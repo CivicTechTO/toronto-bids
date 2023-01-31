@@ -20,3 +20,5 @@ The extracted information is then stored in an SQL database for easier managemen
 ## Making the data public
 
 The final stage of the project involves making the information publicly accessible through a user-friendly website. The goal is to provide an easy-to-use platform for accessing the information contained in the RFPs, even after the due date has passed, promoting transparency and accountability in the procurement process of the Toronto City Council.
+
+This stage also requires making an API to allow programmatic access to the database of RFP information. This API will allow developers to programmatically access and retrieve data from the database for use in their own applications and tools. The API should include endpoints for retrieving information about specific RFPs, searching for RFPs based on certain criteria, and retrieving metadata about the RFPs. The API will be a critical component of the project, allowing the data to be used in a wide range of applications and promoting the goal of transparency and accessibility in the Toronto City Council's procurement process.
