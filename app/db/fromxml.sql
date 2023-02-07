@@ -44,7 +44,7 @@ CREATE TABLE `fromxml` (
   `Division` varchar(256) COLLATE utf8_unicode_ci NOT NULL,
   `BuyerLocationShow` varchar(256) COLLATE utf8_unicode_ci NOT NULL,
   `urls` varchar(1000) COLLATE utf8_unicode_ci NOT NULL,
-  `parsedtext` longtext COLLATE utf8_unicode_ci NOT NULL,
+  `parsedtext` varchar(65535) COLLATE utf8_unicode_ci NOT NULL,
   `lastupdated` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `uuid` varchar(36) COLLATE utf8_unicode_ci NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
