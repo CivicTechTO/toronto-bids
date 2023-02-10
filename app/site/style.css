@@ -1,0 +1,19 @@
+/*
+ *	style.css
+ */
+ 
+body
+{
+	background-color: LightSkyBlue;
+}
+
+#container
+{
+	width: 1000px;
+	padding: 10px;
+}
+
+#title
+{
+	text-align: center;
+}
