@@ -1,0 +1,1 @@
+scp target/uberjar/toronto-bids.jar jrootham@jrootham.ca:toronto-bids/bin

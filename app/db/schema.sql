@@ -47,7 +47,6 @@ CREATE TABLE procurement
 	, call_number VARCHAR(30) NOT NULL
 	, commodity_type_id INT NOT NULL
 	, division_id INT NOT NULL
-	, buyer_id INT NOT NULL
 	, short_description VARCHAR(256) NOT NULL
 	, description VARCHAR(10000) NOT NULL
 	, posting_date DATE NOT NULL
@@ -57,7 +56,13 @@ CREATE TABLE procurement
 	, FOREIGN KEY (type_id) REFERENCES type(id)
 	, FOREIGN KEY (commodity_type_id) REFERENCES commodity_type(id)
 	, FOREIGN KEY (division_id) REFERENCES division(id)
-	, FOREIGN KEY (buyer_id) REFERENCES buyer(id)
+);
+
+CREATE TABLE procurement_buyer
+(
+	procurement_id INT NOT NULL
+	, buyer_id INT NOT NULL
+	, PRIMARY KEY (procurement_id, buyer_id)
 );
 
 CREATE TABLE search_text

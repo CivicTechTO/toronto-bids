@@ -1,0 +1,14 @@
+[Unit]
+Description=Bids server
+After=nginx.service mysql.service
+Wants=nginx.service mysql.service
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=10
+WorkingDirectory=/home/jrootham/toronto-bids/bin/
+ExecStart=/usr/bin/java -jar toronto-bids.jar
+
+[Install]
+WantedBy=multi-user.target

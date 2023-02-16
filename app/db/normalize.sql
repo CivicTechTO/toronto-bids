@@ -24,12 +24,13 @@ INSERT INTO buyer (name, phone, email, location_id) SELECT DISTINCT source.name,
 			, import.fromxml.BuyerPhoneShow AS phone
 			, import.fromxml.BuyerEmailShow AS email
 		FROM location JOIN import.fromxml ON location.location = import.fromxml.BuyerLocationShow
-	) AS source;
+	) AS source
+;
 
-INSERT INTO procurement (type_id, call_number, commodity_type_id, division_id, buyer_id, short_description, description, posting_date, closing_date, site_meeting, search_text)
+INSERT INTO procurement (type_id, call_number, commodity_type_id, division_id, short_description, description, posting_date, closing_date, site_meeting)
 	SELECT DISTINCT 
-		source.type_id, source.call_number, source.commodity_type_id, source.division_id, source.buyer_id, source.short_description, source.description
-			, source.posting_date, source.closing_date, source.site_meeting,  source.search_text
+		source.type_id, source.call_number, source.commodity_type_id, source.division_id, source.short_description, source.description
+			, source.posting_date, source.closing_date, source.site_meeting
 		FROM
 		(
 			SELECT DISTINCT 
@@ -37,20 +38,41 @@ INSERT INTO procurement (type_id, call_number, commodity_type_id, division_id, b
 				, import.fromxml.CallNumber AS call_number
 				, commodity_type.id AS commodity_type_id
 				, division.id AS division_id
-				, buyer.id AS buyer_id
 				, import.fromxml.ShortDescription AS short_description
 				, import.fromxml.Description AS description
-				, import.fromxml.ShowDatePosted AS posting_date
-				, import.fromxml.ClosingDate AS closing_date
+				, STR_TO_DATE(import.fromxml.ShowDatePosted, '%M %e, %Y') AS posting_date
+				, STR_TO_DATE(import.fromxml.ClosingDate, '%M %e, %Y') AS closing_date
 				, import.fromxml.SiteMeeting AS site_meeting
-				, import.fromxml.parsedtext AS search_text
 			FROM
 				import.fromxml INNER JOIN type ON import.fromxml.Type = type.type
 					INNER JOIN commodity_type ON import.fromxml.CommodityType = commodity_type.commodity_type
 						INNER JOIN division ON import.fromxml.Division = division.division
-							INNER JOIN buyer ON import.fromxml.ShowBuyerNameList = buyer.name
-		) AS source;
+		) AS source
+;
 
-CREATE FULLTEXT INDEX short_description_index ON procurement(short_description);
-CREATE FULLTEXT INDEX description_index ON procurement(description);
-CREATE FULLTEXT INDEX search_text_index ON procurement(search_text);
+INSERT INTO procurement_buyer (procurement_id, buyer_id)
+	SELECT DISTINCT source.procurement_id, source.buyer_id
+	FROM
+	(
+		SELECT DISTINCT 
+			procurement.id AS procurement_id
+			, buyer.id AS buyer_id
+		FROM 
+			import.fromxml JOIN procurement ON import.fromxml.CallNumber = procurement.call_number
+				INNER JOIN buyer ON import.fromxml.ShowBuyerNameList = buyer.name
+	) AS source
+;
+
+INSERT INTO search_text (procurement_id, search_text)
+	SELECT source.procurement_id, source.search_text 
+	FROM
+	(
+		SELECT DISTINCT 
+			procurement.id AS procurement_id
+			, import.fromxml.parsedtext AS search_text
+		FROM
+			import.fromxml JOIN procurement ON import.fromxml.CallNumber = procurement.call_number
+	) AS source
+;
+
+
