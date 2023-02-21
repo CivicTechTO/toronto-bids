@@ -15,6 +15,7 @@ CREATE TABLE commodity_type
 	id INT PRIMARY KEY AUTO_INCREMENT
 	, commodity_id INT  NOT NULL
 	, commodity_type VARCHAR(256)  NOT NULL
+
 	, FOREIGN KEY (commodity_id) REFERENCES commodity(id)
 );
 
@@ -37,10 +38,11 @@ CREATE TABLE buyer
 	, phone VARCHAR(256) NOT NULL
 	, email VARCHAR(256) NOT NULL
 	, location_id INT NOT NULL
+
 	, FOREIGN KEY (location_id) REFERENCES location(id)
 );
 
-CREATE TABLE procurement
+CREATE TABLE document
 (
 	id INT PRIMARY KEY AUTO_INCREMENT
 	, type_id INT NOT NULL
@@ -53,25 +55,43 @@ CREATE TABLE procurement
 	, closing_date DATE NOT NULL
 	, site_meeting VARCHAR(1000) NOT NULL
 	, last_updated TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+
 	, FOREIGN KEY (type_id) REFERENCES type(id)
 	, FOREIGN KEY (commodity_type_id) REFERENCES commodity_type(id)
 	, FOREIGN KEY (division_id) REFERENCES division(id)
 );
 
-CREATE TABLE procurement_buyer
+CREATE TABLE document_buyer
 (
-	procurement_id INT NOT NULL
+	document_id INT NOT NULL
 	, buyer_id INT NOT NULL
-	, PRIMARY KEY (procurement_id, buyer_id)
+
+	, PRIMARY KEY (document_id, buyer_id)
 );
 
 CREATE TABLE search_text
 (
 	id INT PRIMARY KEY AUTO_INCREMENT
-	, procurement_id INT NOT NULL
+	, document_id INT NOT NULL
 	, search_text VARCHAR(10000) NOT NULL
 );
 
-CREATE FULLTEXT INDEX short_description_index ON procurement(short_description);
-CREATE FULLTEXT INDEX description_index ON procurement(description);
+CREATE TABLE attachment
+(
+	id INT PRIMARY KEY AUTO_INCREMENT
+	, document_id INT NOT NULL
+	, contents LONGBLOB NOT NULL
+
+	, FOREIGN KEY (document_id) REFERENCES document(id)
+);
+
+CREATE TABLE header
+(
+	id INT PRIMARY KEY AUTO_INCREMENT
+	, attachment_id INT NOT NULL
+	, header VARCHAR(1000) NOT NULL
+);
+
+CREATE FULLTEXT INDEX short_description_index ON document(short_description);
+CREATE FULLTEXT INDEX description_index ON document(description);
 CREATE FULLTEXT INDEX search_text_index ON search_text(search_text);
