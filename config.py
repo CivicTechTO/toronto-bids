@@ -1,8 +1,18 @@
 import os
+import yaml
+class ConfigReader:
+    def __init__(self):
+        config_path = os.path.join(os.getcwd(), 'config.yaml')
+        self.file_path = config_path
 
-# Ariba configuration paths
-DOWNLOAD_DIRECTORY = 'C:\\Toronto-Bids-Downloads',
-REPO_DIRECTORY = 'C:\\\\code\\\\CivicTech\\\\toronto-bids\\\\scrapers',
-TORONTO_ARIBA_URL = 'https://service.ariba.com/Discovery.aw/ad/profile?key=AN01050912625#b0'
-SCRAPING_RETRY_INTERVAL_SEC = 600,
-OUTPUT_HTML_DIRECTORY = f'{REPO_DIRECTORY}'"
+    def read(self):
+        with open(self.file_path, 'r') as f:
+            data = yaml.safe_load(f)
+        return data
+
+    def load_key(self, key):
+        data = self.read()
+        return data.get(key, {})
+
+    def get_working_directory():
+        return os.getcwd()

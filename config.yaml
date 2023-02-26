@@ -1,0 +1,7 @@
+scrapers:
+  ariba:
+    CONFIG_DOWNLOAD_DIRECTORY: "scrapers/ariba/bin"
+    CONFIG_TORONTO_ARIBA_URL: "https://service.ariba.com/Discovery.aw/ad/profile?key=AN01050912625#b0"
+    CONFIG_SCRAPING_RETRY_INTERVAL_SEC: 600,
+    CONFIG_OUTPUT_HTML_DIRECTORY: "scrapers/ariba/data/" 
+  
