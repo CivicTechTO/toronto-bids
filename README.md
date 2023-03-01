@@ -46,7 +46,7 @@ The `README.md` of the `python-magic` module has a section dedicated to [trouble
 ### Python
 
 It's recommended to use a virtual environment to manage python dependencies. The commands below assume that the `toronto-bids` folder is the `pwd` in your terminal:
-
+Use python3.8 or higher.
 ```
 python3 -m venv ./venv
 source venv/bin/activate
