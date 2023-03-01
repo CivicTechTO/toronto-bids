@@ -60,3 +60,34 @@ deactivate
 ```
 
 To enable the virtual environment again, run `source venv/bin/activate`
+
+## Windows
+
+### Pre-requisites
+
+Clone the package to the chosen folder (example using git CLI and HTTPS below):
+
+```
+git clone https://github.com/CivicTechTO/toronto-bids.git
+cd toronto-bids
+```
+
+### Python
+
+It's recommended to use a virtual environment to manage python dependencies. The commands below assume that the `toronto-bids` folder is the `pwd` in PowerShell.
+
+```
+python -m venv .\venv
+.\venv\bin\activate
+python -m pip install -r .\requirements.txt
+pip install python-magic-bin
+```
+
+In case there's an error around the lines of `Activate.ps1 cannot be loaded because running scripts is   
+disabled on this system.`, one of the answers [here](https://stackoverflow.com/questions/4037939/powershell-says-execution-of-scripts-is-disabled-on-this-system) should help fix that.
+
+This will setup a virtual environment within the `toronto-bids` folder, activate it, and install the project modules into the virtual environment. Keep the virtual environment active while working on the project. To deactivate the virtual environment (once switching to another project for instance), simply run:
+
+```
+deactivate
+```
