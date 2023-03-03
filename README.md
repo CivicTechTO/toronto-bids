@@ -79,3 +79,22 @@ deactivate
 ```
 
 To enable the virtual environment again, run `source venv/bin/activate`
+
+### Clojure
+
+The backend server currently is written in Clojure and resides at `app/server/toronto-bids/toronto-bids`.
+
+You can follow the [README](app/server/toronto-bids/toronto-bids/README.md) for prequisites and running the application.
+
+Two major requirements are `clojure` and `lein` build tool.
+
+Running the backend server from the top level repo:
+```shell
+make run-server
+```
+
+To build the jars:
+```shell
+make build-uberjar
+```
+
