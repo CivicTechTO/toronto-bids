@@ -45,17 +45,36 @@ The `README.md` of the `python-magic` module has a section dedicated to [trouble
 
 ### Python
 
-It's recommended to use a virtual environment to manage python dependencies. The commands below assume that the `toronto-bids` folder is the `pwd` in your terminal:
+Use python3.8 or higher, currently the project is setup to use python3.9
 
+We're utilize [GNU make](https://www.gnu.org/software/make/) to help setup and run the python scrapers and other scripts. Currently the `Makefile` is tested and supported on Mac OSX (need contributors for Windows).
+
+To setup and run the Jupyter notebook just at the top level of this repo you can run:
+```shell
+make run-jupyter-notebook
 ```
+
+This sets up the python virtual environment and requirements and runs the Jupyter server on the `scrapers` directory.
+For further inspect or extending the make build tool, the targets are defined in `Makefile`
+Currently it is just extended for the Jupyter notebooks that are written, eventually it should be expanded to support all the build/setup tasks needed for the other projects.
+
+To clean the project:
+```shell
+make clean
+```
+
+Below are the instructions if you don't want to follow `make` for the python projects:
+---
+It's recommended to use a virtual environment to manage python dependencies. The commands below assume that the `toronto-bids` folder is the `pwd` in your terminal:
+```shell
 python3 -m venv ./venv
 source venv/bin/activate
-python3 -m pip install -r requirements.txt
+python3 -m pip install -r scrapers/requirements.txt
 ```
 
 This will setup a virtual environment within the `toronto-bids` folder, activate it, and install the project modules into the virtual environment. Keep the virtual environment active while working on the project. To deactivate the virtual environment (once switching to another project for instance), simply run:
 
-```
+```shell
 deactivate
 ```
 
