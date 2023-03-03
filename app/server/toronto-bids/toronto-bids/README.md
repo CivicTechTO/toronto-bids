@@ -6,7 +6,15 @@ FIXME: description
 
 Download from http://example.com/FIXME.
 
+Install [Clojure](https://clojure.org/guides/install_clojure) dependent on your OS.
+Install [Leiningen](https://leiningen.org/) to use the build tool for the Clojure application.
+
 ## Usage
+
+To run the server using `lein` :
+```shell
+lein run
+```
 
 FIXME: explanation
 
