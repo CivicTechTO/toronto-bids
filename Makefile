@@ -27,7 +27,7 @@ $(VENV): $(PYTHON_SCRAPERS_DIR)/requirements.txt
 	$(PIP) install -r $(PYTHON_SCRAPERS_DIR)/requirements.txt
 	touch $(VENV)
 
-pip-freeze: $(PYTHON_SCRAPERS_DIR)/requirements.txt
+pip-freeze: $(VENV) $(PYTHON_SCRAPERS_DIR)/requirements.txt
 	$(PIP) freeze > $(VENV)/requirements.txt
 
 run-server:
@@ -36,5 +36,5 @@ run-server:
 build-uberjar:
 	cd $(TORONTO_BIDS_SERVER_DIR) && lein uberjar
 
-.PHONY: run-jupyter-notebook setup-py pip-freeze run-server clean
+.PHONY: run-jupyter-notebook setup-py pip-freeze run-server build-uberjar clean
 
