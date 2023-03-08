@@ -11,6 +11,8 @@ TORONTO_BIDS_SERVER_UBERJAR = $(TORONTO_BIDS_SERVER_TARGET_DIR)/uberjar/$(TORONT
 TORONTO_BIDS_SERVER_UBERJAR_STANDALONE = $(TORONTO_BIDS_SERVER_TARGET_DIR)/uberjar/$(TORONTO_BIDS_SERVER_REVISION)-standalone.jar
 
 setup-py: $(VENV)
+$(PYTHON): setup-py
+$(PIP): setup-py
 
 run-jupyter-notebook: $(VENV)
 	$(JUPYTER) notebook --notebook-dir $(PYTHON_SCRAPERS_DIR)
@@ -22,7 +24,7 @@ clean:
 $(VENV): $(PYTHON_SCRAPERS_DIR)/requirements.txt
 	python$(PYTHON_VERSION) -m venv venv
 	. $(VENV)/bin/activate
-	$(PYTHON) -m pip install -r $(PYTHON_SCRAPERS_DIR)/requirements.txt
+	$(PIP) install -r $(PYTHON_SCRAPERS_DIR)/requirements.txt
 	touch $(VENV)
 
 pip-freeze: $(PYTHON_SCRAPERS_DIR)/requirements.txt
@@ -31,7 +33,7 @@ pip-freeze: $(PYTHON_SCRAPERS_DIR)/requirements.txt
 run-server:
 	cd $(TORONTO_BIDS_SERVER_DIR) && lein run
 
-build-uberjar: $(TORONTO_BIDS_SERVER_UBERJAR)
+build-uberjar:
 	cd $(TORONTO_BIDS_SERVER_DIR) && lein uberjar
 
 .PHONY: run-jupyter-notebook setup-py pip-freeze run-server clean
