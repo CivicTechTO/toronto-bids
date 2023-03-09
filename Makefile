@@ -11,8 +11,6 @@ TORONTO_BIDS_SERVER_UBERJAR = $(TORONTO_BIDS_SERVER_TARGET_DIR)/uberjar/$(TORONT
 TORONTO_BIDS_SERVER_UBERJAR_STANDALONE = $(TORONTO_BIDS_SERVER_TARGET_DIR)/uberjar/$(TORONTO_BIDS_SERVER_REVISION)-standalone.jar
 
 setup-py: $(VENV)
-$(PYTHON): setup-py
-$(PIP): setup-py
 
 run-jupyter-notebook: $(VENV)
 	$(JUPYTER) notebook --notebook-dir $(PYTHON_SCRAPERS_DIR)
