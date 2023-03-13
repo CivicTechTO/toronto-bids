@@ -77,7 +77,8 @@ def main_loop(has_clicked: bool = False) -> bool:
                 f'{REPO_DIRECTORY}/data/{document_id}/{document_id}.html'
             ).exists()
 
-            # Zip might exist as a zip file, or as a directory - if it's the latter, we need to check that there's more than just the HTML file
+            # Zip might exist as a zip file, or as a directory - if it's the latter, we need to check that there's
+            # more than just the HTML file
             zip_exists = Path(f'{REPO_DIRECTORY}/data/{document_id}.zip').exists() or count_directory_files(Path(
                 f'{REPO_DIRECTORY}/data/{document_id}'
             )) > 1

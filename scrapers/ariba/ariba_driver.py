@@ -45,12 +45,15 @@ class Ariba(Chrome):
         WebDriverWait(self, timeout=60).until(EC.element_to_be_clickable((By.CSS_SELECTOR, ".sap-icon--log")))
         self.find_element(By.CSS_SELECTOR, ".sap-icon--log").click()
         # Wait until username and password fields are visible
-        WebDriverWait(self, timeout=60).until(EC.visibility_of_element_located((By.NAME, "UserName") and (By.NAME, "Password")))
+        WebDriverWait(self, timeout=60).until(
+            EC.visibility_of_element_located(
+                (By.NAME, "UserName") and (By.NAME, "Password")
+            )
+        )
         with open(username_path,'r') as f:
             self.find_element(By.NAME, "UserName").send_keys(f.read())
         with open(password_path,'r') as f:
             self.find_element(By.NAME, "Password").send_keys(f.read())
         self.find_element(By.NAME, "Password").send_keys(Keys.ENTER)
-        # Wait until the page has stopped loading
-        WebDriverWait(self, timeout=60).until(EC.invisibility_of_element_located((By.CSS_SELECTOR, ".leftAlign")))
+        sleep(2)
         self.get("https://service.ariba.com/Discovery.aw/ad/profile?key=AN01050912625#b0")
