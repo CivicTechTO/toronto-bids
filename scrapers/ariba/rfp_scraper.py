@@ -61,6 +61,7 @@ def main_loop(has_clicked: bool = False) -> bool:
 
             clicked.add(title_text)
             title.click()
+            has_clicked = True
 
             # Now we've moved from the listing page to the RFP page. First thing is to identify the doc number
             document_id = driver.patiently_find_regex('(Doc\d{10})')
@@ -108,8 +109,8 @@ def main_loop(has_clicked: bool = False) -> bool:
                 )  # download attachments (for real)
 
             # Now we're done with this RFP, so we go back to the listing page
-            driver.patiently_click('//*[@text()="Back to Search Results"]', wait_after=5)
-            return True  # True because we aren't finished
+            driver.patiently_click('//a[contains(text(),"Back to Search Results")]', wait_after=5)
+            return False  # False because we aren't finished
         if not has_clicked:
             # if we didn't find an RFP on this page, we should go to the next page.
             # First, check if the next page button is clickable
@@ -117,7 +118,7 @@ def main_loop(has_clicked: bool = False) -> bool:
             if next_button.get_attribute('class') == 'disabled':
                 # If it's not clickable, we're done
                 print('No more RFPs to click on')
-                return False  # False because we are finished
+                return True  # True because we are finished
             else:
                 # If it is clickable, click it
                 driver.patiently_click('//*[@id="next"]', wait_after=5)
