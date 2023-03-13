@@ -1,0 +1,150 @@
+import datetime as dt
+from pathlib import Path
+from selenium.webdriver.chrome.service import Service as ChromeService
+from selenium.webdriver.common.by import By
+from selenium.webdriver.remote.errorhandler import NoSuchElementException
+from ariba_driver import Ariba
+from time import sleep
+from webdriver_manager.chrome import ChromeDriverManager
+from filemanage import extract_zip_and_move_html, move_pdfs, parse_html
+
+# System default download directory
+DOWNLOAD_DIRECTORY = Path.home() / 'Downloads'
+
+# Working directory
+REPO_DIRECTORY = Path.cwd()
+
+
+def wait_for_download(command, max_wait=1200) -> bool:
+    initial_length = len(list(DOWNLOAD_DIRECTORY.iterdir()))
+    command()
+    total_wait = 0
+    while len(list(DOWNLOAD_DIRECTORY.iterdir())) == initial_length:
+        sleep(15)
+        total_wait += 15
+        if total_wait > max_wait:
+            return False
+    return True
+
+
+def count_directory_files(root: Path) -> int:
+    if not root.exists():
+        return 0
+    return len(list(root.iterdir()))
+
+
+def main_loop(has_clicked: bool = False) -> bool:
+    while not has_clicked:  # We loop through RFPs until we find one we want to click on
+        elements = driver.find_elements(By.CLASS_NAME,
+                                        'ADTableBodyWhite')  # Class name for open RFPs (and some closed ones!)
+        elements += driver.find_elements(By.CLASS_NAME, 'ADHiliteBlock')  # Class name for closed RFPs (exclusively)
+        for element in elements:
+            try:
+                title = element.find_element(By.CLASS_NAME, 'QuoteSearchResultTitle')  # Title is hyperlink
+            except NoSuchElementException:
+                continue
+            title_text = title.text
+            if title_text in clicked:
+                continue
+
+            print(f'{title.text}')
+
+            # Attempt to parse expiry date, so we can see if the RFP is open
+            date = element.find_elements(By.CLASS_NAME, 'paddingRight5')
+            if len(date) < 3:
+                request_expired = True
+                print('\tNo date found')
+            else:
+                date = date[2].text
+                request_expired = dt.datetime.strptime(date[:-4], '%d %b %Y %I:%M %p') < dt.datetime.now()
+                print(f'\tdate: {date}')
+
+            clicked.add(title_text)
+            title.click()
+
+            # Now we've moved from the listing page to the RFP page. First thing is to identify the doc number
+            document_id = driver.patiently_find_regex('(Doc\d{10})')
+            print(f'\tDocument id is {document_id}')
+
+            # Now we check if there are any PDFs to download on the listing page
+            noip = driver.find_elements(By.XPATH, '//a[contains(text(),".pdf")]')
+            for link in noip:
+                print(f'\tPDF found, downloading {link.text}')
+                wait_for_download(lambda: link.click())
+
+            # Check to see if we've already downloaded the raw HTML, and the attachments
+            html_exists = Path(f'{REPO_DIRECTORY}/data/{document_id}.html').exists() or Path(
+                f'{REPO_DIRECTORY}/data/{document_id}/{document_id}.html'
+            ).exists()
+
+            # Zip might exist as a zip file, or as a directory - if it's the latter, we need to check that there's more than just the HTML file
+            zip_exists = Path(f'{REPO_DIRECTORY}/data/{document_id}.zip').exists() or count_directory_files(Path(
+                f'{REPO_DIRECTORY}/data/{document_id}'
+            )) > 1
+
+            # Print the results of our checks
+            print('\tHTML exists' if html_exists else '\tHTML does not exist')
+
+            if zip_exists:
+                print('\tZip exists')
+            elif not request_expired:
+                print('\tZip does not exist')
+            else:
+                print('\tZip does not exist, but RFP is expired')
+
+            # If we haven't already downloaded the HTML, download it now
+            if not html_exists:
+                with open(f'{REPO_DIRECTORY}/data/{document_id}.html', 'w') as f:
+                    f.write(driver.page_source)
+            if (not zip_exists) and (not request_expired):
+                # If we don't have the attachments and the RFP is still open, download them
+                driver.patiently_click('//*[@id="_hfdr9c"]')  # respond to posting
+                driver.patiently_click('//*[@id="_xjqay"]')  # download content
+                driver.patiently_click('//*[@id="_hgesab"]', wait_after=15)  # click download attachment
+                driver.patiently_click('//*[@id="_h_l$m"]/span/div/label', wait_after=5)  # click select all
+                wait_for_download(
+                    lambda: driver.patiently_click('//*[@id="_5wq_j"]')
+                )  # download attachments (for real)
+
+            # Now we're done with this RFP, so we go back to the listing page
+            driver.patiently_click('//*[@text()="Back to Search Results"]', wait_after=5)
+            return True  # True because we aren't finished
+        if not has_clicked:
+            # if we didn't find an RFP on this page, we should go to the next page.
+            # First, check if the next page button is clickable
+            next_button = driver.find_element(By.XPATH, '//*[@id="next"]')
+            if next_button.get_attribute('class') == 'disabled':
+                # If it's not clickable, we're done
+                print('No more RFPs to click on')
+                return False  # False because we are finished
+            else:
+                # If it is clickable, click it
+                driver.patiently_click('//*[@id="next"]', wait_after=5)
+
+
+if __name__ == '__main__':
+    finished = False
+    clicked = set()
+    driver = Ariba(service=ChromeService(ChromeDriverManager().install()))
+
+    while not finished:
+        try:
+            finished = main_loop()
+        except Exception as e:
+            print(e)
+            # Check if the issue is that we aren't logged in
+            if not driver.is_logged_in():
+                driver.login()
+            else:
+                driver.quit()
+                driver = Ariba(service=ChromeService(ChromeDriverManager().install()))
+
+    # Move zips from download directory to repo's data directory
+    for file in DOWNLOAD_DIRECTORY.iterdir():
+        if file.suffix == '.zip':
+            file.rename(REPO_DIRECTORY / 'data' / file.name)
+
+    extract_zip_and_move_html(REPO_DIRECTORY / 'data')
+    move_pdfs(DOWNLOAD_DIRECTORY, REPO_DIRECTORY / 'data')
+
+    parse_html(REPO_DIRECTORY / 'data').to_csv('metadata.csv', index=False)
