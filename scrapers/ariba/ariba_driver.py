@@ -51,9 +51,9 @@ class Ariba(Chrome):
                 (By.NAME, "UserName") and (By.NAME, "Password")
             )
         )
-        with open(username_path,'r') as f:
+        with open(username_path, 'r') as f:
             self.find_element(By.NAME, "UserName").send_keys(f.read())
-        with open(password_path,'r') as f:
+        with open(password_path, 'r') as f:
             self.find_element(By.NAME, "Password").send_keys(f.read())
         self.find_element(By.NAME, "Password").send_keys(Keys.ENTER)
         sleep(2)

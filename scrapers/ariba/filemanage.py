@@ -8,7 +8,7 @@ from bs4 import BeautifulSoup
 
 def extract_zip_recursively(zip_file: Path, new_dir: Path):
     print(f"Extracting contents of {zip_file} to {new_dir}")
-    with zipfile.ZipFile(zip_file, "r") as z:
+    with zipfile.ZipFile(zip_file) as z:
         z.extractall(new_dir)
         for name in z.namelist():
             if name.endswith(".zip"):
@@ -81,7 +81,8 @@ def parse_html(directory: Path) -> pd.DataFrame:
                             dictionary[k] = v
                     dictionary['Product Categories'] = [t.strip() for t in
                                                         re.findall('([A-Z][^A-Z]+)', tables[1].loc[0, 0])[3:]]
-                    dictionary['summary'] = content.find_all('div', class_='postingHeaderNormalText postingHeaderPadding')[
+                    dictionary['summary'] = content.find_all('div', class_='postingHeaderNormalText '
+                                                                           'postingHeaderPadding')[
                         0].text
                     results.append(dictionary)
     return pd.DataFrame(results)

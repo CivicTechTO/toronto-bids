@@ -116,8 +116,8 @@ def main_loop(has_clicked: bool = False) -> bool:
             # if we didn't find an RFP on this page, we should go to the next page.
             # First, check if the next page button is clickable
             next_button = driver.find_element(By.XPATH, '//*[@id="next"]')
-            if next_button.get_attribute('class') == 'disabled':
-                # If it's not clickable, we're done
+            # If next button contains a div with the id "noLink", it's not clickable
+            if next_button.find_elements(By.XPATH, 'div[@id="noLink"]'):
                 print('No more RFPs to click on')
                 return True  # True because we are finished
             else:
