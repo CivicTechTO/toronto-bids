@@ -20,8 +20,8 @@ def wait_for_download(command, max_wait=1200) -> bool:
     command()
     total_wait = 0
     while len(list(DOWNLOAD_DIRECTORY.iterdir())) == initial_length:
-        sleep(15)
-        total_wait += 15
+        sleep(1)
+        total_wait += 1
         if total_wait > max_wait:
             return False
     return True
@@ -107,9 +107,10 @@ def main_loop(has_clicked: bool = False) -> bool:
                 wait_for_download(
                     lambda: driver.patiently_click('//*[@id="_5wq_j"]')
                 )  # download attachments (for real)
+                driver.home()
+            else:
+                driver.patiently_click('//a[contains(text(),"Back to Search Results")]', wait_after=5)
 
-            # Now we're done with this RFP, so we go back to the listing page
-            driver.patiently_click('//a[contains(text(),"Back to Search Results")]', wait_after=5)
             return False  # False because we aren't finished
         if not has_clicked:
             # if we didn't find an RFP on this page, we should go to the next page.

@@ -22,12 +22,13 @@ class Ariba(Chrome):
             sleep(wait_after)
 
     def patiently_find_regex(self, regex):
-        attempts = 0
+        max_wait = 1200
+        total_wait = 0
         results = []
-        while len(results) == 0 and attempts < 150:
-            sleep(3)
+        while len(results) == 0 and total_wait < max_wait:
+            sleep(1)
+            total_wait += 1
             results = re.findall(regex, self.page_source)
-            attempts += 1
         if len(results) == 0:
             return None
         return results[0]
@@ -41,7 +42,7 @@ class Ariba(Chrome):
         password_path = Path('password.key')
         if not username_path.exists() or not password_path.exists():
             raise FileNotFoundError('username.key or password.key not found')
-        self.get("https://service.ariba.com/Discovery.aw/ad/profile?key=AN01050912625#b0")
+        self.home()
         WebDriverWait(self, timeout=60).until(EC.element_to_be_clickable((By.CSS_SELECTOR, ".sap-icon--log")))
         self.find_element(By.CSS_SELECTOR, ".sap-icon--log").click()
         # Wait until username and password fields are visible
@@ -56,4 +57,7 @@ class Ariba(Chrome):
             self.find_element(By.NAME, "Password").send_keys(f.read())
         self.find_element(By.NAME, "Password").send_keys(Keys.ENTER)
         sleep(2)
+        self.home()
+
+    def home(self):
         self.get("https://service.ariba.com/Discovery.aw/ad/profile?key=AN01050912625#b0")
