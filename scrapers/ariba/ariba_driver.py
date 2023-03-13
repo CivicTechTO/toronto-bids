@@ -24,8 +24,8 @@ class Ariba(Chrome):
     def patiently_find_regex(self, regex):
         attempts = 0
         results = []
-        while len(results) == 0 and attempts < 30:
-            sleep(15)
+        while len(results) == 0 and attempts < 150:
+            sleep(3)
             results = re.findall(regex, self.page_source)
             attempts += 1
         if len(results) == 0:
