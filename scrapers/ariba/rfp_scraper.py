@@ -6,7 +6,7 @@ from selenium.webdriver.remote.errorhandler import NoSuchElementException
 from ariba_driver import Ariba
 from time import sleep
 from webdriver_manager.chrome import ChromeDriverManager
-from filemanage import extract_zip_and_move_html, move_pdfs, parse_html
+from filemanage import extract_zip_and_move_html, move_pdfs, parse_html, delete_duplicates
 
 # System default download directory
 DOWNLOAD_DIRECTORY = Path.home() / 'Downloads'
@@ -151,3 +151,5 @@ if __name__ == '__main__':
     move_pdfs(DOWNLOAD_DIRECTORY, REPO_DIRECTORY / 'data')
 
     parse_html(REPO_DIRECTORY / 'data').to_csv('metadata.csv', index=False)
+
+    delete_duplicates(REPO_DIRECTORY / 'data')

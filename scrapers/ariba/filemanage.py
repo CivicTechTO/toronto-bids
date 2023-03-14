@@ -1,6 +1,7 @@
 import re
 from pathlib import Path
 import zipfile
+import hashlib
 
 import pandas as pd
 from bs4 import BeautifulSoup
@@ -86,3 +87,26 @@ def parse_html(directory: Path) -> pd.DataFrame:
                         0].text
                     results.append(dictionary)
     return pd.DataFrame(results)
+
+
+def delete_duplicates(directory: Path):
+    for folder in directory.iterdir():
+        if folder.is_dir():
+            # Get list of all files in directory and its subdirectories
+            files = [f for f in folder.glob('**/*') if f.is_file()]
+            # Compute the hash of each file
+            hashes = [hashlib.md5(f.read_bytes()).hexdigest() for f in files]
+            # Create a hash-to-file dict
+            hash_to_file = {}
+            for f, h in zip(files, hashes):
+                hash_to_file.setdefault(h, []).append(f)
+            # Find all duplicate files
+            duplicates = [(f,h) for h, f in hash_to_file.items() if len(f) > 1]
+            # Delete all but one of each duplicate
+            for f,h in duplicates:
+                print(f'Hash {h} appears in {len(f)} files. Keeping {f[0]} and deleting the rest.')
+                for file in f[1:]:
+                    print(f'Deleting {file}')
+                    file.unlink()
+
+
