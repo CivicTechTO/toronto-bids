@@ -102,11 +102,11 @@ def delete_duplicates(directory: Path):
                 hash_to_file.setdefault(h, []).append(f)
             # Find all duplicate files
             duplicates = [(f,h) for h, f in hash_to_file.items() if len(f) > 1]
-            # Delete all but one of each duplicate
+            # Keep the duplicate with the shortest filename
             for f,h in duplicates:
-                print(f'Hash {h} appears in {len(f)} files. Keeping {f[0]} and deleting the rest.')
+                print(f'Hash {h} appears in {len(f)} files')
+                f.sort(key=lambda x: len(x.as_posix()))
+                print(f'Keeping {f[0]}')
                 for file in f[1:]:
                     print(f'Deleting {file}')
                     file.unlink()
-
-
