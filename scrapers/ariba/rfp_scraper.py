@@ -1,5 +1,6 @@
 import datetime as dt
 from pathlib import Path
+from selenium import webdriver
 from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.errorhandler import NoSuchElementException
@@ -8,11 +9,11 @@ from time import sleep
 from webdriver_manager.chrome import ChromeDriverManager
 from filemanage import extract_zip_and_move_html, move_pdfs, parse_html, delete_duplicates
 
-# System default download directory
-DOWNLOAD_DIRECTORY = Path.home() / 'Downloads'
-
 # Working directory
 REPO_DIRECTORY = Path.cwd()
+# System default download directory
+DOWNLOAD_DIRECTORY = REPO_DIRECTORY / 'downloads'
+DATA_DIRECTORY = REPO_DIRECTORY / 'data'
 
 
 def wait_for_download(command, max_wait=1200) -> bool:
@@ -126,9 +127,14 @@ def main_loop(has_clicked: bool = False) -> bool:
 
 
 if __name__ == '__main__':
+    Path(DOWNLOAD_DIRECTORY).mkdir(exist_ok=True)
+    Path(DATA_DIRECTORY).mkdir(exist_ok=True)
     finished = False
     clicked = set()
-    driver = Ariba(service=ChromeService(ChromeDriverManager().install()))
+    chrome_options =  webdriver.ChromeOptions()
+    prefs = {'download.default_directory' : str(DOWNLOAD_DIRECTORY)}
+    chrome_options.add_experimental_option('prefs', prefs)
+    driver = Ariba(service=ChromeService(ChromeDriverManager().install()), options=chrome_options)
 
     while not finished:
         try:
@@ -145,11 +151,11 @@ if __name__ == '__main__':
     # Move zips from download directory to repo's data directory
     for file in DOWNLOAD_DIRECTORY.iterdir():
         if file.suffix == '.zip':
-            file.rename(REPO_DIRECTORY / 'data' / file.name)
+            file.rename(DATA_DIRECTORY / file.name)
 
-    extract_zip_and_move_html(REPO_DIRECTORY / 'data')
-    move_pdfs(DOWNLOAD_DIRECTORY, REPO_DIRECTORY / 'data')
+    extract_zip_and_move_html(DATA_DIRECTORY)
+    move_pdfs(DOWNLOAD_DIRECTORY, DATA_DIRECTORY)
 
-    parse_html(REPO_DIRECTORY / 'data').to_csv('metadata.csv', index=False)
+    parse_html(DATA_DIRECTORY).to_csv('metadata.csv', index=False)
 
-    delete_duplicates(REPO_DIRECTORY / 'data')
+    delete_duplicates(DATA_DIRECTORY)
