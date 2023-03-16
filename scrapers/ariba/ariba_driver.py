@@ -3,6 +3,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
+from selenium.common.exceptions import NoSuchElementException
 
 from time import sleep
 from pathlib import Path
@@ -55,7 +56,14 @@ class Ariba(Chrome):
             self.find_element(By.NAME, "UserName").send_keys(f.read())
         with open(password_path, 'r') as f:
             self.find_element(By.NAME, "Password").send_keys(f.read())
-        self.find_element(By.NAME, "Password").send_keys(Keys.ENTER)
+        try:
+            self.find_element(By.NAME, "Password").send_keys(Keys.ENTER)
+        except NoSuchElementException as e:
+            # This might be okay. On MacOS, it seems like just entering the password causes the login to happen.
+            sleep(2)
+            # If we're still not logged in, raise the exception
+            if not self.is_logged_in():
+                raise e
         sleep(2)
         self.home()
 
