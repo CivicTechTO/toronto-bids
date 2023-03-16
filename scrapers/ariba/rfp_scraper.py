@@ -146,7 +146,7 @@ if __name__ == '__main__':
                 driver.login()
             else:
                 driver.quit()
-                driver = Ariba(service=ChromeService(ChromeDriverManager().install()))
+                driver = Ariba(service=ChromeService(ChromeDriverManager().install()), options=chrome_options)
 
     # Move zips from download directory to repo's data directory
     for file in DOWNLOAD_DIRECTORY.iterdir():
