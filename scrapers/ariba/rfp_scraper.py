@@ -75,14 +75,14 @@ def main_loop(has_clicked: bool = False) -> bool:
                 wait_for_download(lambda: link.click())
 
             # Check to see if we've already downloaded the raw HTML, and the attachments
-            html_exists = Path(f'{REPO_DIRECTORY}/data/{document_id}.html').exists() or Path(
-                f'{REPO_DIRECTORY}/data/{document_id}/{document_id}.html'
+            html_exists = Path(f'{DATA_DIRECTORY}/{document_id}.html').exists() or Path(
+                f'{DATA_DIRECTORY}/{document_id}/{document_id}.html'
             ).exists()
 
             # Zip might exist as a zip file, or as a directory - if it's the latter, we need to check that there's
             # more than just the HTML file
-            zip_exists = Path(f'{REPO_DIRECTORY}/data/{document_id}.zip').exists() or count_directory_files(Path(
-                f'{REPO_DIRECTORY}/data/{document_id}'
+            zip_exists = Path(f'{DATA_DIRECTORY}/{document_id}.zip').exists() or count_directory_files(Path(
+                f'{DATA_DIRECTORY}/{document_id}'
             )) > 1
 
             # Print the results of our checks
@@ -97,7 +97,7 @@ def main_loop(has_clicked: bool = False) -> bool:
 
             # If we haven't already downloaded the HTML, download it now
             if not html_exists:
-                with open(f'{REPO_DIRECTORY}/data/{document_id}.html', 'w') as f:
+                with open(f'{DATA_DIRECTORY}/{document_id}.html', 'w') as f:
                     f.write(driver.page_source)
             if (not zip_exists) and (not request_expired):
                 # If we don't have the attachments and the RFP is still open, download them
