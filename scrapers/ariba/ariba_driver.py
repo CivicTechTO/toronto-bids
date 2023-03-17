@@ -9,11 +9,13 @@ from time import sleep
 from pathlib import Path
 import re
 
+ARIBA_BASE_URL = "https://service.ariba.com/Discovery.aw/ad/profile"
 
 class Ariba(Chrome):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, ariba_discovery_profile_key, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.ariba_discovery_profile_key = ariba_discovery_profile_key
         self.login()
 
     def patiently_click(self, button, wait_after=0):
@@ -43,7 +45,7 @@ class Ariba(Chrome):
         password_path = Path('password.key')
         if not username_path.exists() or not password_path.exists():
             raise FileNotFoundError('username.key or password.key not found')
-        self.home()
+        self.home(profile_key=self.ariba_discovery_profile_key)
         WebDriverWait(self, timeout=60).until(EC.element_to_be_clickable((By.CSS_SELECTOR, ".sap-icon--log")))
         self.find_element(By.CSS_SELECTOR, ".sap-icon--log").click()
         # Wait until username and password fields are visible
@@ -65,7 +67,7 @@ class Ariba(Chrome):
             if not self.is_logged_in():
                 raise e
         sleep(2)
-        self.home()
+        self.home(profile_key=self.ariba_discovery_profile_key)
 
-    def home(self):
-        self.get("https://service.ariba.com/Discovery.aw/ad/profile?key=AN01050912625#b0")
+    def home(self, profile_key):
+        self.get(f'{ARIBA_BASE_URL}?key={profile_key}')

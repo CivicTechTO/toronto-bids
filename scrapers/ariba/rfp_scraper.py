@@ -8,13 +8,21 @@ from ariba_driver import Ariba
 from time import sleep
 from webdriver_manager.chrome import ChromeDriverManager
 from filemanage import extract_zip_and_move_html, move_pdfs, parse_html, delete_duplicates
+import json
 
 # Working directory
 REPO_DIRECTORY = Path.cwd()
 # System default download directory
 DOWNLOAD_DIRECTORY = REPO_DIRECTORY / 'downloads'
 DATA_DIRECTORY = REPO_DIRECTORY / 'data'
+RFP_SCRAPER_CONFIG_JSON = Path.cwd() / 'rfp_scraper_config.json'
 
+
+def load_scraper_config(scraper_config_json_path):
+    config_json_file = open(scraper_config_json_path)
+    scraper_config = json.load(config_json_file)
+    config_json_file.close()
+    return scraper_config
 
 def wait_for_download(command, max_wait=1200) -> bool:
     initial_length = len(list(DOWNLOAD_DIRECTORY.iterdir()))
@@ -129,12 +137,13 @@ def main_loop(has_clicked: bool = False) -> bool:
 if __name__ == '__main__':
     Path(DOWNLOAD_DIRECTORY).mkdir(exist_ok=True)
     Path(DATA_DIRECTORY).mkdir(exist_ok=True)
+    scraper_config = load_scraper_config(RFP_SCRAPER_CONFIG_JSON)
     finished = False
     clicked = set()
     chrome_options =  webdriver.ChromeOptions()
     prefs = {'download.default_directory' : str(DOWNLOAD_DIRECTORY)}
     chrome_options.add_experimental_option('prefs', prefs)
-    driver = Ariba(service=ChromeService(ChromeDriverManager().install()), options=chrome_options)
+    driver = Ariba(service=ChromeService(ChromeDriverManager().install()), options=chrome_options, ariba_discovery_profile_key=scraper_config['aribaDiscoveryProfileKey'])
 
     while not finished:
         try:
