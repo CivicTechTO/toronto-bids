@@ -70,4 +70,5 @@ class Ariba(Chrome):
         self.home(profile_key=self.ariba_discovery_profile_key)
 
     def home(self, profile_key):
-        self.get(f'{ARIBA_BASE_URL}?key={profile_key}')
+        key = profile_key if not profile_key else self.ariba_discovery_profile_key
+        self.get(f'{ARIBA_BASE_URL}?key={key}')
