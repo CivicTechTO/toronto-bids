@@ -26,7 +26,7 @@ $(VENV): $(PYTHON_SCRAPERS_DIR)/requirements.txt
 	touch $(VENV)
 
 pip-freeze: $(VENV) $(PYTHON_SCRAPERS_DIR)/requirements.txt
-	$(PIP) freeze > $(VENV)/requirements.txt
+	$(PIP) freeze > $(PYTHON_SCRAPERS_DIR)/requirements.txt
 
 run-server:
 	cd $(TORONTO_BIDS_SERVER_DIR) && lein run
