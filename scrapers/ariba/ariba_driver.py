@@ -11,15 +11,17 @@ import re
 
 ARIBA_BASE_URL = "https://service.ariba.com/Discovery.aw/ad/profile"
 
-class Ariba(Chrome):
 
+class Ariba(Chrome):
     def __init__(self, ariba_discovery_profile_key, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.ariba_discovery_profile_key = ariba_discovery_profile_key
         self.login()
 
     def patiently_click(self, button, wait_after=0):
-        WebDriverWait(self, timeout=60).until(EC.element_to_be_clickable((By.XPATH, button)))
+        WebDriverWait(self, timeout=60).until(
+            EC.element_to_be_clickable((By.XPATH, button))
+        )
         self.find_element(By.XPATH, button).click()
         if wait_after > 0:
             sleep(wait_after)
@@ -41,12 +43,14 @@ class Ariba(Chrome):
         return len(login) == 0
 
     def login(self):
-        username_path = Path('username.key')
-        password_path = Path('password.key')
+        username_path = Path("username.key")
+        password_path = Path("password.key")
         if not username_path.exists() or not password_path.exists():
-            raise FileNotFoundError('username.key or password.key not found')
+            raise FileNotFoundError("username.key or password.key not found")
         self.home(profile_key=self.ariba_discovery_profile_key)
-        WebDriverWait(self, timeout=60).until(EC.element_to_be_clickable((By.CSS_SELECTOR, ".sap-icon--log")))
+        WebDriverWait(self, timeout=60).until(
+            EC.element_to_be_clickable((By.CSS_SELECTOR, ".sap-icon--log"))
+        )
         self.find_element(By.CSS_SELECTOR, ".sap-icon--log").click()
         # Wait until username and password fields are visible
         WebDriverWait(self, timeout=60).until(
@@ -54,9 +58,9 @@ class Ariba(Chrome):
                 (By.NAME, "UserName") and (By.NAME, "Password")
             )
         )
-        with open(username_path, 'r') as f:
+        with open(username_path, "r") as f:
             self.find_element(By.NAME, "UserName").send_keys(f.read())
-        with open(password_path, 'r') as f:
+        with open(password_path, "r") as f:
             self.find_element(By.NAME, "Password").send_keys(f.read())
         try:
             self.find_element(By.NAME, "Password").send_keys(Keys.ENTER)
@@ -71,4 +75,4 @@ class Ariba(Chrome):
 
     def home(self, profile_key):
         key = profile_key if not profile_key else self.ariba_discovery_profile_key
-        self.get(f'{ARIBA_BASE_URL}?key={key}')
+        self.get(f"{ARIBA_BASE_URL}?key={key}")
