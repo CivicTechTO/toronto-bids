@@ -28,7 +28,7 @@ $(VENV): $(PYTHON_SCRAPERS_DIR)/requirements.txt
 pip-freeze: $(VENV) $(PYTHON_SCRAPERS_DIR)/requirements.txt
 	$(PIP) freeze > $(PYTHON_SCRAPERS_DIR)/requirements.txt
 
-run-rfp-scaper: $(VENV)
+run-rfp-scraper: $(VENV)
 	$(PYTHON) $(PYTHON_SCRAPERS_DIR)/ariba/rfp_scraper.py
 
 lint-python: $(VENV)
