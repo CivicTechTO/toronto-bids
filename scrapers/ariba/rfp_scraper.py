@@ -48,7 +48,7 @@ def count_directory_files(root: Path) -> int:
     return len(list(root.iterdir()))
 
 
-def main_loop(has_clicked: bool = False) -> bool:
+def main_loop(scraper_config, has_clicked: bool = False) -> bool:
     while not has_clicked:  # We loop through RFPs until we find one we want to click on
         elements = driver.find_elements(
             By.CLASS_NAME, "ADTableBodyWhite"
@@ -136,7 +136,7 @@ def main_loop(has_clicked: bool = False) -> bool:
                 wait_for_download(
                     lambda: driver.patiently_click('//*[@id="_5wq_j"]')
                 )  # download attachments (for real)
-                driver.home()
+                driver.home(scraper_config['aribaDiscoveryProfileKey'])
             else:
                 driver.patiently_click(
                     '//a[contains(text(),"Back to Search Results")]', wait_after=5
@@ -173,7 +173,7 @@ if __name__ == "__main__":
 
     while not finished:
         try:
-            finished = main_loop()
+            finished = main_loop(scraper_config=scraper_config)
         except Exception as e:
             print(e)
             # Check if the issue is that we aren't logged in
