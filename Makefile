@@ -28,11 +28,16 @@ $(VENV): $(PYTHON_SCRAPERS_DIR)/requirements.txt
 pip-freeze: $(VENV) $(PYTHON_SCRAPERS_DIR)/requirements.txt
 	$(PIP) freeze > $(PYTHON_SCRAPERS_DIR)/requirements.txt
 
+run-rfp-scaper: $(VENV)
+	$(PYTHON) $(PYTHON_SCRAPERS_DIR)/ariba/rfp_scraper.py
+
+lint-python: $(VENV)
+	$(PYTHON) -m black $(PYTHON_SCRAPERS_DIR)
+
 run-server:
 	cd $(TORONTO_BIDS_SERVER_DIR) && lein run
 
 build-uberjar:
 	cd $(TORONTO_BIDS_SERVER_DIR) && lein uberjar
 
-.PHONY: run-jupyter-notebook setup-py pip-freeze run-server build-uberjar clean
-
+.PHONY: run-jupyter-notebook setup-py pip-freeze run-server build-uberjar run-rfp-scraper lint-python clean
