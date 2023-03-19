@@ -14,6 +14,7 @@ from filemanage import (
     delete_duplicates,
 )
 import json
+from rfp_logger import log
 
 # Working directory
 REPO_DIRECTORY = Path.cwd()
@@ -23,6 +24,7 @@ DATA_DIRECTORY = REPO_DIRECTORY / "data"
 RFP_SCRAPER_CONFIG_JSON = Path.cwd() / "rfp_scraper_config.json"
 
 
+@log
 def load_scraper_config(scraper_config_json_path):
     config_json_file = open(scraper_config_json_path)
     scraper_config = json.load(config_json_file)
@@ -30,6 +32,7 @@ def load_scraper_config(scraper_config_json_path):
     return scraper_config
 
 
+@log
 def wait_for_download(command, max_wait=1200) -> bool:
     initial_length = len(list(DOWNLOAD_DIRECTORY.iterdir()))
     command()
@@ -42,12 +45,14 @@ def wait_for_download(command, max_wait=1200) -> bool:
     return True
 
 
+@log
 def count_directory_files(root: Path) -> int:
     if not root.exists():
         return 0
     return len(list(root.iterdir()))
 
 
+@log
 def main_loop(scraper_config, has_clicked: bool = False) -> bool:
     while not has_clicked:  # We loop through RFPs until we find one we want to click on
         elements = driver.find_elements(
