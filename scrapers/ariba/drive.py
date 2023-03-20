@@ -16,8 +16,8 @@ class Drive:
         # The file token.pickle stores the user's access and refresh tokens, and is
         # created automatically when the authorization flow completes for the first
         # time.
-        if Path('token.pickle').exists():
-            with open('token.pickle', 'rb') as token:
+        if Path('keys/token.pickle').exists():
+            with open('keys/token.pickle', 'rb') as token:
                 creds = pickle.load(token)
         # If there are no (valid) credentials available, let the user log in.
         if not creds or not creds.valid:
@@ -25,18 +25,18 @@ class Drive:
                 creds.refresh(Request())
             else:
                 flow = InstalledAppFlow.from_client_secrets_file(
-                    'credentials.json', scope)
+                    'keys/credentials.json', scope)
                 creds = flow.run_local_server(port=0)
             # Save the credentials for the next run
-            with open('token.pickle', 'wb') as token:
+            with open('keys/token.pickle', 'wb') as token:
                 pickle.dump(creds, token)
         # return Google Drive API service
         self.service = build('drive', 'v3', credentials=creds)
 
     def check_if_file_or_folder_exists(self, name, parent=None):
         query = f"name='{name}'"
-        # if parent:
-        #     query += f" and '{parent}' in parents"
+        if parent:
+            query += f" and '{parent}' in parents"
         result = self.service.files().list(q=query).execute()
         if result['files']:
             return result['files'][0]['id']
@@ -77,7 +77,9 @@ class Drive:
                 self.recursively_upload_directory(path, self.create_folder(path.name, folder_id))
             else:
                 self.upload_file(path, folder_id)
-#%%
+
+
+# %%
 if __name__ == '__main__':
     drive = Drive()
     drive.recursively_upload_directory('data', drive.create_folder('data'))
