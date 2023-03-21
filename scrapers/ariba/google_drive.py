@@ -7,17 +7,16 @@ from pathlib import Path
 import pickle
 
 
-class Drive:
-
+class GoogleDrive:
     def __init__(self):
-        scope = ['https://www.googleapis.com/auth/drive']
+        scope = ["https://www.googleapis.com/auth/drive"]
 
         creds = None
         # The file token.pickle stores the user's access and refresh tokens, and is
         # created automatically when the authorization flow completes for the first
         # time.
-        if Path('keys/token.pickle').exists():
-            with open('keys/token.pickle', 'rb') as token:
+        if Path("keys/token.pickle").exists():
+            with open("keys/token.pickle", "rb") as token:
                 creds = pickle.load(token)
         # If there are no (valid) credentials available, let the user log in.
         if not creds or not creds.valid:
@@ -25,21 +24,22 @@ class Drive:
                 creds.refresh(Request())
             else:
                 flow = InstalledAppFlow.from_client_secrets_file(
-                    'keys/credentials.json', scope)
+                    "keys/credentials.json", scope
+                )
                 creds = flow.run_local_server(port=0)
             # Save the credentials for the next run
-            with open('keys/token.pickle', 'wb') as token:
+            with open("keys/token.pickle", "wb") as token:
                 pickle.dump(creds, token)
         # return Google Drive API service
-        self.service = build('drive', 'v3', credentials=creds)
+        self.service = build("drive", "v3", credentials=creds)
 
     def check_if_file_or_folder_exists(self, name, parent=None):
         query = f"name='{name}'"
         if parent:
             query += f" and '{parent}' in parents"
         result = self.service.files().list(q=query).execute()
-        if result['files']:
-            return result['files'][0]['id']
+        if result["files"]:
+            return result["files"][0]["id"]
         else:
             return None
 
@@ -47,39 +47,44 @@ class Drive:
         if (file_id := self.check_if_file_or_folder_exists(name, parent)) is not None:
             print(f"Folder {name} already exists in Google Drive.")
             return file_id
-        body = {
-            'name': name,
-            'mimeType': 'application/vnd.google-apps.folder'
-        }
+        body = {"name": name, "mimeType": "application/vnd.google-apps.folder"}
         if parent:
-            body['parents'] = [parent]
+            body["parents"] = [parent]
         result = self.service.files().create(body=body).execute()
         # Return folder ID
-        return result['id']
+        return result["id"]
 
     def upload_file(self, file_path, folder_id=None):
-        if (file_id := self.check_if_file_or_folder_exists(Path(file_path).name, folder_id)) is not None:
+        if (
+            file_id := self.check_if_file_or_folder_exists(
+                Path(file_path).name, folder_id
+            )
+        ) is not None:
             print(f"File {file_path} already exists in Google Drive.")
             return file_id
         body = {
-            'name': Path(file_path).name,
-            'mimetype': magic.from_file(file_path, mime=True)
+            "name": Path(file_path).name,
+            "mimetype": magic.from_file(file_path, mime=True),
         }
         if folder_id is not None:
-            body['parents'] = [folder_id]
+            body["parents"] = [folder_id]
         media = MediaFileUpload(file_path)
         print(f"Uploading {file_path} to Google Drive...")
-        return self.service.files().create(body=body, media_body=media, fields='id').execute()
+        return (
+            self.service.files()
+            .create(body=body, media_body=media, fields="id")
+            .execute()
+        )
 
-    def recursively_upload_directory(self, directory, folder_id=None):
+    def upload_directory(self, directory, folder_id=None):
         for path in Path(directory).iterdir():
             if path.is_dir():
-                self.recursively_upload_directory(path, self.create_folder(path.name, folder_id))
+                self.upload_directory(path, self.create_folder(path.name, folder_id))
             else:
                 self.upload_file(path, folder_id)
 
 
 # %%
-if __name__ == '__main__':
-    drive = Drive()
-    drive.recursively_upload_directory('data', drive.create_folder('data'))
+if __name__ == "__main__":
+    drive = GoogleDrive()
+    drive.upload_directory("data", drive.create_folder("data"))
