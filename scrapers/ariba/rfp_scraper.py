@@ -164,6 +164,7 @@ if __name__ == "__main__":
     finished = False
     clicked = set()
     chrome_options = webdriver.ChromeOptions()
+    chrome_options.add_argument('--headless')
     prefs = {"download.default_directory": str(DOWNLOAD_DIRECTORY)}
     chrome_options.add_experimental_option("prefs", prefs)
     driver = Ariba(
