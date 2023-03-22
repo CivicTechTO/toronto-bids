@@ -43,8 +43,8 @@ class Ariba(Chrome):
         return len(login) == 0
 
     def login(self):
-        username_path = Path("username.key")
-        password_path = Path("password.key")
+        username_path = Path("keys/username.key")
+        password_path = Path("keys/password.key")
         if not username_path.exists() or not password_path.exists():
             raise FileNotFoundError("username.key or password.key not found")
         self.home(profile_key=self.ariba_discovery_profile_key)

@@ -13,6 +13,7 @@ from filemanage import (
     parse_html,
     delete_duplicates,
 )
+from google_drive import GoogleDrive
 import json
 
 # Working directory
@@ -200,3 +201,7 @@ if __name__ == "__main__":
     parse_html(DATA_DIRECTORY).to_csv("metadata.csv", index=False)
 
     delete_duplicates(DATA_DIRECTORY)
+
+    drive = GoogleDrive()
+    drive.upload_file("metadata.csv", "data")
+    drive.upload_directory(DATA_DIRECTORY, "data")
