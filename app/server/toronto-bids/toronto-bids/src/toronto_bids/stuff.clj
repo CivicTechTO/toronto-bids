@@ -1,5 +1,8 @@
-(ns toronto-bids.stuff)
+(ns toronto-bids.stuff
+	(:gen-class)
+	(:require [clojure.string :as str])
+)
 
-(def PORT 8100)
-
-(def DB-SPEC "jdbc:mysql:///toronto_bids?user=jrootham")
+(defn db-spec [db-name]
+	(str "jdbc:mysql:///" db-name "?user=jrootham")
+)
