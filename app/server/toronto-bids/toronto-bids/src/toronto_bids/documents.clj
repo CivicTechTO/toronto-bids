@@ -34,16 +34,12 @@
 	)
 )
 
-(def HEAD (str "SELECT DISTINCT" COLUMN-STRING FROM-STRING))
+(def HEAD (str "SELECT DISTINCT" COLUMN-STRING FROM-STRING " WHERE TRUE"))
 
 (def ORDER-STRING " ORDER BY posting_date")
 
 (def BUYER-SELECT 
 	"SELECT buyer, phone, email, location FROM document_buyer JOIN buyer ON buyer_id = buyer.id JOIN location ON location_id = location.id WHERE document_id = ?;"
-)
-
-(defn where-phrase [test start]
-	(if start (str " WHERE " test) (str " AND " test))
 )
 
 (defn limit-string [limit offset]
@@ -60,11 +56,10 @@
 			argument (first argument-list)
 			test-rest (rest test-list)
 			argument-rest (rest argument-list)
-			start (= where-clause "")
 		]
 		(cond 
 			(nil? test) (assoc sql 0 (str HEAD where-clause tail))
-			(not (nil? argument)) (make-query test-rest argument-rest tail (str where-clause (where-phrase test start)) (conj sql argument)) 
+			(not (nil? argument)) (make-query test-rest argument-rest tail (str where-clause " AND " test) (conj sql argument)) 
 			:else (make-query test-rest argument-rest tail where-clause sql)
 		)
 	)
