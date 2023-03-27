@@ -84,11 +84,11 @@
 	)
 )
 
-(defn write-documents [db argument-list limit offset]
+(defn output-documents [db argument-list limit offset]
 	(json/write-str (fetch-documents db argument-list limit offset))
 )
 
-(defn write-description [db document_id]
+(defn output-description [db document_id]
 	(let [row (first (jdbc/query db ["SELECT description FROM document WHERE document.id = ?" document_id]))]
 		(if row 
 			(json/write-str (get row :description))
