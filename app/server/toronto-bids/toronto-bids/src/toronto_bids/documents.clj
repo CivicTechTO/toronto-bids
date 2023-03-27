@@ -21,7 +21,7 @@
 	"posting_date >= ?" "posting_date <= ?" "closing_date >= ?" "closing_date <= ?" "buyer = ?" SEARCH-STRING)
 )
 
-(def COLUMN-STRING " document.id AS document_id, type, call_number, commodity, commodity_type, short_description, posting_date, closing_date, site_meeting")
+(def COLUMN-STRING " document.id AS document_id, division, type, call_number, commodity, commodity_type, short_description, posting_date, closing_date, site_meeting")
 
 (def FROM-STRING
 	(str " FROM document" 	
@@ -79,7 +79,7 @@
 	)
 )
 
-(defn fetch [db argument-list limit offset]
+(defn fetch-documents [db argument-list limit offset]
 	(let
 		[
 			tail (str ORDER-STRING (limit-string limit offset) ";")
@@ -90,9 +90,14 @@
 )
 
 (defn write-documents [db argument-list limit offset]
-	(json/write-str (fetch db argument-list limit offset))
+	(json/write-str (fetch-documents db argument-list limit offset))
 )
 
 (defn write-description [db document_id]
-	(json/write-str (jdbc/query db ["SELECT description FROM document WHERE document.id = ?" document_id]))
+	(let [row (first (jdbc/query db ["SELECT description FROM document WHERE document.id = ?" document_id]))]
+		(if row 
+			(json/write-str (get row :description))
+			(hash-map :status 404 :body "Document not found")
+		)
+	)
 )

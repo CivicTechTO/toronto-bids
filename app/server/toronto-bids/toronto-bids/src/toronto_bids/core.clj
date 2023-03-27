@@ -29,13 +29,16 @@
 		(compojure/GET "*/api/buyers" [db] (write-simple db "buyer" "id, buyer"))
 
 		(compojure/GET "*/api/documents" 
-			[db call-number type division commodity commodity-type posting-date-after posting-date-before closing-date-after closing-date-before buyer search-text limit offset] 
+			[db call_number type division commodity commodity_type posting_date_after posting_date_before closing_date_after closing_date_before buyer search_text limit offset] 
 			(documents/write-documents db 
-				(list call-number type division commodity commodity-type posting-date-after posting-date-before closing-date-after closing-date-before buyer search-text) 
-				limit offset)
+				(list call_number type division commodity commodity_type posting_date_after posting_date_before closing_date_after closing_date_before buyer search_text) 
+				limit offset
 			)
+		)
 
-		(compojure-route/not-found "Not found")
+		(compojure/GET "*/api/description" [db document_id] (documents/write-description db document_id))
+
+		(compojure-route/not-found "End point not found")
 )
 
 (defn make-wrap-db [db]
