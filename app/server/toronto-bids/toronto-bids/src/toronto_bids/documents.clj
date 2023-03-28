@@ -59,7 +59,7 @@
 		]
 		(cond 
 			(nil? test) (assoc sql 0 (str HEAD where-clause tail))
-			(not (nil? argument)) (make-query test-rest argument-rest tail (str where-clause " AND " test) (conj sql argument)) 
+			(not (str/blank? argument)) (make-query test-rest argument-rest tail (str where-clause " AND " test) (conj sql argument)) 
 			:else (make-query test-rest argument-rest tail where-clause sql)
 		)
 	)
@@ -92,7 +92,7 @@
 	(let [row (first (jdbc/query db ["SELECT description FROM document WHERE document.id = ?" document_id]))]
 		(if row 
 			(json/write-str (get row :description))
-			(hash-map :status 404 :body "Document not found")
+			(hash-map :status 404 :body (json/write-str "Document not found"))
 		)
 	)
 )

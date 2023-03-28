@@ -10,7 +10,7 @@
 	(:require [clojure.data.json :as json])
 	(:require [toronto-bids.stuff :as stuff])
 	(:require [toronto-bids.documents :as documents])
-;	 (:require [ring-debug-logging.core :as debug])
+	(:require [ring-debug-logging.core :as debug])
 )
 
 (defn output-simple [db table columns]
@@ -39,7 +39,7 @@
 
 	(compojure/GET "*/api/description" [db document_id] (documents/output-description db document_id))
 
-	(compojure-route/not-found "End point not found")
+	(compojure-route/not-found (json/write-str "End point not found"))
 )
 
 (defn make-wrap-db [db]
