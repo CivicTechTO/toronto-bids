@@ -1,14 +1,143 @@
+from typing import Any
+from hashlib import sha256
 from google.auth.transport.requests import Request
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaFileUpload
-import magic
+
+import logging
+from rich.logging import RichHandler
+from rich.progress import (
+    Progress,
+    BarColumn,
+    TimeRemainingColumn,
+    MofNCompleteColumn,
+    TextColumn,
+    TimeElapsedColumn,
+)
+
+FORMAT = "%(message)s"
+logging.basicConfig(
+    level="INFO", format=FORMAT, datefmt="[%X]", handlers=[RichHandler()]
+)
+
+log = logging.getLogger("rich")
+
+try:
+    import magic
+except ImportError:
+    # If python-magic is not installed, use a dummy class because Google Drive will attempt to infer the mime type anyway
+    class magic:
+        def from_file(path: str, mime: bool = False) -> str:
+            return None
+
+
 from pathlib import Path
-import pickle
+import pickle, time, socket
+
+
+class File:
+    """
+    A file or folder on Google Drive
+    """
+
+    def __init__(self, path: Path, docid: str, parent: "Folder" = None):
+        self.path = path
+        self.name = Path(path).name
+        self.docid = docid  # This is OUR docid, not Google's
+        self.mime_type = (
+            self.get_mime_type()
+        )  # If we can tell Google what the mime type is, we should
+        assert (
+            isinstance(parent, Folder) or parent is None
+        ), "Parent must be a Folder or None"
+        self.parent = parent
+        self.sha256 = self.get_sha256()
+
+    def get_mime_type(self) -> str:
+        return magic.from_file(self.path, mime=True)
+
+    def is_uploaded(self, drive: "GoogleDrive") -> tuple[bool, Any]:
+        """
+        Check if this file is already uploaded to Google Drive
+        :param drive: the uploader object
+        :return: whether the file is uploaded, and any metadata about the file
+        """
+
+        # Construct a query to search for the file
+        query = f"name = '{self.name}'"
+        if self.parent:
+            query += f" and '{self.parent.get_file_id(drive)}' in parents"
+        try:
+            result = drive.service.files().list(q=query, fields="*").execute()
+        except HttpError as e:
+            if e.resp.status == 404:
+                return False, None
+            log.error(f"Error: {e}")
+            return False, None
+        if result["files"]:
+            return True, result["files"][0]
+        return False, None
+
+    def is_dir(self):
+        return False
+
+    def get_sha256(self) -> str:
+        return sha256(self.path.read_bytes()).hexdigest()
+
+    def __repr__(self):
+        if self.parent:
+            return f"{self.parent}/{self.name}"
+        return self.name
+
+    def __str__(self):
+        return self.__repr__()
+
+
+class Folder(File):
+    """
+    A folder on Google Drive
+    """
+
+    def __init__(self, path: Path, docid: str, parent: "Folder" = None):
+        super().__init__(path, docid, parent)
+        self.mime_type = self.get_mime_type()
+
+    def get_mime_type(self) -> str:
+        # Google Drive folders have a special mime type
+        return "application/vnd.google-apps.folder"
+
+    def is_dir(self):
+        return True
+
+    def iterdir(self):
+        # Yield all files in this folder, constructing new File/Folder objects as needed
+        for path in self.path.iterdir():
+            if path.is_dir():
+                yield Folder(path, self.docid, self)
+            else:
+                yield File(path, self.docid, self)
+
+    def get_file_id(self, drive: "GoogleDrive") -> str:
+        """
+        Get the Google Drive file ID for this folder
+        :param drive:
+        :return: Google Drive file ID, required for uploading files to this folder
+        """
+        is_uploaded, file_metadata = self.is_uploaded(drive)
+        if is_uploaded:
+            return file_metadata["id"]
+        return None
+
+    def get_sha256(self) -> str:
+        return None
 
 
 class GoogleDrive:
     def __init__(self):
+        # Loads credentials and creates Google Drive API service
+
         scope = ["https://www.googleapis.com/auth/drive"]
 
         creds = None
@@ -32,59 +161,116 @@ class GoogleDrive:
                 pickle.dump(creds, token)
         # return Google Drive API service
         self.service = build("drive", "v3", credentials=creds)
+        log.info("Google Drive API service created.")
 
-    def check_if_file_or_folder_exists(self, name, parent=None):
-        query = f"name='{name}'"
-        if parent:
-            query += f" and '{parent}' in parents"
-        result = self.service.files().list(q=query).execute()
-        if result["files"]:
-            return result["files"][0]["id"]
-        else:
-            return None
-
-    def create_folder(self, name, parent=None):
-        if (file_id := self.check_if_file_or_folder_exists(name, parent)) is not None:
-            print(f"Folder {name} already exists in Google Drive.")
-            return file_id
-        body = {"name": name, "mimeType": "application/vnd.google-apps.folder"}
-        if parent:
-            body["parents"] = [parent]
-        result = self.service.files().create(body=body).execute()
-        # Return folder ID
-        return result["id"]
-
-    def upload_file(self, file_path, folder_id=None):
-        if (
-            file_id := self.check_if_file_or_folder_exists(
-                Path(file_path).name, folder_id
-            )
-        ) is not None:
-            print(f"File {file_path} already exists in Google Drive.")
-            return file_id
-        body = {
-            "name": Path(file_path).name,
-            "mimetype": magic.from_file(file_path, mime=True),
+    def upload_file(self, file: File) -> None:
+        is_uploaded, file_metadata = file.is_uploaded(self)
+        if is_uploaded:
+            # Same filename exists but we need to compare hashes
+            if file.sha256 == file_metadata["sha256Checksum"]:
+                log.debug(f"File {file.name} already uploaded. Skipping...")
+                return
+            else:
+                log.info(
+                    f"File {file.name} already exists but has changed. Modifying name then uploading..."
+                )
+                file.name = f"{file.name} ({time.time()})"
+        file_metadata = {
+            "name": file.name,
+            "appProperties": {
+                "docid": file.docid,
+                "timestamp": str(time.time()),
+                "hostname": socket.gethostname(),
+            },
         }
-        if folder_id is not None:
-            body["parents"] = [folder_id]
-        media = MediaFileUpload(file_path)
-        print(f"Uploading {file_path} to Google Drive...")
-        return (
-            self.service.files()
-            .create(body=body, media_body=media, fields="id")
-            .execute()
+        if file.parent:
+            # If the file has a parent, we need to upload it to that folder. Requires getting the folder's file ID
+            parent_uploaded, parent_metadata = file.parent.is_uploaded(self)
+            if not parent_uploaded:
+                # Shouldn't be able to reach this point as the folder should have been uploaded first.
+                raise FileNotFoundError(
+                    "Attempting to upload file to non-existent folder."
+                )
+            file_metadata["parents"] = [parent_metadata["id"]]
+        media = MediaFileUpload(file.path, mimetype=file.mime_type)
+        log.info(f"Uploading {file.name}...")
+        self.service.files().create(
+            body=file_metadata, media_body=media, fields="id"
+        ).execute()
+
+    def upload_folder(self, folder: Folder) -> None:
+        # Very similar to the upload_file method, but we don't need to upload the file contents
+
+        is_uploaded, _ = folder.is_uploaded(self)
+        if is_uploaded:
+            log.debug(f"Folder {folder.name} already created. Skipping...")
+            return
+        folder_metadata = {
+            "name": folder.name,
+            "mimeType": folder.mime_type,
+            "appProperties": {
+                "docid": folder.docid,
+                "timestamp": str(time.time()),
+                "hostname": socket.gethostname(),
+            },
+        }
+        if folder.parent:
+            parent_uploaded, parent_metadata = folder.parent.is_uploaded(self)
+            if not parent_uploaded:
+                raise FileNotFoundError(
+                    "Attempting to create folder within a non-existent folder."
+                )
+            folder_metadata["parents"] = [parent_metadata["id"]]
+        log.info(f"Creating {folder.name}...")
+        result = (
+            self.service.files().create(body=folder_metadata, fields="id").execute()
         )
 
-    def upload_directory(self, directory, folder_id=None):
-        for path in Path(directory).iterdir():
-            if path.is_dir():
-                self.upload_directory(path, self.create_folder(path.name, folder_id))
+    def upload_directory(self, folder: Folder, progress: Progress):
+        # Recursively upload all files and folders in a directory.
+
+        self.upload_folder(folder)
+        task = progress.add_task("Uploading", total=len([x for x in folder.iterdir()]))
+        for file in folder.iterdir():
+            progress.update(task, description=f"Uploading {file.name}...")
+            if file.is_dir():
+                self.upload_directory(file, progress)
             else:
-                self.upload_file(path, folder_id)
+                self.upload_file(file)
+            progress.advance(task)
+        progress.remove_task(task)
+
+    def upload_all_data(self, root: Path):
+        # Special method to handle the root directory. Constructs the Folder objects and then calls upload_directory.
+        root_folder = Folder(root, "root")
+        root_is_uploaded, root_metadata = root_folder.is_uploaded(self)
+        if not root_is_uploaded:
+            self.upload_folder(root_folder)
+
+        directory_count = len([x for x in root.iterdir() if x.is_dir()])
+        progress = Progress(
+            TextColumn("[bold blue]{task.description}"),
+            BarColumn(bar_width=None),
+            MofNCompleteColumn(),
+            "Elapsed Time: ",
+            TimeElapsedColumn(),
+            "Remaining Time: ",
+            TimeRemainingColumn(),
+        )
+        with progress:
+            task = progress.add_task("Uploading", total=directory_count)
+            for path in root.iterdir():
+                progress.update(task, description=f"Uploading {path.name}...")
+                if not path.is_dir():
+                    continue
+                if not path.name.startswith("Doc"):
+                    continue
+                folder = Folder(path, path.name, root_folder)
+                self.upload_directory(folder, progress)
+                progress.advance(task)
 
 
-# %%
 if __name__ == "__main__":
     drive = GoogleDrive()
-    drive.upload_directory("data", drive.create_folder("data"))
+    drive.upload_all_data(Path("data"))
+# %%

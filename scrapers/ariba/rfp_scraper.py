@@ -1,11 +1,15 @@
 import datetime as dt
+import filecmp
+from hashlib import sha256
 from pathlib import Path
+
+import pandas as pd
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.errorhandler import NoSuchElementException
 from ariba_driver import Ariba
-from time import sleep
+from time import sleep, time
 from webdriver_manager.chrome import ChromeDriverManager
 from filemanage import (
     extract_zip_and_move_html,
@@ -13,6 +17,7 @@ from filemanage import (
     parse_html,
     delete_duplicates,
 )
+from open_data import get_open_data
 from google_drive import GoogleDrive
 import json
 
@@ -20,8 +25,9 @@ import json
 REPO_DIRECTORY = Path.cwd()
 # System default download directory
 DOWNLOAD_DIRECTORY = REPO_DIRECTORY / "downloads"
-DATA_DIRECTORY = REPO_DIRECTORY / "data"
-RFP_SCRAPER_CONFIG_JSON = Path.cwd() / "rfp_scraper_config.json"
+OPEN_DATA_DIRECTORY = REPO_DIRECTORY / "open_data"
+ARIBA_DATA_DIRECTORY = REPO_DIRECTORY / "data"
+RFP_SCRAPER_CONFIG_JSON = Path.cwd() / "keys" / "rfp_scraper_config.json"
 
 
 def load_scraper_config(scraper_config_json_path):
@@ -86,8 +92,8 @@ def main_loop(scraper_config, has_clicked: bool = False) -> bool:
             clicked.add(title_text)
             title.click()
             has_clicked = True
-
             # Now we've moved from the listing page to the RFP page. First thing is to identify the doc number
+            driver.patiently_find_regex("Back to Search Results")
             document_id = driver.patiently_find_regex("(Doc\d{10})")
             print(f"\tDocument id is {document_id}")
 
@@ -99,15 +105,18 @@ def main_loop(scraper_config, has_clicked: bool = False) -> bool:
 
             # Check to see if we've already downloaded the raw HTML, and the attachments
             html_exists = (
-                Path(f"{DATA_DIRECTORY}/{document_id}.html").exists()
-                or Path(f"{DATA_DIRECTORY}/{document_id}/{document_id}.html").exists()
+                Path(f"{ARIBA_DATA_DIRECTORY}/{document_id}.html").exists()
+                or Path(
+                    f"{ARIBA_DATA_DIRECTORY}/{document_id}/{document_id}.html"
+                ).exists()
             )
 
             # Zip might exist as a zip file, or as a directory - if it's the latter, we need to check that there's
             # more than just the HTML file
             zip_exists = (
-                Path(f"{DATA_DIRECTORY}/{document_id}.zip").exists()
-                or count_directory_files(Path(f"{DATA_DIRECTORY}/{document_id}")) > 1
+                Path(f"{ARIBA_DATA_DIRECTORY}/{document_id}.zip").exists()
+                or count_directory_files(Path(f"{ARIBA_DATA_DIRECTORY}/{document_id}"))
+                > 1
             )
 
             # Print the results of our checks
@@ -122,7 +131,7 @@ def main_loop(scraper_config, has_clicked: bool = False) -> bool:
 
             # If we haven't already downloaded the HTML, download it now
             if not html_exists:
-                with open(f"{DATA_DIRECTORY}/{document_id}.html", "w") as f:
+                with open(f"{ARIBA_DATA_DIRECTORY}/{document_id}.html", "w") as f:
                     f.write(driver.page_source)
             if (not zip_exists) and (not request_expired):
                 # If we don't have the attachments and the RFP is still open, download them
@@ -159,50 +168,91 @@ def main_loop(scraper_config, has_clicked: bool = False) -> bool:
 
 if __name__ == "__main__":
     Path(DOWNLOAD_DIRECTORY).mkdir(exist_ok=True)
-    Path(DATA_DIRECTORY).mkdir(exist_ok=True)
-    scraper_config = load_scraper_config(RFP_SCRAPER_CONFIG_JSON)
-    finished = False
-    clicked = set()
-    chrome_options = webdriver.ChromeOptions()
-    chrome_options.add_argument('--headless')
-    prefs = {"download.default_directory": str(DOWNLOAD_DIRECTORY)}
-    chrome_options.add_experimental_option("prefs", prefs)
-    driver = Ariba(
-        service=ChromeService(ChromeDriverManager().install()),
-        options=chrome_options,
-        ariba_discovery_profile_key=scraper_config["aribaDiscoveryProfileKey"],
-    )
+    Path(ARIBA_DATA_DIRECTORY).mkdir(exist_ok=True)
+    Path(OPEN_DATA_DIRECTORY).mkdir(exist_ok=True)
 
-    while not finished:
-        try:
-            finished = main_loop(scraper_config=scraper_config)
-        except Exception as e:
-            print(e)
-            # Check if the issue is that we aren't logged in
-            if not driver.is_logged_in():
-                driver.login()
+    print("Getting open data")
+    # Save open data with datestamp
+    get_open_data().to_json(
+        f'{OPEN_DATA_DIRECTORY}/open_data_{dt.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.json'
+    )
+    # Check if latest open data is the same as the next most recent
+    open_data_files = sorted(Path(OPEN_DATA_DIRECTORY).glob("*.json"))
+    skip_scraper = False
+    if len(open_data_files) > 1:
+        if filecmp.cmp(open_data_files[-1], open_data_files[-2]):
+            skip_scraper = True
+
+    for file in OPEN_DATA_DIRECTORY.iterdir():
+        df = pd.read_json(file)
+        for k, v in df.iterrows():
+            if v.CallNumber is None or not v.CallNumber == v.CallNumber:
+                continue
+            if "Doc" in str(v.CallNumber):
+                call_path = ARIBA_DATA_DIRECTORY / v.CallNumber
             else:
-                driver.quit()
-                driver = Ariba(
-                    service=ChromeService(ChromeDriverManager().install()),
-                    options=chrome_options,
-                    ariba_discovery_profile_key=scraper_config[
-                        "aribaDiscoveryProfileKey"
-                    ],
-                )
+                call_path = ARIBA_DATA_DIRECTORY / ("Doc" + v.CallNumber)
+            call_path.mkdir(parents=True, exist_ok=True)
+            v.to_json(call_path / file.name)
+
+    # Now delete any duplicates
+    hashes = set()
+    for file in ARIBA_DATA_DIRECTORY.iterdir():
+        if file.is_dir():
+            for json_file in file.iterdir():
+                if json_file.is_file():
+                    with open(json_file, "rb") as f:
+                        file_hash = sha256(f.read()).hexdigest()
+                    if file_hash in hashes:
+                        json_file.unlink()
+                    else:
+                        hashes.add(file_hash)
+
+    if not skip_scraper:
+        print("Open data acquired. Starting scraper")
+
+        scraper_config = load_scraper_config(RFP_SCRAPER_CONFIG_JSON)
+        finished = False
+        clicked = set()
+        chrome_options = webdriver.ChromeOptions()
+        # chrome_options.add_argument('--headless')
+        prefs = {"download.default_directory": str(DOWNLOAD_DIRECTORY)}
+        chrome_options.add_experimental_option("prefs", prefs)
+        driver = Ariba(
+            service=ChromeService(ChromeDriverManager().install()),
+            options=chrome_options,
+            ariba_discovery_profile_key=scraper_config["aribaDiscoveryProfileKey"],
+        )
+
+        while not finished:
+            try:
+                finished = main_loop(scraper_config=scraper_config)
+            except Exception as e:
+                print(e)
+                # Check if the issue is that we aren't logged in
+                if not driver.is_logged_in():
+                    driver.login()
+                else:
+                    driver.quit()
+                    driver = Ariba(
+                        service=ChromeService(ChromeDriverManager().install()),
+                        options=chrome_options,
+                        ariba_discovery_profile_key=scraper_config[
+                            "aribaDiscoveryProfileKey"
+                        ],
+                    )
 
     # Move zips from download directory to repo's data directory
     for file in DOWNLOAD_DIRECTORY.iterdir():
         if file.suffix == ".zip":
-            file.rename(DATA_DIRECTORY / file.name)
+            file.rename(ARIBA_DATA_DIRECTORY / file.name)
 
-    extract_zip_and_move_html(DATA_DIRECTORY)
-    move_pdfs(DOWNLOAD_DIRECTORY, DATA_DIRECTORY)
+    extract_zip_and_move_html(ARIBA_DATA_DIRECTORY)
+    move_pdfs(DOWNLOAD_DIRECTORY, ARIBA_DATA_DIRECTORY)
 
-    parse_html(DATA_DIRECTORY).to_csv("metadata.csv", index=False)
+    parse_html(ARIBA_DATA_DIRECTORY).to_csv("metadata.csv", index=False)
 
-    delete_duplicates(DATA_DIRECTORY)
+    delete_duplicates(ARIBA_DATA_DIRECTORY)
 
     drive = GoogleDrive()
-    drive.upload_file("metadata.csv", "data")
-    drive.upload_directory(DATA_DIRECTORY, "data")
+    drive.upload_all_data(Path("data"))
