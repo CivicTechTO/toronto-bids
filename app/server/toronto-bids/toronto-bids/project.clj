@@ -26,7 +26,7 @@
   				:test
   				{
 		  				:aot [toronto-bids.core]
-		      :uberjar-name "toronto-bids-test.jar"
+		      :uberjar-name "test-bids.jar"
   				}
    }
   )
