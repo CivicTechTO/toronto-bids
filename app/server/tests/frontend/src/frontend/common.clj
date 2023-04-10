@@ -8,49 +8,67 @@
 	(:require [clj-http.client :as client])
 )
 
-; (defn division-option [row]
-; 	(let [value (get row :division)]
-; 	)
-; )
+(def ALL "*All*")
 
-(defn option [value]
-	[:option value]
-)
-
-(defn divisions [api-base]
-	(let
-		[
-			response (client/get (str api-base "plain_divisions") {:accept :json})
-			body (get response :body)
-
-			division-list (json/read-str body)
-		]
-		[:div 
-			(list 
-				[:div.label "Divisions"]
-				[:select {:name "division"}
-					(map option division-list)
-				]
-			)
-		]
-	)
-)
-
-(defn select [api-base]
-	[:div#select
-		(divisions api-base)
+(defn filter-line [label filter-fn]
+	[:div 
+		(list 
+			[:div.label label]
+			(filter-fn)
+		)
 	]
 )
 
-(defn display [api-base limit offset]
+(defn select [api-base label name request selected]
+	(let
+		[
+			response (client/get (str api-base request) {:accept :json})
+			body (get response :body)
+
+			pick-list (json/read-str body)
+
+			filter-fn (fn [] (form/drop-down name (cons ALL pick-list) selected))
+		]
+		(filter-line label filter-fn)
+	)
 )
 
+(defn date [label name value]
+	(let 
+		[
+			filter-fn (fn [] [:input {:type "date" :value value}])
+		]
+		(filter-line label filter-fn)
+	)
+)
+
+(defn selection-form [api-base]
+	[:div#select
+		(list
+			[:div
+				(form/form-to [:get "index.html"]
+					(select api-base "Division" "division" "plain_divisions" nil)
+					(select api-base "Type" "type" "plain_types" nil)
+					(select api-base "Commodity" "commodity" "plain_commodities" nil)
+					(select api-base "Commodity type" "commodity_type" "plain_commodity_types" nil)
+					(select api-base "Buyer" "buyer" "plain_buyers" nil)
+					(date "Posted on or before", "before_post_date", nil)
+					(date "Posted on or after", "after_post_date", nil)
+					(date "Closed on or before", "before_close_date", nil)
+					(date "Closed on or after", "after_close_date", nil)
+					[:div (form/submit-button "Reload")]
+				)
+			]
+			(form/form-to [:get "index.html"] (form/submit-button "Reset"))
+		)
+	]
+)
 
 (defn body [title api-base contents]
 	[:div#outer
 		[:div#title title]
 		[:div#wrapper
-			(select api-base)
+			(selection-form api-base)
 			[:div#contents
 				contents
 			]

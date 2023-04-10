@@ -10,7 +10,7 @@
 	(:require [hiccup.core :as hiccup])
 	(:require [hiccup.page :as page])
   (:require [clojure.java.io :as io])
-	(:require [frontend.documents :as documents])
+	(:require [frontend.index :as index])
 	(:require [frontend.details :as details])
 	(:require [frontend.attachments :as attachments])
 ;	(:require [ring-debug-logging.core :as debug])
@@ -27,7 +27,10 @@
 )
 
 (compojure/defroutes toronto-bids
-	(compojure/GET "*/index.html" [api-base local-base limit offset] (documents/output api-base local-base limit offset))
+	(compojure/GET "*/index.html" 
+		[api-base local-base division type limit offset] 
+		(index/output api-base local-base division type limit offset)
+	)
 	(compojure/GET "*/details.html" [api-base local-base document_id] (details/output api-base local-base document_id))
 	(compojure/GET "*/attachments.html" [api-base local-base document_id] (attachments/output api-base local-base document_id))
 
