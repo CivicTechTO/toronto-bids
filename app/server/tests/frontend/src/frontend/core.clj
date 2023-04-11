@@ -28,9 +28,15 @@
 
 (compojure/defroutes toronto-bids
 	(compojure/GET "*/index.html" 
-		[api-base local-base division type limit offset] 
-		(index/output api-base local-base division type limit offset)
+		[api-base local-base division type commodity commodity_type buyer before_post_date after_post_date before_close_date after_close_date limit offset] 
+		(index/output api-base local-base division type commodity commodity_type buyer before_post_date after_post_date before_close_date after_close_date limit offset)
 	)
+	(compojure/GET "*/reset.html" [api-base local-base] (index/reset[api-base local-base]))
+	(compojure/GET "*/next.html" 
+		[api-base local-base division type commodity commodity_type buyer before_post_date after_post_date before_close_date after_close_date limit offset] 
+		(index/next api-base local-base division type commodity commodity_type buyer before_post_date after_post_date before_close_date after_close_date limit offset)
+	)
+
 	(compojure/GET "*/details.html" [api-base local-base document_id] (details/output api-base local-base document_id))
 	(compojure/GET "*/attachments.html" [api-base local-base document_id] (attachments/output api-base local-base document_id))
 

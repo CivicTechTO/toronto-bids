@@ -56,10 +56,15 @@
 					(date "Posted on or after", "after_post_date", nil)
 					(date "Closed on or before", "before_close_date", nil)
 					(date "Closed on or after", "after_close_date", nil)
-					[:div (form/submit-button "Reload")]
+					[:div
+						(list
+							(form/submit-button "Reload")
+							(form/submit-button {:action "reset.html"} "Reset")
+							(form/submit-button {:action "next.html"} "Next")
+						) 
+					]
 				)
 			]
-			(form/form-to [:get "index.html"] (form/submit-button "Reset"))
 		)
 	]
 )
