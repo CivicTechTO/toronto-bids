@@ -26,8 +26,12 @@ for r in data.values():
         r['urls'] = []
     if not r.get('CallNumber'):
         r['CallNumber'] = f'blank_{count}'
+    short_description = r['ShortDescription'].replace("'", "\\'")
+    description = r['Description'].replace("'", "\\'")
+    division = r['Division'].replace("'", "\\'")
+    buyer_location_show = r['BuyerLocationShow'].replace("'", "\\'")
     print(f"INSERT INTO fromxml (Commodity,CommodityType,CallNumber,Type,ShortDescription,Description,ShowDatePosted,ClosingDate,SiteMeeting,ShowBuyerNameList,BuyerPhoneShow,BuyerEmailShow,Division,BuyerLocationShow,urls,uuid) "
-          f"VALUES('{r['Commodity']}','{r['CommodityType']}','{r['CallNumber']}','{r['Type']}','{r['ShortDescription'].replace("'", "\\'")}','{r['Description'].replace("'", "\\'")}','{r['ShowDatePosted']}','{r['$4']}','{r['SiteMeeting']}','{r['ShowBuyerNameList']}','{r['BuyerPhoneShow']}','{r['BuyerEmailShow']}','{r['Division'].replace("'", "\\'")}','{r['BuyerLocationShow'].replace("'", "\\'")}','{','.join(r['urls'])}',UUID());")
+          f"VALUES('{r['Commodity']}','{r['CommodityType']}','{r['CallNumber']}','{r['Type']}','{short_description}','{description}','{r['ShowDatePosted']}','{r['$4']}','{r['SiteMeeting']}','{r['ShowBuyerNameList']}','{r['BuyerPhoneShow']}','{r['BuyerEmailShow']}','{division}','{buyer_location_show}','{','.join(r['urls'])}',UUID());")
     count += 1
 
 print(f"\n\nCount: {count}\n")

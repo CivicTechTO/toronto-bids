@@ -12,9 +12,6 @@ TORONTO_BIDS_SERVER_UBERJAR_STANDALONE = $(TORONTO_BIDS_SERVER_TARGET_DIR)/uberj
 
 setup-py: $(VENV)
 
-run-jupyter-notebook: $(VENV)
-	$(JUPYTER) notebook --notebook-dir $(PYTHON_SCRAPERS_DIR)
-
 clean:
 	rm -rf $(VENV)
 	rm -rf $(TORONTO_BIDS_SERVER_TARGET_DIR)
