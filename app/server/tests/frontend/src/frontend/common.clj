@@ -10,6 +10,10 @@
 
 (def ALL "*All*")
 
+(def FIXED "*FIXED*")
+(def UP "NEXT")
+(def DOWN "PREVIOUS")
+
 (defn filter-line [label filter-fn]
 	[:div 
 		(list 
@@ -42,6 +46,10 @@
 	)
 )
 
+(defn up-down []
+	(form/drop-down "up_down" (list FIXED UP DOWN) FIXED)
+)
+
 (defn selection-form [api-base query-params]
 	[:div#select
 		(list
@@ -52,28 +60,18 @@
 					(select api-base "Commodity" "commodity" "plain_commodities" (get query-params "commodity"))
 					(select api-base "Commodity type" "commodity_type" "plain_commodity_types" (get query-params "commodity_type"))
 					(select api-base "Buyer" "buyer" "plain_buyers" (get query-params "buyer"))
-					(date "Posted on or before", "before_post_date", (get query-params "before_post_date"))
-					(date "Posted on or after", "after_post_date", (get query-params "after_post_date"))
-					(date "Closed on or before", "before_close_date", (get query-params "before_close_date"))
-					(date "Closed on or after", "after_close_date", (get query-params "after_close_date"))
+					(date "Posted on or before", "posting_date_before", (get query-params "posting_date_before"))
+					(date "Posted on or after", "posting_date_after", (get query-params "posting_date_after"))
+					(date "Closed on or before", "closing_date_before", (get query-params "closing_date_before"))
+					(date "Closed on or after", "closing_date_after", (get query-params "closing_date_after"))
 					(form/hidden-field "limit" (get query-params "limit"))
 					(form/hidden-field "offset" (get query-params "offset"))
+					(up-down)
+
 					[:div (form/submit-button "Reload")]
 				) 
 
 				(form/form-to [:get "reset.html"] (form/submit-button "Reset"))
-
-				(form/form-to [:get "next.html"] 
-					(form/hidden-field "limit" (get query-params "limit"))
-					(form/hidden-field "offset" (get query-params "offset"))
-					(form/submit-button "Next")
-				)
-
-				(form/form-to [:get "previous.html"] 
-					(form/hidden-field "limit" (get query-params "limit"))
-					(form/hidden-field "offset" (get query-params "offset"))
-					(form/submit-button "Previous")
-				)
 			]
 		)
 	]

@@ -34,9 +34,8 @@
 )
 
 (defn line3 [call]
-(println (get call "buyer"))
 	[:div
-		[:div.item (first (get call "buyer"))]
+		[:div.item (get (first (get call "buyers")) "buyer")]
 		[:div.item (get call "posting_date")]
 		[:div.item (get call "closing_date")]
 	]
@@ -72,10 +71,10 @@
 		"commodity" filter-drop
 		"commodity_type" filter-drop
 		"buyer" filter-drop
-		"before_post_date" filter-date
-		"after_post_date" filter-date
-		"before_close_date" filter-date
-		"after_close_date" filter-date
+		"posting_date_before" filter-date
+		"posting_date_after" filter-date
+		"closing_date_before" filter-date
+		"closing_date_after" filter-date
 		"limit" filter-limit
 		"offset" filter-limit
 		}
@@ -85,7 +84,7 @@
 	((get FILTER-FNS (first pair)) (second pair))
 )
 
-(defn make-query-params [division type commodity commodity_type buyer before_post_date after_post_date before_close_date after_close_date limit-arg offset-arg]
+(defn make-query-params [division type commodity commodity_type buyer posting_date_before posting_date_after closing_date_before closing_date_after limit-arg offset-arg]
 	(let
 		[
 			limit (set-default DEFAULT-LIMIT limit-arg)
@@ -97,10 +96,10 @@
 			"commodity" commodity
 			"commodity_type" commodity_type
 			"buyer" buyer
-			"before_post_date" before_post_date
-			"after_post_date" after_post_date
-			"before_close_date" before_close_date
-			"after_close_date" after_close_date
+			"posting_date_before" posting_date_before
+			"posting_date_after" posting_date_after
+			"closing_date_before" closing_date_before
+			"closing_date_after" closing_date_after
 			"limit" limit
 			"offset" offset
 		}
@@ -129,41 +128,31 @@
 	)
 )
 
-(defn output [api-base local-base division type commodity commodity_type buyer before_post_date after_post_date before_close_date after_close_date limit-arg offset-arg]
-	(let
-		[
-			query-params (make-query-params division type commodity commodity_type buyer before_post_date after_post_date before_close_date after_close_date limit-arg offset-arg)
-		]
-		(common/page api-base local-base TITLE (contents api-base query-params) query-params)
+(defn set-offset [up-down offset limit]
+	(cond 
+		(= up-down common/UP) (+ offset limit)
+		(= up-down common/DOWN) (max 0 (- offset limit))
+		:else offset
 	)
 )
 
-(defn change-page [direction api-base local-base division type commodity commodity_type buyer before_post_date after_post_date before_close_date after_close_date limit-arg offset-arg]
+(defn output [api-base local-base division type commodity commodity_type buyer posting_date_before posting_date_after closing_date_before closing_date_after up-down limit-arg offset-arg]
 	(try
 		(let
 			[
 				limit (parse-limit "limit" limit-arg)
 				offset (parse-limit "offset" offset-arg)
-				query-params 	(make-query-params division type commodity commodity_type buyer before_post_date after_post_date before_close_date after_close_date limit 
-												(max 0 (direction offset limit))
+				query-params 	(make-query-params division type commodity commodity_type buyer posting_date_before posting_date_after closing_date_before closing_date_after limit 
+												(set-offset up-down offset limit)
 											)
 			]
-			(common/page api-base local-base TITLE (contents api-base query-params))
+			(common/page api-base local-base TITLE (contents api-base query-params) query-params)
 		)
 		(catch Exception error
 			(page/html5 (list (common/head local-base TITLE) [:body error]))
 		)
 	)
 )
-
-(defn next-page [api-base local-base division type commodity commodity_type buyer before_post_date after_post_date before_close_date after_close_date limit-arg offset-arg]
-	(change-page + api-base local-base division type commodity commodity_type buyer before_post_date after_post_date before_close_date after_close_date limit-arg offset-arg)
-)
-
-(defn previous-page [api-base local-base division type commodity commodity_type buyer before_post_date after_post_date before_close_date after_close_date limit-arg offset-arg]
-	(change-page - api-base local-base division type commodity commodity_type buyer before_post_date after_post_date before_close_date after_close_date limit-arg offset-arg)
-)
-
 (defn reset [api-base local-base]
 	(let
 		[

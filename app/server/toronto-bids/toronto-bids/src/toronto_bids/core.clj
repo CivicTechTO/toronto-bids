@@ -10,7 +10,7 @@
 	(:require [clojure.data.json :as json])
 	(:require [toronto-bids.stuff :as stuff])
 	(:require [toronto-bids.documents :as documents])
-	(:require [ring-debug-logging.core :as debug])
+;	(:require [ring-debug-logging.core :as debug])
 )
 
 (defn output-simple [db table columns]
@@ -78,7 +78,7 @@
 (defn make-db-handler [db] 
 	(let [wrap-db (make-wrap-db db)]
 		(-> toronto-bids
-			(debug/wrap-with-logger)
+;			(debug/wrap-with-logger)
 			(wrap-db)
 			(params/wrap-params)
 		)
