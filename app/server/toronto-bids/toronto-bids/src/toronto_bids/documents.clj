@@ -79,8 +79,9 @@
 		[
 			tail (str ORDER-STRING (limit-string limit offset) ";")
 			query (make-query TEST-LIST argument-list tail "" [""])
+			result (jdbc/query db query)
 		]
-		(map (make-insert-buyers db) (jdbc/query db query))
+		(map (make-insert-buyers db) result)
 	)
 )
 
