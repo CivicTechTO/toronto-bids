@@ -36,9 +36,19 @@
 									posting_date_before posting_date_after closing_date_before closing_date_after up_down limit offset
 		)
 	)
+
+	(compojure/GET "*/details.html" 
+		[
+			api-base local-base document_id
+		] 
+		(details/output api-base local-base document_id division type commodity commodity_type buyer 
+									posting_date_before posting_date_after closing_date_before closing_date_after up_down limit offset)
+		)
+
 	(compojure/GET "*/reset.html" [api-base local-base] (index/reset api-base local-base))
-	(compojure/GET "*/details.html" [api-base local-base document_id] (details/output api-base local-base document_id))
-	(compojure/GET "*/attachments.html" [api-base local-base document_id] (attachments/output api-base local-base document_id))
+
+
+;	(compojure/GET "*/attachments.html" [api-base local-base document_id] (attachments/output api-base local-base document_id))
 
 	(compojure/GET "*/styles.css" [] (css))
 

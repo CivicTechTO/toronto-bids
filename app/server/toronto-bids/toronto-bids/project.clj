@@ -16,5 +16,5 @@
 	  ]
   :main ^:skip-aot toronto-bids.core
   :target-path "target/%s"
-	:profiles {:uberjar {:aot :all :uberjar-name "toronto-bids.jar"}}
+  :profiles {:uberjar {:aot :all :uberjar-name "toronto-bids.jar"}}
   )
