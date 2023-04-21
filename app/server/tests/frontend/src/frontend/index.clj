@@ -12,8 +12,8 @@
 
 (def TITLE "Call List")
 
-(def DEFAULT-LIMIT 10)
-(def DEFAULT-OFFSET 0)
+(def DEFAULT-LIMIT "10")
+(def DEFAULT-OFFSET "0")
 
 (defn set-default [default value]
 	(if (nil? value) default value)
@@ -40,12 +40,24 @@
 		[:div.item (get call "closing_date")]
 	]
 )
-(defn call-display [call]
+
+(defn call-lines [call]
 	[:div.call 
 		(line1 call) 
 		(line2 call)
 		(line3 call)
 	]
+)
+
+(defn call-display [call]
+	(let 
+		[
+			detail-button (form/submit-button "Details")
+			details (list (form/hidden-field "document_id" (get call "document_id")) detail-button)
+			detail-form [:div (form/form-to [:get "details.html"] details)]
+		]
+		(list (call-lines call) detail-form)
+	)
 )
 
 (defn show [v]
@@ -77,40 +89,36 @@
 		"closing_date_after" filter-date
 		"limit" filter-limit
 		"offset" filter-limit
-		}
-	)
+	}
+)
 
 (defn filter-query-params [pair]
 	((get FILTER-FNS (first pair)) (second pair))
 )
 
-(defn make-query-params [division type commodity commodity_type buyer posting_date_before posting_date_after closing_date_before closing_date_after limit-arg offset-arg]
-	(let
-		[
-			limit (set-default DEFAULT-LIMIT limit-arg)
-			offset (set-default DEFAULT-OFFSET offset-arg)
-		]
-		{
-			"division" division
-			"type" type
-			"commodity" commodity
-			"commodity_type" commodity_type
-			"buyer" buyer
-			"posting_date_before" posting_date_before
-			"posting_date_after" posting_date_after
-			"closing_date_before" closing_date_before
-			"closing_date_after" closing_date_after
-			"limit" limit
-			"offset" offset
-		}
-	)
+(defn make-query-params [division type commodity commodity_type buyer posting_date_before posting_date_after closing_date_before closing_date_after limit offset]
+	{
+		"division" division
+		"type" type
+		"commodity" commodity
+		"commodity_type" commodity_type
+		"buyer" buyer
+		"posting_date_before" posting_date_before
+		"posting_date_after" posting_date_after
+		"closing_date_before" closing_date_before
+		"closing_date_after" closing_date_after
+		"limit" (str limit)
+		"offset" (str offset)
+	}
 )
 
 (defn contents [api-base query-params]
 	(let
 		[
 			filtered-params (filter filter-query-params query-params) 
+			foo (println "Getting data")
 			response (client/get (str api-base "documents") {:query-params filtered-params :accept :json})
+			bar (println "Got data")
 			body (get response :body)
 
 			document-array (json/read-str body)
@@ -136,15 +144,19 @@
 	)
 )
 
-(defn output [api-base local-base division type commodity commodity_type buyer posting_date_before posting_date_after closing_date_before closing_date_after up-down limit-arg offset-arg]
+(defn output [api-base local-base division type commodity commodity_type buyer 
+								posting_date_before posting_date_after closing_date_before closing_date_after up-down limit-arg offset-arg]
 	(try
 		(let
 			[
-				limit (parse-limit "limit" limit-arg)
-				offset (parse-limit "offset" offset-arg)
+				baz (println "getting args")
+				limit (parse-limit "limit" (set-default DEFAULT-LIMIT limit-arg))
+				offset (parse-limit "offset" (set-default DEFAULT-OFFSET offset-arg))
+				foo (println "making params")
 				query-params 	(make-query-params division type commodity commodity_type buyer posting_date_before posting_date_after closing_date_before closing_date_after limit 
 												(set-offset up-down offset limit)
 											)
+				bar (println "made params")
 			]
 			(common/page api-base local-base TITLE (contents api-base query-params) query-params)
 		)
@@ -153,6 +165,7 @@
 		)
 	)
 )
+
 (defn reset [api-base local-base]
 	(let
 		[
