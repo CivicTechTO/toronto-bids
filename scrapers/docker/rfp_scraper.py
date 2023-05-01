@@ -21,6 +21,9 @@ from open_data import get_open_data
 from google_drive import GoogleDrive
 import json
 import argparse
+import os
+
+from slack import Slack
 
 # Working directory
 REPO_DIRECTORY = Path.cwd()
@@ -28,7 +31,7 @@ REPO_DIRECTORY = Path.cwd()
 DOWNLOAD_DIRECTORY = REPO_DIRECTORY / "downloads"
 OPEN_DATA_DIRECTORY = REPO_DIRECTORY / "open_data"
 ARIBA_DATA_DIRECTORY = REPO_DIRECTORY / "data"
-RFP_SCRAPER_CONFIG_JSON = Path.cwd() / "keys" / "rfp_scraper_config.json"
+RFP_SCRAPER_CONFIG_JSON = Path.cwd() / "rfp_scraper_config.json"
 
 
 def load_scraper_config(scraper_config_json_path):
@@ -97,7 +100,6 @@ def main_loop(
             date = element.find_elements(By.CLASS_NAME, "paddingRight5")
             if len(date) == 0:
                 continue
-            print(f"{title.text}")
 
             most_recent_date = parse_date_text(date[0].text)
             for d in date:
@@ -105,19 +107,21 @@ def main_loop(
                 if parsed_date > most_recent_date:
                     most_recent_date = parsed_date
 
-            print(f"\tMost recent date: {most_recent_date}")
             if most_recent_date < dt.datetime.now():
                 request_expired = True
-                print("\tRFP is expired")
                 if closing_soon:
                     continue
             elif most_recent_date < dt.datetime.now() + dt.timedelta(days=7):
                 request_expired = False
-                print("\tRFP is closing soon")
             else:
                 request_expired = False
                 if closing_soon:
                     continue
+
+            thread = slack.post_log(f"{title.text}")
+            slack.post_log(
+                f"\tLikely expiry date: {most_recent_date.strftime('%d %b %Y')}", thread
+            )
 
             clicked.add(title_text)
             title.click()
@@ -125,12 +129,12 @@ def main_loop(
             # Now we've moved from the listing page to the RFP page. First thing is to identify the doc number
             driver.patiently_find_regex("Back to Search Results")
             document_id = driver.patiently_find_regex("(Doc\d{10})")
-            print(f"\tDocument id is {document_id}")
+            slack.post_log(f"\tDocument id is {document_id}", thread)
 
             # Now we check if there are any PDFs to download on the listing page
             noip = driver.find_elements(By.XPATH, '//a[contains(text(),".pdf")]')
             for link in noip:
-                print(f"\tPDF found, downloading {link.text}")
+                slack.post_log(f"\tPDF found, downloading {link.text}", thread)
                 wait_for_download(lambda: link.click())
 
             # Check to see if we've already downloaded the raw HTML, and the attachments
@@ -160,14 +164,17 @@ def main_loop(
             )
 
             # Print the results of our checks
-            print("\tHTML exists" if html_exists else "\tHTML does not exist")
+            slack.post_log(
+                "\tHTML archived" if html_exists else "\tHTML not yet archived...",
+                thread,
+            )
 
             if zip_exists:
-                print("\tZip exists")
+                slack.post_log("\tAttachments already archived", thread)
             elif not request_expired:
-                print("\tZip does not exist")
+                slack.post_log("\tAttachments not yet archived...", thread)
             else:
-                print("\tZip does not exist, but RFP is expired")
+                slack.post_log("\tAttachments not archived, but RFP is expired", thread)
 
             # If we haven't already downloaded the HTML, download it now
             if not html_exists:
@@ -192,6 +199,8 @@ def main_loop(
                     '//a[contains(text(),"Back to Search Results")]', wait_after=5
                 )
 
+            slack.post_log(f"Downloaded successfully!", thread)
+
             return False  # False because we aren't finished
         if not has_clicked:
             # if we didn't find an RFP on this page, we should go to the next page.
@@ -199,7 +208,7 @@ def main_loop(
             next_button = driver.find_element(By.XPATH, '//*[@id="next"]')
             # If next button contains a div with the id "noLink", it's not clickable
             if next_button.find_elements(By.XPATH, 'div[@id="noLink"]'):
-                print("No more RFPs to click on")
+                slack.post_log("No more RFPs to click on")
                 return True  # True because we are finished
             else:
                 # If it is clickable, click it
@@ -210,7 +219,7 @@ if __name__ == "__main__":
     start_time = time()
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--skip_scraper",
+        "--skip-scraper",
         action="store_true",
         help="Skip the scraper and just process the data",
     )
@@ -220,12 +229,12 @@ if __name__ == "__main__":
         help="Force the scraper to run even if the data hasn't changed",
     )
     parser.add_argument(
-        "--scrape_all",
+        "--scrape-all",
         action="store_true",
         help="Include all RFPs, not just those closing soon",
     )
     parser.add_argument(
-        "--download_everything",
+        "--download-everything",
         action="store_true",
         help="Download all attachments even if they already exist",
     )
@@ -234,7 +243,16 @@ if __name__ == "__main__":
     Path(ARIBA_DATA_DIRECTORY).mkdir(exist_ok=True)
     Path(OPEN_DATA_DIRECTORY).mkdir(exist_ok=True)
 
-    print("Getting open data")
+    slack = Slack(
+        token=os.environ.get("SLACK_KEY"),
+        log_channel="bid-scraper-logs",
+        update_channel="bid-scraper-logs",
+    )
+
+    slack.post_update(
+        f"Scraper is starting to run! :rocket: You can follow updates on the #{slack.log_channel} channel."
+    )
+    slack.post_log("Checking if there is new data on the city website...")
     # Save open data with datestamp
     get_open_data().to_json(
         f'{OPEN_DATA_DIRECTORY}/open_data_{dt.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.json'
@@ -276,13 +294,15 @@ if __name__ == "__main__":
                         hashes.add(file_hash)
 
     if not skip_scraper:
-        print("Open data acquired. Starting scraper")
+        slack.post_log("It looks like there are new bids! Starting the scraper...")
 
         scraper_config = load_scraper_config(RFP_SCRAPER_CONFIG_JSON)
         finished = False
         clicked = set()
         chrome_options = webdriver.ChromeOptions()
         # chrome_options.add_argument('--headless')
+        chrome_options.add_argument("--no-sandbox")
+        chrome_options.add_argument("--disable-dev-shm-usage")
         prefs = {"download.default_directory": str(DOWNLOAD_DIRECTORY)}
         chrome_options.add_experimental_option("prefs", prefs)
         driver = Ariba(
@@ -299,7 +319,7 @@ if __name__ == "__main__":
                     download_everything=args.download_everything,
                 )
             except Exception as e:
-                print(e)
+                slack.post_log(str(e))
                 # Check if the issue is that we aren't logged in
                 if not driver.is_logged_in():
                     driver.login()
@@ -313,6 +333,10 @@ if __name__ == "__main__":
                         ],
                     )
 
+        slack.post_log(
+            "Ariba scraper is finished! :tada: Now performing cleanup, then uploading to Google Drive..."
+        )
+
     # Move zips from download directory to repo's data directory
     for file in DOWNLOAD_DIRECTORY.iterdir():
         if file.suffix == ".zip":
@@ -325,10 +349,13 @@ if __name__ == "__main__":
 
     delete_duplicates(ARIBA_DATA_DIRECTORY)
 
-    drive = GoogleDrive()
+    drive = GoogleDrive(slack)
     drive.upload_all_data(Path("data"))
 
     finish_time = time()
-    print(f"Finished in {finish_time - start_time} seconds")
+    slack.post_update(
+        f"Scraper is finished! :tada: You can find the data in the Google Drive folder. :file_folder:"
+    )
+    slack.post_log(f"Finished in {finish_time - start_time} seconds")
 
 # %%
