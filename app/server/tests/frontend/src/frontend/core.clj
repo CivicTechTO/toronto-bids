@@ -1,7 +1,6 @@
 (ns frontend.core
 	(:gen-class)
 
-;	(:require [clojure.string :as str])
 	(:require [ring.adapter.jetty :as ring])
 	(:require [ring.middleware.params :as params])
 	(:require [compojure.core :as compojure])
@@ -10,7 +9,7 @@
 	(:require [hiccup.core :as hiccup])
 	(:require [hiccup.page :as page])
 	(:require [clojure.java.io :as io])
-	(:require [frontend.index :as index])
+	(:require [frontend.calls :as calls])
 	(:require [frontend.details :as details])
 	(:require [frontend.attachments :as attachments])
 ;	(:require [ring-debug-logging.core :as debug])
@@ -26,27 +25,62 @@
 	}
 )
 
+(defn stay [limit offset]
+	offset
+)
+
+(defn forward [limit offset]
+	(+ offset limit)
+)
+
+(defn back [limit offset]
+	(max 0 (- offset limit))
+)
+
 (compojure/defroutes toronto-bids
-	(compojure/GET "*/index.html" 
+	(compojure/GET "*/calls.html" 
 		[
-			api-base local-base division type commodity commodity_type buyer 
-			posting_date_before posting_date_after closing_date_before closing_date_after up_down limit offset
+			api-base local-base division type commodity commodity_type buyer posting_date_before posting_date_after 
+			closing_date_before closing_date_after search_text limit offset
 		] 
-		(index/output api-base local-base division type commodity commodity_type buyer 
-									posting_date_before posting_date_after closing_date_before closing_date_after up_down limit offset
+		(calls/output api-base local-base division type commodity commodity_type buyer posting_date_before posting_date_after 
+									closing_date_before closing_date_after search_text limit offset stay
 		)
 	)
 
-	(compojure/GET "*/details.html" 
+	(compojure/GET "*/forward.html" 
 		[
-			api-base local-base document_id
+			api-base local-base division type commodity commodity_type buyer posting_date_before posting_date_after 
+			closing_date_before closing_date_after search_text limit offset
 		] 
-		(details/output api-base local-base document_id division type commodity commodity_type buyer 
-									posting_date_before posting_date_after closing_date_before closing_date_after up_down limit offset)
+		(calls/output api-base local-base division type commodity commodity_type buyer posting_date_before posting_date_after 
+									closing_date_before closing_date_after search_text limit offset forward
 		)
+	)
 
-	(compojure/GET "*/reset.html" [api-base local-base] (index/reset api-base local-base))
+	(compojure/GET "*/back.html" 
+		[
+			api-base local-base division type commodity commodity_type buyer posting_date_before posting_date_after 
+			closing_date_before closing_date_after search_text limit offset
+		] 
+		(calls/output api-base local-base division type commodity commodity_type buyer posting_date_before posting_date_after 
+									closing_date_before closing_date_after search_text limit offset back
+		)
+	)
 
+	(compojure/GET "*/reset.html" [api-base local-base] (calls/reset api-base local-base))
+
+	(compojure/GET "*/call_list.html" 
+		[
+			api-base local-base division type commodity commodity_type buyer posting_date_before posting_date_after 
+			closing_date_before closing_date_after search_text limit offset
+		] 
+		(calls/call-list api-base local-base division type commodity commodity_type buyer posting_date_before posting_date_after 
+									closing_date_before closing_date_after search_text limit offset
+		)
+	)
+
+	(compojure/GET "*/details.html" [api-base local-base document_id] (details/output api-base local-base document_id))
 
 ;	(compojure/GET "*/attachments.html" [api-base local-base document_id] (attachments/output api-base local-base document_id))
 
