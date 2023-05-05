@@ -1,0 +1,14 @@
+[Unit]
+Description=Integration bids upload
+After=nginx.service mysql.service
+Wants=nginx.service mysql.service
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=10
+WorkingDirectory=/home/jrootham/integration-bids/bin/
+ExecStart=/usr/bin/java -jar upload-bids.jar integration_bids 8302
+
+[Install]
+WantedBy=multi-user.target

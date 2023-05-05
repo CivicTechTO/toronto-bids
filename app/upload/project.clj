@@ -13,4 +13,5 @@
 	]
   :main ^:skip-aot upload.core
   :target-path "target/%s"
-  :profiles {:uberjar {:aot :all :uberjar-name "upload.jar"}}
+  :profiles {:uberjar {:aot :all :uberjar-name "upload-bids.jar"}}
+)
