@@ -10,7 +10,7 @@
 	(:require [clojure.data.json :as json])
 	(:require [toronto-bids.stuff :as stuff])
 	(:require [toronto-bids.documents :as documents])
-	(:require [ring-debug-logging.core :as debug])
+;	(:require [ring-debug-logging.core :as debug])
 )
 
 (defn output-simple [db table columns]
@@ -22,12 +22,35 @@
 	)
 )
 
+(defn make-extract [column]
+	(fn [row]
+		(get row (keyword column))
+	)
+)
+
+(defn output-plain [db table column]
+	(let 
+		[
+			extract (make-extract column)
+		  query (str "SELECT " column " FROM " table)
+		  result (jdbc/query db [query])
+		]
+		(json/write-str (map extract result))
+	)
+)
+
 (compojure/defroutes toronto-bids
 	(compojure/GET "*/api/types" [db] (output-simple db "type" "id, type"))
 	(compojure/GET "*/api/commodities" [db] (output-simple db "commodity" "id, commodity"))
 	(compojure/GET "*/api/commodity_types" [db] (output-simple db "commodity_type" "id, commodity_id, commodity_type"))
 	(compojure/GET "*/api/divisions" [db] (output-simple db "division" "id,division"))
 	(compojure/GET "*/api/buyers" [db] (output-simple db "buyer" "id, buyer"))
+
+	(compojure/GET "*/api/plain_divisions" [db] (output-plain db "division" "division"))
+	(compojure/GET "*/api/plain_types" [db] (output-plain db "type" "type"))
+	(compojure/GET "*/api/plain_commodities" [db] (output-plain db "commodity" "commodity"))
+	(compojure/GET "*/api/plain_commodity_types" [db] (output-plain db "commodity_type" "commodity_type"))
+	(compojure/GET "*/api/plain_buyers" [db] (output-plain db "buyer" "buyer"))
 
 	(compojure/GET "*/api/documents" 
 		[db call_number type division commodity commodity_type posting_date_after posting_date_before closing_date_after closing_date_before buyer search_text limit offset] 
