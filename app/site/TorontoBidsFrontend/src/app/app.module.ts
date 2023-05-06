@@ -8,6 +8,8 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { FormsModule } from '@angular/forms';
 import { SelectDropDownModule } from 'ngx-select-dropdown'
 import { MatSelectModule} from '@angular/material/select';
+import { MatInputModule } from '@angular/material/input';
+
 import { MatDatepickerModule} from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { ReactiveFormsModule } from '@angular/forms';
@@ -34,7 +36,8 @@ import { ResultsViewComponent } from './results-view/results-view.component';
     MatNativeDateModule,
     MatFormFieldModule,
     FormsModule,
-    ReactiveFormsModule
+    ReactiveFormsModule,
+    MatInputModule
   ],
   providers: [],
   bootstrap: [AppComponent]

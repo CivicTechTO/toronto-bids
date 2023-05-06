@@ -19,12 +19,13 @@ export class SearchComponentComponent implements OnInit {
   commoditySubTypesSelected : FormControl = new FormControl();
 
   postingDate = new FormGroup({
-    start: new FormControl<Date | null>(null),
-    end: new FormControl<Date | null>(null),
+    postingStart: new FormControl<Date | null>(null),
+    postingEnd: new FormControl<Date | null>(null),
   });
+
   closingDate = new FormGroup({
-    start: new FormControl<Date | null>(null),
-    end: new FormControl<Date | null>(null),
+    closingStart: new FormControl<Date | null>(null),
+    closingEnd: new FormControl<Date | null>(null),
   });
 
 

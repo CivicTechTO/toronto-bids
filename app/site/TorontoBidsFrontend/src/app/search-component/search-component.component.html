@@ -1,98 +1,109 @@
 <div class="container">
-  <div class="form-group">
-    <mat-form-field appearance="fill">
-      <mat-label>Posting Date</mat-label>
-      <mat-date-range-input
-        [formGroup]="postingDate"
-        [rangePicker]="postingDatePicker"
-      >
-        <input
-          matStartDate
-          formControlName="start"
-          placeholder="Posting date range - start"
-        />
-        <input
-          matEndDate
-          formControlName="end"
-          placeholder="Posting date range - end"
-        />
-      </mat-date-range-input>
-      <mat-hint>MM/DD/YYYY – MM/DD/YYYY</mat-hint>
-      <mat-datepicker-toggle
-        matIconSuffix
-        [for]="postingDatePicker"
-      ></mat-datepicker-toggle>
-      <mat-date-range-picker #postingDatePicker></mat-date-range-picker>
+  <div class="row">
+    <div class="col-lg-6">
+      <mat-form-field appearance="fill">
+        <mat-label>Posting Date</mat-label>
+        <mat-date-range-input
+          [formGroup]="postingDate"
+          [rangePicker]="postingDatePicker"
+        >
+          <input
+            matStartDate
+            formControlName="postingStart"
+            placeholder="Start"
+          />
+          <input matEndDate formControlName="postingEnd" placeholder="End" />
+        </mat-date-range-input>
+        <mat-hint>MM/DD/YYYY – MM/DD/YYYY</mat-hint>
+        <mat-datepicker-toggle
+          matIconSuffix
+          [for]="postingDatePicker"
+        ></mat-datepicker-toggle>
+        <mat-date-range-picker #postingDatePicker></mat-date-range-picker>
 
-      <mat-error
-        *ngIf="postingDate.controls.start.hasError('matStartDateInvalid')"
-        >Invalid start date</mat-error
-      >
-      <mat-error *ngIf="postingDate.controls.end.hasError('matEndDateInvalid')"
-        >Invalid end date</mat-error
-      >
-    </mat-form-field>
+        <mat-error
+          *ngIf="
+            postingDate.controls.postingStart.hasError('matStartDateInvalid')
+          "
+          >Invalid start date</mat-error
+        >
+        <mat-error
+          *ngIf="postingDate.controls.postingEnd.hasError('matEndDateInvalid')"
+          >Invalid end date</mat-error
+        >
+      </mat-form-field>
+    </div>
+    <div class="col-lg-6">
+      <mat-form-field appearance="fill">
+        <mat-label>Closing Date</mat-label>
+        <mat-date-range-input
+          [formGroup]="closingDate"
+          [rangePicker]="closingDatePicker"
+        >
+          <input
+            matStartDate
+            formControlName="closingStart"
+            placeholder="Closing date range - start"
+          />
+          <input
+            matEndDate
+            formControlName="closingEnd"
+            placeholder="Closing date range - end"
+          />
+        </mat-date-range-input>
+        <mat-hint>MM/DD/YYYY – MM/DD/YYYY</mat-hint>
+        <mat-datepicker-toggle
+          matIconSuffix
+          [for]="closingDatePicker"
+        ></mat-datepicker-toggle>
+        <mat-date-range-picker #closingDatePicker></mat-date-range-picker>
+
+        <mat-error
+          *ngIf="
+            closingDate.controls.closingStart.hasError('matStartDateInvalid')
+          "
+          >Invalid start date</mat-error
+        >
+        <mat-error
+          *ngIf="closingDate.controls.closingEnd.hasError('matEndDateInvalid')"
+          >Invalid end date</mat-error
+        >
+      </mat-form-field>
+    </div>
   </div>
 
-  <div class="form-group">
-    <mat-form-field appearance="fill">
-      <mat-label>Closing Date</mat-label>
-      <mat-date-range-input
-        [formGroup]="closingDate"
-        [rangePicker]="closingDatePicker"
-      >
-        <input
-          matStartDate
-          formControlName="start"
-          placeholder="Closing date range - start"
-        />
-        <input
-          matEndDate
-          formControlName="end"
-          placeholder="Closing date range - end"
-        />
-      </mat-date-range-input>
-      <mat-hint>MM/DD/YYYY – MM/DD/YYYY</mat-hint>
-      <mat-datepicker-toggle
-        matIconSuffix
-        [for]="closingDatePicker"
-      ></mat-datepicker-toggle>
-      <mat-date-range-picker #closingDatePicker></mat-date-range-picker>
-
-      <mat-error
-        *ngIf="postingDate.controls.start.hasError('matStartDateInvalid')"
-        >Invalid start date</mat-error
-      >
-      <mat-error *ngIf="postingDate.controls.end.hasError('matEndDateInvalid')"
-        >Invalid end date</mat-error
-      >
-    </mat-form-field>
-  </div>
-
-  <div class="form-group">
+  <div class="row">
     <mat-form-field appearance="fill">
       <mat-label>Commodity</mat-label>
-      <mat-select
-        *ngFor="let commodity of commodities"
-        [formControl]="commoditySelected"
-      >
-        <mat-option value="{{ commodity }}">{{ commodity }}</mat-option>
+      <mat-select>
+        <mat-option
+          *ngFor="let commodity of commodities"
+          [formControl]="commoditySelected"
+          value="{{ commodity }}"
+          >{{ commodity }}</mat-option
+        >
       </mat-select>
     </mat-form-field>
   </div>
 
-  <div class="form-group">
+  <!-- <div class="row">
     <mat-form-field appearance="fill">
       <mat-label>Commodity Sub Type</mat-label>
-      <mat-select
-        *ngFor="
-          let commodityVal of commoditySubTypes.get(
-            commoditySelected.getRawValue()
-          )
-        "
-      >
-        <mat-option value="{{ commodityVal }}">{{ commodityVal }}</mat-option>
+      <mat-select>
+        <mat-option
+          *ngFor="
+            let commodityVal of commoditySubTypes.get(
+              commoditySelected.getRawValue()
+            )
+          "
+          [formControl]="commoditySubTypesSelected"
+          value="{{ commodityVal }}"
+          >{{ commodityVal }}</mat-option
+        >
       </mat-select>
     </mat-form-field>
+  </div> -->
+  <div class="row">
+    <button type="submit">Search</button>
   </div>
 </div>
