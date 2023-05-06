@@ -1,13 +1,15 @@
 body
 {
-	background: lightskyblue;
+	margin: 0;
+	font-family: sans-serif;
 }
 
 #title
 {
 	text-align: center;
-	font-size: x-large;
-	font-family: sans-serif;
+	font-size: xx-large;
+	font-weight: bolder;
+	margin-bottom: 1.5em;
 }
 
 #wrapper
@@ -16,18 +18,44 @@ body
 	grid-template-columns: 500px 1250px;
 }
 
+#iframe-outer
+{
+	margin: 2em;
+}
+
 #contents
 {
 	width: 1250px;
 	height: 900px;
+	border: none;
 }
 
 #select
 {
+	background: #eee;
+	padding: 2em;
 }
 
-#container
+#select form div
 {
+	margin-bottom: 1em;
+}
+
+#select .label
+{
+	margin-bottom: 0;
+	color: #444;
+}
+
+#select select
+{
+	width: 100%;
+}
+
+#name
+{
+	display: inline;
+	margin-right: 1em;
 }
 
 .item
@@ -38,6 +66,42 @@ body
 
 .call
 {
-	padding-top: 20px;
+	margin-bottom: 2em;
+	padding: 1em;
+	border: 1px solid lightgray;
+	border-radius: 1em;
+	box-shadow: 4px 4px 5px gray;
 }
 
+.call form
+{
+	float: right;
+	position: relative;
+	bottom: 1.2em;
+}
+
+.itemdesc
+{
+	font-size: x-large;
+	font-weight: bold;
+	margin-top: 0.5em;
+}
+
+.itemdate
+{
+	text-align: right;
+	font-size: large;
+	float: right;
+}
+
+.itemcom
+{
+	display: inline-block;
+	margin-right: 1em;
+	font-size: small;
+}
+
+.itemcat
+{
+	font-size: small;
+}

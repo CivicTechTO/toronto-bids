@@ -55,8 +55,9 @@
 	[(keyword (str "div#name")) (form/submit-button {:formaction action} label)]
 )
 
-(defn selection-form [api-base query-params]
+(defn selection-form [api-base query-params title]
 	[:div#select
+		[:div#title title]
 		(list
 			[:div
 				(form/form-to [:get "calls.html"]
@@ -73,12 +74,10 @@
 					(form/hidden-field "limit" (get query-params "limit"))
 					(form/hidden-field "offset" (get query-params "offset"))
 
-					(button-box "forward" "forward.html" "Forward")
-					(button-box "back" "back.html" "Back")
-
 					(button-box "reload" "calls.html" "Reload")
-
 					(button-box "reset" "reset.html" "Reset")
+					(button-box "back" "back.html" "Back")
+					(button-box "forward" "forward.html" "Forward")
 				) 
 			]
 		)

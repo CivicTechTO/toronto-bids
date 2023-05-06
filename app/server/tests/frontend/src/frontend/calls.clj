@@ -12,7 +12,7 @@
 ;	(:require [frontend.filter] :as filter)
 )
 
-(def TITLE "Toronto Bids")
+(def TITLE "Toronto Bids Archives")
 
 (def DEFAULT-LIMIT "8")
 (def DEFAULT-OFFSET "0")
@@ -22,23 +22,25 @@
 )
 
 (defn line1 [call]
-	[:div (get call "short_description")]
+	[:div
+		[:div.itemdate (get call "posting_date")]
+		[:div.itemcom  (get call "commodity")]
+		[:div.itemcom  (get call "commodity_type")]
+		[:div.itemcat  (get call "division")]
+		[:div.itemdesc (get call "short_description")]
+	]
 )
 
 (defn line2 [call]
 	[:div
 		[:div.item (get call "call_number")]
-		[:div.item (get call "division")]
 		[:div.item (get call "type")]
-		[:div.item (get call "commodity")]
-		[:div.item (get call "commodity_type")]
 	]
 )
 
 (defn line3 [call]
 	[:div
 		[:div.item (get (first (get call "buyers")) "buyer")]
-		[:div.item (get call "posting_date")]
 		[:div.item (get call "closing_date")]
 	]
 )
@@ -55,11 +57,11 @@
 	(let 
 		[
 			document_id (get call "document_id")
-			detail-button (form/submit-button "Details")
+			detail-button (form/submit-button "View details")
 			details (list (form/hidden-field "document_id" document_id) detail-button)
 			detail-form [:div (form/form-to [:get "details.html"] details)]
 		]
-		(list (call-lines call) detail-form)
+		(conj (call-lines call) detail-form)
 	)
 )
 
@@ -140,7 +142,6 @@
 
 (defn list-body [api-base query-params]
 	[:div#iframe-outer
-		[:div#title "List"]
 		[:div (contents api-base query-params)]
 	]
 )
@@ -151,9 +152,8 @@
 
 (defn main-body [api-base query-params]
 	[:div#outer
-		[:div#title "CALLS"]
 		[:div#wrapper
-			(selection/selection-form api-base query-params)
+			(selection/selection-form api-base query-params TITLE)
 			(let 
 				[
 					url (util/url "call_list.html" query-params)
