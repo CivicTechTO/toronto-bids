@@ -16,6 +16,12 @@ body
 	grid-template-columns: 500px 1250px;
 }
 
+#contents
+{
+	width: 1250px;
+	height: 900px;
+}
+
 #select
 {
 }

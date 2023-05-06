@@ -32,7 +32,7 @@
 	(let 
 		[
 			extract (make-extract column)
-		  query (str "SELECT " column " FROM " table)
+		  query (str "SELECT " column " FROM " table " ORDER BY " column)
 		  result (jdbc/query db [query])
 		]
 		(json/write-str (map extract result))
@@ -60,7 +60,7 @@
 		)
 	)
 
-	(compojure/GET "*/api/description" [db document_id] (documents/output-description db document_id))
+	(compojure/GET "*/api/details" [db document_id] (documents/output-details db document_id))
 
 	(compojure-route/not-found (json/write-str "End point not found"))
 )
