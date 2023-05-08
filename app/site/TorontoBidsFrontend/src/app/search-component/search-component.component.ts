@@ -19,6 +19,9 @@ export class SearchComponentComponent implements OnInit {
   ]);
   commoditySubTypesSelected : FormControl = new FormControl();
 
+  divisions : string[] = ['']
+  divisionSelected : FormControl = new FormControl();
+  
   postingDate = new FormGroup({
     postingStart: new FormControl<Date | null>(null),
     postingEnd: new FormControl<Date | null>(null),

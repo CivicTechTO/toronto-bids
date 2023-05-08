@@ -1,9 +1,10 @@
-<div class="container">
-  <div *ngIf="true">
+<mat-sidenav-container>
+  <mat-sidenav [mode]="'side'" #drawer opened fixedInViewport>
     <app-search-component></app-search-component>
-  </div>
-
+  </mat-sidenav>
   <div class="container">
     <app-results-view></app-results-view>
   </div>
-</div>
+</mat-sidenav-container>
+
+
