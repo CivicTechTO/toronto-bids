@@ -22,6 +22,7 @@
     "@angular/platform-browser-dynamic": "^14.3.0",
     "@angular/router": "^14.3.0",
     "@ng-bootstrap/ng-bootstrap": "^13.0.0",
+    "@ng-select/ng-select": "^10.0.4",
     "@popperjs/core": "^2.10.2",
     "bootstrap": "^5.2.3",
     "ngx-select-dropdown": "^3.3.0",

@@ -74,32 +74,21 @@
   </div>
   
   <div class="row">
-    <mat-form-field appearance="fill">
-      <mat-label>Commodity</mat-label>
-      <mat-select>
-        <mat-option
-          *ngFor="let commodity of commodities"
-          [formControl]="commoditySelected"
-          value="{{ commodity }}"
-          >{{ commodity }}</mat-option
-        >
-      </mat-select>
-    </mat-form-field>
+    <ng-select 
+      [items]="commodities$ | async"
+      [bindLabel]="'name'"
+      [bindValue]="'id'" 
+      [(ngModel)]="selectedCommodity">
+    </ng-select>
   </div>
   
-  <div class="row">
-    <mat-form-field appearance="fill">
-      <mat-label>Division</mat-label>
-      <mat-select>
-        <mat-option
-          *ngFor="let division of divisions"
-          [formControl]="divisionSelected"
-          value="{{ division }}"
-          >{{ division }}</mat-option
-        >
-      </mat-select>
-    </mat-form-field>
-  </div>
+  <!-- <div class="row">
+    <ng-select [items]="divisions" 
+           bindLabel="division" 
+           bindValue="division" 
+           [(ngModel)]="selectedDivision">
+    </ng-select>
+  </div> -->
   
   <div class="button-container">
     <div class="row button-item">

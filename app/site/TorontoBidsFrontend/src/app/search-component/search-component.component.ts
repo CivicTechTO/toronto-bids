@@ -1,26 +1,32 @@
 import { Component, OnInit } from '@angular/core';
 import {FormGroup, FormControl} from '@angular/forms';
 import { ApiServiceService } from '../api-service.service';
+import { Observable } from 'rxjs';
 const today = new Date();
 const month = today.getMonth();
 const year = today.getFullYear();
+export interface Commodity {
+  id : string;
+  name : string;
+}
 @Component({
   selector: 'app-search-component',
   templateUrl: './search-component.component.html',
   styleUrls: ['./search-component.component.less']
 })
 export class SearchComponentComponent implements OnInit {
-  commodities : string[] = ['Health Care','Something Else'];
-  commoditySelected : FormControl = new FormControl();
+  commodities$! : Observable<Commodity[]>;
 
-  commoditySubTypes : Map<string,string[]> = new Map([
-    ['Health Care', ['Health Care A', 'HC B', 'HC C']],
-    ['Something Else', ['SE 1','SE 2']],
-  ]);
-  commoditySubTypesSelected : FormControl = new FormControl();
+  selectedCommodity : string = "";
 
-  divisions : string[] = ['']
-  divisionSelected : FormControl = new FormControl();
+  // commoditySubTypes : Map<string,string[]> = new Map([
+  //   ['Health Care', ['Health Care A', 'HC B', 'HC C']],
+  //   ['Something Else', ['SE 1','SE 2']],
+  // ]);
+  // selectedSubCommodity : string = "";
+
+  // divisions : string[] = ['']
+  // selectedDivision : string = "";
   
   postingDate = new FormGroup({
     postingStart: new FormControl<Date | null>(null),
@@ -33,13 +39,12 @@ export class SearchComponentComponent implements OnInit {
   });
 
 
-  constructor(apiService:ApiServiceService) {
-    apiService.getCommodities((res:any)=>{
-      console.log(res);
-    });
+  constructor(private apiService:ApiServiceService) {
+   
   }
 
   ngOnInit(): void {
+    this.commodities$ = this.apiService.getCommodities();
   }
 
 }
