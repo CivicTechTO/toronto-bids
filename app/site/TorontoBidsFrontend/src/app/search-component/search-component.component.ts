@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import {FormGroup, FormControl} from '@angular/forms';
+import { ApiServiceService } from '../api-service.service';
 const today = new Date();
 const month = today.getMonth();
 const year = today.getFullYear();
@@ -29,7 +30,11 @@ export class SearchComponentComponent implements OnInit {
   });
 
 
-  constructor() { }
+  constructor(apiService:ApiServiceService) {
+    apiService.getCommodities((res:any)=>{
+      console.log(res);
+    });
+  }
 
   ngOnInit(): void {
   }

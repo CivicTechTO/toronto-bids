@@ -1,1 +1,19 @@
-<p>results-view works!</p>
+<div class="row inmemory-text-filter">
+  <mat-form-field class="search-filter-text">
+    <mat-label>Filter Result</mat-label>
+    <input matInput type="text" [(ngModel)]="resultsTextFilter" /><button
+      *ngIf="resultsTextFilter"
+      matSuffix
+      mat-icon-button
+      aria-label="Clear"
+      (click)="resultsTextFilter = ''"
+    >
+      <mat-icon>close</mat-icon>
+    </button></mat-form-field
+  >
+</div>
+<div class="search-results-list">
+  <!-- <table mat-table [dataSource]="myDataArray"></table> -->
+</div>
+
+<div class="search-result"></div>

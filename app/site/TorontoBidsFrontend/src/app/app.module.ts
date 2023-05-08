@@ -9,6 +9,7 @@ import { FormsModule } from '@angular/forms';
 import { SelectDropDownModule } from 'ngx-select-dropdown'
 import { MatSelectModule} from '@angular/material/select';
 import { MatInputModule } from '@angular/material/input';
+import { MatIconModule } from '@angular/material/icon'
 
 import { MatDatepickerModule} from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
@@ -18,6 +19,7 @@ import { MatFormFieldModule } from "@angular/material/form-field";
 import { SearchFiltersComponent } from './search-filters/search-filters.component';
 import { ResultsViewComponent } from './results-view/results-view.component';
 
+import { HttpClientModule } from '@angular/common/http';
 @NgModule({
   declarations: [
     AppComponent,
@@ -37,7 +39,9 @@ import { ResultsViewComponent } from './results-view/results-view.component';
     MatFormFieldModule,
     FormsModule,
     ReactiveFormsModule,
-    MatInputModule
+    MatInputModule,
+    MatIconModule,
+    HttpClientModule
   ],
   providers: [],
   bootstrap: [AppComponent]

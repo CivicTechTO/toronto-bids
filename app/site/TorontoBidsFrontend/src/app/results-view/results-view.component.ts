@@ -1,5 +1,4 @@
 import { Component, OnInit } from '@angular/core';
-
 @Component({
   selector: 'app-results-view',
   templateUrl: './results-view.component.html',
@@ -7,7 +6,11 @@ import { Component, OnInit } from '@angular/core';
 })
 export class ResultsViewComponent implements OnInit {
 
-  constructor() { }
+  constructor() {
+    this.resultsTextFilter= "";
+
+  }
+  resultsTextFilter:string;
 
   ngOnInit(): void {
   }

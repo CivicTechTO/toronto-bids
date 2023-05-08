@@ -77,7 +77,8 @@
               "browserTarget": "TorontoBidsFrontend:build:production"
             },
             "development": {
-              "browserTarget": "TorontoBidsFrontend:build:development"
+              "browserTarget": "TorontoBidsFrontend:build:development",
+              "proxyConfig": "src/proxy.conf.json"
             }
           },
           "defaultConfiguration": "development"
