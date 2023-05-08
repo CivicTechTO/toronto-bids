@@ -7,6 +7,7 @@
 	  [
 		  	[org.clojure/clojure "1.10.0"]
 		   [ring/ring-core "1.9.6"]
+		   [ring-cors "0.1.13"]
 					[ring/ring-jetty-adapter "1.9.6"]
 					[compojure "1.7.0"]
 					[org.clojure/data.json "2.4.0"]
