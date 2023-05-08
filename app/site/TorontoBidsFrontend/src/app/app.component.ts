@@ -6,6 +6,7 @@ import { Commodity, CommodityType, SearchQuery } from './models/models';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatDatepicker } from '@angular/material/datepicker';
 import { MatCard } from '@angular/material/card';
+import { Observable } from 'rxjs';
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
@@ -35,8 +36,6 @@ export class AppComponent {
   divisions = ['Division A', 'Division B', 'Division C'];
   commodities = [{value:CommodityType.Any,display:'Any'},{value:CommodityType.ConstructionServices,display:'Construction Services'}, {value:CommodityType.GoodsAndServices,display:'Goods and Services'}, {value:CommodityType.ProfessionalServices,display:'Professional Services'}];
   types = ['Type A', 'Type B', 'Type C'];
-
-
   buyer = '';
 
   searchQuery : SearchQuery;

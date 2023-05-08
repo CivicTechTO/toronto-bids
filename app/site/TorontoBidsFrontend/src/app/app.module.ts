@@ -20,6 +20,7 @@ import { MatCard, MatCardModule} from '@angular/material/card';
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { SearchFiltersComponent } from './search-filters/search-filters.component';
 import { ResultsViewComponent } from './results-view/results-view.component';
+import { NgSelectModule } from '@ng-select/ng-select';
 
 import { HttpClientModule } from '@angular/common/http';
 @NgModule({
@@ -44,7 +45,8 @@ import { HttpClientModule } from '@angular/common/http';
     MatInputModule,
     MatIconModule,
     HttpClientModule,
-    MatSidenavModule
+    MatSidenavModule,
+    NgSelectModule
   ],
   providers: [],
   bootstrap: [AppComponent]
