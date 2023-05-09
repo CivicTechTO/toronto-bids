@@ -1,4 +1,6 @@
 import { Component, OnInit } from '@angular/core';
+import { ApiServiceService } from '../api-service.service';
+import { SearchResult } from '../models/models';
 @Component({
   selector: 'app-results-view',
   templateUrl: './results-view.component.html',
@@ -6,9 +8,11 @@ import { Component, OnInit } from '@angular/core';
 })
 export class ResultsViewComponent implements OnInit {
 
-  constructor() {
+  results : SearchResult[] = [];
+  constructor(private apiService:ApiServiceService) {
     this.resultsTextFilter= "";
-
+    this.results = apiService.getSearchResults();
+    console.log(this.results);
   }
   resultsTextFilter:string;
 

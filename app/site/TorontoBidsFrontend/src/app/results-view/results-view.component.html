@@ -13,7 +13,17 @@
   >
 </div>
 <div class="search-results-list">
-  <!-- <table mat-table [dataSource]="myDataArray"></table> -->
+  <div class="container">
+    <div class="search-result" *ngFor="let result of results; let i = index" >
+      <span class="badge rounded-pill" [ngClass]="{'bg-primary':(result.commodity === 'Goods and Services'),'bg-warning':(result.commodity === 'Construction Services'),'bg-success':(result.commodity === 'Professional Services')}">{{result.commodity}}</span>
+      <span class="expand-click"></span>
+      <div class="row">
+        <span class="description">{{result.short_description}}</span>
+      </div>
+
+
+    </div>
+
+  </div>
 </div>
 
-<div class="search-result"></div>
