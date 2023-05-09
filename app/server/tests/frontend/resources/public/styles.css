@@ -14,8 +14,7 @@ body
 
 #wrapper
 {
-	display: grid;
-	grid-template-columns: 500px 1250px;
+	display: flex;
 }
 
 #iframe-outer
@@ -25,8 +24,7 @@ body
 
 #contents
 {
-	width: 1250px;
-	height: 900px;
+	width: 100%;
 	border: none;
 }
 
