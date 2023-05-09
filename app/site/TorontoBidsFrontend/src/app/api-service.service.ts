@@ -1,8 +1,8 @@
-import { Injectable } from '@angular/core';
+  import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpRequest, HttpEventType, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError, retry } from 'rxjs/operators';
-import { Commodity } from './search-component/search-component.component';
+import { Commodity } from './models/models';
 @Injectable({
   providedIn: 'root'
 })
@@ -13,20 +13,34 @@ export class ApiServiceService {
 
   constructor(private $http:HttpClient) { }
 
-  getCommodities() : Observable<Commodity[]> {
-    const url = this.baseURL + 'commodities';
+  getDivisions() {
+    return getDivisions();
+  }
 
-    let httpHeaders = new HttpHeaders()
-    .set('Cache-Control', 'no-cache, no-store, must-revalidate')
-    .set('Pragma', 'no-cache')
+  getOfferTypes() {
+    return getOfferTypes();
+  }
 
-	return this.$http.get<Commodity[]>(url);
+  getCommodities() {
+    return getCommodities();
+  //   const url = this.baseURL + 'commodities';
+
+  //   let httpHeaders = new HttpHeaders()
+  //   .set('Cache-Control', 'no-cache, no-store, must-revalidate')
+  //   .set('Pragma', 'no-cache')
+
+	// return this.$http.get<Commodity[]>(url);
+  }
+
+  getCommodityTypes() {
+    return getCommodityTypes();
   }
 
   getSearchResults(){
     return getMockSearchResults();
   }
 }
+
 function getMockSearchResults() {
   return [
 
@@ -222,4 +236,191 @@ function getMockSearchResults() {
     }
   ];
 
+}
+
+function getDivisions() {
+  return [
+    {
+      'id': 13,
+      'division': ""
+    },
+    {
+      'id': 22,
+      'division': "City Manager's Office"
+    },
+    {
+      'id': 20,
+      'division': "City Planning"
+    },
+    {
+      'id': 16,
+      'division': "Corporate Real Estate Management"
+    },
+    {
+      'id': 12,
+      'division': "Engineering & Construction Services - Capital Works Delivery"
+    },
+    {
+      'id': 15,
+      'division': "Engineering & Construction Services - Engineering Services"
+    },
+    {
+      'id': 18,
+      'division': "Fire Services"
+    },
+    {
+      'id': 19,
+      'division': "Fleet Services"
+    },
+    {
+      'id': 14,
+      'division': "Parks, Forestry & Recreation"
+    },
+    {
+      'id': 17,
+      'division': "Toronto Water"
+    },
+    {
+      'id': 21,
+      'division': "Transportation Services"
+    }
+  ];
+
+}
+
+function getOfferTypes() {
+return [
+    {
+      'id': 14,
+      'type': "Expression of Interest"
+    },
+    {
+      'id': 9,
+      'type': "Notice of Intended Procurement"
+    },
+    {
+      'id': 10,
+      'type': "Request for Proposal"
+    },
+    {
+      'id': 11,
+      'type': "Request for Quotation"
+    },
+    {
+      'id': 12,
+      'type': "Request for Quotation - Prequalification"
+    },
+    {
+      'id': 13,
+      'type': "Summary Notice and Notice of Intended Procurement"
+    },
+    {
+      'id': 8,
+      'type': "Tender"
+    }
+  ]
+}
+
+function getCommodities(){
+  return [{display:'Construction Services',value:4},{display:'Goods and Services',value:5},{display:'Professional Services',value:6}];
+}
+
+function getCommodityTypes(){
+  return [
+    {
+      'id': 7,
+      'commodity_id': 1,
+      'commodity_type': ""
+    },
+    {
+      'id': 1,
+      'commodity_id': 1,
+      'commodity_type': "Bridge Repairs"
+    },
+    {
+      'id': 2,
+      'commodity_id': 1,
+      'commodity_type': "Construction Services"
+    },
+    {
+      'id': 3,
+      'commodity_id': 1,
+      'commodity_type': "Facilities renovations"
+    },
+    {
+      'id': 4,
+      'commodity_id': 1,
+      'commodity_type': "Landscape Construction"
+    },
+    {
+      'id': 5,
+      'commodity_id': 1,
+      'commodity_type': "Sewer repair and maintenance"
+    },
+    {
+      'id': 6,
+      'commodity_id': 1,
+      'commodity_type': "Watermains - Water Services"
+    },
+    {
+      'id': 8,
+      'commodity_id': 2,
+      'commodity_type': "Fine / Bond Paper"
+    },
+    {
+      'id': 9,
+      'commodity_id': 2,
+      'commodity_type': "Hospital - Medical - Dental - Supplies / Equipment / Services"
+    },
+    {
+      'id': 10,
+      'commodity_id': 2,
+      'commodity_type': "Information & Technology Software/Hardware"
+    },
+    {
+      'id': 11,
+      'commodity_id': 2,
+      'commodity_type': "Overhead Doors - Supply / Repair / Maintenance / Parts"
+    },
+    {
+      'id': 12,
+      'commodity_id': 2,
+      'commodity_type': "Preventative Maintenance and Services"
+    },
+    {
+      'id': 13,
+      'commodity_id': 2,
+      'commodity_type': "Vehicle - Parts / Tires / Repair / Maintenance / Service"
+    },
+    {
+      'id': 14,
+      'commodity_id': 2,
+      'commodity_type': "Waste Removal and Haulage"
+    },
+    {
+      'id': 15,
+      'commodity_id': 3,
+      'commodity_type': "Architectural Services"
+    },
+    {
+      'id': 16,
+      'commodity_id': 3,
+      'commodity_type': "Consulting Services"
+    },
+    {
+      'id': 17,
+      'commodity_id': 3,
+      'commodity_type': "Engineering Services"
+    },
+    {
+      'id': 18,
+      'commodity_id': 3,
+      'commodity_type': "Environmental Services"
+    },
+    {
+      'id': 19,
+      'commodity_id': 3,
+      'commodity_type': "Testing & Inspection Services"
+    }
+  ];
 }

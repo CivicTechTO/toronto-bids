@@ -5,17 +5,8 @@ export class SearchQuery {
   closingEndDate?: string | null = null;
   buyer: string | null = null;
   commodityType: CommodityType = CommodityType.Any;
-  commodity: Commodity = Commodity.Any;
   type: string | null = null;
   division: string | null = null;
-}
-
-export enum Commodity {
-  Any = 0,
-  ConstructionServices = 1,
-  GoodsAndServices = 2,
-  ProfessionalServices = 3,
-  Unknown = 4
 }
 
 export enum CommodityType {
@@ -44,4 +35,25 @@ export interface Buyer {
   phone:string;
   email:string;
   location:string;
+}
+
+export interface Division {
+  division:string;
+  id:number;
+}
+
+export interface OfferType {
+  id:number;
+  type:string;
+}
+
+export interface Commodity {
+  display:string;
+  value:number;
+}
+
+export interface CommoditySubType {
+  id:number;
+  commodity_id:number;
+  commodity_type:string;
 }

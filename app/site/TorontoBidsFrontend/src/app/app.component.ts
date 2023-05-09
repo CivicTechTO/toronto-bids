@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { JsonPipe } from '@angular/common';
-import { Commodity, CommodityType, SearchQuery } from './models/models';
+import { CommodityType, SearchQuery } from './models/models';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatDatepicker } from '@angular/material/datepicker';
 import { MatLegacyCard as MatCard } from '@angular/material/legacy-card';
@@ -37,21 +37,8 @@ export class AppComponent {
   types = ['Type A', 'Type B', 'Type C'];
   buyer = '';
 
-  searchQuery : SearchQuery;
-  commodityType: CommodityType;
 
 	constructor() {
-    this.commodityType = CommodityType.Any;
-    this.searchQuery = {
-      postingStartDate : null,
-      postingEndDate : null,
-      closingStartDate : null,
-      closingEndDate : null,
-      buyer : '',
-      commodityType : CommodityType.Any,
-      commodity:Commodity.Any,
-      type:'',
-      division:''
-    }
+  
 	}
 }
