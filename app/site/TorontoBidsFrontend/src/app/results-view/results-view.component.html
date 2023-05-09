@@ -1,16 +1,23 @@
-<div class="row inmemory-text-filter">
-  <mat-form-field class="search-filter-text">
-    <mat-label>Filter Result</mat-label>
-    <input matInput type="text" [(ngModel)]="resultsTextFilter" /><button
-      *ngIf="resultsTextFilter"
-      matSuffix
-      mat-icon-button
-      aria-label="Clear"
-      (click)="resultsTextFilter = ''"
-    >
-      <mat-icon>close</mat-icon>
-    </button></mat-form-field
-  >
+<div class="inmemory-text-filter">
+  <div class="row search-text-container">
+    <input class="search-text form-control-lg" (search)="searchResults()" type="search" placeholder="Search for scope of work or keyword" aria-label=".form-control-lg example" (keyup.enter)="searchResults()" [(ngModel)]="resultsTextFilter">
+  </div>
+  <div class="row search-text-container">
+    <div class="col-lg-6">
+      <span class="search-results-count">About {{results.length}} results</span>
+    </div>
+    <div class="col-lg-6 sorter">
+      <span>
+        <ng-select>
+          <ng-option [value]="1">A-Z</ng-option>
+          <ng-option [value]="2">Posting Date</ng-option>
+          <ng-option [value]="3">Closing Date</ng-option>
+        </ng-select>
+      </span>
+
+    </div>
+    
+  </div>
 </div>
 <div class="search-results-list">
   <div class="container">
