@@ -7,8 +7,8 @@ import { SearchComponentComponent } from './search-component/search-component.co
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { FormsModule } from '@angular/forms';
 import { SelectDropDownModule } from 'ngx-select-dropdown'
-import { MatSelectModule} from '@angular/material/select';
-import { MatInputModule } from '@angular/material/input';
+import { MatLegacySelectModule as MatSelectModule} from '@angular/material/legacy-select';
+import { MatLegacyInputModule as MatInputModule } from '@angular/material/legacy-input';
 import { MatIconModule } from '@angular/material/icon'
 import {MatSidenavModule} from '@angular/material/sidenav';
 
@@ -16,8 +16,8 @@ import {MatSidenavModule} from '@angular/material/sidenav';
 import { MatDatepickerModule} from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { ReactiveFormsModule } from '@angular/forms';
-import { MatCard, MatCardModule} from '@angular/material/card';
-import { MatFormFieldModule } from "@angular/material/form-field";
+import { MatLegacyCard as MatCard, MatLegacyCardModule as MatCardModule} from '@angular/material/legacy-card';
+import { MatLegacyFormFieldModule as MatFormFieldModule } from "@angular/material/legacy-form-field";
 import { SearchFiltersComponent } from './search-filters/search-filters.component';
 import { ResultsViewComponent } from './results-view/results-view.component';
 import { NgSelectModule } from '@ng-select/ng-select';

@@ -5,7 +5,7 @@ import { JsonPipe } from '@angular/common';
 import { Commodity, CommodityType, SearchQuery } from './models/models';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatDatepicker } from '@angular/material/datepicker';
-import { MatCard } from '@angular/material/card';
+import { MatLegacyCard as MatCard } from '@angular/material/legacy-card';
 import { Observable } from 'rxjs';
 @Component({
   selector: 'app-root',
