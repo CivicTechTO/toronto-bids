@@ -3,16 +3,16 @@
     <input class="search-text form-control-lg" (search)="searchResults()" type="search" placeholder="Search for scope of work or keyword" aria-label=".form-control-lg example" (keyup.enter)="searchResults()" [(ngModel)]="resultsTextFilter">
   </div>
   <div class="row search-text-container">
-    <div class="col-lg-6">
+    <div class="col-lg-6 result-count-container">
       <span class="search-results-count">About {{results.length}} results</span>
     </div> 
     <!-- <div class="col-lg-6 sorter-container">
+      <span>Sort by</span>
       <div class="sorter">
-        <ng-select class="sort-dropdown"[(ngModel)]="sortByValue" placeholder="">
+        <ng-select class="sort-dropdown"[(ngModel)]="sortByValue" placeholder="" [clearable]="false">
           <ng-option *ngFor="let sortBy of sortByList" [value]="sortBy.id">{{sortBy.name}}</ng-option>
        </ng-select>
       </div>
-      
     </div>  -->
   </div>
 </div>
@@ -28,13 +28,17 @@
         <div class="col-lg-3 date-container">
           <div *ngIf="result.posting_date" class="date">Date Posted : {{result.posting_date.toLocaleString()|dateOnly}}</div>
           <div *ngIf="result.closing_date" class="date">Date Closed : {{result.closing_date.toLocaleString()|dateOnly}}</div>
-          <div class="view-detail-button" (click)="viewMore[i] =!viewMore[i]">View More</div>
         </div>
       </div> 
-
-      <div *ngIf="viewMore[i]">
-        <div class="row">
-          <span>Call Number : {{result.call_number}}</span>
+      <div class="row">
+        <div class="view-detail-button" (click)="viewMore[i] =!viewMore[i]"><a>{{(viewMore[i])? 'View Less' :'View More'}}</a></div>
+      </div>
+      <div class="detail-view-container" *ngIf="viewMore[i]">
+        <div class="row result-field">
+          <span> <span class="title">Source Division :</span> {{result.division}}</span>
+        </div>
+        <div class="row result-field">
+          <span><span class="title">Call Number :</span>{{result.call_number}}</span>
         </div>
 
         <table mat-table [dataSource]="buyersPerResult.get(i)!">
@@ -65,14 +69,6 @@
           <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
           <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
         </table>
-        <!-- <div class="row">
-          <span class="buyer-header">Buyers</span>
-        </div>
-        <div class="row" *ngFor="let buyer of result.buyers">
-          <span>Phone Number:{{buyer.phone}}</span>
-          <span>Email:{{buyer.email}}</span>
-          <span>Location:{{buyer.location}}</span>
-        </div> -->
       </div>
     </div>
   </div>

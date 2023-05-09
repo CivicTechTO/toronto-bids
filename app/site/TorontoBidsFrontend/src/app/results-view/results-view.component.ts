@@ -10,8 +10,10 @@ import * as $ from 'jquery';
   styleUrls: ['./results-view.component.less']
 })
 export class ResultsViewComponent implements OnInit {
+  // sortByList : {display:string, value:number}[] = [{display:'A-Z',value:1},{display:'Posting Date',value:2},{display:'Closing Date',value:2}]
   sortByValue : string = "Posting Date";
   results : SearchResult[] = [];
+  resultsSortClone : SearchResult[] = [];
   resultsClone : SearchResult[] = [];
   viewMore : boolean[] = [];
   buyersPerResult:Map<number,Buyer[]>;
