@@ -35,7 +35,7 @@
               "node_modules/bootstrap/dist/css/bootstrap.min.css",
               "src/styles.less"
             ],
-            "scripts": []
+            "scripts": ["./node_modules/jquery/dist/jquery.min.js"]
           },
           "configurations": {
             "production": {
