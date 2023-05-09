@@ -8,6 +8,7 @@ from googleapiclient.http import MediaFileUpload
 import base64
 
 from slack import Slack
+from rfpkeys import Keychain
 
 try:
     import magic
@@ -19,7 +20,7 @@ except ImportError:
 
 
 from pathlib import Path
-import pickle, time, socket, os, json
+import pickle, time, socket, json
 
 
 class File:
@@ -120,7 +121,7 @@ class Folder(File):
 
 
 class GoogleDrive:
-    def __init__(self, slack: Slack):
+    def __init__(self, slack: Slack, keychain: Keychain):
         # Loads credentials and creates Google Drive API service
 
         scope = ["https://www.googleapis.com/auth/drive"]
@@ -129,19 +130,17 @@ class GoogleDrive:
         # The file token.pickle stores the user's access and refresh tokens, and is
         # created automatically when the authorization flow completes for the first
         # time.
-        token_json = os.environ.get("GDRIVE_TOKEN")
+        token_json = keychain.get_secret("GDRIVETOKEN")
         creds = json.loads(base64.b64decode(token_json.encode()).decode())
         # If there are no (valid) credentials available, let the user log in.
         if not creds or not creds["valid"]:
             if creds and creds["expired"] and creds["refresh_token"]:
                 creds.refresh(Request())
             else:
-                credentials_json = os.environ.get("GDRIVE_CREDENTIALS")
+                credentials_json = keychain.get_secret("GDRIVECREDENTIALS")
                 creds = json.loads(base64.b64decode(credentials_json.encode()).decode())
                 flow = InstalledAppFlow.from_client_config(creds, scope)
                 creds = flow.run_local_server(port=0)
-            # Save the credentials to the environment file
-            os.environ["GDRIVE_TOKEN"] = creds.to_json()
 
         # return Google Drive API service
         self.service = build("drive", "v3", credentials=creds)
@@ -232,9 +231,3 @@ class GoogleDrive:
                 continue
             folder = Folder(path, path.name, root_folder)
             self.upload_directory(folder)
-
-
-if __name__ == "__main__":
-    drive = GoogleDrive()
-    drive.upload_all_data(Path("data"))
-# %%

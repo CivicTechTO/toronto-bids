@@ -6,9 +6,8 @@ from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import NoSuchElementException
 
 from time import sleep
-from pathlib import Path
+from rfpkeys import Keychain
 import re
-import os
 
 ARIBA_BASE_URL = "https://service.ariba.com/Discovery.aw/ad/profile"
 
@@ -17,7 +16,7 @@ class Ariba(Chrome):
     def __init__(self, ariba_discovery_profile_key, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.ariba_discovery_profile_key = ariba_discovery_profile_key
-        self.login()
+        self.login(Keychain())
 
     def patiently_click(self, button, wait_after=0):
         WebDriverWait(self, timeout=60).until(
@@ -43,7 +42,7 @@ class Ariba(Chrome):
         login = self.find_elements(By.CSS_SELECTOR, ".sap-icon--log")
         return len(login) == 0
 
-    def login(self):
+    def login(self, keychain: Keychain):
         self.home(profile_key=self.ariba_discovery_profile_key)
         WebDriverWait(self, timeout=60).until(
             EC.element_to_be_clickable((By.CSS_SELECTOR, ".sap-icon--log"))
@@ -56,10 +55,10 @@ class Ariba(Chrome):
             )
         )
         self.find_element(By.NAME, "UserName").send_keys(
-            os.environ.get("ARIBA_USERNAME")
+            keychain.get_secret("ARIBAUSERNAME")
         )
         self.find_element(By.NAME, "Password").send_keys(
-            os.environ.get("ARIBA_PASSWORD")
+            keychain.get_secret("ARIBAPASSWORD")
         )
         try:
             self.find_element(By.NAME, "Password").send_keys(Keys.ENTER)

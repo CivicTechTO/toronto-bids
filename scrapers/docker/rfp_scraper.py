@@ -21,7 +21,7 @@ from open_data import get_open_data
 from google_drive import GoogleDrive
 import json
 import argparse
-import os
+from rfpkeys import Keychain
 
 from slack import Slack
 
@@ -243,8 +243,10 @@ if __name__ == "__main__":
     Path(ARIBA_DATA_DIRECTORY).mkdir(exist_ok=True)
     Path(OPEN_DATA_DIRECTORY).mkdir(exist_ok=True)
 
+    keychain = Keychain()
+
     slack = Slack(
-        token=os.environ.get("SLACK_KEY"),
+        token=keychain.get_secret("SLACKKEY"),
         log_channel="bid-scraper-logs",
         update_channel="bid-scraper-logs",
     )
@@ -349,8 +351,8 @@ if __name__ == "__main__":
 
     delete_duplicates(ARIBA_DATA_DIRECTORY)
 
-    drive = GoogleDrive(slack)
-    drive.upload_all_data(Path("data"))
+    # drive = GoogleDrive(slack, keychain)
+    # drive.upload_all_data(Path("data"))
 
     finish_time = time()
     slack.post_update(
