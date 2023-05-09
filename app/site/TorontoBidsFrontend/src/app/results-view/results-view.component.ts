@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ApiServiceService } from '../api-service.service';
-import { SearchResult } from '../models/models';
+import { Buyer, SearchResult } from '../models/models';
 import { faAngleDown } from '@fortawesome/free-solid-svg-icons';
 import * as $ from 'jquery';
 
@@ -10,20 +10,34 @@ import * as $ from 'jquery';
   styleUrls: ['./results-view.component.less']
 })
 export class ResultsViewComponent implements OnInit {
-  sortByList: {display:string,value:number}[] = [{display:'A-Z',value:1},{display:'Posting Date',value:2},{display:'Closing Date',value:3}];
-  sortByValue : number = 0;
+  sortByValue : string = "Posting Date";
   results : SearchResult[] = [];
   resultsClone : SearchResult[] = [];
+  viewMore : boolean[] = [];
+  buyersPerResult:Map<number,Buyer[]>;
   textFilter : string = "";
-  searchInProgress : boolean = false;
+  displayedColumns: string[] = ['name', 'phone', 'location', 'email'];
+
   constructor(private apiService:ApiServiceService) {
+    this.buyersPerResult = new Map<number,Buyer[]>();
     this.resultsTextFilter= "";
     this.results = apiService.getSearchResults();
-    console.log(this.results);
+    for (let i = 0 ; i < this.results.length ; i++){
+      this.viewMore.push(false);
+      this.buyersPerResult.set(i,this.results[i].buyers);
+    }
   }
   resultsTextFilter:string;
 
+  sortByList = [
+      { id: 1, name: 'A-Z' },
+      { id: 2, name: 'Posting Date' },
+      { id: 3, name: 'Closing Date' },
+  ];
+
+  searchInProgress:boolean=false; 
   ngOnInit(): void {
+   
   }
   loadData(){
     this.results = this.apiService.getSearchResults();

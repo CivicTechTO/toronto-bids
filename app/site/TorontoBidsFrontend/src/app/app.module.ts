@@ -15,17 +15,23 @@ import { MatDatepickerModule} from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatLegacyCard as MatCard, MatLegacyCardModule as MatCardModule} from '@angular/material/legacy-card';
 import { MatLegacyFormFieldModule as MatFormFieldModule } from "@angular/material/legacy-form-field";
+import {MatLegacyTabsModule as MatTabsModule} from '@angular/material/legacy-tabs';
+
 import { SearchFiltersComponent } from './search-filters/search-filters.component';
 import { ResultsViewComponent } from './results-view/results-view.component';
 import { NgSelectModule } from '@ng-select/ng-select';
-
 import { HttpClientModule } from '@angular/common/http';
+import { DateOnlyPipe } from './pipes';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import {MatLegacyTableModule as MatTableModule} from '@angular/material/legacy-table';
+
 @NgModule({
   declarations: [
     AppComponent,
     SearchComponentComponent,
     SearchFiltersComponent,
-    ResultsViewComponent
+    ResultsViewComponent,
+    DateOnlyPipe
   ],
   imports: [
     BrowserModule,
@@ -41,7 +47,9 @@ import { HttpClientModule } from '@angular/common/http';
     MatIconModule,
     HttpClientModule,
     MatSidenavModule,
-    NgSelectModule
+    NgSelectModule,
+    FontAwesomeModule,
+    MatTableModule
   ],
   providers: [],
   bootstrap: [AppComponent]
