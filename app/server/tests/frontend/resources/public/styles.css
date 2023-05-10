@@ -1,3 +1,8 @@
+html, body, #outer, #wrapper
+{
+	height: 100%;
+}
+
 body
 {
 	margin: 0;
@@ -17,6 +22,13 @@ body
 	display: flex;
 }
 
+@media (max-width: 1000px) {
+	#wrapper {
+		flex-direction: column;
+	}
+}
+
+
 #iframe-outer
 {
 	margin: 2em;
@@ -25,6 +37,7 @@ body
 #contents
 {
 	width: 100%;
+        height: inherit;
 	border: none;
 }
 
