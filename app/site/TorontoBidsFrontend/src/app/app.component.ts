@@ -16,6 +16,9 @@ import { Observable } from 'rxjs';
   - Connect to API
   - Create a results detail view that opens in separate page
   - Clean up styling classes
+  - Optimize for mobile responsiveness
+    - Make the side drawer toggle-able, and turn into menu that opens up from the bottom on mobile
+    -
 */
 
 export class AppComponent {
@@ -24,7 +27,6 @@ export class AppComponent {
   commodities = [{ value: CommodityType.Any, display: 'Any' }, { value: CommodityType.ConstructionServices, display: 'Construction Services' }, { value: CommodityType.GoodsAndServices, display: 'Goods and Services' }, { value: CommodityType.ProfessionalServices, display: 'Professional Services' }];
   types = ['Type A', 'Type B', 'Type C'];
   buyer = '';
-
 
   constructor() {
 
