@@ -19,41 +19,41 @@ export enum CommodityType {
 
 export interface SearchResult {
   division: string;
-  call_number:string;
-  document_id:number;
+  call_number: string;
+  document_id: number;
   type: string;
   commodity: string;
   short_description: string;
   closing_date: Date;
   posting_date: Date;
-  buyers : Buyer[];
+  buyers: Buyer[];
   commodity_type: string;
 }
 
 export interface Buyer {
-  buyer:string;
-  phone:string;
-  email:string;
-  location:string;
+  buyer: string;
+  phone: string;
+  email: string;
+  location: string;
 }
 
 export interface Division {
-  division:string;
-  id:number;
+  division: string;
+  id: number;
 }
 
 export interface OfferType {
-  id:number;
-  type:string;
+  id: number;
+  type: string;
 }
 
 export interface Commodity {
-  display:string;
-  value:number;
+  display: string;
+  value: number;
 }
 
 export interface CommoditySubType {
-  id:number;
-  commodity_id:number;
-  commodity_type:string;
+  id: number;
+  commodity_id: number;
+  commodity_type: string;
 }

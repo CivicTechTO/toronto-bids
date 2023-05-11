@@ -1,11 +1,21 @@
 <div class="inmemory-text-filter">
   <div class="row search-text-container">
-    <input class="search-text form-control-lg" (search)="searchResults()" type="search" placeholder="Search for scope of work or keyword" aria-label=".form-control-lg example" (keyup.enter)="searchResults()" [(ngModel)]="resultsTextFilter">
+    <input
+      class="search-text form-control-lg"
+      (search)="searchResults()"
+      type="search"
+      placeholder="Search for scope of work or keyword"
+      aria-label=".form-control-lg example"
+      (keyup.enter)="searchResults()"
+      [(ngModel)]="resultsTextFilter"
+    />
   </div>
   <div class="row search-text-container">
     <div class="col-lg-6 result-count-container">
-      <span class="search-results-count">About {{results.length}} results</span>
-    </div> 
+      <span class="search-results-count"
+        >About {{ results.length }} results</span
+      >
+    </div>
     <!-- <div class="col-lg-6 sorter-container">
       <span>Sort by</span>
       <div class="sorter">
@@ -18,59 +28,85 @@
 </div>
 <div class="search-results-list">
   <div class="container">
-    <div class="search-result" *ngFor="let result of results; let i = index" >
-      <span class="badge rounded-pill" [ngClass]="{'bg-primary':(result.commodity === 'Goods and Services'),'bg-warning':(result.commodity === 'Construction Services'),'bg-success':(result.commodity === 'Professional Services')}">{{result.commodity}}</span>
+    <div class="search-result" *ngFor="let result of results; let i = index">
+      <span
+        class="badge rounded-pill"
+        [ngClass]="{
+          'bg-primary': result.commodity === 'Goods and Services',
+          'bg-warning': result.commodity === 'Construction Services',
+          'bg-success': result.commodity === 'Professional Services'
+        }"
+        >{{ result.commodity }}</span
+      >
       <span class="expand-click"></span>
       <div class="row">
         <div class="col-lg-9">
-          <span class="description">{{result.short_description}}</span>
+          <span class="description">{{ result.short_description }}</span>
         </div>
         <div class="col-lg-3 date-container">
-          <div *ngIf="result.posting_date" class="date">Date Posted : {{result.posting_date.toLocaleString()|dateOnly}}</div>
-          <div *ngIf="result.closing_date" class="date">Date Closed : {{result.closing_date.toLocaleString()|dateOnly}}</div>
+          <div *ngIf="result.posting_date" class="date">
+            Date Posted : {{ result.posting_date.toLocaleString() | dateOnly }}
+          </div>
+          <div *ngIf="result.closing_date" class="date">
+            Date Closed : {{ result.closing_date.toLocaleString() | dateOnly }}
+          </div>
         </div>
-      </div> 
+      </div>
       <div class="row">
-        <div class="view-detail-button" (click)="viewMore[i] =!viewMore[i]"><a>{{(viewMore[i])? 'View Less' :'View More'}}</a></div>
+        <div class="view-detail-button" (click)="viewMore[i] = !viewMore[i]">
+          <a>{{ viewMore[i] ? "View Less" : "View More" }}</a>
+        </div>
       </div>
       <div class="detail-view-container" *ngIf="viewMore[i]">
         <div class="row result-field">
-          <span> <span class="title">Source Division :</span> {{result.division}}</span>
+          <span>
+            <span class="title">Source Division :</span>
+            {{ result.division }}</span
+          >
         </div>
         <div class="row result-field">
-          <span><span class="title">Call Number :</span>{{result.call_number}}</span>
+          <span
+            ><span class="title">Call Number :</span
+            >{{ result.call_number }}</span
+          >
         </div>
 
         <table mat-table [dataSource]="buyersPerResult.get(i)!">
-        
           <!-- Name Column -->
           <ng-container matColumnDef="name" class="buyer-row">
-            <th mat-header-cell *matHeaderCellDef> Buyer Name </th>
-            <td mat-cell *matCellDef="let buyer" class="buyer-table-buyer"> {{buyer.buyer}} </td>
+            <th mat-header-cell *matHeaderCellDef>Buyer Name</th>
+            <td mat-cell *matCellDef="let buyer" class="buyer-table-buyer">
+              {{ buyer.buyer }}
+            </td>
           </ng-container>
-        
+
           <!-- Weight Column -->
           <ng-container matColumnDef="phone" class="buyer-row">
-            <th mat-header-cell *matHeaderCellDef> Phone </th>
-            <td mat-cell *matCellDef="let buyer" class="buyer-table-phone"> {{buyer.phone}} </td>
+            <th mat-header-cell *matHeaderCellDef>Phone</th>
+            <td mat-cell *matCellDef="let buyer" class="buyer-table-phone">
+              {{ buyer.phone }}
+            </td>
           </ng-container>
-        
+
           <!-- Symbol Column -->
           <ng-container matColumnDef="location" class="buyer-row">
-            <th mat-header-cell *matHeaderCellDef> Location </th>
-            <td mat-cell *matCellDef="let buyer" class="buyer-table-location"> {{buyer.location}} </td>
+            <th mat-header-cell *matHeaderCellDef>Location</th>
+            <td mat-cell *matCellDef="let buyer" class="buyer-table-location">
+              {{ buyer.location }}
+            </td>
           </ng-container>
 
           <ng-container matColumnDef="email" class="buyer-row">
-            <th mat-header-cell *matHeaderCellDef> Email </th>
-            <td mat-cell *matCellDef="let buyer" class="buyer-table-email"> {{buyer.email}} </td>
+            <th mat-header-cell *matHeaderCellDef>Email</th>
+            <td mat-cell *matCellDef="let buyer" class="buyer-table-email">
+              {{ buyer.email }}
+            </td>
           </ng-container>
-        
+
           <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
         </table>
       </div>
     </div>
   </div>
 </div>
-

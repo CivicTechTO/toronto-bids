@@ -1,4 +1,4 @@
-  import { Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpRequest, HttpEventType, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError, retry } from 'rxjs/operators';
@@ -9,9 +9,9 @@ import { Commodity } from './models/models';
 export class ApiServiceService {
 
   // baseURL : string = 'http://localhost:3305/toronto-bids/api/'
-  baseURL : string = 'https://jrootham.ca/dev-bids/api/'
+  baseURL: string = 'https://jrootham.ca/dev-bids/api/'
 
-  constructor(private $http:HttpClient) { }
+  constructor(private $http: HttpClient) { }
 
   getDivisions() {
     return getDivisions();
@@ -23,20 +23,20 @@ export class ApiServiceService {
 
   getCommodities() {
     return getCommodities();
-  //   const url = this.baseURL + 'commodities';
+    //   const url = this.baseURL + 'commodities';
 
-  //   let httpHeaders = new HttpHeaders()
-  //   .set('Cache-Control', 'no-cache, no-store, must-revalidate')
-  //   .set('Pragma', 'no-cache')
+    //   let httpHeaders = new HttpHeaders()
+    //   .set('Cache-Control', 'no-cache, no-store, must-revalidate')
+    //   .set('Pragma', 'no-cache')
 
-	// return this.$http.get<Commodity[]>(url);
+    // return this.$http.get<Commodity[]>(url);
   }
 
   getCommodityTypes() {
     return getCommodityTypes();
   }
 
-  getSearchResults(){
+  getSearchResults() {
     return getMockSearchResults();
   }
 }
@@ -51,7 +51,7 @@ function getMockSearchResults() {
       'type': 'Summary Notice and Notice of Intended Procurement',
       'commodity': 'Goods and Services',
       'short_description': 'Request for Quotations for the Non-Exclusive Supply and Delivery of Fine Paper and Related Paper Products for Various Ci',
-      'closing_date': new Date ('2023-01-31T00:00:00Z'),
+      'closing_date': new Date('2023-01-31T00:00:00Z'),
       'buyers': [
         {
           'buyer': 'Mutinelli-Djukic, Alexandra',
@@ -289,7 +289,7 @@ function getDivisions() {
 }
 
 function getOfferTypes() {
-return [
+  return [
     {
       'id': 14,
       'type': "Expression of Interest"
@@ -321,11 +321,11 @@ return [
   ]
 }
 
-function getCommodities(){
-  return [{display:'Construction Services',value:4},{display:'Goods and Services',value:5},{display:'Professional Services',value:6}];
+function getCommodities() {
+  return [{ display: 'Construction Services', value: 4 }, { display: 'Goods and Services', value: 5 }, { display: 'Professional Services', value: 6 }];
 }
 
-function getCommodityTypes(){
+function getCommodityTypes() {
   return [
     {
       'id': 7,

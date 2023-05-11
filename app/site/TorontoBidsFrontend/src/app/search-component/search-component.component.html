@@ -12,11 +12,23 @@
     </div>
     <div class="row">
       <mat-form-field appearance="fill" class="form-border">
-        <mat-date-range-input [formGroup]="closingDate" [rangePicker]="closingDatePicker">
-          <input matStartDate class="date-range-input" placeholder="Start date">
-          <input matEndDate class="date-range-input" placeholder="End date">
+        <mat-date-range-input
+          [formGroup]="closingDate"
+          [rangePicker]="closingDatePicker"
+        >
+          <input
+            matStartDate
+            class="date-range-input"
+            placeholder="Start date"
+          />
+          <input matEndDate class="date-range-input" placeholder="End date" />
         </mat-date-range-input>
-        <mat-datepicker-toggle #toggleClosingDate [hidden]="false" matIconSuffix [for]="closingDatePicker"></mat-datepicker-toggle>
+        <mat-datepicker-toggle
+          #toggleClosingDate
+          [hidden]="false"
+          matIconSuffix
+          [for]="closingDatePicker"
+        ></mat-datepicker-toggle>
         <mat-date-range-picker #closingDatePicker></mat-date-range-picker>
       </mat-form-field>
     </div>
@@ -28,9 +40,22 @@
     </div>
     <div class="row">
       <mat-form-field appearance="fill" class="form-border">
-        <mat-date-range-input [formGroup]="postingDate" [rangePicker]="postingDatePicker">
-          <input matStartDate class="date-range-input" formControlName="postingStart" placeholder="Start"/>
-          <input matEndDate class="date-range-input"formControlName="postingEnd" placeholder="End" />
+        <mat-date-range-input
+          [formGroup]="postingDate"
+          [rangePicker]="postingDatePicker"
+        >
+          <input
+            matStartDate
+            class="date-range-input"
+            formControlName="postingStart"
+            placeholder="Start"
+          />
+          <input
+            matEndDate
+            class="date-range-input"
+            formControlName="postingEnd"
+            placeholder="End"
+          />
         </mat-date-range-input>
         <mat-datepicker-toggle
           matIconSuffix
@@ -46,8 +71,10 @@
       <span class="label">Divisions</span>
     </div>
     <ng-select class="search-dropdown" [(ngModel)]="selectedDivision">
-      <ng-option *ngFor="let div of divisions" [value]="div.id">{{div.division}}</ng-option>
-  </ng-select>
+      <ng-option *ngFor="let div of divisions" [value]="div.id">{{
+        div.division
+      }}</ng-option>
+    </ng-select>
   </div>
 
   <div class="row form-group">
@@ -55,18 +82,21 @@
       <span class="label">Offer Type</span>
     </div>
     <ng-select class="search-dropdown" [(ngModel)]="selectedType">
-      <ng-option *ngFor="let type of offerTypes" [value]="type.id">{{type.type}}</ng-option>
-  </ng-select>
+      <ng-option *ngFor="let type of offerTypes" [value]="type.id">{{
+        type.type
+      }}</ng-option>
+    </ng-select>
   </div>
-
 
   <div class="row form-group">
     <div class="row">
       <span class="label">Commodity</span>
     </div>
     <ng-select class="search-dropdown" [(ngModel)]="selectedCommodity">
-      <ng-option *ngFor="let comm of commodities" [value]="comm.value">{{comm.display}}</ng-option>
-  </ng-select>
+      <ng-option *ngFor="let comm of commodities" [value]="comm.value">{{
+        comm.display
+      }}</ng-option>
+    </ng-select>
   </div>
 
   <div class="row form-group">
@@ -74,7 +104,11 @@
       <span class="label">Commodity Sub Type</span>
     </div>
     <ng-select class="search-dropdown" [(ngModel)]="selectedCommodity">
-      <ng-option *ngFor="let subComm of commoditySubTypes.get(selectedCommodity)" [value]="subComm.id">{{subComm.commodity_type}}</ng-option>
-  </ng-select>
+      <ng-option
+        *ngFor="let subComm of commoditySubTypes.get(selectedCommodity)"
+        [value]="subComm.id"
+        >{{ subComm.commodity_type }}</ng-option
+      >
+    </ng-select>
   </div>
 </div>
