@@ -17,7 +17,6 @@ import { MatLegacyCard as MatCard, MatLegacyCardModule as MatCardModule} from '@
 import { MatLegacyFormFieldModule as MatFormFieldModule } from "@angular/material/legacy-form-field";
 import {MatLegacyTabsModule as MatTabsModule} from '@angular/material/legacy-tabs';
 
-import { SearchFiltersComponent } from './search-filters/search-filters.component';
 import { ResultsViewComponent } from './results-view/results-view.component';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { HttpClientModule } from '@angular/common/http';
@@ -29,7 +28,6 @@ import {MatLegacyTableModule as MatTableModule} from '@angular/material/legacy-t
   declarations: [
     AppComponent,
     SearchComponentComponent,
-    SearchFiltersComponent,
     ResultsViewComponent,
     DateOnlyPipe
   ],
