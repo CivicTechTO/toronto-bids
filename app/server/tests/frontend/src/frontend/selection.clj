@@ -52,7 +52,7 @@
 )
 
 (defn button-box [name action label]
-	[(keyword (str "div#name")) (form/submit-button {:formaction action} label)]
+	[:div.button (form/submit-button {:formaction action} label)]
 )
 
 (defn selection-form [api-base query-params title]

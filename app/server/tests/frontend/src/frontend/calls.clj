@@ -22,34 +22,29 @@
 )
 
 (defn line1 [call]
-	[:div
-		[:div.itemdate (get call "posting_date")]
-		[:div.itemcom  (get call "commodity")]
-		[:div.itemcom  (get call "commodity_type")]
-		[:div.itemcat  (get call "division")]
-		[:div.itemdesc (get call "short_description")]
+	[:div.datecall
+		[:div "Posted: " (get call "posting_date")]
+		[:div "Closed: " (get call "closing_date")]
+		[:div (get call "call_number")]
 	]
 )
 
 (defn line2 [call]
 	[:div
-		[:div.item (get call "call_number")]
-		[:div.item (get call "type")]
+		[:div.itemcom  (get call "commodity")]
+		[:div.itemcom  (get call "commodity_type")]
+		[:div.itemcat  (get call "division")]
+		[:div.itemdesc (get call "short_description")]
+		[:div.itemtype (get call "type")]
 	]
 )
 
-(defn line3 [call]
-	[:div
-		[:div.item (get (first (get call "buyers")) "buyer")]
-		[:div.item (get call "closing_date")]
-	]
-)
+;		[:div.item (get (first (get call "buyers")) "buyer")]
 
 (defn call-lines [call]
 	[:div.call 
 		(line1 call) 
 		(line2 call)
-		(line3 call)
 	]
 )
 

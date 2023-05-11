@@ -9,14 +9,6 @@ body
 	font-family: sans-serif;
 }
 
-#title
-{
-	text-align: center;
-	font-size: xx-large;
-	font-weight: bolder;
-	margin-bottom: 1.5em;
-}
-
 #wrapper
 {
 	display: flex;
@@ -28,6 +20,13 @@ body
 	}
 }
 
+#title
+{
+	text-align: center;
+	font-size: xx-large;
+	font-weight: bolder;
+	margin-bottom: 1.5em;
+}
 
 #iframe-outer
 {
@@ -63,16 +62,10 @@ body
 	width: 100%;
 }
 
-#name
+.button
 {
 	display: inline;
 	margin-right: 1em;
-}
-
-.item
-{
-	display: inline-block;
-	padding-right: 10px;
 }
 
 .call
@@ -91,18 +84,23 @@ body
 	bottom: 1.2em;
 }
 
+.datecall
+{
+	text-align: right;
+	float: right;
+        margin-left: 3em;
+}
+
+.itemtype
+{
+	margin-top: 1em;
+}
+
 .itemdesc
 {
 	font-size: x-large;
 	font-weight: bold;
 	margin-top: 0.5em;
-}
-
-.itemdate
-{
-	text-align: right;
-	font-size: large;
-	float: right;
 }
 
 .itemcom
