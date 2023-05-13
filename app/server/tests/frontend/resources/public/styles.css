@@ -57,7 +57,7 @@ body
 	color: #444;
 }
 
-#select select
+#select select, .search
 {
 	width: 100%;
 }
@@ -119,4 +119,15 @@ body
 .itemcat, .callno
 {
 	font-size: small;
+}
+
+.forward
+{
+    float: right;
+}
+
+.back, .forward
+{
+    font-size: x-large;
+    text-decoration: none;
 }

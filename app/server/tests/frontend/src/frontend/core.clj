@@ -10,6 +10,7 @@
 	(:require [hiccup.page :as page])
 	(:require [clojure.java.io :as io])
 	(:require [frontend.calls :as calls])
+	(:require [frontend.common :as common])
 	(:require [frontend.details :as details])
 	(:require [frontend.attachments :as attachments])
 ;	(:require [ring-debug-logging.core :as debug])
@@ -25,18 +26,6 @@
 	}
 )
 
-(defn stay [limit offset]
-	offset
-)
-
-(defn forward [limit offset]
-	(+ offset limit)
-)
-
-(defn back [limit offset]
-	(max 0 (- offset limit))
-)
-
 (compojure/defroutes toronto-bids
 	(compojure/GET "*/calls.html" 
 		[
@@ -44,7 +33,7 @@
 			closing_date_before closing_date_after search_text limit offset
 		] 
 		(calls/output api-base local-base division type commodity commodity_type buyer posting_date_before posting_date_after 
-									closing_date_before closing_date_after search_text limit offset stay
+									closing_date_before closing_date_after search_text limit offset common/stay
 		)
 	)
 
@@ -54,7 +43,7 @@
 			closing_date_before closing_date_after search_text limit offset
 		] 
 		(calls/output api-base local-base division type commodity commodity_type buyer posting_date_before posting_date_after 
-									closing_date_before closing_date_after search_text limit offset forward
+									closing_date_before closing_date_after search_text limit offset common/forward
 		)
 	)
 
@@ -64,7 +53,7 @@
 			closing_date_before closing_date_after search_text limit offset
 		] 
 		(calls/output api-base local-base division type commodity commodity_type buyer posting_date_before posting_date_after 
-									closing_date_before closing_date_after search_text limit offset back
+									closing_date_before closing_date_after search_text limit offset common/back
 		)
 	)
 

@@ -45,7 +45,7 @@
 (defn text [label name value]
 	(let 
 		[
-			create-fn (fn [] [:input {:type "text-area" :name name :value value}])
+			create-fn (fn [] [:input.search {:type "text-area" :name name :value value}])
 		]
 		(create-line label create-fn)
 	)
@@ -61,6 +61,7 @@
 		(list
 			[:div
 				(form/form-to [:get "calls.html"]
+					(text "Search for", "search_text", (get query-params "search_text"))
 					(select api-base "Division" "division" "plain_divisions" (get query-params "division"))
 					(select api-base "Type" "type" "plain_types" (get query-params "type"))
 					(select api-base "Commodity" "commodity" "plain_commodities" (get query-params "commodity"))
@@ -70,14 +71,11 @@
 					(date "Posted on or after", "posting_date_after", (get query-params "posting_date_after"))
 					(date "Closed on or before", "closing_date_before", (get query-params "closing_date_before"))
 					(date "Closed on or after", "closing_date_after", (get query-params "closing_date_after"))
-					(text "Search for", "search_text", (get query-params "search_text"))
 					(form/hidden-field "limit" (get query-params "limit"))
 					(form/hidden-field "offset" (get query-params "offset"))
 
-					(button-box "reload" "calls.html" "Reload")
-					(button-box "reset" "reset.html" "Reset")
-					(button-box "back" "back.html" "Back")
-					(button-box "forward" "forward.html" "Forward")
+					(button-box "reload" "calls.html" "Apply filters")
+					(button-box "reset" "reset.html" "Reset filters")
 				) 
 			]
 		)

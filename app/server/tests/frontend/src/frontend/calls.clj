@@ -128,8 +128,16 @@
 			body (get response :body)
 
 			document-array (json/read-str body)
+            offset (Integer/parseInt (get query-params "offset"))
+            limit (Integer/parseInt (get query-params "limit"))
 		]
-		[:div (map call-display document-array)]
+		(list
+            [:div (map call-display document-array)]
+		    [:div
+                [:a.back {:href (util/url "call_list.html" (assoc query-params "offset" (common/back limit offset)))} "< Prev results"]
+                [:a.forward {:href (util/url "call_list.html" (assoc query-params "offset" (common/forward limit offset)))} "Next results >"]
+		    ]
+	    )
 	)
 )
 

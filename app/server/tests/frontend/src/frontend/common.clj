@@ -14,3 +14,15 @@
 		(page/include-css (str local-base "styles.css"))
 	]
 )
+
+(defn stay [limit offset]
+	offset
+)
+
+(defn forward [limit offset]
+	(+ offset limit)
+)
+
+(defn back [limit offset]
+	(max 0 (- offset limit))
+)
