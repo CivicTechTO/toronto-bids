@@ -1,8 +1,8 @@
 (ns toronto-bids.documents
 	(:gen-class)
-	(:require [clojure.string :as str])
+	(:require [clojure.string :as string])
 	(:require [clojure.java.jdbc :as jdbc])
-	(:require [clojure.data.json :as json])
+	(:require [ring.util.response :as response])
 )
 
 (def SEARCH-STRING 
@@ -59,7 +59,7 @@
 		]
 		(cond 
 			(nil? test) (assoc sql 0 (str HEAD where-clause tail))
-			(not (str/blank? argument)) (make-query test-rest argument-rest tail (str where-clause " AND " test) (conj sql argument)) 
+			(not (string/blank? argument)) (make-query test-rest argument-rest tail (str where-clause " AND " test) (conj sql argument)) 
 			:else (make-query test-rest argument-rest tail where-clause sql)
 		)
 	)
@@ -86,14 +86,14 @@
 )
 
 (defn output-documents [db argument-list limit offset]
-	(json/write-str (fetch-documents db argument-list limit offset))
+	(response/response (fetch-documents db argument-list limit offset))
 )
 
 (defn output-description [db document_id]
 	(let [row (first (jdbc/query db ["SELECT description FROM document WHERE document.id = ?" document_id]))]
 		(if row 
-			(json/write-str (get row :description))
-			(hash-map :status 404 :body (json/write-str "Document not found"))
+			(get row :description)
+			(response/status (response/response {:message "Document not found"} 404))
 		)
 	)
 )

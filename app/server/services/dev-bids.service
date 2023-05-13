@@ -7,7 +7,7 @@ Wants=nginx.service mysql.service
 Type=simple
 Restart=always
 RestartSec=10
-WorkingDirectory=/home/jrootham/test-bids/bin/
+WorkingDirectory=/home/jrootham/dev-bids/bin/
 ExecStart=/usr/bin/java -jar toronto-bids.jar test_bids 8102
 
 [Install]
