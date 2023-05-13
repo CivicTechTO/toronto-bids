@@ -68,6 +68,12 @@ body
 	margin-right: 1em;
 }
 
+.calllink
+{
+    color: black;
+    text-decoration: none;
+}
+
 .call
 {
 	margin-bottom: 2em;

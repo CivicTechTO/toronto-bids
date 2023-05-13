@@ -40,10 +40,9 @@
 		[:div.itemcat  (get call "division")]
 		[:div.itemdesc (get call "short_description")]
 		[:div.itemtype (get call "type")]
+;		[:div.item (get (first (get call "buyers")) "buyer")]
 	]
 )
-
-;		[:div.item (get (first (get call "buyers")) "buyer")]
 
 (defn call-lines [call]
 	[:div.call 
@@ -53,15 +52,10 @@
 )
 
 (defn call-display [call]
-	(let 
-		[
-			document_id (get call "document_id")
-			detail-button (form/submit-button "View details")
-			details (list (form/hidden-field "document_id" document_id) detail-button)
-			detail-form [:div (form/form-to [:get "details.html"] details)]
-		]
-		(conj (call-lines call) detail-form)
-	)
+    [:a.calllink
+        {:href (util/url "/details.html" {:document_id (get call "document_id")})}
+        (call-lines call)
+    ]
 )
 
 (defn show [v]
