@@ -22,7 +22,7 @@
 )
 
 (defn format-date-time [date-time]
-    (first (str/split date-time #"T" 2))
+	(first (str/split date-time #"T" 2))
 )
 
 (defn line1 [call]
@@ -52,10 +52,10 @@
 )
 
 (defn call-display [call]
-    [:a.calllink
-        {:href (util/url "/details.html" {:document_id (get call "document_id")})}
-        (call-lines call)
-    ]
+	[:a.calllink
+		{:href (util/url "/details.html" {:document_id (get call "document_id")})}
+		(call-lines call)
+	]
 )
 
 (defn show [v]
@@ -128,16 +128,16 @@
 			body (get response :body)
 
 			document-array (json/read-str body)
-            offset (Integer/parseInt (get query-params "offset"))
-            limit (Integer/parseInt (get query-params "limit"))
+			offset (Integer/parseInt (get query-params "offset"))
+			limit (Integer/parseInt (get query-params "limit"))
 		]
 		(list
-            [:div (map call-display document-array)]
-		    [:div
-                [:a.back {:href (util/url "call_list.html" (assoc query-params "offset" (common/back limit offset)))} "< Prev results"]
-                [:a.forward {:href (util/url "call_list.html" (assoc query-params "offset" (common/forward limit offset)))} "Next results >"]
-		    ]
-	    )
+			[:div (map call-display document-array)]
+			[:div
+				[:a.back {:href (util/url "call_list.html" (assoc query-params "offset" (common/back limit offset)))} "< Prev results"]
+				[:a.forward {:href (util/url "call_list.html" (assoc query-params "offset" (common/forward limit offset)))} "Next results >"]
+			]
+		)
 	)
 )
 
