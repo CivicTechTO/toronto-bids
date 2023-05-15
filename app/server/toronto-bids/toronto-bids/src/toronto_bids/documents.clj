@@ -36,7 +36,7 @@
 
 (def HEAD (str "SELECT DISTINCT" COLUMN-STRING FROM-STRING " WHERE TRUE"))
 
-(def ORDER-STRING " ORDER BY posting_date")
+(def ORDER-STRING " ORDER BY posting_date DESC")
 
 (def BUYER-SELECT 
 	"SELECT buyer, phone, email, location FROM document_buyer JOIN buyer ON buyer_id = buyer.id JOIN location ON location_id = location.id WHERE document_id = ?;"
@@ -49,20 +49,85 @@
 	)
 )
 
-(defn make-query [test-list argument-list tail where-clause sql]
-	(let 
-		[
-			test (first test-list)
-			argument (first argument-list)
-			test-rest (rest test-list)
-			argument-rest (rest argument-list)
-		]
-		(cond 
-			(nil? test) (assoc sql 0 (str HEAD where-clause tail))
-			(not (str/blank? argument)) (make-query test-rest argument-rest tail (str where-clause " AND " test) (conj sql argument)) 
-			:else (make-query test-rest argument-rest tail where-clause sql)
-		)
+(defn collapse [fn initial coll]
+ 	(cond 
+ 		(empty? coll) initial
+		:else (collapse	fn (fn initial (first coll)) (next coll))
 	)
+)
+
+(defn join [test argument]
+	{
+		:test test, 
+		:argument argument
+	}
+)
+
+(defn pick [input]
+	(not (nil? (get input :argument)))
+)
+
+(defn construct [previous entry]
+	(let
+		[
+			test (get entry :test)
+			argument (get entry :argument)
+			sql (str (get previous 0) " AND " test)
+			result (assoc previous 0 sql)
+		]
+		(conj result argument)
+	)
+)
+
+(defn make-query [test-list argument-list]
+	(let
+		[
+			input (map join test-list argument-list)
+			active (filter pick input)
+			result (collapse construct [HEAD] active)
+			sql (get result 0)
+		]
+		(assoc result 0 (str sql ORDER-STRING))
+	)
+)
+
+; (defn make-query [test-list argument-list tail where-clause sql]
+; 	(let 
+; 		[
+; 			test (first test-list)
+; 			argument (first argument-list)
+; 			test-rest (rest test-list)
+; 			argument-rest (rest argument-list)
+; 		]
+; 		(cond 
+; 			(nil? test) (assoc sql 0 (str HEAD where-clause tail))
+; 			(not (str/blank? argument)) (make-query test-rest argument-rest tail (str where-clause " AND " test) (conj sql argument)) 
+; 			:else (make-query test-rest argument-rest tail where-clause sql)
+; 		)
+; 	)
+; )
+
+(defn parse[name string]
+	(try 
+		(Integer/parseInt string)
+		(catch NumberFormatException exception (throw (Exception. (str name "=" string " is not a number"))))
+	)
+)
+
+(defn block-field [query name test value-string]
+	(cond 
+		(nil? value-string) query
+		:else (conj (assoc query 0 (str (get query 0) test)) (parse name value-string))
+	)
+)
+
+(defn validate [limit-string offset-string]
+	(if (and (nil? limit-string) (not (nil? offset-string))) (throw (Exception. "Cannot set offset without limit")))
+)
+
+(defn set-limit [query limit-string offset-string]
+	(validate limit-string offset-string)
+	(block-field (block-field query "limit" " LIMIT ?" limit-string) "offset" " OFFSET ?" offset-string)
 )
 
 (defn make-insert-buyers [db]
@@ -78,15 +143,18 @@
 	(let
 		[
 			tail (str ORDER-STRING (limit-string limit offset) ";")
-			query (make-query TEST-LIST argument-list tail "" [""])
+			query (make-query TEST-LIST argument-list)
 			result (jdbc/query db query)
 		]
 		(map (make-insert-buyers db) result)
 	)
 )
 
-(defn output-documents [db argument-list limit offset]
-	(json/write-str (fetch-documents db argument-list limit offset))
+(defn output-documents [db argument-list limit-string offset-string]
+	(try
+		(json/write-str (fetch-documents db argument-list limit-string offset-string))
+		(catch Exception exception (hash-map :status 400 :body (json/write-str (str exception))))
+	)
 )
 
 (defn output-description [db document_id]
