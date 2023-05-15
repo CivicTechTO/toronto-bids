@@ -1,13 +1,15 @@
 (ns toronto-bids.core
 	(:gen-class)
 
-	(:require [clojure.string :as str])
-	(:require [ring.adapter.jetty :as ring])
+	(:require [ring.adapter.jetty :as jetty])
+	(:require [ring.util.response :as response])
 	(:require [ring.middleware.params :as params])
+	(:require [ring.middleware.cors :as cors])
+	(:require [ring.middleware.json :as json])
+	(:require [ring.middleware.content-type :as content-type])
 	(:require [compojure.core :as compojure])
 	(:require [compojure.route :as compojure-route])
 	(:require [clojure.java.jdbc :as jdbc])
-	(:require [clojure.data.json :as json])
 	(:require [toronto-bids.stuff :as stuff])
 	(:require [toronto-bids.documents :as documents])
 ;	(:require [ring-debug-logging.core :as debug])
@@ -18,7 +20,7 @@
 		[
 		  query (str "SELECT " columns " FROM " table)
 		]
-		(json/write-str (jdbc/query db [query]))
+		(response/response (jdbc/query db [query]))
 	)
 )
 
@@ -35,24 +37,24 @@
 		  query (str "SELECT " column " FROM " table " ORDER BY " column)
 		  result (jdbc/query db [query])
 		]
-		(json/write-str (map extract result))
+		(response/response (map extract result))
 	)
 )
 
 (compojure/defroutes toronto-bids
-	(compojure/GET "*/api/types" [db] (output-simple db "type" "id, type"))
-	(compojure/GET "*/api/commodities" [db] (output-simple db "commodity" "id, commodity"))
-	(compojure/GET "*/api/commodity_types" [db] (output-simple db "commodity_type" "id, commodity_id, commodity_type"))
-	(compojure/GET "*/api/divisions" [db] (output-simple db "division" "id,division"))
-	(compojure/GET "*/api/buyers" [db] (output-simple db "buyer" "id, buyer"))
+	(compojure/GET "*/api/types.json" [db] (output-simple db "type" "id, type"))
+	(compojure/GET "*/api/commodities.json" [db] (output-simple db "commodity" "id, commodity"))
+	(compojure/GET "*/api/commodity_types.json" [db] (output-simple db "commodity_type" "id, commodity_id, commodity_type"))
+	(compojure/GET "*/api/divisions.json" [db] (output-simple db "division" "id,division"))
+	(compojure/GET "*/api/buyers.json" [db] (output-simple db "buyer" "id, buyer"))
 
-	(compojure/GET "*/api/plain_divisions" [db] (output-plain db "division" "division"))
-	(compojure/GET "*/api/plain_types" [db] (output-plain db "type" "type"))
-	(compojure/GET "*/api/plain_commodities" [db] (output-plain db "commodity" "commodity"))
-	(compojure/GET "*/api/plain_commodity_types" [db] (output-plain db "commodity_type" "commodity_type"))
-	(compojure/GET "*/api/plain_buyers" [db] (output-plain db "buyer" "buyer"))
+	(compojure/GET "*/api/plain_divisions.json" [db] (output-plain db "division" "division"))
+	(compojure/GET "*/api/plain_types.json" [db] (output-plain db "type" "type"))
+	(compojure/GET "*/api/plain_commodities.json" [db] (output-plain db "commodity" "commodity"))
+	(compojure/GET "*/api/plain_commodity_types.json" [db] (output-plain db "commodity_type" "commodity_type"))
+	(compojure/GET "*/api/plain_buyers.json" [db] (output-plain db "buyer" "buyer"))
 
-	(compojure/GET "*/api/documents" 
+	(compojure/GET "*/api/documents.json" 
 		[db call_number type division commodity commodity_type posting_date_after posting_date_before closing_date_after closing_date_before buyer search_text limit offset] 
 		(documents/output-documents db 
 			(list call_number type division commodity commodity_type posting_date_after posting_date_before closing_date_after closing_date_before buyer search_text) 
@@ -60,9 +62,9 @@
 		)
 	)
 
-	(compojure/GET "*/api/details" [db document_id] (documents/output-details db document_id))
+	(compojure/GET "*/api/details.json" [db document_id] (documents/output-details db document_id))
 
-	(compojure-route/not-found (json/write-str "End point not found"))
+	(compojure-route/not-found (list "End point not found"))
 )
 
 (defn make-wrap-db [db]
@@ -81,6 +83,10 @@
 ;			(debug/wrap-with-logger)
 			(wrap-db)
 			(params/wrap-params)
+			(cors/wrap-cors :access-control-allow-origin [#".*"] :access-control-allow-methods [:get])
+			(json/wrap-json-response)
+			(content-type/wrap-content-type)
+;			(debug/wrap-with-logger)
 		)
 	)
 )
@@ -99,7 +105,7 @@
 			(try
 				(let [port (Integer/parseInt portString)]
 					(println (str "Will run on port " portString))
-					(ring/run-jetty (make-db-handler db) {:port port})
+					(jetty/run-jetty (make-db-handler db) {:port port})
 				)
 				(catch NumberFormatException exception 
 					(println (str portString " is not an int"))

@@ -176,7 +176,7 @@
 
 (defn parse-limit [name argument]
 	(try
-		(Integer/parseInt argument)
+		(when (some? argument) (Integer/parseInt argument))
 		(catch NumberFormatException exception 
 			(throw (Exception. (str "The " name " argument '" argument "' is not a number")))
 		)
