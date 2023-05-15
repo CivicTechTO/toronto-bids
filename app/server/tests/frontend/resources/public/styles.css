@@ -40,12 +40,6 @@ body
 	border: none;
 }
 
-#contents
-{
-	width: 1250px;
-	height: 900px;
-}
-
 #select
 {
 	background: #eee;
@@ -137,3 +131,4 @@ body
 	font-size: x-large;
 	text-decoration: none;
 }
+
