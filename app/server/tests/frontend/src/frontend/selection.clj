@@ -62,11 +62,11 @@
 			[:div
 				(form/form-to [:get "calls.html"]
 					(text "Search for", "search_text", (get query-params "search_text"))
-					(select api-base "Division" "division" "plain_divisions" (get query-params "division"))
-					(select api-base "Type" "type" "plain_types" (get query-params "type"))
-					(select api-base "Commodity" "commodity" "plain_commodities" (get query-params "commodity"))
-					(select api-base "Commodity type" "commodity_type" "plain_commodity_types" (get query-params "commodity_type"))
-					(select api-base "Buyer" "buyer" "plain_buyers" (get query-params "buyer"))
+					(select api-base "Division" "division" "plain_divisions.json" (get query-params "division"))
+					(select api-base "Type" "type" "plain_types.json" (get query-params "type"))
+					(select api-base "Commodity" "commodity" "plain_commodities.json" (get query-params "commodity"))
+					(select api-base "Commodity type" "commodity_type" "plain_commodity_types.json" (get query-params "commodity_type"))
+					(select api-base "Buyer" "buyer" "plain_buyers.json" (get query-params "buyer"))
 					(date "Posted on or before", "posting_date_before", (get query-params "posting_date_before"))
 					(date "Posted on or after", "posting_date_after", (get query-params "posting_date_after"))
 					(date "Closed on or before", "closing_date_before", (get query-params "closing_date_before"))

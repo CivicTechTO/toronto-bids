@@ -124,7 +124,7 @@
 	(let
 		[
 			filtered-params (filter filter-query-params query-params) 
-			response (client/get (str api-base "documents") {:query-params filtered-params :accept :json})
+			response (client/get (str api-base "documents.json") {:query-params filtered-params :accept :json})
 			body (get response :body)
 
 			document-array (json/read-str body)
