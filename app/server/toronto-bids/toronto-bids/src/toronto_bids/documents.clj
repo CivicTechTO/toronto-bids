@@ -1,8 +1,8 @@
 (ns toronto-bids.documents
 	(:gen-class)
-	(:require [clojure.string :as str])
+	(:require [clojure.string :as string])
 	(:require [clojure.java.jdbc :as jdbc])
-	(:require [clojure.data.json :as json])
+	(:require [ring.util.response :as response])
 )
 
 (def SEARCH-STRING 
