@@ -2,6 +2,7 @@
 	(:gen-class)
 	(:require [clojure.string :as string])
 	(:require [clojure.java.jdbc :as jdbc])
+	(:require [clojure.data.json :as json])
 	(:require [ring.util.response :as response])
 )
 
@@ -85,7 +86,7 @@
 	)
 )
 
-(defn make-query [test-list argument-list]
+(defn make-query [test-list argument-list tail]
 	(let
 		[
 			input (map join test-list argument-list)
@@ -93,7 +94,7 @@
 			result (collapse construct [HEAD] active)
 			sql (get result 0)
 		]
-		(assoc result 0 (str sql ORDER-STRING))
+		(assoc result 0 (str sql tail))
 	)
 )
 
@@ -113,7 +114,7 @@
 ; 	)
 ; )
 
-(defn parse[name string]
+(defn parse [name string]
 	(try 
 		(Integer/parseInt string)
 		(catch NumberFormatException exception (throw (Exception. (str name "=" string " is not a number"))))
@@ -149,7 +150,7 @@
 	(let
 		[
 			tail (str ORDER-STRING (limit-string limit offset) ";")
-			query (make-query TEST-LIST argument-list)
+			query (make-query TEST-LIST argument-list tail)
 			result (jdbc/query db query)
 		]
 		(map (make-insert-buyers db) result)
