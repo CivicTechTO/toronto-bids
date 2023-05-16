@@ -44,6 +44,10 @@
 	"SELECT buyer, phone, email, location FROM document_buyer JOIN buyer ON buyer_id = buyer.id JOIN location ON location_id = location.id WHERE document_id = ?;"
 )
 
+(def DETAILS_SQL
+	(str "	SELECT " DETAIL-COLUMNS FROM-STRING " WHERE document_id = ?")
+)
+
 (defn limit-string [limit offset]
 	(str 
 		(if (nil? limit) "" (str " LIMIT " limit))
@@ -69,10 +73,6 @@
 	(not (nil? (get input :argument)))
 )
 
-(def DETAILS_SQL
-	(str "	SELECT " DETAIL-COLUMNS FROM-STRING " WHERE document_id = ?")
-)
-
 (defn construct [previous entry]
 	(let
 		[
@@ -96,22 +96,6 @@
 		(assoc result 0 (str sql ORDER-STRING))
 	)
 )
-
-; (defn make-query [test-list argument-list tail where-clause sql]
-; 	(let 
-; 		[
-; 			test (first test-list)
-; 			argument (first argument-list)
-; 			test-rest (rest test-list)
-; 			argument-rest (rest argument-list)
-; 		]
-; 		(cond 
-; 			(nil? test) (assoc sql 0 (str HEAD where-clause tail))
-; 			(not (str/blank? argument)) (make-query test-rest argument-rest tail (str where-clause " AND " test) (conj sql argument)) 
-; 			:else (make-query test-rest argument-rest tail where-clause sql)
-; 		)
-; 	)
-; )
 
 (defn parse[name string]
 	(try 
@@ -148,7 +132,6 @@
 (defn fetch-documents [db argument-list limit offset]
 	(let
 		[
-			tail (str ORDER-STRING (limit-string limit offset) ";")
 			query (make-query TEST-LIST argument-list)
 			result (jdbc/query db query)
 		]
@@ -158,8 +141,8 @@
 
 (defn output-documents [db argument-list limit-string offset-string]
 	(try
-		(json/write-str (fetch-documents db argument-list limit-string offset-string))
-		(catch Exception exception (hash-map :status 400 :body (json/write-str (str exception))))
+		(response/response (fetch-documents db argument-list limit-string offset-string))
+		(catch Exception exception (response/status (response/response (str exception)) 500))
 	)
 )
 
@@ -169,12 +152,8 @@
 			row (first (jdbc/query db [DETAILS_SQL document_id]))
 		]
 		(if row 
-			(json/write-str row)
-			(hash-map :status 404 :body (json/write-str "Document not found"))
+			(response/response row)
+			(response/status response/response("Document not found") 404)
 		)
 	)
-)
-
-(defn output-documents [db argument-list limit offset]
-	(json/write-str (fetch-documents db argument-list limit offset))
 )
