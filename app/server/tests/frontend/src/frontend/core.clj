@@ -16,13 +16,14 @@
 ;	(:require [ring-debug-logging.core :as debug])
 )
 
-(def CSS (io/resource "public/styles.css"))
+(def css-calls (io/resource "public/calls.css"))
+(def css-details (io/resource "public/details.css"))
 
-(defn css []
+(defn css-response [css]
 	{
 		:status 200
 		:headers {"Content-Type" "text/css"}
-		:body (slurp CSS)
+		:body (slurp css)
 	}
 )
 
@@ -85,7 +86,8 @@
 
 ;	(compojure/GET "*/attachments.html" [api-base local-base document_id] (attachments/output api-base local-base document_id))
 
-	(compojure/GET "*/styles.css" [] (css))
+	(compojure/GET "*/calls.css" [] (css-response css-calls))
+	(compojure/GET "*/details.css" [] (css-response css-details))
 
 ;	(route/resources "/")
 

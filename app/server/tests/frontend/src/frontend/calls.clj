@@ -148,7 +148,7 @@
 )
 
 (defn list-page [api-base local-base query-params]
-	(page/html5 (list (common/head local-base TITLE) [:body (list-body api-base query-params)]))
+	(page/html5 (list (common/head local-base TITLE "calls.css") [:body (list-body api-base query-params)]))
 )
 
 (defn main-body [api-base query-params]
@@ -170,7 +170,7 @@
 	[
 		main (main-body api-base query-params)
 	]
-		(page/html5 (list (common/head local-base TITLE) [:body main]))
+		(page/html5 (list (common/head local-base TITLE "calls.css") [:body main]))
 	)
 )
 
@@ -197,7 +197,7 @@
 			(list-page api-base local-base query-params)
 		)
 		(catch Exception error
-			(page/html5 (list (common/head local-base TITLE) [:body error]))
+			(page/html5 (list (common/head local-base TITLE "calls.css") [:body error]))
 		)
 	)
 )
@@ -228,7 +228,7 @@
 			(main-page api-base local-base query-params)
 		)
 		(catch Exception error
-			(page/html5 (list (common/head local-base TITLE) [:body error]))
+			(page/html5 (list (common/head local-base TITLE "calls.css") [:body error]))
 		)
 	)
 )

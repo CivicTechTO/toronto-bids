@@ -1,0 +1,53 @@
+@import url('https://fonts.googleapis.com/css2?family=Arimo&display=swap');
+
+body
+{
+	margin: 0;
+	font-family: 'Arimo', sans-serif;
+    line-height: 1.5;
+    padding: 1em;
+}
+
+.call
+{
+	margin-bottom: 2em;
+}
+
+.call form
+{
+	float: right;
+	position: relative;
+	bottom: 1.2em;
+}
+
+.datecall
+{
+	text-align: right;
+	float: right;
+	margin-left: 3em;
+}
+
+.itemtype
+{
+	margin-top: 1em;
+}
+
+.itemdesc
+{
+	font-size: x-large;
+	font-weight: bold;
+	margin-top: 0.5em;
+}
+
+.itemcom
+{
+	display: inline-block;
+	margin-right: 1em;
+	font-size: small;
+}
+
+.itemcat, .callno
+{
+	font-size: small;
+}
+

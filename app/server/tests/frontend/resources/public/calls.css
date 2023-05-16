@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Arimo&display=swap');
+
 html, body, #outer, #wrapper
 {
 	height: 100%;
@@ -6,7 +8,8 @@ html, body, #outer, #wrapper
 body
 {
 	margin: 0;
-	font-family: sans-serif;
+	font-family: 'Arimo', sans-serif;
+    line-height: 1.5;
 }
 
 #wrapper
@@ -113,10 +116,9 @@ body
 {
 	display: inline-block;
 	margin-right: 1em;
-	font-size: small;
 }
 
-.itemcat, .callno
+.callno
 {
 	font-size: small;
 }

@@ -8,10 +8,10 @@
 	(:require [clj-http.client :as client])
 )
 
-(defn head [local-base title]
+(defn head [local-base title css-file]
 	[:head
 		[:title title]
-		(page/include-css (str local-base "styles.css"))
+		(page/include-css (str local-base css-file))
 	]
 )
 
