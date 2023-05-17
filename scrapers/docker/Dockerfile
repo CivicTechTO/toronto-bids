@@ -25,4 +25,3 @@ RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key
 
 # Set the entrypoint to run your script
 ENTRYPOINT ["bash", "entrypoint.sh"]
-
