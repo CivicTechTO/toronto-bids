@@ -243,6 +243,14 @@ if __name__ == "__main__":
         action="store_true",
         help="Don't post updates to Slack",
     )
+    parser.add_argument(
+        "json-url",
+        help="URL to push the JSON to"
+    )
+    parser.add_argument(
+        "json-key",
+        help="Key to use to push the JSON"
+    )
     args = parser.parse_args()
     Path(DOWNLOAD_DIRECTORY).mkdir(exist_ok=True)
     Path(ARIBA_DATA_DIRECTORY).mkdir(exist_ok=True)
@@ -363,6 +371,11 @@ if __name__ == "__main__":
 
     # drive = GoogleDrive(slack, keychain)
     # drive.upload_all_data(Path("data"))
+    # Check if alternate JSON URL is provided in args
+    if args.json_url:
+        scraper_config["json_url"] = args.json_url
+    if args.json_key:
+        scraper_config["json_key"] = args.json_key
 
     response = transmit_json(scraper_config["json_url"], scraper_config["json_key"])
     slack.post_log(f'Pushed JSON, received response: {response.text}')
