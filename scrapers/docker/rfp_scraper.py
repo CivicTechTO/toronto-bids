@@ -18,7 +18,7 @@ from filemanage import (
     delete_duplicates,
 )
 from open_data import get_open_data
-from google_drive import GoogleDrive
+from transmit_json import transmit_json
 import json
 import argparse
 from rfpkeys import Keychain
@@ -28,9 +28,9 @@ from slack import Slack
 # Working directory
 REPO_DIRECTORY = Path.cwd()
 # System default download directory
-DOWNLOAD_DIRECTORY = REPO_DIRECTORY / "downloads"
-OPEN_DATA_DIRECTORY = REPO_DIRECTORY / "open_data"
-ARIBA_DATA_DIRECTORY = REPO_DIRECTORY / "data"
+DOWNLOAD_DIRECTORY = REPO_DIRECTORY / "files" / "downloads"
+OPEN_DATA_DIRECTORY = REPO_DIRECTORY / "files" / "open_data"
+ARIBA_DATA_DIRECTORY = REPO_DIRECTORY / "files" / "ariba_data"
 RFP_SCRAPER_CONFIG_JSON = Path.cwd() / "rfp_scraper_config.json"
 
 
@@ -238,18 +238,28 @@ if __name__ == "__main__":
         action="store_true",
         help="Download all attachments even if they already exist",
     )
+    parser.add_argument(
+        "--no-slack",
+        action="store_true",
+        help="Don't post updates to Slack",
+    )
     args = parser.parse_args()
     Path(DOWNLOAD_DIRECTORY).mkdir(exist_ok=True)
     Path(ARIBA_DATA_DIRECTORY).mkdir(exist_ok=True)
     Path(OPEN_DATA_DIRECTORY).mkdir(exist_ok=True)
 
     keychain = Keychain()
-
-    slack = Slack(
-        token=keychain.get_secret("SLACKKEY"),
-        log_channel="bid-scraper-logs",
-        update_channel="bid-scraper-logs",
-    )
+    if not args.no_slack:
+        slack = Slack(
+            token=keychain.get_secret("SLACKKEY"),
+            log_channel="bid-scraper-logs",
+            update_channel="bid-scraper-logs",
+        )
+    else:
+        # Create a fake slack object that just prints to the console
+        slack = Slack(token="fake", log_channel="fake", update_channel="fake")
+        slack.post_log = print
+        slack.post_update = print
 
     slack.post_update(
         f"Scraper is starting to run! :rocket: You can follow updates on the #{slack.log_channel} channel."
@@ -294,11 +304,11 @@ if __name__ == "__main__":
                         json_file.unlink()
                     else:
                         hashes.add(file_hash)
+    scraper_config = load_scraper_config(RFP_SCRAPER_CONFIG_JSON)
 
     if not skip_scraper:
         slack.post_log("It looks like there are new bids! Starting the scraper...")
 
-        scraper_config = load_scraper_config(RFP_SCRAPER_CONFIG_JSON)
         finished = False
         clicked = set()
         chrome_options = webdriver.ChromeOptions()
@@ -324,7 +334,7 @@ if __name__ == "__main__":
                 slack.post_log(str(e))
                 # Check if the issue is that we aren't logged in
                 if not driver.is_logged_in():
-                    driver.login()
+                    driver.login(keychain)
                 else:
                     driver.quit()
                     driver = Ariba(
@@ -336,7 +346,7 @@ if __name__ == "__main__":
                     )
 
         slack.post_log(
-            "Ariba scraper is finished! :tada: Now performing cleanup, then uploading to Google Drive..."
+            "Ariba scraper is finished! :tada: Now performing cleanup..."
         )
 
     # Move zips from download directory to repo's data directory
@@ -354,10 +364,11 @@ if __name__ == "__main__":
     # drive = GoogleDrive(slack, keychain)
     # drive.upload_all_data(Path("data"))
 
+    response = transmit_json(scraper_config["json_url"], scraper_config["json_key"])
+    slack.post_log(f'Pushed JSON, received response: {response.text}')
+
     finish_time = time()
     slack.post_update(
-        f"Scraper is finished! :tada: You can find the data in the Google Drive folder. :file_folder:"
+        f"Scraper is finished! :tada: :file_folder:"
     )
-    slack.post_log(f"Finished in {finish_time - start_time} seconds")
-
-# %%
+    slack.post_log(f"Finished in {finish_time - start_time:.0f} seconds")
