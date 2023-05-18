@@ -119,6 +119,15 @@ body
 	text-align: right;
 	float: right;
 	margin-left: 3em;
+        line-height: 1;
+}
+
+.date
+{
+	font-weight: bold;
+        font-size: larger;
+	display: inline;
+	color: royalblue;
 }
 
 .itemtype
@@ -130,7 +139,7 @@ body
 {
 	font-size: x-large;
 	font-weight: bold;
-	margin-top: 0.5em;
+	color: royalblue;
 }
 
 .itemcom

@@ -19,7 +19,7 @@
 (defn line1 [call]
 	[:div.datecall
 ;		[:div "<b>Posted:</b> " (format-date-time (get call "posting_date"))]
-		[:div "<b>Closed:</b> " (format-date-time (get call "closing_date"))]
+		[:div.date (format-date-time (get call "closing_date"))]
 		[:div.callno (get call "call_number")]
 	]
 )
