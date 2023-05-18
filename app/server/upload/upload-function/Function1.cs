@@ -69,10 +69,15 @@ namespace upload_function
                         Location = new_location
                     };
 
-                    var new_offer_type = new Type
+                    tempString = data.Type;
+                    var dbOfferType = context.Types.FirstOrDefault(x=>x.Type1 == tempString);
+                    if (dbOfferType == null)
                     {
-                        Type1 = data.Type
-                    };
+                        dbOfferType = new Type
+                        {
+                            Type1 = data.Type
+                        };
+                    }
 
                     var new_document = new Document
                     {
@@ -86,7 +91,7 @@ namespace upload_function
                         LastUpdated = DateTime.Now,
                         CommodityType = new_comm_type,
                         Division = dbDivision,
-                        OfferType = new_offer_type,
+                        OfferType = dbOfferType,
                         Attachments = new List<Attachment>(),
                     };
 
