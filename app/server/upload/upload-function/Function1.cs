@@ -7,12 +7,13 @@ using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using upload_function.DB;
 
 namespace upload_function
 {
-    public static class Function1
+    public static class UploadFunction
     {
-        [FunctionName("Function1")]
+        [FunctionName("upload-document")]
         public static async Task<IActionResult> Run(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = null)] HttpRequest req,
             ILogger log) {
@@ -23,6 +24,13 @@ namespace upload_function
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
             dynamic data = JsonConvert.DeserializeObject(requestBody);
             name = name ?? data?.name;
+            using var context = new BidsDBContext();
+            context.Commodities.Add(new Commodity
+            {
+                Commodity1 = "SaheelTestCommodity"
+            });
+
+            context.SaveChanges();
 
             string responseMessage = string.IsNullOrEmpty(name)
                 ? "This HTTP triggered function executed successfully. Pass a name in the query string or in the request body for a personalized response."
