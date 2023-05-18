@@ -18,7 +18,7 @@
 
 (defn line1 [call]
 	[:div.datecall
-		[:div "<b>Posted:</b> " (format-date-time (get call "posting_date"))]
+;		[:div "<b>Posted:</b> " (format-date-time (get call "posting_date"))]
 		[:div "<b>Closed:</b> " (format-date-time (get call "closing_date"))]
 		[:div.callno (get call "call_number")]
 	]
@@ -30,7 +30,7 @@
 		[:div.itemcom  (get call "commodity_type")]
 		[:div.itemcat  (get call "division")]
 		[:div.itemdesc (get call "short_description")]
-		[:div.itemtype (get call "type")]
+;		[:div.itemtype (get call "type")]
 ;		[:div.item (get (first (get call "buyers")) "buyer")]
 	]
 )

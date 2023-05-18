@@ -125,6 +125,7 @@ body
 	font-size: small;
 }
 
+<<<<<<< Updated upstream
 .forward
 {
 	float: right;
@@ -136,3 +137,9 @@ body
 	text-decoration: none;
 }
 
+=======
+#attachments
+{
+	margin-top: 5em;
+}
+>>>>>>> Stashed changes

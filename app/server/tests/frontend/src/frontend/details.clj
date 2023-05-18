@@ -4,6 +4,7 @@
 	(:require [clojure.data.json :as json])
 	(:require [hiccup.core :as hiccup])
 	(:require [hiccup.page :as page])
+	(:require [hiccup.element :as elem])
 	(:require [hiccup.form :as form])
 	(:require [hiccup.util :as util])
 	(:require [frontend.common :as common])
@@ -26,8 +27,15 @@
 				(list
 					(calls/call-lines call)
 					[:div (get call "site_meeting")]
-					[:div#description (get call "description")]
+					[:div#description
+						"<b>Description:</b>"
+						(get call "description")
+					]
 					;[:div#fulltext (get call "search_text")]
+					[:div#attachments
+						"<b>Attachments:</b>"
+						(elem/unordered-list '()) ; TODO
+					]
 					[:a.back {:href (util/url "calls.html" (dissoc query-params "document_id"))} "< Back to results"]
 					[:a.forward {:href (util/url "call.html" document_id)} "Permalink"]
 				)
