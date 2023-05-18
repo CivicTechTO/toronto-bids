@@ -22,6 +22,31 @@ body
 	#wrapper {
 		flex-direction: column;
 	}
+
+	#content {
+		max-width: 100%;
+	}
+
+	#filters {
+		visibility: hidden;
+		height: 0;
+	}
+
+	#expand-toggle:checked ~ #filters {
+		visibility: visible;
+		height: auto;
+		margin-top: 1em;
+	}
+}
+
+@media (min-width: 1000px) {
+	#content {
+		width: 100%;
+	}
+
+	#expand-toggle, #expand-filters {
+		visibility: hidden;
+	}
 }
 
 #title
@@ -36,7 +61,7 @@ body
 {
 	padding: 2em;
 	overflow-y: auto;
-	width: 100%;
+	min-height: 90%;
 }
 
 #select
