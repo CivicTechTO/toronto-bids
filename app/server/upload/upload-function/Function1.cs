@@ -37,16 +37,28 @@ namespace upload_function
                 var dbDoc = context.Documents.FirstOrDefault(x => x.CallNumber == callNumber);
                 if (dbDoc == null)
                 {
-                    var new_comm_type = new CommoditySubType
+                    string tempString = data.Commodity;
+                    Commodity dbCommodity = context.Commodities.FirstOrDefault(x => x.CommodityName == tempString);
+                    if (dbCommodity == null)
                     {
-                        SubTypeName = data.CommodityType,
-                        Commodity = new Commodity
+                        dbCommodity = new Commodity
                         {
                             CommodityName = data.Commodity,
-                        }
-                    };
+                        };
+                    }
 
-                    string tempString = data.Division;
+                    tempString = data.CommodityType;
+                    CommoditySubType dbCommoditySubType = context.CommodityTypes.FirstOrDefault(x=>x.SubTypeName == tempString && x.Commodity.CommodityName == dbCommodity.CommodityName);
+                    if (dbCommoditySubType == null)
+                    {
+                        dbCommoditySubType = new CommoditySubType
+                        {
+                            SubTypeName = tempString,
+                            Commodity = dbCommodity,
+                        };
+                    }
+
+                    tempString = data.Division;
                     var dbDivision = context.Divisions.FirstOrDefault(x => x.Division1 == tempString);
                     if (dbDivision == null)
                     {
@@ -79,7 +91,7 @@ namespace upload_function
                         };
                     }
 
-                    var new_document = new Document
+                    dbDoc = new Document
                     {
                         CallNumber = (data?.CallNumber == null ? "" : data?.CallNumber),
                         ShortDescription = (data?.ShortDescription == null ? "" : data?.ShortDescription),
@@ -89,7 +101,7 @@ namespace upload_function
                         SearchText = (data?.SearchText == null ? "" : data?.SearchText),
                         SiteMeeting = (data?.SiteMeeting == null ? "" : data?.SiteMeeting),
                         LastUpdated = DateTime.Now,
-                        CommodityType = new_comm_type,
+                        CommodityType = dbCommoditySubType,
                         Division = dbDivision,
                         OfferType = dbOfferType,
                         Attachments = new List<Attachment>(),
@@ -116,17 +128,15 @@ namespace upload_function
                             AttachmentPath = path
                         };
 
-                        new_document.Attachments.Add(attachment);
+                        dbDoc.Attachments.Add(attachment);
                     }
 
                     context.Documents.Add(dbDoc);
-
                 }
 
                 context.SaveChanges();
 
                 log.LogInformation("Saved successfully");
-               
             }
 
             catch(Exception e)
