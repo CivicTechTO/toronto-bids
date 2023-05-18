@@ -46,10 +46,15 @@ namespace upload_function
                         }
                     };
 
-                    var new_division = new Division
+                    string tempString = data.Division;
+                    var dbDivision = context.Divisions.FirstOrDefault(x => x.Division1 == tempString);
+                    if (dbDivision == null)
                     {
-                        Division1 = data.Division
-                    };
+                        dbDivision = new Division
+                        {
+                            Division1 = data.Division
+                        };
+                    }
 
                     var new_location = new Location
                     {
@@ -80,7 +85,7 @@ namespace upload_function
                         SiteMeeting = (data?.SiteMeeting == null ? "" : data?.SiteMeeting),
                         LastUpdated = DateTime.Now,
                         CommodityType = new_comm_type,
-                        Division = new_division,
+                        Division = dbDivision,
                         OfferType = new_offer_type,
                         Attachments = new List<Attachment>(),
                     };
