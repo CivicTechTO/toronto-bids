@@ -3,12 +3,12 @@ using System.Collections.Generic;
 
 namespace upload_function.DB;
 
-public partial class CommodityType {
+public partial class CommoditySubType {
     public int Id { get; set; }
 
     public int CommodityId { get; set; }
 
-    public string CommodityType1 { get; set; }
+    public string SubTypeName { get; set; }
 
     public virtual Commodity Commodity { get; set; }
 

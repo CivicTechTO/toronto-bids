@@ -20,7 +20,7 @@ public partial class BidsDBContext : DbContext {
 
     public virtual DbSet<Commodity> Commodities { get; set; }
 
-    public virtual DbSet<CommodityType> CommodityTypes { get; set; }
+    public virtual DbSet<CommoditySubType> CommodityTypes { get; set; }
 
     public virtual DbSet<Division> Divisions { get; set; }
 
@@ -121,24 +121,24 @@ public partial class BidsDBContext : DbContext {
 
             entity.ToTable("commodity");
 
-            entity.HasIndex(e => e.Commodity1, "commodity").IsUnique();
+            entity.HasIndex(e => e.CommodityName, "commodity").IsUnique();
 
             entity.Property(e => e.Id)
                 .HasColumnType("int(11)")
                 .HasColumnName("id");
-            entity.Property(e => e.Commodity1)
+            entity.Property(e => e.CommodityName)
                 .IsRequired()
                 .HasMaxLength(256)
                 .HasColumnName("commodity");
         });
 
-        modelBuilder.Entity<CommodityType>(entity =>
+        modelBuilder.Entity<CommoditySubType>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("PRIMARY");
 
             entity.ToTable("commodity_type");
 
-            entity.HasIndex(e => new { e.CommodityId, e.CommodityType1 }, "commodity_id").IsUnique();
+            entity.HasIndex(e => new { e.CommodityId, e.SubTypeName }, "commodity_id").IsUnique();
 
             entity.Property(e => e.Id)
                 .HasColumnType("int(11)")
@@ -146,7 +146,7 @@ public partial class BidsDBContext : DbContext {
             entity.Property(e => e.CommodityId)
                 .HasColumnType("int(11)")
                 .HasColumnName("commodity_id");
-            entity.Property(e => e.CommodityType1)
+            entity.Property(e => e.SubTypeName)
                 .IsRequired()
                 .HasMaxLength(256)
                 .HasColumnName("commodity_type");

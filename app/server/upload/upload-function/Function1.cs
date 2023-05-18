@@ -34,12 +34,12 @@ namespace upload_function
 
                 dynamic data = JsonConvert.DeserializeObject(body);
 
-                var new_comm_type = new CommodityType
+                var new_comm_type = new CommoditySubType
                 {
-                    CommodityType1 = data.CommodityType,
+                    SubTypeName = data.CommodityType,
                     Commodity = new Commodity
                     {
-                        Commodity1 = data.Commodity,
+                        CommodityName = data.Commodity,
                     }
                 };
 

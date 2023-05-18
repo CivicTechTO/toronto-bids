@@ -6,7 +6,7 @@ namespace upload_function.DB;
 public partial class Commodity {
     public int Id { get; set; }
 
-    public string Commodity1 { get; set; }
+    public string CommodityName { get; set; }
 
-    public virtual ICollection<CommodityType> CommodityTypes { get; set; } = new List<CommodityType>();
+    public virtual ICollection<CommoditySubType> CommodityTypes { get; set; } = new List<CommoditySubType>();
 }

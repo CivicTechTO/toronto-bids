@@ -30,7 +30,7 @@ public partial class Document {
 
     public virtual ICollection<Attachment> Attachments { get; set; } = new List<Attachment>();
 
-    public virtual CommodityType CommodityType { get; set; }
+    public virtual CommoditySubType CommodityType { get; set; }
 
     public virtual Division Division { get; set; }
 
