@@ -9,6 +9,7 @@ body
 {
 	margin: 0;
 	font-family: 'Arimo', sans-serif;
+	font-size: large;
 	line-height: 1.5;
 }
 
@@ -133,4 +134,9 @@ body
 .forward
 {
 	float: right;
+}
+
+#description, #attachments
+{
+	margin-top: 3em;
 }

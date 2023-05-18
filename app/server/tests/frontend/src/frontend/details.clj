@@ -29,7 +29,7 @@
 					[:div (get call "site_meeting")]
 					[:div#description
 						"<b>Description:</b>"
-						(get call "description")
+						[:div (get call "description")]
 					]
 					;[:div#fulltext (get call "search_text")]
 					[:div#attachments
