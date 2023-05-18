@@ -12,15 +12,6 @@
 ;	(:require [frontend.filter] :as filter)
 )
 
-(def TITLE "Toronto Bids Archives")
-
-(def DEFAULT-LIMIT "8")
-(def DEFAULT-OFFSET "0")
-
-(defn set-default [default value]
-	(if (nil? value) default value)
-)
-
 (defn format-date-time [date-time]
 	(first (str/split date-time #"T" 2))
 )
@@ -51,9 +42,9 @@
 	]
 )
 
-(defn call-display [call]
+(defn call-display [query-params call]
 	[:a.calllink
-		{:href (util/url "/details.html" {:document_id (get call "document_id")})}
+		{:href (util/url "/details.html" (assoc query-params :document_id (get call "document_id")))}
 		(call-lines call)
 	]
 )
@@ -63,7 +54,7 @@
 )
 
 (defn filter-drop [value]
-	(not (or (= selection/ALL value) (empty? value)))
+	(not (or (= common/ALL value) (empty? value)))
 )
 
 (defn filter-empty [value]
@@ -95,31 +86,6 @@
 	((get FILTER-FNS (first pair)) (second pair))
 )
 
-(defn convert [value]
-	(cond 
-		(nil? value) ""
-		:else value
-	)
-)
-
-(defn make-query-params 
-				[division type commodity commodity_type buyer posting_date_before posting_date_after closing_date_before closing_date_after search_text limit offset]
-	{
-		"division" division
-		"type" type
-		"commodity" commodity
-		"commodity_type" commodity_type
-		"buyer" buyer
-		"posting_date_before" posting_date_before
-		"posting_date_after" posting_date_after
-		"closing_date_before" closing_date_before
-		"closing_date_after" closing_date_after
-		"search_text" (convert search_text)
-		"limit" (str limit)
-		"offset" (str offset)
-	}
-)
-
 (defn contents [api-base query-params]
 	(let
 		[
@@ -132,36 +98,25 @@
 			limit (Integer/parseInt (get query-params "limit"))
 		]
 		(list
-			[:div (map call-display document-array)]
+			[:div (map (partial call-display query-params) document-array)]
 			[:div
-				[:a.back {:href (util/url "call_list.html" (assoc query-params "offset" (common/back limit offset)))} "< Prev results"]
-				[:a.forward {:href (util/url "call_list.html" (assoc query-params "offset" (common/forward limit offset)))} "Next results >"]
+				[:a.back {:href (util/url "calls.html" (assoc query-params "offset" (common/back limit offset)))} "< Prev results"]
+				[:a.forward {:href (util/url "calls.html" (assoc query-params "offset" (common/forward limit offset)))} "Next results >"]
 			]
 		)
 	)
 )
 
 (defn list-body [api-base query-params]
-	[:div#iframe-outer
-		[:div (contents api-base query-params)]
+	[:div#content
+		(contents api-base query-params)
 	]
 )
 
-(defn list-page [api-base local-base query-params]
-	(page/html5 (list (common/head local-base TITLE "calls.css") [:body (list-body api-base query-params)]))
-)
-
 (defn main-body [api-base query-params]
-	[:div#outer
-		[:div#wrapper
-			(selection/selection-form api-base query-params TITLE)
-			(let 
-				[
-					url (util/url "call_list.html" query-params)
-				]
-				[:iframe#contents {:src url}]
-			)
-		]
+	[:div#wrapper
+		(selection/selection-form api-base query-params common/title)
+		(list-body api-base query-params)
 	]
 )
 
@@ -170,47 +125,12 @@
 	[
 		main (main-body api-base query-params)
 	]
-		(page/html5 (list (common/head local-base TITLE "calls.css") [:body main]))
-	)
-)
-
-(defn parse-limit [name argument]
-	(try
-		(when (some? argument) (Integer/parseInt argument))
-		(catch NumberFormatException exception 
-			(throw (Exception. (str "The " name " argument '" argument "' is not a number")))
-		)
-	)
-)
-
-(defn call-list [api-base local-base division type commodity commodity_type buyer posting_date_before posting_date_after 
-								closing_date_before closing_date_after search_text limit-arg offset-arg]
-	(try
-		(let
-			[
-				limit (parse-limit "limit" (set-default DEFAULT-LIMIT limit-arg))
-				offset (parse-limit "offset" (set-default DEFAULT-OFFSET offset-arg))
-				query-params 	(make-query-params division type commodity commodity_type buyer posting_date_before posting_date_after 
-												closing_date_before closing_date_after search_text limit offset
-											)
-			]
-			(list-page api-base local-base query-params)
-		)
-		(catch Exception error
-			(page/html5 (list (common/head local-base TITLE "calls.css") [:body error]))
-		)
+		(page/html5 (list (common/head local-base common/title "calls.css") [:body main]))
 	)
 )
 
 (defn reset [api-base local-base]
-	(let
-		[
-			limit (parse-limit "limit" DEFAULT-LIMIT)
-			offset (parse-limit "offset" DEFAULT-OFFSET)
-			query-params (make-query-params selection/ALL selection/ALL selection/ALL selection/ALL selection/ALL "" "" "" "" "" limit offset)
-		]
-		(main-page api-base local-base query-params)
-	)
+	(main-page api-base local-base common/default-query-params)
 )
 
 (defn output [api-base local-base division type commodity commodity_type buyer posting_date_before posting_date_after 
@@ -218,19 +138,18 @@
 	(try
 		(let
 			[
-				limit (parse-limit "limit" (set-default DEFAULT-LIMIT limit-arg))
-				offset-int (parse-limit "offset" (set-default DEFAULT-OFFSET offset-arg))
+				limit (common/parse-limit "limit" (common/set-default common/DEFAULT-LIMIT limit-arg))
+				offset-int (common/parse-limit "offset" (common/set-default common/DEFAULT-OFFSET offset-arg))
 				offset (direction limit offset-int)
-				query-params 	(make-query-params division type commodity commodity_type buyer posting_date_before posting_date_after 
+				query-params 	(common/make-query-params division type commodity commodity_type buyer posting_date_before posting_date_after 
 												closing_date_before closing_date_after search_text limit offset
 											)
 			]
 			(main-page api-base local-base query-params)
 		)
 		(catch Exception error
-			(page/html5 (list (common/head local-base TITLE "calls.css") [:body error]))
+			(page/html5 (list (common/head local-base common/title "calls.css") [:body error]))
 		)
 	)
 )
-
 

@@ -1,16 +1,91 @@
 @import url('https://fonts.googleapis.com/css2?family=Arimo&display=swap');
 
+html, body, #outer, #wrapper
+{
+	height: 100%;
+}
+
 body
 {
 	margin: 0;
 	font-family: 'Arimo', sans-serif;
     line-height: 1.5;
-    padding: 1em;
+}
+
+#wrapper
+{
+	display: flex;
+}
+
+@media (max-width: 1000px) {
+	#wrapper {
+		flex-direction: column;
+	}
+}
+
+#title
+{
+	text-align: center;
+	font-size: xx-large;
+	font-weight: bolder;
+	margin-bottom: 1.5em;
+}
+
+#iframe-outer
+{
+	padding: 2em;
+        overflow-y: auto;
+        width: 100%;
+}
+
+#contents
+{
+	width: 100%;
+	height: inherit;
+	border: none;
+}
+
+#select
+{
+	background: #eee;
+	padding: 2em;
+}
+
+#select form div
+{
+	margin-bottom: 1em;
+}
+
+#select .label
+{
+	margin-bottom: 0;
+	color: #444;
+}
+
+#select select, .search
+{
+	width: 100%;
+}
+
+.button
+{
+	display: inline;
+	margin-right: 1em;
+}
+
+.calllink
+{
+	color: black;
+	text-decoration: none;
 }
 
 .call
 {
 	margin-bottom: 2em;
+	padding: 1em;
+	border: 1px solid lightgray;
+	border-radius: 1em;
+	box-shadow: 4px 4px 5px gray;
 }
 
 .call form
@@ -43,11 +118,21 @@ body
 {
 	display: inline-block;
 	margin-right: 1em;
+}
+
+.callno
+{
 	font-size: small;
 }
 
-.itemcat, .callno
+.forward
 {
-	font-size: small;
+	float: right;
+}
+
+.back, .forward
+{
+	font-size: x-large;
+	text-decoration: none;
 }
 

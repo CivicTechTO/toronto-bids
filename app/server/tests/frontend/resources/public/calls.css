@@ -9,7 +9,7 @@ body
 {
 	margin: 0;
 	font-family: 'Arimo', sans-serif;
-    line-height: 1.5;
+	line-height: 1.5;
 }
 
 #wrapper
@@ -31,16 +31,11 @@ body
 	margin-bottom: 1.5em;
 }
 
-#iframe-outer
+#content
 {
-	margin: 2em;
-}
-
-#contents
-{
+	padding: 2em;
+	overflow-y: auto;
 	width: 100%;
-	height: inherit;
-	border: none;
 }
 
 #select
@@ -123,14 +118,19 @@ body
 	font-size: small;
 }
 
-.forward
-{
-	float: right;
-}
-
 .back, .forward
 {
+	margin-top: 1em;
 	font-size: x-large;
 	text-decoration: none;
 }
 
+.back
+{
+	float: left;
+}
+
+.forward
+{
+	float: right;
+}

@@ -6,9 +6,8 @@
 	(:require [hiccup.page :as page])
 	(:require [hiccup.form :as form])
 	(:require [clj-http.client :as client])
+	(:require [frontend.common :as common])
 )
-
-(def ALL "*All*")
 
 (defn create-line [label create-fn]
 	[:div 
@@ -27,7 +26,7 @@
 
 			pick-list (json/read-str body)
 
-			create-fn (fn [] (form/drop-down name (cons ALL pick-list) selected))
+			create-fn (fn [] (form/drop-down name (cons common/ALL pick-list) selected))
 		]
 		(create-line label create-fn)
 	)

@@ -72,17 +72,21 @@
 
 	(compojure/GET "*/reset.html" [api-base local-base] (calls/reset api-base local-base))
 
-	(compojure/GET "*/call_list.html" 
+	(compojure/GET "*/details.html"
 		[
 			api-base local-base division type commodity commodity_type buyer posting_date_before posting_date_after 
-			closing_date_before closing_date_after search_text limit offset
+			closing_date_before closing_date_after search_text limit offset document_id
 		] 
-		(calls/call-list api-base local-base division type commodity commodity_type buyer posting_date_before posting_date_after 
-									closing_date_before closing_date_after search_text limit offset
+		(details/output api-base local-base document_id division type commodity commodity_type buyer posting_date_before posting_date_after 
+									closing_date_before closing_date_after search_text limit offset common/stay
 		)
 	)
-
-	(compojure/GET "*/details.html" [api-base local-base document_id] (details/output api-base local-base document_id))
+	(compojure/GET "*/call.html"
+		[
+			api-base local-base document_id
+		] 
+		(details/output api-base local-base document_id)
+	)
 
 ;	(compojure/GET "*/attachments.html" [api-base local-base document_id] (attachments/output api-base local-base document_id))
 
