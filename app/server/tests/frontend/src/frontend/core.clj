@@ -17,7 +17,6 @@
 )
 
 (def css-calls (io/resource "public/calls.css"))
-(def css-details (io/resource "public/details.css"))
 
 (defn css-response [css]
 	{
@@ -91,7 +90,6 @@
 ;	(compojure/GET "*/attachments.html" [api-base local-base document_id] (attachments/output api-base local-base document_id))
 
 	(compojure/GET "*/calls.css" [] (css-response css-calls))
-	(compojure/GET "*/details.css" [] (css-response css-details))
 
 ;	(route/resources "/")
 
