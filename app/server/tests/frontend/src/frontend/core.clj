@@ -69,7 +69,7 @@
 		)
 	)
 
-	(compojure/GET "*/reset.html" [api-base local-base] (calls/reset api-base local-base))
+	(compojure/GET "/" [api-base local-base] (calls/reset api-base local-base))
 
 	(compojure/GET "*/details.html"
 		[
@@ -90,8 +90,6 @@
 ;	(compojure/GET "*/attachments.html" [api-base local-base document_id] (attachments/output api-base local-base document_id))
 
 	(compojure/GET "*/calls.css" [] (css-response css-calls))
-
-;	(route/resources "/")
 
 	(route/not-found (hiccup/html (page/html5 [:body [:div "Page not found"]])))
 )

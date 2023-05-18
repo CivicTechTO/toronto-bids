@@ -74,7 +74,7 @@
 					(form/hidden-field "offset" (get query-params "offset"))
 
 					(button-box "reload" "calls.html" "Apply filters")
-					(button-box "reset" "reset.html" "Reset filters")
+					[:a {:href "/" :style "display: inline"} "Reset filters"]
 				) 
 			]
 		)
