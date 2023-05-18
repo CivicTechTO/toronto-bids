@@ -141,10 +141,12 @@ namespace upload_function
 
             catch(Exception e)
             {
-                log.LogInformation($"There was an error {e.Message}");
+                var errString = $"There was an error {e.Message} - {e.StackTrace}";
+                log.LogInformation(errString);
+                return new StatusCodeResult(500);
             }
 
-            string responseMessage = string.IsNullOrEmpty(name)
+            return new StatusCodeResult(200);
               ? "This HTTP triggered function executed successfully. Pass a name in the query string or in the request body for a personalized response."
               : $"Hello, {name}. This HTTP triggered function executed successfully.";
 
