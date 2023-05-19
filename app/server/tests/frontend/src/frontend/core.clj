@@ -41,53 +41,53 @@
 (compojure/defroutes toronto-bids
 	(compojure/GET "*/calls.html" 
 		[
-			api-base local-base division type commodity commodity_type buyer posting_date_before posting_date_after 
+			api-base division type commodity commodity_type buyer posting_date_before posting_date_after 
 			closing_date_before closing_date_after search_text limit offset
 		] 
-		(calls/output api-base local-base division type commodity commodity_type buyer posting_date_before posting_date_after 
+		(calls/output api-base division type commodity commodity_type buyer posting_date_before posting_date_after 
 									closing_date_before closing_date_after search_text limit offset common/stay
 		)
 	)
 
 	(compojure/GET "*/forward.html" 
 		[
-			api-base local-base division type commodity commodity_type buyer posting_date_before posting_date_after 
+			api-base division type commodity commodity_type buyer posting_date_before posting_date_after 
 			closing_date_before closing_date_after search_text limit offset
 		] 
-		(calls/output api-base local-base division type commodity commodity_type buyer posting_date_before posting_date_after 
+		(calls/output api-base division type commodity commodity_type buyer posting_date_before posting_date_after 
 									closing_date_before closing_date_after search_text limit offset common/forward
 		)
 	)
 
 	(compojure/GET "*/back.html" 
 		[
-			api-base local-base division type commodity commodity_type buyer posting_date_before posting_date_after 
+			api-base division type commodity commodity_type buyer posting_date_before posting_date_after 
 			closing_date_before closing_date_after search_text limit offset
 		] 
-		(calls/output api-base local-base division type commodity commodity_type buyer posting_date_before posting_date_after 
+		(calls/output api-base division type commodity commodity_type buyer posting_date_before posting_date_after 
 									closing_date_before closing_date_after search_text limit offset common/back
 		)
 	)
 
-	(compojure/GET "/" [api-base local-base] (calls/reset api-base local-base))
+	(compojure/GET "/" [api-base] (calls/reset api-base))
 
 	(compojure/GET "*/details.html"
 		[
-			api-base local-base division type commodity commodity_type buyer posting_date_before posting_date_after 
+			api-base division type commodity commodity_type buyer posting_date_before posting_date_after 
 			closing_date_before closing_date_after search_text limit offset document_id
 		] 
-		(details/output api-base local-base document_id division type commodity commodity_type buyer posting_date_before posting_date_after 
+		(details/output api-base document_id division type commodity commodity_type buyer posting_date_before posting_date_after 
 									closing_date_before closing_date_after search_text limit offset common/stay
 		)
 	)
 	(compojure/GET "*/call.html"
 		[
-			api-base local-base document_id
+			api-base document_id
 		] 
-		(details/output api-base local-base document_id)
+		(details/output api-base document_id)
 	)
 
-;	(compojure/GET "*/attachments.html" [api-base local-base document_id] (attachments/output api-base local-base document_id))
+;	(compojure/GET "*/attachments.html" [api-base document_id] (attachments/output api-base document_id))
 
 	(compojure/GET "*/calls.css" [] (css-response css-calls))
 
@@ -104,16 +104,14 @@
 	)
 )
 
-(defn make-bases-handler [api-base local-base] 
+(defn make-bases-handler [api-base] 
 	(let 
 		[
 			wrap-api-base (make-wrap-argument :api-base api-base)
-			wrap-local-base (make-wrap-argument :local-base local-base)
 		]
 		(-> toronto-bids
 ;			(debug/wrap-with-logger)
 			(wrap-api-base)
-			(wrap-local-base)
 			(params/wrap-params)
 		)
 	)
@@ -122,22 +120,21 @@
 (defn -main
   "toronto-bids test front end"
   [& args]
-  	(if (== 3 (count args))
+  	(if (== 2 (count args))
 		(let 
 			[
 				api-base (first args)
 				portString (first (rest args))
-				local-base (first (rest (rest args)))
 			]
 			(try
 				(let [port (Integer/parseInt portString)]
-					(ring/run-jetty (make-bases-handler api-base local-base) {:port port})
+					(ring/run-jetty (make-bases-handler api-base) {:port port})
 				)
 				(catch NumberFormatException exception 
 					(println (str portString " is not an int"))
 				)
 			)
 		)  	
-		(println "frontend api-base port local-base")
+		(println "frontend api-base port")
 	)
 )

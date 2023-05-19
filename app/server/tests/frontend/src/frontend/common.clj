@@ -27,10 +27,10 @@
 	)
 )
 
-(defn head [local-base title css-file]
+(defn head [title css-file]
 	[:head
 		[:title title]
-		(page/include-css (str local-base css-file))
+		(page/include-css (str css-file))
 	]
 )
 

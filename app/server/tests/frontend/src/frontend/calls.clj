@@ -120,20 +120,20 @@
 	]
 )
 
-(defn main-page [api-base local-base query-params]
+(defn main-page [api-base query-params]
 	(let 
 	[
 		main (main-body api-base query-params)
 	]
-		(page/html5 (list (common/head local-base common/title "calls.css") [:body main]))
+		(page/html5 (list (common/head common/title "calls.css") [:body main]))
 	)
 )
 
-(defn reset [api-base local-base]
-	(main-page api-base local-base common/default-query-params)
+(defn reset [api-base]
+	(main-page api-base common/default-query-params)
 )
 
-(defn output [api-base local-base division type commodity commodity_type buyer posting_date_before posting_date_after 
+(defn output [api-base division type commodity commodity_type buyer posting_date_before posting_date_after 
 								closing_date_before closing_date_after search_text limit-arg offset-arg direction]
 	(try
 		(let
@@ -145,10 +145,10 @@
 												closing_date_before closing_date_after search_text limit offset
 											)
 			]
-			(main-page api-base local-base query-params)
+			(main-page api-base query-params)
 		)
 		(catch Exception error
-			(page/html5 (list (common/head local-base common/title "calls.css") [:body error]))
+			(page/html5 (list (common/head common/title "calls.css") [:body error]))
 		)
 	)
 )

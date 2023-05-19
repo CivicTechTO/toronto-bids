@@ -12,7 +12,7 @@
 	[:div "Attachments list"]
 )
 
-(defn output [api-base local-base document_id]
+(defn output [api-base document_id]
 	(page/html5 [:body (body api-base document_id)])
 )
 

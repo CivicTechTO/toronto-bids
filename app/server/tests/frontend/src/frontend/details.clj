@@ -44,13 +44,13 @@
 	]
 )
 
-(defn output-page [api-base local-base query-params]
-	(page/html5 (list (common/head local-base "Details" "calls.css") [:body (details-body api-base query-params)]))
+(defn output-page [api-base query-params]
+	(page/html5 (list (common/head "Details" "calls.css") [:body (details-body api-base query-params)]))
 )
 
 (defn output
-	  ([api-base local-base document_id] (output-page api-base local-base (assoc common/default-query-params "document_id" document_id)))
-	  ([api-base local-base document_id division type commodity commodity_type buyer posting_date_before posting_date_after 
+	  ([api-base document_id] (output-page api-base (assoc common/default-query-params "document_id" document_id)))
+	  ([api-base document_id division type commodity commodity_type buyer posting_date_before posting_date_after 
 								closing_date_before closing_date_after search_text limit-arg offset-arg direction]
 		(try
 			(let
@@ -62,10 +62,10 @@
 						closing_date_before closing_date_after search_text limit offset)
 						"document_id" document_id)
 				]
-				(output-page api-base local-base query-params)
+				(output-page api-base query-params)
 			)
 			(catch Exception error
-				(page/html5 (list (common/head local-base common/title "calls.css") [:body error]))
+				(page/html5 (list (common/head common/title "calls.css") [:body error]))
 			)
 		)
 	)
