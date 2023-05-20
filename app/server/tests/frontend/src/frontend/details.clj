@@ -2,6 +2,7 @@
 	(:gen-class)
 	(:require [clj-http.client :as client])
 	(:require [clojure.data.json :as json])
+	(:require [clojure.string :as str])
 	(:require [hiccup.core :as hiccup])
 	(:require [hiccup.page :as page])
 	(:require [hiccup.element :as elem])
@@ -10,8 +11,38 @@
 	(:require [frontend.common :as common])
 	(:require [frontend.calls :as calls])
 	(:require [frontend.selection :as selection])
+	(:import java.net.URI)
 )
 
+(def attachment-host
+	{
+		:scheme "https"
+		:host "torontobidsstorage.file.core.windows.net"
+		:path "/torontobids/ariba_data/"
+	}
+)
+(def ariba-sas-token
+	{
+		:sv "2022-11-02"
+		:ss "f"
+		:srt "sco"
+		:sp "rl"
+		:se "2123-05-18T04:49:53Z"
+		:st "2023-05-17T20:49:53Z"
+		:spr "https,http"
+		:sig "uWfbBiXayfnnSxN/pmRW/BOtVOyGcY//cz5lN8gjAP4="
+	 }
+)
+
+(defn make-attachment-url [call-number file]
+	(let
+		[
+			path (str (:path attachment-host) call-number "/" file)
+			uri (URI. (:scheme attachment-host) (:host attachment-host) path nil)
+		]
+		(util/url (str uri) ariba-sas-token)
+	)
+)
 
 (defn details-body [api-base query-params]
 	[:div#wrapper
@@ -32,7 +63,11 @@
 					;[:div#fulltext (get call "search_text")]
 					[:div#attachments
 						"<b>Attachments:</b>"
-						(elem/unordered-list (map #(get % "filename") attachments))
+						(elem/unordered-list
+							(for [at attachments :let [filename (get at "filename")]]
+								[:a {:href (make-attachment-url (get call "call_number") filename)} filename]
+							)
+						)
 					]
 					[:a.back {:href (util/url "calls.html" (dissoc query-params "document_id"))} "< Back to results"]
 					[:a.forward {:href (util/url "call.html" (select-keys query-params ["document_id"]))} "Permalink"]
@@ -47,8 +82,8 @@
 )
 
 (defn output
-	  ([api-base document_id] (output-page api-base (assoc common/default-query-params "document_id" document_id)))
-	  ([api-base document_id division type commodity commodity_type buyer posting_date_before posting_date_after 
+	([api-base document_id] (output-page api-base (assoc common/default-query-params "document_id" document_id)))
+	([api-base document_id division type commodity commodity_type buyer posting_date_before posting_date_after
 								closing_date_before closing_date_after search_text limit-arg offset-arg direction]
 		(try
 			(let
