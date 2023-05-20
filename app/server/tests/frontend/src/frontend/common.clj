@@ -5,6 +5,7 @@
 	(:require [hiccup.core :as hiccup])
 	(:require [hiccup.page :as page])
 	(:require [hiccup.form :as form])
+	(:require [hiccup.util :as util])
 	(:require [clj-http.client :as client])
 )
 
@@ -71,3 +72,11 @@
 		(parse-limit "offset" DEFAULT-OFFSET)
 	)
 )
+
+(defn api-call [api-base endpoint params]
+  (->> params
+       (util/url (str api-base endpoint))
+       (util/to-str)
+       (client/get)
+       (:body)
+       (json/read-str)))

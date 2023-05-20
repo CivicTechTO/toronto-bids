@@ -19,10 +19,8 @@
 		[:div#content
 			(let 
 				[
-					document_id {"document_id" (get query-params "document_id")}
-					response (client/get (str api-base "details.json") {:query-params document_id :accept :json})
-					body (get response :body)
-					call (json/read-str body)
+					call (common/api-call api-base "details.json" (select-keys query-params ["document_id"]))
+					attachments (common/api-call api-base "attachments.json" (select-keys call ["call_number"]))
 				]
 				(list
 					(calls/call-lines call)
@@ -34,10 +32,10 @@
 					;[:div#fulltext (get call "search_text")]
 					[:div#attachments
 						"<b>Attachments:</b>"
-						(elem/unordered-list '()) ; TODO
+						(elem/unordered-list (map #(get % "filename") attachments))
 					]
 					[:a.back {:href (util/url "calls.html" (dissoc query-params "document_id"))} "< Back to results"]
-					[:a.forward {:href (util/url "call.html" document_id)} "Permalink"]
+					[:a.forward {:href (util/url "call.html" (get query-params "document_id"))} "Permalink"]
 				)
 			)
 		]
