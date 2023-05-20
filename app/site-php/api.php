@@ -33,7 +33,7 @@ if (!empty($_REQUEST['cn'])) {
 	$params[] = "s";
 	$params[] = $_REQUEST['cn'];
 
-	$stmt = $mysqli->prepare("SELECT `CallNumber`, `Commodity`, `CommodityType`, `Type`, `ShortDescription`, `Description`, `ShowDatePosted`, `ClosingDate`, `SiteMeeting`, `ShowBuyerNameList`, `BuyerPhoneShow`, `BuyerEmailShow`, `Division`, `BuyerLocationShow`, `urls`, `parsedtext`, `lastupdated`, `uuid` FROM `calls` WHERE ".$where);
+	$stmt = $mysqli->prepare("SELECT `CallNumber`, `Commodity`, `CommodityType`, `Type`, `ShortDescription`, `Description`, `ShowDatePosted`, `ClosingDate`, `SiteMeeting`, `ShowBuyerNameList`, `BuyerPhoneShow`, `BuyerEmailShow`, `Division`, `BuyerLocationShow`, `parsedtext`, `lastupdated`, `uuid` FROM `calls` WHERE ".$where);
 	$stmt->bind_param(...$params);
 	$stmt->execute();
 	$result = $stmt->get_result(); // get the mysqli result

@@ -5,7 +5,11 @@ RewriteEngine On
 order allow,deny
 deny from all
 </Files>
-<Files ~ "^includes$">
+<Files ~ "^mysql-vars.php$">
+order allow,deny
+deny from all
+</Files>
+<Files "\.pem$">
 order allow,deny
 deny from all
 </Files>

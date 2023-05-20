@@ -97,3 +97,7 @@ label {
 .recorddisplay .row:nth-child(odd) {
     background: #efefef;
 }
+
+pre{
+font-size: 0.9rem;
+}

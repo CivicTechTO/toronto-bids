@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: May 20, 2023 at 11:08 AM
+-- Generation Time: May 20, 2023 at 06:08 PM
 -- Server version: 5.7.23-23
 -- PHP Version: 7.3.32
 
@@ -32,6 +32,7 @@ CREATE TABLE `attachments` (
   `CallNumber` varchar(30) COLLATE utf8_unicode_ci NOT NULL,
   `filename` varchar(256) COLLATE utf8_unicode_ci NOT NULL,
   `parsedtext` longtext COLLATE utf8_unicode_ci,
+  `lastupdated` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `uuid` varchar(36) COLLATE utf8_unicode_ci NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
@@ -69,7 +70,7 @@ CREATE TABLE `calls` (
 -- Indexes for table `attachments`
 --
 ALTER TABLE `attachments`
-  ADD PRIMARY KEY (`uuid`),
+  ADD PRIMARY KEY (`CallNumber`,`filename`),
   ADD KEY `CallNumber` (`CallNumber`);
 ALTER TABLE `attachments` ADD FULLTEXT KEY `parsedtext` (`parsedtext`);
 

@@ -27,6 +27,17 @@
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
   <link rel="icon" type="image/png" href="images/favicon.png">
 
+
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GXWPTRZ3GT"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-GXWPTRZ3GT');
+</script>
+
 </head>
 <body>
 
@@ -84,7 +95,7 @@ foreach($value as $item) {
 ?>
     <div class="row">
       <div class="twelve columns"><strong>Text from attachments:</strong><br/>
-      <?=$parsedtext?></div>
+      <pre><?=$parsedtext?></pre></div>
 	</div>
 
     </div>
