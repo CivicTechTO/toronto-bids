@@ -44,6 +44,23 @@
 	)
 )
 
+(defn show-call-detail [call field field-name]
+	(let [value (some-> (get call field) str/trim)]
+		[:tr
+			[:td [:b field-name ": "]]
+			[:td (if (empty? value) "(none)" value)]
+		]
+	)
+)
+
+(defn show-attachment-list [call-number attachments]
+	(elem/unordered-list
+		(for [at attachments :let [filename (get at "filename")]]
+			[:a {:href (make-attachment-url call-number filename)} filename]
+		)
+	)
+)
+
 (defn details-body [api-base query-params]
 	[:div#wrapper
 		(selection/selection-form api-base {} common/title)
@@ -55,18 +72,19 @@
 				]
 				(list
 					(calls/call-lines call)
-					[:div (get call "site_meeting")]
-					[:div#description
-						"<b>Description:</b>"
-						[:div (get call "description")]
+					[:table#details
+						(show-call-detail call "type" "Type")
+						(show-call-detail call "posted_date" "Posted date")
+						(show-call-detail call "site_meeting" "Site meeting")
+						(show-call-detail call "buyer" "Buyer")
+						(show-call-detail call "description" "Description")
+						;(show-call-detail call "search_text" "Search text")
 					]
-					;[:div#fulltext (get call "search_text")]
 					[:div#attachments
-						"<b>Attachments:</b>"
-						(elem/unordered-list
-							(for [at attachments :let [filename (get at "filename")]]
-								[:a {:href (make-attachment-url (get call "call_number") filename)} filename]
-							)
+						[:div [:b "Attachments:"]]
+						(if (empty? attachments)
+							"none"
+							(show-attachment-list (get call "call_number") attachments)
 						)
 					]
 					[:a.back {:href (util/url "calls.html" (dissoc query-params "document_id"))} "< Back to results"]

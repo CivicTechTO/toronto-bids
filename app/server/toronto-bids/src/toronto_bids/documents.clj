@@ -24,7 +24,7 @@
 
 (def COLUMN-STRING " document.id AS document_id, division, type, call_number, commodity, commodity_type, short_description, posting_date, closing_date")
 
-(def DETAIL-COLUMNS (str COLUMN-STRING ",site_meeting,description"))
+(def DETAIL-COLUMNS (str COLUMN-STRING ",site_meeting,description,buyer"))
 
 (def FROM-STRING
 	(str " FROM document" 	

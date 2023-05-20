@@ -9,7 +9,6 @@
 	(:require [clj-http.client :as client])
 	(:require [frontend.common :as common])
 	(:require [frontend.selection :as selection])
-;	(:require [frontend.filter] :as filter)
 )
 
 (defn format-date-time [date-time]
@@ -31,7 +30,6 @@
 		[:div.itemcat  (get call "division")]
 		[:div.itemdesc (get call "short_description")]
 ;		[:div.itemtype (get call "type")]
-;		[:div.item (get (first (get call "buyers")) "buyer")]
 	]
 )
 
