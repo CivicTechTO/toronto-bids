@@ -65,10 +65,10 @@
 					[:label#expand-filters {:for "expand-toggle"} "Show filters"]
 					[:div#filters
 						(select api-base "Division" "division" "plain_divisions.json" (get query-params "division"))
-						(select api-base "Type" "type" "plain_types.json" (get query-params "type"))
+;						(select api-base "Type" "type" "plain_types.json" (get query-params "type"))
 						(select api-base "Commodity" "commodity" "plain_commodities.json" (get query-params "commodity"))
 						(select api-base "Commodity type" "commodity_type" "plain_commodity_types.json" (get query-params "commodity_type"))
-						(select api-base "Buyer" "buyer" "plain_buyers.json" (get query-params "buyer"))
+;						(select api-base "Buyer" "buyer" "plain_buyers.json" (get query-params "buyer"))
 						(date "Posted on or before", "posting_date_before", (get query-params "posting_date_before"))
 						(date "Posted on or after", "posting_date_after", (get query-params "posting_date_after"))
 						(date "Closed on or before", "closing_date_before", (get query-params "closing_date_before"))
