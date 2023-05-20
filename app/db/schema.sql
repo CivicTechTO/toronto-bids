@@ -82,3 +82,8 @@ CREATE TABLE document_buyer
 	, PRIMARY KEY (document_id, buyer_id)
 );
 
+CREATE TABLE attachments
+(
+  call_number varchar(30) NOT NULL,
+  filename varchar(1000) NOT NULL
+);

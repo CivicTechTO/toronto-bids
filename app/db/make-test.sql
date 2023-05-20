@@ -64,5 +64,6 @@ INSERT INTO document_buyer (document_id, buyer_id)
 	) AS source
 ;
 
+INSERT INTO attachments (call_number, filename) SELECT DISTINCT CallNumber, filename FROM import.attachments;
 
 

@@ -43,9 +43,16 @@ CREATE TABLE `fromxml` (
   `BuyerEmailShow` varchar(256) NOT NULL,
   `Division` varchar(256) NOT NULL,
   `BuyerLocationShow` varchar(256) NOT NULL,
-  `urls` varchar(1000) NOT NULL,
-  `parsedtext` varchar(65535) NOT NULL,
+  `urls` varchar(1000) NOT NULL DEFAULT '',
+  `parsedtext` mediumtext NOT NULL,
   `lastupdated` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `uuid` varchar(36) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE `attachments` (
+  `CallNumber` varchar(30) NOT NULL,
+  `filename` varchar(1000) NOT NULL,
+  `parsedtext` mediumtext NOT NULL,
   `uuid` varchar(36) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
