@@ -73,6 +73,8 @@
 (def DETAILS_SQL
 	(str "	SELECT " DETAIL-COLUMNS FROM-STRING " WHERE document_id = ?")
 )
+(def ATTACH_SQL
+  (str "SELECT filename FROM attachments WHERE call_number = ?"))
 
 (defn construct [previous entry]
 	(let
@@ -157,6 +159,10 @@
 	)
 )
 
+(defn output-attachments [db call_number]
+        (json/write-str (jdbc/query db [ATTACH_SQL call_number]))
+)
+
 (defn output-details [db document_id]
 	(let 
 		[
@@ -172,3 +178,4 @@
 (defn output-documents [db argument-list limit offset]
 	(json/write-str (fetch-documents db argument-list limit offset))
 )
+

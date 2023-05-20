@@ -63,6 +63,7 @@
 	)
 
 	(compojure/GET "*/api/details.json" [db document_id] (documents/output-details db document_id))
+	(compojure/GET "*/api/attachments.json" [db call_number] (documents/output-attachments db call_number))
 
 	(compojure-route/not-found (list "End point not found"))
 )
