@@ -35,7 +35,7 @@
 						(elem/unordered-list (map #(get % "filename") attachments))
 					]
 					[:a.back {:href (util/url "calls.html" (dissoc query-params "document_id"))} "< Back to results"]
-					[:a.forward {:href (util/url "call.html" (get query-params "document_id"))} "Permalink"]
+					[:a.forward {:href (util/url "call.html" (select-keys query-params ["document_id"]))} "Permalink"]
 				)
 			)
 		]
