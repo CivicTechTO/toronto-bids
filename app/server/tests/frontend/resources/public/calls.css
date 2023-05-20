@@ -52,16 +52,22 @@ body
 #title
 {
 	text-align: center;
-	font-size: xx-large;
+	font-size: 2em;
 	font-weight: bolder;
-	margin-bottom: 1.5em;
+	margin-bottom: 0.75em;
+	min-width: max-content;
+}
+
+#title a
+{
+	text-decoration: none;
+	color: black;
 }
 
 #content
 {
 	padding: 2em;
 	overflow-y: auto;
-	min-height: 90%;
 }
 
 #select

@@ -56,7 +56,7 @@
 
 (defn selection-form [api-base query-params title]
 	[:div#select
-		[:div#title title]
+		[:div#title [:a {:href "/"} title]]
 		(list
 			[:div
 				(form/form-to [:get "calls.html"]
