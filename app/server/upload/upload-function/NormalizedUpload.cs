@@ -15,17 +15,9 @@ using System.Linq;
 using upload_function.DB.Normalized;
 
 namespace upload_function {
-    /*
-     *  TODO
-     *      - 
-     * 
-     * 
-     * 
-     * 
-     */
     public static class UploadFunction
     {
-        [FunctionName("upload-document")]
+        [FunctionName("upload-document-normalized")]
         public static async Task<IActionResult> Run(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = null)] HttpRequest req,
             ILogger log) {
