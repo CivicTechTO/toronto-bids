@@ -36,7 +36,9 @@
 	]
 )
 
-(defn call-display [local-base query-params call]
+(defn call-display
+  "Displays an info panel for the given call, linked to the call details page."
+  [local-base query-params call]
 	[:a.calllink
 		{:href (util/url (str local-base "/details.html") (assoc query-params :call_number (get call "call_number")))}
 		(call-lines call)
@@ -60,6 +62,7 @@
 )
 
 (def FILTER-FNS
+  "Specifies when to keep the given filter categories for the API call."
 	{
 		"division" filter-drop
 		"type" filter-drop
@@ -76,11 +79,15 @@
 	}
 )
 
-(defn filter-query-params [pair]
+(defn filter-query-params
+  "Applies the pair's key's FILTER-FN to its value."
+  [pair]
 	((get FILTER-FNS (first pair)) (second pair))
 )
 
-(defn contents [api-base local-base query-params]
+(defn contents
+  "Fetches calls and displays the results, with forward and back links at the bottom."
+  [api-base local-base query-params]
 	(let
 		[
 			filtered-params (into {} (filter filter-query-params query-params))
@@ -116,6 +123,7 @@
 )
 
 (defn output
+  "Generates HTML for the calls page given query parameters."
 	([api-base local-base] (main-page api-base local-base common/default-query-params))
 	([api-base local-base division type commodity commodity_type buyer
 	  posting_date_before posting_date_after closing_date_before closing_date_after

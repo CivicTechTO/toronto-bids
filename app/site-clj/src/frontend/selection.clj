@@ -4,7 +4,9 @@
 	(:require [frontend.common :as common])
 )
 
-(defn create-line [label create-fn]
+(defn create-line
+  "Show given form control with label."
+  [label create-fn]
 	[:div 
 		(list 
 			[:div.label label]

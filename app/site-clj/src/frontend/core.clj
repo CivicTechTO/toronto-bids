@@ -13,13 +13,15 @@
 ;	(:require [ring-debug-logging.core :as debug])
 )
 
-(def CSS (io/resource "public/styles.css"))
+(def css-file (io/resource "public/styles.css"))
 
-(defn css []
+(defn css-response
+  "The HTTP response for the CSS file."
+  []
 	{
 		:status 200
 		:headers {"Content-Type" "text/css"}
-		:body (slurp CSS)
+		:body (slurp css-file)
 	}
 )
 
@@ -59,12 +61,14 @@
 		(details/output api-base local-base call_number)
 	)
 
-	(compojure/GET "*/styles.css" [] (css))
+	(compojure/GET "*/styles.css" [] (css-response))
 
 	(route/not-found (page/html5 [:body [:div "Page not found"]]))
 )
 
-(defn make-wrap-argument [argument value]
+(defn make-wrap-argument
+  "Creates a wrapper that adds the given key-value pair to the request's params map."
+  [argument value]
 	(fn [handler]
 		(fn [request]
 			(let [params (get request :params)]
@@ -74,7 +78,9 @@
 	)
 )
 
-(defn make-bases-handler [api-base local-base]
+(defn make-bases-handler
+  "Add wrappers to toronto-bids for providing api-base, local-base, and URL-encoded parameters."
+  [api-base local-base]
 	(let 
 		[
 			wrap-api-base (make-wrap-argument :api-base api-base)

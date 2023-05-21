@@ -11,6 +11,7 @@
 )
 
 (def attachment-host
+  "Host address for the server which holds call attachment files."
 	{
 		:scheme "https"
 		:host "torontobidsstorage.file.core.windows.net"
@@ -18,6 +19,7 @@
 	}
 )
 (def ariba-sas-token
+  "Token for Ariba used to access the call attachment files."
 	{
 		:sv "2022-11-02"
 		:ss "f"
@@ -30,7 +32,9 @@
 	 }
 )
 
-(defn make-attachment-url [call-number file]
+(defn make-attachment-url
+  "Builds a URL for the given call's attachment."
+  [call-number file]
 	(let
 		[
 			path (str (:path attachment-host) call-number "/" file)
@@ -40,7 +44,9 @@
 	)
 )
 
-(defn show-call-detail [call field field-name]
+(defn show-call-detail
+  "Builds a table row for the given call and field."
+  [call field field-name]
 	(let [value (some-> (get call field) str/trim)]
 		[:tr
 			[:td [:b field-name ": "]]
@@ -49,11 +55,36 @@
 	)
 )
 
-(defn show-attachment-list [call-number attachments]
+(defn show-attachment-list
+  "Creates an unordered list of attachment files for the given call."
+  [call-number attachments]
 	(elem/unordered-list
 		(for [at attachments :let [filename (get at "filename")]]
 			[:a {:href (make-attachment-url call-number filename)} filename]
 		)
+	)
+)
+
+(defn call-details-content
+  "Shows the call entry, details table, and attachments list."
+  [call attachments]
+	(list
+		(calls/call-lines call)
+		[:table#details
+			(show-call-detail call "type" "Type")
+			(show-call-detail call "posted_date" "Posted date")
+			(show-call-detail call "site_meeting" "Site meeting")
+			(show-call-detail call "buyer" "Buyer")
+			(show-call-detail call "description" "Description")
+			(show-call-detail call "search_text" "Search text")
+		]
+		[:div#attachments
+			[:div [:b "Attachments:"]]
+			(if (empty? attachments)
+				"none"
+				(show-attachment-list (get call "call_number") attachments)
+			)
+		]
 	)
 )
 
@@ -68,22 +99,7 @@
 					attachments (common/api-call api-base "attachments.json" call-number)
 				]
 				(list
-					(calls/call-lines call)
-					[:table#details
-						(show-call-detail call "type" "Type")
-						(show-call-detail call "posted_date" "Posted date")
-						(show-call-detail call "site_meeting" "Site meeting")
-						(show-call-detail call "buyer" "Buyer")
-						(show-call-detail call "description" "Description")
-;						(show-call-detail call "search_text" "Search text")
-					]
-					[:div#attachments
-						[:div [:b "Attachments:"]]
-						(if (empty? attachments)
-							"none"
-							(show-attachment-list (get call "call_number") attachments)
-						)
-					]
+					(call-details-content call attachments)
 					[:a.back {:href (util/url (str local-base "/calls.html") (dissoc query-params "call_number"))} "< Back to results"]
 					[:a.forward {:href (util/url (str local-base "/call.html") call-number)} "Permalink"]
 				)
@@ -97,6 +113,7 @@
 )
 
 (defn output
+  "Generates HTML for the details page given call number. Supplied query parameters are for 'go back' link."
 	([api-base local-base call_number] (output-page api-base local-base (assoc common/default-query-params "call_number" call_number)))
 	([api-base local-base call_number division type commodity commodity_type buyer
 	  posting_date_before posting_date_after closing_date_before closing_date_after
