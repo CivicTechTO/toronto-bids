@@ -1,11 +1,6 @@
 (ns frontend.selection
 	(:gen-class)
-	(:require [clojure.string :as str])
-	(:require [clojure.data.json :as json])
-	(:require [hiccup.core :as hiccup])
-	(:require [hiccup.page :as page])
 	(:require [hiccup.form :as form])
-	(:require [clj-http.client :as client])
 	(:require [frontend.common :as common])
 )
 

@@ -1,12 +1,8 @@
 (ns frontend.details
 	(:gen-class)
-	(:require [clj-http.client :as client])
-	(:require [clojure.data.json :as json])
 	(:require [clojure.string :as str])
-	(:require [hiccup.core :as hiccup])
 	(:require [hiccup.page :as page])
 	(:require [hiccup.element :as elem])
-	(:require [hiccup.form :as form])
 	(:require [hiccup.util :as util])
 	(:require [frontend.common :as common])
 	(:require [frontend.calls :as calls])
@@ -67,8 +63,9 @@
 		[:div#content
 			(let 
 				[
-					call (common/api-call api-base "details.json" (select-keys query-params ["call_number"]))
-					attachments (common/api-call api-base "attachments.json" (select-keys call ["call_number"]))
+					call-number (select-keys query-params ["call_number"])
+					call (common/api-call api-base "details.json" call-number)
+					attachments (common/api-call api-base "attachments.json" call-number)
 				]
 				(list
 					(calls/call-lines call)
@@ -78,7 +75,7 @@
 						(show-call-detail call "site_meeting" "Site meeting")
 						(show-call-detail call "buyer" "Buyer")
 						(show-call-detail call "description" "Description")
-						;(show-call-detail call "search_text" "Search text")
+;						(show-call-detail call "search_text" "Search text")
 					]
 					[:div#attachments
 						[:div [:b "Attachments:"]]
@@ -88,7 +85,7 @@
 						)
 					]
 					[:a.back {:href (util/url "calls.html" (dissoc query-params "call_number"))} "< Back to results"]
-					[:a.forward {:href (util/url "call.html" (select-keys query-params ["call_number"]))} "Permalink"]
+					[:a.forward {:href (util/url "call.html" call-number)} "Permalink"]
 				)
 			)
 		]
@@ -96,27 +93,29 @@
 )
 
 (defn output-page [api-base query-params]
-	(page/html5 (list (common/head "Details" "calls.css") [:body (details-body api-base query-params)]))
+	(page/html5 (list common/head [:body (details-body api-base query-params)]))
 )
 
 (defn output
 	([api-base call_number] (output-page api-base (assoc common/default-query-params "call_number" call_number)))
-	([api-base call_number division type commodity commodity_type buyer posting_date_before posting_date_after
-								closing_date_before closing_date_after search_text limit-arg offset-arg direction]
+	([api-base call_number division type commodity commodity_type buyer
+	  posting_date_before posting_date_after closing_date_before closing_date_after
+	  search_text limit-arg offset-arg]
 		(try
 			(let
 				[
-					limit (common/parse-limit "limit" (common/set-default common/DEFAULT-LIMIT limit-arg))
-					offset-int (common/parse-limit "offset" (common/set-default common/DEFAULT-OFFSET offset-arg))
-					offset (direction limit offset-int)
-					query-params (assoc (common/make-query-params division type commodity commodity_type buyer posting_date_before posting_date_after 
-						closing_date_before closing_date_after search_text limit offset)
-						"call_number" call_number)
+					limit (common/parse-int "limit" limit-arg common/DEFAULT-LIMIT)
+					offset (common/parse-int "offset" offset-arg common/DEFAULT-OFFSET)
+					query-params (common/make-query-params
+						division type commodity commodity_type buyer
+						posting_date_before posting_date_after closing_date_before closing_date_after
+						search_text limit offset
+					)
 				]
-				(output-page api-base query-params)
+				(output-page api-base (assoc query-params "call_number" call_number))
 			)
 			(catch Exception error
-				(page/html5 (list (common/head common/title "calls.css") [:body error]))
+				(page/html5 (list common/head [:body error]))
 			)
 		)
 	)

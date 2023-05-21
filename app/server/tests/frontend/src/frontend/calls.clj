@@ -1,12 +1,8 @@
 (ns frontend.calls
 	(:gen-class)
 	(:require [clojure.string :as str])
-	(:require [clojure.data.json :as json])
-	(:require [hiccup.core :as hiccup])
 	(:require [hiccup.page :as page])
-	(:require [hiccup.form :as form])
 	(:require [hiccup.util :as util])
-	(:require [clj-http.client :as client])
 	(:require [frontend.common :as common])
 	(:require [frontend.selection :as selection])
 )
@@ -116,34 +112,30 @@
 )
 
 (defn main-page [api-base query-params]
-	(let 
-	[
-		main (main-body api-base query-params)
-	]
-		(page/html5 (list (common/head common/title "calls.css") [:body main]))
-	)
+	(page/html5 common/head [:body (main-body api-base query-params)])
 )
 
-(defn reset [api-base]
-	(main-page api-base common/default-query-params)
-)
-
-(defn output [api-base division type commodity commodity_type buyer posting_date_before posting_date_after 
-								closing_date_before closing_date_after search_text limit-arg offset-arg direction]
-	(try
-		(let
-			[
-				limit (common/parse-limit "limit" (common/set-default common/DEFAULT-LIMIT limit-arg))
-				offset-int (common/parse-limit "offset" (common/set-default common/DEFAULT-OFFSET offset-arg))
-				offset (direction limit offset-int)
-				query-params 	(common/make-query-params division type commodity commodity_type buyer posting_date_before posting_date_after 
-												closing_date_before closing_date_after search_text limit offset
-											)
-			]
-			(main-page api-base query-params)
-		)
-		(catch Exception error
-			(page/html5 (list (common/head common/title "calls.css") [:body error]))
+(defn output
+	([api-base] (main-page api-base common/default-query-params))
+	([api-base division type commodity commodity_type buyer
+	  posting_date_before posting_date_after closing_date_before closing_date_after
+	  search_text limit-arg offset-arg]
+		(try
+			(let
+				[
+					limit (common/parse-int "limit" limit-arg common/DEFAULT-LIMIT)
+					offset (common/parse-int "offset" offset-arg common/DEFAULT-OFFSET)
+					query-params (common/make-query-params
+						division type commodity commodity_type buyer
+						posting_date_before posting_date_after closing_date_before closing_date_after
+						search_text limit offset
+					)
+				]
+				(main-page api-base query-params)
+			)
+			(catch Exception error
+				(page/html5 (list common/head [:body error]))
+			)
 		)
 	)
 )
