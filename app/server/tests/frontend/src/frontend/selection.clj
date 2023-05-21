@@ -45,12 +45,12 @@
 	[:div.button (form/submit-button {:formaction action} label)]
 )
 
-(defn selection-form [api-base query-params title]
+(defn selection-form [api-base local-base query-params title]
 	[:div#select
-		[:div#title [:a {:href "/"} title]]
+		[:div#title [:a {:href (str local-base "/")} title]]
 		(list
 			[:div
-				(form/form-to [:get "calls.html"]
+				(form/form-to [:get (str local-base "/calls.html")]
 					(text "Search for", "search_text", (get query-params "search_text"))
 					[:input#expand-toggle {:type "checkbox"}]
 					[:label#expand-filters {:for "expand-toggle"} "Show filters"]
@@ -67,8 +67,8 @@
 						(form/hidden-field "limit" (get query-params "limit"))
 						(form/hidden-field "offset" 0)
 
-						(button-box "reload" "calls.html" "Apply filters")
-						[:a {:href "/" :style "display: inline"} "Reset filters"]
+						(button-box "reload" (str local-base "/calls.html") "Apply filters")
+						[:a {:href (str local-base "/") :style "display: inline"} "Reset filters"]
 					] 
 				) 
 			]

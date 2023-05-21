@@ -36,9 +36,9 @@
 	]
 )
 
-(defn call-display [query-params call]
+(defn call-display [local-base query-params call]
 	[:a.calllink
-		{:href (util/url "/details.html" (assoc query-params :call_number (get call "call_number")))}
+		{:href (util/url (str local-base "/details.html") (assoc query-params :call_number (get call "call_number")))}
 		(call-lines call)
 	]
 )
@@ -80,7 +80,7 @@
 	((get FILTER-FNS (first pair)) (second pair))
 )
 
-(defn contents [api-base query-params]
+(defn contents [api-base local-base query-params]
 	(let
 		[
 			filtered-params (into {} (filter filter-query-params query-params))
@@ -89,35 +89,35 @@
 			limit (Integer/parseInt (get query-params "limit"))
 		]
 		(list
-			[:div (map (partial call-display query-params) document-array)]
+			[:div (map (partial call-display local-base query-params) document-array)]
 			[:div
-				[:a.back {:href (util/url "calls.html" (assoc query-params "offset" (common/back limit offset)))} "< Prev results"]
-				[:a.forward {:href (util/url "calls.html" (assoc query-params "offset" (common/forward limit offset)))} "Next results >"]
+				[:a.back {:href (util/url (str local-base "/calls.html") (assoc query-params "offset" (common/back limit offset)))} "< Prev results"]
+				[:a.forward {:href (util/url (str local-base "/calls.html") (assoc query-params "offset" (common/forward limit offset)))} "Next results >"]
 			]
 		)
 	)
 )
 
-(defn list-body [api-base query-params]
+(defn list-body [api-base local-base query-params]
 	[:div#content
-		(contents api-base query-params)
+		(contents api-base local-base query-params)
 	]
 )
 
-(defn main-body [api-base query-params]
+(defn main-body [api-base local-base query-params]
 	[:div#wrapper
-		(selection/selection-form api-base query-params common/title)
-		(list-body api-base query-params)
+		(selection/selection-form api-base local-base query-params common/title)
+		(list-body api-base local-base query-params)
 	]
 )
 
-(defn main-page [api-base query-params]
-	(page/html5 common/head [:body (main-body api-base query-params)])
+(defn main-page [api-base local-base query-params]
+	(page/html5 common/head [:body (main-body api-base local-base query-params)])
 )
 
 (defn output
-	([api-base] (main-page api-base common/default-query-params))
-	([api-base division type commodity commodity_type buyer
+	([api-base local-base] (main-page api-base local-base common/default-query-params))
+	([api-base local-base division type commodity commodity_type buyer
 	  posting_date_before posting_date_after closing_date_before closing_date_after
 	  search_text limit-arg offset-arg]
 		(try
@@ -131,7 +131,7 @@
 						search_text limit offset
 					)
 				]
-				(main-page api-base query-params)
+				(main-page api-base local-base query-params)
 			)
 			(catch Exception error
 				(page/html5 (list common/head [:body error]))

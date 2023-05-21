@@ -57,9 +57,9 @@
 	)
 )
 
-(defn details-body [api-base query-params]
+(defn details-body [api-base local-base query-params]
 	[:div#wrapper
-		(selection/selection-form api-base query-params common/title)
+		(selection/selection-form api-base local-base query-params common/title)
 		[:div#content
 			(let 
 				[
@@ -84,21 +84,21 @@
 							(show-attachment-list (get call "call_number") attachments)
 						)
 					]
-					[:a.back {:href (util/url "calls.html" (dissoc query-params "call_number"))} "< Back to results"]
-					[:a.forward {:href (util/url "call.html" call-number)} "Permalink"]
+					[:a.back {:href (util/url (str local-base "/calls.html") (dissoc query-params "call_number"))} "< Back to results"]
+					[:a.forward {:href (util/url (str local-base "/call.html") call-number)} "Permalink"]
 				)
 			)
 		]
 	]
 )
 
-(defn output-page [api-base query-params]
-	(page/html5 (list common/head [:body (details-body api-base query-params)]))
+(defn output-page [api-base local-base query-params]
+	(page/html5 (list common/head [:body (details-body api-base local-base query-params)]))
 )
 
 (defn output
-	([api-base call_number] (output-page api-base (assoc common/default-query-params "call_number" call_number)))
-	([api-base call_number division type commodity commodity_type buyer
+	([api-base local-base call_number] (output-page api-base local-base (assoc common/default-query-params "call_number" call_number)))
+	([api-base local-base call_number division type commodity commodity_type buyer
 	  posting_date_before posting_date_after closing_date_before closing_date_after
 	  search_text limit-arg offset-arg]
 		(try
@@ -112,7 +112,7 @@
 						search_text limit offset
 					)
 				]
-				(output-page api-base (assoc query-params "call_number" call_number))
+				(output-page api-base local-base (assoc query-params "call_number" call_number))
 			)
 			(catch Exception error
 				(page/html5 (list common/head [:body error]))

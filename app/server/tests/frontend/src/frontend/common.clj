@@ -35,7 +35,7 @@
 (def head
 	[:head
 		[:title title]
-		(page/include-css "calls.css")
+		(page/include-css "styles.css")
 	]
 )
 
