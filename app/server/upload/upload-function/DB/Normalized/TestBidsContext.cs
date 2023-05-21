@@ -4,7 +4,7 @@ using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
 using Microsoft.EntityFrameworkCore;
 
-namespace upload_function.DB;
+namespace upload_function.DB.Normalized;
 
 public partial class BidsDBContext : DbContext {
     public BidsDBContext() {

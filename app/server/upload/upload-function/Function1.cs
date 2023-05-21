@@ -10,11 +10,19 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using upload_function.DB;
 using System.Collections.Generic;
-using Type = upload_function.DB.OfferType;
+using Type = upload_function.DB.Normalized.OfferType;
 using System.Linq;
+using upload_function.DB.Normalized;
 
-namespace upload_function
-{
+namespace upload_function {
+    /*
+     *  TODO
+     *      - 
+     * 
+     * 
+     * 
+     * 
+     */
     public static class UploadFunction
     {
         [FunctionName("upload-document")]
@@ -81,6 +89,7 @@ namespace upload_function
                         Location = new_location
                     };
 
+
                     tempString = data.Type;
                     var dbOfferType = context.Types.FirstOrDefault(x=>x.Type1 == tempString);
                     if (dbOfferType == null)
@@ -132,6 +141,7 @@ namespace upload_function
                     }
 
                     context.Documents.Add(dbDoc);
+
                 }
 
                 context.SaveChanges();
@@ -147,10 +157,6 @@ namespace upload_function
             }
 
             return new StatusCodeResult(200);
-              ? "This HTTP triggered function executed successfully. Pass a name in the query string or in the request body for a personalized response."
-              : $"Hello, {name}. This HTTP triggered function executed successfully.";
-
-            return new OkObjectResult(responseMessage);
         }
     }
 }

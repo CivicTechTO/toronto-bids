@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace upload_function.DB;
+namespace upload_function.DB.Normalized;
 
 public partial class Buyer {
     public int Id { get; set; }
