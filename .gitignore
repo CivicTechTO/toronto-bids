@@ -11,6 +11,8 @@
 *.key
 scrapers/ariba/keys/
 scrapers/ariba/data/
+app/db-regen/settings.py
+
 .idea
 temp.html
 

@@ -1,0 +1,17 @@
+Options -Indexes +FollowSymLinks
+RewriteEngine On
+
+<Files ~ "^\.(htaccess|htpasswd)$">
+order allow,deny
+deny from all
+</Files>
+<Files ~ "^mysql-vars.php$">
+order allow,deny
+deny from all
+</Files>
+<Files "\.pem$">
+order allow,deny
+deny from all
+</Files>
+
+RewriteRule ^(.*).html$ /openbidstoronto/record.php?cn=$1

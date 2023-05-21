@@ -24,9 +24,37 @@ The program can either be compiled to a .jar file using `lein uberjar`, or can b
 
 ## Frontend
 
-The frontend is located in the `server/tests/frontend` folder, and also uses Clojure and Leiningen.
+There are multiple versions of the frontend available:
 
-Either compile the frontend to a .jar using `lein uberjar`, or execute it immediately with the command `lein run http://localhost:8000/api/ 8001 ""`. The first argument points to the running API program, `8001` sets the port to run the frontend on, and the empty quotes set the "local-base".
+### Clojure
 
-You can access the running frontend by going to `http://localhost:8001/reset.html` in a web browser.
+This frontend is located in the `site-clj` folder. Leiningen is used as a build tool.
+
+Either compile the frontend to a .jar using `lein uberjar`, or execute it immediately with the command `lein run http://localhost:8000/api/ 8001 ""`. The first argument points to the running API program, `8001` sets the port to run the frontend on, and the empty quotes set the local base.
+
+You can access the running frontend by going to `http://localhost:8001/` in a web browser.
+
+### Angular
+
+The `site` folder contains an Angular webapp that's a rough start for something we might want to use as a front end to access bid data.
+
+#### Prerequisites
+
+To run the project, ensure your machine meets the following prerequisites (these are all just the prereqs to run a standard Angular App)
+
+- Install NodeJS and the Node Package Manager on the machine this is running on (https://nodejs.org/en/download)
+
+- Download the Angular CLI, instructions found here - (https://github.com/angular/angular-cli)
+
+#### Building the webapp
+
+- If this is your first time running the webapp, make sure that you have NodeJS, npm and the Angular CLI installed on your machine. 
+ 
+- Open a terminal in this folder and run ```npm install```. This will ensure download all of the dependencies that you need to run this project into a folder called 'node_modules'. 
+
+- Run the command `ng serve`. This will stand up a webserver that the app will be accessible on for local access. By default the webserver will run on port 4200, but you can change this by supplying the `--port` parameter when you invoke `ng serve`.
+
+### PHP
+
+A PHP frontend is available in the `site-php` folder. This frontend uses its own API implementation to access the bids database.
 
