@@ -71,7 +71,7 @@
 )
 
 (def DETAILS_SQL
-	(str "	SELECT " DETAIL-COLUMNS FROM-STRING " WHERE document_id = ?")
+	(str "	SELECT " DETAIL-COLUMNS FROM-STRING " WHERE call_number = ?")
 )
 (def ATTACH_SQL
   (str "SELECT filename FROM attachments WHERE call_number = ?"))
@@ -163,10 +163,10 @@
         (json/write-str (jdbc/query db [ATTACH_SQL call_number]))
 )
 
-(defn output-details [db document_id]
+(defn output-details [db call_number]
 	(let 
 		[
-			row (first (jdbc/query db [DETAILS_SQL document_id]))
+			row (first (jdbc/query db [DETAILS_SQL call_number]))
 		]
 		(if row 
 			(json/write-str row)
