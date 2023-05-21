@@ -32,7 +32,4 @@
       <CopyToPublishDirectory>Never</CopyToPublishDirectory>
     </None>
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="DB\Flat\" />
-  </ItemGroup>
 </Project>

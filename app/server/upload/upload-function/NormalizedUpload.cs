@@ -106,7 +106,6 @@ namespace upload_function {
                         CommodityType = dbCommoditySubType,
                         Division = dbDivision,
                         OfferType = dbOfferType,
-                        Attachments = new List<Attachment>(),
                     };
 
                     string[] fileNames = data.FileName.ToObject<string[]>();
@@ -123,7 +122,7 @@ namespace upload_function {
                         string path = filePaths[i];
                         path = path.Replace(@"\/", "\\");
 
-                        var attachment = new Attachment
+                        var attachment = new upload_function.DB.Normalized.Attachment
                         {
                             FileName = fileNames[i],
                             DatastoreFileURL = uri,
