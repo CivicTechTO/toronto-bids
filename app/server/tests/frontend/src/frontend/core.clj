@@ -74,20 +74,18 @@
 	(compojure/GET "*/details.html"
 		[
 			api-base division type commodity commodity_type buyer posting_date_before posting_date_after 
-			closing_date_before closing_date_after search_text limit offset document_id
+			closing_date_before closing_date_after search_text limit offset call_number
 		] 
-		(details/output api-base document_id division type commodity commodity_type buyer posting_date_before posting_date_after 
+		(details/output api-base call_number division type commodity commodity_type buyer posting_date_before posting_date_after
 									closing_date_before closing_date_after search_text limit offset common/stay
 		)
 	)
 	(compojure/GET "*/call.html"
 		[
-			api-base document_id
+			api-base call_number
 		] 
-		(details/output api-base document_id)
+		(details/output api-base call_number)
 	)
-
-;	(compojure/GET "*/attachments.html" [api-base document_id] (attachments/output api-base document_id))
 
 	(compojure/GET "*/calls.css" [] (css-response css-calls))
 

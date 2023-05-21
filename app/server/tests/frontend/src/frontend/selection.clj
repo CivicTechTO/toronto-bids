@@ -21,11 +21,7 @@
 (defn select [api-base label name request selected]
 	(let
 		[
-			response (client/get (str api-base request) {:accept :json})
-			body (get response :body)
-
-			pick-list (json/read-str body)
-
+			pick-list (common/api-call api-base request {})
 			create-fn (fn [] (form/drop-down name (cons common/ALL pick-list) selected))
 		]
 		(create-line label create-fn)
@@ -74,7 +70,7 @@
 						(date "Closed on or before", "closing_date_before", (get query-params "closing_date_before"))
 						(date "Closed on or after", "closing_date_after", (get query-params "closing_date_after"))
 						(form/hidden-field "limit" (get query-params "limit"))
-						(form/hidden-field "offset" (get query-params "offset"))
+						(form/hidden-field "offset" 0)
 
 						(button-box "reload" "calls.html" "Apply filters")
 						[:a {:href "/" :style "display: inline"} "Reset filters"]

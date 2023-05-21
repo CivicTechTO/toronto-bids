@@ -42,7 +42,7 @@
 
 (defn call-display [query-params call]
 	[:a.calllink
-		{:href (util/url "/details.html" (assoc query-params :document_id (get call "document_id")))}
+		{:href (util/url "/details.html" (assoc query-params :call_number (get call "call_number")))}
 		(call-lines call)
 	]
 )

@@ -50,10 +50,10 @@
 (defn make-query-params [division type commodity commodity_type buyer posting_date_before posting_date_after closing_date_before closing_date_after search_text limit offset]
 	{
 		"division" division
-		"type" type
+		"type" (set-default ALL type)
 		"commodity" commodity
 		"commodity_type" commodity_type
-		"buyer" buyer
+		"buyer" (set-default ALL buyer)
 		"posting_date_before" posting_date_before
 		"posting_date_after" posting_date_after
 		"closing_date_before" closing_date_before

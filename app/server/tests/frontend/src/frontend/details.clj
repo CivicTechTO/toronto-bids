@@ -63,11 +63,11 @@
 
 (defn details-body [api-base query-params]
 	[:div#wrapper
-		(selection/selection-form api-base {} common/title)
+		(selection/selection-form api-base query-params common/title)
 		[:div#content
 			(let 
 				[
-					call (common/api-call api-base "details.json" (select-keys query-params ["document_id"]))
+					call (common/api-call api-base "details.json" (select-keys query-params ["call_number"]))
 					attachments (common/api-call api-base "attachments.json" (select-keys call ["call_number"]))
 				]
 				(list
@@ -87,8 +87,8 @@
 							(show-attachment-list (get call "call_number") attachments)
 						)
 					]
-					[:a.back {:href (util/url "calls.html" (dissoc query-params "document_id"))} "< Back to results"]
-					[:a.forward {:href (util/url "call.html" (select-keys query-params ["document_id"]))} "Permalink"]
+					[:a.back {:href (util/url "calls.html" (dissoc query-params "call_number"))} "< Back to results"]
+					[:a.forward {:href (util/url "call.html" (select-keys query-params ["call_number"]))} "Permalink"]
 				)
 			)
 		]
@@ -100,8 +100,8 @@
 )
 
 (defn output
-	([api-base document_id] (output-page api-base (assoc common/default-query-params "document_id" document_id)))
-	([api-base document_id division type commodity commodity_type buyer posting_date_before posting_date_after
+	([api-base call_number] (output-page api-base (assoc common/default-query-params "call_number" call_number)))
+	([api-base call_number division type commodity commodity_type buyer posting_date_before posting_date_after
 								closing_date_before closing_date_after search_text limit-arg offset-arg direction]
 		(try
 			(let
@@ -111,7 +111,7 @@
 					offset (direction limit offset-int)
 					query-params (assoc (common/make-query-params division type commodity commodity_type buyer posting_date_before posting_date_after 
 						closing_date_before closing_date_after search_text limit offset)
-						"document_id" document_id)
+						"call_number" call_number)
 				]
 				(output-page api-base query-params)
 			)
