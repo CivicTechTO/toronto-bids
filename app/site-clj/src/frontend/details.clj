@@ -114,7 +114,7 @@
 )
 
 (defn output-page [api-base local-base query-params]
-	(page/html5 (list common/head [:body (details-body api-base local-base query-params)]))
+	(page/html5 (list (common/head local-base) [:body (details-body api-base local-base query-params)]))
 )
 
 (defn output
@@ -137,7 +137,7 @@
 				(output-page api-base local-base (assoc query-params "call_number" call_number))
 			)
 			(catch Exception error
-				(page/html5 (list common/head [:body error]))
+				(page/html5 (list (common/head local-base) [:body error]))
 			)
 		)
 	)

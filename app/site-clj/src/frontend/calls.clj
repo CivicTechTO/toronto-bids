@@ -119,7 +119,7 @@
 )
 
 (defn main-page [api-base local-base query-params]
-	(page/html5 common/head [:body (main-body api-base local-base query-params)])
+	(page/html5 (common/head local-base) [:body (main-body api-base local-base query-params)])
 )
 
 (defn output
@@ -142,7 +142,7 @@
 				(main-page api-base local-base query-params)
 			)
 			(catch Exception error
-				(page/html5 (list common/head [:body error]))
+				(page/html5 (list (common/head local-base) [:body error]))
 			)
 		)
 	)

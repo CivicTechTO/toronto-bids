@@ -32,10 +32,10 @@
 	)
 )
 
-(def head
+(defn head [local-base]
 	[:head
 		[:title title]
-		(page/include-css "styles.css")
+		(page/include-css (str local-base "/styles.css"))
 	]
 )
 
