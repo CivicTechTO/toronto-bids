@@ -159,6 +159,16 @@ body
 	font-size: small;
 }
 
+.dheader
+{
+	font-size: xx-large;
+	font-weight: bold;
+	color: royalblue;
+	margin-bottom: 1em;
+	padding-bottom: 0.25em;
+	border-bottom: 1px solid gray;
+}
+
 .back, .forward
 {
 	margin-top: 1em;

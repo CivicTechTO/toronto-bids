@@ -69,14 +69,19 @@
   "Shows the call entry, details table, and attachments list."
   [call attachments]
 	(list
-		(calls/call-lines call)
+		[:div (get call "call_number")]
+		[:div.dheader (get call "short_description")]
 		[:table#details
 			(show-call-detail call "type" "Type")
+			(show-call-detail call "division" "Division")
+			(show-call-detail call "commodity" "Commodity")
+			(show-call-detail call "commodity_type" "Commodity Type")
 			(show-call-detail call "posted_date" "Posted date")
+			(show-call-detail call "closing_date" "Closing date")
 			(show-call-detail call "site_meeting" "Site meeting")
 			(show-call-detail call "buyer" "Buyer")
 			(show-call-detail call "description" "Description")
-			(show-call-detail call "search_text" "Search text")
+			;(show-call-detail call "search_text" "Search text")
 		]
 		[:div#attachments
 			[:div [:b "Attachments:"]]
