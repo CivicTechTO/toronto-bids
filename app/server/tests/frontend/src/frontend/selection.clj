@@ -22,7 +22,7 @@
 (defn select [api-base label name request selected]
 	(let
 		[
-			response (client/get (str api-base request) {:accept :json})
+			response (client/get (str api-base request ".json") {:accept :json})
 			body (get response :body)
 
 			pick-list (json/read-str body)

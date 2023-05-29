@@ -13,7 +13,7 @@
 (defn contents [api-base document_id]
 	(let 
 		[
-			response (client/get (str api-base "details") {:query-params {"document_id" document_id} :accept :json})
+			response (client/get (str api-base "details.json") {:query-params {"document_id" document_id} :accept :json})
 			body (get response :body)
 			call (json/read-str body)
 		]
