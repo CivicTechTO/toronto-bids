@@ -1,0 +1,24 @@
+name: bids
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - lxml>=4.9
+  - pip>=23.1
+  - python>=3.11
+  - pip:
+      - azure-common>=1.1
+      - azure-core>=1.26
+      - azure-identity>=1.12
+      - azure-keyvault-secrets>=4.7
+      - azure-storage-file-share>=12.12
+      - beautifulsoup4>=4.11
+      - numpy>=1.24
+      - pandas>=1.5
+      - python-magic>=0.4
+      - requests>=2.28
+      - selenium>=4.8
+      - slack-sdk>=3.21
+      - tqdm>=4.64
+      - webdriver-manager>=3.8
+prefix: /home/alex/anaconda3/envs/bids

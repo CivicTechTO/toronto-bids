@@ -6,7 +6,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import NoSuchElementException
 
 from time import sleep
-from rfpkeys import Keychain
+from secret_manager import Keychain
 import re
 
 ARIBA_BASE_URL = "https://service.ariba.com/Discovery.aw/ad/profile"

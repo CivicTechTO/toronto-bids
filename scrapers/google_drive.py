@@ -8,7 +8,7 @@ from googleapiclient.http import MediaFileUpload
 import base64
 
 from slack import Slack
-from rfpkeys import Keychain
+from secret_manager import Keychain
 
 try:
     import magic

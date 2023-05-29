@@ -19,9 +19,8 @@ from filemanage import (
 )
 from open_data import get_open_data
 from transmit_json import transmit_json
-import json
 import argparse
-from rfpkeys import Keychain
+from secret_manager import Keychain
 
 from slack import Slack
 
@@ -31,14 +30,6 @@ REPO_DIRECTORY = Path.cwd()
 DOWNLOAD_DIRECTORY = REPO_DIRECTORY / "files" / "downloads"
 OPEN_DATA_DIRECTORY = REPO_DIRECTORY / "files" / "open_data"
 ARIBA_DATA_DIRECTORY = REPO_DIRECTORY / "files" / "ariba_data"
-RFP_SCRAPER_CONFIG_JSON = Path.cwd() / "rfp_scraper_config.json"
-
-
-def load_scraper_config(scraper_config_json_path):
-    config_json_file = open(scraper_config_json_path)
-    scraper_config = json.load(config_json_file)
-    config_json_file.close()
-    return scraper_config
 
 
 def wait_for_download(command, max_wait=1200) -> bool:
@@ -243,14 +234,6 @@ if __name__ == "__main__":
         action="store_true",
         help="Don't post updates to Slack",
     )
-    parser.add_argument(
-        "json-url",
-        help="URL to push the JSON to"
-    )
-    parser.add_argument(
-        "json-key",
-        help="Key to use to push the JSON"
-    )
     args = parser.parse_args()
     Path(DOWNLOAD_DIRECTORY).mkdir(exist_ok=True)
     Path(ARIBA_DATA_DIRECTORY).mkdir(exist_ok=True)
@@ -260,8 +243,8 @@ if __name__ == "__main__":
     if not args.no_slack:
         slack = Slack(
             token=keychain.get_secret("SLACKKEY"),
-            log_channel="bid-scraper-logs",
-            update_channel="bid-scraper-logs",
+            log_channel=keychain.get_config("log_channel"),
+            update_channel=keychain.get_config("update_channel"),
         )
     else:
         # Create a fake slack object that just prints to the console
@@ -312,7 +295,6 @@ if __name__ == "__main__":
                         json_file.unlink()
                     else:
                         hashes.add(file_hash)
-    scraper_config = load_scraper_config(RFP_SCRAPER_CONFIG_JSON)
 
     if not skip_scraper:
         slack.post_log("It looks like there are new bids! Starting the scraper...")
@@ -328,13 +310,13 @@ if __name__ == "__main__":
         driver = Ariba(
             service=ChromeService(ChromeDriverManager().install()),
             options=chrome_options,
-            ariba_discovery_profile_key=scraper_config["aribaDiscoveryProfileKey"],
+            ariba_discovery_profile_key=keychain.get_config("aribaDiscoveryProfileKey"),
         )
 
         while not finished:
             try:
                 finished = main_loop(
-                    scraper_config=scraper_config,
+                    scraper_config=keychain,
                     closing_soon=not args.scrape_all,
                     download_everything=args.download_everything,
                 )
@@ -348,14 +330,12 @@ if __name__ == "__main__":
                     driver = Ariba(
                         service=ChromeService(ChromeDriverManager().install()),
                         options=chrome_options,
-                        ariba_discovery_profile_key=scraper_config[
+                        ariba_discovery_profile_key=keychain.get_config(
                             "aribaDiscoveryProfileKey"
-                        ],
+                        ),
                     )
 
-        slack.post_log(
-            "Ariba scraper is finished! :tada: Now performing cleanup..."
-        )
+        slack.post_log("Ariba scraper is finished! :tada: Now performing cleanup...")
 
     # Move zips from download directory to repo's data directory
     for file in DOWNLOAD_DIRECTORY.iterdir():
@@ -372,16 +352,16 @@ if __name__ == "__main__":
     # drive = GoogleDrive(slack, keychain)
     # drive.upload_all_data(Path("data"))
     # Check if alternate JSON URL is provided in args
-    if args.json_url:
-        scraper_config["json_url"] = args.json_url
-    if args.json_key:
-        scraper_config["json_key"] = args.json_key
+    # if args.json_url:
+    #     scraper_config["json_url"] = args.json_url
+    # if args.json_key:
+    #     scraper_config["json_key"] = args.json_key
 
-    response = transmit_json(scraper_config["json_url"], scraper_config["json_key"])
-    slack.post_log(f'Pushed JSON, received response: {response.text}')
+    response = transmit_json(
+        keychain.get_config("json_url"), keychain.get_config("json_key")
+    )
+    slack.post_log(f"Pushed JSON, received response: {response.text}")
 
     finish_time = time()
-    slack.post_update(
-        f"Scraper is finished! :tada: :file_folder:"
-    )
+    slack.post_update(f"Scraper is finished! :tada: :file_folder:")
     slack.post_log(f"Finished in {finish_time - start_time:.0f} seconds")

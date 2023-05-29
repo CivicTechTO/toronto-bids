@@ -7,7 +7,7 @@ WORKDIR /app
 # Copy your Python script and other necessary files into the container
 COPY *.py /app
 COPY entrypoint.sh /app
-COPY rfp_scraper_config.json /app
+COPY config.json /app
 COPY environment.yml /app
 
 # Update packages and install any additional dependencies
