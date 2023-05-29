@@ -8,14 +8,15 @@ from azure.keyvault.secrets import SecretClient
 
 class Keychain:
     def __init__(self):
-        self.vault_uri = self.get_config("vault_uri")
-        self.credential = DefaultAzureCredential()
-        self.client = SecretClient(vault_url=self.vault_uri, credential=self.credential)
         if Path("secrets.pickle").exists():
             with open("secrets.pickle", "rb") as f:
                 self.cache = pickle.load(f)
         else:
             self.cache = {}
+        self.vault_uri = self.get_config("vault_uri")
+        self.credential = DefaultAzureCredential()
+        self.client = SecretClient(vault_url=self.vault_uri, credential=self.credential)
+
 
     def get_secret(self, secret_name):
         # Check if secret is in cache

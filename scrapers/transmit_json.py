@@ -19,7 +19,7 @@ def get_latest_open_data() -> pd.DataFrame:
 
 
 def join_open_data_and_file_metadata() -> pd.DataFrame:
-    afs = AzureFileShare(Keychain(), "torontobids")
+    afs = AzureFileShare(Keychain())
     open_data = get_latest_open_data()
     file_metadata = afs.create_file_listing_dataframe()
     file_metadata["CallNumber"] = None

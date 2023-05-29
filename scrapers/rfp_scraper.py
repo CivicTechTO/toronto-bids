@@ -184,7 +184,7 @@ def main_loop(
                 wait_for_download(
                     lambda: driver.patiently_click('//*[@id="_5wq_j"]')
                 )  # download attachments (for real)
-                driver.home(scraper_config["aribaDiscoveryProfileKey"])
+                driver.home(scraper_config.get_config("aribaDiscoveryProfileKey"))
             else:
                 driver.patiently_click(
                     '//a[contains(text(),"Back to Search Results")]', wait_after=5

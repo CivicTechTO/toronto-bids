@@ -4,12 +4,15 @@ from secret_manager import Keychain
 
 
 class AzureFileShare:
-    def __init__(self, keychain: Keychain, share_name: str):
+    def __init__(self, keychain: Keychain):
+        connection_string = f"DefaultEndpointsProtocol=https;AccountName={keychain.get_config('storage_account_name')};AccountKey={keychain.get_secret('AZURESTORAGEKEY')};EndpointSuffix=core.windows.net"
+        print(f'Connection string: {connection_string}')
         self.service = ShareServiceClient.from_connection_string(
-            f"DefaultEndpointsProtocol=https;AccountName={keychain.get_config('storage_account_name')};AccountKey={keychain.get_secret('AZURESTORAGEKEY')};EndpointSuffix=core.windows.net"
+            connection_string
         )
-        self.share = self.service.get_share_client(share_name)
-        self.share_name = share_name
+
+        self.share = self.service.get_share_client(keychain.get_config("share_name"))
+        self.share_name = keychain.get_config("share_name")
 
     def list_files(self, directory: str = "ariba_data") -> list[str]:
         files = []
@@ -34,3 +37,5 @@ class AzureFileShare:
         df["Download Link"] = download_links
 
         return df
+
+# %%
