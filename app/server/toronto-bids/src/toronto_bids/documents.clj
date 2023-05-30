@@ -2,6 +2,7 @@
 	(:gen-class)
 	(:require [clojure.string :as string])
 	(:require [clojure.java.jdbc :as jdbc])
+	(:require [clojure.data.json :as json])
 	(:require [ring.util.response :as response])
 )
 
@@ -23,7 +24,7 @@
 
 (def COLUMN-STRING " document.id AS document_id, division, type, call_number, commodity, commodity_type, short_description, posting_date, closing_date")
 
-(def DETAIL-COLUMNS (str COLUMN-STRING ",site_meeting,description"))
+(def DETAIL-COLUMNS (str COLUMN-STRING ",site_meeting,description,buyer"))
 
 (def FROM-STRING
 	(str " FROM document" 	
@@ -45,7 +46,11 @@
 )
 
 (def DETAILS_SQL
-	(str "	SELECT " DETAIL-COLUMNS FROM-STRING " WHERE document_id = ?")
+	(str "	SELECT " DETAIL-COLUMNS FROM-STRING " WHERE call_number = ?")
+)
+
+(def ATTACH_SQL
+	(str "SELECT filename FROM attachments WHERE call_number = ?")
 )
 
 (defn limit-string [limit offset]
@@ -85,7 +90,7 @@
 	)
 )
 
-(defn make-query [test-list argument-list]
+(defn make-query [test-list argument-list tail]
 	(let
 		[
 			input (map join test-list argument-list)
@@ -93,11 +98,11 @@
 			result (collapse construct [HEAD] active)
 			sql (get result 0)
 		]
-		(assoc result 0 (str sql ORDER-STRING))
+		(assoc result 0 (str sql tail))
 	)
 )
 
-(defn parse[name string]
+(defn parse [name string]
 	(try 
 		(Integer/parseInt string)
 		(catch NumberFormatException exception (throw (Exception. (str name "=" string " is not a number"))))
@@ -132,24 +137,26 @@
 (defn fetch-documents [db argument-list limit offset]
 	(let
 		[
-			query (make-query TEST-LIST argument-list)
+			tail (str ORDER-STRING (limit-string limit offset) ";")
+			query (make-query TEST-LIST argument-list tail)
 			result (jdbc/query db query)
 		]
 		(map (make-insert-buyers db) result)
 	)
 )
 
-(defn output-documents [db argument-list limit-string offset-string]
-	(try
-		(response/response (fetch-documents db argument-list limit-string offset-string))
-		(catch Exception exception (response/status (response/response (str exception)) 500))
-	)
+(defn output-attachments [db call_number]
+	(json/write-str (jdbc/query db [ATTACH_SQL call_number]))
 )
 
-(defn output-details [db document_id]
+(defn output-documents [db argument-list limit offset]
+	(json/write-str (fetch-documents db argument-list limit offset))
+)
+
+(defn output-details [db call_number]
 	(let 
 		[
-			row (first (jdbc/query db [DETAILS_SQL document_id]))
+			row (first (jdbc/query db [DETAILS_SQL call_number]))
 		]
 		(if row 
 			(response/response row)
@@ -157,3 +164,4 @@
 		)
 	)
 )
+

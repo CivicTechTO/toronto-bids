@@ -4,6 +4,8 @@
 ### Linux ###
 *~
 
+.*.sw*
+
 *.zip
 *.csv
 *.key
