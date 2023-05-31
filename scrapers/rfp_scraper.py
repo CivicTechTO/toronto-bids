@@ -360,7 +360,7 @@ if __name__ == "__main__":
     response = transmit_json(
         keychain.get_config("json_url"), keychain.get_config("json_key")
     )
-    slack.post_log(f"Pushed JSON, received response: {response.text}")
+    slack.post_log(f"Pushed JSON, received response: {response}\n{response.text}")
 
     finish_time = time()
     slack.post_update(f"Scraper is finished! :tada: :file_folder:")
