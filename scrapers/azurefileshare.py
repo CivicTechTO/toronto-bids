@@ -6,10 +6,8 @@ from secret_manager import Keychain
 class AzureFileShare:
     def __init__(self, keychain: Keychain):
         connection_string = f"DefaultEndpointsProtocol=https;AccountName={keychain.get_config('storage_account_name')};AccountKey={keychain.get_secret('AZURESTORAGEKEY')};EndpointSuffix=core.windows.net"
-        print(f'Connection string: {connection_string}')
-        self.service = ShareServiceClient.from_connection_string(
-            connection_string
-        )
+        print(f"Connection string: {connection_string}")
+        self.service = ShareServiceClient.from_connection_string(connection_string)
 
         self.share = self.service.get_share_client(keychain.get_config("share_name"))
         self.share_name = keychain.get_config("share_name")
@@ -37,5 +35,6 @@ class AzureFileShare:
         df["Download Link"] = download_links
 
         return df
+
 
 # %%

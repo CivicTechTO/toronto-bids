@@ -17,7 +17,6 @@ class Keychain:
         self.credential = DefaultAzureCredential()
         self.client = SecretClient(vault_url=self.vault_uri, credential=self.credential)
 
-
     def get_secret(self, secret_name):
         # Check if secret is in cache
         if secret_name in self.cache:
