@@ -52,7 +52,12 @@ namespace upload_function
             log.LogInformation("C# HTTP trigger function processed a request.");
             try
             {
-               
+                using var context = new FlatDBContext();
+
+                log.LogInformation($"Testing DB Connection...");
+                var dbCount = context.Calls.Count();
+                log.LogInformation($"Found {dbCount} existing call records - DB Connection Successful!");
+
                 string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
 
                 var dataList = JsonConvert.DeserializeObject<UploadedEntryParent>(requestBody);
