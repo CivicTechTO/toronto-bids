@@ -61,7 +61,6 @@ namespace upload_function
                 string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
 
                 var dataList = JsonConvert.DeserializeObject<UploadedEntryParent>(requestBody);
-                using var context = new FlatDBContext();
 
                 foreach (var data in dataList.list)
                 {
