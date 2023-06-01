@@ -3,9 +3,10 @@
 
 ### Linux ###
 *~
-
+az_create.sh
+config.json
+scrapers/files/
 .*.sw*
-
 *.zip
 *.csv
 *.key

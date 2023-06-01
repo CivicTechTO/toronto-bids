@@ -1,9 +1,0 @@
-beautifulsoup4==4.12.2
-google_api_python_client==2.84.0
-google_auth_oauthlib==1.0.0
-pandas==2.0.0
-protobuf==4.22.1
-python_magic==0.4.27
-requests==2.27.1
-selenium==4.8.3
-webdriver_manager==3.8.5
