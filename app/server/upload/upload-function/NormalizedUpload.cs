@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using Type = upload_function.DB.Normalized.OfferType;
 using System.Linq;
 using upload_function.DB.Normalized;
+using upload_function.DB.Flat;
 
 namespace upload_function {
     public static class UploadFunction
