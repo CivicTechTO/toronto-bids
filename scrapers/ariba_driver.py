@@ -6,7 +6,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import NoSuchElementException
 
 from time import sleep
-from pathlib import Path
+from secret_manager import Keychain
 import re
 
 ARIBA_BASE_URL = "https://service.ariba.com/Discovery.aw/ad/profile"
@@ -16,7 +16,7 @@ class Ariba(Chrome):
     def __init__(self, ariba_discovery_profile_key, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.ariba_discovery_profile_key = ariba_discovery_profile_key
-        self.login()
+        self.login(Keychain())
 
     def patiently_click(self, button, wait_after=0):
         WebDriverWait(self, timeout=60).until(
@@ -42,11 +42,7 @@ class Ariba(Chrome):
         login = self.find_elements(By.CSS_SELECTOR, ".sap-icon--log")
         return len(login) == 0
 
-    def login(self):
-        username_path = Path("keys/username.key")
-        password_path = Path("keys/password.key")
-        if not username_path.exists() or not password_path.exists():
-            raise FileNotFoundError("username.key or password.key not found")
+    def login(self, keychain: Keychain):
         self.home(profile_key=self.ariba_discovery_profile_key)
         WebDriverWait(self, timeout=60).until(
             EC.element_to_be_clickable((By.CSS_SELECTOR, ".sap-icon--log"))
@@ -58,10 +54,12 @@ class Ariba(Chrome):
                 (By.NAME, "UserName") and (By.NAME, "Password")
             )
         )
-        with open(username_path, "r") as f:
-            self.find_element(By.NAME, "UserName").send_keys(f.read())
-        with open(password_path, "r") as f:
-            self.find_element(By.NAME, "Password").send_keys(f.read())
+        self.find_element(By.NAME, "UserName").send_keys(
+            keychain.get_secret("ARIBAUSERNAME")
+        )
+        self.find_element(By.NAME, "Password").send_keys(
+            keychain.get_secret("ARIBAPASSWORD")
+        )
         try:
             self.find_element(By.NAME, "Password").send_keys(Keys.ENTER)
         except NoSuchElementException as e:

@@ -62,7 +62,7 @@ def parse_html(directory: Path) -> pd.DataFrame:
                     dictionary = {"ID": file.parts[1]}
                     try:
                         with open(file, "r") as f:
-                            soup = BeautifulSoup(f, parser="html5lib")
+                            soup = BeautifulSoup(f, parser="html5lib", features="lxml")
                     except Exception as e:
                         print(e)
                         continue
