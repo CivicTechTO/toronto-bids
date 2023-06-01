@@ -1,6 +1,5 @@
-(ns toronto-bids.stuff
+(ns upload.stuff
 	(:gen-class)
-	(:require [clojure.string :as str])
 )
 
 (defn db-spec [db-name]

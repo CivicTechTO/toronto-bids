@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Test Toronto Bids Dates</title>
+	</head>
+	<body>
+		<h1>Test Toronto Bids Dates</h1>
+		<div>
+			<form method="GET" action="http://localhost:4000/toronto-bids/api/documents">
+				<div>
+					With posting date after
+					<input type="date" name="posting_date_after">
+				</div>
+				<div>
+					With posting date before
+					<input type="date" name="posting_date_before">
+				</div>
+				<div>
+					With closing date after
+					<input type="date" name="closing_date_after">
+				</div>
+				<div>
+					With closing date before
+					<input type="date" name="closing_date_before">
+				</div>
+				<div>
+					<button>Submit</button>
+				</div>
+			</form>
+		</div>
+	</body>
+</html>

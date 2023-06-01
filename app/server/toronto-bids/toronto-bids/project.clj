@@ -8,6 +8,8 @@
 		  	[org.clojure/clojure "1.10.0"]
 		   [ring/ring-core "1.9.6"]
 					[ring/ring-jetty-adapter "1.9.6"]
+		   [ring-cors "0.1.13"]
+		   [ring/ring-json "0.5.1"]
 					[compojure "1.7.0"]
 					[org.clojure/data.json "2.4.0"]
 					[org.clojure/java.jdbc "0.7.12"]
@@ -16,17 +18,5 @@
 	  ]
   :main ^:skip-aot toronto-bids.core
   :target-path "target/%s"
-  :profiles 
-  	{
-  				:prod
-  				{
-		  				:aot [toronto-bids.core]
-  					 :uberjar-name "toronto-bids.jar"
-  				}
-  				:test
-  				{
-		  				:aot [toronto-bids.core]
-		      :uberjar-name "toronto-bids-test.jar"
-  				}
-   }
+  :profiles {:uberjar {:aot :all :uberjar-name "toronto-bids.jar"}}
   )

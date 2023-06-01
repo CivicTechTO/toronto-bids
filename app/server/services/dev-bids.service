@@ -1,5 +1,5 @@
 [Unit]
-Description=Bids server
+Description=Test bids server
 After=nginx.service mysql.service
 Wants=nginx.service mysql.service
 
@@ -7,8 +7,8 @@ Wants=nginx.service mysql.service
 Type=simple
 Restart=always
 RestartSec=10
-WorkingDirectory=/home/jrootham/toronto-bids/bin/
-ExecStart=/usr/bin/java -jar toronto-bids.jar toronto_bids 8100
+WorkingDirectory=/home/jrootham/dev-bids/bin/
+ExecStart=/usr/bin/java -jar toronto-bids.jar test_bids 8102
 
 [Install]
 WantedBy=multi-user.target

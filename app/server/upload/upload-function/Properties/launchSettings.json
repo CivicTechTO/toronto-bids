@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "upload_function": {
+      "commandName": "Project",
+      "commandLineArgs": "--port 7283",
+      "launchBrowser": false
+    }
+  }
+}
