@@ -50,6 +50,7 @@ namespace upload_function
             ILogger log)
         {
             log.LogInformation("C# HTTP trigger function processed a request.");
+            var callCount = 0;
             try
             {
                 using var context = new FlatDBContext();
@@ -108,12 +109,11 @@ namespace upload_function
                             }
                         }
 
-
                         context.Calls.Add(dbDoc);
-
                     }
 
                     context.SaveChanges();
+                    callCount += 1;
 
                     log.LogInformation("Saved successfully");
                 }
@@ -126,7 +126,7 @@ namespace upload_function
                 return new StatusCodeResult(500);
             }
 
-            return new StatusCodeResult(200);
+            return new StatusCodeResult(callCount);
         }
     }
 }
