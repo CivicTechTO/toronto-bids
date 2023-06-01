@@ -48,13 +48,3 @@ mysql -u bids -p bids test_bids < schema.sql
 mysql -u bids -p bids test_bids < make_test.sql
 ```
 
-## Server configuration
-
-You will need to update the toronto-bids server code to use the login you
-created, specifically the `stuff.clj` file. For the above example with `bids`,
-update `db-spec` with the following:
-
-```
-(str "jdbc:mysql:///" db-name "?user=bids&password=bids")
-```
-

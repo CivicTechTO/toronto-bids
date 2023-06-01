@@ -1,0 +1,205 @@
+@import url('https://fonts.googleapis.com/css2?family=Arimo&display=swap');
+
+html, body, #outer, #wrapper
+{
+	height: 100%;
+}
+
+body
+{
+	margin: 0;
+	font-family: 'Arimo', sans-serif;
+	font-size: large;
+	line-height: 1.5;
+}
+
+#wrapper
+{
+	display: flex;
+}
+
+@media (max-width: 1000px) {
+	#wrapper {
+		flex-direction: column;
+	}
+
+	#content {
+		max-width: 100%;
+	}
+
+	#filters {
+		visibility: hidden;
+		height: 0;
+	}
+
+	#expand-toggle:checked ~ #filters {
+		visibility: visible;
+		height: auto;
+		margin-top: 1em;
+	}
+}
+
+@media (min-width: 1000px) {
+	#content {
+		width: 100%;
+	}
+
+	#expand-toggle, #expand-filters {
+		visibility: hidden;
+	}
+}
+
+#title
+{
+	text-align: center;
+	font-size: 2em;
+	font-weight: bolder;
+	margin-bottom: 0.75em;
+	min-width: max-content;
+}
+
+#title a
+{
+	text-decoration: none;
+	color: black;
+}
+
+#content
+{
+	padding: 2em;
+	overflow-y: auto;
+}
+
+#select
+{
+	background: #eee;
+	padding: 2em;
+}
+
+#select form div
+{
+	margin-bottom: 1em;
+}
+
+#select .label
+{
+	margin-bottom: 0;
+	color: #444;
+}
+
+#select select, .search
+{
+	width: 100%;
+}
+
+.button
+{
+	display: inline;
+	margin-right: 1em;
+}
+
+.calllink
+{
+	color: black;
+	text-decoration: none;
+}
+
+.call
+{
+	margin-bottom: 2em;
+	padding: 1em;
+	border: 1px solid lightgray;
+	border-radius: 1em;
+	box-shadow: 4px 4px 5px gray;
+}
+
+.call form
+{
+	float: right;
+	position: relative;
+	bottom: 1.2em;
+}
+
+.datecall
+{
+	text-align: right;
+	float: right;
+	margin-left: 3em;
+	line-height: 1;
+}
+
+.date
+{
+	font-weight: bold;
+	font-size: larger;
+	display: inline;
+	color: royalblue;
+}
+
+.itemtype
+{
+	margin-top: 1em;
+}
+
+.itemdesc
+{
+	font-size: x-large;
+	font-weight: bold;
+	color: royalblue;
+}
+
+.itemcom
+{
+	display: inline-block;
+	margin-right: 1em;
+}
+
+.callno
+{
+	font-size: small;
+}
+
+.dheader
+{
+	font-size: xx-large;
+	font-weight: bold;
+	color: royalblue;
+	margin-bottom: 1em;
+	padding-bottom: 0.25em;
+	border-bottom: 1px solid gray;
+}
+
+.back, .forward
+{
+	margin-top: 1em;
+	font-size: x-large;
+	text-decoration: none;
+}
+
+.back
+{
+	float: left;
+}
+
+.forward
+{
+	float: right;
+}
+
+#attachments
+{
+	margin-top: 2em;
+}
+
+#attachments ul
+{
+	margin-top: 0.25em;
+}
+
+#details tr :first-child
+{
+	display: block;
+	min-width: max-content;
+	text-align: right;
+	padding-right: 0.25em;
+}

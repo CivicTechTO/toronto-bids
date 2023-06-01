@@ -6,11 +6,14 @@
 az_create.sh
 config.json
 scrapers/files/
+.*.sw*
 *.zip
 *.csv
 *.key
 scrapers/ariba/keys/
 scrapers/ariba/data/
+app/db-regen/settings.py
+
 .idea
 temp.html
 

@@ -1,0 +1,6 @@
+<?
+$mysqluser = '';
+$mysqlpassword = '';
+$mysqlhost = '';
+$mysqldb = '';
+?>

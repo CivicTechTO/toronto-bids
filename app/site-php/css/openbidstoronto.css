@@ -1,0 +1,103 @@
+.resultsheader a:link {
+  text-decoration: none;
+  color: black;
+}
+
+.resultsheader a:visited {
+  text-decoration: none;
+  color: black;
+}
+.recordheader a:link {
+  text-decoration: none;
+  color: black;
+}
+
+.recordheader a:visited {
+  text-decoration: none;
+  color: black;
+}
+
+.footer-section {
+/*background: #eee;*/
+margin-top: 10%;
+border-top: 1px solid #eee;
+}
+.info-section {
+    margin-top: 10%;
+    border-top: 1px solid #eee;
+}
+.filter-section {
+    margin-top: 10%;
+    border-top: 1px solid #eee;
+}
+.attachments-section li {
+	margin-left: 1rem;
+    margin-bottom: 0px;
+}
+.result {
+    margin: 2px;
+    border-radius: 10px;
+    padding: 8px;
+    border: 1px solid #eee;
+}
+.datecall {
+    text-align: right;
+    float: right;
+    margin-left: 3em;
+}
+
+.result a:link {
+  text-decoration: none;
+}
+
+.result a:visited {
+  text-decoration: none;
+}
+
+.result .itemcom
+{
+	display: inline-block;
+	margin-right: 1em;
+	padding: 0.1em 0.3em 0.1em 0.3em;
+	border-radius: 20px;
+    border:none;
+	color:white;
+font-size: 1.2rem; line-height: 1;  letter-spacing: 0; 
+margin-bottom: 0px;
+}
+
+.result .comg
+{
+	border-radius: 30px;
+   background-color:#1099dd;
+}
+
+.result .comc
+{
+	border-radius: 30px;
+   background-color:#8899aa;
+}
+
+.result .comp
+{
+	border-radius: 30px;
+   background-color:#66bb55;
+}
+
+.result .callno
+{
+font-size: 1.2rem;
+display:inline;
+margin-left: 1rem;
+color: black;
+}
+label {
+  font-weight: 200; }
+
+.recorddisplay .row:nth-child(odd) {
+    background: #efefef;
+}
+
+pre{
+font-size: 0.9rem;
+}
