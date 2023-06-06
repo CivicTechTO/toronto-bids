@@ -2,7 +2,7 @@
 
 /*
 Usage:
-http://pwd.ca/openbidstoronto/api.php: 
+http://pwd.ca/torontobidsarchive/api.php: 
 - cn: Return detail info for the specified record
 - If cn is not specified: Returns summary of all records
 	Optional:
@@ -115,10 +115,7 @@ if (!empty($_REQUEST['cn'])) {
 	$params[] = $offset;
 	$params[] = $limit;
 
-	#print_r($where);
-	#print_r($params);
-	#print_r("SELECT `ShortDescription`,`CallNumber`,`ShowDatePosted`,`ClosingDate`,`Division`,`Type`,`Commodity`,`CommodityType` FROM `fromxml` WHERE ".$where." ORDER BY `ClosingDate` DESC LIMIT ?,?");
-	$stmt = $mysqli->prepare("SELECT `ShortDescription`,`CallNumber`,`ShowDatePosted`,`ClosingDate`,`Division`,`Type`,`Commodity`,`CommodityType` FROM `calls` WHERE ".$where." ".$orderby." LIMIT ?,?");
+	$stmt = $mysqli->prepare("SELECT `ShortDescription`,`CallNumber`,`ClosingDate`,`Division`,`Type`,`Commodity`,`CommodityType`,LENGTH(`parsedtext`) as textlength FROM `calls` WHERE ".$where." ".$orderby." LIMIT ?,?");
 	$stmt->bind_param(...$params);
 	$stmt->execute();
 	$result = $stmt->get_result(); // get the mysqli result

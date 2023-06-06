@@ -5,7 +5,7 @@
   <!-- Basic Page Needs
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
   <meta charset="utf-8">
-  <title>Open Bids Toronto</title>
+  <title>Toronto Bids Archive</title>
   <meta name="description" content="">
   <meta name="author" content="">
 
@@ -21,7 +21,7 @@
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
   <link rel="stylesheet" href="css/normalize.css">
   <link rel="stylesheet" href="css/skeleton.css">
-  <link rel="stylesheet" href="css/openbidstoronto.css">
+  <link rel="stylesheet" href="css/app.css">
 
   <!-- Favicon
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
@@ -43,7 +43,7 @@
 
 <?php
 $haveresults = 0;
-$url = "http://pwd.ca/openbidstoronto/api.php?l=4";
+$url = "http://pwd.ca/torontobidsarchive/api.php?l=4";
 $json = file_get_contents($url);
 $json = json_decode($json);
   
@@ -54,7 +54,7 @@ if (empty($json->data)) {
 }
 
 $rhaveresults = 0;
-$rurl = "http://pwd.ca/openbidstoronto/api.php?l=4&sort=random";
+$rurl = "http://pwd.ca/torontobidsarchive/api.php?l=4&sort=random";
 $rjson = file_get_contents($rurl);
 $rjson = json_decode($rjson);
   
@@ -71,7 +71,7 @@ if (empty($rjson->data)) {
   <div class="container">
     <div class="row">
       <div class="twelve columns" style="margin-top: 10%">
-        <h1>Open Bids Toronto</h1>
+        <h1>Toronto Bids Archive</h1>
         <p>A searchable archive of past City of Toronto bids and tenders.</p>
       </div>
     </div>
@@ -95,7 +95,11 @@ if (empty($rjson->data)) {
 <?php
 if ($haveresults) {
 	foreach($json->data as $key) {
-?>            <tr><td><a href='<?=$key->{"CallNumber"}?>.html'><?=$key->{"ShortDescription"}?></a> <?=$key->{"ClosingDate"}?></td></tr><?
+?>            <tr><td><a href='<?=$key->{"CallNumber"}?>.html'><?=$key->{"ShortDescription"}?></a> <?=$key->{"ClosingDate"}?><?php
+if ($key->{'textlength'} > 10) {
+?> &#128452;<?
+}
+?></td></tr><?
 	}
 }
 ?>
@@ -110,7 +114,11 @@ if ($haveresults) {
 <?php
 if ($rhaveresults) {
 	foreach($rjson->data as $key) {
-?>            <tr><td><a href='<?=$key->{"CallNumber"}?>.html'><?=$key->{"ShortDescription"}?></a> <?=$key->{"ClosingDate"}?></td></tr><?
+?>            <tr><td><a href='<?=$key->{"CallNumber"}?>.html'><?=$key->{"ShortDescription"}?></a> <?=$key->{"ClosingDate"}?><?php
+if ($key->{'textlength'} > 10) {
+?> &#128452;<?
+}
+?></td></tr><?
 	}
 }
 ?>

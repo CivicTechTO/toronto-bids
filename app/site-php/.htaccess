@@ -14,4 +14,4 @@ order allow,deny
 deny from all
 </Files>
 
-RewriteRule ^(.*).html$ /openbidstoronto/record.php?cn=$1
+RewriteRule ^(.*).html$ /torontobidsarchive/record.php?cn=$1

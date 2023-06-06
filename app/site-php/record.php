@@ -5,7 +5,7 @@
   <!-- Basic Page Needs
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
   <meta charset="utf-8">
-  <title>Open Bids Toronto</title>
+  <title>Toronto Bids Archive</title>
   <meta name="description" content="">
   <meta name="author" content="">
 
@@ -21,7 +21,7 @@
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
   <link rel="stylesheet" href="css/normalize.css">
   <link rel="stylesheet" href="css/skeleton.css">
-  <link rel="stylesheet" href="css/openbidstoronto.css">
+  <link rel="stylesheet" href="css/app.css">
 
   <!-- Favicon
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
@@ -46,7 +46,7 @@ $urlbase = "https://torontobidsstorage.file.core.windows.net/torontobids/ariba_d
 $ariba_sas_token = "?sv=2022-11-02&ss=f&srt=sco&sp=rl&se=2123-05-18T04:49:53Z&st=2023-05-17T20:49:53Z&spr=https,http&sig=uWfbBiXayfnnSxN%2FpmRW%2FBOtVOyGcY%2F%2Fcz5lN8gjAP4%3D";
 
 $haverecord=0;
-$url = "http://pwd.ca/openbidstoronto/api.php?cn=".urldecode($_REQUEST['cn']);
+$url = "http://pwd.ca/torontobidsarchive/api.php?cn=".urldecode($_REQUEST['cn']);
 $json = file_get_contents($url);
 $json = json_decode($json);
 if (empty($json->data)) {
@@ -62,7 +62,7 @@ if (empty($json->data)) {
   <div class="container">
     <div class="row recordheader">
       <div class="twelve columns" style="margin-top: 10%">
-        <h1><a href="http://pwd.ca/openbidstoronto/">Open Bids Toronto</a></h1>
+        <h1><a href="http://pwd.ca/torontobidsarchive/">Open Bids Toronto</a></h1>
         <p>A searchable archive of past City of Toronto bids and tenders.</p>
       </div>
     </div>

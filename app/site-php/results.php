@@ -5,7 +5,7 @@
   <!-- Basic Page Needs
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
   <meta charset="utf-8">
-  <title>Open Bids Toronto</title>
+  <title>Toronto Bids Archive</title>
   <meta name="description" content="">
   <meta name="author" content="">
 
@@ -21,7 +21,7 @@
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
   <link rel="stylesheet" href="css/normalize.css">
   <link rel="stylesheet" href="css/skeleton.css">
-  <link rel="stylesheet" href="css/openbidstoronto.css">
+  <link rel="stylesheet" href="css/app.css">
 
   <!-- Favicon
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
@@ -49,7 +49,7 @@ if (!empty($_REQUEST['q'])) {
   if (!empty($_REQUEST['d'])) $querystring .= "&d=".urlencode($_REQUEST['d']);
   if (!empty($_REQUEST['c'])) $querystring .= "&c=".urlencode($_REQUEST['c']);
   if (!empty($_REQUEST['ct'])) $querystring .= "&ct=".urlencode($_REQUEST['ct']);  
-  $url = "http://pwd.ca/openbidstoronto/api.php?".$querystring;
+  $url = "http://pwd.ca/torontobidsarchive/api.php?".$querystring;
   $json = file_get_contents($url);
   $json = json_decode($json);
   
@@ -67,7 +67,7 @@ if (!empty($_REQUEST['q'])) {
 <div class="container">
   <div class="row resultsheader">
     <div class="twelve columns" style="margin-top: 10%">
-      <h1><a href="http://pwd.ca/openbidstoronto/">Open Bids Toronto</a></h1>
+      <h1><a href="http://pwd.ca/torontobidsarchive/">Toronto Bids Archive</a></h1>
     </div>
   </div>
   <form action="results.php" method="get">
@@ -158,7 +158,11 @@ if ($haveresults) {
     ?>
     <div class='result'><a href='<?=$key->{"CallNumber"}?>.html'><div class='datecall'><?=$key->{"ClosingDate"}?></div>
     <div class="itemcom <?=$col?>"><?=$key->{"Commodity"}?></div><br/>
-    <?=$key->{"ShortDescription"}?><div class="callno"><?=$key->{"CallNumber"}?></div></a>
+    <?=$key->{"ShortDescription"}?><div class="callno"><?=$key->{"CallNumber"}?></div><?php
+if ($key->{'textlength'} > 10) {
+?> &#128452;<?
+}
+?></a>
     </div><?php
   }
 } else {
