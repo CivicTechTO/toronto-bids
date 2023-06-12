@@ -1,6 +1,0 @@
-<?
-$mysqluser = '';
-$mysqlpassword = '';
-$mysqlhost = '';
-$mysqldb = '';
-?>

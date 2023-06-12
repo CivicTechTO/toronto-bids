@@ -1,6 +1,12 @@
 # Created by https://www.toptal.com/developers/gitignore/api/macos,windows,linux,python,phpunit
 # Edit at https://www.toptal.com/developers/gitignore?templates=macos,windows,linux,python,phpunit
 
+scrapers/ariba/keys/
+scrapers/ariba/data/
+app/db-regen/settings.py
+app/site-php/includes/mysql-vars.php
+
+
 ### Linux ###
 *~
 az_create.sh
@@ -10,9 +16,6 @@ scrapers/files/
 *.zip
 *.csv
 *.key
-scrapers/ariba/keys/
-scrapers/ariba/data/
-app/db-regen/settings.py
 
 .idea
 temp.html
