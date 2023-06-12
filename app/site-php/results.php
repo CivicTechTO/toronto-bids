@@ -44,21 +44,24 @@
 <?php
 $haveresults = 0;
 $querystring = "q=";
+$querystring .= urlencode($_REQUEST['q']);
+if (!empty($_REQUEST['d'])) $querystring .= "&d=".urlencode($_REQUEST['d']);
+if (!empty($_REQUEST['c'])) $querystring .= "&c=".urlencode($_REQUEST['c']);
+if (!empty($_REQUEST['ct'])) $querystring .= "&ct=".urlencode($_REQUEST['ct']);  
+$url = "http://pwd.ca/torontobidsarchive/api.php?".$querystring;
+$json = file_get_contents($url);
+$json = json_decode($json);
+
+//var_dump($json);
+if (empty($json->data)) {
+  //print "no record found";
+} else {
+  $haveresults = 1;
+}
 if (!empty($_REQUEST['q'])) {
-  $querystring .= urlencode($_REQUEST['q']);
-  if (!empty($_REQUEST['d'])) $querystring .= "&d=".urlencode($_REQUEST['d']);
-  if (!empty($_REQUEST['c'])) $querystring .= "&c=".urlencode($_REQUEST['c']);
-  if (!empty($_REQUEST['ct'])) $querystring .= "&ct=".urlencode($_REQUEST['ct']);  
-  $url = "http://pwd.ca/torontobidsarchive/api.php?".$querystring;
-  $json = file_get_contents($url);
-  $json = json_decode($json);
-  
-  //var_dump($json);
-  if (empty($json->data)) {
-	  //print "no record found";
-  } else {
-    $haveresults = 1;
-  }
+	$search_term_to_display = urldecode($_REQUEST['q']);
+} else {
+	$search_term_to_display = "( none )";
 }
 ?>
 <!-- <?=var_dump($url);?>-->
@@ -74,7 +77,7 @@ if (!empty($_REQUEST['q'])) {
   <input type="hidden" name="q" value="<?=$_REQUEST['q']?>">
   <div class="row" style="font-weight: 600">
     <div class="four columns">
-			Search term: <?=urldecode($_REQUEST['q'])?>
+			Search term: <?=$search_term_to_display?>
     </div>
 	<div class="four columns" style="text-align: center;">
 			Total results: <?=$json->meta->{"total"}?>
@@ -173,7 +176,7 @@ if ($key->{'textlength'} > 10) {
   <div class="footer-section">
     <div class="row">
       <div class="twelve columns">
-      <a href="">About</a>
+      <a href="/torontobidsarchive/">Home</a> | <a href="about.php">About</a>
       </div>
     </div>
   </div>
@@ -182,10 +185,3 @@ if ($key->{'textlength'} > 10) {
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
 </body>
 </html>
-<!--
-Meta
-<?=var_dump($json->meta)?>
-
-Included
-<?=var_dump($json->included)?>
--->

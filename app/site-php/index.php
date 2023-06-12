@@ -103,6 +103,7 @@ if ($key->{'textlength'} > 10) {
 	}
 }
 ?>
+<tr><td style="text-align: right;"><a href="results.php">[more]</a></td></tr>
           </tbody>
         </table>
       </div>
@@ -130,7 +131,7 @@ if ($key->{'textlength'} > 10) {
   <div class="footer-section">
     <div class="row">
       <div class="twelve columns">
-      <a href="">About</a>
+      <a href="/torontobidsarchive/">Home</a> | <a href="about.php">About</a>
       </div>
     </div>
   </div>

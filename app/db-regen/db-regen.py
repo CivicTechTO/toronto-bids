@@ -21,8 +21,10 @@ fields_to_strip_html_from = [ "CallNumber", "Commodity", "CommodityType", "Type"
 urlbase = "https://torontobidsstorage.file.core.windows.net/torontobids/ariba_data/"
 folderbase = "ariba_data"
 read_pdfs = 1
-folders_to_skip = [ "Doc3921046980", "Doc3948982724", "Doc3952713027", "Doc3964425639", "Doc3964997028", "Doc3968699837", "Doc3971697547", "Doc3973032085", "Doc3992828327"]
-folder_to_start_with = "Doc3992828327"
+#folders_to_skip = [ "Doc3921046980", "Doc3948982724", "Doc3952713027", "Doc3964425639", "Doc3964997028", "Doc3968699837", "Doc3971697547", "Doc3973032085", "Doc3992828327"]
+#folder_to_start_with = "Doc3992828327"
+folders_to_skip = [ ]
+folder_to_start_with = "Doc3921046980"
 
 def process_folder(folder_name, CallNumber, subfolder = 0):
     print("-- Starting folder: " + folder_name)
@@ -79,9 +81,13 @@ def process_folder(folder_name, CallNumber, subfolder = 0):
             sqlreal = ( "INSERT INTO attachments (CallNumber,filename,parsedtext,uuid) VALUES(%s,%s,%s,UUID()) ON DUPLICATE KEY UPDATE CallNumber = %s,filename = %s,parsedtext = %s" )
             filename_for_db = folder_name+"/"+this_file['name']
             filename_for_db = filename_for_db.replace(CallNumber+"/","")
+            #I think this line might be causing problems at INSERT
             CallNumber_for_db = CallNumber.replace("Doc","")
             print("INSERTING attachment: "+filename_for_db)
             sqlval = ( CallNumber_for_db, filename_for_db, text, CallNumber_for_db, filename_for_db, text )
+
+            conn.ping(reconnect=True, attempts=1, delay=0)
+
             cursor.execute(sqlreal,sqlval)
             conn.commit()
 
@@ -126,6 +132,10 @@ def process_folder(folder_name, CallNumber, subfolder = 0):
             CallNumber_for_db = y['CallNumber'].replace("Doc","")
             #SQL INSERT
             print(f"MYSQL INSERT INTO calls -- foldertext length: {len(foldertext)}")
+
+            conn.ping(reconnect=True, attempts=1, delay=0)
+            
+            print("INSERTING CALL: "+CallNumber_for_db)
             sqlreal = ( "INSERT INTO calls (Commodity,CommodityType,CallNumber,Type,ShortDescription,Description,ShowDatePosted,ClosingDate,SiteMeeting,ShowBuyerNameList,BuyerPhoneShow,BuyerEmailShow,Division,BuyerLocationShow,parsedtext,uuid) " + 
             "VALUES(%s,%s,%s,%s,%s,%s,STR_TO_DATE(%s,'%M %d, %Y'),STR_TO_DATE(%s,'%M %d, %Y'),%s,%s,%s,%s,%s,%s,%s,UUID())" +
             " ON DUPLICATE KEY UPDATE Commodity = %s,CommodityType = %s,Type = %s,ShortDescription = %s,Description = %s,ShowDatePosted = STR_TO_DATE(%s,'%M %d, %Y'),ClosingDate = STR_TO_DATE(%s,'%M %d, %Y'),SiteMeeting = " + 
