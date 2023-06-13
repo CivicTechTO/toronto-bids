@@ -289,12 +289,15 @@ if __name__ == "__main__":
         if file.is_dir():
             for json_file in file.iterdir():
                 if json_file.is_file():
-                    with open(json_file, "rb") as f:
-                        file_hash = sha256(f.read()).hexdigest()
-                    if file_hash in hashes:
-                        json_file.unlink()
-                    else:
-                        hashes.add(file_hash)
+                    try:
+                        with open(json_file, "rb") as f:
+                            file_hash = sha256(f.read()).hexdigest()
+                        if file_hash in hashes:
+                            json_file.unlink()
+                        else:
+                            hashes.add(file_hash)
+                    except Exception as e:
+                        continue
 
     if not skip_scraper:
         slack.post_log("It looks like there are new bids! Starting the scraper...")
