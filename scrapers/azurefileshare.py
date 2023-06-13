@@ -1,3 +1,5 @@
+from typing import List, Tuple, Any
+
 import pandas as pd
 from azure.storage.fileshare import ShareServiceClient
 from secret_manager import Keychain
@@ -12,7 +14,7 @@ class AzureFileShare:
         self.share = self.service.get_share_client(keychain.get_config("share_name"))
         self.share_name = keychain.get_config("share_name")
 
-    def list_files(self, directory: str = "ariba_data") -> list[str]:
+    def list_files(self, directory: str) -> list[tuple[str, str]]:
         files = []
         dir_client = self.share.get_directory_client(directory.lstrip("/"))
         for item in dir_client.list_directories_and_files():
@@ -22,11 +24,15 @@ class AzureFileShare:
                 files.append((item.name, f"{directory}/{item.name}".lstrip("/")))
         return files
 
+    def list_files_handler(self, directory: str = "ariba_data") -> list[tuple[str, str]]:
+        files = self.list_files(directory)
+        return [(file_name, file_path.split("/", 3)[-1]) for file_name, file_path in files]
+
     def generate_download_link(self, file_path: str) -> str:
         return f"https://{self.service.account_name}.file.core.windows.net/{self.share_name}/{file_path}"
 
     def create_file_listing_dataframe(self) -> pd.DataFrame:
-        files = self.list_files()
+        files = self.list_files_handler()
         download_links = [
             self.generate_download_link(file_path) for file_name, file_path in files
         ]
