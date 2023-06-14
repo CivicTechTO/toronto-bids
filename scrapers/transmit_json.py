@@ -73,9 +73,16 @@ def join_open_data_and_file_metadata() -> pd.DataFrame:
     grouped_file_metadata = pd.DataFrame(grouped_file_metadata).transpose()
     grouped_file_metadata.index.name = "CallNumber"
     grouped_file_metadata.reset_index(inplace=True)
-    return open_data.merge(
+    data = open_data.merge(
         grouped_file_metadata, on="CallNumber", how="inner", suffixes=("", "_y")
     )
+    # Now drop any duplicate call numbers
+    data.drop_duplicates(subset="CallNumber", inplace=True)
+    # Drop any columns with an empty or none call number
+    data.dropna(subset=["CallNumber"], inplace=True)
+    data = data[data["CallNumber"] != ""]
+    return data
+
 
 
 def transmit_json(url: str, password: str) -> requests.Response:
