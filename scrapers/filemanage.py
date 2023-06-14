@@ -96,7 +96,13 @@ def delete_duplicates(directory: Path):
             # Get list of all files in directory and its subdirectories
             files = [f for f in folder.glob("**/*") if f.is_file()]
             # Compute the hash of each file
-            hashes = [hashlib.md5(f.read_bytes()).hexdigest() for f in files]
+            hashes = []
+            for file in files:
+                try:
+                    hashes.append(hashlib.md5(file.read_bytes()).hexdigest())
+                except FileNotFoundError as e:
+                    print(e)
+                    continue
             # Create a hash-to-file dict
             hash_to_file = {}
             for f, h in zip(files, hashes):
