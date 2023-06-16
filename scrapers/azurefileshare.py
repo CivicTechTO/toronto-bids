@@ -24,7 +24,9 @@ class AzureFileShare:
                 files.append((item.name, f"{directory}/{item.name}".lstrip("/")))
         return files
 
-    def list_files_handler(self, directory: str = "ariba_data") -> list[tuple[str, str]]:
+    def list_files_handler(
+        self, directory: str = "ariba_data"
+    ) -> list[tuple[str, str]]:
         files = self.list_files(directory)
         return files
 

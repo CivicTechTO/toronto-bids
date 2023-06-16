@@ -1,8 +1,8 @@
 import datetime as dt
 import filecmp
+import platform
 from hashlib import sha256
 from pathlib import Path
-
 import pandas as pd
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service as ChromeService
@@ -254,6 +254,10 @@ if __name__ == "__main__":
 
     slack.post_update(
         f"Scraper is starting to run! :rocket: You can follow updates on the #{slack.log_channel} channel."
+    )
+    # Get computer name and operating system
+    slack.post_log(
+        f"Running on {platform.node()} {platform.system_alias(platform.system(), platform.release(), platform.version())}"
     )
     slack.post_log("Checking if there is new data on the city website...")
     # Save open data with datestamp
