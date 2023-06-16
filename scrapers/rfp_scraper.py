@@ -361,7 +361,7 @@ if __name__ == "__main__":
     #     scraper_config["json_key"] = args.json_key
 
     response = transmit_json(
-        keychain.get_config("json_url"), keychain.get_config("json_key")
+        keychain.get_config("json_url"), keychain.get_config("json_key"), slack
     )
     slack.post_log(f"Pushed JSON, received response: {response}\n{response.text}")
 

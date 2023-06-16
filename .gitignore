@@ -3,6 +3,7 @@
 
 scrapers/ariba/keys/
 scrapers/ariba/data/
+scrapers/*.ipynb
 app/db-regen/settings.py
 app/site-php/includes/mysql-vars.php
 

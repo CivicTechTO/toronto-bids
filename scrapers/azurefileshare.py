@@ -26,19 +26,14 @@ class AzureFileShare:
 
     def list_files_handler(self, directory: str = "ariba_data") -> list[tuple[str, str]]:
         files = self.list_files(directory)
-        return [(file_name, file_path.split("/", 3)[-1]) for file_name, file_path in files]
+        return files
 
     def generate_download_link(self, file_path: str) -> str:
         return f"https://{self.service.account_name}.file.core.windows.net/{self.share_name}/{file_path}"
 
     def create_file_listing_dataframe(self) -> pd.DataFrame:
         files = self.list_files_handler()
-        download_links = [
-            self.generate_download_link(file_path) for file_name, file_path in files
-        ]
-
         df = pd.DataFrame(files, columns=["File Name", "Location"])
-        df["Download Link"] = download_links
 
         return df
 

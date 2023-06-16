@@ -4,6 +4,7 @@ import pandas as pd
 from azurefileshare import AzureFileShare
 from secret_manager import Keychain
 from pathlib import Path
+from slack import Slack
 
 
 def get_latest_open_data() -> pd.DataFrame:
@@ -53,22 +54,22 @@ def join_open_data_and_file_metadata() -> pd.DataFrame:
             continue
         location = v.Location.split("/")
         call = [l for l in location if "Doc" in l][0]
-        call = re.sub("[A-Za-z]", "", call)
+        call = re.sub("[^\d]", "", call)
         file_metadata.loc[k, "CallNumber"] = call
+        file_metadata.loc[k, "Location"] = v.Location.split("/", 3)[-1]
+
+    #[(file_name, file_path.split("/", 3)[-1]) for file_name, file_path in files]
 
     grouped_file_metadata = {}
     for k, v in file_metadata.iterrows():
         if v["CallNumber"] not in grouped_file_metadata.keys():
             grouped_file_metadata[v["CallNumber"]] = {
                 "File Name": [],
-                "Location": [],
-                "Download Link": [],
+                "Location": []
             }
         grouped_file_metadata[v["CallNumber"]]["File Name"].append(v["File Name"])
         grouped_file_metadata[v["CallNumber"]]["Location"].append(v["Location"])
-        grouped_file_metadata[v["CallNumber"]]["Download Link"].append(
-            v["Download Link"]
-        )
+
 
     grouped_file_metadata = pd.DataFrame(grouped_file_metadata).transpose()
     grouped_file_metadata.index.name = "CallNumber"
@@ -85,13 +86,13 @@ def join_open_data_and_file_metadata() -> pd.DataFrame:
 
 
 
-def transmit_json(url: str, password: str) -> requests.Response:
+def transmit_json(url: str, password: str, slack: Slack) -> requests.Response:
     data = join_open_data_and_file_metadata()
     json_data = {"list": data.to_dict(orient="records")}
     # Post data to url, with basic password authentication
-    print(f"Attempting to post {len(data)} records to {url}")
+    slack.post_log(f"Attempting to post {len(data)} records to {url}")
     # before sending, preview the request
-    print(requests.Request("POST", url, json=json_data).prepare().body)
+    slack.post_log(str(requests.Request("POST", url, json=json_data).prepare().body))
 
     response = requests.post(url, json=json_data)  # , auth=("user", password))
     return response
