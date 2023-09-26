@@ -5,6 +5,7 @@ from hashlib import sha256
 from pathlib import Path
 import pandas as pd
 from selenium import webdriver
+from selenium.webdriver import Keys
 from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.errorhandler import NoSuchElementException
@@ -173,7 +174,39 @@ def main_loop(
                     f.write(driver.page_source)
             if (not zip_exists) and (not request_expired):
                 # If we don't have the attachments and the RFP is still open, download them
-                driver.patiently_click('//*[@id="_hfdr9c"]')  # respond to posting
+                driver.patiently_click("//a[contains(@class, 'adsmallbutton') and contains(@class, 'adbuttonblock') and contains(@class, 'buttonRightPadding')]", wait_after=3)
+
+
+                # If we aren't logged in yet, we will now get a box asking us to log in. There will be two elements
+                # we care about: <input value=" Enter Username" onblur="ariba.Handlers.hTextBlur(this, event)" _pl="
+                # Enter Username" bh="TF" size="30" maxlength="100" class="ph tf tfW" type="text" name="UserName">
+                # <input value="" onblur="ariba.Handlers.hPassBlur(this, event)" onfocus="ariba.Handlers.hPassFocus(
+                # this, event)" bh="PF" autocomplete="off" size="30" maxlength="48" class="tf tfW" type="password"
+                # name="Password">
+
+                try:
+                    # Try to locate the element by multiple attributes
+                    username_element = driver.find_element(By.XPATH, "//input[@name='UserName'][@type='text'][@maxlength='100']")
+
+                    # Additional check for class
+                    if 'tfW' in username_element.get_attribute('class'):
+                        username_element.send_keys(keychain.get_secret("ARIBAUSERNAME"))
+                    else:
+                        print("Element found but class does not match.")
+
+                    # Locate the element by multiple attributes
+                    password_element = driver.find_element(By.XPATH, "//input[@name='Password'][@type='password'][@maxlength='48']")
+
+                    # Additional check for class
+                    if 'tfW' in password_element.get_attribute('class'):
+                        password_element.send_keys(keychain.get_secret("ARIBAPASSWORD"))
+                        password_element.send_keys(Keys.ENTER)
+                    else:
+                        print("Element found but class does not match.")
+
+                except NoSuchElementException:
+                    print("Seems like we are logged in.")
+
                 driver.patiently_click('//*[@id="_xjqay"]')  # download content
                 driver.patiently_click(
                     '//*[@id="_hgesab"]', wait_after=15
@@ -234,12 +267,47 @@ if __name__ == "__main__":
         action="store_true",
         help="Don't post updates to Slack",
     )
+    parser.add_argument(
+        "--ariba-password",
+        action="store",
+        help="Override the Ariba password stored in the keychain"
+    )
+    parser.add_argument(
+        "--ariba-username",
+        action="store",
+        help="Override the Ariba username stored in the keychain"
+    )
+    parser.add_argument(
+        "--azure-storage-key",
+        action="store",
+        help="Override the Azure storage key stored in the keychain"
+    )
+    parser.add_argument(
+        "--azure-storage-account",
+        action="store",
+        help="Override the Azure storage account name"
+    )
+    parser.add_argument(
+        "--slack-key",
+        action="store",
+        help="Override the Slack key stored in the keychain"
+    )
     args = parser.parse_args()
-    Path(DOWNLOAD_DIRECTORY).mkdir(exist_ok=True)
-    Path(ARIBA_DATA_DIRECTORY).mkdir(exist_ok=True)
-    Path(OPEN_DATA_DIRECTORY).mkdir(exist_ok=True)
+    Path(DOWNLOAD_DIRECTORY).mkdir(parents=True, exist_ok=True)
+    Path(ARIBA_DATA_DIRECTORY).mkdir(parents=True, exist_ok=True)
+    Path(OPEN_DATA_DIRECTORY).mkdir(parents=True, exist_ok=True)
 
     keychain = Keychain()
+    if args.ariba_password:
+        keychain.cache["ARIBAPASSWORD"] = args.ariba_password
+    if args.ariba_username:
+        keychain.cache["ARIBAUSERNAME"] = args.ariba_username
+    if args.azure_storage_key:
+        keychain.cache["AZURESTORAGEKEY"] = args.azure_storage_key
+    if args.azure_storage_account:
+        keychain.cache["STORAGEACCOUNTNAME"] = args.azure_storage_account
+    if args.slack_key:
+        keychain.cache["SLACKKEY"] = args.slack_key
     if not args.no_slack:
         slack = Slack(
             token=keychain.get_secret("SLACKKEY"),

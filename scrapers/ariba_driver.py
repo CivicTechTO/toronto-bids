@@ -19,11 +19,14 @@ class Ariba(Chrome):
         self.login(Keychain())
 
     def patiently_click(self, button, wait_after=0):
-        WebDriverWait(self, timeout=60).until(
+        print(f"Looking for {button}")
+        WebDriverWait(self, timeout=120).until(
             EC.element_to_be_clickable((By.XPATH, button))
         )
+        print(f"Clicking {button}")
         self.find_element(By.XPATH, button).click()
         if wait_after > 0:
+            print(f"Waiting {wait_after} seconds after clicking {button}")
             sleep(wait_after)
 
     def patiently_find_regex(self, regex):
@@ -44,32 +47,34 @@ class Ariba(Chrome):
 
     def login(self, keychain: Keychain):
         self.home(profile_key=self.ariba_discovery_profile_key)
-        WebDriverWait(self, timeout=60).until(
-            EC.element_to_be_clickable((By.CSS_SELECTOR, ".sap-icon--log"))
-        )
-        self.find_element(By.CSS_SELECTOR, ".sap-icon--log").click()
-        # Wait until username and password fields are visible
-        WebDriverWait(self, timeout=60).until(
-            EC.visibility_of_element_located(
-                (By.NAME, "UserName") and (By.NAME, "Password")
-            )
-        )
-        self.find_element(By.NAME, "UserName").send_keys(
-            keychain.get_secret("ARIBAUSERNAME")
-        )
-        self.find_element(By.NAME, "Password").send_keys(
-            keychain.get_secret("ARIBAPASSWORD")
-        )
-        try:
-            self.find_element(By.NAME, "Password").send_keys(Keys.ENTER)
-        except NoSuchElementException as e:
-            # This might be okay. On MacOS, it seems like just entering the password causes the login to happen.
-            sleep(2)
-            # If we're still not logged in, raise the exception
-            if not self.is_logged_in():
-                raise e
-        sleep(2)
-        self.home(profile_key=self.ariba_discovery_profile_key)
+        sleep(10)
+        return
+        # WebDriverWait(self, timeout=60).until(
+        #     EC.element_to_be_clickable((By.CSS_SELECTOR, ".sap-icon--log"))
+        # )
+        # self.find_element(By.CSS_SELECTOR, ".sap-icon--log").click()
+        # # Wait until username and password fields are visible
+        # WebDriverWait(self, timeout=60).until(
+        #     EC.visibility_of_element_located(
+        #         (By.NAME, "UserName") and (By.NAME, "Password")
+        #     )
+        # )
+        # self.find_element(By.NAME, "UserName").send_keys(
+        #     keychain.get_secret("ARIBAUSERNAME")
+        # )
+        # self.find_element(By.NAME, "Password").send_keys(
+        #     keychain.get_secret("ARIBAPASSWORD")
+        # )
+        # try:
+        #     self.find_element(By.NAME, "Password").send_keys(Keys.ENTER)
+        # except NoSuchElementException as e:
+        #     # This might be okay. On MacOS, it seems like just entering the password causes the login to happen.
+        #     sleep(2)
+        #     # If we're still not logged in, raise the exception
+        #     if not self.is_logged_in():
+        #         raise e
+        # sleep(2)
+        # self.home(profile_key=self.ariba_discovery_profile_key)
 
     def home(self, profile_key):
         key = profile_key if not profile_key else self.ariba_discovery_profile_key

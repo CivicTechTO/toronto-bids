@@ -30,7 +30,8 @@ class Keychain:
             secret = self.client.get_secret(secret_name).value
             self.cache[secret_name] = secret
             return secret
-        except Exception:
+        except Exception as e:
+            print(e)
             pass
         # Otherwise raise an exception
         raise KeyError(f"Secret {secret_name} not found")
