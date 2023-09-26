@@ -332,6 +332,7 @@ if __name__ == "__main__":
     get_open_data().to_json(
         f'{OPEN_DATA_DIRECTORY}/open_data_{dt.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.json'
     )
+    slack.post_log("Downloaded latest open data. Checking against cached data...")
     # Check if latest open data is the same as the next most recent
     open_data_files = sorted(Path(OPEN_DATA_DIRECTORY).glob("*.json"))
     skip_scraper = False
@@ -342,6 +343,7 @@ if __name__ == "__main__":
         skip_scraper = True
     if args.force:
         skip_scraper = False
+    slack.post_log(f'Skip scraper: {skip_scraper}. Now processing data...')
 
     for file in OPEN_DATA_DIRECTORY.iterdir():
         df = pd.read_json(file)
@@ -354,6 +356,8 @@ if __name__ == "__main__":
                 call_path = ARIBA_DATA_DIRECTORY / ("Doc" + v.CallNumber)
             call_path.mkdir(parents=True, exist_ok=True)
             v.to_json(call_path / file.name)
+
+    slack.post_log("Processed data. Now deleting duplicates...")
 
     # Now delete any duplicates
     hashes = set()
