@@ -123,6 +123,11 @@ def main_loop(
             document_id = driver.patiently_find_regex("(Doc\d{10})")
             slack.post_log(f"\tDocument id is {document_id}", thread)
 
+            # Create a directory for the document
+            Path(f"{ARIBA_DATA_DIRECTORY}/{document_id}").mkdir(
+                parents=True, exist_ok=True
+            )
+
             # Now we check if there are any PDFs to download on the listing page
             noip = driver.find_elements(By.XPATH, '//a[contains(text(),".pdf")]')
             for link in noip:
@@ -203,6 +208,11 @@ def main_loop(
                         password_element.send_keys(Keys.ENTER)
                     else:
                         print("Element found but class does not match.")
+
+                    driver.home(profile_key=driver.ariba_discovery_profile_key)
+                    sleep(10)
+
+                    return False
 
                 except NoSuchElementException:
                     print("Seems like we are logged in.")
@@ -327,35 +337,36 @@ if __name__ == "__main__":
     slack.post_log(
         f"Running on {platform.node()} {platform.system_alias(platform.system(), platform.release(), platform.version())}"
     )
-    slack.post_log("Checking if there is new data on the city website...")
-    # Save open data with datestamp
-    get_open_data().to_json(
-        f'{OPEN_DATA_DIRECTORY}/open_data_{dt.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.json'
-    )
-    slack.post_log("Downloaded latest open data. Checking against cached data...")
-    # Check if latest open data is the same as the next most recent
-    open_data_files = sorted(Path(OPEN_DATA_DIRECTORY).glob("*.json"))
+    # === Commented out because the city changed the way they publish data ===
+    # slack.post_log("Checking if there is new data on the city website...")
+    # # Save open data with datestamp
+    # get_open_data().to_json(
+    #     f'{OPEN_DATA_DIRECTORY}/open_data_{dt.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.json'
+    # )
+    # slack.post_log("Downloaded latest open data. Checking against cached data...")
+    # # Check if latest open data is the same as the next most recent
+    # open_data_files = sorted(Path(OPEN_DATA_DIRECTORY).glob("*.json"))
     skip_scraper = False
-    if len(open_data_files) > 1:
-        if filecmp.cmp(open_data_files[-1], open_data_files[-2]):
-            skip_scraper = True
+    # if len(open_data_files) > 1:
+    #     if filecmp.cmp(open_data_files[-1], open_data_files[-2]):
+    #         skip_scraper = True
     if args.skip_scraper:
         skip_scraper = True
     if args.force:
         skip_scraper = False
-    slack.post_log(f'Skip scraper: {skip_scraper}. Now processing data...')
+    # slack.post_log(f'Skip scraper: {skip_scraper}. Now processing data...')
 
-    for file in OPEN_DATA_DIRECTORY.iterdir():
-        df = pd.read_json(file)
-        for k, v in df.iterrows():
-            if v.CallNumber is None or not v.CallNumber == v.CallNumber:
-                continue
-            if "Doc" in str(v.CallNumber):
-                call_path = ARIBA_DATA_DIRECTORY / v.CallNumber
-            else:
-                call_path = ARIBA_DATA_DIRECTORY / ("Doc" + v.CallNumber)
-            call_path.mkdir(parents=True, exist_ok=True)
-            v.to_json(call_path / file.name)
+    # for file in OPEN_DATA_DIRECTORY.iterdir():
+    #     df = pd.read_json(file)
+    #     for k, v in df.iterrows():
+    #         if v.CallNumber is None or not v.CallNumber == v.CallNumber:
+    #             continue
+    #         if "Doc" in str(v.CallNumber):
+    #             call_path = ARIBA_DATA_DIRECTORY / v.CallNumber
+    #         else:
+    #             call_path = ARIBA_DATA_DIRECTORY / ("Doc" + v.CallNumber)
+    #         call_path.mkdir(parents=True, exist_ok=True)
+    #         v.to_json(call_path / file.name)
 
     slack.post_log("Processed data. Now deleting duplicates...")
 
@@ -436,10 +447,10 @@ if __name__ == "__main__":
     # if args.json_key:
     #     scraper_config["json_key"] = args.json_key
 
-    response = transmit_json(
-        keychain.get_config("json_url"), keychain.get_config("json_key"), slack
-    )
-    slack.post_log(f"Pushed JSON, received response: {response}\n{response.text}")
+    # response = transmit_json(
+    #     keychain.get_config("json_url"), keychain.get_config("json_key"), slack
+    # )
+    # slack.post_log(f"Pushed JSON, received response: {response}\n{response.text}")
 
     finish_time = time()
     slack.post_update(f"Scraper is finished! :tada: :file_folder:")
