@@ -1,0 +1,11 @@
+{
+  "aribaDiscoveryProfileKey": "AN01050912625",
+  "json_url": "https://upload-function20230528103644.azurewebsites.net/api/FlatUpload",
+  "json_key": "born still friend frequently",
+  "log_channel": "bid-scraper-logs",
+  "update_channel": "bid-scraper-logs",
+  "vault_uri": "https://obt-keys.vault.azure.net/",
+  "storage_account_name": "uploadfunction2023052810",
+  "share_name": "call-archive"
+}
+
