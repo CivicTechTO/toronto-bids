@@ -10,7 +10,11 @@ from bs4 import BeautifulSoup
 def extract_zip_recursively(zip_file: Path, new_dir: Path):
     print(f"Extracting contents of {zip_file} to {new_dir}")
     with zipfile.ZipFile(zip_file) as z:
-        z.extractall(new_dir)
+        try:
+            z.extractall(new_dir)
+        except zipfile.BadZipFile:
+            print(f"Bad zip file: {zip_file}")
+            return
         for name in z.namelist():
             if name.endswith(".zip"):
                 nested_zip = new_dir / name

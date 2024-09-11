@@ -1,7 +1,6 @@
-from typing import List, Tuple, Any
-
 import pandas as pd
 from azure.storage.fileshare import ShareServiceClient
+
 from secret_manager import Keychain
 
 
@@ -24,9 +23,7 @@ class AzureFileShare:
                 files.append((item.name, f"{directory}/{item.name}".lstrip("/")))
         return files
 
-    def list_files_handler(
-        self, directory: str = "ariba_data"
-    ) -> list[tuple[str, str]]:
+    def list_files_handler(self, directory: str = "ariba_data") -> list[tuple[str, str]]:
         files = self.list_files(directory)
         return files
 
@@ -38,6 +35,3 @@ class AzureFileShare:
         df = pd.DataFrame(files, columns=["File Name", "Location"])
 
         return df
-
-
-# %%

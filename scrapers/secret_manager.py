@@ -1,7 +1,8 @@
 import json
+import pickle
 from os import environ
 from pathlib import Path
-import pickle
+
 from azure.identity import DefaultAzureCredential
 from azure.keyvault.secrets import SecretClient
 
@@ -15,6 +16,7 @@ class Keychain:
             self.cache = {}
         self.vault_uri = self.get_config("vault_uri")
         self.credential = DefaultAzureCredential()
+        # noinspection PyTypeChecker
         self.client = SecretClient(vault_url=self.vault_uri, credential=self.credential)
 
     def get_secret(self, secret_name):

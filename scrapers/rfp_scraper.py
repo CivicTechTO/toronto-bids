@@ -1,28 +1,20 @@
+import argparse
 import datetime as dt
-import filecmp
 import platform
 from hashlib import sha256
 from pathlib import Path
-import pandas as pd
+from time import sleep, time
+
 from selenium import webdriver
 from selenium.webdriver import Keys
 from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.errorhandler import NoSuchElementException
-from ariba_driver import Ariba
-from time import sleep, time
 from webdriver_manager.chrome import ChromeDriverManager
-from filemanage import (
-    extract_zip_and_move_html,
-    move_pdfs,
-    parse_html,
-    delete_duplicates,
-)
-from open_data import get_open_data
-from transmit_json import transmit_json
-import argparse
-from secret_manager import Keychain
 
+from ariba_driver import Ariba
+from filemanage import (extract_zip_and_move_html, move_pdfs, parse_html, delete_duplicates, )
+from secret_manager import Keychain
 from slack import Slack
 
 # Working directory
@@ -57,29 +49,20 @@ def parse_date_text(date_text: str) -> dt.datetime:
     try:
         date_text = date_text.split(" ")[:3]
         return dt.datetime.strptime(" ".join(date_text), "%d %b %Y")
-    except:
+    except ValueError:
         # Return 1/1/1970 if we can't parse the date
         return dt.datetime(1970, 1, 1)
 
 
-def main_loop(
-    scraper_config,
-    has_clicked: bool = False,
-    closing_soon: bool = True,
-    download_everything: bool = False,
-) -> bool:
+def main_loop(scraper_config, has_clicked: bool = False, closing_soon: bool = True,
+        download_everything: bool = False, ) -> bool:
     while not has_clicked:  # We loop through RFPs until we find one we want to click on
-        elements = driver.find_elements(
-            By.CLASS_NAME, "ADTableBodyWhite"
-        )  # Class name for open RFPs (and some closed ones!)
-        elements += driver.find_elements(
-            By.CLASS_NAME, "ADHiliteBlock"
-        )  # Class name for closed RFPs (exclusively)
+        elements = driver.find_elements(By.CLASS_NAME,
+            "ADTableBodyWhite")  # Class name for open RFPs (and some closed ones!)
+        elements += driver.find_elements(By.CLASS_NAME, "ADHiliteBlock")  # Class name for closed RFPs (exclusively)
         for element in elements:
             try:
-                title = element.find_element(
-                    By.CLASS_NAME, "QuoteSearchResultTitle"
-                )  # Title is hyperlink
+                title = element.find_element(By.CLASS_NAME, "QuoteSearchResultTitle")  # Title is hyperlink
             except NoSuchElementException:
                 continue
             title_text = title.text
@@ -111,22 +94,17 @@ def main_loop(
                     continue
 
             thread = slack.post_log(f"{title.text}")
-            slack.post_log(
-                f"\tLikely expiry date: {most_recent_date.strftime('%d %b %Y')}", thread
-            )
+            slack.post_log(f"\tLikely expiry date: {most_recent_date.strftime('%d %b %Y')}", thread)
 
             clicked.add(title_text)
             title.click()
-            has_clicked = True
             # Now we've moved from the listing page to the RFP page. First thing is to identify the doc number
             driver.patiently_find_regex("Back to Search Results")
             document_id = driver.patiently_find_regex("(Doc\d{10})")
             slack.post_log(f"\tDocument id is {document_id}", thread)
 
             # Create a directory for the document
-            Path(f"{ARIBA_DATA_DIRECTORY}/{document_id}").mkdir(
-                parents=True, exist_ok=True
-            )
+            Path(f"{ARIBA_DATA_DIRECTORY}/{document_id}").mkdir(parents=True, exist_ok=True)
 
             # Now we check if there are any PDFs to download on the listing page
             noip = driver.find_elements(By.XPATH, '//a[contains(text(),".pdf")]')
@@ -135,36 +113,16 @@ def main_loop(
                 wait_for_download(lambda: link.click())
 
             # Check to see if we've already downloaded the raw HTML, and the attachments
-            html_exists = (
-                (
-                    Path(f"{ARIBA_DATA_DIRECTORY}/{document_id}.html").exists()
-                    or Path(
-                        f"{ARIBA_DATA_DIRECTORY}/{document_id}/{document_id}.html"
-                    ).exists()
-                )
-                if not download_everything
-                else False
-            )
+            html_exists = ((Path(f"{ARIBA_DATA_DIRECTORY}/{document_id}.html").exists() or Path(
+                f"{ARIBA_DATA_DIRECTORY}/{document_id}/{document_id}.html").exists()) if not download_everything else False)
 
             # Zip might exist as a zip file, or as a directory - if it's the latter, we need to check that there's
             # more than just the HTML file
-            zip_exists = (
-                (
-                    Path(f"{ARIBA_DATA_DIRECTORY}/{document_id}.zip").exists()
-                    or count_directory_files(
-                        Path(f"{ARIBA_DATA_DIRECTORY}/{document_id}")
-                    )
-                    > 1
-                )
-                if not download_everything
-                else False
-            )
+            zip_exists = ((Path(f"{ARIBA_DATA_DIRECTORY}/{document_id}.zip").exists() or count_directory_files(
+                Path(f"{ARIBA_DATA_DIRECTORY}/{document_id}")) > 1) if not download_everything else False)
 
             # Print the results of our checks
-            slack.post_log(
-                "\tHTML archived" if html_exists else "\tHTML not yet archived...",
-                thread,
-            )
+            slack.post_log("\tHTML archived" if html_exists else "\tHTML not yet archived...", thread, )
 
             if zip_exists:
                 slack.post_log("\tAttachments already archived", thread)
@@ -175,12 +133,13 @@ def main_loop(
 
             # If we haven't already downloaded the HTML, download it now
             if not html_exists:
-                with open(f"{ARIBA_DATA_DIRECTORY}/{document_id}.html", "w") as f:
-                    f.write(driver.page_source)
+                with open(f"{ARIBA_DATA_DIRECTORY}/{document_id}.html", "w") as html_file:
+                    html_file.write(driver.page_source)
             if (not zip_exists) and (not request_expired):
                 # If we don't have the attachments and the RFP is still open, download them
-                driver.patiently_click("//a[contains(@class, 'adsmallbutton') and contains(@class, 'adbuttonblock') and contains(@class, 'buttonRightPadding')]", wait_after=3)
-
+                driver.patiently_click(
+                    "//a[contains(@class, 'adsmallbutton') and contains(@class, 'adbuttonblock') and contains(@class, 'buttonRightPadding')]",
+                    wait_after=3)
 
                 # If we aren't logged in yet, we will now get a box asking us to log in. There will be two elements
                 # we care about: <input value=" Enter Username" onblur="ariba.Handlers.hTextBlur(this, event)" _pl="
@@ -191,7 +150,8 @@ def main_loop(
 
                 try:
                     # Try to locate the element by multiple attributes
-                    username_element = driver.find_element(By.XPATH, "//input[@name='UserName'][@type='text'][@maxlength='100']")
+                    username_element = driver.find_element(By.XPATH,
+                                                           "//input[@name='UserName'][@type='text'][@maxlength='100']")
 
                     # Additional check for class
                     if 'tfW' in username_element.get_attribute('class'):
@@ -200,7 +160,8 @@ def main_loop(
                         print("Element found but class does not match.")
 
                     # Locate the element by multiple attributes
-                    password_element = driver.find_element(By.XPATH, "//input[@name='Password'][@type='password'][@maxlength='48']")
+                    password_element = driver.find_element(By.XPATH,
+                                                           "//input[@name='Password'][@type='password'][@maxlength='48']")
 
                     # Additional check for class
                     if 'tfW' in password_element.get_attribute('class'):
@@ -218,20 +179,13 @@ def main_loop(
                     print("Seems like we are logged in.")
 
                 driver.patiently_click('//*[@id="_xjqay"]')  # download content
-                driver.patiently_click(
-                    '//*[@id="_hgesab"]', wait_after=15
-                )  # click download attachment
-                driver.patiently_click(
-                    '//*[@id="_h_l$m"]/span/div/label', wait_after=5
-                )  # click select all
+                driver.patiently_click('//*[@id="_hgesab"]', wait_after=15)  # click download attachment
+                driver.patiently_click('//*[@id="_h_l$m"]/span/div/label', wait_after=5)  # click select all
                 wait_for_download(
-                    lambda: driver.patiently_click('//*[@id="_5wq_j"]')
-                )  # download attachments (for real)
+                    lambda: driver.patiently_click('//*[@id="_5wq_j"]'))  # download attachments (for real)
                 driver.home(scraper_config.get_config("aribaDiscoveryProfileKey"))
             else:
-                driver.patiently_click(
-                    '//a[contains(text(),"Back to Search Results")]', wait_after=5
-                )
+                driver.patiently_click('//a[contains(text(),"Back to Search Results")]', wait_after=5)
 
             slack.post_log(f"Downloaded successfully!", thread)
 
@@ -252,56 +206,19 @@ def main_loop(
 if __name__ == "__main__":
     start_time = time()
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--skip-scraper",
-        action="store_true",
-        help="Skip the scraper and just process the data",
-    )
-    parser.add_argument(
-        "--force",
-        action="store_true",
-        help="Force the scraper to run even if the data hasn't changed",
-    )
-    parser.add_argument(
-        "--scrape-all",
-        action="store_true",
-        help="Include all RFPs, not just those closing soon",
-    )
-    parser.add_argument(
-        "--download-everything",
-        action="store_true",
-        help="Download all attachments even if they already exist",
-    )
-    parser.add_argument(
-        "--no-slack",
-        action="store_true",
-        help="Don't post updates to Slack",
-    )
-    parser.add_argument(
-        "--ariba-password",
-        action="store",
-        help="Override the Ariba password stored in the keychain"
-    )
-    parser.add_argument(
-        "--ariba-username",
-        action="store",
-        help="Override the Ariba username stored in the keychain"
-    )
-    parser.add_argument(
-        "--azure-storage-key",
-        action="store",
-        help="Override the Azure storage key stored in the keychain"
-    )
-    parser.add_argument(
-        "--azure-storage-account",
-        action="store",
-        help="Override the Azure storage account name"
-    )
-    parser.add_argument(
-        "--slack-key",
-        action="store",
-        help="Override the Slack key stored in the keychain"
-    )
+    parser.add_argument("--skip-scraper", action="store_true", help="Skip the scraper and just process the data", )
+    parser.add_argument("--force", action="store_true",
+        help="Force the scraper to run even if the data hasn't changed", )
+    parser.add_argument("--scrape-all", action="store_true", help="Include all RFPs, not just those closing soon", )
+    parser.add_argument("--download-everything", action="store_true",
+        help="Download all attachments even if they already exist", )
+    parser.add_argument("--no-slack", action="store_true", help="Don't post updates to Slack", )
+    parser.add_argument("--ariba-password", action="store", help="Override the Ariba password stored in the keychain")
+    parser.add_argument("--ariba-username", action="store", help="Override the Ariba username stored in the keychain")
+    parser.add_argument("--azure-storage-key", action="store",
+        help="Override the Azure storage key stored in the keychain")
+    parser.add_argument("--azure-storage-account", action="store", help="Override the Azure storage account name")
+    parser.add_argument("--slack-key", action="store", help="Override the Slack key stored in the keychain")
     args = parser.parse_args()
     Path(DOWNLOAD_DIRECTORY).mkdir(parents=True, exist_ok=True)
     Path(ARIBA_DATA_DIRECTORY).mkdir(parents=True, exist_ok=True)
@@ -319,11 +236,8 @@ if __name__ == "__main__":
     if args.slack_key:
         keychain.cache["SLACKKEY"] = args.slack_key
     if not args.no_slack:
-        slack = Slack(
-            token=keychain.get_secret("SLACKKEY"),
-            log_channel=keychain.get_config("log_channel"),
-            update_channel=keychain.get_config("update_channel"),
-        )
+        slack = Slack(token=keychain.get_secret("SLACKKEY"), log_channel=keychain.get_config("log_channel"),
+            update_channel=keychain.get_config("update_channel"), )
     else:
         # Create a fake slack object that just prints to the console
         slack = Slack(token="fake", log_channel="fake", update_channel="fake")
@@ -331,42 +245,15 @@ if __name__ == "__main__":
         slack.post_update = print
 
     slack.post_update(
-        f"Scraper is starting to run! :rocket: You can follow updates on the #{slack.log_channel} channel."
-    )
+        f"Scraper is starting to run! :rocket: You can follow updates on the #{slack.log_channel} channel.")
     # Get computer name and operating system
     slack.post_log(
-        f"Running on {platform.node()} {platform.system_alias(platform.system(), platform.release(), platform.version())}"
-    )
-    # === Commented out because the city changed the way they publish data ===
-    # slack.post_log("Checking if there is new data on the city website...")
-    # # Save open data with datestamp
-    # get_open_data().to_json(
-    #     f'{OPEN_DATA_DIRECTORY}/open_data_{dt.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.json'
-    # )
-    # slack.post_log("Downloaded latest open data. Checking against cached data...")
-    # # Check if latest open data is the same as the next most recent
-    # open_data_files = sorted(Path(OPEN_DATA_DIRECTORY).glob("*.json"))
+        f"Running on {platform.node()} {platform.system_alias(platform.system(), platform.release(), platform.version())}")
     skip_scraper = False
-    # if len(open_data_files) > 1:
-    #     if filecmp.cmp(open_data_files[-1], open_data_files[-2]):
-    #         skip_scraper = True
     if args.skip_scraper:
         skip_scraper = True
     if args.force:
         skip_scraper = False
-    # slack.post_log(f'Skip scraper: {skip_scraper}. Now processing data...')
-
-    # for file in OPEN_DATA_DIRECTORY.iterdir():
-    #     df = pd.read_json(file)
-    #     for k, v in df.iterrows():
-    #         if v.CallNumber is None or not v.CallNumber == v.CallNumber:
-    #             continue
-    #         if "Doc" in str(v.CallNumber):
-    #             call_path = ARIBA_DATA_DIRECTORY / v.CallNumber
-    #         else:
-    #             call_path = ARIBA_DATA_DIRECTORY / ("Doc" + v.CallNumber)
-    #         call_path.mkdir(parents=True, exist_ok=True)
-    #         v.to_json(call_path / file.name)
 
     slack.post_log("Processed data. Now deleting duplicates...")
 
@@ -376,6 +263,7 @@ if __name__ == "__main__":
         if file.is_dir():
             for json_file in file.iterdir():
                 if json_file.is_file():
+                    # noinspection PyBroadException
                     try:
                         with open(json_file, "rb") as f:
                             file_hash = sha256(f.read()).hexdigest()
@@ -397,33 +285,22 @@ if __name__ == "__main__":
         chrome_options.add_argument("--disable-dev-shm-usage")
         prefs = {"download.default_directory": str(DOWNLOAD_DIRECTORY)}
         chrome_options.add_experimental_option("prefs", prefs)
-        driver = Ariba(
-            service=ChromeService(ChromeDriverManager().install()),
-            options=chrome_options,
-            ariba_discovery_profile_key=keychain.get_config("aribaDiscoveryProfileKey"),
-        )
+        driver = Ariba(service=ChromeService(ChromeDriverManager().install()), options=chrome_options,
+            ariba_discovery_profile_key=keychain.get_config("aribaDiscoveryProfileKey"), )
 
         while not finished:
             try:
-                finished = main_loop(
-                    scraper_config=keychain,
-                    closing_soon=not args.scrape_all,
-                    download_everything=args.download_everything,
-                )
+                finished = main_loop(scraper_config=keychain, closing_soon=not args.scrape_all,
+                    download_everything=args.download_everything, )
             except Exception as e:
                 slack.post_log(str(e))
                 # Check if the issue is that we aren't logged in
                 if not driver.is_logged_in():
-                    driver.login(keychain)
+                    driver.login()
                 else:
                     driver.quit()
-                    driver = Ariba(
-                        service=ChromeService(ChromeDriverManager().install()),
-                        options=chrome_options,
-                        ariba_discovery_profile_key=keychain.get_config(
-                            "aribaDiscoveryProfileKey"
-                        ),
-                    )
+                    driver = Ariba(service=ChromeService(ChromeDriverManager().install()), options=chrome_options,
+                        ariba_discovery_profile_key=keychain.get_config("aribaDiscoveryProfileKey"), )
 
         slack.post_log("Ariba scraper is finished! :tada: Now performing cleanup...")
 
@@ -438,19 +315,6 @@ if __name__ == "__main__":
     parse_html(ARIBA_DATA_DIRECTORY).to_csv("metadata.csv", index=False)
 
     delete_duplicates(ARIBA_DATA_DIRECTORY)
-
-    # drive = GoogleDrive(slack, keychain)
-    # drive.upload_all_data(Path("data"))
-    # Check if alternate JSON URL is provided in args
-    # if args.json_url:
-    #     scraper_config["json_url"] = args.json_url
-    # if args.json_key:
-    #     scraper_config["json_key"] = args.json_key
-
-    # response = transmit_json(
-    #     keychain.get_config("json_url"), keychain.get_config("json_key"), slack
-    # )
-    # slack.post_log(f"Pushed JSON, received response: {response}\n{response.text}")
 
     finish_time = time()
     slack.post_update(f"Scraper is finished! :tada: :file_folder:")

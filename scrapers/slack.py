@@ -12,15 +12,13 @@ class Slack:
         print(f"#{channel}: {message}")
         try:
             if thread:
-                response = self.client.chat_postMessage(
-                    channel=channel, text=message, thread_ts=thread
-                )
+                response = self.client.chat_postMessage(channel=channel, text=message, thread_ts=thread)
             else:
                 response = self.client.chat_postMessage(channel=channel, text=message)
             # Return timestamp
             return response["ts"]
         except SlackApiError as e:
-            return
+            return f"Error: {e.response['error']}"
 
     def post_log(self, message: str, thread: str = None) -> str:
         return self.post_message(self.log_channel, message, thread)
