@@ -45,10 +45,22 @@ def test_normalize_solicitation_yields_spine_and_award():
     assert sol.ariba_posting_link is None  # "" normalized to None
     assert sol.odata_id == "da83db29-e4fc-4651-a9a3-d6bedd042e8c"
     assert sol.source == "odata"
+    assert sol.wards is None
     assert award.supplier_name_raw == "Computer Media Group"
     assert award.award_amount == "26773.58"
     assert award.award_date == "2012-10-04"
     assert award.source == "odata"
+
+
+def test_normalize_solicitation_awarded_suppliers_expansion_rules():
+    from toronto_bids.models import Award
+    rows = list(odata.normalize_solicitation(_value("odata_solicitation.json")))
+    awards = [r for r in rows if isinstance(r, Award)]
+    # Blank Successful_Bidder entry is skipped: 3 entries -> 2 awards.
+    assert len(awards) == 2
+    fallback = next(a for a in awards if a.supplier_name_raw == "Fallback Date Supplier")
+    # Date_Awarded is "" -> falls back to AwardedDate.
+    assert fallback.award_date == "2013-01-15"
 
 
 def test_normalize_solicitation_skips_invalid_docnum_but_still_none_safe():

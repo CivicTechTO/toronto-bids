@@ -26,6 +26,18 @@
           "Successful_Bidder": "Computer Media Group",
           "city": "MISSISSAUGA",
           "province": "ON"
+        },
+        {
+          "Award_Amount": "100.00",
+          "AwardedDate": "2013-01-15",
+          "Date_Awarded": "",
+          "Successful_Bidder": "Fallback Date Supplier"
+        },
+        {
+          "Award_Amount": "",
+          "AwardedDate": null,
+          "Date_Awarded": "",
+          "Successful_Bidder": ""
         }
       ],
       "id": "da83db29-e4fc-4651-a9a3-d6bedd042e8c"
