@@ -1,0 +1,34 @@
+{
+  "@odata.count": 1,
+  "value": [
+    {
+      "Solicitation_Document_Number": "3303123110",
+      "Status": "Awarded",
+      "Solicitation_Document_Type": "RFQ",
+      "Solicitation_Form_Type": "Awarded Contracts",
+      "Posting_Title": "Toner Cartridges",
+      "Solicitation_Document_Description": "For the non-exclusive supply and delivery of various OEM toners",
+      "High_Level_Category": "Goods and Services",
+      "Issue_Date": "2012-07-13",
+      "Closing_Date": "2012-07-30",
+      "Client_Division": ["Purchasing & Materials Management"],
+      "Buyer_Name": "Justin Diptee",
+      "Buyer_Email": "supplychain@toronto.ca",
+      "Buyer_Phone_Number": "416-397-4141",
+      "Wards": [],
+      "Ariba_Discovery_Posting_Link": "",
+      "Award_Amount": "",
+      "Awarded_Suppliers": [
+        {
+          "Award_Amount": "26773.58",
+          "AwardedDate": null,
+          "Date_Awarded": "2012-10-04",
+          "Successful_Bidder": "Computer Media Group",
+          "city": "MISSISSAUGA",
+          "province": "ON"
+        }
+      ],
+      "id": "da83db29-e4fc-4651-a9a3-d6bedd042e8c"
+    }
+  ]
+}
