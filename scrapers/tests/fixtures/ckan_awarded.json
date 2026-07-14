@@ -1,0 +1,41 @@
+{
+  "success": true,
+  "result": {
+    "resource_id": "e211f003-5909-4bea-bd96-d75899d8e612",
+    "total": 2,
+    "records": [
+      {
+        "_id": 1,
+        "Document Number": "3303123110",
+        "RFx (Solicitation) Type": "RFQ",
+        "High Level Category": "Goods and Services",
+        "Successful Supplier": "Computer Media Group",
+        "Award": "26773.58",
+        "Award Authority Obtained Date": "2012-10-04",
+        "Division": "Purchasing & Materials Management",
+        "Buyer Name": "Justin Diptee",
+        "Buyer Email": "supplychain@toronto.ca",
+        "Buyer Phone Number": "416-397-4141",
+        "Solicitation Document Description": "For the non-exclusive supply and delivery of various OEM toners",
+        "Supplier Address": null,
+        "Wards": null
+      },
+      {
+        "_id": 2,
+        "Document Number": "xxxxxxxx",
+        "RFx (Solicitation) Type": "RFT",
+        "High Level Category": "Construction Services",
+        "Successful Supplier": "Some Roadworks Ltd",
+        "Award": "0",
+        "Award Authority Obtained Date": null,
+        "Division": "Engineering & Construction Services",
+        "Buyer Name": "Nicole Di Petta",
+        "Buyer Email": "nicole.dipetta@toronto.ca",
+        "Buyer Phone Number": "4163385583",
+        "Solicitation Document Description": "Road resurfacing",
+        "Supplier Address": null,
+        "Wards": null
+      }
+    ]
+  }
+}
