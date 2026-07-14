@@ -1,0 +1,22 @@
+{
+  "success": true,
+  "result": {
+    "records": [
+      {
+        "_id": 1,
+        "Document Number": "9117105139",
+        "RFx (Solicitation) Type": "RFP",
+        "NOIP (Notice of Intended Procurement) Type": "Notice of Intended Procurement",
+        "Issue Date": "2010-10-28",
+        "Submission Deadline": "2010-11-24",
+        "High Level Category": "Professional Services",
+        "Solicitation Document Description": "Consulting services",
+        "Division": "City Planning",
+        "Buyer Name": "Jane Buyer",
+        "Buyer Email": "jane.buyer@toronto.ca",
+        "Buyer Phone Number": "416-000-0000",
+        "Wards": "None"
+      }
+    ]
+  }
+}
