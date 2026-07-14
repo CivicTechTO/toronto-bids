@@ -2,7 +2,7 @@
   "success": true,
   "result": {
     "resource_id": "e211f003-5909-4bea-bd96-d75899d8e612",
-    "total": 2,
+    "total": 3,
     "records": [
       {
         "_id": 1,
@@ -27,6 +27,22 @@
         "High Level Category": "Construction Services",
         "Successful Supplier": "Some Roadworks Ltd",
         "Award": "0",
+        "Award Authority Obtained Date": null,
+        "Division": "Engineering & Construction Services",
+        "Buyer Name": "Nicole Di Petta",
+        "Buyer Email": "nicole.dipetta@toronto.ca",
+        "Buyer Phone Number": "4163385583",
+        "Solicitation Document Description": "Road resurfacing",
+        "Supplier Address": null,
+        "Wards": null
+      },
+      {
+        "_id": 3,
+        "Document Number": "5749398870",
+        "RFx (Solicitation) Type": "RFT",
+        "High Level Category": "Construction Services",
+        "Successful Supplier": "",
+        "Award": "",
         "Award Authority Obtained Date": null,
         "Division": "Engineering & Construction Services",
         "Buyer Name": "Nicole Di Petta",

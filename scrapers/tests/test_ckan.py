@@ -67,6 +67,13 @@ def test_normalize_awarded_skips_invalid_document_number():
     assert rows == []
 
 
+def test_normalize_awarded_yields_no_award_when_supplier_blank():
+    rows = list(ckan.normalize_awarded(_records("ckan_awarded.json")[2]))
+    assert any(isinstance(r, Solicitation) for r in rows)
+    assert not any(isinstance(r, Award) for r in rows)
+    assert rows[0].document_number == "5749398870"
+
+
 def test_normalize_open_yields_open_solicitation():
     rows = list(ckan.normalize_open(_records("ckan_solicitations.json")[0]))
     sol = rows[0]
@@ -78,6 +85,7 @@ def test_normalize_open_yields_open_solicitation():
     assert sol.issue_date == "2010-10-28"
     assert sol.submission_deadline == "2010-11-24"
     assert sol.source == "ckan_open"
+    assert sol.wards is None
 
 
 def test_normalize_noncompetitive_yields_row():
