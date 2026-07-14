@@ -55,3 +55,12 @@ def test_post_json_sends_body():
         return httpx.Response(200, json={"echo": True})
     client = _client(handler)
     assert client.post_json("https://example.test/x", json={"a": 1}) == {"echo": True}
+
+
+def test_default_client_uses_config_user_agent():
+    from toronto_bids import config
+    client = HttpClient()
+    try:
+        assert client._client.headers["User-Agent"] == config.USER_AGENT
+    finally:
+        client.close()
