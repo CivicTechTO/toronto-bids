@@ -6,7 +6,7 @@ def test_init_creates_tables(conn):
     names = {r[0] for r in conn.execute(
         "SELECT name FROM sqlite_master WHERE type='table'"
     )}
-    assert {"solicitation", "award", "noncompetitive", "sync_run"} <= names
+    assert {"solicitation", "award", "noncompetitive", "ariba_posting", "sync_run"} <= names
 
 
 def test_upsert_solicitation_is_idempotent(conn):
