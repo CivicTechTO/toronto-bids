@@ -102,8 +102,21 @@ CREATE TABLE IF NOT EXISTS suspended_firm (
     end_date           TEXT,
     suspension_type    TEXT,
     council_authority  TEXT,
+    supplier_id        INTEGER,
     source             TEXT,
     first_seen         TEXT NOT NULL DEFAULT (datetime('now')),
     last_seen          TEXT NOT NULL DEFAULT (datetime('now')),
     UNIQUE (supplier_name_raw, council_authority)
+);
+
+-- supplier is the canonical supplier dimension: one row per normalized supplier_key,
+-- with the raw name variants that mapped to it. award/noncompetitive/suspended_firm carry a
+-- nullable supplier_id FK, backfilled by the build_supplier_dimension linking pass.
+CREATE TABLE IF NOT EXISTS supplier (
+    supplier_id   INTEGER PRIMARY KEY AUTOINCREMENT,
+    supplier_key  TEXT NOT NULL UNIQUE,
+    display_name  TEXT,
+    variants      TEXT,
+    first_seen    TEXT NOT NULL DEFAULT (datetime('now')),
+    last_seen     TEXT NOT NULL DEFAULT (datetime('now'))
 );
