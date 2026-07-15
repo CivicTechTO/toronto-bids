@@ -37,7 +37,7 @@ def run_source(conn, http, source):
 
 def sync(conn, http, sources=None, only=None) -> None:
     sources = sources if sources is not None else default_sources()
-    if only:
+    if only is not None:
         wanted = set(only)
         sources = [s for s in sources if s.name in wanted]
     for source in sources:

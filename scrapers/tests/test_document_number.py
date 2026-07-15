@@ -32,6 +32,8 @@ def test_valid_document_numbers_normalize_to_ten_digits(raw, expected):
         "Summary67141",
         "No. 22436",
         "1111111111",               # denylisted test row
+        "0000000000",               # denylisted test row
+        "1234567890",               # denylisted test row
         "3.77E+1100",               # Excel scientific-notation corruption
         "3710106+0111",             # digits present but 11 after strip -> reject
         "123",                      # too short

@@ -5,7 +5,7 @@ from toronto_bids.models import Award, NonCompetitive, Solicitation
 
 # Column lists per table, in the order used for INSERT. Excludes auto/default columns.
 _SOLICITATION_COLS = [
-    "document_number", "status", "rfx_type", "noip_type", "title", "description",
+    "document_number", "status", "rfx_type", "noip_type", "form_type", "title", "description",
     "issue_date", "submission_deadline", "category", "division", "buyer_name",
     "buyer_email", "buyer_phone", "wards", "ariba_posting_link", "odata_id", "source",
 ]

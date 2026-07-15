@@ -45,6 +45,8 @@ def test_normalize_solicitation_yields_spine_and_award():
     assert sol.ariba_posting_link is None  # "" normalized to None
     assert sol.odata_id == "da83db29-e4fc-4651-a9a3-d6bedd042e8c"
     assert sol.source == "odata"
+    assert sol.form_type == "Awarded Contracts"
+    assert sol.noip_type is None
     assert sol.wards is None
     assert award.supplier_name_raw == "Computer Media Group"
     assert award.award_amount == "26773.58"

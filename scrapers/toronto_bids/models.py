@@ -7,6 +7,7 @@ class Solicitation:
     status: str | None = None
     rfx_type: str | None = None
     noip_type: str | None = None
+    form_type: str | None = None
     title: str | None = None
     description: str | None = None
     issue_date: str | None = None

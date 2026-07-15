@@ -12,6 +12,8 @@ def resolve_resource_id(http, slug: str) -> str:
     Resource UUIDs rotate on refresh, so this must be called at runtime.
     """
     data = http.get_json(config.CKAN_BASE + "package_show", params={"id": slug})
+    if data.get("success") is False:
+        raise RuntimeError(f"CKAN package_show failed for '{slug}': {data.get('error')}")
     resources = data["result"]["resources"]
     for res in resources:
         if res.get("datastore_active"):
@@ -27,6 +29,8 @@ def fetch_datastore(http, resource_id: str, page_size: int = 10000) -> Iterator[
             config.CKAN_BASE + "datastore_search",
             params={"resource_id": resource_id, "limit": page_size, "offset": offset},
         )
+        if data.get("success") is False:
+            raise RuntimeError(f"CKAN datastore_search failed for resource '{resource_id}': {data.get('error')}")
         records = data["result"]["records"]
         if not records:
             return

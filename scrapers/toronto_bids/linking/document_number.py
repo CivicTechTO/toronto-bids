@@ -3,7 +3,7 @@ import re
 # Placeholder / junk values that survive digit-stripping but are not real doc numbers.
 _DENYLIST = {"1111111111", "0000000000", "1234567890"}
 
-_NON_DIGIT = re.compile(r"\D")
+_NON_DIGIT = re.compile(r"[^0-9]")
 
 
 def normalize_document_number(raw: str | None) -> str | None:

@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS solicitation (
     status               TEXT,
     rfx_type             TEXT,
     noip_type            TEXT,
+    form_type            TEXT,
     title                TEXT,
     description          TEXT,
     issue_date           TEXT,
@@ -20,6 +21,9 @@ CREATE TABLE IF NOT EXISTS solicitation (
     last_seen            TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- NOTE: award is dual-provenance -- the same (document_number, supplier) can appear once per source
+-- (source is in the UNIQUE key). For a de-duplicated view, filter source='odata' or GROUP BY
+-- document_number, supplier_name_raw. Cross-source supplier de-dup (fuzzy) is a later phase.
 CREATE TABLE IF NOT EXISTS award (
     id                 INTEGER PRIMARY KEY AUTOINCREMENT,
     document_number    TEXT NOT NULL,

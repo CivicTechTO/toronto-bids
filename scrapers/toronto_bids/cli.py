@@ -28,13 +28,18 @@ def _cmd_sync(args) -> int:
     conn = _open_db()
     http = HttpClient()
     only = args.only.split(",") if args.only else None
+    if only is not None:
+        known = {s.name for s in pipeline.default_sources()}
+        unknown = [name for name in only if name not in known]
+        if unknown:
+            print(f"Warning: unknown source name(s): {', '.join(unknown)}")
     try:
         pipeline.sync(conn, http, only=only)
+        counts = db.counts(conn)
+        print("Sync complete:", ", ".join(f"{k}={v}" for k, v in counts.items()))
     finally:
         http.close()
-    counts = db.counts(conn)
-    print("Sync complete:", ", ".join(f"{k}={v}" for k, v in counts.items()))
-    conn.close()
+        conn.close()
     return 0
 
 

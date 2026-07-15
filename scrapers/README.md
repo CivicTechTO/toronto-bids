@@ -27,6 +27,16 @@ uv run pytest             # tests (offline; uses fixtures)
 
 Set `TB_DATA_DIR` to change where `bids.sqlite` and downloads live (default `scrapers/files/`).
 
-See `docs/superpowers/specs/2026-07-14-toronto-bids-scraper-rewrite-design.md` for the
-full design, source inventory, and the later phases (Ariba Discovery JSON, attachments,
-council/PDF enrichment).
+See `../docs/superpowers/specs/2026-07-14-toronto-bids-scraper-rewrite-design.md`
+(from repo root) for the full design, source inventory, and the later phases
+(Ariba Discovery JSON, attachments, council/PDF enrichment).
+
+## Data notes
+
+`award` rows are stored per-source: OData (`source='odata'`) is the spine, and CKAN's
+awarded-contracts dataset (`source='ckan_awarded'`) is a cross-check, so the same
+`(document_number, supplier_name_raw)` pair can legitimately appear once per source
+(`source` is part of the table's UNIQUE key). A naive `COUNT(*)` or `SUM(award_amount)`
+over `award` will double-count. Consumers should either filter to `source='odata'` or
+`GROUP BY document_number, supplier_name_raw` to get a de-duplicated view. Fuzzy
+cross-source supplier de-duplication is a later phase.
