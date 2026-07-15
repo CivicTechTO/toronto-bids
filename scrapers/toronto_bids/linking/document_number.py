@@ -24,7 +24,7 @@ def normalize_document_number(raw: str | None) -> str | None:
     return digits
 
 
-_TITLE_DOC = re.compile(r"Doc(\d{10})")
+_TITLE_DOC = re.compile(r"Doc(\d{10})(?!\d)")
 
 
 def bridge_document_number(external_rfx_id: str | None, title: str | None) -> str | None:

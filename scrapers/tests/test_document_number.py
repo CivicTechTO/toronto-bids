@@ -62,3 +62,8 @@ def test_bridge_returns_none_when_neither_resolves():
     assert bridge_document_number(None, "Request for Tenders for Road Resurfacing") is None
     assert bridge_document_number("", "") is None
     assert bridge_document_number(None, None) is None
+
+
+def test_bridge_rejects_title_doc_with_more_than_ten_digits():
+    # An 11-digit run is ambiguous -> must NOT fabricate a truncated document number.
+    assert bridge_document_number(None, "Doc56727512911 - eleven digit run") is None
