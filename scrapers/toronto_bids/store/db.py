@@ -74,6 +74,10 @@ def upsert_row(conn, row, *, overwrite: bool) -> None:
                       ["rfx_id"], overwrite)
     elif isinstance(row, SuspendedFirm):
         values = [getattr(row, c) for c in _SUSPENDED_COLS]
+        # council_authority is part of the UNIQUE key; coerce None -> '' so a firm with no
+        # parseable Authority stays idempotent (SQLite treats NULLs as distinct in UNIQUE indexes).
+        ca_idx = _SUSPENDED_COLS.index("council_authority")
+        values[ca_idx] = values[ca_idx] or ""
         _upsert_keyed(conn, "suspended_firm", _SUSPENDED_COLS, values,
                       ["supplier_name_raw", "council_authority"], overwrite)
     else:

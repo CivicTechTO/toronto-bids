@@ -114,3 +114,14 @@ def test_suspended_firm_overwrite_updates_status(conn):
 
 def test_counts_includes_suspended_firm(conn):
     assert "suspended_firm" in db.counts(conn)
+
+
+def test_suspended_firm_null_authority_is_idempotent(conn):
+    firm = SuspendedFirm(supplier_name_raw="No Authority Co", council_authority=None,
+                         source="suspended_firms")
+    db.upsert_row(conn, firm, overwrite=True)
+    db.upsert_row(conn, firm, overwrite=True)
+    assert db.counts(conn)["suspended_firm"] == 1
+    # stored as '' (not NULL) so the UNIQUE key dedupes
+    row = conn.execute("SELECT council_authority FROM suspended_firm WHERE supplier_name_raw='No Authority Co'").fetchone()
+    assert row["council_authority"] == ""
