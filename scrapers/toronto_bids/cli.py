@@ -27,7 +27,7 @@ def _open_db():
 def _cmd_sync(args) -> int:
     conn = _open_db()
     http = HttpClient()
-    only = args.only.split(",") if args.only else None
+    only = [n.strip() for n in args.only.split(",")] if args.only else None
     if only is not None:
         known = {s.name for s in pipeline.default_sources()}
         unknown = [name for name in only if name not in known]

@@ -13,7 +13,7 @@ def resolve_resource_id(http, slug: str) -> str:
     """
     data = http.get_json(config.CKAN_BASE + "package_show", params={"id": slug})
     if data.get("success") is False:
-        raise RuntimeError(f"CKAN package_show failed for '{slug}': {data.get('error')}")
+        raise RuntimeError(f"CKAN package_show failed for '{slug}': {data.get('error', '<no detail>')}")
     resources = data["result"]["resources"]
     for res in resources:
         if res.get("datastore_active"):
@@ -30,7 +30,7 @@ def fetch_datastore(http, resource_id: str, page_size: int = 10000) -> Iterator[
             params={"resource_id": resource_id, "limit": page_size, "offset": offset},
         )
         if data.get("success") is False:
-            raise RuntimeError(f"CKAN datastore_search failed for resource '{resource_id}': {data.get('error')}")
+            raise RuntimeError(f"CKAN datastore_search failed for resource '{resource_id}': {data.get('error', '<no detail>')}")
         records = data["result"]["records"]
         if not records:
             return
