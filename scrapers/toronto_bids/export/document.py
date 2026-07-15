@@ -69,6 +69,11 @@ def build_export_document(conn, generated_at: str | None = None) -> dict:
         for nc in _rows(conn, "SELECT * FROM noncompetitive ORDER BY workspace_number")
     ]
 
+    suspended_firms = [
+        _drop(firm, "id")
+        for firm in _rows(conn, "SELECT * FROM suspended_firm ORDER BY supplier_name_raw, council_authority")
+    ]
+
     sources = _rows(
         conn,
         "SELECT source, status, finished_at, rows_fetched, rows_upserted "
@@ -83,6 +88,7 @@ def build_export_document(conn, generated_at: str | None = None) -> dict:
         },
         "solicitations": solicitations,
         "noncompetitive": noncompetitive,
+        "suspended_firms": suspended_firms,
         "unlinked_ariba_postings": unlinked,
         "unlinked_awards": unlinked_awards,
     }
