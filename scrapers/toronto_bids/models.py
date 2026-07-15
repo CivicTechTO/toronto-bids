@@ -43,3 +43,24 @@ class NonCompetitive:
     council_authority_link: str | None = None
     odata_id: str | None = None
     source: str = ""
+
+
+@dataclass(frozen=True)
+class AribaPosting:
+    rfx_id: str
+    document_number: str | None = None
+    title: str | None = None
+    posting_type: str | None = None      # detail 'type' field — unreliable (often "RFI")
+    status: str | None = None
+    customer_name: str | None = None
+    posted_date: str | None = None
+    close_date: str | None = None
+    categories: str | None = None        # JSON array of category names
+    amount_min: str | None = None
+    amount_max: str | None = None
+    currency: str | None = None
+    public_posting_url: str | None = None
+    sourcing_url: str | None = None      # authenticated event URL (for a later attachments phase)
+    external_rfx_id: str | None = None   # raw e.g. "Doc5672751291"
+    raw_json: str | None = None          # detail JSON snapshot, or None if the detail call failed
+    source: str = ""

@@ -1,7 +1,7 @@
 import sqlite3
 from importlib import resources
 
-from toronto_bids.models import Award, NonCompetitive, Solicitation
+from toronto_bids.models import Award, NonCompetitive, Solicitation, AribaPosting
 
 # Column lists per table, in the order used for INSERT. Excludes auto/default columns.
 _SOLICITATION_COLS = [
@@ -12,6 +12,11 @@ _SOLICITATION_COLS = [
 _NONCOMP_COLS = [
     "workspace_number", "supplier_name_raw", "reason", "contract_amount",
     "contract_date", "division", "council_authority_link", "odata_id", "source",
+]
+_ARIBA_POSTING_COLS = [
+    "rfx_id", "document_number", "title", "posting_type", "status", "customer_name",
+    "posted_date", "close_date", "categories", "amount_min", "amount_max", "currency",
+    "public_posting_url", "sourcing_url", "external_rfx_id", "raw_json", "source",
 ]
 
 
@@ -59,12 +64,16 @@ def upsert_row(conn, row, *, overwrite: bool) -> None:
         values = [getattr(row, c) for c in cols]
         _upsert_keyed(conn, "award", cols, values,
                       ["document_number", "supplier_name_raw", "source"], overwrite)
+    elif isinstance(row, AribaPosting):
+        values = [getattr(row, c) for c in _ARIBA_POSTING_COLS]
+        _upsert_keyed(conn, "ariba_posting", _ARIBA_POSTING_COLS, values,
+                      ["rfx_id"], overwrite)
     else:
         raise TypeError(f"Cannot upsert row of type {type(row).__name__}")
 
 
 def counts(conn) -> dict:
-    tables = ["solicitation", "award", "noncompetitive", "sync_run"]
+    tables = ["solicitation", "award", "noncompetitive", "ariba_posting", "sync_run"]
     return {t: conn.execute(f"SELECT COUNT(*) FROM {t}").fetchone()[0] for t in tables}
 
 

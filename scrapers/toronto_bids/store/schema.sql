@@ -64,3 +64,30 @@ CREATE TABLE IF NOT EXISTS sync_run (
     rows_upserted  INTEGER DEFAULT 0,
     error          TEXT
 );
+
+-- ariba_posting archives open SAP Ariba Discovery postings (which disappear when they close).
+-- overwrite=True upserts fill NULL columns on later runs; a later 500 (all-NULL) never wipes an
+-- earlier captured snapshot. document_number is bridged best-effort and may be NULL.
+CREATE TABLE IF NOT EXISTS ariba_posting (
+    rfx_id              TEXT PRIMARY KEY,
+    document_number     TEXT,
+    title               TEXT,
+    posting_type        TEXT,
+    status              TEXT,
+    customer_name       TEXT,
+    posted_date         TEXT,
+    close_date          TEXT,
+    categories          TEXT,
+    amount_min          TEXT,
+    amount_max          TEXT,
+    currency            TEXT,
+    public_posting_url  TEXT,
+    sourcing_url        TEXT,
+    external_rfx_id     TEXT,
+    raw_json            TEXT,
+    source              TEXT,
+    first_seen          TEXT NOT NULL DEFAULT (datetime('now')),
+    last_seen           TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_ariba_posting_docnum ON ariba_posting (document_number);
