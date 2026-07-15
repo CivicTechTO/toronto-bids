@@ -26,23 +26,32 @@ def build_export_document(conn, generated_at: str | None = None) -> dict:
     """Assemble the solicitation-centric nested export document from the store.
 
     Pure and deterministic: no file I/O, every query ordered. Awards and Ariba
-    postings are nested under their solicitation by document_number; postings
-    with a NULL document_number go to unlinked_ariba_postings (nothing dropped).
+    postings are nested under their solicitation only when their document_number
+    matches an existing solicitation; everything else (NULL or non-matching
+    document_number) goes to unlinked_ariba_postings / unlinked_awards
+    (nothing dropped).
     """
-    generated_at = generated_at or datetime.now(timezone.utc).isoformat()
+    if generated_at is None:
+        generated_at = datetime.now(timezone.utc).isoformat()
+
+    sol_docs = {r["document_number"] for r in _rows(conn, "SELECT document_number FROM solicitation")}
 
     awards_by_doc: dict[str, list] = {}
+    unlinked_awards: list = []
     for award in _rows(conn, "SELECT * FROM award ORDER BY document_number, id"):
-        awards_by_doc.setdefault(award["document_number"], []).append(
-            _drop(award, "id", "supplier_id", "document_number")
-        )
+        doc = award["document_number"]
+        cleaned = _drop(award, "id", "supplier_id")
+        if doc in sol_docs:
+            awards_by_doc.setdefault(doc, []).append(_drop(cleaned, "document_number"))
+        else:
+            unlinked_awards.append(cleaned)
 
     postings_by_doc: dict[str, list] = {}
     unlinked: list = []
     for posting in _rows(conn, "SELECT * FROM ariba_posting ORDER BY rfx_id"):
         posting = _parse_categories(_drop(posting, "raw_json"))
         doc = posting.get("document_number")
-        if doc:
+        if doc and doc in sol_docs:
             postings_by_doc.setdefault(doc, []).append(_drop(posting, "document_number"))
         else:
             unlinked.append(posting)
@@ -75,4 +84,5 @@ def build_export_document(conn, generated_at: str | None = None) -> dict:
         "solicitations": solicitations,
         "noncompetitive": noncompetitive,
         "unlinked_ariba_postings": unlinked,
+        "unlinked_awards": unlinked_awards,
     }

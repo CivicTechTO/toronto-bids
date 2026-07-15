@@ -87,4 +87,44 @@ def test_empty_store_produces_empty_collections(conn):
     assert doc["solicitations"] == []
     assert doc["noncompetitive"] == []
     assert doc["unlinked_ariba_postings"] == []
+    assert doc["unlinked_awards"] == []
     assert doc["meta"]["counts"]["solicitation"] == 0
+
+
+def test_orphan_posting_docnum_not_in_solicitation_goes_to_unlinked(seeded):
+    # A posting bridged to a doc number that matches NO solicitation must NOT vanish.
+    db.upsert_row(seeded, AribaPosting(rfx_id="1110088888", document_number="4044346425",
+                                       title="Mock RFT", source="ariba_discovery"), overwrite=True)
+    seeded.commit()
+    doc = build_export_document(seeded, generated_at="t")
+    orphan = [p for p in doc["unlinked_ariba_postings"] if p["rfx_id"] == "1110088888"]
+    assert len(orphan) == 1
+    assert orphan[0]["document_number"] == "4044346425"   # kept for diagnostics
+    # and it must NOT be nested under any solicitation
+    assert all(p["rfx_id"] != "1110088888"
+               for s in doc["solicitations"] for p in s["ariba_postings"])
+
+
+def test_orphan_award_docnum_not_in_solicitation_goes_to_unlinked_awards(seeded):
+    db.upsert_row(seeded, Award(document_number="4044346425", supplier_name_raw="Orphan Co",
+                                source="ckan_awarded"), overwrite=True)
+    seeded.commit()
+    doc = build_export_document(seeded, generated_at="t")
+    orphan = [a for a in doc["unlinked_awards"] if a["supplier_name_raw"] == "Orphan Co"]
+    assert len(orphan) == 1
+    assert orphan[0]["document_number"] == "4044346425"
+
+
+def test_no_record_is_dropped_counts_reconcile(seeded):
+    # Every posting/award is either nested or unlinked — nested + unlinked == db count.
+    db.upsert_row(seeded, AribaPosting(rfx_id="1110088888", document_number="4044346425",
+                                       source="ariba_discovery"), overwrite=True)
+    db.upsert_row(seeded, Award(document_number="4044346425", supplier_name_raw="Orphan Co",
+                                source="ckan_awarded"), overwrite=True)
+    seeded.commit()
+    doc = build_export_document(seeded, generated_at="t")
+    counts = doc["meta"]["counts"]
+    nested_postings = sum(len(s["ariba_postings"]) for s in doc["solicitations"])
+    assert nested_postings + len(doc["unlinked_ariba_postings"]) == counts["ariba_posting"]
+    nested_awards = sum(len(s["awards"]) for s in doc["solicitations"])
+    assert nested_awards + len(doc["unlinked_awards"]) == counts["award"]

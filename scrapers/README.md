@@ -35,9 +35,11 @@ uv run pytest             # tests (offline; uses fixtures)
 - `uv run tb export [--out PATH]` — write the whole store to a single
   solicitation-centric nested JSON artifact (default `<DATA_DIR>/export/bids.json`):
   each solicitation with its `awards` and `ariba_postings` nested by `document_number`,
-  plus top-level `noncompetitive` and `unlinked_ariba_postings` (Ariba postings that
-  never bridged to a document number). This is the publish seam — the `Exporter`
-  interface lets other destinations/formats be added without changing the document shape.
+  plus top-level `noncompetitive`, `unlinked_ariba_postings` (Ariba postings whose
+  document_number never bridged to a solicitation), and `unlinked_awards` (awards
+  whose document_number matches no solicitation). This is the publish seam — the
+  `Exporter` interface lets other destinations/formats be added without changing the
+  document shape.
 
 Set `TB_DATA_DIR` to change where `bids.sqlite` and downloads live (default `scrapers/files/`).
 
