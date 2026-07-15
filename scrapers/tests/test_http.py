@@ -57,6 +57,13 @@ def test_post_json_sends_body():
     assert client.post_json("https://example.test/x", json={"a": 1}) == {"echo": True}
 
 
+def test_get_text_returns_body_text():
+    def handler(request):
+        return httpx.Response(200, text="<html>hi</html>")
+    client = _client(handler)
+    assert client.get_text("https://example.test/x") == "<html>hi</html>"
+
+
 def test_get_json_sends_custom_headers():
     seen = {}
     def handler(request):

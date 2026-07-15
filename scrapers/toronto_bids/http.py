@@ -39,5 +39,8 @@ class HttpClient:
     def post_json(self, url, json=None, params=None, headers=None):
         return self._request("POST", url, json=json, params=params, headers=headers).json()
 
+    def get_text(self, url, params=None, headers=None) -> str:
+        return self._request("GET", url, params=params, headers=headers).text
+
     def close(self):
         self._client.close()

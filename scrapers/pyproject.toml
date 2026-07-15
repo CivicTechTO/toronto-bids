@@ -5,6 +5,7 @@ description = "Scraper for City of Toronto procurement data"
 requires-python = ">=3.12"
 dependencies = [
     "httpx",
+    "lxml>=6.1.1",
 ]
 
 [project.scripts]
