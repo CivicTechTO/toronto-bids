@@ -20,6 +20,11 @@ def parse_suspended_table(html_str: str) -> list[dict]:
         cells = [td.text_content().strip() for td in tr.xpath("./td")]
         if not cells:
             continue
+        if len(cells) != len(headers):
+            raise ValueError(
+                f"suspended-firms table row has {len(cells)} cells but {len(headers)} headers "
+                f"(page structure changed): {cells}"
+            )
         rows.append(dict(zip(headers, cells)))
     return rows
 

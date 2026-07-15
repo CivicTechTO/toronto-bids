@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import httpx
+import pytest
 
 from toronto_bids.http import HttpClient
 from toronto_bids.models import SuspendedFirm
@@ -61,3 +62,13 @@ def test_source_attributes():
     src = SuspendedFirmsSource()
     assert src.name == "suspended_firms"
     assert src.overwrite is True
+
+
+def test_parse_raises_on_cell_header_count_mismatch():
+    # A row with fewer <td>s than <thead> columns must surface (not silently truncate).
+    bad = """<html><body><table>
+      <thead><tr><th>Supplier Name</th><th>Status</th><th>Authority</th></tr></thead>
+      <tbody><tr><td>Acme</td><td>Suspended</td></tr></tbody>
+    </table></body></html>"""
+    with pytest.raises(ValueError):
+        parse_suspended_table(bad)
