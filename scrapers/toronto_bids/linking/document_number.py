@@ -22,3 +22,23 @@ def normalize_document_number(raw: str | None) -> str | None:
     if digits in _DENYLIST:
         return None
     return digits
+
+
+_TITLE_DOC = re.compile(r"Doc(\d{10})")
+
+
+def bridge_document_number(external_rfx_id: str | None, title: str | None) -> str | None:
+    """Bridge an Ariba posting to its 10-digit document_number.
+
+    Primary: the detail endpoint's externalRfxId (e.g. "Doc5672751291").
+    Fallback: a "Doc##########" token embedded in the posting title.
+    Returns None if neither yields a valid document number.
+    """
+    doc = normalize_document_number(external_rfx_id)
+    if doc is not None:
+        return doc
+    if title:
+        match = _TITLE_DOC.search(title)
+        if match:
+            return normalize_document_number(match.group(1))
+    return None
