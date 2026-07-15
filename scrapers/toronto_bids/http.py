@@ -16,11 +16,11 @@ class HttpClient:
         self._retries = retries
         self._backoff = backoff
 
-    def _request(self, method, url, **kwargs):
+    def _request(self, method, url, headers=None, **kwargs):
         last_exc = None
         for attempt in range(self._retries + 1):
             try:
-                resp = self._client.request(method, url, **kwargs)
+                resp = self._client.request(method, url, headers=headers, **kwargs)
                 resp.raise_for_status()
                 return resp
             except httpx.HTTPStatusError as exc:
@@ -33,11 +33,11 @@ class HttpClient:
                 time.sleep(self._backoff * (2 ** attempt))
         raise last_exc
 
-    def get_json(self, url, params=None):
-        return self._request("GET", url, params=params).json()
+    def get_json(self, url, params=None, headers=None):
+        return self._request("GET", url, params=params, headers=headers).json()
 
-    def post_json(self, url, json=None, params=None):
-        return self._request("POST", url, json=json, params=params).json()
+    def post_json(self, url, json=None, params=None, headers=None):
+        return self._request("POST", url, json=json, params=params, headers=headers).json()
 
     def close(self):
         self._client.close()
