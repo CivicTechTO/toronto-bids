@@ -1,0 +1,25 @@
+{
+  "@odata.count": 1,
+  "value": [
+    {
+      "Non_Competitive_Reference_Number": "8614",
+      "Non_Competitive_Reason": "Emergency",
+      "Solicitation_Document_Number": "",
+      "Posting_Title": "Environmental service request",
+      "Solicitation_Document_Description": "For the provision of an environmental service request",
+      "Client_Division": ["Toronto Water"],
+      "Buyer_Name": "Justin Diptee",
+      "Buyer_Email": "supplychain@toronto.ca",
+      "Council_Authority_Link_to_Staff_Report": "",
+      "Status": "Awarded",
+      "Awarded_Suppliers": [
+        {
+          "Award_Amount": "67896.4",
+          "Date_Awarded": "2015-07-29",
+          "Successful_Bidder": "Accuworx Inc"
+        }
+      ],
+      "id": "66e002b8-5d66-4df0-b0d8-6cb628fda467"
+    }
+  ]
+}
