@@ -1,4 +1,4 @@
-from toronto_bids.models import Award, NonCompetitive, Solicitation, AribaPosting
+from toronto_bids.models import Award, NonCompetitive, Solicitation, AribaPosting, SuspendedFirm
 from toronto_bids.store import db
 
 
@@ -82,3 +82,35 @@ def test_ariba_posting_later_500_does_not_wipe_snapshot(conn):
 
 def test_counts_includes_ariba_posting(conn):
     assert "ariba_posting" in db.counts(conn)
+
+
+def test_upsert_suspended_firm_is_idempotent(conn):
+    firm = SuspendedFirm(supplier_name_raw="Duron Ontario Ltd.", status="Suspended",
+                         start_date="March 27, 2025", council_authority="2025.GG19.17",
+                         source="suspended_firms")
+    db.upsert_row(conn, firm, overwrite=True)
+    db.upsert_row(conn, firm, overwrite=True)
+    assert db.counts(conn)["suspended_firm"] == 1
+
+
+def test_upsert_suspended_firm_distinct_authority_is_new_row(conn):
+    db.upsert_row(conn, SuspendedFirm(supplier_name_raw="Acme", council_authority="A1",
+                                      source="suspended_firms"), overwrite=True)
+    db.upsert_row(conn, SuspendedFirm(supplier_name_raw="Acme", council_authority="A2",
+                                      source="suspended_firms"), overwrite=True)
+    assert db.counts(conn)["suspended_firm"] == 2
+
+
+def test_suspended_firm_overwrite_updates_status(conn):
+    db.upsert_row(conn, SuspendedFirm(supplier_name_raw="Duron Ontario Ltd.", status="Suspended",
+                                      council_authority="2025.GG19.17", source="suspended_firms"),
+                  overwrite=True)
+    db.upsert_row(conn, SuspendedFirm(supplier_name_raw="Duron Ontario Ltd.", status="Reinstated",
+                                      council_authority="2025.GG19.17", source="suspended_firms"),
+                  overwrite=True)
+    row = conn.execute("SELECT status FROM suspended_firm WHERE supplier_name_raw='Duron Ontario Ltd.'").fetchone()
+    assert row["status"] == "Reinstated"
+
+
+def test_counts_includes_suspended_firm(conn):
+    assert "suspended_firm" in db.counts(conn)

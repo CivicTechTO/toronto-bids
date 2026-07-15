@@ -91,3 +91,19 @@ CREATE TABLE IF NOT EXISTS ariba_posting (
 );
 
 CREATE INDEX IF NOT EXISTS idx_ariba_posting_docnum ON ariba_posting (document_number);
+
+-- suspended_firm mirrors the City's Suspended & Disqualified Firms registry (public HTML table).
+-- Keyed on (supplier_name_raw, council_authority): one row per firm per council decision.
+CREATE TABLE IF NOT EXISTS suspended_firm (
+    id                 INTEGER PRIMARY KEY AUTOINCREMENT,
+    supplier_name_raw  TEXT NOT NULL,
+    status             TEXT,
+    start_date         TEXT,
+    end_date           TEXT,
+    suspension_type    TEXT,
+    council_authority  TEXT,
+    source             TEXT,
+    first_seen         TEXT NOT NULL DEFAULT (datetime('now')),
+    last_seen          TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE (supplier_name_raw, council_authority)
+);
