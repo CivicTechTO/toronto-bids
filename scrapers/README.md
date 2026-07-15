@@ -10,6 +10,12 @@ local SQLite store. No browser, no login, no cloud.
 - **OData `feis_non_competitive_published`** — non-competitive (sole-source) awards.
 - **CKAN `tobids-awarded-contracts` / `tobids-all-open-solicitations` /
   `tobids-non-competitive-contracts`** — backfill for the spine.
+- **SAP Ariba Discovery** (`ariba_discovery`) — archives currently-open City-of-Toronto
+  Ariba postings (`ariba_posting` table) before they close, via public JSON APIs (no auth).
+  Each posting is bridged to its `document_number` where the detail endpoint resolves
+  (~40% return HTTP 500 on a given run and are archived un-bridged; idempotent re-runs fill
+  the gap). The `sourcing_url` column is the authenticated event link for a future
+  attachments phase.
 
 Everything competitive is keyed on the normalized 10-digit `document_number`.
 Non-competitive awards are a separate keyspace (`workspace_number`).

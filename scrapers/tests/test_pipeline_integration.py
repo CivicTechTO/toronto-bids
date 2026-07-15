@@ -39,3 +39,32 @@ def test_odata_spine_wins_and_ckan_links_on_document_number(conn):
     )}
     assert "odata" in sources
     assert "ckan_awarded" in sources
+
+
+def test_ariba_fetch_normalize_upsert_bridges_and_archives(conn):
+    from toronto_bids.sources.ariba import normalize_posting
+    from toronto_bids.store import db
+
+    search = _load("ariba_search_record.json")
+    detail = _load("ariba_detail.json")
+    # Simulate the fetch output: one detail-200 posting, one detail-500 posting.
+    raws = [
+        {"search": search, "detail": detail},
+        {"search": {**search, "rfxID": "1110099999", "title": "no doc here"}, "detail": None},
+    ]
+    for raw in raws:
+        for row in normalize_posting(raw):
+            db.upsert_row(conn, row, overwrite=True)
+    conn.commit()
+
+    assert db.counts(conn)["ariba_posting"] == 2
+    bridged = conn.execute(
+        "SELECT document_number, raw_json FROM ariba_posting WHERE rfx_id='1110015885'"
+    ).fetchone()
+    assert bridged["document_number"] == "5672751291"   # linked to the OData/CKAN spine
+    assert bridged["raw_json"] is not None               # snapshot archived
+    unbridged = conn.execute(
+        "SELECT document_number, raw_json FROM ariba_posting WHERE rfx_id='1110099999'"
+    ).fetchone()
+    assert unbridged["document_number"] is None          # archived even though un-bridged
+    assert unbridged["raw_json"] is None
