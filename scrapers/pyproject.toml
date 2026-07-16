@@ -6,6 +6,13 @@ requires-python = ">=3.12"
 dependencies = [
     "httpx",
     "lxml>=6.1.1",
+]
+
+[project.optional-dependencies]
+# Opt-in TMMIS council + background-PDF enrichment (`tb enrich-council`).
+# Needs a headed browser (Akamai blocks headless); pyvirtualdisplay runs it
+# under Xvfb on a headless server. Install with: uv sync --extra council
+council = [
     "playwright>=1.61.0",
     "pyvirtualdisplay>=3.0",
 ]
