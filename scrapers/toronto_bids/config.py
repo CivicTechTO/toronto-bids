@@ -42,3 +42,8 @@ SUSPENDED_FIRMS_URL = (
     "https://www.toronto.ca/business-economy/doing-business-with-the-city/"
     "searching-bidding-on-city-contracts/suspended-disqualified-firms/"
 )
+
+# TMMIS council agenda-item pages (Akamai-gated -> headed browser). Query param: ?item=<reference>.
+COUNCIL_ITEM_URL = "https://secure.toronto.ca/council/agenda-item.do"
+# Downloaded council PDFs.
+COUNCIL_DOCS_DIR = DATA_DIR / "documents" / "council"

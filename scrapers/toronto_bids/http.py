@@ -42,5 +42,8 @@ class HttpClient:
     def get_text(self, url, params=None, headers=None) -> str:
         return self._request("GET", url, params=params, headers=headers).text
 
+    def get_bytes(self, url, params=None, headers=None) -> bytes:
+        return self._request("GET", url, params=params, headers=headers).content
+
     def close(self):
         self._client.close()

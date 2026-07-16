@@ -310,6 +310,15 @@ wheels = [
 ]
 
 [[package]]
+name = "pyvirtualdisplay"
+version = "3.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/86/9f/23e5a82987c26d225139948a224a93318d7a7c8b166d4dbe4de7426dc4e4/PyVirtualDisplay-3.0.tar.gz", hash = "sha256:09755bc3ceb6eb725fb07eca5425f43f2358d3bf08e00d2a9b792a1aedd16159", size = 18560, upload-time = "2022-02-13T07:57:05.783Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/90/eb/c3b8deb661cb3846db63288c99bbb39f217b7807fc8acb2fd058db41e2e6/PyVirtualDisplay-3.0-py3-none-any.whl", hash = "sha256:40d4b8dfe4b8de8552e28eb367647f311f88a130bf837fe910e7f180d5477f0e", size = 15258, upload-time = "2022-02-13T07:57:04.051Z" },
+]
+
+[[package]]
 name = "toronto-bids"
 version = "0.1.0"
 source = { editable = "." }
@@ -317,6 +326,7 @@ dependencies = [
     { name = "httpx" },
     { name = "lxml" },
     { name = "playwright" },
+    { name = "pyvirtualdisplay" },
 ]
 
 [package.dev-dependencies]
@@ -329,6 +339,7 @@ requires-dist = [
     { name = "httpx" },
     { name = "lxml", specifier = ">=6.1.1" },
     { name = "playwright", specifier = ">=1.61.0" },
+    { name = "pyvirtualdisplay", specifier = ">=3.0" },
 ]
 
 [package.metadata.requires-dev]

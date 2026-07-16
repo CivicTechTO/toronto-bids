@@ -1,8 +1,12 @@
+import hashlib
 import re
+import subprocess
+from pathlib import Path
 
 from lxml import html as _html
 from lxml.html import HtmlComment
 
+from toronto_bids import config
 from toronto_bids.models import CouncilItem
 
 _LEGDOCS = "/legdocs/mmis/"
@@ -50,3 +54,48 @@ def parse_agenda_item(html: str, reference: str):
         pdfs.append({"url": url, "kind": kind})
 
     return CouncilItem(reference=reference, title=title, decision_text=decision), pdfs
+
+
+def download_pdf(http, url: str, dest_dir) -> dict:
+    """Download a PDF over plain HTTP, save it, hash it, and extract its text with pdftotext."""
+    data = http.get_bytes(url)
+    dest_dir = Path(dest_dir)
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    name = url.rsplit("/", 1)[-1]
+    path = dest_dir / name
+    path.write_bytes(data)
+    digest = hashlib.sha256(data).hexdigest()
+    proc = subprocess.run(["pdftotext", "-q", str(path), "-"], capture_output=True, text=True)
+    text = proc.stdout.strip() or None
+    return {"local_path": str(path), "sha256": digest, "text": text}
+
+
+def fetch_agenda_item(reference: str, virtual_display: bool = False) -> str:
+    """Fetch a TMMIS agenda-item page's HTML with a HEADED Chromium (Akamai blocks headless).
+
+    On a headless server pass virtual_display=True to run Chromium under Xvfb (needs Xvfb
+    installed). Not unit-tested — exercised by the live smoke.
+    """
+    from playwright.sync_api import sync_playwright
+
+    display = None
+    if virtual_display:
+        from pyvirtualdisplay import Display
+        display = Display(visible=False, size=(1440, 900))
+        display.start()
+    try:
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(
+                headless=False, args=["--disable-blink-features=AutomationControlled"]
+            )
+            try:
+                page = browser.new_context().new_page()
+                page.goto(f"{config.COUNCIL_ITEM_URL}?item={reference}",
+                          wait_until="domcontentloaded", timeout=45000)
+                page.wait_for_timeout(1500)
+                return page.content()
+            finally:
+                browser.close()
+    finally:
+        if display is not None:
+            display.stop()
