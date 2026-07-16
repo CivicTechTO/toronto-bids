@@ -4,6 +4,7 @@ from toronto_bids.sources.odata import ODataNonCompetitiveSource, ODataSolicitat
 from toronto_bids.sources.suspended_firms import SuspendedFirmsSource
 from toronto_bids.store import db
 from toronto_bids import config
+from toronto_bids.linking.supplier import build_supplier_dimension
 
 
 def default_sources():
@@ -46,3 +47,15 @@ def sync(conn, http, sources=None, only=None) -> None:
         sources = [s for s in sources if s.name in wanted]
     for source in sources:
         run_source(conn, http, source)
+    _run_supplier_dimension(conn)
+
+
+def _run_supplier_dimension(conn) -> None:
+    """Rebuild the supplier dimension after sources. Isolated: never raises out of sync."""
+    run_id = db.start_sync_run(conn, "supplier_dimension")
+    try:
+        n = build_supplier_dimension(conn)
+        db.finish_sync_run(conn, run_id, status="ok", rows_fetched=n, rows_upserted=n)
+    except Exception as exc:
+        conn.rollback()
+        db.finish_sync_run(conn, run_id, status="failed", error=str(exc))

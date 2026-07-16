@@ -20,6 +20,12 @@ local SQLite store. No browser, no login, no cloud.
   suspended/disqualified suppliers (`suspended_firm` table), parsed from the HTML table. Each
   row carries the supplier name, status, suspension dates, type, and the council `Authority`
   reference. Exported as a top-level `suspended_firms` array.
+- **Supplier dimension** (`supplier` table) — after every sync, a linking pass canonicalizes
+  the free-text supplier names across awards, non-competitive contracts, and suspended firms
+  into one `supplier` row per firm (merging spelling/case/punctuation variants; legal suffixes
+  kept so distinct entities stay distinct) and backfills a `supplier_id` FK on those rows. The
+  export includes a top-level `suppliers` array; each award/non-competitive/suspended-firm
+  record keeps its `supplier_id` so you can answer "which contracts belong to this supplier?".
 
 Everything competitive is keyed on the normalized 10-digit `document_number`.
 Non-competitive awards are a separate keyspace (`workspace_number`).

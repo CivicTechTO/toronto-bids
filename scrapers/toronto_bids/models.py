@@ -75,3 +75,10 @@ class SuspendedFirm:
     suspension_type: str | None = None
     council_authority: str | None = None
     source: str = ""
+
+
+@dataclass(frozen=True)
+class Supplier:
+    supplier_key: str
+    display_name: str | None = None
+    variants: str | None = None

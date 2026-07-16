@@ -74,7 +74,8 @@ def test_noncompetitive_is_separate_top_level(seeded):
     doc = build_export_document(seeded, generated_at="t")
     assert len(doc["noncompetitive"]) == 1
     assert doc["noncompetitive"][0]["workspace_number"] == "8614"
-    assert "supplier_id" not in doc["noncompetitive"][0]
+    # supplier_id is retained for joining to suppliers[]
+    assert "supplier_id" in doc["noncompetitive"][0]
 
 
 def test_document_is_json_serializable(seeded):
@@ -146,3 +147,30 @@ def test_suspended_firms_is_separate_top_level(conn):
 def test_suspended_firms_empty_when_none(conn):
     doc = build_export_document(conn, generated_at="t")
     assert doc["suspended_firms"] == []
+
+
+def test_export_has_suppliers_array_and_retains_supplier_id(conn):
+    from toronto_bids.models import Award, Solicitation, Supplier
+    from toronto_bids.store import db as _db
+    _db.upsert_row(conn, Supplier(supplier_key="compugen inc", display_name="Compugen Inc.",
+                                  variants='["Compugen Inc."]'), overwrite=True)
+    sid = conn.execute("SELECT supplier_id FROM supplier WHERE supplier_key='compugen inc'").fetchone()[0]
+    _db.upsert_row(conn, Solicitation(document_number="3303123110", source="odata"), overwrite=True)
+    _db.upsert_row(conn, Award(document_number="3303123110", supplier_name_raw="Compugen Inc.",
+                               source="odata"), overwrite=True)
+    conn.execute("UPDATE award SET supplier_id=? WHERE document_number='3303123110'", (sid,))
+    conn.commit()
+
+    doc = build_export_document(conn, generated_at="t")
+    assert len(doc["suppliers"]) == 1
+    assert doc["suppliers"][0]["display_name"] == "Compugen Inc."
+    # variants is parsed to a list for consistency with categories
+    assert doc["suppliers"][0]["variants"] == ["Compugen Inc."]
+    # supplier_id is retained on nested awards so consumers can join to suppliers[]
+    award = doc["solicitations"][0]["awards"][0]
+    assert award["supplier_id"] == sid
+
+
+def test_export_suppliers_empty_when_none(conn):
+    doc = build_export_document(conn, generated_at="t")
+    assert doc["suppliers"] == []

@@ -1,4 +1,4 @@
-from toronto_bids.models import Award, NonCompetitive, Solicitation, AribaPosting, SuspendedFirm
+from toronto_bids.models import Award, NonCompetitive, Solicitation, AribaPosting, SuspendedFirm, Supplier
 from toronto_bids.store import db
 
 
@@ -125,3 +125,28 @@ def test_suspended_firm_null_authority_is_idempotent(conn):
     # stored as '' (not NULL) so the UNIQUE key dedupes
     row = conn.execute("SELECT council_authority FROM suspended_firm WHERE supplier_name_raw='No Authority Co'").fetchone()
     assert row["council_authority"] == ""
+
+
+def test_upsert_supplier_is_idempotent(conn):
+    s = Supplier(supplier_key="compugen inc", display_name="Compugen Inc.", variants='["Compugen Inc."]')
+    db.upsert_row(conn, s, overwrite=True)
+    db.upsert_row(conn, s, overwrite=True)
+    assert db.counts(conn)["supplier"] == 1
+
+
+def test_upsert_supplier_updates_variants(conn):
+    db.upsert_row(conn, Supplier(supplier_key="compugen inc", display_name="Compugen Inc",
+                                 variants='["Compugen Inc"]'), overwrite=True)
+    db.upsert_row(conn, Supplier(supplier_key="compugen inc", display_name="Compugen Inc.",
+                                 variants='["Compugen Inc", "Compugen Inc."]'), overwrite=True)
+    row = conn.execute("SELECT variants FROM supplier WHERE supplier_key='compugen inc'").fetchone()
+    assert row["variants"] == '["Compugen Inc", "Compugen Inc."]'
+
+
+def test_counts_includes_supplier(conn):
+    assert "supplier" in db.counts(conn)
+
+
+def test_suspended_firm_has_supplier_id_column(conn):
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(suspended_firm)")}
+    assert "supplier_id" in cols

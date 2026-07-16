@@ -40,7 +40,7 @@ def build_export_document(conn, generated_at: str | None = None) -> dict:
     unlinked_awards: list = []
     for award in _rows(conn, "SELECT * FROM award ORDER BY document_number, id"):
         doc = award["document_number"]
-        cleaned = _drop(award, "id", "supplier_id")
+        cleaned = _drop(award, "id")
         if doc in sol_docs:
             awards_by_doc.setdefault(doc, []).append(_drop(cleaned, "document_number"))
         else:
@@ -65,7 +65,7 @@ def build_export_document(conn, generated_at: str | None = None) -> dict:
         solicitations.append(sol)
 
     noncompetitive = [
-        _drop(nc, "supplier_id", "odata_id")
+        _drop(nc, "odata_id")
         for nc in _rows(conn, "SELECT * FROM noncompetitive ORDER BY workspace_number")
     ]
 
@@ -73,6 +73,17 @@ def build_export_document(conn, generated_at: str | None = None) -> dict:
         _drop(firm, "id")
         for firm in _rows(conn, "SELECT * FROM suspended_firm ORDER BY supplier_name_raw, council_authority")
     ]
+
+    suppliers = []
+    for s in _rows(conn, "SELECT * FROM supplier ORDER BY display_name"):
+        s = _drop(s, "supplier_key")
+        raw = s.get("variants")
+        if raw:
+            try:
+                s["variants"] = json.loads(raw)
+            except (TypeError, ValueError):
+                pass
+        suppliers.append(s)
 
     sources = _rows(
         conn,
@@ -89,6 +100,7 @@ def build_export_document(conn, generated_at: str | None = None) -> dict:
         "solicitations": solicitations,
         "noncompetitive": noncompetitive,
         "suspended_firms": suspended_firms,
+        "suppliers": suppliers,
         "unlinked_ariba_postings": unlinked,
         "unlinked_awards": unlinked_awards,
     }
