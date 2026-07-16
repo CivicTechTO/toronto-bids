@@ -52,8 +52,10 @@ Normalizers read feed fields with `raw.get(...)`, so a field the City renames si
 ### Linking
 
 - Everything competitive is keyed on the normalized 10-digit `document_number` (`linking/document_number.py`: strip non-digits, require exactly 10, reject a placeholder denylist). Non-competitive contracts live in a separate keyspace (`workspace_number`) — there is no join between them.
-- After every sync, `linking/supplier.py:build_supplier_dimension` rebuilds the supplier dimension from scratch: a normalized string key groups raw names across `award`/`noncompetitive`/`suspended_firm`; `supplier_id` FKs are cleared and re-backfilled each run. Legal suffixes (Inc, Ltd) are deliberately kept in the key.
-- Ariba postings bridge to a document number via the detail `externalRfxId`, falling back to a `Doc(\d{10})` token in the title; unbridged postings keep a NULL `document_number`.
+- Two linking passes run after the sources on every sync, isolated the same way sources are (`pipeline._run_linking_pass` — a failure is recorded in `sync_run` and returned, never raised). They run regardless of `--only`, since they read whatever is in the store.
+- `linking/supplier.py:build_supplier_dimension` rebuilds the supplier dimension from scratch: a normalized string key groups raw names across `award`/`noncompetitive`/`suspended_firm`; `supplier_id` FKs are cleared and re-backfilled each run. Legal suffixes (Inc, Ltd) are deliberately kept in the key.
+- `linking/ariba.py:bridge_postings_to_spine` is the primary Ariba bridge: `solicitation.ariba_posting_link` embeds the rfx id (`/RfxEvent/preview/<id>`), so the spine names the join outright. `sources/ariba.py` also bridges inline from the detail `externalRfxId`, falling back to a `Doc(\d{10})` title token, but that path depends on the detail call — which 500s ~48% of the time — so it bridges roughly half. The linking pass fills the rest and only fills NULLs (the two agree wherever both fire). Older spine rows carry dead link formats (`discovery.ariba.com/rfx/`, merx, Lotus Notes, `n/a`) that are deliberately unparsed: those postings are long closed and absent from `ariba_posting`.
+- A posting with no `document_number`, or one whose `document_number` has no `solicitation` row, stays unlinked and surfaces in the export's `unlinked_ariba_postings`.
 
 ### Council enrichment (`sources/council.py`) — not a Source
 
