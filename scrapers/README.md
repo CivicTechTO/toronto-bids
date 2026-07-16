@@ -88,10 +88,40 @@ See `../docs/superpowers/specs/2026-07-14-toronto-bids-scraper-rewrite-design.md
 
 ## Data notes
 
-`award` rows are stored per-source: OData (`source='odata'`) is the spine, and CKAN's
-awarded-contracts dataset (`source='ckan_awarded'`) is a cross-check, so the same
-`(document_number, supplier_name_raw)` pair can legitimately appear once per source
-(`source` is part of the table's UNIQUE key). A naive `COUNT(*)` or `SUM(award_amount)`
-over `award` will double-count. Consumers should either filter to `source='odata'` or
-`GROUP BY document_number, supplier_name_raw` to get a de-duplicated view. Fuzzy
-cross-source supplier de-duplication is a later phase.
+Four things will give you a wrong answer if you assume the obvious.
+
+**Never `SUM(award_amount)`.** It is `TEXT`, holding the City's string verbatim —
+`"$1,317,169.92 CAD"`, `"kj"`, and in a few cases three amounts concatenated. SQLite
+coerces text prefixes, so that sum silently returns **$950 trillion**; and because text
+sorts above every number, `award_amount > 1000` matches every row that *has* an amount,
+whatever the amount is. Aggregate **`award_amount_numeric`** (`REAL`) instead — same for
+`contract_amount_numeric`. Where the numeric is NULL beside a non-NULL raw string, the raw
+value is not a single CAD amount (68 of 14,165 awards). That is deliberate, not missing
+data: the string is kept because it is what the City published, and some of it has no
+numeric form at all.
+
+**One `award` row is one award *line*, not one supplier.** A document can award the same
+supplier many times — standing-offer call-ups are routine, and `Cascades Recovery Inc.` has
+ten lines on document `9154157025`. So **do not `GROUP BY document_number,
+supplier_name_raw`** to de-duplicate: that collapses real, distinct awards.
+
+**Do de-duplicate by source.** OData (`source='odata'`) is the spine and CKAN's
+awarded-contracts dataset (`source='ckan_awarded'`) is an independent cross-check, so every
+award legitimately appears once per source. Filter to `source='odata'` for a single view.
+Both hazards apply at once — a trustworthy total needs the numeric column **and** a source
+filter:
+
+```sql
+SELECT SUM(award_amount_numeric) FROM award WHERE source = 'odata';
+```
+
+Even then, treat the figure with care: three awards are implausible in *both* City feeds
+(document `3901175008` publishes `9054510208` — $9.05B to an individual, against a ~$16B
+city budget) and carry roughly $15B of the total. The sum is faithful to what the City
+published; what the City published is wrong.
+
+**Most solicitations have no title.** For ~72% of them the City publishes the document
+number *as* the title (`Doc-3524228095`), which carries no information the primary key does
+not. Those are stored as `NULL`, so **`title IS NULL` means "the City published no title"**
+— do not test `title LIKE 'Doc-%'`, which both misses placeholders (`'3586141004'`) and
+catches real titles that merely lead with a document number.
