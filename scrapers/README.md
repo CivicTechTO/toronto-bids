@@ -16,6 +16,10 @@ local SQLite store. No browser, no login, no cloud.
   (~40% return HTTP 500 on a given run and are archived un-bridged; idempotent re-runs fill
   the gap). The `sourcing_url` column is the authenticated event link for a future
   attachments phase.
+- **Suspended & Disqualified Firms** (`suspended_firms`) — the City's public registry of
+  suspended/disqualified suppliers (`suspended_firm` table), parsed from the HTML table. Each
+  row carries the supplier name, status, suspension dates, type, and the council `Authority`
+  reference. Exported as a top-level `suspended_firms` array.
 
 Everything competitive is keyed on the normalized 10-digit `document_number`.
 Non-competitive awards are a separate keyspace (`workspace_number`).

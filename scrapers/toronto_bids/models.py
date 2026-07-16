@@ -64,3 +64,14 @@ class AribaPosting:
     external_rfx_id: str | None = None   # raw e.g. "Doc5672751291"
     raw_json: str | None = None          # detail JSON snapshot, or None if the detail call failed
     source: str = ""
+
+
+@dataclass(frozen=True)
+class SuspendedFirm:
+    supplier_name_raw: str
+    status: str | None = None
+    start_date: str | None = None
+    end_date: str | None = None
+    suspension_type: str | None = None
+    council_authority: str | None = None
+    source: str = ""

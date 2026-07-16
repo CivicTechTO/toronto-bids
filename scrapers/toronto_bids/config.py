@@ -36,3 +36,9 @@ ARIBA_SEARCH_BODY = {
     "filters": [],
 }
 ARIBA_CUSTOMER_NAME = "City of Toronto"
+
+# Suspended & Disqualified Firms registry (public HTML, no auth).
+SUSPENDED_FIRMS_URL = (
+    "https://www.toronto.ca/business-economy/doing-business-with-the-city/"
+    "searching-bidding-on-city-contracts/suspended-disqualified-firms/"
+)

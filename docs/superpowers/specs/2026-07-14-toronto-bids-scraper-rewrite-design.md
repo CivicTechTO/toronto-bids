@@ -112,7 +112,18 @@ are in `value` (not a `d`/`results` wrapper) and the total is `@odata.count`. Pa
 ### 2.5 Coverage gaps (what "everything downstream" still cannot give us)
 
 1. **Bid documents/specs/attachments** live only inside the authenticated Ariba Sourcing
-   event (supplier login + browser). Biggest gap; addressed by the optional Tier-2 fetcher.
+   event (supplier login + browser). Biggest gap.
+   **UPDATE (2026-07-15, P4b exploration): a supplier login is NOT sufficient.** Live test
+   with a real Toronto-realm supplier account (logged in, AN…011) opening an open Toronto
+   event returned *"You do not have the correct permission to view the event."* Event
+   documents are visible only to accounts **participating in that specific event** (invited /
+   responded). There is no way to archive attachments across all open solicitations without
+   actively registering intent-to-bid on each one (spamming the buyer) — so the attachment
+   fetcher (P4b) is **DEFERRED / effectively infeasible for a public archive**. It could only
+   ever fetch attachments for the handful of events a given account actually participates in
+   (a personal-workflow tool, not an archive component). The public archive already captures
+   everything publicly available (metadata, awards, non-competitive, open-posting Discovery
+   JSON, suspended firms).
 2. **Losing bidders and bid prices** are never published anywhere. **Unrecoverable.**
 3. **Closed-posting Ariba detail/attachments** — public detail API serves open postings only.
    Must **archive at scrape time**; no backfill.
@@ -345,8 +356,11 @@ Each phase ships something that works standalone and gets its own implementation
 - **P2 — Ariba Discovery JSON**: `doIndexedSearch` + `/rfx/{id}` detail adapters, the
   rfxId↔document_number bridge, open-posting archival. Still no auth/browser.
 - **P3 — publish seam**: `Exporter` interface + `json_export.py`; `tb export`.
-- **P4 — Tier 2**: suspended-firms diff (cheap, low-brittleness), then the optional
-  authenticated Ariba attachment fetcher (Playwright, credentials-gated).
+- **P4 — Tier 2**: suspended-firms diff (cheap, low-brittleness). **DONE (P4a).** The
+  authenticated Ariba attachment fetcher (P4b) was investigated and **deferred as infeasible
+  for a public archive** — a supplier login does not grant access to event documents (only
+  event *participants* can view them); see §2.5 gap #1. No `attachment` table / Playwright /
+  credential plumbing was built.
 - **P5 — Tier 3 enrichment**: TMMIS council agenda-items + background-file PDFs; the supplier
   fuzzy `dim` + council bridge.
 

@@ -1,7 +1,7 @@
 import sqlite3
 from importlib import resources
 
-from toronto_bids.models import Award, NonCompetitive, Solicitation, AribaPosting
+from toronto_bids.models import Award, NonCompetitive, Solicitation, AribaPosting, SuspendedFirm
 
 # Column lists per table, in the order used for INSERT. Excludes auto/default columns.
 _SOLICITATION_COLS = [
@@ -17,6 +17,10 @@ _ARIBA_POSTING_COLS = [
     "rfx_id", "document_number", "title", "posting_type", "status", "customer_name",
     "posted_date", "close_date", "categories", "amount_min", "amount_max", "currency",
     "public_posting_url", "sourcing_url", "external_rfx_id", "raw_json", "source",
+]
+_SUSPENDED_COLS = [
+    "supplier_name_raw", "status", "start_date", "end_date",
+    "suspension_type", "council_authority", "source",
 ]
 
 
@@ -68,12 +72,20 @@ def upsert_row(conn, row, *, overwrite: bool) -> None:
         values = [getattr(row, c) for c in _ARIBA_POSTING_COLS]
         _upsert_keyed(conn, "ariba_posting", _ARIBA_POSTING_COLS, values,
                       ["rfx_id"], overwrite)
+    elif isinstance(row, SuspendedFirm):
+        values = [getattr(row, c) for c in _SUSPENDED_COLS]
+        # council_authority is part of the UNIQUE key; coerce None -> '' so a firm with no
+        # parseable Authority stays idempotent (SQLite treats NULLs as distinct in UNIQUE indexes).
+        ca_idx = _SUSPENDED_COLS.index("council_authority")
+        values[ca_idx] = values[ca_idx] or ""
+        _upsert_keyed(conn, "suspended_firm", _SUSPENDED_COLS, values,
+                      ["supplier_name_raw", "council_authority"], overwrite)
     else:
         raise TypeError(f"Cannot upsert row of type {type(row).__name__}")
 
 
 def counts(conn) -> dict:
-    tables = ["solicitation", "award", "noncompetitive", "ariba_posting", "sync_run"]
+    tables = ["solicitation", "award", "noncompetitive", "ariba_posting", "suspended_firm", "sync_run"]
     return {t: conn.execute(f"SELECT COUNT(*) FROM {t}").fetchone()[0] for t in tables}
 
 

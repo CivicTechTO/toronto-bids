@@ -3,7 +3,7 @@ import json
 import pytest
 
 from toronto_bids.export.document import build_export_document
-from toronto_bids.models import AribaPosting, Award, NonCompetitive, Solicitation
+from toronto_bids.models import AribaPosting, Award, NonCompetitive, Solicitation, SuspendedFirm
 from toronto_bids.store import db
 
 
@@ -128,3 +128,21 @@ def test_no_record_is_dropped_counts_reconcile(seeded):
     assert nested_postings + len(doc["unlinked_ariba_postings"]) == counts["ariba_posting"]
     nested_awards = sum(len(s["awards"]) for s in doc["solicitations"])
     assert nested_awards + len(doc["unlinked_awards"]) == counts["award"]
+
+
+def test_suspended_firms_is_separate_top_level(conn):
+    db.upsert_row(conn, SuspendedFirm(supplier_name_raw="Duron Ontario Ltd.", status="Suspended",
+                                      council_authority="2025.GG19.17", source="suspended_firms"),
+                  overwrite=True)
+    conn.commit()
+    doc = build_export_document(conn, generated_at="t")
+    assert len(doc["suspended_firms"]) == 1
+    firm = doc["suspended_firms"][0]
+    assert firm["supplier_name_raw"] == "Duron Ontario Ltd."
+    assert firm["council_authority"] == "2025.GG19.17"
+    assert "id" not in firm
+
+
+def test_suspended_firms_empty_when_none(conn):
+    doc = build_export_document(conn, generated_at="t")
+    assert doc["suspended_firms"] == []
