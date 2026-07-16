@@ -115,15 +115,22 @@ def enrich_council(conn, http, fetch=fetch_agenda_item, dest_dir=None) -> int:
     )]
     processed = 0
     for ref in refs:
-        html = fetch(ref)
-        item, pdfs = parse_agenda_item(html, ref)
-        db.upsert_row(conn, item, overwrite=True)
-        for pdf in pdfs:
-            info = download_pdf(http, pdf["url"], dest_dir)
-            db.upsert_row(conn, BackgroundPdf(
-                url=pdf["url"], reference=ref, kind=pdf["kind"],
-                local_path=info["local_path"], sha256=info["sha256"], text=info["text"],
-            ), overwrite=True)
-        conn.commit()
-        processed += 1
+        try:
+            html = fetch(ref)
+            item, pdfs = parse_agenda_item(html, ref)
+            db.upsert_row(conn, item, overwrite=True)
+            for pdf in pdfs:
+                try:
+                    info = download_pdf(http, pdf["url"], dest_dir)
+                    db.upsert_row(conn, BackgroundPdf(
+                        url=pdf["url"], reference=ref, kind=pdf["kind"],
+                        local_path=info["local_path"], sha256=info["sha256"], text=info["text"],
+                    ), overwrite=True)
+                except Exception:
+                    continue  # skip a bad PDF; keep the rest of this item
+            conn.commit()
+            processed += 1
+        except Exception:
+            conn.rollback()  # discard this ref's partial work; move on to the next authority
+            continue
     return processed
