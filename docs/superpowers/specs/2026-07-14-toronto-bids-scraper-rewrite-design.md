@@ -146,15 +146,63 @@ are in `value` (not a `d`/`results` wrapper) and the total is `@odata.count`. Pa
    (a personal-workflow tool, not an archive component). The public archive already captures
    everything publicly available (metadata, awards, non-competitive, open-posting Discovery
    JSON, suspended firms).
-2. **Losing bidders and bid prices** are never published anywhere. **Unrecoverable.**
+2. ~~**Losing bidders and bid prices** are never published anywhere. **Unrecoverable.**~~
+   **WRONG — resolved 2026-07-16 (#84).** They are tabulated on **every Bid Award Panel
+   agenda**, in real `<table>` markup, and have been all along. 12,387 bids from 5,096
+   distinct bidders are now stored, parsed out of the 475 agendas cached under
+   `<DATA_DIR>/council/agendas/` — offline, no browser, no PDFs. 9,814 carry a parseable
+   price; the rest carry an outcome (`Non-Compliant`, `No bid`) which is itself the reason a
+   bid lost. 3,341 are pre-2019.
+
+   This was the most consequential error in this document. It declared the archive's most
+   valuable dataset non-existent, and it went unchallenged because nobody looked at an
+   agenda. Two lessons worth keeping: **"unrecoverable" is a claim about where we looked,
+   not about the world**; and this data was reachable *only* because #65 scraped those
+   agendas for an unrelated reason (titles) and cached the raw HTML.
+
+   Caveats now in `CLAUDE.md`: `hst_basis` is load-bearing (5,801 bids quote including HST,
+   4,097 excluding), and a bid price is not an award amount (a bid excludes contingency).
 3. **Closed-posting Ariba detail/attachments** — public detail API serves open postings only.
-   Must **archive at scrape time**; no backfill.
+   Must **archive at scrape time**; no backfill. **Caveat (2026-07-16, #78):** that 401 is
+   an *API* result. The UI has never been tested with a real browser, and §2.4's dismissal of
+   the Discovery HTML as "an empty SPA shell" was assessed against plain HTTP — a browser
+   renders the SPA, which is how the legacy archive's pages came to carry titles. If an
+   authenticated view serves closed postings, this gap narrows substantially.
 4. **Canonical supplier ID** — none exists; suppliers are free text everywhere. Cross-source
    supplier linkage is fuzzy only.
 5. **Non-competitive → competitive** — non-competitive rows carry no doc number; permanent
    separate keyspace.
-6. **PCard / consulting spend → bids** — no join key; orthogonal spend data.
+6. **PCard / consulting spend → bids** — no join key; orthogonal spend data. Formally
+   declined 2026-07-16 (#69) — see §2.1.1.
 7. **Pre-retirement historical records** that lived only in the dead Lotus Notes feeds are gone.
+8. **Solicitation titles before ~2019 — the archive's largest hole.** Added 2026-07-16 (#65),
+   which this document never recorded despite it being the biggest gap in the dataset.
+
+   For ~66% of solicitations the City publishes the **document number as the title**
+   (`Doc-3524228095`), which carries nothing the primary key does not. Those are stored NULL
+   (#70), so `title IS NULL` means "the City published no title". **4,913 of 7,444 have no
+   subject line** — the awarded record is a number, a supplier and an amount, with no
+   statement of what was bought.
+
+   | source | titles |
+   |---|---|
+   | `odata` — the City's own feed | 2,053 |
+   | `bid_award_panel` — council agendas (#65) | 342 |
+   | `legacy_ariba_html` — the rescued archive (#65) | 136 |
+
+   **The remaining gap is 4,616 rows in 2012–2019, and it is bounded by history, not
+   effort.** Toronto adopted Ariba around 2019. Earlier council agendas identify awards by
+   Call Number (`2017.BA1.2`: "Award of Call Number 6032-16-3114 to MeteoGroup…"), the spine
+   is keyed on the 10-digit Ariba number backfilled later, and
+   `Contract_Number_Purchase_Order` is **empty on all 7,592 feed records**. There is no join
+   key in either direction. Verified dead ends: TMMIS plain HTTP (403, Akamai), CKAN council
+   voting records (742k vote rows → 2 usable titles), and the 46 unread OData fields (all
+   metadata, no title).
+
+   Two candidate routes remain, both open: **#77** (match pre-Ariba council items on
+   supplier+amount rather than identifier — 3,341 pre-2019 bids now carry both) and **#78**
+   (browser-scrape publicly visible Ariba posting detail; the spine holds 1,681
+   `ariba_posting_link` values against the 42 postings currently reachable).
 
 ## 3. The linking model
 
