@@ -27,6 +27,7 @@ uv run tb export                          # write JSON artifact (default <DATA_D
 - Council tests skip silently without `pdftotext` (`brew install poppler`); CI installs poppler so they run there.
 - `TB_DATA_DIR` env var relocates the DB and downloads (default `scrapers/files/`).
 - Opt-in council enrichment: `uv sync --extra council && uv run playwright install chromium`, then `uv run tb enrich-council` (`--virtual-display` for Xvfb on headless servers). Not part of `tb sync`.
+- `uv run tb enrich-titles` recovers titles the City never published (#65). **Offline by default** — it reads agendas already cached under `<DATA_DIR>/council/agendas/` plus the legacy archive, so it needs no browser. `--scrape` fetches Bid Award Panel agendas first (headed browser, needs the `council` extra; ~10 min cold, seconds once cached — an agenda on disk is never refetched). Not part of `tb sync`.
 - `tb sync` hits live City endpoints and is slow; the tests are the dev loop.
 
 ## Architecture
@@ -61,6 +62,17 @@ Normalizers read feed fields with `raw.get(...)`, so a field the City renames si
 ### Council enrichment (`sources/council.py`) — not a Source
 
 A separate opt-in step (`tb enrich-council`). TMMIS is Akamai-gated, so it needs a *headed* Playwright Chromium (headless is blocked); Playwright lives only behind the `council` extra. It fetches council decisions for each `suspended_firm.council_authority` and extracts staff-report PDFs with `pdftotext`.
+
+### Title recovery (`sources/bid_award_panel.py`, `sources/legacy_titles.py`) — not Sources
+
+`tb enrich-titles`. The City publishes the document number *as* the title for ~72% of solicitations, so `title` is NULL for most of the awarded record (#70). Two sources fill it, and **both only ever touch a NULL — a title the City published always wins**:
+
+- **Bid Award Panel agendas** — all 475 (2017-01-04 → present), scraped with one headed Chromium for the whole run (not one per page as `council.py` does; that is fine for 3 suspended firms and ruinous across 475 meetings). Raw HTML is cached under `<DATA_DIR>/council/agendas/`, so re-parsing never re-drives a browser and the pre-Ariba pages stay available for #77. Also populates `council_item` (#68). **References cannot be derived** — the City's schedule omits `MTG #` before the 2022-2026 term, and date-order inference is wrong in both directions (2017.BA1 and 2017.BA2 are both 2017-01-04), so `discover_meetings` probes and confirms against each page's own stated date.
+- **The legacy archive's Ariba posting pages** — `<title>` is the solicitation's real title. Offline; the bytes are on disk from the rescue.
+
+**Reach is bounded by history, not effort.** Toronto adopted Ariba ~2019; earlier agendas identify awards by Call Number (`6032-16-3114`), the spine is keyed on the 10-digit Ariba number backfilled later, and `Contract_Number_Purchase_Order` is empty on all 7,592 feed records — so **there is no join key for 2012-2018** and ~4,100 title-less rows are unreachable this way (#77 proposes supplier+amount instead). Match on *any* 10-digit number, never on the word "Ariba": the labels vary ("Ariba Document Number", "Ariba Doc.", "Tender Call Number", "Request for Quotation") and keying on the vocabulary silently drops the 2019-2020 items.
+
+A legacy posting title outranks a Bid Award Panel heading — the posting page names the solicitation, the council heading describes the award. That precedence lives in `legacy_titles`' query, not in call order.
 
 ### Export seam (`export/`)
 

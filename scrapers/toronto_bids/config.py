@@ -47,3 +47,12 @@ SUSPENDED_FIRMS_URL = (
 COUNCIL_ITEM_URL = "https://secure.toronto.ca/council/agenda-item.do"
 # Downloaded council PDFs.
 COUNCIL_DOCS_DIR = DATA_DIR / "documents" / "council"
+
+# Raw Bid Award Panel agenda HTML. Kept because fetching is the Akamai-gated, browser-bound,
+# expensive half (475 pages, ~10 min) while parsing is free and repeatable — and the same
+# pages carry the supplier/amount/Call Number that the pre-Ariba years need (#77).
+COUNCIL_AGENDAS_DIR = DATA_DIR / "council" / "agendas"
+
+# Archived Ariba posting pages from the legacy rescue; their <title> is the real
+# solicitation title (#65).
+LEGACY_ARIBA_DIR = DATA_DIR / "legacy" / "azure" / "ariba_data"
