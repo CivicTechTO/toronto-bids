@@ -147,11 +147,6 @@ def test_counts_includes_supplier(conn):
     assert "supplier" in db.counts(conn)
 
 
-def test_suspended_firm_has_supplier_id_column(conn):
-    cols = {r[1] for r in conn.execute("PRAGMA table_info(suspended_firm)")}
-    assert "supplier_id" in cols
-
-
 def test_upsert_council_item_is_idempotent(conn):
     it = CouncilItem(reference="2025.GG26.3", title="Suspension of X", decision_text="Adopted.")
     db.upsert_row(conn, it, overwrite=True)

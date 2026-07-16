@@ -11,8 +11,6 @@ from toronto_bids import config
 from toronto_bids.models import BackgroundPdf, CouncilItem
 from toronto_bids.store import db
 
-_LEGDOCS = "/legdocs/mmis/"
-
 
 def _clean(text: str | None) -> str | None:
     if text is None:
@@ -47,7 +45,7 @@ def parse_agenda_item(html: str, reference: str):
 
     seen = set()
     pdfs = []
-    for a in root.xpath("//a[contains(@href, '%s')]" % _LEGDOCS):
+    for a in root.xpath("//a[contains(@href, '/legdocs/mmis/')]"):
         url = a.get("href")
         if not url or not url.lower().endswith(".pdf") or url in seen:
             continue

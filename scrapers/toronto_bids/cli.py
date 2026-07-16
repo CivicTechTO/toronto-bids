@@ -1,7 +1,7 @@
 import argparse
 
 from toronto_bids import __version__, config, pipeline
-from toronto_bids.export.json_export import JsonExporter
+from toronto_bids.export.json_export import export_json
 from toronto_bids.http import HttpClient
 from toronto_bids.store import db
 
@@ -66,7 +66,7 @@ def _cmd_export(args) -> int:
     conn = _open_db()
     try:
         out_path = Path(args.out) if args.out else config.DATA_DIR / "export" / "bids.json"
-        written = JsonExporter().export(conn, out_path)
+        written = export_json(conn, out_path)
         counts = db.counts(conn)
         print(f"Exported {counts['solicitation']} solicitations to {written}")
     finally:

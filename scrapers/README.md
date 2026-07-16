@@ -57,9 +57,10 @@ uv run pytest             # tests (offline; uses fixtures)
   each solicitation with its `awards` and `ariba_postings` nested by `document_number`,
   plus top-level `noncompetitive`, `unlinked_ariba_postings` (Ariba postings whose
   document_number never bridged to a solicitation), and `unlinked_awards` (awards
-  whose document_number matches no solicitation). This is the publish seam — the
-  `Exporter` interface lets other destinations/formats be added without changing the
-  document shape.
+  whose document_number matches no solicitation). This is the publish seam:
+  `build_export_document(conn)` builds the format-independent document and
+  `export_json()` serializes it, so another destination/format is another function
+  over the same builder — no change to the document shape.
 
 Set `TB_DATA_DIR` to change where `bids.sqlite` and downloads live (default `scrapers/files/`).
 
