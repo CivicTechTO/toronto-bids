@@ -171,3 +171,29 @@ CREATE TABLE IF NOT EXISTS background_pdf (
 );
 
 CREATE INDEX IF NOT EXISTS idx_background_pdf_reference ON background_pdf (reference);
+
+-- Solicitations the City intends to issue but has not yet (#69, rewrite spec §2.1
+-- "capital-project-pipeline"). Forward-looking, so there is no document_number and no join to
+-- the spine — a project only gets one once it is actually solicited. Worth archiving anyway:
+-- the City refreshes this list and entries drop off as they are sourced, so what was planned
+-- is preserved nowhere else. That disappearing act is what this archive exists for.
+--
+-- Keyed on the City's combined name+contract string: 'No.' is a row index that churns on every
+-- refresh. A renamed project therefore lands as a new row rather than updating the old one;
+-- at 46 rows that is visible and tolerable, and archive semantics keep both.
+CREATE TABLE IF NOT EXISTS capital_project (
+    name                     TEXT PRIMARY KEY,
+    contract_number          TEXT,
+    type_of_work             TEXT,
+    scope                    TEXT,
+    delivery_division        TEXT,
+    owner_division           TEXT,
+    target_sourcing_year     TEXT,
+    target_award_year        TEXT,
+    sourcing_type            TEXT,
+    estimated_range          TEXT,
+    estimated_term_months    TEXT,
+    source                   TEXT,
+    first_seen               TEXT NOT NULL DEFAULT (datetime('now')),
+    last_seen                TEXT NOT NULL DEFAULT (datetime('now'))
+);

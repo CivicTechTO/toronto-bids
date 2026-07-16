@@ -62,6 +62,12 @@ _CKAN = {
         "Workspace Number", "Supplier Name", "Reason", "Contract Amount",
         "Contract Date", "Division",
     }),
+    "ckan_pipeline": (config.CKAN_PIPELINE_SLUG, {
+        "Name and Construction Contract Number", "Type of Work",
+        "Scope of Work: Detailed Description", "Delivery Division",
+        "Project Owner (Division)", "Target Sourcing Year", "Target Award Year",
+        "Sourcing Type", "Estimated Range", "Estimated Contract Term (Months)",
+    }),
 }
 
 

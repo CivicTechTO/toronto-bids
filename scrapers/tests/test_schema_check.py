@@ -50,6 +50,13 @@ CKAN_NONCOMP = {
     "Workspace Number": "WS-1", "Supplier Name": "Acme", "Reason": "Sole source",
     "Contract Amount": "5", "Contract Date": "2025-02-02", "Division": "Fleet", "_id": 1,
 }
+CKAN_PIPELINE = {
+    "Name and Construction Contract Number": "Dufferin Compactors - 25ECS-MI-02SW",
+    "Type of Work": "Construction", "Scope of Work: Detailed Description": "Replace them",
+    "Delivery Division": "Solid Waste", "Project Owner (Division)": "Solid Waste",
+    "Target Sourcing Year": "2026", "Target Award Year": "2026", "Sourcing Type": "RFT",
+    "Estimated Range": "Up to $5M", "Estimated Contract Term (Months)": "24", "_id": 1,
+}
 
 
 class FakeHttp:
@@ -60,7 +67,8 @@ class FakeHttp:
     $skip loop and fetch_datastore's offset loop actually terminate.
     """
 
-    def __init__(self, solicitation=None, noncomp=None, awarded=None, open_=None, ckan_noncomp=None):
+    def __init__(self, solicitation=None, noncomp=None, awarded=None, open_=None,
+                 ckan_noncomp=None, pipeline_=None):
         def page(value, default):
             value = default if value is None else value
             return [value] if isinstance(value, dict) and value else list(value or [])
@@ -71,6 +79,7 @@ class FakeHttp:
             "awarded": page(awarded, CKAN_AWARDED),
             "open": page(open_, CKAN_OPEN),
             "ckan_noncomp": page(ckan_noncomp, CKAN_NONCOMP),
+            "pipeline": page(pipeline_, CKAN_PIPELINE),
         }
 
     def get_json(self, url, params=None):
@@ -80,7 +89,8 @@ class FakeHttp:
         if "datastore_search" in url:
             key = {config.CKAN_AWARDED_SLUG: "awarded",
                    config.CKAN_OPEN_SLUG: "open",
-                   config.CKAN_NONCOMP_SLUG: "ckan_noncomp"}[params["resource_id"]]
+                   config.CKAN_NONCOMP_SLUG: "ckan_noncomp",
+                   config.CKAN_PIPELINE_SLUG: "pipeline"}[params["resource_id"]]
             offset, limit = params["offset"], params["limit"]
             return {"result": {"records": self.records[key][offset:offset + limit]}}
         key = "noncomp" if config.ODATA_NONCOMPETITIVE in url else "solicitation"
@@ -209,3 +219,20 @@ def test_drift_is_isolated_and_surfaced_not_swallowed(conn):
     assert [name for name, _ in failures] == ["schema_check"]  # surfaced to the CLI
     assert "Status" in failures[0][1]
     assert db.counts(conn)["solicitation"] == 1  # ingestion continued anyway
+
+
+def test_detects_a_renamed_pipeline_column():
+    """The forward-looking feed is guarded like every other (#69)."""
+    drifted = {**CKAN_PIPELINE}
+    drifted["Project Name"] = drifted.pop("Name and Construction Contract Number")
+    with pytest.raises(ValueError, match="Name and Construction Contract Number"):
+        SchemaCheckSource().fetch(FakeHttp(pipeline_=drifted))
+
+
+def test_every_declared_ckan_feed_has_a_source_that_reads_it():
+    """A declared feed with no source, or a source with no declaration, is a bug either way."""
+    from toronto_bids.sources.schema_check import _CKAN
+
+    slugs_declared = {slug for slug, _fields in _CKAN.values()}
+    slugs_pulled = {s.slug for s in pipeline.default_sources() if hasattr(s, "slug")}
+    assert slugs_declared == slugs_pulled

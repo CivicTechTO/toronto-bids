@@ -1,8 +1,9 @@
 from typing import Iterable, Protocol, runtime_checkable
 
-from toronto_bids.models import AribaPosting, Award, NonCompetitive, Solicitation, SuspendedFirm
+from toronto_bids.models import (AribaPosting, Award, CapitalProject, NonCompetitive,
+                                  Solicitation, SuspendedFirm)
 
-Row = Solicitation | Award | NonCompetitive | AribaPosting | SuspendedFirm
+Row = Solicitation | Award | NonCompetitive | AribaPosting | SuspendedFirm | CapitalProject
 
 
 @runtime_checkable

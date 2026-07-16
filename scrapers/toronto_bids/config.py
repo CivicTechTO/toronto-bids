@@ -12,6 +12,8 @@ ODATA_BASE = "https://secure.toronto.ca/c3api_data/v2/DataAccess.svc/pmmd_solici
 CKAN_AWARDED_SLUG = "tobids-awarded-contracts"
 CKAN_OPEN_SLUG = "tobids-all-open-solicitations"
 CKAN_NONCOMP_SLUG = "tobids-non-competitive-contracts"
+# Forward-looking: solicitations the City intends to issue (#69). No document_number yet.
+CKAN_PIPELINE_SLUG = "capital-project-pipeline"
 
 # OData entity sets.
 ODATA_SOLICITATIONS = "feis_solicitation_published"

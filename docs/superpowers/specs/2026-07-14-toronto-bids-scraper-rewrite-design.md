@@ -65,11 +65,33 @@ archiving currently-open posting detail.
 | **CKAN `tobids-awarded-contracts`** | Competitive awards, one row per successful supplier (~7,574 rows). `Document Number`, RFx type, `Successful Supplier`, `Award` ($), date, division, buyer. | `datastore_search?resource_id=<uuid>` or `/datastore/dump/<uuid>` (one request) | Live; newest award = today |
 | **CKAN `tobids-all-open-solicitations`** | Solicitation notices (~903 rows; archive back to 2008 — only ~44 truly open). `Document Number`, RFx/NOIP type, division, buyer, wards. | `datastore_search` / dump | Live |
 | **CKAN `tobids-non-competitive-contracts`** | Sole-source awards (~2,920 rows). `Workspace Number`, `Reason`, `Supplier Name`, `Contract Amount`, `Contract Date`. | `datastore_search` / dump | Live |
-| **CKAN `capital-project-pipeline`** | 46 forward-looking upcoming solicitations (no doc/award ids yet). | `datastore_search?resource_id=<uuid>` | ~6 wks |
-| **CKAN `pcard-expenditures`** | Purchasing-card spend (~820k rows), free-text merchant + division. **Adjacent — not joinable.** | `datastore_search` / dump | ~5-mo lag |
-| **CKAN `consulting-services-expenditures`** | Annual consulting spend (XLSX only, no datastore API). **Adjacent — not joinable.** | `package_show` → download XLSX | Annual |
+| **CKAN `capital-project-pipeline`** | 46 forward-looking upcoming solicitations (no doc/award ids yet). Built 2026-07-16 (#69) — see §2.1.1. | `datastore_search?resource_id=<uuid>` | ~6 wks |
 | **Ariba Discovery leads search** (`doIndexedSearch`) | Enumerate currently-open Toronto postings + their `rfxID` (Ariba internal posting id). | `POST https://service.ariba.com/Network/discoveryweb/search/public/v1/doIndexedSearch?siteName=Quote` body `{"pageSize":1000,"pageNum":0,"searchType":"Quote","sortBy":"RESPONSE_DEAD_LINE","filters":[]}`; filter `customerName=="City of Toronto"` client-side | Live |
 | **Ariba Discovery detail** (`/rfx/{rfxId}`) | Per-posting detail incl. `externalRfxId` (= `Doc##########`) needed to join to the spine, UNSPSC categories, dates. | `GET https://service.ariba.com/Network/discoveryweb/api/public/v1/rfx/{rfxId}` with `Accept: application/json` | Live, **open postings only** (closed → 401); **~48% return HTTP 500 → retry/skip** |
+
+#### 2.1.1 Considered and declined (resolved 2026-07-16, #69)
+
+Two datasets were listed in this table as Tier 1 "sources we pull" and never implemented.
+That was not an oversight: **they were listed because they are easy to fetch, not because they
+belong in this archive**, and §2.5.6 already says so — "no join key; orthogonal spend data".
+The table contradicted itself. Recording the decision rather than leaving every future reader
+to re-litigate whether the implementation is incomplete.
+
+| Declined | Why |
+|---|---|
+| **`pcard-expenditures`** | **819,993 rows** (measured 2026-07-16) of free-text merchant names, ~5-month lag, no join key. It would dominate the export artifact while linking to nothing, and feeding 820k more free-text merchant strings to the fuzzy supplier dimension (§2.5.4) would manufacture false links, not insight. The City publishes it directly; we would add nothing. |
+| **`consulting-services-expenditures`** | XLSX only — **no datastore API** (confirmed 2026-07-16: 4 resources, 0 datastore-active) — annual, not joinable. Lowest value-to-effort of the three. |
+
+`capital-project-pipeline` **was** built, because it is a different case despite sitting in the
+same row of the table. It does not join the spine either — a project has no document number
+until it is actually solicited — but it is the only forward-looking source in the entire
+landscape, it is 46 rows and one request, and **the City refreshes it, so entries drop off as
+they are sourced**. What the City *planned* to buy is preserved nowhere else once it stops
+planning. That vanishing act is precisely what this archive exists for, whereas pcard spend
+sits permanently on the City's own portal.
+
+It is the one CKAN source with `overwrite=True`: no spine covers it, so CKAN is authoritative
+there and a project whose target year slips must land rather than be COALESCEd away.
 
 **CKAN API base:** `https://ckan0.cf.opendata.inter.prod-toronto.ca/api/3/action/`
 Resolve CKAN resource UUIDs **at runtime** via `package_show?id=<slug>` — they rotate on
@@ -285,8 +307,9 @@ Keyed on the normalized `document_number` except where noted. Rows are **never d
   `committee`; `term_id`.
 - **`background_pdf`** (Tier 3) — `id` PK; `year`; `committee`; `url`; `local_path`;
   `extracted_text`; `linked_reference` FK.
-- **`pcard`**, **`consulting`**, **`capital_pipeline`** — adjacent tables, **explicitly
-  marked unlinked** (no shared key with the spine).
+- **`capital_project`** — forward-looking, **explicitly unlinked** (no shared key with the
+  spine; a project has no document number until it is solicited). Built 2026-07-16 (#69).
+  `pcard` and `consulting` were declined — see §2.1.1.
 - **`sync_run`** (provenance/observability) — `id` PK; `source`; `started_at`; `finished_at`;
   `status` (ok/failed); `rows_fetched`; `rows_upserted`; `error`.
 
@@ -351,8 +374,8 @@ Each phase ships something that works standalone and gets its own implementation
   `feis_non_competitive`) + CKAN adapters (awarded / open / non-competitive) + the linking
   pass on `document_number` → SQLite. **Reproduces and exceeds the old scraper's mission with
   zero browser.**
-- **P1.5 — adjacent datasets (optional)**: `capital-project-pipeline`, `pcard`, `consulting`
-  as clearly-unlinked tables.
+- **P1.5 — adjacent datasets (optional)**: `capital-project-pipeline` as a clearly-unlinked
+  table. Done 2026-07-16 (#69); `pcard` and `consulting` declined, see §2.1.1.
 - **P2 — Ariba Discovery JSON**: `doIndexedSearch` + `/rfx/{id}` detail adapters, the
   rfxId↔document_number bridge, open-posting archival. Still no auth/browser.
 - **P3 — publish seam**: `Exporter` interface + `json_export.py`; `tb export`.

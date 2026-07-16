@@ -69,6 +69,10 @@ def build_export_document(conn, generated_at: str | None = None) -> dict:
         for nc in _rows(conn, "SELECT * FROM noncompetitive ORDER BY workspace_number")
     ]
 
+    # Forward-looking and joinable to nothing — a project has no document_number until it
+    # is actually solicited. Top-level rather than nested for that reason (#69).
+    capital_projects = _rows(conn, "SELECT * FROM capital_project ORDER BY name")
+
     suspended_firms = [
         _drop(firm, "id")
         for firm in _rows(conn, "SELECT * FROM suspended_firm ORDER BY supplier_name_raw, council_authority")
@@ -104,6 +108,7 @@ def build_export_document(conn, generated_at: str | None = None) -> dict:
         "noncompetitive": noncompetitive,
         "suspended_firms": suspended_firms,
         "suppliers": suppliers,
+        "capital_projects": capital_projects,
         "council_items": council_items,
         "unlinked_ariba_postings": unlinked,
         "unlinked_awards": unlinked_awards,
