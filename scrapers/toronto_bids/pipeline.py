@@ -1,6 +1,7 @@
 from toronto_bids.sources.ariba import AribaDiscoverySource
 from toronto_bids.sources.ckan import CkanSource
 from toronto_bids.sources.odata import ODataNonCompetitiveSource, ODataSolicitationSource
+from toronto_bids.sources.schema_check import SchemaCheckSource
 from toronto_bids.sources.suspended_firms import SuspendedFirmsSource
 from toronto_bids.store import db
 from toronto_bids import config
@@ -8,8 +9,13 @@ from toronto_bids.linking.supplier import build_supplier_dimension
 
 
 def default_sources():
-    """OData spine first (overwrite=True), then CKAN backfill (overwrite=False)."""
+    """OData spine first (overwrite=True), then CKAN backfill (overwrite=False).
+
+    schema_check leads: it reports feed drift without blocking the sources behind it
+    (per-source isolation), so drift is loud but never costs us a run's data.
+    """
     return [
+        SchemaCheckSource(),
         ODataSolicitationSource(),
         ODataNonCompetitiveSource(),
         CkanSource(name="ckan_awarded", slug=config.CKAN_AWARDED_SLUG, kind="awarded"),
