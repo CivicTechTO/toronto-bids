@@ -21,7 +21,11 @@ def default_sources():
 
 
 def run_source(conn, http, source):
-    """Run one source; record a sync_run. Never raises — returns (fetched, upserted)."""
+    """Run one source; record a sync_run. Never raises — returns (fetched, upserted, error).
+
+    error is None on success. Callers are responsible for surfacing it: this is the only
+    place a source's exception is seen, so silence here means silence everywhere.
+    """
     run_id = db.start_sync_run(conn, source.name)
     fetched = upserted = 0
     try:
@@ -33,29 +37,39 @@ def run_source(conn, http, source):
         conn.commit()
         db.finish_sync_run(conn, run_id, status="ok",
                            rows_fetched=fetched, rows_upserted=upserted)
+        return fetched, upserted, None
     except Exception as exc:  # per-source isolation
         conn.commit()
         db.finish_sync_run(conn, run_id, status="failed",
                            rows_fetched=fetched, rows_upserted=upserted, error=str(exc))
-    return fetched, upserted
+        return fetched, upserted, str(exc)
 
 
-def sync(conn, http, sources=None, only=None) -> None:
+def sync(conn, http, sources=None, only=None) -> list[tuple[str, str]]:
+    """Run every source in isolation. Returns [(source_name, error)] for those that failed."""
     sources = sources if sources is not None else default_sources()
     if only is not None:
         wanted = set(only)
         sources = [s for s in sources if s.name in wanted]
+    failures = []
     for source in sources:
-        run_source(conn, http, source)
-    _run_supplier_dimension(conn)
+        *_, error = run_source(conn, http, source)
+        if error:
+            failures.append((source.name, error))
+    error = _run_supplier_dimension(conn)
+    if error:
+        failures.append(("supplier_dimension", error))
+    return failures
 
 
-def _run_supplier_dimension(conn) -> None:
+def _run_supplier_dimension(conn) -> str | None:
     """Rebuild the supplier dimension after sources. Isolated: never raises out of sync."""
     run_id = db.start_sync_run(conn, "supplier_dimension")
     try:
         n = build_supplier_dimension(conn)
         db.finish_sync_run(conn, run_id, status="ok", rows_fetched=n, rows_upserted=n)
+        return None
     except Exception as exc:
         conn.rollback()
         db.finish_sync_run(conn, run_id, status="failed", error=str(exc))
+        return str(exc)

@@ -24,6 +24,7 @@ def test_sync_uses_pipeline_and_persists(tmp_path, monkeypatch):
     def fake_sync(conn, http, sources=None, only=None):
         db.upsert_row(conn, Solicitation("3303123110", source="odata"), overwrite=True)
         conn.commit()
+        return []  # no failures
     monkeypatch.setattr(pipeline_mod, "sync", fake_sync)
 
     assert main(["sync"]) == 0
