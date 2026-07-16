@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 
-from toronto_bids.amount import parse_amount
+from toronto_bids.amount import parse_amount, parse_bid_price
 
 
 @dataclass(frozen=True)
@@ -119,6 +119,29 @@ class CapitalProject:
     estimated_range: str | None = None
     estimated_term_months: str | None = None
     source: str = ""
+
+
+@dataclass(frozen=True)
+class Bid:
+    """One bid on one solicitation — including the ones that lost (#84).
+
+    Rewrite spec §2.5.2 called these "never published anywhere. **Unrecoverable.**" They are
+    on every Bid Award Panel agenda. This is what makes the archive answer whether a
+    procurement was actually competitive, not merely what it cost.
+    """
+    reference: str                       # council item, e.g. '2022.BA189.2'
+    bidder_name_raw: str
+    document_number: str | None = None   # NULL pre-2019: Toronto had no Ariba doc numbers yet
+    bid_price: str | None = None         # verbatim, footnote marker and all
+    # 'including' | 'excluding' | None. NOT decoration: 5,752 bids are quoted including HST
+    # and 4,083 excluding it, so a bare price is two incomparable things in one column.
+    hst_basis: str | None = None
+    price_header: str | None = None      # the column header verbatim — provenance for hst_basis
+    source: str = ""
+    bid_price_numeric: float | None = field(init=False, default=None)
+
+    def __post_init__(self):
+        object.__setattr__(self, "bid_price_numeric", parse_bid_price(self.bid_price))
 
 
 @dataclass(frozen=True)
