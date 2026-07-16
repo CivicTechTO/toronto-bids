@@ -48,8 +48,8 @@ def test_sync_runs_all_and_one_failure_does_not_stop_others(conn):
     also_good = FakeSource("ckan_awarded", [Solicitation("5749398870", source="ckan_awarded")], overwrite=False)
     failures = pipeline.sync(conn, http=None, sources=[good, bad, also_good])
     assert db.counts(conn)["solicitation"] == 2
-    # 3 sources + 1 supplier_dimension sync_run = 4
-    assert db.counts(conn)["sync_run"] == 4
+    # 3 sources + 2 linking passes (ariba_bridge, supplier_dimension) = 5
+    assert db.counts(conn)["sync_run"] == 5
     # the failure is isolated but NOT swallowed: sync hands it back
     assert [name for name, _ in failures] == ["ckan_open"]
     assert "network exploded" in failures[0][1]
@@ -72,8 +72,8 @@ def test_sync_only_filters_sources(conn):
     other = FakeSource("ckan_open", [Solicitation("5749398870", source="ckan_open")])
     pipeline.sync(conn, http=None, sources=[good, other], only=["odata_solicitations"])
     assert db.counts(conn)["solicitation"] == 1
-    # 1 source + 1 supplier_dimension sync_run = 2
-    assert db.counts(conn)["sync_run"] == 2
+    # 1 source + 2 linking passes (which run regardless of --only) = 3
+    assert db.counts(conn)["sync_run"] == 3
 
 
 def test_sync_runs_supplier_dimension_after_sources(conn):
@@ -87,6 +87,22 @@ def test_sync_runs_supplier_dimension_after_sources(conn):
     assert db.counts(conn)["supplier"] == 1
     row = conn.execute("SELECT status FROM sync_run WHERE source='supplier_dimension'").fetchone()
     assert row is not None and row["status"] == "ok"
+
+
+def test_sync_ariba_bridge_failure_is_isolated(conn, monkeypatch):
+    from toronto_bids import pipeline
+    def boom(_conn):
+        raise RuntimeError("bridge exploded")
+    monkeypatch.setattr(pipeline, "bridge_postings_to_spine", boom)
+    failures = pipeline.sync(conn, http=None, sources=[])
+    row = conn.execute("SELECT status, error FROM sync_run WHERE source='ariba_bridge'").fetchone()
+    assert row["status"] == "failed"
+    assert "bridge exploded" in row["error"]
+    assert failures == [("ariba_bridge", "bridge exploded")]
+    # the pass behind it still ran: one failure never stops the next
+    assert conn.execute(
+        "SELECT status FROM sync_run WHERE source='supplier_dimension'"
+    ).fetchone()["status"] == "ok"
 
 
 def test_sync_supplier_dimension_failure_is_isolated(conn, monkeypatch):
