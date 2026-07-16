@@ -1,100 +1,54 @@
 # Toronto Bids Project
 
-The Toronto Bids Project is an initiative aimed at promoting transparency and accountability in the procurement process of the Toronto City Council. The project involves scraping request for proposal (RFP) documents from the Toronto City Council's procurement tool, SAP Ariba, and making the information publicly accessible through a database. The goal is to make the procurement process more accessible to the public even after the due date of the RFPs has passed.
+The Toronto Bids Project promotes transparency and accountability in City of Toronto
+procurement. The City publishes solicitations and awards while they are open, but the
+data is hard to use and much of it becomes difficult to reach once a bid closes. This
+project pulls that data into a local, queryable store and exports it as a single public
+artifact — so the record stays available after the due date has passed.
 
-# Project Outline
+## Quick start
 
-The project consists of the following main stages:
-
-## Scraping
-
-The first stage of the project involves scraping RFP information from the Toronto City Council's procurement tool, SAP Ariba. A custom-built scraping tool has been developed to crawl the SAP Ariba website and extract relevant information about each RFP, including structured metadata and PDF documents containing detailed information.
-
-In addition, the city posts some metadata about the RFPs through the Open Data Portal, and a separate scraper has been developed to capture this information.
-
-## Ingestion
-
-The next stage of the project involves ingestion of the extracted information into a database. The downloaded data consists of structured metadata as well as PDF documents containing additional information. A separate script is used to extract human-readable text from the PDF documents, which is then added to the main table of data.
-
-The extracted information is then stored in an SQL database for easier management and accessibility.
-## Making the data public
-
-The final stage of the project involves making the information publicly accessible through a user-friendly website. The goal is to provide an easy-to-use platform for accessing the information contained in the RFPs, even after the due date has passed, promoting transparency and accountability in the procurement process of the Toronto City Council.
-
-This stage also requires making an API to allow programmatic access to the database of RFP information. This API will allow developers to programmatically access and retrieve data from the database for use in their own applications and tools. The API should include endpoints for retrieving information about specific RFPs, searching for RFPs based on certain criteria, and retrieving metadata about the RFPs. The API will be a critical component of the project, allowing the data to be used in a wide range of applications and promoting the goal of transparency and accessibility in the Toronto City Council's procurement process.
-
-# Getting Started
-
-## OSX
-
-### Pre-requisites
-
-Clone the package to the chosen folder (example using git CLI and HTTPS below):
-
-```
-git clone https://github.com/CivicTechTO/toronto-bids.git
-cd toronto-bids
-```
-
-`libmagic` is a pre-requisite needed for the python module `python-magic`. Install via Homebrew/macports
-
-* `brew install libmagic`
-* `port install file`
-
-The `README.md` of the `python-magic` module has a section dedicated to [troubleshooting `libmagic` errors](https://github.com/ahupp/python-magic#troubleshooting)
-
-### Python
-
-Use python3.8 or higher, currently the project is setup to use python3.9
-
-We're utilize [GNU make](https://www.gnu.org/software/make/) to help setup and run the python scrapers and other scripts. Currently the `Makefile` is tested and supported on Mac OSX (need contributors for Windows).
-
-To setup and run the Jupyter notebook just at the top level of this repo you can run:
-```shell
-make run-jupyter-notebook
-```
-
-This sets up the python virtual environment and requirements and runs the Jupyter server on the `scrapers` directory.
-For further inspect or extending the make build tool, the targets are defined in `Makefile`
-Currently it is just extended for the Jupyter notebooks that are written, eventually it should be expanded to support all the build/setup tasks needed for the other projects.
-
-To clean the project:
-```shell
-make clean
-```
-
-Below are the instructions if you don't want to follow `make` for the python projects:
----
-It's recommended to use a virtual environment to manage python dependencies. The commands below assume that the `toronto-bids` folder is the `pwd` in your terminal:
-```shell
-python3 -m venv ./venv
-source venv/bin/activate
-python3 -m pip install -r scrapers/requirements.txt
-```
-
-This will setup a virtual environment within the `toronto-bids` folder, activate it, and install the project modules into the virtual environment. Keep the virtual environment active while working on the project. To deactivate the virtual environment (once switching to another project for instance), simply run:
+Everything lives in [`scrapers/`](scrapers/), a `uv`-managed Python 3.12 package that
+installs a `tb` command. No browser, no login, no cloud, no API keys.
 
 ```shell
-deactivate
+cd scrapers
+uv sync
+uv run tb sync      # fetch every source into files/bids.sqlite
+uv run tb status    # row counts
+uv run tb export    # write the whole store to one JSON artifact
+uv run pytest       # tests (offline; uses fixtures)
 ```
 
-To enable the virtual environment again, run `source venv/bin/activate`
+See [`scrapers/README.md`](scrapers/README.md) for the source inventory, the data model,
+and the opt-in council/PDF enrichment.
 
-### Clojure
+## What it collects
 
-The backend server currently is written in Clojure and resides at `app/server/toronto-bids/toronto-bids`.
+- **Solicitations** — the lifecycle spine (open / awarded / cancelled), from the City's
+  OData feed, backfilled from CKAN Open Data.
+- **Awards** — who won, for how much, including divisible awards split across suppliers.
+- **Non-competitive contracts** — sole-source awards and their stated justification.
+- **Ariba Discovery postings** — archived while open, before they disappear.
+- **Suspended & disqualified firms** — the City's public supplier-suspension registry,
+  bridged to the City Council decision that authorized each suspension.
+- **Suppliers** — a canonicalized supplier dimension linking the above together, so you
+  can ask "which contracts belong to this firm?"
 
-You can follow the [README](app/server/toronto-bids/toronto-bids/README.md) for prequisites and running the application.
+Everything competitive is keyed on the normalized 10-digit `document_number`.
 
-Two major requirements are `clojure` and `lein` build tool.
+## Project status
 
-Running the backend server from the top level repo:
-```shell
-make run-server
-```
+The scraper (`scrapers/`) is the active, working part of this repo, and `tb export`
+produces the public artifact.
 
-To build the jars:
-```shell
-make build-uberjar
-```
+A previous MySQL-backed application — a Clojure API plus Clojure and Angular frontends —
+lived under `app/` and was dormant from mid-2023. It was removed in the repo cleanup;
+it remains in git history if anyone wants to revive it. Publishing the exported JSON is
+the open next step, and it does not depend on that older stack.
 
+## Contributing
+
+This is a [CivicTechTO](https://civictech.ca/) project. Issues and pull requests welcome.
+The scraper's tests run offline against fixtures, so `cd scrapers && uv sync && uv run pytest`
+is enough to get a working development setup — it needs no database, credentials, or network.
