@@ -20,6 +20,14 @@ local SQLite store. No browser, no login, no cloud.
   suspended/disqualified suppliers (`suspended_firm` table), parsed from the HTML table. Each
   row carries the supplier name, status, suspension dates, type, and the council `Authority`
   reference. Exported as a top-level `suspended_firms` array.
+- **Council enrichment** (`tb enrich-council`, OPT-IN) — for each suspended firm, fetches its
+  City Council decision from TMMIS and the linked staff-report / communication PDFs
+  (`council_item` + `background_pdf` tables, with extracted text). TMMIS is Akamai-gated and
+  only served to a **real, headed browser**, so this command drives a headed Chromium
+  (Playwright); the PDFs themselves download over plain HTTP + `pdftotext`. It is **not** part
+  of `tb sync` — the core pipeline stays browser-free. On a headless server run
+  `tb enrich-council --virtual-display` with `Xvfb` installed (`apt-get install -y xvfb`);
+  `pdftotext` (poppler) is also required.
 - **Supplier dimension** (`supplier` table) — after every sync, a linking pass canonicalizes
   the free-text supplier names across awards, non-competitive contracts, and suspended firms
   into one `supplier` row per firm (merging spelling/case/punctuation variants; legal suffixes

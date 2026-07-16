@@ -174,3 +174,28 @@ def test_export_has_suppliers_array_and_retains_supplier_id(conn):
 def test_export_suppliers_empty_when_none(conn):
     doc = build_export_document(conn, generated_at="t")
     assert doc["suppliers"] == []
+
+
+def test_export_has_council_items_with_nested_pdfs(conn):
+    from toronto_bids.models import CouncilItem, BackgroundPdf
+    from toronto_bids.store import db as _db
+    _db.upsert_row(conn, CouncilItem(reference="2025.GG26.3", title="Suspension",
+                                     decision_text="Adopted."), overwrite=True)
+    _db.upsert_row(conn, BackgroundPdf(url="https://x/bgrd/backgroundfile-260581.pdf",
+                                       reference="2025.GG26.3", kind="bgrd", text="REPORT",
+                                       local_path="/abs/path/backgroundfile-260581.pdf"),
+                   overwrite=True)
+    conn.commit()
+    doc = build_export_document(conn, generated_at="t")
+    assert len(doc["council_items"]) == 1
+    ci = doc["council_items"][0]
+    assert ci["reference"] == "2025.GG26.3"
+    assert len(ci["background_pdfs"]) == 1
+    assert ci["background_pdfs"][0]["kind"] == "bgrd"
+    assert "text" not in ci["background_pdfs"][0]  # bulky extracted text excluded from the export
+    assert "local_path" not in ci["background_pdfs"][0]  # machine-specific paths excluded from the export
+
+
+def test_export_council_items_empty_when_none(conn):
+    doc = build_export_document(conn, generated_at="t")
+    assert doc["council_items"] == []

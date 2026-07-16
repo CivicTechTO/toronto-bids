@@ -18,6 +18,11 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_export = sub.add_parser("export", help="Write the store to a nested JSON artifact")
     p_export.add_argument("--out", help="Output path (default: <DATA_DIR>/export/bids.json)")
+
+    p_enrich = sub.add_parser("enrich-council",
+                              help="OPT-IN: fetch council decisions + staff-report PDFs for suspended firms (headed browser)")
+    p_enrich.add_argument("--virtual-display", action="store_true",
+                          help="Run the headed browser under Xvfb (headless servers; needs Xvfb installed)")
     return parser
 
 
@@ -69,6 +74,24 @@ def _cmd_export(args) -> int:
     return 0
 
 
+def _cmd_enrich_council(args) -> int:
+    from functools import partial
+
+    from toronto_bids.sources.council import enrich_council, fetch_agenda_item
+
+    conn = _open_db()
+    http = HttpClient()
+    fetch = partial(fetch_agenda_item, virtual_display=args.virtual_display)
+    try:
+        n = enrich_council(conn, http, fetch=fetch)
+        counts = db.counts(conn)
+        print(f"Enriched {n} council items; background_pdf={counts['background_pdf']}")
+    finally:
+        http.close()
+        conn.close()
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
@@ -78,6 +101,8 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_status(args)
     if args.command == "export":
         return _cmd_export(args)
+    if args.command == "enrich-council":
+        return _cmd_enrich_council(args)
     parser.print_help()
     return 0
 

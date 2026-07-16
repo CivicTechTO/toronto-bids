@@ -82,3 +82,20 @@ class Supplier:
     supplier_key: str
     display_name: str | None = None
     variants: str | None = None
+
+
+@dataclass(frozen=True)
+class CouncilItem:
+    reference: str
+    title: str | None = None
+    decision_text: str | None = None
+
+
+@dataclass(frozen=True)
+class BackgroundPdf:
+    url: str
+    reference: str | None = None
+    kind: str | None = None
+    local_path: str | None = None
+    sha256: str | None = None
+    text: str | None = None

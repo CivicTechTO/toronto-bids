@@ -6,6 +6,8 @@ requires-python = ">=3.12"
 dependencies = [
     "httpx",
     "lxml>=6.1.1",
+    "playwright>=1.61.0",
+    "pyvirtualdisplay>=3.0",
 ]
 
 [project.scripts]

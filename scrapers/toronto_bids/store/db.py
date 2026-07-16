@@ -1,7 +1,7 @@
 import sqlite3
 from importlib import resources
 
-from toronto_bids.models import Award, NonCompetitive, Solicitation, AribaPosting, SuspendedFirm, Supplier
+from toronto_bids.models import Award, NonCompetitive, Solicitation, AribaPosting, SuspendedFirm, Supplier, CouncilItem, BackgroundPdf
 
 # Column lists per table, in the order used for INSERT. Excludes auto/default columns.
 _SOLICITATION_COLS = [
@@ -23,6 +23,8 @@ _SUSPENDED_COLS = [
     "suspension_type", "council_authority", "source",
 ]
 _SUPPLIER_COLS = ["supplier_key", "display_name", "variants"]
+_COUNCIL_ITEM_COLS = ["reference", "title", "decision_text"]
+_BACKGROUND_PDF_COLS = ["url", "reference", "kind", "local_path", "sha256", "text"]
 
 
 def connect(path) -> sqlite3.Connection:
@@ -84,13 +86,19 @@ def upsert_row(conn, row, *, overwrite: bool) -> None:
     elif isinstance(row, Supplier):
         values = [getattr(row, c) for c in _SUPPLIER_COLS]
         _upsert_keyed(conn, "supplier", _SUPPLIER_COLS, values, ["supplier_key"], overwrite)
+    elif isinstance(row, CouncilItem):
+        values = [getattr(row, c) for c in _COUNCIL_ITEM_COLS]
+        _upsert_keyed(conn, "council_item", _COUNCIL_ITEM_COLS, values, ["reference"], overwrite)
+    elif isinstance(row, BackgroundPdf):
+        values = [getattr(row, c) for c in _BACKGROUND_PDF_COLS]
+        _upsert_keyed(conn, "background_pdf", _BACKGROUND_PDF_COLS, values, ["url"], overwrite)
     else:
         raise TypeError(f"Cannot upsert row of type {type(row).__name__}")
 
 
 def counts(conn) -> dict:
     tables = ["solicitation", "award", "noncompetitive", "ariba_posting",
-              "suspended_firm", "supplier", "sync_run"]
+              "suspended_firm", "supplier", "council_item", "background_pdf", "sync_run"]
     return {t: conn.execute(f"SELECT COUNT(*) FROM {t}").fetchone()[0] for t in tables}
 
 
