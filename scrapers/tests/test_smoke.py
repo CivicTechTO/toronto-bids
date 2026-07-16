@@ -1,0 +1,37 @@
+from toronto_bids import __version__
+from toronto_bids.cli import main
+from toronto_bids.models import Solicitation
+from toronto_bids.store import db
+import toronto_bids.pipeline as pipeline_mod
+
+
+def test_version_is_a_string():
+    assert isinstance(__version__, str)
+
+
+def test_main_with_no_args_returns_zero():
+    assert main([]) == 0
+
+
+def test_status_on_empty_db_prints_zero_counts(tmp_path, capsys, monkeypatch):
+    monkeypatch.setattr("toronto_bids.config.DB_PATH", tmp_path / "bids.sqlite")
+    monkeypatch.setattr("toronto_bids.config.DATA_DIR", tmp_path)
+    assert main(["status"]) == 0
+    out = capsys.readouterr().out
+    assert "solicitation" in out
+
+
+def test_sync_uses_pipeline_and_persists(tmp_path, monkeypatch):
+    db_path = tmp_path / "bids.sqlite"
+    monkeypatch.setattr("toronto_bids.config.DB_PATH", db_path)
+    monkeypatch.setattr("toronto_bids.config.DATA_DIR", tmp_path)
+
+    def fake_sync(conn, http, sources=None, only=None):
+        db.upsert_row(conn, Solicitation("3303123110", source="odata"), overwrite=True)
+        conn.commit()
+    monkeypatch.setattr(pipeline_mod, "sync", fake_sync)
+
+    assert main(["sync"]) == 0
+    conn = db.connect(db_path)
+    assert db.counts(conn)["solicitation"] == 1
+    conn.close()
