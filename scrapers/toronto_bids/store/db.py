@@ -112,6 +112,14 @@ def counts(conn) -> dict:
     return {t: conn.execute(f"SELECT COUNT(*) FROM {t}").fetchone()[0] for t in tables}
 
 
+def last_runs(conn) -> list:
+    """The most recent sync_run per source, newest source-run first."""
+    return conn.execute(
+        "SELECT source, status, started_at, rows_upserted, error FROM sync_run "
+        "WHERE id IN (SELECT MAX(id) FROM sync_run GROUP BY source) ORDER BY source"
+    ).fetchall()
+
+
 def start_sync_run(conn, source: str) -> int:
     cur = conn.execute(
         "INSERT INTO sync_run (source, started_at, status) VALUES (?, datetime('now'), 'running')",

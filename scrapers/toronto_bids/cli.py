@@ -1,4 +1,5 @@
 import argparse
+import sys
 
 from toronto_bids import __version__, config, pipeline
 from toronto_bids.export.json_export import export_json
@@ -43,19 +44,30 @@ def _cmd_sync(args) -> int:
         if unknown:
             print(f"Warning: unknown source name(s): {', '.join(unknown)}")
     try:
-        pipeline.sync(conn, http, only=only)
+        failures = pipeline.sync(conn, http, only=only)
         counts = db.counts(conn)
-        print("Sync complete:", ", ".join(f"{k}={v}" for k, v in counts.items()))
+        print("Row counts:", ", ".join(f"{k}={v}" for k, v in counts.items()))
+        for name, error in failures:
+            print(f"FAILED  {name}: {error}", file=sys.stderr)
+        print("Sync complete" if not failures
+              else f"Sync finished with {len(failures)} failed source(s)")
     finally:
         http.close()
         conn.close()
-    return 0
+    # Non-zero so a human or a cron job notices; a silent zero-row run is the bug (#18).
+    return 1 if failures else 0
 
 
 def _cmd_status(args) -> int:
     conn = _open_db()
     for table, n in db.counts(conn).items():
         print(f"{table:16s} {n}")
+    runs = db.last_runs(conn)
+    if runs:
+        print("\nLast run per source:")
+        for r in runs:
+            line = f"  {r['source']:22s} {r['status']:8s} {r['started_at']}  rows={r['rows_upserted']}"
+            print(line + (f"\n    error: {r['error']}" if r["error"] else ""))
     conn.close()
     return 0
 

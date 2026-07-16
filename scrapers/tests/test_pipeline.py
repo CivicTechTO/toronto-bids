@@ -24,8 +24,8 @@ def test_run_source_upserts_and_records_ok(conn):
         Solicitation("3303123110", status="Awarded", source="odata"),
         Award("3303123110", supplier_name_raw="Computer Media Group", source="odata"),
     ])
-    fetched, upserted = pipeline.run_source(conn, http=None, source=src)
-    assert (fetched, upserted) == (2, 2)
+    fetched, upserted, error = pipeline.run_source(conn, http=None, source=src)
+    assert (fetched, upserted, error) == (2, 2, None)
     assert db.counts(conn)["solicitation"] == 1
     assert db.counts(conn)["award"] == 1
     run = conn.execute("SELECT status FROM sync_run WHERE source='odata_solicitations'").fetchone()
@@ -34,8 +34,9 @@ def test_run_source_upserts_and_records_ok(conn):
 
 def test_run_source_isolates_failure(conn):
     src = FakeSource("odata_solicitations", [], boom=True)
-    fetched, upserted = pipeline.run_source(conn, http=None, source=src)
+    fetched, upserted, error = pipeline.run_source(conn, http=None, source=src)
     assert (fetched, upserted) == (0, 0)
+    assert "network exploded" in error  # returned to the caller, not just buried in sync_run
     run = conn.execute("SELECT status, error FROM sync_run WHERE source='odata_solicitations'").fetchone()
     assert run["status"] == "failed"
     assert "network exploded" in run["error"]
@@ -45,10 +46,25 @@ def test_sync_runs_all_and_one_failure_does_not_stop_others(conn):
     good = FakeSource("odata_solicitations", [Solicitation("3303123110", source="odata")])
     bad = FakeSource("ckan_open", [], boom=True)
     also_good = FakeSource("ckan_awarded", [Solicitation("5749398870", source="ckan_awarded")], overwrite=False)
-    pipeline.sync(conn, http=None, sources=[good, bad, also_good])
+    failures = pipeline.sync(conn, http=None, sources=[good, bad, also_good])
     assert db.counts(conn)["solicitation"] == 2
     # 3 sources + 1 supplier_dimension sync_run = 4
     assert db.counts(conn)["sync_run"] == 4
+    # the failure is isolated but NOT swallowed: sync hands it back
+    assert [name for name, _ in failures] == ["ckan_open"]
+    assert "network exploded" in failures[0][1]
+
+
+def test_sync_returns_no_failures_when_all_sources_succeed(conn):
+    good = FakeSource("odata_solicitations", [Solicitation("3303123110", source="odata")])
+    assert pipeline.sync(conn, http=None, sources=[good]) == []
+
+
+def test_sync_reports_every_failed_source(conn):
+    bad = FakeSource("ckan_open", [], boom=True)
+    worse = FakeSource("ariba_discovery", [], boom=True)
+    failures = pipeline.sync(conn, http=None, sources=[bad, worse])
+    assert sorted(name for name, _ in failures) == ["ariba_discovery", "ckan_open"]
 
 
 def test_sync_only_filters_sources(conn):
@@ -78,7 +94,8 @@ def test_sync_supplier_dimension_failure_is_isolated(conn, monkeypatch):
     def boom(_conn):
         raise RuntimeError("link exploded")
     monkeypatch.setattr(pipeline, "build_supplier_dimension", boom)
-    pipeline.sync(conn, http=None, sources=[])  # no sources; linking still runs and fails safely
+    failures = pipeline.sync(conn, http=None, sources=[])  # no sources; linking still fails safely
     row = conn.execute("SELECT status, error FROM sync_run WHERE source='supplier_dimension'").fetchone()
     assert row["status"] == "failed"
     assert "link exploded" in row["error"]
+    assert failures == [("supplier_dimension", "link exploded")]

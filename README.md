@@ -14,8 +14,8 @@ installs a `tb` command. No browser, no login, no cloud, no API keys.
 ```shell
 cd scrapers
 uv sync
-uv run tb sync      # fetch every source into files/bids.sqlite
-uv run tb status    # row counts
+uv run tb sync      # fetch every source into files/bids.sqlite (non-zero exit if any source failed)
+uv run tb status    # row counts + last run per source
 uv run tb export    # write the whole store to one JSON artifact
 uv run pytest       # tests (offline; uses fixtures)
 ```

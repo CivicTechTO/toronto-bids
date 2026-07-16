@@ -47,10 +47,16 @@ cd scrapers
 uv sync
 uv run tb sync            # fetch all sources into files/bids.sqlite
 uv run tb sync --only odata_solicitations,ckan_awarded
-uv run tb status          # row counts
+uv run tb status          # row counts + last run per source
 uv run tb export [--out PATH]  # write the whole store to a single JSON artifact
 uv run pytest             # tests (offline; uses fixtures)
 ```
+
+Each source runs in isolation: one source failing never stops the others, and whatever
+the others fetched is still committed. Failures are not silent, though — `tb sync` prints
+each one to stderr and **exits non-zero** if any source failed, so cron and CI notice.
+`tb status` shows the last run per source with its status and error, which is where you
+look first when a number seems wrong.
 
 - `uv run tb export [--out PATH]` — write the whole store to a single
   solicitation-centric nested JSON artifact (default `<DATA_DIR>/export/bids.json`):
