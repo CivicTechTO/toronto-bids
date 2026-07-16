@@ -58,3 +58,23 @@ def parse_amount(raw) -> float | None:
     if currency is not None and currency.upper() != _CAD:
         return None
     return float(match.group("num").replace(",", "") + (match.group("frac") or ""))
+
+
+# Bid tables mark prices with a footnote pointing at a note under the table:
+# '$2,982,036.67*' ("includes contingency"), '$1,581,114.08 *', 'Smith and Long Ltd.**'.
+# 26% of the corpus carries one.
+_FOOTNOTE_MARKER = re.compile(r"[\s*^+\u2020\u2021\u00a7]+$")
+
+
+def parse_bid_price(raw) -> float | None:
+    """A bid price as a number, once its footnote marker is off (#84).
+
+    parse_amount rightly refuses '$2,982,036.67*' — a stray trailing character is exactly the
+    ambiguity it exists to reject. In a bid table that character is known scaffolding, not
+    ambiguity, so strip it and let parse_amount judge the rest. Everything else still returns
+    None: the City writes 'Non-Compliant', 'No bid' and 'N/A' in the price column, and those
+    are outcomes rather than amounts — the raw string keeps them.
+    """
+    if raw is None or isinstance(raw, (int, float)):
+        return parse_amount(raw)
+    return parse_amount(_FOOTNOTE_MARKER.sub("", str(raw)))

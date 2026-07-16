@@ -125,7 +125,7 @@ def _cmd_enrich_titles(args) -> int:
     """
     from toronto_bids.sources.bid_award_panel import (
         cached_agendas, fill_titles_from_council, scrape_agendas, store_background_pdfs,
-        store_items)
+        store_bids, store_items)
     from toronto_bids.sources.legacy_titles import fill_titles_from_legacy
 
     conn = _open_db()
@@ -150,6 +150,9 @@ def _cmd_enrich_titles(args) -> int:
             # The same cached pages are the staff-report index spec §2.3 says does not
             # exist, so index them here rather than make anyone walk the files twice.
             print(f"  staff reports indexed: {store_background_pdfs(conn, agendas)}")
+            # The same pages tabulate every bid, including the losers that spec
+            # §2.5.2 calls unrecoverable (#84).
+            print(f"  bids extracted       : {store_bids(conn, agendas)}")
             print(f"  titles from council : {fill_titles_from_council(conn)}")
 
         n_legacy = fill_titles_from_legacy(conn, config.LEGACY_ARIBA_DIR)

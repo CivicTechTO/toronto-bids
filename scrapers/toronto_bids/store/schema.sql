@@ -197,3 +197,40 @@ CREATE TABLE IF NOT EXISTS capital_project (
     first_seen               TEXT NOT NULL DEFAULT (datetime('now')),
     last_seen                TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+-- One bid on one solicitation, INCLUDING the ones that lost (#84).
+--
+-- Rewrite spec §2.5.2 lists this under "what everything downstream still cannot give us":
+-- "Losing bidders and bid prices are never published anywhere. **Unrecoverable.**" That is
+-- wrong — they are tabulated on every Bid Award Panel agenda, and 12,443 of them parse out of
+-- the 475 agendas already cached under <DATA_DIR>/council/agendas/.
+--
+-- This is the table that lets the archive ask whether a procurement was *competitive*: how
+-- many bids did it draw, was the winner cheapest, who keeps losing, whose bid was rejected
+-- and why.
+CREATE TABLE IF NOT EXISTS bid (
+    id                 INTEGER PRIMARY KEY AUTOINCREMENT,
+    reference          TEXT NOT NULL,   -- council item, e.g. '2022.BA189.2'
+    document_number    TEXT,            -- NULL pre-2019: no Ariba doc numbers existed yet
+    bidder_name_raw    TEXT NOT NULL,
+    -- Verbatim, footnote marker and all ('$2,982,036.67*'). The City also writes outcomes
+    -- here — 'Non-Compliant', 'No bid', 'N/A' — which is why the raw string is kept: it
+    -- records WHY a bid lost, and bid_price_numeric is NULL for exactly those.
+    bid_price          TEXT,
+    bid_price_numeric  REAL,
+    -- 'including' | 'excluding' | NULL. Load-bearing: 5,752 bids are quoted including HST and
+    -- 4,083 excluding it. Comparing or aggregating across the two without this is wrong.
+    hst_basis          TEXT,
+    price_header       TEXT,            -- the column header verbatim — provenance for hst_basis
+    source             TEXT,
+    first_seen         TEXT NOT NULL DEFAULT (datetime('now')),
+    last_seen          TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- COALESCE for the same reason as award_line_key (#73): SQLite treats NULLs as DISTINCT in a
+-- UNIQUE index, and 1,909 bids have no price at all (scored RFPs list bidders without one),
+-- so a bare key would insert a fresh duplicate of every one of them on every run.
+-- db._upsert_keyed's conflict target must match this expression exactly.
+CREATE UNIQUE INDEX IF NOT EXISTS bid_key ON bid (
+    reference, bidder_name_raw, COALESCE(bid_price, ''), source
+);

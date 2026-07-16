@@ -30,8 +30,9 @@ from lxml import html as _html
 from lxml.html import HtmlComment
 
 from toronto_bids.linking.document_number import normalize_document_number
+from toronto_bids.amount import parse_amount
 from toronto_bids.sources.council import pdf_kind
-from toronto_bids.models import BackgroundPdf, CouncilItem
+from toronto_bids.models import BackgroundPdf, Bid, CouncilItem
 from toronto_bids.store import db
 
 AGENDA_URL = "https://secure.toronto.ca/council/report.do"
@@ -330,6 +331,96 @@ def store_background_pdfs(conn, agendas: dict) -> int:
         for pdf in parse_agenda_pdfs(html, meeting):
             db.upsert_row(conn, BackgroundPdf(url=pdf["url"], reference=pdf["reference"],
                                               kind=pdf["kind"]), overwrite=False)
+            n += 1
+    conn.commit()
+    return n
+
+
+# Bid tables name their first column six ways across the corpus.
+_BIDDER_HDR = re.compile(
+    r"^\s*(supplier|bidder|proponent|firm|vendor|company|respondent)"
+    r"[\s/]*(name|or proponent name)?\s*$", re.I)
+_PRICE_HDR = re.compile(r"bid price|bid amount|price|quotation", re.I)
+# "including H.S.T." vs "excluding H.S.T." is a real difference — 1,307 tables say one and
+# 1,048 the other. A bare price column would silently mix the two bases.
+_HST_INCLUDING = re.compile(r"includ\w*\s*(all applicable taxes|h\.?s\.?t)", re.I)
+_HST_EXCLUDING = re.compile(r"exclud\w*\s*(h\.?s\.?t)", re.I)
+# Footnote markers ride on both names and prices: '$2,982,036.67*', 'Smith and Long Ltd.**'.
+# They point at a note under the table ('*includes contingency', '**found non-compliant'), so
+# the raw string keeps them and only the parse strips them.
+_FOOTNOTE = re.compile(r"[\s*^+†‡§]+$")
+
+
+def _hst_basis(header: str) -> str | None:
+    if _HST_INCLUDING.search(header):
+        return "including"
+    if _HST_EXCLUDING.search(header):
+        return "excluding"
+    return None
+
+
+def parse_bid_tables(html: str, meeting: str) -> list[dict]:
+    """Every bid on an agenda: who bid, what they bid, and on which basis.
+
+    Rewrite spec §2.5.2 calls this data "never published anywhere. **Unrecoverable.**" It is
+    published on every Bid Award Panel agenda, in real <table> markup (#84).
+
+    Returns dicts of reference / document_number / bidder_name_raw / bid_price /
+    hst_basis / price_header. Tables are selected on their first column matching a bidder
+    heading, because an item also carries Financial Impact and WBS cost-centre tables that
+    look nothing like a bid.
+    """
+    root = _html.fromstring(html)
+    out = []
+    reference, docs = meeting, []
+    for el in root.iter():
+        if isinstance(el, HtmlComment) or not isinstance(el.tag, str):
+            continue
+        if el.tag in ("h1", "h2", "h3", "h4", "h5", "h6"):
+            m = _ITEM_HEADING.match(_clean(el.text_content()))
+            if m:
+                reference = f"{meeting}.{m.group('ref').split('.', 1)[1]}"
+                docs = [d for hit in _TEN_DIGIT.findall(m.group("title"))
+                        if (d := normalize_document_number(hit))]
+            continue
+        if el.tag != "table":
+            continue
+        rows = el.xpath(".//tr")
+        if len(rows) < 2:
+            continue
+        header = [_clean(c.text_content()) for c in rows[0].xpath(".//td|.//th")]
+        if not header or not _BIDDER_HDR.match(header[0]):
+            continue
+        price_col = next((i for i, h in enumerate(header) if i and _PRICE_HDR.search(h)), None)
+        price_header = header[price_col] if price_col is not None else None
+        for row in rows[1:]:
+            cells = [_clean(c.text_content()) for c in row.xpath(".//td|.//th")]
+            if not cells or not cells[0]:
+                continue
+            price = cells[price_col] if (price_col is not None
+                                         and len(cells) > price_col) else None
+            out.append({
+                "reference": reference,
+                # Pre-2019 items name no document number (Toronto adopted Ariba ~2019), so a
+                # bid can be real and unattributable. Kept anyway — #77 wants exactly these.
+                "document_number": docs[0] if docs else None,
+                "bidder_name_raw": cells[0],
+                "bid_price": price or None,
+                "hst_basis": _hst_basis(price_header) if price_header else None,
+                "price_header": price_header,
+            })
+    return out
+
+
+def store_bids(conn, agendas: dict) -> int:
+    """Extract and store every bid the agendas tabulate. Idempotent. Returns rows stored.
+
+    This is the data rewrite spec §2.5.2 calls unrecoverable (#84).
+    """
+    n = 0
+    for meeting, html in agendas.items():
+        for bid in parse_bid_tables(html, meeting):
+            db.upsert_row(conn, Bid(source="bid_award_panel", **bid), overwrite=True)
             n += 1
     conn.commit()
     return n
