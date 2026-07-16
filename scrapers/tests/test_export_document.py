@@ -164,6 +164,8 @@ def test_export_has_suppliers_array_and_retains_supplier_id(conn):
     doc = build_export_document(conn, generated_at="t")
     assert len(doc["suppliers"]) == 1
     assert doc["suppliers"][0]["display_name"] == "Compugen Inc."
+    # variants is parsed to a list for consistency with categories
+    assert doc["suppliers"][0]["variants"] == ["Compugen Inc."]
     # supplier_id is retained on nested awards so consumers can join to suppliers[]
     award = doc["solicitations"][0]["awards"][0]
     assert award["supplier_id"] == sid

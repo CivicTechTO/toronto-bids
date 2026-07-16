@@ -58,7 +58,12 @@ def build_supplier_dimension(conn) -> int:
             overwrite=True,
         )
 
-    # 3. Map key -> supplier_id, then backfill the FK on each source row.
+    # 3. Recompute FKs from scratch each run: clear all, then set the matched rows below.
+    # (A row whose name blanked out since last run must lose its stale supplier_id.)
+    for table, _pk in _SUPPLIER_TABLES:
+        conn.execute(f"UPDATE {table} SET supplier_id = NULL")
+
+    # 4. Map key -> supplier_id, then backfill the FK on each source row.
     id_by_key = {r["supplier_key"]: r["supplier_id"]
                  for r in conn.execute("SELECT supplier_key, supplier_id FROM supplier")}
     for table, pk in _SUPPLIER_TABLES:

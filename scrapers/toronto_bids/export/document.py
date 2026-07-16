@@ -74,10 +74,16 @@ def build_export_document(conn, generated_at: str | None = None) -> dict:
         for firm in _rows(conn, "SELECT * FROM suspended_firm ORDER BY supplier_name_raw, council_authority")
     ]
 
-    suppliers = [
-        _drop(s, "supplier_key")
-        for s in _rows(conn, "SELECT * FROM supplier ORDER BY display_name")
-    ]
+    suppliers = []
+    for s in _rows(conn, "SELECT * FROM supplier ORDER BY display_name"):
+        s = _drop(s, "supplier_key")
+        raw = s.get("variants")
+        if raw:
+            try:
+                s["variants"] = json.loads(raw)
+            except (TypeError, ValueError):
+                pass
+        suppliers.append(s)
 
     sources = _rows(
         conn,

@@ -60,3 +60,15 @@ def test_blank_supplier_name_is_skipped(conn):
     conn.commit()
     assert build_supplier_dimension(conn) == 0
     assert db.counts(conn)["supplier"] == 0
+
+
+def test_backfill_clears_stale_fk_when_name_blanks(conn):
+    db.upsert_row(conn, Award(document_number="3303123110", supplier_name_raw="Compugen Inc.",
+                              source="odata"), overwrite=True)
+    conn.commit()
+    build_supplier_dimension(conn)
+    assert conn.execute("SELECT supplier_id FROM award").fetchone()[0] is not None
+    conn.execute("UPDATE award SET supplier_name_raw='' WHERE document_number='3303123110'")
+    conn.commit()
+    build_supplier_dimension(conn)
+    assert conn.execute("SELECT supplier_id FROM award").fetchone()[0] is None  # stale FK cleared

@@ -57,5 +57,5 @@ def _run_supplier_dimension(conn) -> None:
         n = build_supplier_dimension(conn)
         db.finish_sync_run(conn, run_id, status="ok", rows_fetched=n, rows_upserted=n)
     except Exception as exc:
-        conn.commit()
+        conn.rollback()
         db.finish_sync_run(conn, run_id, status="failed", error=str(exc))
