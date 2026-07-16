@@ -115,3 +115,71 @@ def test_discovery_handles_two_meetings_on_one_date():
         _fake_site({"2017.BA1": "2017-01-04", "2017.BA2": "2017-01-04"}),
         max_per_term=2, stop_after_misses=1)
     assert set(found) == {"2017.BA1", "2017.BA2"}
+
+
+# --- staff-report PDF index (#68) --------------------------------------------------------
+
+def test_indexes_staff_report_pdfs_against_the_item_that_owns_them():
+    """Spec §2.3 says background-file PDFs have 'no index'. The agendas are that index."""
+    from toronto_bids.sources.bid_award_panel import parse_agenda_pdfs
+
+    pdfs = parse_agenda_pdfs(_fixture("2022.BA189"), "2022.BA189")
+    assert len(pdfs) == 7
+    assert pdfs[0]["reference"] == "2022.BA189.1"
+    assert pdfs[0]["kind"] == "bgrd"
+    assert pdfs[0]["url"].endswith("backgroundfile-226166.pdf")
+    # every PDF belongs to a distinct item, in document order
+    assert [p["reference"] for p in pdfs] == [f"2022.BA189.{i}" for i in range(1, 8)]
+
+
+def test_a_pdf_linked_twice_on_one_page_is_indexed_once():
+    """The City emits each link twice; the index must not double it."""
+    from toronto_bids.sources.bid_award_panel import parse_agenda_pdfs
+
+    html = ("<html><body><h3>BA1.1 - Award of Doc1234567890 to X for Y</h3>"
+            "<a href='https://www.toronto.ca/legdocs/mmis/2022/ba/bgrd/backgroundfile-1.pdf'>a</a>"
+            "<a href='https://www.toronto.ca/legdocs/mmis/2022/ba/bgrd/backgroundfile-1.pdf'>b</a>"
+            "</body></html>")
+    assert len(parse_agenda_pdfs(html, "2022.BA1")) == 1
+
+
+def test_a_pdf_before_any_item_is_attributed_to_the_meeting_not_dropped():
+    from toronto_bids.sources.bid_award_panel import parse_agenda_pdfs
+
+    html = ("<html><body>"
+            "<a href='https://www.toronto.ca/legdocs/mmis/2022/ba/bgrd/backgroundfile-9.pdf'>x</a>"
+            "<h3>BA1.1 - Award of Doc1234567890 to X for Y</h3>"
+            "<a href='https://www.toronto.ca/legdocs/mmis/2022/ba/bgrd/backgroundfile-1.pdf'>y</a>"
+            "</body></html>")
+    pdfs = parse_agenda_pdfs(html, "2022.BA1")
+    assert [p["reference"] for p in pdfs] == ["2022.BA1", "2022.BA1.1"]
+
+
+def test_non_pdf_and_non_legdocs_links_are_ignored():
+    from toronto_bids.sources.bid_award_panel import parse_agenda_pdfs
+
+    html = ("<html><body><h3>BA1.1 - Award of Doc1234567890 to X for Y</h3>"
+            "<a href='https://twitter.com/share?url=x'>tweet</a>"
+            "<a href='mailto:bdc@toronto.ca'>mail</a>"
+            "<a href='https://www.toronto.ca/legdocs/mmis/2022/ba/index.html'>not a pdf</a>"
+            "</body></html>")
+    assert parse_agenda_pdfs(html, "2022.BA1") == []
+
+
+def test_store_background_pdfs_is_idempotent(conn):
+    from toronto_bids.sources.bid_award_panel import store_background_pdfs
+
+    agendas = {"2022.BA189": _fixture("2022.BA189")}
+    assert store_background_pdfs(conn, agendas) == 7
+    store_background_pdfs(conn, agendas)
+    assert conn.execute("SELECT COUNT(*) FROM background_pdf").fetchone()[0] == 7
+
+
+def test_indexing_records_the_url_without_downloading_anything(conn, tmp_path):
+    from toronto_bids.sources.bid_award_panel import store_background_pdfs
+
+    store_background_pdfs(conn, {"2022.BA189": _fixture("2022.BA189")})
+    row = conn.execute("SELECT url, local_path, text FROM background_pdf LIMIT 1").fetchone()
+    assert row["url"].startswith("https://www.toronto.ca/legdocs/")
+    assert row["local_path"] is None    # the index is the deliverable; bytes are a later pass
+    assert row["text"] is None

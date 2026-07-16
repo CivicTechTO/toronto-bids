@@ -50,10 +50,17 @@ def parse_agenda_item(html: str, reference: str):
         if not url or not url.lower().endswith(".pdf") or url in seen:
             continue
         seen.add(url)
-        kind = "bgrd" if "/bgrd/" in url else ("comm" if "/comm/" in url else "other")
-        pdfs.append({"url": url, "kind": kind})
+        pdfs.append({"url": url, "kind": pdf_kind(url)})
 
     return CouncilItem(reference=reference, title=title, decision_text=decision), pdfs
+
+
+def pdf_kind(url: str) -> str:
+    """Classify a legdocs PDF by the path segment the City files it under.
+
+    Shared with sources/bid_award_panel.py, which indexes the same PDFs off agenda pages.
+    """
+    return "bgrd" if "/bgrd/" in url else ("comm" if "/comm/" in url else "other")
 
 
 def download_pdf(http, url: str, dest_dir) -> dict:

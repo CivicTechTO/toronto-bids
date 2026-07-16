@@ -27,9 +27,11 @@ import re
 from contextlib import contextmanager
 
 from lxml import html as _html
+from lxml.html import HtmlComment
 
 from toronto_bids.linking.document_number import normalize_document_number
-from toronto_bids.models import CouncilItem
+from toronto_bids.sources.council import pdf_kind
+from toronto_bids.models import BackgroundPdf, CouncilItem
 from toronto_bids.store import db
 
 AGENDA_URL = "https://secure.toronto.ca/council/report.do"
@@ -279,3 +281,55 @@ def scrape_agendas(agenda_dir, virtual_display: bool = False, log=lambda _m: Non
             return html
 
         return discover_meetings(fetch, log=log)
+
+
+def parse_agenda_pdfs(html: str, meeting: str) -> list[dict]:
+    """The staff-report PDFs an agenda links, attributed to the item each sits under.
+
+    Rewrite spec §2.3 lists background-file PDFs as having "**No index** — source
+    (year, committee, id) tuples from TMMIS". The agendas *are* that index: every award item
+    links its report, and 474 of the 475 cached agendas carry at least one. 3,142 distinct
+    PDFs across the corpus.
+
+    Attribution works because the City emits them in document order — item heading, then that
+    item's Background Information links, then the next heading — so the most recent heading
+    owns the links that follow it. Links appearing before any item heading (agenda-level
+    attachments) are attributed to the meeting rather than dropped.
+    """
+    root = _html.fromstring(html)
+    out, seen = [], set()
+    reference = meeting
+    for el in root.iter():
+        if isinstance(el, HtmlComment) or not isinstance(el.tag, str):
+            continue
+        if el.tag in ("h1", "h2", "h3", "h4", "h5", "h6"):
+            m = _ITEM_HEADING.match(_clean(el.text_content()))
+            if m:
+                reference = f"{meeting}.{m.group('ref').split('.', 1)[1]}"
+            continue
+        if el.tag != "a":
+            continue
+        url = el.get("href") or ""
+        if "/legdocs/mmis/" not in url or not url.lower().endswith(".pdf") or url in seen:
+            continue
+        seen.add(url)
+        out.append({"url": url, "reference": reference, "kind": pdf_kind(url)})
+    return out
+
+
+def store_background_pdfs(conn, agendas: dict) -> int:
+    """Index every staff-report PDF the agendas link. Idempotent. Downloads nothing.
+
+    The URL index is the deliverable: it is what spec §2.3 says does not exist, and it turns
+    "fetch the report for award X" from an unanswerable question into a lookup. Fetching the
+    bytes is a separate, much heavier pass — these are plain HTTP (verified: 200,
+    application/pdf), so it needs no browser, unlike the agendas themselves.
+    """
+    n = 0
+    for meeting, html in agendas.items():
+        for pdf in parse_agenda_pdfs(html, meeting):
+            db.upsert_row(conn, BackgroundPdf(url=pdf["url"], reference=pdf["reference"],
+                                              kind=pdf["kind"]), overwrite=False)
+            n += 1
+    conn.commit()
+    return n
