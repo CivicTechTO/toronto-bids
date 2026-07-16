@@ -47,7 +47,8 @@ def test_sync_runs_all_and_one_failure_does_not_stop_others(conn):
     also_good = FakeSource("ckan_awarded", [Solicitation("5749398870", source="ckan_awarded")], overwrite=False)
     pipeline.sync(conn, http=None, sources=[good, bad, also_good])
     assert db.counts(conn)["solicitation"] == 2
-    assert db.counts(conn)["sync_run"] == 3
+    # 3 sources + 1 supplier_dimension sync_run = 4
+    assert db.counts(conn)["sync_run"] == 4
 
 
 def test_sync_only_filters_sources(conn):
@@ -55,4 +56,29 @@ def test_sync_only_filters_sources(conn):
     other = FakeSource("ckan_open", [Solicitation("5749398870", source="ckan_open")])
     pipeline.sync(conn, http=None, sources=[good, other], only=["odata_solicitations"])
     assert db.counts(conn)["solicitation"] == 1
-    assert db.counts(conn)["sync_run"] == 1
+    # 1 source + 1 supplier_dimension sync_run = 2
+    assert db.counts(conn)["sync_run"] == 2
+
+
+def test_sync_runs_supplier_dimension_after_sources(conn):
+    from toronto_bids import pipeline
+    from toronto_bids.models import Award
+    good = FakeSource("odata_solicitations", [
+        Award("3303123110", supplier_name_raw="Compugen Inc.", source="odata"),
+    ])
+    pipeline.sync(conn, http=None, sources=[good])
+    # the linking pass ran: a supplier exists and a sync_run named supplier_dimension is recorded
+    assert db.counts(conn)["supplier"] == 1
+    row = conn.execute("SELECT status FROM sync_run WHERE source='supplier_dimension'").fetchone()
+    assert row is not None and row["status"] == "ok"
+
+
+def test_sync_supplier_dimension_failure_is_isolated(conn, monkeypatch):
+    from toronto_bids import pipeline
+    def boom(_conn):
+        raise RuntimeError("link exploded")
+    monkeypatch.setattr(pipeline, "build_supplier_dimension", boom)
+    pipeline.sync(conn, http=None, sources=[])  # no sources; linking still runs and fails safely
+    row = conn.execute("SELECT status, error FROM sync_run WHERE source='supplier_dimension'").fetchone()
+    assert row["status"] == "failed"
+    assert "link exploded" in row["error"]
