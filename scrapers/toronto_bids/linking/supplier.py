@@ -66,13 +66,11 @@ def build_supplier_dimension(conn) -> int:
     # 4. Map key -> supplier_id, then backfill the FK on each source row.
     id_by_key = {r["supplier_key"]: r["supplier_id"]
                  for r in conn.execute("SELECT supplier_key, supplier_id FROM supplier")}
-    for table, pk in _SUPPLIER_TABLES:
-        for row_table, row_pk, key in row_keys:
-            if row_table != table:
-                continue
-            conn.execute(
-                f"UPDATE {table} SET supplier_id = ? WHERE {pk} = ?",
-                (id_by_key[key], row_pk),
-            )
+    pk_by_table = dict(_SUPPLIER_TABLES)
+    for table, row_pk, key in row_keys:
+        conn.execute(
+            f"UPDATE {table} SET supplier_id = ? WHERE {pk_by_table[table]} = ?",
+            (id_by_key[key], row_pk),
+        )
     conn.commit()
     return len(variants_by_key)

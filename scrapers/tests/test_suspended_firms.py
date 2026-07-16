@@ -5,7 +5,6 @@ import pytest
 
 from toronto_bids.http import HttpClient
 from toronto_bids.models import SuspendedFirm
-from toronto_bids.sources import suspended_firms
 from toronto_bids.sources.suspended_firms import SuspendedFirmsSource, parse_suspended_table
 
 FIXTURES = Path(__file__).parent / "fixtures"

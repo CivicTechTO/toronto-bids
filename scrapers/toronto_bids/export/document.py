@@ -12,14 +12,14 @@ def _drop(record: dict, *keys) -> dict:
     return {k: v for k, v in record.items() if k not in keys}
 
 
-def _parse_categories(posting: dict) -> dict:
-    raw = posting.get("categories")
+def _parse_json(record: dict, key: str) -> dict:
+    raw = record.get(key)
     if raw:
         try:
-            posting["categories"] = json.loads(raw)
+            record[key] = json.loads(raw)
         except (TypeError, ValueError):
             pass  # leave the raw string if it isn't valid JSON
-    return posting
+    return record
 
 
 def build_export_document(conn, generated_at: str | None = None) -> dict:
@@ -49,7 +49,7 @@ def build_export_document(conn, generated_at: str | None = None) -> dict:
     postings_by_doc: dict[str, list] = {}
     unlinked: list = []
     for posting in _rows(conn, "SELECT * FROM ariba_posting ORDER BY rfx_id"):
-        posting = _parse_categories(_drop(posting, "raw_json"))
+        posting = _parse_json(_drop(posting, "raw_json"), "categories")
         doc = posting.get("document_number")
         if doc and doc in sol_docs:
             postings_by_doc.setdefault(doc, []).append(_drop(posting, "document_number"))
@@ -74,16 +74,10 @@ def build_export_document(conn, generated_at: str | None = None) -> dict:
         for firm in _rows(conn, "SELECT * FROM suspended_firm ORDER BY supplier_name_raw, council_authority")
     ]
 
-    suppliers = []
-    for s in _rows(conn, "SELECT * FROM supplier ORDER BY display_name"):
-        s = _drop(s, "supplier_key")
-        raw = s.get("variants")
-        if raw:
-            try:
-                s["variants"] = json.loads(raw)
-            except (TypeError, ValueError):
-                pass
-        suppliers.append(s)
+    suppliers = [
+        _parse_json(_drop(s, "supplier_key"), "variants")
+        for s in _rows(conn, "SELECT * FROM supplier ORDER BY display_name")
+    ]
 
     sources = _rows(
         conn,
