@@ -67,7 +67,9 @@ A separate opt-in step (`tb enrich-council`). TMMIS is Akamai-gated, so it needs
 
 ## Gotchas
 
-- `award` rows are per-source (`source` is part of the UNIQUE key: OData spine plus `ckan_awarded` cross-check), so naive `COUNT(*)`/`SUM(award_amount)` double-counts — filter to `source='odata'` or GROUP BY.
+- **Never aggregate `award_amount` / `contract_amount`** — they are `TEXT` holding the City's string verbatim (`"$1,317,169.92 CAD"`, `"kj"`, three amounts concatenated). `SUM()` coerces text prefixes to 0 or truncates, and SQLite sorts text above every number so `award_amount > 1000` matches *every* row. Aggregate `award_amount_numeric` / `contract_amount_numeric` (`REAL`, parsed by `toronto_bids/amount.py`) instead. A NULL numeric beside a non-NULL raw string means the raw value is not a single CAD amount (77 of 13,559 awards) — deliberate, not missing data.
+- `award` rows are per-source (`source` is part of the UNIQUE key: OData spine plus `ckan_awarded` cross-check), so a naive `COUNT(*)`/`SUM(award_amount_numeric)` double-counts — filter to `source='odata'` or GROUP BY. Both hazards apply at once: the sum must use the numeric column *and* filter by source.
+- The City's two award feeds contradict each other on **158 of 6,777** awards, sometimes by orders of magnitude (doc `9117177338`: OData $1.9B vs CKAN $3.66M), and some amounts are implausible in both (doc `3901175008`: $9.05B to an individual). This is upstream data, not a parsing bug — don't "fix" it in a normalizer. See the cross-source disagreement issue.
 - Ariba detail calls return HTTP 500 ~40% of the time; runs are idempotent and later runs fill the gaps. Expected, not a bug.
 - CKAN resource UUIDs rotate on refresh — they are resolved at runtime via `package_show`, never hardcoded.
 - The design spec (`docs/superpowers/specs/2026-07-14-toronto-bids-scraper-rewrite-design.md`) records dead-end data sources (retired CKAN datasets, Ariba HTML shell, Ariba public attachment API) — don't rebuild against them.

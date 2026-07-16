@@ -29,7 +29,13 @@ CREATE TABLE IF NOT EXISTS award (
     document_number    TEXT NOT NULL,
     supplier_name_raw  TEXT,
     supplier_id        INTEGER,
+    -- The City's published string, verbatim: "$1,317,169.92 CAD", "kj", "Metal Items at
+    -- 109.11000 Percentage of the AMM published price". Archive fidelity — NOT summable.
     award_amount       TEXT,
+    -- The number, where there plainly is one (toronto_bids/amount.py). NULL beside a
+    -- non-NULL award_amount means the raw value is not a single CAD amount. Aggregate on
+    -- this column, never on award_amount.
+    award_amount_numeric REAL,
     award_date         TEXT,
     source             TEXT,
     first_seen         TEXT NOT NULL DEFAULT (datetime('now')),
@@ -44,7 +50,9 @@ CREATE TABLE IF NOT EXISTS noncompetitive (
     supplier_name_raw       TEXT,
     supplier_id             INTEGER,
     reason                  TEXT,
+    -- Raw string / parsed number: see the award table above.
     contract_amount         TEXT,
+    contract_amount_numeric REAL,
     contract_date            TEXT,
     division                TEXT,
     council_authority_link  TEXT,

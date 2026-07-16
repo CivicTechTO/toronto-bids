@@ -1,4 +1,6 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+
+from toronto_bids.amount import parse_amount
 
 
 @dataclass(frozen=True)
@@ -27,9 +29,14 @@ class Solicitation:
 class Award:
     document_number: str
     supplier_name_raw: str | None = None
-    award_amount: str | None = None
+    award_amount: str | None = None          # the City's string, verbatim — never summable
     award_date: str | None = None
     source: str = ""
+    # Derived, not passed: see NonCompetitive.__post_init__ for why it lives here.
+    award_amount_numeric: float | None = field(init=False, default=None)
+
+    def __post_init__(self):
+        object.__setattr__(self, "award_amount_numeric", parse_amount(self.award_amount))
 
 
 @dataclass(frozen=True)
@@ -37,12 +44,20 @@ class NonCompetitive:
     workspace_number: str
     supplier_name_raw: str | None = None
     reason: str | None = None
-    contract_amount: str | None = None
+    contract_amount: str | None = None       # the City's string, verbatim — never summable
     contract_date: str | None = None
     division: str | None = None
     council_authority_link: str | None = None
     odata_id: str | None = None
     source: str = ""
+    contract_amount_numeric: float | None = field(init=False, default=None)
+
+    def __post_init__(self):
+        # Derived on the model rather than at each normalizer's call site (odata + ckan, two
+        # each): every source that sets the raw string gets the number for free, and a new
+        # one cannot forget it and silently NULL the column — the same failure mode
+        # sources/schema_check.py exists to catch.
+        object.__setattr__(self, "contract_amount_numeric", parse_amount(self.contract_amount))
 
 
 @dataclass(frozen=True)
