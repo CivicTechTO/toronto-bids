@@ -120,3 +120,29 @@ CREATE TABLE IF NOT EXISTS supplier (
     first_seen    TEXT NOT NULL DEFAULT (datetime('now')),
     last_seen     TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+-- council_item mirrors a TMMIS agenda item (a City Council decision), bridged to
+-- suspended_firm via suspended_firm.council_authority = council_item.reference.
+CREATE TABLE IF NOT EXISTS council_item (
+    reference      TEXT PRIMARY KEY,
+    title          TEXT,
+    decision_text  TEXT,
+    first_seen     TEXT NOT NULL DEFAULT (datetime('now')),
+    last_seen      TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- background_pdf archives a staff-report (bgrd) or communication (comm) PDF linked
+-- from a council_item, with its extracted text. Keyed on the URL.
+CREATE TABLE IF NOT EXISTS background_pdf (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    url         TEXT NOT NULL UNIQUE,
+    reference   TEXT,
+    kind        TEXT,
+    local_path  TEXT,
+    sha256      TEXT,
+    text        TEXT,
+    first_seen  TEXT NOT NULL DEFAULT (datetime('now')),
+    last_seen   TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_background_pdf_reference ON background_pdf (reference);

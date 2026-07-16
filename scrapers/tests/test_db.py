@@ -1,4 +1,4 @@
-from toronto_bids.models import Award, NonCompetitive, Solicitation, AribaPosting, SuspendedFirm, Supplier
+from toronto_bids.models import Award, NonCompetitive, Solicitation, AribaPosting, SuspendedFirm, Supplier, CouncilItem, BackgroundPdf
 from toronto_bids.store import db
 
 
@@ -150,3 +150,23 @@ def test_counts_includes_supplier(conn):
 def test_suspended_firm_has_supplier_id_column(conn):
     cols = {r[1] for r in conn.execute("PRAGMA table_info(suspended_firm)")}
     assert "supplier_id" in cols
+
+
+def test_upsert_council_item_is_idempotent(conn):
+    it = CouncilItem(reference="2025.GG26.3", title="Suspension of X", decision_text="Adopted.")
+    db.upsert_row(conn, it, overwrite=True)
+    db.upsert_row(conn, it, overwrite=True)
+    assert db.counts(conn)["council_item"] == 1
+
+
+def test_upsert_background_pdf_is_idempotent(conn):
+    p = BackgroundPdf(url="https://www.toronto.ca/legdocs/mmis/2025/gg/bgrd/backgroundfile-260581.pdf",
+                      reference="2025.GG26.3", kind="bgrd", sha256="abc", text="REPORT FOR ACTION")
+    db.upsert_row(conn, p, overwrite=True)
+    db.upsert_row(conn, p, overwrite=True)
+    assert db.counts(conn)["background_pdf"] == 1
+
+
+def test_counts_includes_council_tables(conn):
+    c = db.counts(conn)
+    assert "council_item" in c and "background_pdf" in c
