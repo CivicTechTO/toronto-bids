@@ -25,8 +25,10 @@ local SQLite store. No browser, no login, no cloud.
   (`council_item` + `background_pdf` tables, with extracted text). TMMIS is Akamai-gated and
   only served to a **real, headed browser**, so this command drives a headed Chromium
   (Playwright); the PDFs themselves download over plain HTTP + `pdftotext`. It is **not** part
-  of `tb sync` — the core pipeline stays browser-free. On a headless server run
-  `tb enrich-council --virtual-display` with `Xvfb` installed (`apt-get install -y xvfb`);
+  of `tb sync` — the core pipeline stays browser-free, so Playwright lives behind the optional
+  `council` extra (the default install pulls neither Playwright nor `pyvirtualdisplay`). Enable
+  it with `uv sync --extra council && uv run playwright install chromium`. On a headless server
+  run `tb enrich-council --virtual-display` with `Xvfb` installed (`apt-get install -y xvfb`);
   `pdftotext` (poppler) is also required.
 - **Supplier dimension** (`supplier` table) — after every sync, a linking pass canonicalizes
   the free-text supplier names across awards, non-competitive contracts, and suspended firms
