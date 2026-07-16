@@ -24,6 +24,17 @@ def build_parser() -> argparse.ArgumentParser:
                               help="OPT-IN: fetch council decisions + staff-report PDFs for suspended firms (headed browser)")
     p_enrich.add_argument("--virtual-display", action="store_true",
                           help="Run the headed browser under Xvfb (headless servers; needs Xvfb installed)")
+
+    p_titles = sub.add_parser(
+        "enrich-titles",
+        help="Recover titles the City never published, from Bid Award Panel agendas "
+             "and the legacy archive (offline unless --scrape)")
+    p_titles.add_argument(
+        "--scrape", action="store_true",
+        help="Fetch Bid Award Panel agendas first (headed browser; ~10 min on a cold "
+             "cache, seconds once cached). Without it, only agendas already on disk are used")
+    p_titles.add_argument("--virtual-display", action="store_true",
+                          help="Run the headed browser under Xvfb (implies --scrape's needs)")
     return parser
 
 
@@ -104,6 +115,56 @@ def _cmd_enrich_council(args) -> int:
     return 0
 
 
+def _cmd_enrich_titles(args) -> int:
+    """Fill titles the City never published. Offline by default; --scrape needs a browser.
+
+    Both fills only ever touch a NULL title, so a title the City published always wins.
+    They are ordered council-then-legacy for readable output, not for correctness: the
+    precedence between the two is encoded in legacy_titles' query, so the result does not
+    depend on which runs first.
+    """
+    from toronto_bids.sources.bid_award_panel import (
+        cached_agendas, fill_titles_from_council, scrape_agendas, store_items)
+    from toronto_bids.sources.legacy_titles import fill_titles_from_legacy
+
+    conn = _open_db()
+    try:
+        before = conn.execute(
+            "SELECT COUNT(*) FROM solicitation WHERE title IS NULL").fetchone()[0]
+
+        if args.scrape:
+            agendas = scrape_agendas(config.COUNCIL_AGENDAS_DIR,
+                                     virtual_display=args.virtual_display,
+                                     log=lambda m: print(m, flush=True))
+        else:
+            agendas = cached_agendas(config.COUNCIL_AGENDAS_DIR)
+            if not agendas:
+                print(f"No cached agendas in {config.COUNCIL_AGENDAS_DIR} — "
+                      f"run with --scrape to fetch them (needs the 'council' extra).")
+
+        if agendas:
+            print(f"Bid Award Panel agendas: {len(agendas)}"
+                  f" ({'scraped' if args.scrape else 'cached'})")
+            print(f"  council items stored: {store_items(conn, agendas)}")
+            print(f"  titles from council : {fill_titles_from_council(conn)}")
+
+        n_legacy = fill_titles_from_legacy(conn, config.LEGACY_ARIBA_DIR)
+        print(f"  titles from legacy  : {n_legacy}"
+              if n_legacy or config.LEGACY_ARIBA_DIR.is_dir()
+              else f"  legacy archive absent ({config.LEGACY_ARIBA_DIR}) — skipped")
+
+        after = conn.execute(
+            "SELECT COUNT(*) FROM solicitation WHERE title IS NULL").fetchone()[0]
+        print(f"\nTitle-less solicitations: {before} -> {after}  ({before - after} named)")
+        for source, n in conn.execute(
+                "SELECT COALESCE(source,'?'), COUNT(*) FROM solicitation "
+                "WHERE title IS NOT NULL GROUP BY 1 ORDER BY 2 DESC"):
+            print(f"  {source:<20} {n:>5}")
+    finally:
+        conn.close()
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
@@ -115,6 +176,8 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_export(args)
     if args.command == "enrich-council":
         return _cmd_enrich_council(args)
+    if args.command == "enrich-titles":
+        return _cmd_enrich_titles(args)
     parser.print_help()
     return 0
 

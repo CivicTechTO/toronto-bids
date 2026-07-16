@@ -47,3 +47,97 @@ def test_status_shows_last_run_per_source(monkeypatch, tmp_path, capsys):
     assert cli.main(["status"]) == 0
     out = capsys.readouterr().out
     assert "ckan_open" in out and "failed" in out and "network exploded" in out
+
+
+# --- enrich-titles (#65) -----------------------------------------------------------------
+
+def _titles_env(monkeypatch, tmp_path):
+    """Isolate the DB and both title sources so nothing touches the real store."""
+    _isolate_db(monkeypatch, tmp_path)
+    monkeypatch.setattr(config, "COUNCIL_AGENDAS_DIR", tmp_path / "council" / "agendas")
+    monkeypatch.setattr(config, "LEGACY_ARIBA_DIR", tmp_path / "legacy" / "ariba_data")
+
+
+def _seed_titleless(doc="3234668279"):
+    conn = db.connect(config.DB_PATH)
+    db.init_db(conn)
+    db.upsert_row(conn, Solicitation(doc, title=None, source="odata"), overwrite=True)
+    conn.commit()
+    conn.close()
+
+
+def test_enrich_titles_runs_offline_from_cached_agendas(monkeypatch, tmp_path, capsys):
+    """No --scrape means no browser: agendas already on disk are enough."""
+    _titles_env(monkeypatch, tmp_path)
+    config.DATA_DIR.mkdir(parents=True, exist_ok=True)
+    _seed_titleless()
+    agendas = tmp_path / "council" / "agendas"
+    agendas.mkdir(parents=True)
+    (agendas / "2022.BA189.html").write_text(
+        "<html><body><h3>BA189.1 - Award of Ariba Document Number 3234668279 to GHD "
+        "Limited for the Aeration Blower System Upgrades</h3></body></html>")
+
+    assert cli.main(["enrich-titles"]) == 0
+    out = capsys.readouterr().out
+    assert "cached" in out
+    assert "1 -> 0" in out
+
+    conn = db.connect(config.DB_PATH)
+    row = conn.execute("SELECT title, source FROM solicitation").fetchone()
+    assert "Aeration Blower System Upgrades" in row["title"]
+    assert row["source"] == "bid_award_panel"
+    conn.close()
+
+
+def test_enrich_titles_says_so_when_there_is_nothing_cached(monkeypatch, tmp_path, capsys):
+    _titles_env(monkeypatch, tmp_path)
+    config.DATA_DIR.mkdir(parents=True, exist_ok=True)
+    _seed_titleless()
+    assert cli.main(["enrich-titles"]) == 0
+    out = capsys.readouterr().out
+    assert "run with --scrape" in out
+    assert "1 -> 1" in out       # nothing named, and it says so rather than claiming success
+
+
+def test_enrich_titles_prefers_the_legacy_posting_page_over_a_council_heading(
+        monkeypatch, tmp_path, capsys):
+    _titles_env(monkeypatch, tmp_path)
+    config.DATA_DIR.mkdir(parents=True, exist_ok=True)
+    _seed_titleless()
+    agendas = tmp_path / "council" / "agendas"
+    agendas.mkdir(parents=True)
+    (agendas / "2022.BA189.html").write_text(
+        "<html><body><h3>BA189.1 - Award of Ariba Document Number 3234668279 to GHD "
+        "Limited for the Aeration Blower System Upgrades</h3></body></html>")
+    legacy = tmp_path / "legacy" / "ariba_data" / "Doc3234668279"
+    legacy.mkdir(parents=True)
+    (legacy / "Doc3234668279.html").write_text(
+        "<html><head><title>RFP for Aeration Blower System Upgrades</title></head></html>")
+
+    assert cli.main(["enrich-titles"]) == 0
+    conn = db.connect(config.DB_PATH)
+    row = conn.execute("SELECT title, source FROM solicitation").fetchone()
+    assert row["title"] == "RFP for Aeration Blower System Upgrades"
+    assert row["source"] == "legacy_ariba_html"
+    conn.close()
+
+
+def test_enrich_titles_does_not_touch_a_title_the_city_published(monkeypatch, tmp_path):
+    _titles_env(monkeypatch, tmp_path)
+    config.DATA_DIR.mkdir(parents=True, exist_ok=True)
+    conn = db.connect(config.DB_PATH)
+    db.init_db(conn)
+    db.upsert_row(conn, Solicitation("3234668279", title="Urban Forestry Supplies",
+                                     source="odata"), overwrite=True)
+    conn.commit()
+    conn.close()
+    agendas = tmp_path / "council" / "agendas"
+    agendas.mkdir(parents=True)
+    (agendas / "2022.BA189.html").write_text(
+        "<html><body><h3>BA189.1 - Award of Ariba Document Number 3234668279 to GHD "
+        "Limited for the Aeration Blower System Upgrades</h3></body></html>")
+
+    assert cli.main(["enrich-titles"]) == 0
+    conn = db.connect(config.DB_PATH)
+    assert conn.execute("SELECT title FROM solicitation").fetchone()[0] == "Urban Forestry Supplies"
+    conn.close()

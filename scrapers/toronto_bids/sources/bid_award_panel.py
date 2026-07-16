@@ -22,6 +22,7 @@ TMMIS is Akamai-gated: plain HTTP gets 403 (verified), as does anything without 
 browser. So fetching needs the headed Chromium behind the `council` extra, exactly as
 sources/council.py already does. Parsing is pure and testable against saved HTML.
 """
+import pathlib
 import re
 from contextlib import contextmanager
 
@@ -245,3 +246,36 @@ def fill_titles_from_council(conn) -> int:
         [(t, d) for d, t in filled.items()])
     conn.commit()
     return len(filled)
+
+
+def cached_agendas(agenda_dir) -> dict:
+    """{reference: html} for every agenda already on disk. Offline."""
+    root = pathlib.Path(agenda_dir)
+    if not root.is_dir():
+        return {}
+    return {p.stem: p.read_text(errors="replace") for p in sorted(root.glob("*.html"))}
+
+
+def scrape_agendas(agenda_dir, virtual_display: bool = False, log=lambda _m: None) -> dict:
+    """Discover and cache every agenda, returning {reference: html}.
+
+    Resumable and safe to re-run: an agenda already on disk is never refetched, so a second
+    run costs only the probes past the last meeting. Only misses and new meetings hit the
+    network.
+    """
+    root = pathlib.Path(agenda_dir)
+    root.mkdir(parents=True, exist_ok=True)
+
+    with agenda_fetcher(virtual_display=virtual_display) as fetch_live:
+        def fetch(meeting: str) -> str:
+            cached = root / f"{meeting}.html"
+            if cached.exists():
+                return cached.read_text(errors="replace")
+            html = fetch_live(meeting)
+            if not agenda_is_missing(html):
+                # Store <main> only: the rest is nav, sharing widgets and a language picker.
+                match = re.search(r"(<main.*</main>)", html, re.S)
+                cached.write_text(match.group(1) if match else html)
+            return html
+
+        return discover_meetings(fetch, log=log)
