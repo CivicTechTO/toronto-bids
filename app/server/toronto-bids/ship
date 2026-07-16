@@ -1,1 +1,0 @@
-scp target/uberjar/$1.jar jrootham@jrootham.ca:$1/bin

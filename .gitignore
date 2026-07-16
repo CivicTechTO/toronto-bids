@@ -1,11 +1,7 @@
 # Created by https://www.toptal.com/developers/gitignore/api/macos,windows,linux,python,phpunit
 # Edit at https://www.toptal.com/developers/gitignore?templates=macos,windows,linux,python,phpunit
 
-scrapers/ariba/keys/
-scrapers/ariba/data/
 scrapers/*.ipynb
-app/db-regen/settings.py
-app/site-php/includes/mysql-vars.php
 
 
 ### Linux ###
@@ -75,7 +71,6 @@ Temporary Items
 .phpunit.cache
 
 # PHPUnit
-/app/phpunit.xml
 /phpunit.xml
 
 # Build data
