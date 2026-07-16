@@ -1,11 +1,21 @@
+import shutil
 from pathlib import Path
 
 import httpx
+import pytest
 
 from toronto_bids.http import HttpClient
 from toronto_bids.sources.council import download_pdf
 
 FIXTURES = Path(__file__).parent / "fixtures"
+
+# pdftotext is a system package, not a Python dep. Skip rather than fail so a plain
+# `uv sync && uv run pytest` is green on a clean machine; CI installs poppler-utils
+# so these still run there.
+needs_pdftotext = pytest.mark.skipif(
+    shutil.which("pdftotext") is None,
+    reason="needs pdftotext (poppler): apt-get install -y poppler-utils / brew install poppler",
+)
 
 
 def _http_serving(pdf_bytes):
@@ -19,6 +29,7 @@ def test_get_bytes_returns_body_bytes():
     assert http.get_bytes("https://example.test/x") == b"\x89PDFdata"
 
 
+@needs_pdftotext
 def test_download_pdf_saves_hashes_and_extracts(tmp_path):
     pdf = (FIXTURES / "tiny.pdf").read_bytes()
     http = _http_serving(pdf)

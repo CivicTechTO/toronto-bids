@@ -1,6 +1,8 @@
+import shutil
 from pathlib import Path
 
 import httpx
+import pytest
 
 from toronto_bids.http import HttpClient
 from toronto_bids.models import SuspendedFirm
@@ -8,6 +10,15 @@ from toronto_bids.sources.council import enrich_council
 from toronto_bids.store import db
 
 FIXTURES = Path(__file__).parent / "fixtures"
+
+# enrich_council requires pdftotext up front — a system package, not a Python dep. Skip
+# rather than fail so a plain `uv sync && uv run pytest` is green on a clean machine; CI
+# installs poppler-utils so these still run there. Note test_enrich_requires_pdftotext is
+# deliberately NOT marked: it fakes pdftotext's absence and must run either way.
+needs_pdftotext = pytest.mark.skipif(
+    shutil.which("pdftotext") is None,
+    reason="needs pdftotext (poppler): apt-get install -y poppler-utils / brew install poppler",
+)
 
 
 def _stub_fetch(reference):
@@ -21,6 +32,7 @@ def _http_pdf():
         lambda r: httpx.Response(200, content=pdf))), backoff=0.0)
 
 
+@needs_pdftotext
 def test_enrich_builds_council_item_and_pdfs(conn, tmp_path):
     db.upsert_row(conn, SuspendedFirm(supplier_name_raw="Capital Sewer", council_authority="2025.GG26.3",
                                       source="suspended_firms"), overwrite=True)
@@ -34,6 +46,7 @@ def test_enrich_builds_council_item_and_pdfs(conn, tmp_path):
     assert "HELLO PDF" in row["text"]
 
 
+@needs_pdftotext
 def test_enrich_skips_blank_authority_and_is_idempotent(conn, tmp_path):
     db.upsert_row(conn, SuspendedFirm(supplier_name_raw="No Auth", council_authority="",
                                       source="suspended_firms"), overwrite=True)
@@ -46,6 +59,7 @@ def test_enrich_skips_blank_authority_and_is_idempotent(conn, tmp_path):
     assert db.counts(conn)["background_pdf"] == 3     # no duplicate PDFs on re-run
 
 
+@needs_pdftotext
 def test_enrich_isolates_a_failing_ref(conn, tmp_path):
     # One ref's fetch raises; the other must still be processed (not aborted).
     db.upsert_row(conn, SuspendedFirm(supplier_name_raw="A", council_authority="2025.GG26.3",
@@ -64,6 +78,7 @@ def test_enrich_isolates_a_failing_ref(conn, tmp_path):
     assert db.counts(conn)["council_item"] == 1
 
 
+@needs_pdftotext
 def test_enrich_isolates_a_failing_pdf(conn, tmp_path):
     # A PDF that 404s must not abort the item — its other PDFs + the council_item still land.
     pdf = (FIXTURES / "tiny.pdf").read_bytes()
