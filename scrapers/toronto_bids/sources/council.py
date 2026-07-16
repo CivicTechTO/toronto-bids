@@ -1,6 +1,7 @@
 import re
 
 from lxml import html as _html
+from lxml.html import HtmlComment
 
 from toronto_bids.models import CouncilItem
 
@@ -26,14 +27,16 @@ def parse_agenda_item(html: str, reference: str):
 
     # Decision text: everything after the "City Council Decision" heading until the next heading.
     decision = None
-    heads = root.xpath("//*[self::h1 or self::h2 or self::h3][contains(translate(text(),"
+    heads = root.xpath("//*[self::h1 or self::h2 or self::h3 or self::h4 or self::h5 or self::h6][contains(translate(text(),"
                        "'CITY COUNCIL DECISION','city council decision'),'city council decision')]")
     if heads:
         parts = []
         for sib in heads[0].itersiblings():
-            if sib.tag in ("h1", "h2", "h3"):
+            if sib.tag in ("h1", "h2", "h3", "h4", "h5", "h6"):
                 break
-            parts.append(sib.text_content())
+            # Skip comment nodes
+            if not isinstance(sib, HtmlComment):
+                parts.append(sib.text_content())
         decision = _clean(" ".join(parts))
 
     seen = set()
