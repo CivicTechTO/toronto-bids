@@ -23,6 +23,10 @@ def default_sources():
         CkanSource(name="ckan_awarded", slug=config.CKAN_AWARDED_SLUG, kind="awarded"),
         CkanSource(name="ckan_open", slug=config.CKAN_OPEN_SLUG, kind="open"),
         CkanSource(name="ckan_noncomp", slug=config.CKAN_NONCOMP_SLUG, kind="noncompetitive"),
+        # No spine covers the forward-looking pipeline, so CKAN is authoritative for it
+        # and it overwrites (#69).
+        CkanSource(name="ckan_pipeline", slug=config.CKAN_PIPELINE_SLUG,
+                   kind="capital_pipeline", overwrite=True),
         AribaDiscoverySource(),
         SuspendedFirmsSource(),
     ]

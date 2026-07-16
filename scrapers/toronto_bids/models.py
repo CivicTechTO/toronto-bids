@@ -100,6 +100,28 @@ class Supplier:
 
 
 @dataclass(frozen=True)
+class CapitalProject:
+    """A solicitation the City intends to issue but has not yet (#69).
+
+    Forward-looking, so it has no document_number and never joins the spine — a project
+    only gets one when it is actually solicited. Keyed on the City's combined name+contract
+    string because 'No.' is a row index that churns on every refresh.
+    """
+    name: str
+    contract_number: str | None = None    # e.g. '25ECS-MI-02SW', teased out of `name`
+    type_of_work: str | None = None
+    scope: str | None = None
+    delivery_division: str | None = None
+    owner_division: str | None = None
+    target_sourcing_year: str | None = None
+    target_award_year: str | None = None
+    sourcing_type: str | None = None
+    estimated_range: str | None = None
+    estimated_term_months: str | None = None
+    source: str = ""
+
+
+@dataclass(frozen=True)
 class CouncilItem:
     reference: str
     title: str | None = None

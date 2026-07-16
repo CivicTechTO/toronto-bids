@@ -1,8 +1,9 @@
+import re
 from typing import Iterable, Iterator
 
 from toronto_bids import config
 from toronto_bids.linking.document_number import normalize_document_number
-from toronto_bids.models import Award, NonCompetitive, Solicitation
+from toronto_bids.models import Award, CapitalProject, NonCompetitive, Solicitation
 from toronto_bids.sources.base import Row
 
 
@@ -112,24 +113,57 @@ def normalize_noncompetitive(raw: dict):
     )
 
 
+# The City packs a construction contract number into the project name:
+#   'Dufferin Transfer Station - Compactors Replacement  - 25ECS-MI-02SW'
+# Same shape as the contract numbers seen on Bid Award Panel agendas ('22TR-OM-104-SC-TM')
+# and in the legacy archive's folder names ('22ECS-TI-22SP'). Nothing joins on it today —
+# these projects have no document number yet — but teasing it out costs one regex and is the
+# only identifier a future join could use.
+_CONTRACT_NO = re.compile(r"\b(\d{2}[A-Z]{2,4}(?:-[A-Z0-9]+){1,3})\b")
+
+
+def normalize_capital_project(raw: dict):
+    name = _clean(raw.get("Name and Construction Contract Number"))
+    if name is None:
+        return
+    match = _CONTRACT_NO.search(name)
+    yield CapitalProject(
+        name=name,
+        contract_number=match.group(1) if match else None,
+        type_of_work=_clean(raw.get("Type of Work")),
+        scope=_clean(raw.get("Scope of Work: Detailed Description")),
+        delivery_division=_clean(raw.get("Delivery Division")),
+        owner_division=_clean(raw.get("Project Owner (Division)")),
+        target_sourcing_year=_clean(raw.get("Target Sourcing Year")),
+        target_award_year=_clean(raw.get("Target Award Year")),
+        sourcing_type=_clean(raw.get("Sourcing Type")),
+        estimated_range=_clean(raw.get("Estimated Range")),
+        estimated_term_months=_clean(raw.get("Estimated Contract Term (Months)")),
+        source="ckan_pipeline",
+    )
+
+
 _NORMALIZERS = {
     "awarded": normalize_awarded,
     "open": normalize_open,
     "noncompetitive": normalize_noncompetitive,
+    "capital_pipeline": normalize_capital_project,
 }
 
 
 class CkanSource:
     """A CKAN dataset adapter."""
 
-    overwrite = False  # CKAN backfills; OData is the spine.
-
-    def __init__(self, name: str, slug: str, kind: str):
+    def __init__(self, name: str, slug: str, kind: str, overwrite: bool = False):
         if kind not in _NORMALIZERS:
             raise ValueError(f"Unknown CKAN kind: {kind}")
         self.name = name
         self.slug = slug
         self.kind = kind
+        # False by default: CKAN backfills, OData is the spine. capital_pipeline is the
+        # exception — no spine covers it, so CKAN *is* authoritative there, and a project
+        # whose target year or scope shifts must land rather than be COALESCEd away.
+        self.overwrite = overwrite
 
     def fetch(self, http) -> Iterable[dict]:
         resource_id = resolve_resource_id(http, self.slug)

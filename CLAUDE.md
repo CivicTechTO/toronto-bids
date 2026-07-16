@@ -39,7 +39,7 @@ Data flow: sources fetch/normalize → SQLite upsert (`store/db.py`) → supplie
 
 ### Ordering and overwrite semantics
 
-Order in `default_sources()` matters: `schema_check` first (drift detection), then the OData spine (`overwrite=True`, authoritative), then CKAN backfill (`overwrite=False`), then Ariba and suspended firms. Both upsert modes COALESCE (`db._upsert_keyed`): with `overwrite=True` a new non-NULL value wins but NULL never wipes an existing value; with `overwrite=False` only currently-NULL columns get filled. Rows are never deleted — archive semantics with `first_seen`/`last_seen` on every data table.
+Order in `default_sources()` matters: `schema_check` first (drift detection), then the OData spine (`overwrite=True`, authoritative), then CKAN backfill (`overwrite=False`), then Ariba and suspended firms. `ckan_pipeline` is the one CKAN source with `overwrite=True`: no spine covers the forward-looking `capital_project` table, so CKAN is authoritative there (#69). Both upsert modes COALESCE (`db._upsert_keyed`): with `overwrite=True` a new non-NULL value wins but NULL never wipes an existing value; with `overwrite=False` only currently-NULL columns get filled. Rows are never deleted — archive semantics with `first_seen`/`last_seen` on every data table.
 
 ### Per-source isolation and failure surfacing
 

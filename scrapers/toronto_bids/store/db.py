@@ -2,7 +2,7 @@ import sqlite3
 from dataclasses import fields
 from importlib import resources
 
-from toronto_bids.models import Award, NonCompetitive, Solicitation, AribaPosting, SuspendedFirm, Supplier, CouncilItem, BackgroundPdf
+from toronto_bids.models import Award, CapitalProject, NonCompetitive, Solicitation, AribaPosting, SuspendedFirm, Supplier, CouncilItem, BackgroundPdf
 
 # model -> (table, conflict-key columns). A model's fields ARE the table's writable
 # columns, in INSERT order; auto/default columns (id, first_seen, last_seen, supplier_id)
@@ -17,6 +17,7 @@ _TABLES = {
     Supplier: ("supplier", ["supplier_key"]),
     CouncilItem: ("council_item", ["reference"]),
     BackgroundPdf: ("background_pdf", ["url"]),
+    CapitalProject: ("capital_project", ["name"]),
 }
 
 # Tables whose uniqueness is enforced by an expression index rather than a column list, so
@@ -159,7 +160,8 @@ def upsert_row(conn, row, *, overwrite: bool) -> None:
 
 def counts(conn) -> dict:
     tables = ["solicitation", "award", "noncompetitive", "ariba_posting",
-              "suspended_firm", "supplier", "council_item", "background_pdf", "sync_run"]
+              "suspended_firm", "supplier", "capital_project", "council_item",
+              "background_pdf", "sync_run"]
     return {t: conn.execute(f"SELECT COUNT(*) FROM {t}").fetchone()[0] for t in tables}
 
 
