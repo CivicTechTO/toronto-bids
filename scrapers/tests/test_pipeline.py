@@ -48,8 +48,8 @@ def test_sync_runs_all_and_one_failure_does_not_stop_others(conn):
     also_good = FakeSource("ckan_awarded", [Solicitation("5749398870", source="ckan_awarded")], overwrite=False)
     failures = pipeline.sync(conn, http=None, sources=[good, bad, also_good])
     assert db.counts(conn)["solicitation"] == 2
-    # 3 sources + 2 linking passes (ariba_bridge, supplier_dimension) = 5
-    assert db.counts(conn)["sync_run"] == 5
+    # 3 sources + 3 post-source passes (title_cleanup, ariba_bridge, supplier_dimension) = 6
+    assert db.counts(conn)["sync_run"] == 6
     # the failure is isolated but NOT swallowed: sync hands it back
     assert [name for name, _ in failures] == ["ckan_open"]
     assert "network exploded" in failures[0][1]
@@ -72,8 +72,8 @@ def test_sync_only_filters_sources(conn):
     other = FakeSource("ckan_open", [Solicitation("5749398870", source="ckan_open")])
     pipeline.sync(conn, http=None, sources=[good, other], only=["odata_solicitations"])
     assert db.counts(conn)["solicitation"] == 1
-    # 1 source + 2 linking passes (which run regardless of --only) = 3
-    assert db.counts(conn)["sync_run"] == 3
+    # 1 source + 3 post-source passes (which run regardless of --only) = 4
+    assert db.counts(conn)["sync_run"] == 4
 
 
 def test_sync_runs_supplier_dimension_after_sources(conn):

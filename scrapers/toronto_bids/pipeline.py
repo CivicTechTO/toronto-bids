@@ -7,6 +7,7 @@ from toronto_bids.store import db
 from toronto_bids import config
 from toronto_bids.linking.ariba import bridge_postings_to_spine
 from toronto_bids.linking.supplier import build_supplier_dimension
+from toronto_bids.title import clear_placeholder_titles
 
 
 def default_sources():
@@ -63,9 +64,12 @@ def sync(conn, http, sources=None, only=None) -> list[tuple[str, str]]:
         *_, error = run_source(conn, http, source)
         if error:
             failures.append((source.name, error))
-    # Linking passes run after every source, and regardless of --only: they read whatever is
-    # in the store, so a partial sync still leaves the links consistent with it.
-    for name, link in (("ariba_bridge", bridge_postings_to_spine),
+    # Post-source passes run after every source, and regardless of --only: they read whatever
+    # is in the store, so a partial sync still leaves it internally consistent.
+    # title_cleanup leads: it clears placeholder titles COALESCE would otherwise preserve
+    # forever (#70), and the passes behind it read titles.
+    for name, link in (("title_cleanup", clear_placeholder_titles),
+                       ("ariba_bridge", bridge_postings_to_spine),
                        ("supplier_dimension", build_supplier_dimension)):
         error = _run_linking_pass(conn, name, link)
         if error:
@@ -74,7 +78,7 @@ def sync(conn, http, sources=None, only=None) -> list[tuple[str, str]]:
 
 
 def _run_linking_pass(conn, name, link) -> str | None:
-    """Run one post-source linking pass. Isolated like a source: never raises out of sync."""
+    """Run one post-source pass. Isolated like a source: never raises out of sync."""
     run_id = db.start_sync_run(conn, name)
     try:
         n = link(conn)

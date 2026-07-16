@@ -4,6 +4,7 @@ from toronto_bids import config
 from toronto_bids.linking.document_number import normalize_document_number
 from toronto_bids.models import Award, NonCompetitive, Solicitation
 from toronto_bids.sources.base import Row
+from toronto_bids.title import clean_title
 
 # odata.metadata=none returns {"@odata.count": N, "value": [...]}, records in "value".
 _FORMAT = "application/json;odata.metadata=none"
@@ -45,7 +46,8 @@ def normalize_solicitation(raw: dict) -> Iterable[Row]:
         rfx_type=_clean(raw.get("Solicitation_Document_Type")),
         noip_type=None,
         form_type=_clean(raw.get("Solicitation_Form_Type")),
-        title=_clean(raw.get("Posting_Title")),
+        # A placeholder title is spelled NULL so COALESCE stops it winning (#70).
+        title=clean_title(_clean(raw.get("Posting_Title"))),
         description=_clean(raw.get("Solicitation_Document_Description")),
         issue_date=_clean(raw.get("Issue_Date")),
         submission_deadline=_clean(raw.get("Closing_Date")),
