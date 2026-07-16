@@ -91,6 +91,15 @@ def build_export_document(conn, generated_at: str | None = None) -> dict:
         "FROM sync_run ORDER BY id",
     )
 
+    pdfs_by_ref: dict[str, list] = {}
+    for pdf in _rows(conn, "SELECT * FROM background_pdf ORDER BY reference, url"):
+        pdfs_by_ref.setdefault(pdf["reference"], []).append(_drop(pdf, "id", "text"))
+
+    council_items = []
+    for ci in _rows(conn, "SELECT * FROM council_item ORDER BY reference"):
+        ci["background_pdfs"] = pdfs_by_ref.get(ci["reference"], [])
+        council_items.append(ci)
+
     return {
         "meta": {
             "generated_at": generated_at,
@@ -101,6 +110,7 @@ def build_export_document(conn, generated_at: str | None = None) -> dict:
         "noncompetitive": noncompetitive,
         "suspended_firms": suspended_firms,
         "suppliers": suppliers,
+        "council_items": council_items,
         "unlinked_ariba_postings": unlinked,
         "unlinked_awards": unlinked_awards,
     }

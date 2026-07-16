@@ -7,7 +7,8 @@ from lxml import html as _html
 from lxml.html import HtmlComment
 
 from toronto_bids import config
-from toronto_bids.models import CouncilItem
+from toronto_bids.models import BackgroundPdf, CouncilItem
+from toronto_bids.store import db
 
 _LEGDOCS = "/legdocs/mmis/"
 
@@ -99,3 +100,30 @@ def fetch_agenda_item(reference: str, virtual_display: bool = False) -> str:
     finally:
         if display is not None:
             display.stop()
+
+
+def enrich_council(conn, http, fetch=fetch_agenda_item, dest_dir=None) -> int:
+    """Fetch + archive the council decision and PDFs for each suspended firm's Authority.
+
+    `fetch(reference) -> html` is injectable so the loop is testable without a browser.
+    Idempotent. Returns the number of council items processed.
+    """
+    dest_dir = dest_dir if dest_dir is not None else config.COUNCIL_DOCS_DIR
+    refs = [r["council_authority"] for r in conn.execute(
+        "SELECT DISTINCT council_authority FROM suspended_firm "
+        "WHERE council_authority IS NOT NULL AND council_authority != ''"
+    )]
+    processed = 0
+    for ref in refs:
+        html = fetch(ref)
+        item, pdfs = parse_agenda_item(html, ref)
+        db.upsert_row(conn, item, overwrite=True)
+        for pdf in pdfs:
+            info = download_pdf(http, pdf["url"], dest_dir)
+            db.upsert_row(conn, BackgroundPdf(
+                url=pdf["url"], reference=ref, kind=pdf["kind"],
+                local_path=info["local_path"], sha256=info["sha256"], text=info["text"],
+            ), overwrite=True)
+        conn.commit()
+        processed += 1
+    return processed
