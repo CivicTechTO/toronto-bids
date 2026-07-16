@@ -170,3 +170,31 @@ def test_upsert_background_pdf_is_idempotent(conn):
 def test_counts_includes_council_tables(conn):
     c = db.counts(conn)
     assert "council_item" in c and "background_pdf" in c
+
+
+def test_init_db_adds_missing_column_to_pre_p5a_table():
+    # A database created before P5a has a suspended_firm table WITHOUT supplier_id.
+    # CREATE TABLE IF NOT EXISTS won't touch the existing table, so init_db must
+    # additively self-heal by ALTERing in the missing column.
+    c = db.connect(":memory:")
+    c.execute(
+        "CREATE TABLE suspended_firm ("
+        " id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        " supplier_name_raw TEXT NOT NULL,"
+        " council_authority TEXT,"
+        " source TEXT,"
+        " UNIQUE (supplier_name_raw, council_authority))"
+    )
+    c.commit()
+
+    db.init_db(c)
+
+    cols = {r[1] for r in c.execute("PRAGMA table_info(suspended_firm)")}
+    assert "supplier_id" in cols
+    # The healed column must be writable — the supplier dimension backfills it.
+    c.execute("INSERT INTO suspended_firm (supplier_name_raw, council_authority, source)"
+              " VALUES ('Acme', 'A1', 'x')")
+    c.execute("UPDATE suspended_firm SET supplier_id = 7 WHERE supplier_name_raw = 'Acme'")
+    row = c.execute("SELECT supplier_id FROM suspended_firm WHERE supplier_name_raw = 'Acme'").fetchone()
+    assert row["supplier_id"] == 7
+    c.close()

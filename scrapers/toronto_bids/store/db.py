@@ -37,7 +37,49 @@ def connect(path) -> sqlite3.Connection:
 def init_db(conn) -> None:
     schema = resources.files("toronto_bids.store").joinpath("schema.sql").read_text()
     conn.executescript(schema)
+    _add_missing_columns(conn, schema)
     conn.commit()
+
+
+def _add_missing_columns(conn, schema: str) -> None:
+    """Additively self-heal an older database.
+
+    `CREATE TABLE IF NOT EXISTS` never alters a table that already exists, so a
+    database created before a column was added to schema.sql (e.g. suspended_firm.
+    supplier_id, added in P5a) silently lacks that column. Build the reference schema
+    in a scratch in-memory DB, then `ALTER TABLE ... ADD COLUMN` any column present in
+    the reference but missing from the live table. Only additive, nullable-or-defaulted
+    columns are handled — exactly what ADD COLUMN can safely apply.
+    """
+    ref = sqlite3.connect(":memory:")
+    try:
+        ref.executescript(schema)
+        ref_tables = [r[0] for r in ref.execute(
+            "SELECT name FROM sqlite_master WHERE type='table'")]
+        for table in ref_tables:
+            actual = {r[1] for r in conn.execute(f"PRAGMA table_info({table})")}
+            if not actual:
+                continue  # table didn't exist — the CREATE above already made it current
+            for _cid, name, coltype, notnull, default, _pk in ref.execute(
+                    f"PRAGMA table_info({table})"):
+                if name in actual:
+                    continue
+                if notnull and default is None:
+                    continue  # ADD COLUMN can't add NOT NULL without a default
+                decl = f"{name} {coltype}".strip()
+                if notnull:
+                    decl += " NOT NULL"
+                if default is not None:
+                    decl += f" DEFAULT {default}"
+                try:
+                    conn.execute(f"ALTER TABLE {table} ADD COLUMN {decl}")
+                except sqlite3.OperationalError:
+                    # ADD COLUMN also refuses non-constant defaults (e.g. datetime('now')),
+                    # UNIQUE, and PRIMARY KEY. Such columns can't be retrofitted onto an
+                    # existing table; they predate any realistic legacy DB anyway. Skip.
+                    continue
+    finally:
+        ref.close()
 
 
 def _upsert_keyed(conn, table, cols, values, key_cols, overwrite: bool) -> None:
