@@ -52,3 +52,7 @@ the open next step, and it does not depend on that older stack.
 This is a [CivicTechTO](https://civictech.ca/) project. Issues and pull requests welcome.
 The scraper's tests run offline against fixtures, so `cd scrapers && uv sync && uv run pytest`
 is enough to get a working development setup — it needs no database, credentials, or network.
+
+The council-enrichment tests additionally shell out to `pdftotext`, and skip if it isn't
+installed. To run them too, install poppler (`brew install poppler`, or
+`apt-get install -y poppler-utils`); CI does.
