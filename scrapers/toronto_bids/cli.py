@@ -125,7 +125,7 @@ def _cmd_enrich_titles(args) -> int:
     """
     from toronto_bids.sources.bid_award_panel import (
         cached_agendas, fill_titles_from_council, scrape_agendas, store_background_pdfs,
-        store_bids, store_items)
+        match_pre_ariba_titles, store_bids, store_items)
     from toronto_bids.sources.legacy_titles import fill_titles_from_legacy
 
     conn = _open_db()
@@ -154,6 +154,9 @@ def _cmd_enrich_titles(args) -> int:
             # §2.5.2 calls unrecoverable (#84).
             print(f"  bids extracted       : {store_bids(conn, agendas)}")
             print(f"  titles from council : {fill_titles_from_council(conn)}")
+            # Pre-Ariba items name no document number, so they are matched on
+            # (supplier, award value) instead (#77).
+            print(f"  titles pre-Ariba    : {match_pre_ariba_titles(conn, agendas)}")
 
         n_legacy = fill_titles_from_legacy(conn, config.LEGACY_ARIBA_DIR)
         print(f"  titles from legacy  : {n_legacy}"

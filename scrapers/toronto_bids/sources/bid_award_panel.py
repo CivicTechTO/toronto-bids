@@ -30,6 +30,7 @@ from lxml import html as _html
 from lxml.html import HtmlComment
 
 from toronto_bids.linking.document_number import normalize_document_number
+from toronto_bids.linking.supplier import supplier_key
 from toronto_bids.amount import parse_amount
 from toronto_bids.sources.council import pdf_kind
 from toronto_bids.models import BackgroundPdf, Bid, CouncilItem
@@ -41,6 +42,8 @@ AGENDA_URL = "https://secure.toronto.ca/council/report.do"
 _ITEM_HEADING = re.compile(r"^\s*(?P<ref>BA\d+\.\d+)\s*-\s*(?P<title>.+?)\s*$", re.S)
 _TEN_DIGIT = re.compile(r"\d{10}")
 _WS = re.compile(r"\s+")
+# Collapse spaces/tabs but keep newlines: item headings are found by line.
+_WS_LINES = re.compile(r"[ \t]+")
 
 # Item titles that are panel housekeeping, never an award.
 _NOT_AN_AWARD = re.compile(r"^(election of|confirmation of minutes|declarations? of)", re.I)
@@ -424,3 +427,71 @@ def store_bids(conn, agendas: dict) -> int:
             n += 1
     conn.commit()
     return n
+
+
+# "Award of Tender Call No. 14-2017 to Ontario Excavac Inc. for Replacement of ..."
+_WINNER = re.compile(r"\bto\s+(.+?)\s+for\s+", re.I)
+# Council publishes THREE figures per award. Calibrated against 980 Ariba-era items where the
+# document number gives ground truth: award_amount is the "net of all applicable taxes" one
+# (820/980 = 84%). "including HST" matched 0; "net of HST recoveries" matched 4.
+_NET_OF_TAXES = re.compile(r"\$([\d,]+(?:\.\d+)?)\s*net of all applicable taxes", re.I)
+_ITEM_SPLIT = re.compile(r"BA\d+\.\d+ - ")
+
+
+def parse_pre_ariba_awards(html: str) -> list[dict]:
+    """Items that name no document number, with the winner and value needed to match them.
+
+    Toronto adopted Ariba around 2019, so a 2017-2018 agenda identifies its award by Call
+    Number ("Award of Call Number 6032-16-3114 to MeteoGroup...") and our spine is keyed on a
+    10-digit Ariba number backfilled later. There is no identifier in common (#77), and
+    `Contract_Number_Purchase_Order` is empty on all 7,592 feed records.
+
+    But the item names its winner and its value, and `award` holds both. That is the join.
+    """
+    text = _WS_LINES.sub(" ", _html.fromstring(html).text_content())
+    out = []
+    for chunk in _ITEM_SPLIT.split(text)[1:]:
+        head = chunk[:400]
+        if _TEN_DIGIT.search(head):
+            continue                      # names a doc number — joins directly, not our case
+        winner, value = _WINNER.search(head), _NET_OF_TAXES.search(chunk)
+        if not (winner and value):
+            continue
+        amount = parse_amount(value.group(1))
+        if amount is None:
+            continue
+        out.append({"title": _clean(head.split("\n")[0]),
+                    "winner_raw": _clean(winner.group(1)),
+                    "award_value": amount})
+    return out
+
+
+def match_pre_ariba_titles(conn, agendas: dict) -> int:
+    """Name title-less pre-Ariba solicitations by matching (supplier, award value). Idempotent.
+
+    Only a UNIQUE match is accepted. The key barely collides — 21 of 5,443 title-less award
+    rows share a (supplier, amount) with a different document — but a wrong title is worse
+    than none, so an ambiguous match is dropped rather than guessed.
+    """
+    index = {}
+    for row in conn.execute(
+            "SELECT a.document_number d, a.supplier_name_raw s, a.award_amount_numeric v "
+            "FROM award a JOIN solicitation sol ON sol.document_number = a.document_number "
+            "WHERE a.source='odata' AND a.award_amount_numeric IS NOT NULL "
+            "AND a.supplier_name_raw IS NOT NULL AND sol.title IS NULL"):
+        index.setdefault((supplier_key(row["s"]), round(row["v"])), set()).add(row["d"])
+
+    filled = {}
+    for meeting, html in agendas.items():
+        if meeting.split(".")[0] >= "2019":
+            continue                      # 2019+ names a document number; no need to guess
+        for item in parse_pre_ariba_awards(html):
+            docs = index.get((supplier_key(item["winner_raw"]), round(item["award_value"])))
+            if docs and len(docs) == 1:
+                filled.setdefault(next(iter(docs)), item["title"])
+    conn.executemany(
+        "UPDATE solicitation SET title = ?, source = 'council_pre_ariba' "
+        "WHERE document_number = ? AND title IS NULL",
+        [(t, d) for d, t in filled.items()])
+    conn.commit()
+    return len(filled)
