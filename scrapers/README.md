@@ -58,6 +58,18 @@ each one to stderr and **exits non-zero** if any source failed, so cron and CI n
 `tb status` shows the last run per source with its status and error, which is where you
 look first when a number seems wrong.
 
+### Feed drift
+
+`sources/schema_check.py` declares the fields each normalizer reads out of the City's
+OData and CKAN feeds, and a `schema_check` source samples one record per feed on every
+sync to confirm they're still there. If the City renames or drops a field, the run fails
+loudly instead of quietly NULLing that column across every row.
+
+It's an ordinary source, so per-source isolation applies deliberately: **drift is reported
+without stopping ingestion**. A renamed buyer-phone field should never cost us the archive
+of a posting that disappears when it closes. When it fires, fix the normalizer and the
+declared field set together — they're two halves of one change.
+
 - `uv run tb export [--out PATH]` — write the whole store to a single
   solicitation-centric nested JSON artifact (default `<DATA_DIR>/export/bids.json`):
   each solicitation with its `awards` and `ariba_postings` nested by `document_number`,
