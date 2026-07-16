@@ -35,3 +35,24 @@ def test_sync_uses_pipeline_and_persists(tmp_path, monkeypatch):
     conn = db.connect(db_path)
     assert db.counts(conn)["solicitation"] == 1
     conn.close()
+
+
+def test_export_writes_default_path(tmp_path, monkeypatch, capsys):
+    from toronto_bids.models import Solicitation
+    monkeypatch.setattr("toronto_bids.config.DB_PATH", tmp_path / "bids.sqlite")
+    monkeypatch.setattr("toronto_bids.config.DATA_DIR", tmp_path)
+    # Seed one row via a sync-less direct write path: open the db the CLI will use.
+    from toronto_bids.store import db
+    conn = db.connect(tmp_path / "bids.sqlite")
+    db.init_db(conn)
+    db.upsert_row(conn, Solicitation(document_number="5672751291", source="odata"), overwrite=True)
+    conn.commit()
+    conn.close()
+
+    assert main(["export"]) == 0
+    import json
+    out = tmp_path / "export" / "bids.json"
+    assert out.exists()
+    doc = json.loads(out.read_text())
+    assert doc["solicitations"][0]["document_number"] == "5672751291"
+    assert "Exported" in capsys.readouterr().out

@@ -23,3 +23,16 @@ USER_AGENT = (
 )
 HTTP_TIMEOUT = 60.0
 HTTP_RETRIES = 4
+
+# SAP Ariba Discovery public JSON APIs (no auth).
+ARIBA_SEARCH_URL = "https://service.ariba.com/Network/discoveryweb/search/public/v1/doIndexedSearch"
+ARIBA_DETAIL_URL = "https://service.ariba.com/Network/discoveryweb/api/public/v1/rfx/{rfx_id}"
+ARIBA_SEARCH_PARAMS = {"siteName": "Quote"}
+ARIBA_SEARCH_BODY = {
+    "pageSize": 1000,
+    "pageNum": 0,
+    "searchType": "Quote",
+    "sortBy": "RESPONSE_DEAD_LINE",
+    "filters": [],
+}
+ARIBA_CUSTOMER_NAME = "City of Toronto"

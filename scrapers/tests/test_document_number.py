@@ -1,6 +1,6 @@
 import pytest
 
-from toronto_bids.linking.document_number import normalize_document_number
+from toronto_bids.linking.document_number import normalize_document_number, bridge_document_number
 
 
 @pytest.mark.parametrize(
@@ -42,3 +42,28 @@ def test_valid_document_numbers_normalize_to_ten_digits(raw, expected):
 )
 def test_invalid_document_numbers_return_none(raw):
     assert normalize_document_number(raw) is None
+
+
+def test_bridge_uses_external_rfx_id():
+    # "Doc5672751291" -> strip -> "5672751291"
+    assert bridge_document_number("Doc5672751291", "some title") == "5672751291"
+
+
+def test_bridge_falls_back_to_title_embedded_doc():
+    title = "Doc5581608073 - Request for Quotations for the non-exclusive supply"
+    assert bridge_document_number(None, title) == "5581608073"
+
+
+def test_bridge_prefers_external_rfx_id_over_title():
+    assert bridge_document_number("Doc5672751291", "Doc9999999999 - other") == "5672751291"
+
+
+def test_bridge_returns_none_when_neither_resolves():
+    assert bridge_document_number(None, "Request for Tenders for Road Resurfacing") is None
+    assert bridge_document_number("", "") is None
+    assert bridge_document_number(None, None) is None
+
+
+def test_bridge_rejects_title_doc_with_more_than_ten_digits():
+    # An 11-digit run is ambiguous -> must NOT fabricate a truncated document number.
+    assert bridge_document_number(None, "Doc56727512911 - eleven digit run") is None

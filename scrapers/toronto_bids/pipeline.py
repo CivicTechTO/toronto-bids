@@ -1,3 +1,4 @@
+from toronto_bids.sources.ariba import AribaDiscoverySource
 from toronto_bids.sources.ckan import CkanSource
 from toronto_bids.sources.odata import ODataNonCompetitiveSource, ODataSolicitationSource
 from toronto_bids.store import db
@@ -12,6 +13,7 @@ def default_sources():
         CkanSource(name="ckan_awarded", slug=config.CKAN_AWARDED_SLUG, kind="awarded"),
         CkanSource(name="ckan_open", slug=config.CKAN_OPEN_SLUG, kind="open"),
         CkanSource(name="ckan_noncomp", slug=config.CKAN_NONCOMP_SLUG, kind="noncompetitive"),
+        AribaDiscoverySource(),
     ]
 
 

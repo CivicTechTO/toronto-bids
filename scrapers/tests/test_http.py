@@ -57,6 +57,16 @@ def test_post_json_sends_body():
     assert client.post_json("https://example.test/x", json={"a": 1}) == {"echo": True}
 
 
+def test_get_json_sends_custom_headers():
+    seen = {}
+    def handler(request):
+        seen["accept"] = request.headers.get("Accept")
+        return httpx.Response(200, json={"ok": True})
+    client = _client(handler)
+    client.get_json("https://example.test/x", headers={"Accept": "application/json"})
+    assert seen["accept"] == "application/json"
+
+
 def test_default_client_uses_config_user_agent():
     from toronto_bids import config
     client = HttpClient()

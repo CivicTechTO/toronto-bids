@@ -1,6 +1,7 @@
 import argparse
 
 from toronto_bids import __version__, config, pipeline
+from toronto_bids.export.json_export import JsonExporter
 from toronto_bids.http import HttpClient
 from toronto_bids.store import db
 
@@ -14,6 +15,9 @@ def build_parser() -> argparse.ArgumentParser:
     p_sync.add_argument("--only", help="Comma-separated source names to run")
 
     sub.add_parser("status", help="Show row counts in the local store")
+
+    p_export = sub.add_parser("export", help="Write the store to a nested JSON artifact")
+    p_export.add_argument("--out", help="Output path (default: <DATA_DIR>/export/bids.json)")
     return parser
 
 
@@ -51,6 +55,20 @@ def _cmd_status(args) -> int:
     return 0
 
 
+def _cmd_export(args) -> int:
+    from pathlib import Path
+
+    conn = _open_db()
+    try:
+        out_path = Path(args.out) if args.out else config.DATA_DIR / "export" / "bids.json"
+        written = JsonExporter().export(conn, out_path)
+        counts = db.counts(conn)
+        print(f"Exported {counts['solicitation']} solicitations to {written}")
+    finally:
+        conn.close()
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
@@ -58,6 +76,8 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_sync(args)
     if args.command == "status":
         return _cmd_status(args)
+    if args.command == "export":
+        return _cmd_export(args)
     parser.print_help()
     return 0
 

@@ -1,4 +1,4 @@
-from toronto_bids.models import Award, NonCompetitive, Solicitation
+from toronto_bids.models import Award, NonCompetitive, Solicitation, AribaPosting
 from toronto_bids.store import db
 
 
@@ -6,7 +6,7 @@ def test_init_creates_tables(conn):
     names = {r[0] for r in conn.execute(
         "SELECT name FROM sqlite_master WHERE type='table'"
     )}
-    assert {"solicitation", "award", "noncompetitive", "sync_run"} <= names
+    assert {"solicitation", "award", "noncompetitive", "ariba_posting", "sync_run"} <= names
 
 
 def test_upsert_solicitation_is_idempotent(conn):
@@ -56,3 +56,29 @@ def test_sync_run_lifecycle(conn):
     db.finish_sync_run(conn, run_id, status="ok", rows_fetched=10, rows_upserted=10)
     row = conn.execute("SELECT status, rows_fetched FROM sync_run WHERE id=?", (run_id,)).fetchone()
     assert row["status"] == "ok" and row["rows_fetched"] == 10
+
+
+def test_upsert_ariba_posting_is_idempotent(conn):
+    p = AribaPosting(rfx_id="1110015885", document_number="5672751291",
+                     title="RFT Watermain", raw_json="{}", source="ariba_discovery")
+    db.upsert_row(conn, p, overwrite=True)
+    db.upsert_row(conn, p, overwrite=True)
+    assert db.counts(conn)["ariba_posting"] == 1
+
+
+def test_ariba_posting_later_500_does_not_wipe_snapshot(conn):
+    # Run 1: detail succeeded -> raw_json + document_number captured.
+    db.upsert_row(conn, AribaPosting(rfx_id="1110015885", document_number="5672751291",
+                                     raw_json="{\"x\":1}", source="ariba_discovery"), overwrite=True)
+    # Run 2: detail 500'd -> those fields arrive as None. overwrite=True must NOT clobber them.
+    db.upsert_row(conn, AribaPosting(rfx_id="1110015885", document_number=None,
+                                     raw_json=None, source="ariba_discovery"), overwrite=True)
+    row = conn.execute(
+        "SELECT document_number, raw_json FROM ariba_posting WHERE rfx_id='1110015885'"
+    ).fetchone()
+    assert row["document_number"] == "5672751291"
+    assert row["raw_json"] == "{\"x\":1}"
+
+
+def test_counts_includes_ariba_posting(conn):
+    assert "ariba_posting" in db.counts(conn)

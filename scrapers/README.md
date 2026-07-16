@@ -10,6 +10,12 @@ local SQLite store. No browser, no login, no cloud.
 - **OData `feis_non_competitive_published`** — non-competitive (sole-source) awards.
 - **CKAN `tobids-awarded-contracts` / `tobids-all-open-solicitations` /
   `tobids-non-competitive-contracts`** — backfill for the spine.
+- **SAP Ariba Discovery** (`ariba_discovery`) — archives currently-open City-of-Toronto
+  Ariba postings (`ariba_posting` table) before they close, via public JSON APIs (no auth).
+  Each posting is bridged to its `document_number` where the detail endpoint resolves
+  (~40% return HTTP 500 on a given run and are archived un-bridged; idempotent re-runs fill
+  the gap). The `sourcing_url` column is the authenticated event link for a future
+  attachments phase.
 
 Everything competitive is keyed on the normalized 10-digit `document_number`.
 Non-competitive awards are a separate keyspace (`workspace_number`).
@@ -22,8 +28,18 @@ uv sync
 uv run tb sync            # fetch all sources into files/bids.sqlite
 uv run tb sync --only odata_solicitations,ckan_awarded
 uv run tb status          # row counts
+uv run tb export [--out PATH]  # write the whole store to a single JSON artifact
 uv run pytest             # tests (offline; uses fixtures)
 ```
+
+- `uv run tb export [--out PATH]` — write the whole store to a single
+  solicitation-centric nested JSON artifact (default `<DATA_DIR>/export/bids.json`):
+  each solicitation with its `awards` and `ariba_postings` nested by `document_number`,
+  plus top-level `noncompetitive`, `unlinked_ariba_postings` (Ariba postings whose
+  document_number never bridged to a solicitation), and `unlinked_awards` (awards
+  whose document_number matches no solicitation). This is the publish seam — the
+  `Exporter` interface lets other destinations/formats be added without changing the
+  document shape.
 
 Set `TB_DATA_DIR` to change where `bids.sqlite` and downloads live (default `scrapers/files/`).
 

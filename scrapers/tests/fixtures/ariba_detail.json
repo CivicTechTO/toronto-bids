@@ -1,0 +1,17 @@
+{
+  "id": "1110015885",
+  "type": "RFI",
+  "title": "Request for Tenders for Watermain and Sewer Replacement on various roads",
+  "status": "PUBLISHED",
+  "startDate": "2026-06-16T12:16:17",
+  "endDate": "2026-07-17T09:00:00",
+  "externalRfxId": "Doc5672751291",
+  "publicPostingUrl": "https://discovery.ariba.com/rfx/1110015885",
+  "sourcingUrl": "https://s1.ariba.com/Sourcing/Main/ad/gotoEvent/NetworkRFQDirectAction?rfxId=Doc5672751291&realm=toronto",
+  "companyInfo": {"companyName": "City of Toronto"},
+  "categories": [
+    {"categoryCode": 72141105, "categoryName": "Sidewalk construction and repair service"},
+    {"categoryCode": 72141121, "categoryName": "Water main construction service"}
+  ],
+  "opportunityAmount": {"maxAmount": 99000000, "minAmount": 1000, "currency": "CAD"}
+}
