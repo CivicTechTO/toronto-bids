@@ -83,3 +83,11 @@ def test_enrich_isolates_a_failing_pdf(conn, tmp_path):
     assert db.counts(conn)["council_item"] == 1
     # fixture has 2 bgrd + 3 comm distinct; comm all 404 -> only the 2 bgrd PDFs stored
     assert db.counts(conn)["background_pdf"] == 2
+
+
+def test_enrich_requires_pdftotext(conn, tmp_path, monkeypatch):
+    import toronto_bids.sources.council as council_mod
+    monkeypatch.setattr(council_mod.shutil, "which", lambda name: None)
+    import pytest
+    with pytest.raises(RuntimeError, match="pdftotext"):
+        enrich_council(conn, _http_pdf(), fetch=_stub_fetch, dest_dir=tmp_path)

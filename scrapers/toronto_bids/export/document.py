@@ -93,7 +93,7 @@ def build_export_document(conn, generated_at: str | None = None) -> dict:
 
     pdfs_by_ref: dict[str, list] = {}
     for pdf in _rows(conn, "SELECT * FROM background_pdf ORDER BY reference, url"):
-        pdfs_by_ref.setdefault(pdf["reference"], []).append(_drop(pdf, "id", "text"))
+        pdfs_by_ref.setdefault(pdf["reference"], []).append(_drop(pdf, "id", "text", "local_path"))
 
     council_items = []
     for ci in _rows(conn, "SELECT * FROM council_item ORDER BY reference"):

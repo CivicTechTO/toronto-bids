@@ -1,5 +1,6 @@
 import hashlib
 import re
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -109,6 +110,11 @@ def enrich_council(conn, http, fetch=fetch_agenda_item, dest_dir=None) -> int:
     Idempotent. Returns the number of council items processed.
     """
     dest_dir = dest_dir if dest_dir is not None else config.COUNCIL_DOCS_DIR
+    if shutil.which("pdftotext") is None:
+        raise RuntimeError(
+            "pdftotext (poppler) is required for `tb enrich-council` but was not found on PATH. "
+            "Install poppler (e.g. `brew install poppler` / `apt-get install -y poppler-utils`)."
+        )
     refs = [r["council_authority"] for r in conn.execute(
         "SELECT DISTINCT council_authority FROM suspended_firm "
         "WHERE council_authority IS NOT NULL AND council_authority != ''"
