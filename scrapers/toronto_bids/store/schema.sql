@@ -39,8 +39,25 @@ CREATE TABLE IF NOT EXISTS award (
     award_date         TEXT,
     source             TEXT,
     first_seen         TEXT NOT NULL DEFAULT (datetime('now')),
-    last_seen          TEXT NOT NULL DEFAULT (datetime('now')),
-    UNIQUE (document_number, supplier_name_raw, source)
+    last_seen          TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- One row per award LINE, not per (document, supplier) (#73).
+--
+-- A document can award the same supplier many times — standing-offer call-ups are routine:
+-- Cascades Recovery Inc. has 10 lines on doc 9154157025. Keying on
+-- (document_number, supplier_name_raw, source) kept ONE arbitrary line and dropped the rest:
+-- 326 lines and $451,879,325 of awarded value from the OData feed alone. It also made the two
+-- City feeds look like they contradicted each other on 158 awards, because each happened to
+-- keep a different survivor. Under this key they agree on all 6,745 shared pairs.
+--
+-- COALESCE, not a bare column list: SQLite treats NULLs as DISTINCT in a UNIQUE index, and 864
+-- awards have no amount — a bare key would insert a fresh duplicate of every one of them on
+-- every sync. The COALESCE keeps NULL in the data while making the index treat it as a value.
+-- db._upsert_keyed's conflict target must match this expression exactly.
+CREATE UNIQUE INDEX IF NOT EXISTS award_line_key ON award (
+    document_number, supplier_name_raw,
+    COALESCE(award_amount, ''), COALESCE(award_date, ''), source
 );
 
 CREATE INDEX IF NOT EXISTS idx_award_docnum ON award (document_number);

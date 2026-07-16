@@ -10,12 +10,21 @@ from toronto_bids.models import Award, NonCompetitive, Solicitation, AribaPostin
 _TABLES = {
     Solicitation: ("solicitation", ["document_number"]),
     NonCompetitive: ("noncompetitive", ["workspace_number"]),
-    Award: ("award", ["document_number", "supplier_name_raw", "source"]),
+    Award: ("award", ["document_number", "supplier_name_raw", "award_amount",
+                      "award_date", "source"]),
     AribaPosting: ("ariba_posting", ["rfx_id"]),
     SuspendedFirm: ("suspended_firm", ["supplier_name_raw", "council_authority"]),
     Supplier: ("supplier", ["supplier_key"]),
     CouncilItem: ("council_item", ["reference"]),
     BackgroundPdf: ("background_pdf", ["url"]),
+}
+
+# Tables whose uniqueness is enforced by an expression index rather than a column list, so
+# ON CONFLICT must name the same expressions. award's key COALESCEs its nullable parts
+# because SQLite treats NULLs as distinct — see the award_line_key comment in schema.sql.
+_CONFLICT_TARGETS = {
+    "award": "document_number, supplier_name_raw, "
+             "COALESCE(award_amount, ''), COALESCE(award_date, ''), source",
 }
 
 
@@ -30,7 +39,49 @@ def init_db(conn) -> None:
     schema = resources.files("toronto_bids.store").joinpath("schema.sql").read_text()
     conn.executescript(schema)
     _add_missing_columns(conn, schema)
+    _rebuild_award_for_line_key(conn, schema)
     conn.commit()
+
+
+def _rebuild_award_for_line_key(conn, schema: str) -> bool:
+    """Drop award's old table-level UNIQUE so award_line_key governs instead (#73).
+
+    `_add_missing_columns` only ADDs columns; it cannot remove a constraint, and
+    `CREATE TABLE IF NOT EXISTS` never alters an existing table. A database built before #73
+    therefore keeps `UNIQUE (document_number, supplier_name_raw, source)` — which silently
+    discards every award line after the first for a (document, supplier), and would reject the
+    additional lines the next sync tries to insert. So the table needs a genuine rebuild.
+
+    Rows are copied rather than re-fetched so `first_seen` survives: it is archive metadata
+    recording when we first saw a row, and no feed can tell us that again. The lines that were
+    already dropped cannot be recovered here — the next sync re-reads the feed and inserts them.
+
+    Returns True if a rebuild happened. Idempotent: a no-op once the old UNIQUE is gone.
+    """
+    row = conn.execute(
+        "SELECT sql FROM sqlite_master WHERE type='table' AND name='award'").fetchone()
+    if row is None or "UNIQUE" not in (row["sql"] or "").upper():
+        return False                        # fresh DB, or already rebuilt
+
+    cols = [r[1] for r in conn.execute("PRAGMA table_info(award)")]
+    quoted = ", ".join(cols)
+    conn.executescript("PRAGMA foreign_keys = OFF;")
+    try:
+        conn.execute("ALTER TABLE award RENAME TO _award_pre73")
+        # The rename drags award_line_key along with the old table, and CREATE INDEX
+        # IF NOT EXISTS would then skip it by name — leaving the rebuilt table with no
+        # unique index at all. Free the name first.
+        conn.execute("DROP INDEX IF EXISTS award_line_key")
+        # Recreating from schema.sql keeps one definition of the table, rather than a second
+        # copy of the DDL drifting here. Every statement is IF NOT EXISTS, so re-running the
+        # whole script only materialises the award table we just renamed away.
+        conn.executescript(schema)
+        conn.execute(f"INSERT INTO award ({quoted}) SELECT {quoted} FROM _award_pre73")
+        conn.execute("DROP TABLE _award_pre73")
+        conn.commit()
+    finally:
+        conn.executescript("PRAGMA foreign_keys = ON;")
+    return True
 
 
 def _add_missing_columns(conn, schema: str) -> None:
@@ -83,7 +134,7 @@ def _upsert_keyed(conn, table, cols, values, key_cols, overwrite: bool) -> None:
     else:
         # Backfill only: keep existing value; fill in only where existing is NULL.
         sets = ", ".join(f"{c} = COALESCE({table}.{c}, excluded.{c})" for c in non_key)
-    conflict = ", ".join(key_cols)
+    conflict = _CONFLICT_TARGETS.get(table) or ", ".join(key_cols)
     sql = (
         f"INSERT INTO {table} ({', '.join(cols)}) VALUES ({placeholders}) "
         f"ON CONFLICT ({conflict}) DO UPDATE SET {sets}, last_seen = datetime('now')"
