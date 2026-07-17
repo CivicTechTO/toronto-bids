@@ -29,7 +29,7 @@ uv run tb nightly                         # sync + archive new Award Summary For
 - `TB_DATA_DIR` env var relocates the DB and downloads (default `scrapers/files/`).
 - Opt-in council enrichment: `uv sync --extra council && uv run playwright install chromium`, then `uv run tb enrich-council` (`--virtual-display` for Xvfb on headless servers). Not part of `tb sync`.
 - `uv run tb enrich-titles` recovers titles the City never published (#65). **Offline by default** — it reads agendas already cached under `<DATA_DIR>/council/agendas/` plus the legacy archive, so it needs no browser. `--scrape` fetches Bid Award Panel agendas first (headed browser, needs the `council` extra; ~10 min cold, seconds once cached — an agenda on disk is never refetched). Not part of `tb sync`.
-- `tb sync` hits live City endpoints (a full run measures ~3.5 min, mostly Ariba Discovery); the tests are the dev loop.
+- `tb sync` hits live City endpoints (a full run measures ~3 min, mostly Ariba Discovery); the tests are the dev loop.
 - **Deployment**: `tb nightly` runs `sync → enrich-awards --download → export → post a Slack summary`, each step isolated so one failure never stops the rest and the export runs even after a partial sync. It is what the systemd user timer on the home server runs at 05:30 America/Toronto — see `deploy/README.md` and `docs/superpowers/specs/2026-07-17-deployment-design.md`. The Slack webhook lives only in `~/.config/toronto-bids/tb.env` (mode `0600`) on the server, never in git; unset it and `tb nightly` still runs and just posts nothing. Nothing browser-bound is on the scheduled path.
 
 ## Architecture

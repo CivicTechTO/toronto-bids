@@ -134,3 +134,23 @@ def test_a_successful_post_returns_true(monkeypatch):
         status_code = 200
     monkeypatch.setattr(notify.httpx, "post", lambda url, **kw: Resp())
     assert notify.post("hi", webhook="https://hooks.slack.test/x") is True
+
+
+def test_a_failed_before_count_shows_no_delta_rather_than_a_fabricated_one():
+    """When the `before` count raised, the caller passes before={}. Rendering (+18,632) against
+    a zero it never actually measured is a fabricated number in the exact mechanism the summary
+    exists for. Show the absolute count, no delta."""
+    text = notify.summarize({}, AFTER, [("counts", "locked")], 9, 30_800_000, 5.0)
+    assert "bids 18,632" in text
+    assert "(+" not in text
+
+
+def test_a_malformed_webhook_exception_never_leaks_the_url_into_the_log(monkeypatch):
+    """The exception branch must not undo what the status-code branch is careful about:
+    httpx.InvalidURL embeds the request URL in its message, and log() goes to journald."""
+    def raise_invalid(*a, **k):
+        raise notify.httpx.InvalidURL("Invalid URL 'https://hooks.slack.test/SECRET-TOKEN'")
+    monkeypatch.setattr(notify.httpx, "post", raise_invalid)
+    said = []
+    assert notify.post("hi", webhook="https://hooks.slack.test/SECRET-TOKEN", log=said.append) is False
+    assert not any("SECRET-TOKEN" in m for m in said)

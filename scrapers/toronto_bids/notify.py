@@ -19,8 +19,15 @@ _SLACK_TIMEOUT = 15.0
 
 
 def _count(before: dict, after: dict, key: str, label: str) -> str:
-    """'solicitations 7,653 (+12)', or without the delta when nothing moved."""
+    """'solicitations 7,653 (+12)', or without the delta when nothing moved.
+
+    An empty `before` means the before-count did not run (the caller passes {} on that
+    failure) — showing a delta against it would render a fake number against a zero nobody
+    measured, so it is omitted entirely rather than computed against 0.
+    """
     now = after.get(key, 0)
+    if not before:
+        return f"{label} {now:,}"
     delta = now - before.get(key, 0)
     return f"{label} {now:,}" + (f" ({delta:+,})" if delta else "")
 
@@ -72,5 +79,7 @@ def post(text: str, webhook: str | None = None, log=lambda _m: None) -> bool:
             return False
         return True
     except Exception as exc:
-        log(f"  slack post failed: {exc}")
+        # Log the exception TYPE, not str(exc): httpx.InvalidURL and UnsupportedProtocol embed
+        # the request URL in their message, same leak the status-code branch above avoids.
+        log(f"  slack post failed: {type(exc).__name__}")
         return False
