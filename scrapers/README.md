@@ -98,9 +98,25 @@ coerces text prefixes, so that sum silently returns **$950 trillion**; and becau
 sorts above every number, `award_amount > 1000` matches every row that *has* an amount,
 whatever the amount is. Aggregate **`award_amount_numeric`** (`REAL`) instead — same for
 `contract_amount_numeric`. Where the numeric is NULL beside a non-NULL raw string, the raw
-value is not a single CAD amount (68 of 14,165 awards). That is deliberate, not missing
+value is not a single CAD amount (67 of 14,165 awards). That is deliberate, not missing
 data: the string is kept because it is what the City published, and some of it has no
 numeric form at all.
+
+**Amounts come in three tiers.** `award_amount` is raw, `award_amount_numeric` is what the
+machine could parse from it, and `award_amount_labelled` (+ `award_amount_verdict`) is human
+judgement on the 35 strings the parser refuses — `'S2,035,000.00'` really is $2,035,000.00,
+`'31.65/MT'` really is a rate and not a total. The verdicts are a reviewable file
+(`toronto_bids/data/amount_labels.toml`), not a database someone clicked, so `git blame` says
+who decided and which PR argued it.
+
+```sql
+SELECT SUM(award_amount_numeric) FROM award WHERE source = 'odata';                     -- machine only
+SELECT SUM(COALESCE(award_amount_labelled, award_amount_numeric)) FROM award
+ WHERE source = 'odata' AND COALESCE(award_amount_verdict, '') != 'not_an_award';       -- opts into human calls
+```
+
+Both are honest; neither is silently mixed. `tb amounts unlabelled` lists anything the parser
+refused that nobody has ruled on yet.
 
 **One `award` row is one award *line*, not one supplier.** A document can award the same
 supplier many times — standing-offer call-ups are routine, and `Cascades Recovery Inc.` has

@@ -49,6 +49,8 @@ CREATE TABLE IF NOT EXISTS award (
     -- non-NULL award_amount means the raw value is not a single CAD amount. Aggregate on
     -- this column, never on award_amount.
     award_amount_numeric REAL,
+    award_amount_labelled  REAL,
+    award_amount_verdict   TEXT,
     award_date         TEXT,
     source             TEXT,
     first_seen         TEXT NOT NULL DEFAULT (datetime('now')),
@@ -83,6 +85,8 @@ CREATE TABLE IF NOT EXISTS noncompetitive (
     -- Raw string / parsed number: see the award table above.
     contract_amount         TEXT,
     contract_amount_numeric REAL,
+    contract_amount_labelled REAL,
+    contract_amount_verdict  TEXT,
     contract_date            TEXT,
     division                TEXT,
     council_authority_link  TEXT,
@@ -293,3 +297,20 @@ CREATE UNIQUE INDEX IF NOT EXISTS composite_award_line_key ON composite_award (
 );
 
 CREATE INDEX IF NOT EXISTS idx_composite_award_call ON composite_award (call_number);
+
+-- Human verdicts on the amounts the parser refuses (#74). A THIRD TIER, deliberately not
+-- merged into *_numeric: that column's contract is "a number the machine derived from what
+-- the City published", and it is what makes `numeric IS NULL` mean exactly "not
+-- machine-parseable". Merging human judgement into it destroys the review queue and makes a
+-- sum silently part-machine, part-opinion.
+--
+--     raw       award_amount           what the City published, verbatim
+--     parsed    award_amount_numeric   machine-derived, conservative, no guesses
+--     labelled  award_amount_labelled  human judgement, provenance in git
+--
+-- SUM(award_amount_numeric) is a defensible undercount. SUM(COALESCE(labelled, numeric)) is
+-- fuller and the analyst knows they opted in. Neither is silently mixed.
+--
+-- Absent from the Award / NonCompetitive models on purpose, exactly as solicitation.
+-- title_source is (#79): every sync re-upserts these rows, so anything db.upsert_row can
+-- write, the feed can clobber. Only the labelling pass reaches these columns.
