@@ -34,6 +34,9 @@ _SUPPLIER_TABLES = [
     ("noncompetitive", "workspace_number"),
     ("suspended_firm", "id"),
     ("bid", "id"),
+    # 2009-2012 winners, from years the City's feed barely covers (#96). Firms that only ever
+    # won pre-Ariba would otherwise be absent from the dimension entirely.
+    ("composite_award", "id"),
 ]
 
 # bid names its supplier in a different column from the other three.

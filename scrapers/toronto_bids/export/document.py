@@ -73,6 +73,12 @@ def build_export_document(conn, generated_at: str | None = None) -> dict:
     # is actually solicited. Top-level rather than nested for that reason (#69).
     capital_projects = _rows(conn, "SELECT * FROM capital_project ORDER BY name")
 
+    # 2009-2012 awards, keyed on Call Number because they predate Ariba (#96). Top-level for
+    # the same reason as capital_projects: they nest under no solicitation and never will.
+    # For 2009-2011 these are the only awards the archive has at all.
+    composite_awards = _rows(
+        conn, "SELECT * FROM composite_award ORDER BY call_number, supplier_name_raw")
+
     suspended_firms = [
         _drop(firm, "id")
         for firm in _rows(conn, "SELECT * FROM suspended_firm ORDER BY supplier_name_raw, council_authority")
@@ -114,6 +120,7 @@ def build_export_document(conn, generated_at: str | None = None) -> dict:
         "suspended_firms": suspended_firms,
         "suppliers": suppliers,
         "capital_projects": capital_projects,
+        "composite_awards": composite_awards,
         "council_items": council_items,
         "unlinked_ariba_postings": unlinked,
         "unlinked_awards": unlinked_awards,

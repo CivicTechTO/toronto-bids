@@ -38,7 +38,9 @@ local SQLite store. No browser, no login, no cloud.
   record keeps its `supplier_id` so you can answer "which contracts belong to this supplier?".
 
 Everything competitive is keyed on the normalized 10-digit `document_number`.
-Non-competitive awards are a separate keyspace (`workspace_number`).
+Non-competitive awards are a separate keyspace (`workspace_number`), and 2009-2012
+awards are a third (`composite_award.call_number`) — they predate Ariba, so they carry
+a Call Number and join to neither.
 
 ## Usage
 
@@ -119,6 +121,13 @@ Even then, treat the figure with care: three awards are implausible in *both* Ci
 (document `3901175008` publishes `9054510208` — $9.05B to an individual, against a ~$16B
 city budget) and carry roughly $15B of the total. The sum is faithful to what the City
 published; what the City published is wrong.
+
+**The archive reaches back further than the City's feed does.** For 2009-2011 the feed
+publishes 13 awards in total. The `composite_award` table holds **976 awards worth $2.1B**
+for 2009-2012, recovered from the Bid Committee's composite staff reports (#96). They
+predate Ariba, so they are keyed on **Call Number** and join to `solicitation` not at all —
+query them on their own, and aggregate `award_value_numeric`, which is the initial contract
+term and deliberately excludes the option years published beside it.
 
 **Most solicitations have no title.** For ~72% of them the City publishes the document
 number *as* the title (`Doc-3524228095`), which carries no information the primary key does

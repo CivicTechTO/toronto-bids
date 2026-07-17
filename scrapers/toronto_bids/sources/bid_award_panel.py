@@ -31,11 +31,12 @@ from lxml import html as _html
 from lxml.html import HtmlComment
 
 from toronto_bids import config
+from toronto_bids.linking.call_number import normalize_call_number
 from toronto_bids.linking.document_number import normalize_document_number
 from toronto_bids.linking.supplier import supplier_key
 from toronto_bids.amount import parse_amount
 from toronto_bids.sources.council import pdf_kind
-from toronto_bids.models import BackgroundPdf, Bid, CouncilItem
+from toronto_bids.models import BackgroundPdf, Bid, CompositeAward, CouncilItem
 from toronto_bids.store import db
 
 AGENDA_URL = "https://secure.toronto.ca/council/report.do"
@@ -604,21 +605,91 @@ def match_pre_ariba_titles(conn, agendas: dict) -> int:
 _APPENDIX_BLOCK = re.compile(r"(?=Call No:)", re.I)
 
 
-def _appendix_field(label: str) -> re.Pattern:
-    """A labelled appendix field, whose value may sit on the label's line or the next one.
+# An appendix is a run of "Label:" fields, and the value may sit on the label's line or the
+# lines below it. A regex lookahead for the next label cannot read this safely: it has to
+# enumerate what a label looks like, and the real ones defeat any tidy guess —
+# "Contract Award Value*:" (84), "Contract Award Values*:" (19) and
+# "Recommended Bidder/Proponent:" (18) all carry punctuation, so a [A-Za-z ]+ lookahead runs
+# straight past them and swallows the whole value block into the supplier name. That misread
+# 201 of 1,076 bidder fields. Walking lines instead makes the terminator explicit.
+_LABEL_LINE = re.compile(r"^[ \t]*([A-Z][A-Za-z ./&'-]{2,34})\*?:[ \t]*(.*)$")
+# An appendix can span a page break, which drops the running header, the page number and the
+# next "APPENDIX #n" banner into the middle of a field. One such header was captured verbatim
+# as a supplier name ("Contract Awards – Bid Committee Composite Report – January 26, 2011").
+_APX_FURNITURE = re.compile(
+    r"^\s*(?:\d{1,3}|Contract Awards.*Composite Report.*|APPENDIX\s*#?\s*\d*)\s*$", re.I)
+# Council footnotes the corrected tender prices ("*Tender price corrected for mathematical
+# errors..."), which belongs to no field.
+_APX_FOOTNOTE = re.compile(r"^\s*[*^+†‡]")
+# The same section headings sometimes arrive with no colon at all, which is invisible to
+# _LABEL_LINE and so does not end the field before it. Left unhandled the supplier swallows
+# the value block behind it — 24 names ran past their firm into "... Contract Award Value
+# Date of award to December 31, 2011", one to 735 characters.
+_APX_SECTION_NO_COLON = re.compile(
+    r"^\s*(?:Contract Award Values?|Financial Impact|Number of (?:Bids|Proposals)|"
+    r"Range of Scores|Division Contacts?|Call Dates?)\b", re.I)
 
-    Which one depends on the PDF, not the year, so both are accepted. The value ends at a
-    blank line or at the next 'Label:' — pdftotext emits no other structure to lean on.
+_BIDDER_LABELS = ("recommended bidder", "recommended bidders", "recommended proponent",
+                  "recommended proponents", "recommended bidder/proponent")
+
+
+def _appendix_fields(block: str) -> dict:
+    """The block's "Label: value" fields, lowercased, with page furniture and footnotes dropped.
+
+    A blank line does not end a field — council wraps long descriptions across them — but a
+    new label does, and so does any furniture line, which is what a page break inserts.
     """
-    return re.compile(label + r":[ \t]*\n?[ \t]*(.+?)(?=\n[ \t]*\n|\n[ \t]*[A-Z][A-Za-z ]{2,25}:)",
-                      re.I | re.S)
+    out, current = {}, None
+    for line in block.split("\n"):
+        if _APX_FURNITURE.match(line) or _APX_FOOTNOTE.match(line):
+            current = None
+            continue
+        label = _LABEL_LINE.match(line)
+        if label:
+            current = label.group(1).strip().lower()
+            out.setdefault(current, [])
+            if label.group(2).strip():
+                out[current].append(label.group(2).strip())
+        elif _APX_SECTION_NO_COLON.match(line):
+            current = None                # a heading that lost its colon still ends the field
+        elif current is not None and line.strip():
+            out[current].append(line.strip())
+    return {k: _clean(" ".join(v)) for k, v in out.items() if v}
 
 
-_APX_CALL_NO = _appendix_field("Call No")
-_APX_DESCRIPTION = _appendix_field("Description")
-# RFPs say "Proponent" where tenders say "Bidder", and both are pluralized when an award is
-# split. Accepting only the singular "Recommended Bidder" drops 23 of 280 appendices (#93).
-_APX_BIDDER = _appendix_field(r"Recommended (?:Bidder|Proponent)s?")
+def _appendix_bidder(fields: dict) -> str | None:
+    """The recommended supplier, whatever this appendix calls the field.
+
+    RFPs say "Proponent" where tenders say "Bidder", both pluralize when an award is split,
+    and one form hedges with "Bidder/Proponent". Accepting only the singular drops 41.
+    """
+    for label in _BIDDER_LABELS:
+        if fields.get(label):
+            return fields[label]
+    return None
+
+
+# "1. CDR Youngs Aggregates Inc. 2. Lafarge Aggregates 3. Vicdom Sand & Gravel (Ontario)
+# Limited" — one call, several winners, each with its own value section further down. Split
+# awards are real and must not be silently recorded as one firm with a fused name.
+_ENUMERATED_BIDDER = re.compile(r"(?:^|\s)\d{1,2}[.)]\s+")
+# A split award is also written by naming the segments each firm won:
+#     Area "A" – A&F DiCarlo Construction Inc. Area "B" – Pave-Tar Construction Ltd.
+#     Part "A" and Part "C" – SCI Interiors Part "B" – POI Business Interiors
+#     Project 1 - GENIVAR Inc. Project 2 – Stantec Consulting Ltd.
+_SEGMENTED_BIDDER = re.compile(r"\b(?:Area|Part|Project|Group|Schedule)\s*[\"'“]?[A-D0-9]\b", re.I)
+# Rosters name their winners without any marker at all ("Ability Learning Network Inc. Abrigo
+# Centre ACCESS Employment Adanac Truck Driver Training Ltd. ..."), leaving length as the only
+# signal. Counting legal-form tokens looks like a better idea and is not: it flags 81 rows,
+# nearly all single firms that simply carry two ("Canadian Tire Corporation, Limited",
+# "A.J. Stone Co. Ltd.", "Furfari Paving Co. Ltd.").
+#
+# The threshold stays loose on purpose. Real single firms run to 71 characters via aliases
+# ("St. Marys Cement Inc. (Canada) d.b.a. Canada Building Materials Company", "Corporate
+# Express, Canada Inc. operating as Staples Advantage Canada"), so tightening it to catch the
+# last few unmarked pairs would drop an equal number of genuine awards — a worse trade. Three
+# unmarked pairs survive as single rows; #97 is where they get separated properly.
+_MAX_SUPPLIER_NAME = 80
 
 # How council words the net figure drifts with tax history, and the drift is not cosmetic:
 # Ontario had no HST until July 2010, so 2009 publishes only "$1,020,600.00 (Net of GST)"
@@ -637,31 +708,99 @@ _APX_AWARD_VALUE = re.compile(
 
 
 def parse_composite_appendices(text: str) -> list[dict]:
-    """Awards from a composite staff report's appendices, shaped for match_on_supplier_and_value.
+    """Awards from a composite staff report's appendices.
 
     Pure: `text` is the pdftotext output already stored in background_pdf.text. Identical
-    yield with and without pdftotext's -layout (244/280 blocks either way), so this reads
-    whatever council.py:download_pdf produced without changing that path.
+    yield with and without pdftotext's -layout (244/280 blocks either way on the 2012 sample),
+    so this reads whatever council.py:download_pdf produced without changing that path.
+
+    `award_value` is the FIRST net-of-taxes figure in the block — the initial term, excluding
+    option years. That is measured, not assumed: on the 139 appendices whose award the City's
+    feed also published, the first figure equals the feed's award_amount 137 times (98.6%).
+    The option-year and "total potential" figures below it can be twice as large.
+
+    `split_award` marks the appendices naming several winners. They are real (an aggregates
+    standing offer awarded to three firms) and each winner has its own value section, which
+    this does not yet separate — so the value here belongs to the first winner only. Flagged
+    rather than dropped or silently fused; see #97.
     """
     out = []
     for block in _APPENDIX_BLOCK.split(text)[1:]:
-        description, bidder = _APX_DESCRIPTION.search(block), _APX_BIDDER.search(block)
+        fields = _appendix_fields(block)
+        description, bidder = fields.get("description"), _appendix_bidder(fields)
         value = _APX_AWARD_VALUE.search(block)
         if not (description and bidder and value):
-            continue                      # 36 of 280 blocks publish no winner or no value
+            continue                      # blocks publishing no winner or no value at all
         amount = parse_amount(value.group(1))
         if amount is None:
             continue
-        call_no = _APX_CALL_NO.search(block)
-        subject = _clean(description.group(1))
+        call_raw = fields.get("call no") or fields.get("call no.")
         out.append({
+            "call_number_raw": call_raw,
+            "call_number": normalize_call_number(call_raw),
             # The call number is the only identifier the appendix carries, and it is what a
             # human would search for, so it leads the title rather than being dropped.
-            "title": f"{_clean(call_no.group(1))} - {subject}" if call_no else subject,
-            "winner_raw": _clean(bidder.group(1)),
+            "title": f"{call_raw} - {description}" if call_raw else description,
+            "description": description,
+            "winner_raw": bidder,
             "award_value": amount,
+            # Several winners on one call: numbered, or an unnumbered roster too long to be
+            # one firm. Each winner has its own value section, which this does not separate,
+            # so the amount above belongs to the first of them only.
+            "split_award": bool(_ENUMERATED_BIDDER.search(bidder))
+                           or bool(_SEGMENTED_BIDDER.search(bidder))
+                           or len(bidder) > _MAX_SUPPLIER_NAME,
+            # The amount as council wrote it, WITHOUT the trailing "net of all applicable
+            # taxes" qualifier: amount.py:parse_amount is strict and refuses any string that
+            # is not a single CAD amount, so storing the whole phrase would leave
+            # award_value_numeric NULL on every row and silently zero every SUM. Which figure
+            # this is, is a property of the column (see schema.sql), not of the string.
+            "award_value_raw": f"${value.group(1)}",
         })
     return out
+
+
+def store_composite_awards(conn) -> int:
+    """Ingest the composite-report appendices as awards in their own keyspace (#96). Idempotent.
+
+    This is the archive expanding backwards, not a linking pass: the City's feed publishes 0
+    awards for 2009, 1 for 2010 and 12 for 2011, against the 799 sitting in these reports. For
+    those years this table IS the record, which is why an appendix with no `document_number`
+    is ingested rather than discarded — see the composite_award comment in schema.sql.
+
+    Offline: reads background_pdf.text, so it only sees reports download_composite_reports
+    already fetched.
+    """
+    stored = skipped = 0
+    for row in conn.execute(
+            "SELECT reference, text FROM background_pdf WHERE text IS NOT NULL AND kind='bgrd' "
+            "AND substr(reference,1,4) BETWEEN '2009' AND '2012' ORDER BY reference"):
+        for item in parse_composite_appendices(row["text"]):
+            if not item["call_number"]:
+                continue                  # nothing to key it on; 0 of 1,229 in the corpus
+            if item["split_award"]:
+                # One call, several winners, each with its own value section. Recording the
+                # fused name as one firm would invent a supplier that does not exist and hand
+                # it the first winner's money; the dimension would then carry it as real. The
+                # award is genuine and worth having — see #97, which has to separate the
+                # per-winner value sections to do it right.
+                skipped += 1
+                continue
+            db.upsert_row(conn, CompositeAward(
+                call_number=item["call_number"],
+                call_number_raw=item["call_number_raw"],
+                reference=row["reference"],
+                title=item["description"],
+                supplier_name_raw=item["winner_raw"],
+                award_value=item["award_value_raw"],
+                source="bid_committee_composite",
+            ), overwrite=True)
+            stored += 1
+    conn.commit()
+    if skipped:
+        # Never silent: a bounded skip that nobody prints reads as full coverage later.
+        print(f"    split awards skipped (several winners on one call, #97): {skipped}")
+    return stored
 
 
 def match_composite_titles(conn) -> int:

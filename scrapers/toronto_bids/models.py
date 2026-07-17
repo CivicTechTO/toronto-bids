@@ -159,3 +159,29 @@ class BackgroundPdf:
     local_path: str | None = None
     sha256: str | None = None
     text: str | None = None
+
+
+@dataclass(frozen=True)
+class CompositeAward:
+    """One award line from a 2009-2012 Bid Committee composite report's appendices (#96).
+
+    A third keyspace. These predate Ariba, so they carry a Call Number and no
+    document_number, and nothing joins them to `solicitation` — see the composite_award
+    comment in schema.sql. For 2009-2011 this is the only record the archive has: the City's
+    feed publishes 0, 1 and 12 awards for those years against the 799 sitting in these
+    reports.
+    """
+    call_number: str                     # normalized, e.g. '3905-10-0097' / '317-2010'
+    call_number_raw: str | None = None   # as council wrote it, prefix vocabulary and all
+    reference: str | None = None         # the council item that carried it, e.g. '2011.BD5.1'
+    title: str | None = None
+    supplier_name_raw: str | None = None
+    # Verbatim, as `award.award_amount` is. The numeric is the FIRST net-of-taxes figure —
+    # the initial term, excluding option years. Confirmed against the feed on 137 of 139
+    # appendices it also published.
+    award_value: str | None = None
+    source: str = ""
+    award_value_numeric: float | None = field(init=False, default=None)
+
+    def __post_init__(self):
+        object.__setattr__(self, "award_value_numeric", parse_amount(self.award_value))

@@ -251,3 +251,45 @@ CREATE TABLE IF NOT EXISTS bid (
 CREATE UNIQUE INDEX IF NOT EXISTS bid_key ON bid (
     reference, bidder_name_raw, COALESCE(bid_price, ''), source
 );
+
+-- composite_award holds awards from the 2009-2012 Bid Committee composite reports (#96),
+-- which predate Ariba and so carry no document_number. They are a THIRD KEYSPACE, keyed on
+-- the Call Number, exactly as noncompetitive is keyed on workspace_number: there is no join
+-- to `solicitation` and none can be manufactured. The City's feed covers almost none of this
+-- period (2009: 0 awards, 2010: 1, 2011: 12), so for those years this table IS the record.
+--
+-- Deliberately separate from `award` rather than merged with a synthetic key: `award` is
+-- keyed on document_number and every COUNT/SUM in the export assumes that, so admitting
+-- keyless rows there would silently change what those numbers mean.
+--
+-- award_value_numeric is the FIRST "net of all applicable taxes" figure in the appendix,
+-- i.e. the initial term excluding option years. Not a guess: on the 139 appendices whose
+-- award the City's feed also published, that figure equals the feed's award_amount 137
+-- times (98.6%). The option-year and "total potential" figures beside it are 2x larger and
+-- are deliberately NOT summed here.
+CREATE TABLE IF NOT EXISTS composite_award (
+    id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+    call_number         TEXT NOT NULL,
+    call_number_raw     TEXT,
+    reference           TEXT,
+    title               TEXT,
+    supplier_name_raw   TEXT,
+    supplier_id         INTEGER,
+    award_value         TEXT,
+    award_value_numeric REAL,
+    source              TEXT,
+    -- nullable supplier_id backfilled by build_supplier_dimension, declared bare exactly as
+    -- award/noncompetitive/bid do. supplier's PK is `supplier_id`, not `id`.
+    first_seen          TEXT NOT NULL DEFAULT (datetime('now')),
+    last_seen           TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- One row per award LINE, as in `award`: a call can name several recommended bidders. Same
+-- COALESCE reason as award_line_key (#73) — SQLite treats NULLs as DISTINCT in a UNIQUE
+-- index, so a bare key would re-insert every valueless row on each run.
+-- db._upsert_keyed's conflict target must match this expression exactly.
+CREATE UNIQUE INDEX IF NOT EXISTS composite_award_line_key ON composite_award (
+    call_number, COALESCE(supplier_name_raw, ''), COALESCE(award_value, ''), source
+);
+
+CREATE INDEX IF NOT EXISTS idx_composite_award_call ON composite_award (call_number);
