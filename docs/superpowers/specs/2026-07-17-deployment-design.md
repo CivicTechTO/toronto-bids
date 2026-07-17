@@ -142,9 +142,11 @@ reads each form's cells off the PDF on disk. With only the database, all 229 for
 What moves (26 GB total): `bids.sqlite` (26 MB), `documents/` (121 MB), `council/` (115 MB, the
 891 cached agendas), `legacy/` (26 GB, of which 16 GB is the Azure Ariba rescue).
 
-**The rescue corpus is the one irreplaceable thing here.** It is gitignored, it exists on one
-disk, and the City no longer serves it. Moving it to the server does not back it up — it
-relocates it. A real second copy is out of scope for this spec and is worth its own issue.
+**The rescue corpus is the hardest part to re-create if lost** — it is gitignored and the City
+no longer serves it. The operator confirmed it is backed up outside plexbox, so moving it to the
+server is a relocation of the working copy, not the only copy; there is no durability gap here.
+(An earlier draft of this spec asserted it had no backup and proposed a follow-up issue for one
+— that was an unverified assumption, and it was wrong.)
 
 ## 5. Error handling
 
