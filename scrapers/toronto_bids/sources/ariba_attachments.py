@@ -276,18 +276,21 @@ def capture_event(page, event: dict, dest_dir, log=lambda _m: None) -> Path | No
         return None
     respond.click()
 
-    # Respond opens the Sourcing event; wait on its "Download Content" button rather than a URL
-    # glob (the redirect chain varies). If a "Register/Login" modal shows instead, the session
-    # did not carry to this page — fail loudly, don't hang.
+    # Respond opens the Sourcing event, but some events refuse access even so — invite-only, or
+    # tied to a different account — and Ariba shows "You do not have the correct permission to
+    # view the event". Those are a clean skip, not a failure. Poll for the event's Download
+    # Content button, that denial, or the anonymous Register/Login modal, whichever lands first.
     download_content = page.get_by_role("button", name="Download Content")
-    try:
-        download_content.wait_for(state="visible", timeout=60000)
-    except Exception:
-        if page.get_by_role("button", name="Register/Login").count():
-            raise RuntimeError(
-                f"Doc{document_number}: Ariba served the anonymous view (Register/Login modal); "
-                f"the session did not carry to the preview.")
-        raise
+    outcome = _wait_post_respond(page, download_content)
+    if outcome == "denied":
+        log(f"  Doc{document_number}: no permission to view the event — skipped")
+        return None
+    if outcome == "anonymous":
+        raise RuntimeError(
+            f"Doc{document_number}: Ariba served the anonymous view (Register/Login modal); "
+            f"the session did not carry to the preview.")
+    if outcome != "event":
+        raise RuntimeError(f"Doc{document_number}: the Sourcing event never loaded after Respond.")
     _dismiss_cookie_banner(page)
 
     # Download Content -> the Export-to-Excel page -> Download Attachments -> the picker. The
@@ -341,6 +344,34 @@ def _open_authed_preview(page, rfx_id: str, attempts: int = 3) -> bool:
         if page.query_selector(f"text=ID - {rfx_id}") is not None:
             return True
     return False
+
+
+_PERMISSION_DENIED = "do not have the correct permission to view the event"
+
+
+def _wait_post_respond(page, download_content, timeout_ms: int = 60000) -> str:
+    """After Respond, report which page landed: 'event', 'denied', 'anonymous', or 'timeout'.
+
+    The redirect chain varies and three outcomes are all normal-ish: the Sourcing event (has a
+    Download Content button), an access denial (invite-only / wrong account), or the anonymous
+    Register/Login modal. Poll for whichever appears rather than assuming the event and hanging
+    the full timeout on the two that never show a Download Content button.
+    """
+    waited = 0
+    while waited < timeout_ms:
+        try:
+            if download_content.count() and download_content.first.is_visible():
+                return "event"
+            body = (page.inner_text("body") or "").lower()
+            if _PERMISSION_DENIED in body:
+                return "denied"
+            if page.get_by_role("button", name="Register/Login").count():
+                return "anonymous"
+        except Exception:
+            pass                                          # mid-navigation DOM churn — retry
+        page.wait_for_timeout(1000)
+        waited += 1000
+    return "timeout"
 
 
 def _select_all_attachments(page, log=lambda _m: None) -> None:
