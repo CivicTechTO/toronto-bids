@@ -55,6 +55,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="Download the 2009-2012 composite staff-report PDFs first, whose appendices carry "
              "awards the agendas of those years do not describe (#93). Plain HTTP and no "
              "browser, unlike --scrape; needs pdftotext. ~221 files / ~80MB, resumable")
+
+    sub.add_parser(
+        "nightly",
+        help="Sync, archive new Award Summary Forms, export, and post a summary to Slack. "
+             "What the systemd timer runs — see docs/superpowers/specs/"
+             "2026-07-17-deployment-design.md")
     return parser
 
 
@@ -285,6 +291,63 @@ def _cmd_amounts(args) -> int:
     return 1
 
 
+def _cmd_nightly(args) -> int:
+    """The whole unattended run: sync -> award summaries -> export -> tell Slack.
+
+    Each step is isolated exactly as pipeline.run_source isolates a source: a failure is
+    recorded and the steps behind it still run. In particular the EXPORT RUNS EVEN AFTER A
+    PARTIAL SYNC — rows are committed per-source and never deleted, so partial data is still
+    data, and discarding a good artifact over one bad feed would be the worse outcome.
+
+    Exits non-zero if anything failed, so systemd marks the unit failed and the next run's
+    Slack line is not the only record.
+    """
+    import time
+    from pathlib import Path
+
+    from toronto_bids import notify
+    from toronto_bids.sources.award_summary import (
+        download_award_summaries, store_award_summary_bids)
+
+    started = time.monotonic()
+    out = lambda m: print(m, flush=True)
+    conn = _open_db()
+    before = db.counts(conn)
+    failures: list[tuple[str, str]] = []
+
+    http = HttpClient()
+    try:
+        try:
+            failures.extend(pipeline.sync(conn, http))
+        except Exception as exc:
+            failures.append(("sync", str(exc)))
+        try:
+            download_award_summaries(conn, http, log=out)
+            store_award_summary_bids(conn, log=out)
+        except Exception as exc:
+            failures.append(("award_summary", str(exc)))
+    finally:
+        http.close()
+
+    export_bytes = None
+    try:
+        written = export_json(conn, Path(config.DATA_DIR) / "export" / "bids.json")
+        export_bytes = written.stat().st_size
+    except Exception as exc:
+        failures.append(("export", str(exc)))
+
+    after = db.counts(conn)
+    conn.close()
+
+    text = notify.summarize(before, after, failures, len(pipeline.default_sources()),
+                            export_bytes, time.monotonic() - started)
+    print(text)
+    for name, error in failures:
+        print(f"FAILED  {name}: {error}", file=sys.stderr)
+    notify.post(text, log=lambda m: print(m, file=sys.stderr))
+    return 1 if failures else 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
@@ -294,6 +357,8 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_status(args)
     if args.command == "export":
         return _cmd_export(args)
+    if args.command == "nightly":
+        return _cmd_nightly(args)
     if args.command == "enrich-council":
         return _cmd_enrich_council(args)
     if args.command == "enrich-titles":
