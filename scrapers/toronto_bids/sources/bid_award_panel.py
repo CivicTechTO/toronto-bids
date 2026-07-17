@@ -1019,8 +1019,8 @@ def store_composite_awards(conn) -> int:
     those years this table IS the record, which is why an appendix with no `document_number`
     is ingested rather than discarded — see the composite_award comment in schema.sql.
 
-    Offline: reads background_pdf.text, so it only sees reports download_composite_reports
-    already fetched.
+    Offline: reads background_pdf.text, so it only sees reports download_reports already
+    fetched.
     """
     stored = skipped = 0
     for row in conn.execute(
@@ -1058,7 +1058,7 @@ def match_composite_titles(conn) -> int:
     """Name title-less solicitations from composite-report appendices already downloaded.
 
     Offline: reads background_pdf.text, so it only sees reports fetched by
-    download_composite_reports. Idempotent.
+    download_reports. Idempotent.
     """
     items = []
     for row in conn.execute(
@@ -1068,25 +1068,46 @@ def match_composite_titles(conn) -> int:
     return match_on_supplier_and_value(conn, items, "council_composite")
 
 
-def download_composite_reports(conn, http, dest_dir=None, log=lambda _m: None) -> int:
-    """Download the 2009-2012 staff-report PDFs and store their text. Plain HTTP, no browser.
+# The staff reports of BA items whose agenda tabulates no bids (#83). Everything else the
+# panel handled already has its bids from the agenda itself (#84/#94), and the reports of
+# title-less solicitations do not exist at all — the panel only sees awards above the
+# delegation threshold, so a solicitation is never both title-less and panel-handled (0 of
+# them, measured). These ~229 are the whole of what the PDFs can still add.
+# `sha256 IS NULL`, not `text IS NULL`, is what "not yet fetched" means. 16 of the composite
+# reports are image-only scans with no embedded fonts, so pdftotext yields nothing and their
+# text stays NULL forever — keyed on text, every run re-downloaded those 16 in perpetuity.
+# The hash records that we have the bytes, whether or not anything could read them.
+_BA_REPORTS_WITHOUT_BIDS = """
+    SELECT p.url, p.reference FROM background_pdf p
+    JOIN council_item ci ON ci.reference = p.reference
+    WHERE p.sha256 IS NULL AND p.kind='bgrd' AND p.reference NOT LIKE '%.BD%'
+      AND NOT EXISTS (SELECT 1 FROM bid b WHERE b.reference = p.reference)
+    ORDER BY p.reference
+"""
+_COMPOSITE_REPORTS = """
+    SELECT url, reference FROM background_pdf WHERE sha256 IS NULL AND kind='bgrd'
+      AND substr(reference,1,4) BETWEEN '2009' AND '2012' ORDER BY reference
+"""
 
-    Bounded by what store_background_pdfs already indexed off the cached agendas (221 PDFs,
-    ~80MB). Resumable and idempotent: rows that already hold text are skipped, so an
-    interrupted run costs only what it had not yet fetched.
+
+def download_reports(conn, http, query: str, label: str = "reports",
+                     dest_dir=None, log=lambda _m: None) -> int:
+    """Download staff-report PDFs and store their text. Plain HTTP, no browser.
+
+    Only TMMIS itself is Akamai-gated; the legdocs PDFs are ordinary HTTP. Bounded by what
+    store_background_pdfs already indexed off the cached agendas, and resumable: rows that
+    already hold text are skipped, so an interrupted run costs only what it had not fetched.
     """
     from toronto_bids.sources.council import download_pdf
 
     if shutil.which("pdftotext") is None:
         raise RuntimeError(
-            "pdftotext (poppler) is required to read composite reports but was not found on "
+            "pdftotext (poppler) is required to read staff reports but was not found on "
             "PATH. Install poppler (e.g. `brew install poppler` / `apt-get install -y "
             "poppler-utils`).")
     dest_dir = dest_dir if dest_dir is not None else config.COUNCIL_DOCS_DIR
-    rows = conn.execute(
-        "SELECT url, reference FROM background_pdf WHERE text IS NULL AND kind='bgrd' "
-        "AND substr(reference,1,4) BETWEEN '2009' AND '2012' ORDER BY reference").fetchall()
-    log(f"  composite reports to fetch: {len(rows)}")
+    rows = conn.execute(query).fetchall()
+    log(f"  {label} to fetch: {len(rows)}")
     stored = 0
     for i, row in enumerate(rows, 1):
         try:

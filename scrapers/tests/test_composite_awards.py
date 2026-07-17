@@ -341,6 +341,30 @@ def test_reads_only_reports_already_downloaded(conn):
     assert store_composite_awards(conn) == 0
 
 
+def test_an_unreadable_report_is_not_refetched_forever(conn):
+    """16 composite reports are image-only scans: pdftotext yields nothing, so their text is
+    NULL no matter how often they are fetched. Keyed on `text IS NULL`, every run
+    re-downloaded those 16 in perpetuity — the hash is what records that we have the bytes."""
+    from toronto_bids.sources.bid_award_panel import _COMPOSITE_REPORTS
+
+    db.upsert_row(conn, BackgroundPdf(
+        url="https://www.toronto.ca/legdocs/mmis/2010/bd/bgrd/backgroundfile-26269.pdf",
+        reference="2010.BD152.1", kind="bgrd", sha256="abc123",
+        local_path="/tmp/x.pdf", text=None), overwrite=True)
+    conn.commit()
+    assert conn.execute(_COMPOSITE_REPORTS).fetchall() == []
+
+
+def test_a_report_never_fetched_is_still_queued(conn):
+    from toronto_bids.sources.bid_award_panel import _COMPOSITE_REPORTS
+
+    db.upsert_row(conn, BackgroundPdf(
+        url="https://www.toronto.ca/legdocs/mmis/2011/bd/bgrd/backgroundfile-34008.pdf",
+        reference="2011.BD1.1", kind="bgrd"), overwrite=True)
+    conn.commit()
+    assert [r["reference"] for r in conn.execute(_COMPOSITE_REPORTS)] == ["2011.BD1.1"]
+
+
 def test_composite_awards_reach_the_export(conn):
     from toronto_bids.export.document import build_export_document
 
