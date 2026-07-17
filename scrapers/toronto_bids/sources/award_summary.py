@@ -28,6 +28,7 @@ awards. And the City says "a portion of work to create the notice of award recor
 manual", which shows: 223 of the 244 awards since the cutover carry one (91%), not all.
 """
 import re
+from pathlib import Path
 from urllib.parse import quote
 
 from toronto_bids import config
@@ -279,7 +280,15 @@ def store_award_summary_bids(conn, log=lambda _m: None) -> int:
     for row in conn.execute("SELECT document_number, local_path FROM background_pdf "
                             "WHERE kind='award_summary' AND local_path IS NOT NULL"):
         try:
-            parsed = parse_award_summary(form_rows(row["local_path"]))
+            # `local_path` is an ABSOLUTE path baked in at download time on whatever machine
+            # fetched the form (download_pdf returns str(dest_dir / name)). This archive is
+            # designed to migrate — server becomes primary — so a path from the laptop that
+            # downloaded it does not exist on the server it was rsync'd to. The file's identity
+            # is its basename (the portal bin_id, which is also its filename); its location is
+            # deterministic under the CURRENT data dir. Resolve there instead of trusting the
+            # stored path.
+            path = config.AWARD_SUMMARY_DIR / Path(row["local_path"]).name
+            parsed = parse_award_summary(form_rows(path))
         except Exception as exc:
             log(f"    unreadable {row['document_number']}: {exc}")
             continue
