@@ -137,10 +137,15 @@ def store_bundle(conn, zip_path, document_number: str, dest_dir=None) -> int:
 
     zip_sha = sha256_of_file(canonical)
     entries = index_zip(canonical)
+    # Rebuild this document's index from the bytes: ariba_attachment is a derived index of the
+    # on-disk zips (like the supplier dimension), so clear the document's rows — dropping any
+    # stale top-level-only rows from before recursion — then insert the current recursive set.
+    conn.execute("DELETE FROM ariba_attachment WHERE document_number = ?", (document_number,))
     for entry in entries:
         db.upsert_row(conn, AribaAttachment(
             document_number=document_number,
             filename=entry["filename"],
+            path=entry["path"],
             file_size=entry["file_size"],
             crc32=entry["crc32"],
             zip_name=canonical.name,
@@ -168,6 +173,18 @@ def ingest_downloads(conn, source_dir, dest_dir=None, log=lambda _m: None) -> in
         log(f"  {zip_path.name}: {n} files -> Doc{document_number}")
         ingested += 1
     return ingested
+
+
+def reindex_bundles(conn, dest_dir=None, log=lambda _m: None) -> int:
+    """Rebuild the index from the bundles already in the store. Offline, no browser.
+
+    ariba_attachment is a derived index of the on-disk zips, so it can be regenerated whenever the
+    indexing changes (e.g. #123's recursion). Just re-ingest the store into itself — store_bundle
+    skips the copy when the source is already the canonical path and rebuilds the rows from the
+    bytes. Idempotent. Returns the number of bundles reindexed.
+    """
+    root = dest_dir if dest_dir is not None else config.ARIBA_ATTACHMENTS_DIR
+    return ingest_downloads(conn, root, root, log=log)
 
 
 # --- browser: log in and capture ----------------------------------------------------------

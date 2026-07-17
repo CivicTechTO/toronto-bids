@@ -112,6 +112,35 @@ def test_ingest_scans_a_folder_skips_unnamed_zips_and_is_idempotent(conn, tmp_pa
     assert total == 1
 
 
+def test_store_bundle_writes_paths_and_rebuilds_stale_rows(conn, tmp_path):
+    inner = _zip_bytes({"a.pdf": b"a"})
+    src = _make_zip(tmp_path / "Doc9.zip", {"P1.pdf": b"p", "Appx.zip": inner})
+    dest = tmp_path / "store"
+
+    # Simulate a pre-recursion row (the container zip indexed as a top-level leaf).
+    aa.store_bundle(conn, src, "9", dest)  # first pass already recursive; force a stale row:
+    conn.execute("INSERT INTO ariba_attachment (document_number, filename, path) "
+                 "VALUES ('9', 'Appx.zip', 'Appx.zip')")
+    conn.commit()
+
+    aa.store_bundle(conn, src, "9", dest)  # rebuild clears the stale container row
+    paths = {r["path"] for r in conn.execute(
+        "SELECT path FROM ariba_attachment WHERE document_number='9'")}
+    assert paths == {"P1.pdf", "Appx.zip/a.pdf"}          # stale 'Appx.zip' leaf gone
+
+
+def test_reindex_bundles_rebuilds_every_zip_on_disk(conn, tmp_path):
+    dest = tmp_path / "store"
+    dest.mkdir()
+    # Real bundle names carry a full 10-digit document number (document_number_from_zip_name
+    # requires exactly 10 digits) — "Doc11"/"Doc12" would never occur and are silently skipped.
+    _make_zip(dest / "Doc1234567891.zip", {"only.pdf": b"x"})
+    _make_zip(dest / "Doc1234567892.zip", {"a.pdf": b"a", "b.pdf": b"b"})
+
+    assert aa.reindex_bundles(conn, dest) == 2
+    assert conn.execute("SELECT COUNT(*) FROM ariba_attachment").fetchone()[0] == 3
+
+
 def test_init_db_migrates_old_unique_index_to_path(tmp_path):
     # Build a database with the OLD schema (UNIQUE on filename) and a stale row.
     conn = _db.connect(":memory:")
