@@ -93,13 +93,13 @@ def test_a_failure_still_reports_the_export():
     """Export runs even after a partial sync — the message must say so, or a reader assumes
     the run produced nothing."""
     text = notify.summarize(BEFORE, AFTER, [("ariba_discovery", "boom")], 9, 30_800_000, 5.0)
-    assert "export 29.4 MB" in text
+    assert "export 29.4 MiB" in text
 
 
 def test_a_missing_export_is_reported_as_missing_not_as_zero():
     text = notify.summarize(BEFORE, AFTER, [("export", "disk full")], 9, None, 5.0)
     assert "export FAILED" in text
-    assert "0.0 MB" not in text
+    assert "0.0 MiB" not in text
 
 
 def test_elapsed_is_human_readable():
@@ -196,7 +196,7 @@ def summarize(before: dict, after: dict, failures: list, n_sources: int,
     look identical. A nightly line makes silence itself the signal.
     """
     parts = [_count(before, after, key, label) for key, label in _HEADLINE]
-    parts.append(f"export {export_bytes / 1_000_000:.1f} MB" if export_bytes is not None
+    parts.append(f"export {export_bytes / 1_048_576:.1f} MiB" if export_bytes is not None  # binary MiB, matching ls -lh
                  else "export FAILED")
     parts.append(_elapsed(elapsed_s))
     if not failures:
