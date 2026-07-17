@@ -67,7 +67,7 @@ archiving currently-open posting detail.
 | **CKAN `tobids-non-competitive-contracts`** | Sole-source awards (~2,920 rows). `Workspace Number`, `Reason`, `Supplier Name`, `Contract Amount`, `Contract Date`. | `datastore_search` / dump | Live |
 | **CKAN `capital-project-pipeline`** | 46 forward-looking upcoming solicitations (no doc/award ids yet). Built 2026-07-16 (#69) — see §2.1.1. | `datastore_search?resource_id=<uuid>` | ~6 wks |
 | **Ariba Discovery leads search** (`doIndexedSearch`) | Enumerate currently-open Toronto postings + their `rfxID` (Ariba internal posting id). | `POST https://service.ariba.com/Network/discoveryweb/search/public/v1/doIndexedSearch?siteName=Quote` body `{"pageSize":1000,"pageNum":0,"searchType":"Quote","sortBy":"RESPONSE_DEAD_LINE","filters":[]}`; filter `customerName=="City of Toronto"` client-side | Live |
-| **Ariba Discovery detail** (`/rfx/{rfxId}`) | Per-posting detail incl. `externalRfxId` (= `Doc##########`) needed to join to the spine, UNSPSC categories, dates. | `GET https://service.ariba.com/Network/discoveryweb/api/public/v1/rfx/{rfxId}` with `Accept: application/json` | Live, **open postings only** (closed → 401); **~48% return HTTP 500 → retry/skip** |
+| **Ariba Discovery detail** (`/rfx/{rfxId}`) | Per-posting detail incl. `externalRfxId` (= `Doc##########`) needed to join to the spine, UNSPSC categories, dates. | `GET https://service.ariba.com/Network/discoveryweb/api/public/v1/rfx/{rfxId}` with `Accept: application/json` | Live, **open postings only** (closed → 401); **~48% return HTTP 500 → retry/skip**. The 401 binds this **API**, not the posting — closed postings render in a browser (§2.5.3, #117) |
 
 #### 2.1.1 Considered and declined (resolved 2026-07-16, #69)
 
@@ -124,7 +124,13 @@ are in `value` (not a `d`/`results` wrapper) and the total is `@odata.count`. Pa
 - **`competitive-call-award-results`** (CKAN) — same dead Lotus Notes backend. Replaced by
   the `tobids-awarded-contracts` + `tobids-non-competitive-contracts`.
 - **`procurement-pipeline`** slug — empty shell (`num_resources:0`). Use `capital-project-pipeline`.
-- **`discovery.ariba.com/rfx/{id}` HTML** — empty SPA shell; use the JSON detail API.
+- ~~**`discovery.ariba.com/rfx/{id}` HTML** — empty SPA shell; use the JSON detail API.~~
+  **WRONG — corrected 2026-07-17 (#117).** Assessed against plain HTTP only. A real browser
+  renders the SPA in full, and the legacy `discovery.ariba.com/rfx/{id}` URL **redirects into
+  the modern viewer** (`#/RfxEvent/preview/{id}`), which accepts the legacy 8-digit ids
+  directly — no id mapping needed. This is the route, not a dead end. The JSON detail API is
+  still the cheaper path for the postings it serves (open only); the browser is what reaches
+  the other ~1,600.
 - **Ariba public attachment API** (`.../attachments/RFX/{id}`) — returns 500 for every id
   anonymously and attachment ids are never surfaced publicly. Unusable even with auth; only
   the authenticated Ariba Sourcing UI yields attachments.
@@ -162,12 +168,27 @@ are in `value` (not a `d`/`results` wrapper) and the total is `@odata.count`. Pa
 
    Caveats now in `CLAUDE.md`: `hst_basis` is load-bearing (5,801 bids quote including HST,
    4,097 excluding), and a bid price is not an award amount (a bid excludes contingency).
-3. **Closed-posting Ariba detail/attachments** — public detail API serves open postings only.
-   Must **archive at scrape time**; no backfill. **Caveat (2026-07-16, #78):** that 401 is
-   an *API* result. The UI has never been tested with a real browser, and §2.4's dismissal of
-   the Discovery HTML as "an empty SPA shell" was assessed against plain HTTP — a browser
-   renders the SPA, which is how the legacy archive's pages came to carry titles. If an
-   authenticated view serves closed postings, this gap narrows substantially.
+3. ~~**Closed-posting Ariba detail/attachments** — public detail API serves open postings only.
+   Must **archive at scrape time**; no backfill.~~
+   **WRONG for detail — resolved 2026-07-17 (#117). Still true for attachments.**
+
+   The 401 was an *API* result and the UI never agreed with it. Driven with a real browser,
+   **closed postings render in full** — verified on `1110003198` (`Doc5447662436`, Closed) and
+   `22538756` (`Doc4951580548`, Closed). **There is backfill**, and the reachable set is
+   **1,670 postings**, not the 42 §2.2 credits: the 1,380 legacy `discovery.ariba.com/rfx/`
+   links redirect into the modern viewer and work as-is (see §2.4).
+
+   Each page carries the **title**, the **`Doc##########`** (printed on the page — the bridge
+   is free), the **full description / scope of work**, categories, contract length, buyer and
+   amount range. This is the largest single content gain available to the archive, and it
+   needs no account and no interaction.
+
+   **Attachments remain out of reach** and this does not change that: every posting renders
+   `Attachments (0)` / `Files — No data`, including RFPs whose description makes clear a full
+   package exists. Files and Q&A live inside the Sourcing event, reachable only "as
+   participating Supplier" — i.e. behind **Respond**. §2.5.1's live test stands.
+
+   Same lesson as §2.5.2, third time: these were all claims about where we looked.
 4. **Canonical supplier ID** — none exists; suppliers are free text everywhere. Cross-source
    supplier linkage is fuzzy only.
 5. **Non-competitive → competitive** — non-competitive rows carry no doc number; permanent
@@ -200,9 +221,11 @@ are in `value` (not a `d`/`results` wrapper) and the total is `@odata.count`. Pa
    metadata, no title).
 
    Two candidate routes remain, both open: **#77** (match pre-Ariba council items on
-   supplier+amount rather than identifier — 3,341 pre-2019 bids now carry both) and **#78**
-   (browser-scrape publicly visible Ariba posting detail; the spine holds 1,681
-   `ariba_posting_link` values against the 42 postings currently reachable).
+   supplier+amount rather than identifier — 3,341 pre-2019 bids now carry both) and **#78 /
+   #117** (browser-scrape publicly visible Ariba posting detail). The "42 postings currently
+   reachable" figure was an *API* limit: **1,670 of the spine's `ariba_posting_link` values
+   render in a browser**, closed ones included, and each carries a real title and a full scope
+   of work. See §2.5.3.
 
 ## 3. The linking model
 
@@ -372,9 +395,12 @@ Keyed on the normalized `document_number` except where noted. Rows are **never d
 3. Never delete; maintain `first_seen`/`last_seen`.
 4. `tb export --format json` runs the publish seam.
 
-**Archival guarantee.** Open-posting Ariba detail and attachments **vanish when a solicitation
-closes** (closed → 401). The pipeline snapshots `ariba_posting.raw_json` and downloads
-attachments **at capture time**; this at-scrape-time archival is the core mission.
+**Archival guarantee.** Open-posting Ariba detail **does not vanish when a solicitation
+closes** — corrected 2026-07-17 (#117). The 401 is an API behaviour; the posting itself stays
+readable in a browser indefinitely, closed or not. Snapshotting `ariba_posting.raw_json` at
+capture time is still right (the API is cheaper than a browser, and a snapshot beats a refetch),
+but it is an optimisation, not the last chance. **Attachments are the real at-scrape-time
+case** — they were never on the posting at all (§2.5.3).
 
 ## 7. Error handling & resilience
 
