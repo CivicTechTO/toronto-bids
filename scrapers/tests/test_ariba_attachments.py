@@ -167,3 +167,17 @@ def test_init_db_migrates_old_unique_index_to_path(tmp_path):
                        overwrite=True)
     assert conn.execute("SELECT COUNT(*) FROM ariba_attachment WHERE document_number='1' "
                         "AND filename='a.pdf'").fetchone()[0] == 2
+
+
+def test_cli_reindex_rebuilds_from_the_store(tmp_path, monkeypatch, capsys):
+    from toronto_bids import config, cli
+    monkeypatch.setattr(config, "DATA_DIR", tmp_path)
+    monkeypatch.setattr(config, "DB_PATH", tmp_path / "bids.sqlite")
+    store = tmp_path / "ariba" / "attachments"
+    store.mkdir(parents=True)
+    monkeypatch.setattr(config, "ARIBA_ATTACHMENTS_DIR", store)
+    _make_zip(store / "Doc1234567891.zip", {"a.pdf": b"a"})
+
+    assert cli.main(["enrich-ariba-attachments", "--reindex"]) == 0
+    out = capsys.readouterr().out
+    assert "Doc1234567891.zip" in out
