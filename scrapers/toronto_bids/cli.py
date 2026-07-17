@@ -131,7 +131,7 @@ def _cmd_enrich_titles(args) -> int:
     from toronto_bids.sources.bid_award_panel import (
         cached_agendas, download_composite_reports, fill_titles_from_council,
         match_composite_titles, match_pre_ariba_titles, scrape_agendas,
-        store_background_pdfs, store_bids, store_items)
+        store_background_pdfs, store_bids, store_composite_awards, store_items)
     from toronto_bids.sources.legacy_titles import fill_titles_from_legacy
 
     conn = _open_db()
@@ -174,6 +174,9 @@ def _cmd_enrich_titles(args) -> int:
             finally:
                 http.close()
         print(f"  titles composite    : {match_composite_titles(conn)}")
+        # Not a linking pass: for 2009-2011 the City's feed publishes 13 awards against the
+        # 799 in these reports, so this is the archive reaching back past the feed (#96).
+        print(f"  composite awards    : {store_composite_awards(conn)}")
 
         n_legacy = fill_titles_from_legacy(conn, config.LEGACY_ARIBA_DIR)
         print(f"  titles from legacy  : {n_legacy}"
