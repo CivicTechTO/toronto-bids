@@ -1,0 +1,18 @@
+[Unit]
+Description=toronto-bids nightly sync, enrich, export, notify
+Documentation=https://github.com/CivicTechTO/toronto-bids/blob/main/docs/superpowers/specs/2026-07-17-deployment-design.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=%h/toronto-bids/scrapers
+# The default data dir is scrapers/files/ — inside the checkout. On a server the archive must
+# live where a `git pull` cannot reach it.
+Environment=TB_DATA_DIR=%h/tb-data
+# The leading '-' makes this optional: no webhook file -> notify.post() no-ops and the run
+# still succeeds. The file holds a credential and is mode 0600; it is never in git.
+EnvironmentFile=-%h/.config/toronto-bids/tb.env
+ExecStart=%h/.local/bin/uv run tb nightly
+# A full sync measures ~3 minutes (sync_run, 2026-07-16). 30m is a generous ceiling.
+TimeoutStartSec=30m
