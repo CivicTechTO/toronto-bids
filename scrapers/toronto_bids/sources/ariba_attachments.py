@@ -124,8 +124,9 @@ def store_bundle(conn, zip_path, document_number: str, dest_dir=None) -> int:
     """Archive one event bundle under <dest_dir>/<Docnnnn>.zip and index every file in it.
 
     Idempotent: the canonical path is keyed on document_number, so re-storing the same event
-    overwrites in place and the UNIQUE(document_number, filename) upserts refresh rather than
-    duplicate. Returns the number of files indexed.
+    overwrites the bytes in place, and the document's rows are deleted then re-inserted from the
+    freshly indexed bytes — a rebuild, not an upsert, so a leaf that no longer exists (e.g. one
+    from before recursion) cannot survive a re-store. Returns the number of files indexed.
     """
     dest_dir = Path(dest_dir if dest_dir is not None else config.ARIBA_ATTACHMENTS_DIR)
     dest_dir.mkdir(parents=True, exist_ok=True)
