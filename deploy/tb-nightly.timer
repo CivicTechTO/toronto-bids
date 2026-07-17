@@ -1,0 +1,16 @@
+[Unit]
+Description=Run toronto-bids nightly
+Documentation=https://github.com/CivicTechTO/toronto-bids/blob/main/docs/superpowers/specs/2026-07-17-deployment-design.md
+
+[Timer]
+# The box runs on UTC, so a bare `OnCalendar=daily` would fire at 20:00 Toronto. systemd >=252
+# accepts a timezone here and owns the DST arithmetic; verified on the host with
+# `systemd-analyze calendar`.
+OnCalendar=*-*-* 05:30:00 America/Toronto
+# Don't hit the City's endpoints at a round number.
+RandomizedDelaySec=30m
+# A home server is not assumed to be up: run a missed job on the next boot.
+Persistent=true
+
+[Install]
+WantedBy=timers.target

@@ -234,6 +234,29 @@ def test_an_unreadable_form_is_reported_and_skipped(conn, monkeypatch):
     assert any("unreadable" in m for m in said)
 
 
+def test_forms_are_read_from_the_current_data_dir_not_a_stale_absolute_path(conn, monkeypatch, tmp_path):
+    """local_path is absolute and baked in at download time on whatever machine fetched the
+    form. The archive is designed to migrate — server becomes primary — so a path from the old
+    machine will not resolve on the new one. The file's identity is its basename (the portal
+    bin_id) and its home is the current data dir, so it must be resolved there. Found live: a
+    migrated DB logged `unreadable` for all 229 forms and parsed zero bids."""
+    from toronto_bids import config
+    monkeypatch.setattr(config, "AWARD_SUMMARY_DIR", tmp_path / "documents" / "award_summary")
+    seen = {}
+    def fake_form_rows(path):
+        seen["path"] = str(path)
+        return FORM
+    monkeypatch.setattr(award_summary, "form_rows", fake_form_rows)
+    db.upsert_row(conn, BackgroundPdf(
+        url="https://secure.toronto.ca/c3api_upload/retrieve/pmmd_solicitations/kSj1PnNq2nX0FApSenhvCA",
+        kind="award_summary", document_number="5616191850",
+        local_path="/Users/someone-else/scrapers/files/documents/award_summary/kSj1PnNq2nX0FApSenhvCA",
+    ), overwrite=True)
+    conn.commit()
+    store_award_summary_bids(conn)
+    assert seen["path"] == str(tmp_path / "documents" / "award_summary" / "kSj1PnNq2nX0FApSenhvCA")
+
+
 def test_a_bid_award_panel_bid_and_an_award_summary_bid_coexist(conn, monkeypatch):
     """Both write `bid`, and neither identifier is required: a panel bid has a council item
     and (pre-2019) no document number; an award-summary bid is the reverse."""
