@@ -92,12 +92,27 @@ def test_bidders_without_a_price_do_not_duplicate_on_every_run(conn):
 
 
 def test_store_bids_is_idempotent(conn):
+    # 25, not the 20 this asserted before #94: BA189.3 heads its table "Suppliers" and the
+    # plural was declining the whole table. See test_a_plural_header_is_still_a_bid_table.
     agendas = {"2022.BA189": _fixture("2022.BA189")}
     first = store_bids(conn, agendas)
-    assert first == 20
+    assert first == 25
     store_bids(conn, agendas)
-    assert conn.execute("SELECT COUNT(*) FROM bid").fetchone()[0] == 20
-    assert db.counts(conn)["bid"] == 20
+    assert conn.execute("SELECT COUNT(*) FROM bid").fetchone()[0] == 25
+    assert db.counts(conn)["bid"] == 25
+
+
+def test_a_plural_header_is_still_a_bid_table():
+    """Found by #94, on a BA agenda: the Bid Committee parser accepted a header the Bid Award
+    Panel parser refused. BA189.3 heads its table "Suppliers", and `_BIDDER_HDR` allowed
+    "Supplier"/"Supplier Name" but no plural — so the table was declined and its five real
+    bids were dropped silently."""
+    bids = parse_bid_tables(_fixture("2022.BA189"), "2022.BA189")
+    item = [b for b in bids if b["reference"] == "2022.BA189.3"]
+    assert [b["bidder_name_raw"] for b in item] == [
+        "Maple-Crete Inc.", "PTR Paving Inc.", "Aqua Tech Solutions Inc",
+        "Sanscon Construction Ltd.", "Ferpac Paving Inc"]
+    assert all(b["hst_basis"] == "excluding" for b in item)
 
 
 def test_two_bidders_on_one_item_both_survive(conn):
