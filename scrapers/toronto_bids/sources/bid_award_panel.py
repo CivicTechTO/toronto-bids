@@ -612,7 +612,11 @@ _APPENDIX_BLOCK = re.compile(r"(?=Call No:)", re.I)
 # "Recommended Bidder/Proponent:" (18) all carry punctuation, so a [A-Za-z ]+ lookahead runs
 # straight past them and swallows the whole value block into the supplier name. That misread
 # 201 of 1,076 bidder fields. Walking lines instead makes the terminator explicit.
-_LABEL_LINE = re.compile(r"^[ \t]*([A-Z][A-Za-z ./&'-]{2,34})\*?:[ \t]*(.*)$")
+# The length bound is load-bearing and was too tight at 34: "Total Potential Contract Award
+# Value:" is 36 characters, so it was not recognized as a label at all and the supplier name
+# ran straight through it into the amount ("Pitney Bowes of Canada Ltd. Total Potential
+# Contract Award Value: $3,676,730.40").
+_LABEL_LINE = re.compile(r"^[ \t]*([A-Z][A-Za-z ./&'-]{2,44})\*?:[ \t]*(.*)$")
 # An appendix can span a page break, which drops the running header, the page number and the
 # next "APPENDIX #n" banner into the middle of a field. One such header was captured verbatim
 # as a supplier name ("Contract Awards – Bid Committee Composite Report – January 26, 2011").
@@ -707,6 +711,113 @@ _APX_AWARD_VALUE = re.compile(
     r"\$([\d,]+(?:\.\d+)?)\s*\(?\s*net of (?:all )?(?:applicable )?(?:taxes|gst)\b", re.I)
 
 
+# --- split awards: one call, several winners (#98) ---------------------------------------
+#
+# The value section is the authority on HOW MUCH and the bidder field on WHO won, and the two
+# are keyed to each other. Council uses several schemes for that key, all in one corpus:
+#
+#     Recommended Bidders:  1. CDR Youngs Aggregates Inc.  2. Lafarge Aggregates
+#     Contract Award Value: 1. CDR Youngs Aggregates Inc. ... $2,589,782.50 net of ...
+#
+#     Recommended Bidder:   Firm A) WM Weller Tree Service Ltd. Firm B) Ontario Line Clearing
+#     Contract Award Value: Firm A) $4,872,017.44 net of GST
+#                           Firm B) $2,787,919.68 net of GST
+#
+# so the winner's value is the FIRST net-of-taxes figure inside that winner's own run of the
+# section — which also steps past the option-year and "total potential" figures that follow
+# it, exactly as the single-winner case does.
+_VALUE_SECTION = re.compile(
+    r"Contract Award Values?\*?:?\s*\n(.*?)(?=\n\s*(?:Number of (?:Bids|Proposals)|"
+    r"Financial Impact|Division Contacts?|Range of Scores|Call No|Ward No|Call Dates)\b|\Z)",
+    re.S | re.I)
+_VALUE_ENTRY = re.compile(
+    r"^[ \t]*(?:Firm\s+\(?(?P<firm>[A-H])\)|(?P<num>\d{1,2})\s*[.)]|(?P<let>[a-h])\s*\)|"
+    r"(?P<named>[A-Z][^:$\n]{3,44}):(?=\s*\$))[ \t]*(?P<rest>.*)$", re.M)
+# The value section labels its periods the same way it labels its firms, so "Option January 1,
+# 2010 to December 31, 2010: $79,800.00" reads as a winner unless this refuses it. Inventing a
+# supplier named after a date range is the exact failure this whole pass exists to avoid.
+_NOT_A_FIRM = re.compile(r"^(option|date of|from\b|to\b|total|for the period|item|part|year|"
+                         r"january|february|march|april|may|june|july|august|september|"
+                         r"october|november|december)\b|\d{4}", re.I)
+# "Firm A)" and "Firm (A)" are the same scheme; both appear.
+_BIDDER_KEYED = re.compile(
+    r"(?:Firm\s+\(?([A-H])\)|(?:^|\s)(\d{1,2})\s*[.)]\s|(?:^|\s)([a-h])\s*\)\s)")
+# What a winner won, appended to its name: "WM Weller Tree Service Ltd. – Type I and II
+# Service", "Budget Car & Truck - Award Price Schedule A, B and C". Left on, the same firm
+# keys differently here than everywhere else and forks the supplier dimension. Only a SPACED
+# dash starts one, so hyphenated firms (Levitt-Safety, Trade-Mark Industrial) are untouched.
+_WINNER_QUALIFIER = re.compile(
+    r"\s+[-–—]\s*(?:Award|Type|Price|Part|Item|for\b|Schedule|Group|Area).*$", re.I)
+# The same thing in parentheses: "Lima's Gardens & Construction Inc. (Northwest, Northeast and
+# Southwest Quadrant)", "Flow-Kleen Technology Ltd (for services in Toronto East York ...)".
+# Anchored to the end and gated on what a qualifier opens with, so a parenthetical that is
+# part of the name survives — "Vicdom Sand & Gravel (Ontario) Limited" is one firm.
+_WINNER_PAREN_QUALIFIER = re.compile(
+    # north\w* etc: council writes "Northwest"/"Northeast", where a bare `north\b` never matches.
+    r"\s*\((?:for|price\s+schedule|award|north\w*|south\w*|east\w*|west\w*|district|region|"
+    r"quadrant|part|area|item|schedule|group)\b[^)]*\)\.?\s*$", re.I)
+
+
+def _bidder_map(bidder: str) -> dict:
+    """{key: name} from the bidder field, for the schemes that key their winners."""
+    parts, out = list(_BIDDER_KEYED.finditer(bidder)), {}
+    for i, match in enumerate(parts):
+        key = (match.group(1) or match.group(2) or match.group(3) or "").lower()
+        end = parts[i + 1].start() if i + 1 < len(parts) else len(bidder)
+        name = _clean(bidder[match.end():end])
+        if key and name:
+            out[key] = name
+    return out
+
+
+def split_award_winners(block: str, bidder: str) -> list[dict] | None:
+    """Each winner of a split award with its own value, or None if the block does not say.
+
+    Returns None rather than guessing: 21 of the 51 split appendices key their value section
+    in a way this does not read (per-Item tables, per-district prose), and a wrong supplier is
+    worse than a skipped one.
+    """
+    section = _VALUE_SECTION.search(block)
+    if not section:
+        return None
+    text = section.group(1)
+    entries = [m for m in _VALUE_ENTRY.finditer(text)
+               if not (m.group("named") and _NOT_A_FIRM.match(m.group("named").strip()))]
+    if len(entries) < 2:
+        return None
+    keyed, want = _bidder_map(bidder), supplier_tokens(bidder)
+    out = []
+    for i, match in enumerate(entries):
+        end = entries[i + 1].start() if i + 1 < len(entries) else len(text)
+        value = _APX_AWARD_VALUE.search(text[match.start():end])
+        if not value:
+            continue
+        amount = parse_amount(value.group(1))
+        if amount is None:
+            continue
+        rest = (match.group("rest") or "").lstrip()
+        name = match.group("named") or (rest if rest and not rest.startswith("$") else None)
+        if not name:
+            # The value section only labels this winner; the bidder field is where it is named.
+            name = keyed.get((match.group("firm") or match.group("num")
+                              or match.group("let") or "").lower())
+        if not name:
+            continue
+        name = _clean(_WINNER_QUALIFIER.sub("", _clean(name)))
+        # repeat: a name can carry both forms ("X (Northwest Quadrant) (Southwest Quadrant)")
+        while True:
+            stripped = _clean(_WINNER_PAREN_QUALIFIER.sub("", name))
+            if stripped == name or not stripped:
+                break
+            name = stripped
+        # The bidder field is the authority on who won. A "winner" it never names is a parsing
+        # artefact, not a firm — this is what stops a date range becoming a supplier.
+        if not name or not (supplier_tokens(name) & want):
+            continue
+        out.append({"winner_raw": name, "award_value": amount})
+    return out or None
+
+
 def parse_composite_appendices(text: str) -> list[dict]:
     """Awards from a composite staff report's appendices.
 
@@ -719,10 +830,9 @@ def parse_composite_appendices(text: str) -> list[dict]:
     feed also published, the first figure equals the feed's award_amount 137 times (98.6%).
     The option-year and "total potential" figures below it can be twice as large.
 
-    `split_award` marks the appendices naming several winners. They are real (an aggregates
-    standing offer awarded to three firms) and each winner has its own value section, which
-    this does not yet separate — so the value here belongs to the first winner only. Flagged
-    rather than dropped or silently fused; see #98.
+    One item per award LINE. A call awarded to several winners yields one item each, taken
+    from the value section's own per-winner runs (#98); a call this cannot split confidently
+    yields none and is reported by `split_award`, so the caller can count what it dropped.
     """
     out = []
     for block in _APPENDIX_BLOCK.split(text)[1:]:
@@ -731,25 +841,44 @@ def parse_composite_appendices(text: str) -> list[dict]:
         value = _APX_AWARD_VALUE.search(block)
         if not (description and bidder and value):
             continue                      # blocks publishing no winner or no value at all
-        amount = parse_amount(value.group(1))
-        if amount is None:
-            continue
         call_raw = fields.get("call no") or fields.get("call no.")
-        out.append({
+        common = {
             "call_number_raw": call_raw,
             "call_number": normalize_call_number(call_raw),
             # The call number is the only identifier the appendix carries, and it is what a
             # human would search for, so it leads the title rather than being dropped.
             "title": f"{call_raw} - {description}" if call_raw else description,
             "description": description,
+            "split_award": False,
+        }
+
+        winners = split_award_winners(block, bidder)
+        if winners:
+            for winner in winners:
+                out.append({**common, **winner, "award_value_raw": f"${winner['award_value']:,.2f}"})
+            continue
+
+        amount = parse_amount(value.group(1))
+        if amount is None:
+            continue
+        # Not splittable: council named several winners in a way the value section does not
+        # key, so there is nothing to apportion the money by and the row is refused.
+        #
+        # A parenthetical is NOT evidence of a single firm, tempting as it looks. Some long
+        # names are one firm plus what it won ("Lafarge Paving & Construction (for winter
+        # season – South, West and North Districts)"), but just as many are two firms EACH
+        # carrying one ("Coco Paving Limited (for the North, South and West Districts) D.
+        # Crupi & Sons Limited (for the East District)"). Admitting the qualified ones
+        # recovered ~5 real awards and let in as many invented suppliers, including a 735-
+        # character prose bleed and a roster of a dozen firms. So length alone still decides,
+        # exactly as #96 had it, and the ~15 that reach here stay out of the archive.
+        out.append({
+            **common,
             "winner_raw": bidder,
             "award_value": amount,
-            # Several winners on one call: numbered, or an unnumbered roster too long to be
-            # one firm. Each winner has its own value section, which this does not separate,
-            # so the amount above belongs to the first of them only.
-            "split_award": bool(_ENUMERATED_BIDDER.search(bidder))
-                           or bool(_SEGMENTED_BIDDER.search(bidder))
-                           or len(bidder) > _MAX_SUPPLIER_NAME,
+            "split_award": bool(_ENUMERATED_BIDDER.search(bidder)
+                                or _SEGMENTED_BIDDER.search(bidder)
+                                or len(bidder) > _MAX_SUPPLIER_NAME),
             # The amount as council wrote it, WITHOUT the trailing "net of all applicable
             # taxes" qualifier: amount.py:parse_amount is strict and refuses any string that
             # is not a single CAD amount, so storing the whole phrase would leave
@@ -779,11 +908,11 @@ def store_composite_awards(conn) -> int:
             if not item["call_number"]:
                 continue                  # nothing to key it on; 0 of 1,229 in the corpus
             if item["split_award"]:
-                # One call, several winners, each with its own value section. Recording the
-                # fused name as one firm would invent a supplier that does not exist and hand
-                # it the first winner's money; the dimension would then carry it as real. The
-                # award is genuine and worth having — see #98, which has to separate the
-                # per-winner value sections to do it right.
+                # Several winners on one call that the value section does not key in any
+                # scheme split_award_winners reads (per-Item tables, per-district prose), so
+                # there is nothing to apportion the money by. Recording the fused name as one
+                # firm would invent a supplier and hand it the first winner's money, and the
+                # dimension would then carry it as real.
                 skipped += 1
                 continue
             db.upsert_row(conn, CompositeAward(
