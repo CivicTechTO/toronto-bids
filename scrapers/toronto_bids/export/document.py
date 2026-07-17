@@ -22,6 +22,13 @@ def _parse_json(record: dict, key: str) -> dict:
     return record
 
 
+def _ext(name: str | None) -> str | None:
+    if not name:
+        return None
+    dot = name.rfind(".")
+    return name[dot + 1:].lower() if dot != -1 else None
+
+
 def build_export_document(conn, generated_at: str | None = None) -> dict:
     """Assemble the solicitation-centric nested export document from the store.
 
@@ -56,12 +63,35 @@ def build_export_document(conn, generated_at: str | None = None) -> dict:
         else:
             unlinked.append(posting)
 
+    documents_by_doc: dict[str, list] = {}
+    for att in _rows(conn, "SELECT document_number, filename, COALESCE(path, filename) AS path, "
+                           "file_size FROM ariba_attachment ORDER BY document_number, path"):
+        documents_by_doc.setdefault(att["document_number"], []).append({
+            "source": "ariba_attachment",
+            "name": att["filename"],
+            "path": att["path"],
+            "type": _ext(att["path"]),
+            "size_bytes": att["file_size"],
+            "url": None,
+        })
+    for form in _rows(conn, "SELECT document_number, url FROM background_pdf "
+                            "WHERE kind='award_summary' ORDER BY document_number, url"):
+        documents_by_doc.setdefault(form["document_number"], []).append({
+            "source": "award_summary",
+            "name": "Award Summary Form.pdf",
+            "path": "Award Summary Form.pdf",
+            "type": "pdf",
+            "size_bytes": None,
+            "url": form["url"],
+        })
+
     solicitations = []
     for sol in _rows(conn, "SELECT * FROM solicitation ORDER BY document_number"):
         sol = _drop(sol, "odata_id")
         doc = sol["document_number"]
         sol["awards"] = awards_by_doc.get(doc, [])
         sol["ariba_postings"] = postings_by_doc.get(doc, [])
+        sol["documents"] = documents_by_doc.get(doc, [])
         solicitations.append(sol)
 
     noncompetitive = [
