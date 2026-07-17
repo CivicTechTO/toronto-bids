@@ -1,6 +1,15 @@
 import os
 from pathlib import Path
 
+# Load scrapers/.env if python-dotenv is installed (it ships with the `council` extra). Guarded
+# so the core pipeline needs no new dependency; without it, credentials just come from the real
+# environment. Keyed to the package's own parent so it works regardless of the caller's cwd.
+try:
+    from dotenv import load_dotenv
+    load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+except ImportError:
+    pass
+
 # Data directory: scrapers/files/ by default, overridable for tests / deployment.
 DATA_DIR = Path(os.environ.get("TB_DATA_DIR", Path(__file__).resolve().parent.parent / "files"))
 DB_PATH = DATA_DIR / "bids.sqlite"
@@ -62,3 +71,13 @@ COUNCIL_AGENDAS_DIR = DATA_DIR / "council" / "agendas"
 # Archived Ariba posting pages from the legacy rescue; their <title> is the real
 # solicitation title (#65).
 LEGACY_ARIBA_DIR = DATA_DIR / "legacy" / "azure" / "ariba_data"
+
+# Solicitation document bundles behind Ariba's "Respond" gate (#117), one zip per event named
+# by document number. Bytes only — the DB holds the index (ariba_attachment). Not committed.
+ARIBA_ATTACHMENTS_DIR = DATA_DIR / "ariba" / "attachments"
+# The supplier account the attachment scraper logs in as. Read from the gitignored scrapers/.env
+# (the repo is public — credentials never go in it). Respond is authorized by PMMD (#117), but
+# a bid is never submitted.
+ARIBA_LOGIN_URL = "https://service.ariba.com/Supplier.aw/109590048/aw?awh=r&awssk=login"
+ARIBA_USERNAME = os.environ.get("ARIBA_USERNAME")
+ARIBA_PASSWORD = os.environ.get("ARIBA_PASSWORD")

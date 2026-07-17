@@ -2,7 +2,7 @@ import sqlite3
 from dataclasses import fields
 from importlib import resources
 
-from toronto_bids.models import Award, Bid, CapitalProject, CompositeAward, NonCompetitive, Solicitation, AribaPosting, SuspendedFirm, Supplier, CouncilItem, BackgroundPdf
+from toronto_bids.models import Award, Bid, CapitalProject, CompositeAward, NonCompetitive, Solicitation, AribaPosting, AribaAttachment, SuspendedFirm, Supplier, CouncilItem, BackgroundPdf
 
 # model -> (table, conflict-key columns). A model's fields ARE the table's writable
 # columns, in INSERT order; auto/default columns (id, first_seen, last_seen, supplier_id)
@@ -13,6 +13,7 @@ _TABLES = {
     Award: ("award", ["document_number", "supplier_name_raw", "award_amount",
                       "award_date", "source"]),
     AribaPosting: ("ariba_posting", ["rfx_id"]),
+    AribaAttachment: ("ariba_attachment", ["document_number", "filename"]),
     SuspendedFirm: ("suspended_firm", ["supplier_name_raw", "council_authority"]),
     Supplier: ("supplier", ["supplier_key"]),
     CouncilItem: ("council_item", ["reference"]),

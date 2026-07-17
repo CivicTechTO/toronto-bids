@@ -16,6 +16,8 @@ dependencies = [
 council = [
     "playwright>=1.61.0",
     "pyvirtualdisplay>=3.0",
+    # Reads the supplier login from scrapers/.env for `tb enrich-ariba-attachments` (#117).
+    "python-dotenv>=1.0",
 ]
 
 [project.scripts]

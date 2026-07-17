@@ -323,3 +323,32 @@ CREATE INDEX IF NOT EXISTS idx_composite_award_call ON composite_award (call_num
 -- Absent from the Award / NonCompetitive models on purpose, exactly as solicitation.
 -- title_source is (#79): every sync re-upserts these rows, so anything db.upsert_row can
 -- write, the feed can clobber. Only the labelling pass reaches these columns.
+
+-- ariba_attachment indexes the actual solicitation documents behind Ariba's "Respond" gate
+-- (#117) — RFP parts, drawings, addenda, pricing forms. The Discovery preview shows
+-- Attachments (0); the files live inside the Sourcing event, downloadable only as a
+-- participating supplier. sources/ariba_attachments.py archives the whole event as one
+-- server-zipped bundle under <DATA_DIR>/ariba/attachments/ and records one row PER FILE here.
+-- The bytes are NOT in the DB and NOT in git (multi-GB); this table is the INDEX — what
+-- documents exist for a solicitation and where the bundle sits. Nothing is surfaced in the
+-- export yet, by design (archive now, publish later).
+--
+-- document_number joins solicitation.document_number (the Ariba event = the 10-digit doc).
+-- Respond is disabled once a posting closes, so rows only ever accrue for solicitations that
+-- were OPEN at capture time — a recurring job, not a backfill.
+CREATE TABLE IF NOT EXISTS ariba_attachment (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    document_number TEXT NOT NULL,   -- the Ariba event; joins solicitation.document_number
+    filename        TEXT NOT NULL,   -- one file inside the event's downloaded bundle
+    file_size       INTEGER,         -- uncompressed bytes, from the zip central directory
+    -- CRC32 comes free from the central directory (no decompression of a 160 MB bundle), so
+    -- it fingerprints each file for dedup/integrity without ever inflating the entry.
+    crc32           TEXT,
+    zip_name        TEXT,            -- stored bundle basename under <DATA_DIR>/ariba/attachments/
+    zip_sha256      TEXT,            -- sha256 of the whole bundle: integrity + cross-event dedup
+    first_seen      TEXT NOT NULL DEFAULT (datetime('now')),
+    last_seen       TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE (document_number, filename)
+);
+
+CREATE INDEX IF NOT EXISTS idx_ariba_attachment_document ON ariba_attachment (document_number);

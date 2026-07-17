@@ -192,3 +192,20 @@ class CompositeAward:
 
     def __post_init__(self):
         object.__setattr__(self, "award_value_numeric", parse_amount(self.award_value))
+
+
+@dataclass(frozen=True)
+class AribaAttachment:
+    """One file inside the document bundle behind a solicitation's Ariba "Respond" gate (#117).
+
+    document_number is the Ariba event and joins solicitation.document_number. The bytes live
+    on disk under <DATA_DIR>/ariba/attachments/; this row is the index. file_size and crc32
+    come from the zip central directory (no decompression); zip_sha256 fingerprints the whole
+    bundle.
+    """
+    document_number: str
+    filename: str
+    file_size: int | None = None
+    crc32: str | None = None
+    zip_name: str | None = None
+    zip_sha256: str | None = None
