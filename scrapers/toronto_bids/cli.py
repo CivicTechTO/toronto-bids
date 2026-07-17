@@ -66,6 +66,10 @@ def build_parser() -> argparse.ArgumentParser:
         "--headless", action="store_true",
         help="Run capture headless (Ariba's supplier UI is not Akamai-gated, unlike TMMIS; may "
              "still trip bot-detection — headed is the default)")
+    p_ariba.add_argument(
+        "--reindex", action="store_true",
+        help="Rebuild the index from the bundles already on disk under <DATA_DIR>/ariba/"
+             "attachments/ (offline, no browser). Needed once after the recursion change (#123).")
 
     p_titles.add_argument(
         "--reports", action="store_true",
@@ -293,7 +297,10 @@ def _cmd_enrich_ariba_attachments(args) -> int:
     out = lambda m: print(m, flush=True)
     try:
         before = conn.execute("SELECT COUNT(*) FROM ariba_attachment").fetchone()[0]
-        if args.ingest:
+        if args.reindex:
+            print("Reindexing bundles on disk (recursive):")
+            print(f"  bundles reindexed: {aa.reindex_bundles(conn, log=out)}")
+        elif args.ingest:
             print(f"Indexing bundles in {args.ingest}:")
             print(f"  bundles ingested: {aa.ingest_downloads(conn, args.ingest, log=out)}")
         elif args.capture:

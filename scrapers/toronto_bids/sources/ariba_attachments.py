@@ -29,6 +29,7 @@ Two halves, split the way the rest of the package splits fetch from normalize:
 Not part of `tb sync`. Run via `tb enrich-ariba-attachments`.
 """
 import hashlib
+import io
 import shutil
 import zipfile
 from pathlib import Path
@@ -61,23 +62,53 @@ def document_number_from_zip_name(name: str) -> str | None:
     return bridge_document_number(None, name)
 
 
-def index_zip(zip_path) -> list[dict]:
-    """Central-directory listing of a bundle: one dict per file, no decompression.
+_MAX_ZIP_DEPTH = 8
+_MAX_ZIP_ENTRIES = 10000
 
-    file_size and CRC32 both come from the zip's central directory, so indexing a 160 MB
-    bundle never inflates a single byte. Directory entries are dropped. CRC32 is rendered as
-    the fixed 8-hex-digit string SQLite will store.
+
+def index_zip(zip_path) -> list[dict]:
+    """Recursive central-directory listing of a bundle: one dict per LEAF file.
+
+    Nested zips are descended to any depth (a bundle's real documents often live inside
+    "Appendix ….zip"), each leaf carrying the full nested `path`. Sizes and CRC32 come from
+    each level's central directory; a nested zip must be read (inflated) to reach its own
+    directory, so depth and a per-bundle entry budget bound zip bombs. A nested zip that is
+    empty, corrupt, encrypted, or past the depth cap degrades to a single leaf rather than
+    being lost. The entry budget (`_MAX_ZIP_ENTRIES`) is a different, harder backstop: once it
+    hits zero every remaining entry — including one that would otherwise become a nested-zip
+    leaf — is skipped outright, not indexed in any form. That is a deliberate truncation for a
+    pathological bundle, not a leaf fallback.
     """
     with zipfile.ZipFile(zip_path) as zf:
-        return [
-            {
-                "filename": zi.filename,
-                "file_size": zi.file_size,
-                "crc32": format(zi.CRC & 0xFFFFFFFF, "08x"),
-            }
-            for zi in zf.infolist()
-            if not zi.is_dir()
-        ]
+        return _index_zipfile(zf, prefix="", depth=0, budget=[_MAX_ZIP_ENTRIES])
+
+
+def _index_zipfile(zf, prefix: str, depth: int, budget: list) -> list[dict]:
+    out = []
+    for zi in zf.infolist():
+        if zi.is_dir() or budget[0] <= 0:
+            continue                                   # budget exhausted: hard stop, skip outright
+        path = prefix + zi.filename
+        if zi.filename.lower().endswith(".zip") and depth < _MAX_ZIP_DEPTH:
+            try:
+                # ponytail: caps bound zip count/depth, not per-entry inflated size; add a size
+                # cap if a real bundle ever needs it
+                with zipfile.ZipFile(io.BytesIO(zf.read(zi))) as nested:
+                    children = _index_zipfile(nested, path + "/", depth + 1, budget)
+                if children:                       # expandable: contribute its leaves, not it
+                    out.extend(children)
+                    continue
+                # empty zip falls through and is kept as a leaf, so nothing is silently dropped
+            except (zipfile.BadZipFile, RuntimeError, OSError):
+                pass                               # corrupt/encrypted: keep as an opaque leaf
+        out.append({
+            "filename": zi.filename,
+            "path": path,
+            "file_size": zi.file_size,
+            "crc32": format(zi.CRC & 0xFFFFFFFF, "08x"),
+        })
+        budget[0] -= 1
+    return out
 
 
 def sha256_of_file(path, _chunk=1 << 20) -> str:
@@ -93,8 +124,9 @@ def store_bundle(conn, zip_path, document_number: str, dest_dir=None) -> int:
     """Archive one event bundle under <dest_dir>/<Docnnnn>.zip and index every file in it.
 
     Idempotent: the canonical path is keyed on document_number, so re-storing the same event
-    overwrites in place and the UNIQUE(document_number, filename) upserts refresh rather than
-    duplicate. Returns the number of files indexed.
+    overwrites the bytes in place, and the document's rows are deleted then re-inserted from the
+    freshly indexed bytes — a rebuild, not an upsert, so a leaf that no longer exists (e.g. one
+    from before recursion) cannot survive a re-store. Returns the number of files indexed.
     """
     dest_dir = Path(dest_dir if dest_dir is not None else config.ARIBA_ATTACHMENTS_DIR)
     dest_dir.mkdir(parents=True, exist_ok=True)
@@ -106,10 +138,15 @@ def store_bundle(conn, zip_path, document_number: str, dest_dir=None) -> int:
 
     zip_sha = sha256_of_file(canonical)
     entries = index_zip(canonical)
+    # Rebuild this document's index from the bytes: ariba_attachment is a derived index of the
+    # on-disk zips (like the supplier dimension), so clear the document's rows — dropping any
+    # stale top-level-only rows from before recursion — then insert the current recursive set.
+    conn.execute("DELETE FROM ariba_attachment WHERE document_number = ?", (document_number,))
     for entry in entries:
         db.upsert_row(conn, AribaAttachment(
             document_number=document_number,
             filename=entry["filename"],
+            path=entry["path"],
             file_size=entry["file_size"],
             crc32=entry["crc32"],
             zip_name=canonical.name,
@@ -137,6 +174,18 @@ def ingest_downloads(conn, source_dir, dest_dir=None, log=lambda _m: None) -> in
         log(f"  {zip_path.name}: {n} files -> Doc{document_number}")
         ingested += 1
     return ingested
+
+
+def reindex_bundles(conn, dest_dir=None, log=lambda _m: None) -> int:
+    """Rebuild the index from the bundles already in the store. Offline, no browser.
+
+    ariba_attachment is a derived index of the on-disk zips, so it can be regenerated whenever the
+    indexing changes (e.g. #123's recursion). Just re-ingest the store into itself — store_bundle
+    skips the copy when the source is already the canonical path and rebuilds the rows from the
+    bytes. Idempotent. Returns the number of bundles reindexed.
+    """
+    root = dest_dir if dest_dir is not None else config.ARIBA_ATTACHMENTS_DIR
+    return ingest_downloads(conn, root, root, log=log)
 
 
 # --- browser: log in and capture ----------------------------------------------------------
