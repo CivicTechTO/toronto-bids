@@ -63,8 +63,16 @@ def pdf_kind(url: str) -> str:
     return "bgrd" if "/bgrd/" in url else ("comm" if "/comm/" in url else "other")
 
 
-def download_pdf(http, url: str, dest_dir) -> dict:
-    """Download a PDF over plain HTTP, save it, hash it, and extract its text with pdftotext."""
+def download_pdf(http, url: str, dest_dir, layout: bool = False) -> dict:
+    """Download a PDF over plain HTTP, save it, hash it, and extract its text with pdftotext.
+
+    `layout=True` passes pdftotext -layout, which preserves the column alignment a form
+    depends on. It is off by default because that is what every council PDF was extracted
+    with, and re-extracting them differently now would rewrite text already in the store for
+    no gain — #96 measured the two as identical on the composite reports (244/280 blocks
+    either way). The Award Summary Forms are the opposite case: without -layout their
+    "Label    value" columns collapse and the form parses to nothing at all (#114).
+    """
     data = http.get_bytes(url)
     dest_dir = Path(dest_dir)
     dest_dir.mkdir(parents=True, exist_ok=True)
@@ -72,7 +80,8 @@ def download_pdf(http, url: str, dest_dir) -> dict:
     path = dest_dir / name
     path.write_bytes(data)
     digest = hashlib.sha256(data).hexdigest()
-    proc = subprocess.run(["pdftotext", "-q", str(path), "-"], capture_output=True, text=True)
+    proc = subprocess.run(["pdftotext", "-q", *(["-layout"] if layout else []), str(path), "-"],
+                          capture_output=True, text=True)
     text = proc.stdout.strip() or None
     return {"local_path": str(path), "sha256": digest, "text": text}
 

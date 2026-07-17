@@ -178,8 +178,12 @@ CREATE TABLE IF NOT EXISTS council_item (
 CREATE TABLE IF NOT EXISTS background_pdf (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
     url         TEXT NOT NULL UNIQUE,
+    -- The council item this PDF hangs off. NULL for kind='award_summary' (#114): the Bid
+    -- Award Panel was abolished 2025-10-01, so those forms have no council item at all and
+    -- are keyed on document_number instead. Do not conflate the two identifiers here.
     reference   TEXT,
-    kind        TEXT,
+    document_number TEXT,   -- set for kind='award_summary'; NULL for council PDFs
+    kind        TEXT,       -- 'bgrd' | 'comm' | 'other' | 'award_summary'
     local_path  TEXT,
     sha256      TEXT,
     text        TEXT,
@@ -227,7 +231,11 @@ CREATE TABLE IF NOT EXISTS capital_project (
 -- and why.
 CREATE TABLE IF NOT EXISTS bid (
     id                 INTEGER PRIMARY KEY AUTOINCREMENT,
-    reference          TEXT NOT NULL,   -- council item, e.g. '2022.BA189.2'
+    -- Both identifiers are partial, and which is present says where the bid came from. A Bid
+    -- Award Panel bid always has a council item and had no document number before 2019. An
+    -- Award Summary Form bid (#114) is the reverse: keyed on the document number, with no
+    -- council item at all — the panel was abolished 2025-10-01. Neither can be NOT NULL.
+    reference          TEXT,            -- council item, e.g. '2022.BA189.2'; NULL for #114
     document_number    TEXT,            -- NULL pre-2019: no Ariba doc numbers existed yet
     bidder_name_raw    TEXT NOT NULL,
     -- Backfilled by build_supplier_dimension, like award/noncompetitive/suspended_firm.
@@ -253,7 +261,8 @@ CREATE TABLE IF NOT EXISTS bid (
 -- so a bare key would insert a fresh duplicate of every one of them on every run.
 -- db._upsert_keyed's conflict target must match this expression exactly.
 CREATE UNIQUE INDEX IF NOT EXISTS bid_key ON bid (
-    reference, bidder_name_raw, COALESCE(bid_price, ''), source
+    COALESCE(reference, ''), COALESCE(document_number, ''), bidder_name_raw,
+    COALESCE(bid_price, ''), source
 );
 
 -- composite_award holds awards from the 2009-2012 Bid Committee composite reports (#96),

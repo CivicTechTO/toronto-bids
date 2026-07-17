@@ -35,6 +35,15 @@ def build_parser() -> argparse.ArgumentParser:
              "cache, seconds once cached). Without it, only agendas already on disk are used")
     p_titles.add_argument("--virtual-display", action="store_true",
                           help="Run the headed browser under Xvfb (implies --scrape's needs)")
+    p_awards = sub.add_parser(
+        "enrich-awards",
+        help="Archive the Toronto Bids Portal's Award Summary Forms — the losing bidders, "
+             "after the Bid Award Panel was abolished 2025-10-01 (#114). Offline unless "
+             "--download")
+    p_awards.add_argument(
+        "--download", action="store_true",
+        help="Fetch the forms first (plain HTTP, no browser; ~262 PDFs / ~64MB, resumable)")
+
     p_amounts = sub.add_parser(
         "amounts", help="Inspect the amount strings the parser refuses (#74)")
     p_amounts.add_argument(
@@ -209,6 +218,44 @@ def _cmd_enrich_titles(args) -> int:
     return 0
 
 
+def _cmd_enrich_awards(args) -> int:
+    """Archive and parse the Award Summary Forms (#114).
+
+    The Bid Award Panel was abolished on 2025-10-01, so `enrich-titles --scrape` will never
+    find another agenda: 891 is the final corpus. This is where the losing bidders come from
+    now. Offline by default — it parses forms already on disk, exactly as enrich-titles does.
+    """
+    from toronto_bids.sources.award_summary import (
+        download_award_summaries, store_award_summary_bids)
+
+    conn = _open_db()
+    try:
+        before = conn.execute("SELECT COUNT(*) FROM bid").fetchone()[0]
+        if args.download:
+            http = HttpClient()
+            try:
+                out = lambda m: print(m, flush=True)
+                print(f"  award summary forms archived: "
+                      f"{download_award_summaries(conn, http, log=out)}")
+            finally:
+                http.close()
+        else:
+            n = conn.execute("SELECT COUNT(*) FROM background_pdf "
+                             "WHERE kind='award_summary' AND text IS NOT NULL").fetchone()[0]
+            if not n:
+                print("No Award Summary Forms on disk — run with --download to fetch them "
+                      "(plain HTTP, no browser).")
+        print(f"  bids from award summaries   : "
+              f"{store_award_summary_bids(conn, log=lambda m: print(m, flush=True))}")
+        after = conn.execute("SELECT COUNT(*) FROM bid").fetchone()[0]
+        print(f"\nBids: {before} -> {after}  ({after - before} new)")
+        for r in conn.execute("SELECT source, COUNT(*) n FROM bid GROUP BY 1 ORDER BY 2 DESC"):
+            print(f"  {r['source']:<22} {r['n']:>6}")
+    finally:
+        conn.close()
+    return 0
+
+
 def _cmd_amounts(args) -> int:
     """Surface amount strings nobody has ruled on yet.
 
@@ -251,6 +298,8 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_enrich_council(args)
     if args.command == "enrich-titles":
         return _cmd_enrich_titles(args)
+    if args.command == "enrich-awards":
+        return _cmd_enrich_awards(args)
     if args.command == "amounts":
         return _cmd_amounts(args)
     parser.print_help()
