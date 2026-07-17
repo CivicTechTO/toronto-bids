@@ -466,29 +466,66 @@ def parse_pre_ariba_awards(html: str) -> list[dict]:
     return out
 
 
+# Legal-form noise that varies freely between how council writes a supplier and how the feed
+# does: 'Sanscon Construction Limited' vs 'Sanscon Construction Ltd.', 'Liftsafe Engineering &
+# Service Group' vs '... and Service Group', 'The Municipal Infrastructure Group,'.
+_LEGAL_NOISE = re.compile(r"\b(limited|ltd|incorporated|inc|corporation|corp|company|co|"
+                          r"lp|llp|ulc|holdings|group|canada|ontario)\b", re.I)
+_LEADING_THE = re.compile(r"^the\s+", re.I)
+
+
+def supplier_tokens(name: str | None) -> set:
+    """Significant words in a supplier name, with legal form and '&'/'and' variance removed.
+
+    Deliberately looser than linking/supplier.py's supplier_key, and that is safe *here* for a
+    reason that does not apply there: supplier_key must not MERGE two firms into one dimension
+    row, so it keeps legal suffixes on purpose. This only has to CONFIRM a match the exact
+    award value already pinned — and the value is nearly a unique key (4,725 of 4,861 title-less
+    amounts occur exactly once).
+    """
+    text = _LEADING_THE.sub("", (name or "").lower().replace("&", " and "))
+    return {t for t in supplier_key(_LEGAL_NOISE.sub(" ", text)).split() if len(t) > 2}
+
+
 def match_pre_ariba_titles(conn, agendas: dict) -> int:
     """Name title-less pre-Ariba solicitations by matching (supplier, award value). Idempotent.
 
-    Only a UNIQUE match is accepted. The key barely collides — 21 of 5,443 title-less award
-    rows share a (supplier, amount) with a different document — but a wrong title is worse
-    than none, so an ambiguous match is dropped rather than guessed.
+    The award value carries the match; the supplier only confirms it. Measured against 777
+    Ariba-era items, where the document number gives ground truth — matching them on
+    (supplier, value) while ignoring that number, then checking the answer:
+
+        exact supplier_key   488 matched, 0 wrong, recall 62.8%
+        one shared token     759 matched, 0 wrong, recall 97.7%   <- this
+        no supplier check    768 matched, 0 wrong, recall 98.8%
+
+    Zero false positives at every level, so the supplier check buys no precision on that
+    sample — but the sample is biased: every item in it IS an award we hold. A pre-Ariba item
+    whose award we do NOT hold could coincidentally match an unrelated value, and this is the
+    only guard against it. 1.1% recall is a cheap premium.
+
+    Only a UNIQUE match is taken. A wrong title is worse than none.
     """
-    index = {}
+    awards = []
     for row in conn.execute(
             "SELECT a.document_number d, a.supplier_name_raw s, a.award_amount_numeric v "
             "FROM award a JOIN solicitation sol ON sol.document_number = a.document_number "
             "WHERE a.source='odata' AND a.award_amount_numeric IS NOT NULL "
             "AND a.supplier_name_raw IS NOT NULL AND sol.title IS NULL"):
-        index.setdefault((supplier_key(row["s"]), round(row["v"])), set()).add(row["d"])
+        awards.append((round(row["v"]), supplier_tokens(row["s"]), row["d"]))
+    by_value = {}
+    for value, toks, doc in awards:
+        by_value.setdefault(value, []).append((toks, doc))
 
     filled = {}
     for meeting, html in agendas.items():
         if meeting.split(".")[0] >= "2019":
             continue                      # 2019+ names a document number; no need to guess
         for item in parse_pre_ariba_awards(html):
-            docs = index.get((supplier_key(item["winner_raw"]), round(item["award_value"])))
-            if docs and len(docs) == 1:
-                filled.setdefault(next(iter(docs)), item["title"])
+            want = supplier_tokens(item["winner_raw"])
+            docs = {doc for toks, doc in by_value.get(round(item["award_value"]), [])
+                    if want & toks}
+            if len(docs) == 1:
+                filled.setdefault(docs.pop(), item["title"])
     conn.executemany(
         "UPDATE solicitation SET title = ?, source = 'council_pre_ariba' "
         "WHERE document_number = ? AND title IS NULL",

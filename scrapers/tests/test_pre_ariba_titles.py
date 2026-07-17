@@ -96,3 +96,52 @@ def test_is_idempotent(conn):
     conn.commit()
     assert match_pre_ariba_titles(conn, {"2017.BA1": _fixture("2017.BA1")}) == 1
     assert match_pre_ariba_titles(conn, {"2017.BA1": _fixture("2017.BA1")}) == 0
+
+
+# --- how loose the supplier check is, and why it is safe --------------------------------
+
+def test_supplier_tokens_absorbs_the_variance_actually_seen():
+    """Measured misses under the strict key: Ltd/Limited, &/and, a leading 'The'."""
+    from toronto_bids.sources.bid_award_panel import supplier_tokens
+
+    def matches(a, b):
+        return bool(supplier_tokens(a) & supplier_tokens(b))
+
+    assert matches("Sanscon Construction Limited", "Sanscon Construction Ltd.")
+    assert matches("Liftsafe Engineering & Service Group",
+                   "Liftsafe Engineering and Service Group")
+    assert matches("The Municipal Infrastructure Group,", "Municipal Infrastructure Group Ltd")
+    assert matches("J&J Trailers Manufacturers and Sales", "J J Trailers Manufacturers Sales")
+
+
+def test_supplier_tokens_drops_legal_form_so_it_cannot_carry_a_match_alone():
+    """'Inc' and 'Ltd' must not be the shared token — every firm has one."""
+    from toronto_bids.sources.bid_award_panel import supplier_tokens
+
+    assert supplier_tokens("Acme Inc.") == {"acme"}
+    assert not (supplier_tokens("Acme Inc.") & supplier_tokens("Beta Ltd."))
+
+
+def test_two_different_firms_at_the_same_value_are_dropped(conn):
+    """The value carries the match, so the supplier check is what stops a coincidence."""
+    for doc, supplier in (("1234567890", "MeteoGroup Weather Services Canada Inc."),
+                          ("9876543210", "Totally Different Paving Corp.")):
+        db.upsert_row(conn, Solicitation(doc, title=None, source="odata"), overwrite=True)
+        db.upsert_row(conn, Award(doc, supplier_name_raw=supplier,
+                                  award_amount="646356.00", source="odata"), overwrite=True)
+    conn.commit()
+    # Only MeteoGroup shares a token with the agenda's winner, so the match stays unique.
+    assert match_pre_ariba_titles(conn, {"2017.BA1": _fixture("2017.BA1")}) == 1
+    named = conn.execute("SELECT document_number FROM solicitation "
+                         "WHERE source='council_pre_ariba'").fetchone()[0]
+    assert named == "1234567890"
+
+
+def test_the_looser_key_still_matches_the_real_2017_agenda(conn):
+    """'MeteoGroup Weather Services Canada Inc.' — 'Canada' and 'Inc' are legal noise, so the
+    match must ride on 'meteogroup' / 'weather' / 'services'."""
+    db.upsert_row(conn, Solicitation("1234567890", title=None, source="odata"), overwrite=True)
+    db.upsert_row(conn, Award("1234567890", supplier_name_raw="Meteogroup Weather Services Ltd",
+                              award_amount="646356.00", source="odata"), overwrite=True)
+    conn.commit()
+    assert match_pre_ariba_titles(conn, {"2017.BA1": _fixture("2017.BA1")}) == 1
