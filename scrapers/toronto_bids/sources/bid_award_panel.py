@@ -24,11 +24,13 @@ sources/council.py already does. Parsing is pure and testable against saved HTML
 """
 import pathlib
 import re
+import shutil
 from contextlib import contextmanager
 
 from lxml import html as _html
 from lxml.html import HtmlComment
 
+from toronto_bids import config
 from toronto_bids.linking.document_number import normalize_document_number
 from toronto_bids.linking.supplier import supplier_key
 from toronto_bids.amount import parse_amount
@@ -562,30 +564,188 @@ def match_pre_ariba_titles(conn, agendas: dict) -> int:
 
     Only a UNIQUE match is taken. A wrong title is worse than none.
     """
-    awards = []
+    items = []
+    for meeting, html in agendas.items():
+        if meeting.split(".")[0] >= "2019":
+            continue                      # 2019+ names a document number; no need to guess
+        items.extend(parse_pre_ariba_awards(html))
+    return match_on_supplier_and_value(conn, items, "council_pre_ariba")
+
+
+# --- composite reports (#93) ------------------------------------------------------------
+#
+# 2009-2012 agendas do not describe their awards. One item carries many:
+#
+#     BD100.1 - Contract Awards - November 21 - Composite Report
+#
+# and the agenda body only says the details are "set out in the appendices of this report".
+# It names no amount, so #77's (supplier, value) join has nothing to stand on, and the feed
+# offers no identifier to fall back to: probing Posting_Title and
+# Solicitation_Document_Description for all 3,628 title-less rows returned an identifier on
+# zero of them. Matching on (supplier, award date) instead was measured against 880
+# ground-truth items and rejected — at a 30-day window it is 21% wrong.
+#
+# The appendices of the linked staff-report PDF do carry all of it, in the same shape #77
+# already reads:
+#
+#     Call No:            Request for Quotation 3917-12-7226
+#     Description:        For the non exclusive provision of ... Concrete Cutting Services
+#     Recommended Bidder: Accrue Contracting Ltd.
+#     Contract Award Value:
+#         $420,000.00 net of all applicable taxes and charges     <- the figure #77 calibrated
+#         $474,600.00 including all applicable taxes and charges
+#         $427,392.00 net of HST recoveries
+#
+# So this parses the appendices and hands them to the same join. Those PDFs are plain HTTP —
+# only TMMIS itself is Akamai-gated — and they are already indexed in background_pdf by
+# store_background_pdfs, so the download is bounded and needs no browser.
+# Lookahead so the block keeps its own "Call No:" label — a plain split would eat the
+# delimiter and the call number with it.
+_APPENDIX_BLOCK = re.compile(r"(?=Call No:)", re.I)
+
+
+def _appendix_field(label: str) -> re.Pattern:
+    """A labelled appendix field, whose value may sit on the label's line or the next one.
+
+    Which one depends on the PDF, not the year, so both are accepted. The value ends at a
+    blank line or at the next 'Label:' — pdftotext emits no other structure to lean on.
+    """
+    return re.compile(label + r":[ \t]*\n?[ \t]*(.+?)(?=\n[ \t]*\n|\n[ \t]*[A-Z][A-Za-z ]{2,25}:)",
+                      re.I | re.S)
+
+
+_APX_CALL_NO = _appendix_field("Call No")
+_APX_DESCRIPTION = _appendix_field("Description")
+# RFPs say "Proponent" where tenders say "Bidder", and both are pluralized when an award is
+# split. Accepting only the singular "Recommended Bidder" drops 23 of 280 appendices (#93).
+_APX_BIDDER = _appendix_field(r"Recommended (?:Bidder|Proponent)s?")
+
+# How council words the net figure drifts with tax history, and the drift is not cosmetic:
+# Ontario had no HST until July 2010, so 2009 publishes only "$1,020,600.00 (Net of GST)"
+# and _NET_OF_TAXES matches none of it. Measured yield per year, narrow -> this:
+#
+#     2009    0 -> 243      (all of it; "net of GST")
+#     2010  230 -> 253      (the GST/HST transition year, mixed wording)
+#     2011  256 -> 303      ("net of all taxes and charges")
+#     2012  257 -> 277      ("net of all applicable taxes")
+#
+# Still refuses "net of HST recoveries" — a third figure #77 measured as the wrong one
+# (4/980 against ground truth). Deliberately separate from _NET_OF_TAXES, which #77
+# calibrated on Ariba-era agendas: widening that would reopen a settled measurement.
+_APX_AWARD_VALUE = re.compile(
+    r"\$([\d,]+(?:\.\d+)?)\s*\(?\s*net of (?:all )?(?:applicable )?(?:taxes|gst)\b", re.I)
+
+
+def parse_composite_appendices(text: str) -> list[dict]:
+    """Awards from a composite staff report's appendices, shaped for match_on_supplier_and_value.
+
+    Pure: `text` is the pdftotext output already stored in background_pdf.text. Identical
+    yield with and without pdftotext's -layout (244/280 blocks either way), so this reads
+    whatever council.py:download_pdf produced without changing that path.
+    """
+    out = []
+    for block in _APPENDIX_BLOCK.split(text)[1:]:
+        description, bidder = _APX_DESCRIPTION.search(block), _APX_BIDDER.search(block)
+        value = _APX_AWARD_VALUE.search(block)
+        if not (description and bidder and value):
+            continue                      # 36 of 280 blocks publish no winner or no value
+        amount = parse_amount(value.group(1))
+        if amount is None:
+            continue
+        call_no = _APX_CALL_NO.search(block)
+        subject = _clean(description.group(1))
+        out.append({
+            # The call number is the only identifier the appendix carries, and it is what a
+            # human would search for, so it leads the title rather than being dropped.
+            "title": f"{_clean(call_no.group(1))} - {subject}" if call_no else subject,
+            "winner_raw": _clean(bidder.group(1)),
+            "award_value": amount,
+        })
+    return out
+
+
+def match_composite_titles(conn) -> int:
+    """Name title-less solicitations from composite-report appendices already downloaded.
+
+    Offline: reads background_pdf.text, so it only sees reports fetched by
+    download_composite_reports. Idempotent.
+    """
+    items = []
+    for row in conn.execute(
+            "SELECT text FROM background_pdf WHERE text IS NOT NULL AND kind='bgrd' "
+            "AND substr(reference,1,4) BETWEEN '2009' AND '2012'"):
+        items.extend(parse_composite_appendices(row["text"]))
+    return match_on_supplier_and_value(conn, items, "council_composite")
+
+
+def download_composite_reports(conn, http, dest_dir=None, log=lambda _m: None) -> int:
+    """Download the 2009-2012 staff-report PDFs and store their text. Plain HTTP, no browser.
+
+    Bounded by what store_background_pdfs already indexed off the cached agendas (221 PDFs,
+    ~80MB). Resumable and idempotent: rows that already hold text are skipped, so an
+    interrupted run costs only what it had not yet fetched.
+    """
+    from toronto_bids.sources.council import download_pdf
+
+    if shutil.which("pdftotext") is None:
+        raise RuntimeError(
+            "pdftotext (poppler) is required to read composite reports but was not found on "
+            "PATH. Install poppler (e.g. `brew install poppler` / `apt-get install -y "
+            "poppler-utils`).")
+    dest_dir = dest_dir if dest_dir is not None else config.COUNCIL_DOCS_DIR
+    rows = conn.execute(
+        "SELECT url, reference FROM background_pdf WHERE text IS NULL AND kind='bgrd' "
+        "AND substr(reference,1,4) BETWEEN '2009' AND '2012' ORDER BY reference").fetchall()
+    log(f"  composite reports to fetch: {len(rows)}")
+    stored = 0
+    for i, row in enumerate(rows, 1):
+        try:
+            info = download_pdf(http, row["url"], dest_dir)
+            db.upsert_row(conn, BackgroundPdf(
+                url=row["url"], reference=row["reference"], kind="bgrd",
+                local_path=info["local_path"], sha256=info["sha256"], text=info["text"],
+            ), overwrite=True)
+            conn.commit()
+            stored += 1
+        except Exception as exc:
+            conn.rollback()
+            log(f"    skipped {row['reference']}: {exc}")   # one bad PDF must not end the run
+        if i % 25 == 0:
+            log(f"    {i}/{len(rows)}")
+    return stored
+
+
+def _title_less_awards_by_value(conn) -> dict:
+    """Title-less awards indexed by rounded value — the left side of the (value, supplier) join."""
+    by_value = {}
     for row in conn.execute(
             "SELECT a.document_number d, a.supplier_name_raw s, a.award_amount_numeric v "
             "FROM award a JOIN solicitation sol ON sol.document_number = a.document_number "
             "WHERE a.source='odata' AND a.award_amount_numeric IS NOT NULL "
             "AND a.supplier_name_raw IS NOT NULL AND sol.title IS NULL"):
-        awards.append((round(row["v"]), supplier_tokens(row["s"]), row["d"]))
-    by_value = {}
-    for value, toks, doc in awards:
-        by_value.setdefault(value, []).append((toks, doc))
+        by_value.setdefault(round(row["v"]), []).append((supplier_tokens(row["s"]), row["d"]))
+    return by_value
 
+
+def match_on_supplier_and_value(conn, items, title_source: str) -> int:
+    """Name title-less solicitations from items carrying (title, winner_raw, award_value).
+
+    The one join shared by the two sources that have no identifier to offer: agenda items
+    (#77) and composite-report appendices (#93). The value carries the match and the supplier
+    only confirms it; a non-unique match is dropped rather than guessed. Idempotent — the
+    UPDATE is guarded on `title IS NULL`.
+    """
+    by_value = _title_less_awards_by_value(conn)
     filled = {}
-    for meeting, html in agendas.items():
-        if meeting.split(".")[0] >= "2019":
-            continue                      # 2019+ names a document number; no need to guess
-        for item in parse_pre_ariba_awards(html):
-            want = supplier_tokens(item["winner_raw"])
-            docs = {doc for toks, doc in by_value.get(round(item["award_value"]), [])
-                    if want & toks}
-            if len(docs) == 1:
-                filled.setdefault(docs.pop(), item["title"])
+    for item in items:
+        want = supplier_tokens(item["winner_raw"])
+        docs = {doc for toks, doc in by_value.get(round(item["award_value"]), [])
+                if want & toks}
+        if len(docs) == 1:
+            filled.setdefault(docs.pop(), item["title"])
     conn.executemany(
-        "UPDATE solicitation SET title = ?, title_source = 'council_pre_ariba' "
+        "UPDATE solicitation SET title = ?, title_source = ? "
         "WHERE document_number = ? AND title IS NULL",
-        [(t, d) for d, t in filled.items()])
+        [(t, title_source, d) for d, t in filled.items()])
     conn.commit()
     return len(filled)

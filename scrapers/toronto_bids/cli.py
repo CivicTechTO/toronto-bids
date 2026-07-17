@@ -35,6 +35,11 @@ def build_parser() -> argparse.ArgumentParser:
              "cache, seconds once cached). Without it, only agendas already on disk are used")
     p_titles.add_argument("--virtual-display", action="store_true",
                           help="Run the headed browser under Xvfb (implies --scrape's needs)")
+    p_titles.add_argument(
+        "--reports", action="store_true",
+        help="Download the 2009-2012 composite staff-report PDFs first, whose appendices carry "
+             "awards the agendas of those years do not describe (#93). Plain HTTP and no "
+             "browser, unlike --scrape; needs pdftotext. ~221 files / ~80MB, resumable")
     return parser
 
 
@@ -124,8 +129,9 @@ def _cmd_enrich_titles(args) -> int:
     depend on which runs first.
     """
     from toronto_bids.sources.bid_award_panel import (
-        cached_agendas, fill_titles_from_council, scrape_agendas, store_background_pdfs,
-        match_pre_ariba_titles, store_bids, store_items)
+        cached_agendas, download_composite_reports, fill_titles_from_council,
+        match_composite_titles, match_pre_ariba_titles, scrape_agendas,
+        store_background_pdfs, store_bids, store_items)
     from toronto_bids.sources.legacy_titles import fill_titles_from_legacy
 
     conn = _open_db()
@@ -157,6 +163,17 @@ def _cmd_enrich_titles(args) -> int:
             # Pre-Ariba items name no document number, so they are matched on
             # (supplier, award value) instead (#77).
             print(f"  titles pre-Ariba    : {match_pre_ariba_titles(conn, agendas)}")
+
+        # 2009-2012 agendas describe nothing ("Composite Report"); their staff-report
+        # appendices carry the awards, and feed them to the same join (#93).
+        if args.reports:
+            http = HttpClient()
+            try:
+                n = download_composite_reports(conn, http, log=lambda m: print(m, flush=True))
+                print(f"  composite reports downloaded: {n}")
+            finally:
+                http.close()
+        print(f"  titles composite    : {match_composite_titles(conn)}")
 
         n_legacy = fill_titles_from_legacy(conn, config.LEGACY_ARIBA_DIR)
         print(f"  titles from legacy  : {n_legacy}"
