@@ -339,7 +339,10 @@ CREATE INDEX IF NOT EXISTS idx_composite_award_call ON composite_award (call_num
 CREATE TABLE IF NOT EXISTS ariba_attachment (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
     document_number TEXT NOT NULL,   -- the Ariba event; joins solicitation.document_number
-    filename        TEXT NOT NULL,   -- one file inside the event's downloaded bundle
+    filename        TEXT NOT NULL,   -- the LEAF name of one file inside the bundle
+    -- Full nested path within the bundle, e.g. 'Appendix C2.zip/drawings/site.pdf'. The real
+    -- identity: leaf names collide across nested zips. Recursively expanded (#123).
+    path            TEXT,
     file_size       INTEGER,         -- uncompressed bytes, from the zip central directory
     -- CRC32 comes free from the central directory (no decompression of a 160 MB bundle), so
     -- it fingerprints each file for dedup/integrity without ever inflating the entry.
@@ -348,7 +351,7 @@ CREATE TABLE IF NOT EXISTS ariba_attachment (
     zip_sha256      TEXT,            -- sha256 of the whole bundle: integrity + cross-event dedup
     first_seen      TEXT NOT NULL DEFAULT (datetime('now')),
     last_seen       TEXT NOT NULL DEFAULT (datetime('now')),
-    UNIQUE (document_number, filename)
+    UNIQUE (document_number, path)
 );
 
 CREATE INDEX IF NOT EXISTS idx_ariba_attachment_document ON ariba_attachment (document_number);

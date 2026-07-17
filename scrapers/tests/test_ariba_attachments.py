@@ -8,6 +8,8 @@ import io
 import zipfile
 
 from toronto_bids.sources import ariba_attachments as aa
+from toronto_bids.store import db as _db
+from toronto_bids.models import AribaAttachment
 
 
 def _make_zip(path, files: dict):
@@ -108,3 +110,31 @@ def test_ingest_scans_a_folder_skips_unnamed_zips_and_is_idempotent(conn, tmp_pa
     assert aa.ingest_downloads(conn, downloads, dest) == 1
     total = conn.execute("SELECT COUNT(*) FROM ariba_attachment").fetchone()[0]
     assert total == 1
+
+
+def test_init_db_migrates_old_unique_index_to_path(tmp_path):
+    # Build a database with the OLD schema (UNIQUE on filename) and a stale row.
+    conn = _db.connect(":memory:")
+    conn.executescript(
+        "CREATE TABLE ariba_attachment (id INTEGER PRIMARY KEY AUTOINCREMENT, "
+        "document_number TEXT NOT NULL, filename TEXT NOT NULL, file_size INTEGER, "
+        "crc32 TEXT, zip_name TEXT, zip_sha256 TEXT, "
+        "first_seen TEXT NOT NULL DEFAULT (datetime('now')), "
+        "last_seen TEXT NOT NULL DEFAULT (datetime('now')), "
+        "UNIQUE (document_number, filename));")
+    conn.execute("INSERT INTO ariba_attachment (document_number, filename) VALUES ('1','a.zip')")
+    conn.commit()
+
+    _db.init_db(conn)   # must add `path` and swap the unique index without error
+
+    cols = [r[1] for r in conn.execute("PRAGMA table_info(ariba_attachment)")]
+    assert "path" in cols
+    sql = conn.execute("SELECT sql FROM sqlite_master WHERE name='ariba_attachment'").fetchone()[0]
+    assert "document_number, path" in sql
+    assert "document_number, filename" not in sql
+    # Two leaves sharing a filename but differing in path now coexist (the old key forbade it).
+    for p in ("x.zip/a.pdf", "y.zip/a.pdf"):
+        _db.upsert_row(conn, AribaAttachment(document_number="1", filename="a.pdf", path=p),
+                       overwrite=True)
+    assert conn.execute("SELECT COUNT(*) FROM ariba_attachment WHERE document_number='1' "
+                        "AND filename='a.pdf'").fetchone()[0] == 2

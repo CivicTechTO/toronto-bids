@@ -205,6 +205,7 @@ class AribaAttachment:
     """
     document_number: str
     filename: str
+    path: str | None = None
     file_size: int | None = None
     crc32: str | None = None
     zip_name: str | None = None

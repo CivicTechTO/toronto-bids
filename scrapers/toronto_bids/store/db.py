@@ -13,7 +13,7 @@ _TABLES = {
     Award: ("award", ["document_number", "supplier_name_raw", "award_amount",
                       "award_date", "source"]),
     AribaPosting: ("ariba_posting", ["rfx_id"]),
-    AribaAttachment: ("ariba_attachment", ["document_number", "filename"]),
+    AribaAttachment: ("ariba_attachment", ["document_number", "path"]),
     SuspendedFirm: ("suspended_firm", ["supplier_name_raw", "council_authority"]),
     Supplier: ("supplier", ["supplier_key"]),
     CouncilItem: ("council_item", ["reference"]),
@@ -50,6 +50,7 @@ def init_db(conn) -> None:
     _add_missing_columns(conn, schema)
     _rebuild_award_for_line_key(conn, schema)
     _rebuild_bid_for_nullable_reference(conn, schema)
+    _rebuild_ariba_attachment_for_path(conn, schema)
     conn.commit()
 
 
@@ -129,6 +130,36 @@ def _rebuild_award_for_line_key(conn, schema: str) -> bool:
         conn.execute(f"INSERT INTO award ({quoted}) SELECT {quoted} FROM _award_pre73")
         conn.execute("DROP TABLE _award_pre73")
         conn.commit()
+    finally:
+        conn.executescript("PRAGMA foreign_keys = ON;")
+    return True
+
+
+def _rebuild_ariba_attachment_for_path(conn, schema: str) -> bool:
+    """Swap ariba_attachment's UNIQUE(document_number, filename) for UNIQUE(document_number, path).
+
+    Recursive indexing (#123) surfaces leaves that share a filename across different nested zips,
+    which the old key rejected. `_add_missing_columns` adds `path` but cannot change a table-level
+    UNIQUE, so a database built before #123 needs a genuine rebuild — same pattern as
+    _rebuild_bid_for_nullable_reference. Rows are copied so first_seen survives; their `path` is
+    NULL until a --reindex rebuilds them from the bytes.
+
+    Returns True if a rebuild happened. Idempotent: a no-op once the key is on path.
+    """
+    row = conn.execute(
+        "SELECT sql FROM sqlite_master WHERE type='table' AND name='ariba_attachment'").fetchone()
+    if row is None or "document_number, filename)" not in (row["sql"] or ""):
+        return False                        # fresh DB, or already rebuilt
+
+    cols = [r[1] for r in conn.execute("PRAGMA table_info(ariba_attachment)")]
+    quoted = ", ".join(cols)
+    conn.executescript("PRAGMA foreign_keys = OFF;")
+    try:
+        conn.execute("ALTER TABLE ariba_attachment RENAME TO _ariba_attachment_pre123")
+        conn.executescript(schema)
+        conn.execute(f"INSERT INTO ariba_attachment ({quoted}) "
+                     f"SELECT {quoted} FROM _ariba_attachment_pre123")
+        conn.execute("DROP TABLE _ariba_attachment_pre123")
     finally:
         conn.executescript("PRAGMA foreign_keys = ON;")
     return True
