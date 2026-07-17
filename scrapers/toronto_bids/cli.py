@@ -129,7 +129,8 @@ def _cmd_enrich_titles(args) -> int:
     depend on which runs first.
     """
     from toronto_bids.sources.bid_award_panel import (
-        cached_agendas, download_composite_reports, fill_titles_from_council,
+        _BA_REPORTS_WITHOUT_BIDS, _COMPOSITE_REPORTS, cached_agendas,
+        download_reports, fill_titles_from_council,
         match_composite_titles, match_pre_ariba_titles, scrape_agendas,
         store_background_pdfs, store_bids, store_composite_awards, store_items)
     from toronto_bids.sources.legacy_titles import fill_titles_from_legacy
@@ -169,8 +170,15 @@ def _cmd_enrich_titles(args) -> int:
         if args.reports:
             http = HttpClient()
             try:
-                n = download_composite_reports(conn, http, log=lambda m: print(m, flush=True))
+                out = lambda m: print(m, flush=True)
+                n = download_reports(conn, http, _COMPOSITE_REPORTS,
+                                     "composite reports", log=out)
                 print(f"  composite reports downloaded: {n}")
+                # The only thing the PDFs can still add: BA items whose agenda tabulates no
+                # bids (#83). Everything else the panel handled has its bids from the agenda.
+                n = download_reports(conn, http, _BA_REPORTS_WITHOUT_BIDS,
+                                     "BA reports without a bid table", log=out)
+                print(f"  BA reports downloaded       : {n}")
             finally:
                 http.close()
         print(f"  titles composite    : {match_composite_titles(conn)}")
