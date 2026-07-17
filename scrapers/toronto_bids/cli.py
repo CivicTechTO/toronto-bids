@@ -167,8 +167,8 @@ def _cmd_enrich_titles(args) -> int:
             "SELECT COUNT(*) FROM solicitation WHERE title IS NULL").fetchone()[0]
         print(f"\nTitle-less solicitations: {before} -> {after}  ({before - after} named)")
         for source, n in conn.execute(
-                "SELECT COALESCE(source,'?'), COUNT(*) FROM solicitation "
-                "WHERE title IS NOT NULL GROUP BY 1 ORDER BY 2 DESC"):
+                "SELECT COALESCE(title_source, 'odata (City feed)'), COUNT(*) "
+                "FROM solicitation WHERE title IS NOT NULL GROUP BY 1 ORDER BY 2 DESC"):
             print(f"  {source:<20} {n:>5}")
     finally:
         conn.close()

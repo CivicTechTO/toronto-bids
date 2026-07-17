@@ -39,7 +39,12 @@ from toronto_bids.store import db
 AGENDA_URL = "https://secure.toronto.ca/council/report.do"
 
 # "BA189.1 - Award of Ariba Document Number 3234668279 to GHD Limited for the ..."
-_ITEM_HEADING = re.compile(r"^\s*(?P<ref>BA\d+\.\d+)\s*-\s*(?P<title>.+?)\s*$", re.S)
+# BA = Bid Award Panel (2017-01-04 onward). BD = Bid Committee, its predecessor, which ran
+# 2009-02-04 to 2016-12-21 — three weeks before BA's first meeting (#90). Same agenda
+# structure throughout: same "Award of <id> to <supplier> for <subject>" heading, same
+# "Contract Award Value ... net of all applicable taxes" block, same bid tables, same
+# background-file PDFs. One series succeeded the other; nothing else changed.
+_ITEM_HEADING = re.compile(r"^\s*(?P<ref>B[AD]\d+\.\d+)\s*-\s*(?P<title>.+?)\s*$", re.S)
 _TEN_DIGIT = re.compile(r"\d{10}")
 _WS = re.compile(r"\s+")
 # Collapse spaces/tabs but keep newlines: item headings are found by line.
@@ -83,13 +88,22 @@ def parse_agenda(html: str, meeting: str) -> list[dict]:
     return items
 
 
+# TMMIS answers 200 with an error page for a reference that is not real, and it has more than
+# one way of saying so. Missing either one records an error page as an agenda.
+_MISSING_MARKERS = (
+    "this meeting is not available",       # e.g. 2018.BA10
+    "the published report was not found",  # e.g. 2007.BD1
+)
+
+
 def agenda_is_missing(html: str) -> bool:
-    """TMMIS answers 200 with 'This meeting is not available.' for a reference that isn't real.
+    """True when TMMIS served an error page rather than an agenda.
 
     Meeting numbering restarts each council term and the year prefix is a session year, so
     enumerating references means probing. A miss is normal, not an error.
     """
-    return "this meeting is not available" in (html or "").lower()
+    text = (html or "").lower()
+    return any(marker in text for marker in _MISSING_MARKERS)
 
 
 @contextmanager
@@ -158,7 +172,28 @@ def agenda_date(html: str) -> str | None:
 # are numbered 1..N contiguously; the reference's year prefix is the SESSION year, which
 # rolls over in November when a term starts. Confirmed by fetching: 2017.BA1 = 2017-01-04,
 # 2022.BA189 = 2022-05-25, 2023.BA4 = 2022-12-07.
-TERM_STARTS = [(2017, "2014-2018"), (2019, "2018-2022"), (2023, "2022-2026")]
+# (series, first session year of the term, term label). A term numbers its meetings 1..N
+# contiguously and the year prefix is the SESSION year, rolling over each November.
+# Confirmed by fetching: 2017.BA1 = 2017-01-04, 2022.BA189 = 2022-05-25,
+# 2023.BA4 = 2022-12-07, 2016.BD106 = 2016-10-19.
+#
+# BD shares the 2014-2018 term with BA: the Bid Committee sat until 2016-12-21 and the
+# Bid Award Panel restarted numbering at 1 on 2017-01-04, mid-term. So both are walked
+# for that term, and each stops where its own meetings run out.
+# (series, first session year, term label, first meeting number).
+#
+# first_n is 1 everywhere except BD's 2006-2010 term: the Bid Committee was already sitting
+# when that term began, so its meetings there are numbered from 105 (2009.BD105 = 2009-02-04,
+# the earliest the City's schedule lists). Walking from 1 finds nothing and gives up, silently
+# losing every 2009-2010 meeting — which is exactly what happened on the first run.
+TERM_STARTS = [
+    ("BD", 2009, "2006-2010", 105),
+    ("BD", 2011, "2010-2014", 1),
+    ("BD", 2015, "2014-2018", 1),
+    ("BA", 2017, "2014-2018", 1),
+    ("BA", 2019, "2018-2022", 1),
+    ("BA", 2023, "2022-2026", 1),
+]
 
 
 def discover_meetings(fetch, log=lambda _m: None, max_per_term=260, stop_after_misses=4):
@@ -175,23 +210,23 @@ def discover_meetings(fetch, log=lambda _m: None, max_per_term=260, stop_after_m
     guessed, and it only ever advances.
     """
     found = {}
-    for start_year, term in TERM_STARTS:
+    for series, start_year, term, first_n in TERM_STARTS:
         session = start_year
         misses = 0
-        for n in range(1, max_per_term + 1):
+        for n in range(first_n, first_n + max_per_term):
             html = ref = None
             # The prefix only ever advances, and only at a November boundary.
             for candidate in (session, session + 1):
-                probe = f"{candidate}.BA{n}"
+                probe = f"{candidate}.{series}{n}"
                 page = fetch(probe)
                 if not agenda_is_missing(page):
                     html, ref, session = page, probe, candidate
                     break
             if html is None:
                 misses += 1
-                log(f"  {term}: no meeting {n} (miss {misses}/{stop_after_misses})")
+                log(f"  {series} {term}: no meeting {n} (miss {misses}/{stop_after_misses})")
                 if misses >= stop_after_misses:
-                    log(f"  {term}: stopping after {n - misses} meetings")
+                    log(f"  {series} {term}: stopping after {n - misses} meetings")
                     break
                 continue
             misses = 0
@@ -247,7 +282,7 @@ def fill_titles_from_council(conn) -> int:
             if doc in missing and doc not in filled:
                 filled[doc] = row["title"]
     conn.executemany(
-        "UPDATE solicitation SET title = ?, source = 'bid_award_panel' "
+        "UPDATE solicitation SET title = ?, title_source = 'bid_award_panel' "
         "WHERE document_number = ? AND title IS NULL",
         [(t, d) for d, t in filled.items()])
     conn.commit()
@@ -457,7 +492,7 @@ _WINNER = re.compile(r"\bto\s+(.+?)\s+for\s+", re.I)
 # document number gives ground truth: award_amount is the "net of all applicable taxes" one
 # (820/980 = 84%). "including HST" matched 0; "net of HST recoveries" matched 4.
 _NET_OF_TAXES = re.compile(r"\$([\d,]+(?:\.\d+)?)\s*net of all applicable taxes", re.I)
-_ITEM_SPLIT = re.compile(r"BA\d+\.\d+ - ")
+_ITEM_SPLIT = re.compile(r"B[AD]\d+\.\d+ - ")
 
 
 def parse_pre_ariba_awards(html: str) -> list[dict]:
@@ -549,7 +584,7 @@ def match_pre_ariba_titles(conn, agendas: dict) -> int:
             if len(docs) == 1:
                 filled.setdefault(docs.pop(), item["title"])
     conn.executemany(
-        "UPDATE solicitation SET title = ?, source = 'council_pre_ariba' "
+        "UPDATE solicitation SET title = ?, title_source = 'council_pre_ariba' "
         "WHERE document_number = ? AND title IS NULL",
         [(t, d) for d, t in filled.items()])
     conn.commit()

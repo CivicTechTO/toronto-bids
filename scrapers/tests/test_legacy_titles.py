@@ -46,18 +46,19 @@ def test_fills_a_title_less_solicitation(conn, tmp_path):
     db.upsert_row(conn, Solicitation("3567676667", title=None, source="odata"), overwrite=True)
     conn.commit()
     assert fill_titles_from_legacy(conn, root) == 1
-    row = conn.execute("SELECT title, source FROM solicitation").fetchone()
+    row = conn.execute("SELECT title, title_source FROM solicitation").fetchone()
     assert row["title"] == "Request for Quotations for Drywall Recycling"
-    assert row["source"] == "legacy_ariba_html"
+    assert row["title_source"] == "legacy_ariba_html"
 
 
 def test_outranks_a_bid_award_panel_heading(conn, tmp_path):
     """The posting page names the solicitation; the council heading describes the award."""
     root = _archive(tmp_path, {"Doc3524228095": "RFQ for Non-OEM Preventative Vehicle Repairs"})
-    conn.execute("INSERT INTO solicitation (document_number, title, source) VALUES (?,?,?)",
+    conn.execute("INSERT INTO solicitation (document_number, title, source, title_source) "
+                 "VALUES (?,?,?,?)",
                  ("3524228095",
                   "Award of Ariba Document Number 3524228095 to Various Suppliers for the Non-OEM",
-                  "bid_award_panel"))
+                  "odata", "bid_award_panel"))
     conn.commit()
     assert fill_titles_from_legacy(conn, root) == 1
     assert conn.execute("SELECT title FROM solicitation").fetchone()[0] == \

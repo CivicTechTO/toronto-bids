@@ -83,9 +83,9 @@ def test_enrich_titles_runs_offline_from_cached_agendas(monkeypatch, tmp_path, c
     assert "1 -> 0" in out
 
     conn = db.connect(config.DB_PATH)
-    row = conn.execute("SELECT title, source FROM solicitation").fetchone()
+    row = conn.execute("SELECT title, title_source FROM solicitation").fetchone()
     assert "Aeration Blower System Upgrades" in row["title"]
-    assert row["source"] == "bid_award_panel"
+    assert row["title_source"] == "bid_award_panel"
     conn.close()
 
 
@@ -116,9 +116,9 @@ def test_enrich_titles_prefers_the_legacy_posting_page_over_a_council_heading(
 
     assert cli.main(["enrich-titles"]) == 0
     conn = db.connect(config.DB_PATH)
-    row = conn.execute("SELECT title, source FROM solicitation").fetchone()
+    row = conn.execute("SELECT title, title_source FROM solicitation").fetchone()
     assert row["title"] == "RFP for Aeration Blower System Upgrades"
-    assert row["source"] == "legacy_ariba_html"
+    assert row["title_source"] == "legacy_ariba_html"
     conn.close()
 
 

@@ -71,11 +71,11 @@ def fill_titles_from_legacy(conn, ariba_data_dir) -> int:
         return 0
     targets = {r["document_number"] for r in conn.execute(
         "SELECT document_number FROM solicitation "
-        "WHERE title IS NULL OR source = 'bid_award_panel'")}
+        "WHERE title IS NULL OR title_source = 'bid_award_panel'")}
     pending = [(t, d) for d, t in titles.items() if d in targets]
     conn.executemany(
-        "UPDATE solicitation SET title = ?, source = 'legacy_ariba_html' "
-        "WHERE document_number = ? AND (title IS NULL OR source = 'bid_award_panel')",
+        "UPDATE solicitation SET title = ?, title_source = 'legacy_ariba_html' "
+        "WHERE document_number = ? AND (title IS NULL OR title_source = 'bid_award_panel')",
         pending)
     conn.commit()
     return len(pending)

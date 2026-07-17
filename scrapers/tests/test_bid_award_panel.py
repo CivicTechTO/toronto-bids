@@ -104,8 +104,10 @@ def test_discovery_stops_after_consecutive_misses():
         return _fake_site(pages)(ref)
 
     discover_meetings(fetch, max_per_term=200, stop_after_misses=2)
-    # It must not walk to 200 just because meeting 2 is absent.
-    assert len(calls) < 20
+    # It must not walk to 200 just because meeting 2 is absent. Six series/term pairs are
+    # walked (BD 2009/2011/2015, BA 2017/2019/2023), each giving up after its own misses,
+    # so the floor is ~6 * stop_after_misses * 2 candidate prefixes — nowhere near 6 * 200.
+    assert len(calls) < 40
 
 
 def test_discovery_handles_two_meetings_on_one_date():
@@ -183,3 +185,34 @@ def test_indexing_records_the_url_without_downloading_anything(conn, tmp_path):
     assert row["url"].startswith("https://www.toronto.ca/legdocs/")
     assert row["local_path"] is None    # the index is the deliverable; bytes are a later pass
     assert row["text"] is None
+
+
+def test_every_way_tmmis_says_no_is_treated_as_missing():
+    """TMMIS has more than one error page, and missing one records it AS an agenda.
+    'This meeting is not available.' -> 2018.BA10; 'The Published Report was not found.'
+    -> 2007.BD1, which the first BD run cached as if it were real."""
+    assert agenda_is_missing("<html><body>This meeting is not available.</body></html>")
+    assert agenda_is_missing("<html><body>Error The Published Report was not found.</body></html>")
+    assert not agenda_is_missing(_fixture("2022.BA189"))
+
+
+def test_a_terms_meetings_do_not_always_start_at_one():
+    """BD's 2006-2010 term numbers from 105 — the committee was already sitting when the term
+    began. Walking from 1 finds nothing, gives up, and silently loses every 2009-2010 meeting.
+    """
+    from toronto_bids.sources.bid_award_panel import TERM_STARTS
+
+    starts = {(series, term): first_n for series, _yr, term, first_n in TERM_STARTS}
+    assert starts[("BD", "2006-2010")] == 105
+    assert starts[("BA", "2014-2018")] == 1
+
+
+def test_the_bid_committee_series_is_parsed_like_the_panel():
+    """BD (2009-2016) is BA's predecessor and its agendas are structurally identical."""
+    html = ("<html><body><h3>BD106.1 - Award of Request for Proposal No. 9117-16-5060 to "
+            "Morrison Hershfield Limited for Contract Administration Services</h3>"
+            "</body></html>")
+    items = parse_agenda(html, "2016.BD106")
+    assert len(items) == 1
+    assert items[0]["reference"] == "2016.BD106.1"
+    assert "Morrison Hershfield Limited" in items[0]["title"]
