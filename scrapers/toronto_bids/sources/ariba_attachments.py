@@ -73,7 +73,11 @@ def index_zip(zip_path) -> list[dict]:
     "Appendix ….zip"), each leaf carrying the full nested `path`. Sizes and CRC32 come from
     each level's central directory; a nested zip must be read (inflated) to reach its own
     directory, so depth and a per-bundle entry budget bound zip bombs. A nested zip that is
-    empty, corrupt, encrypted, or past a cap is kept as a single leaf rather than lost.
+    empty, corrupt, encrypted, or past the depth cap degrades to a single leaf rather than
+    being lost. The entry budget (`_MAX_ZIP_ENTRIES`) is a different, harder backstop: once it
+    hits zero every remaining entry — including one that would otherwise become a nested-zip
+    leaf — is skipped outright, not indexed in any form. That is a deliberate truncation for a
+    pathological bundle, not a leaf fallback.
     """
     with zipfile.ZipFile(zip_path) as zf:
         return _index_zipfile(zf, prefix="", depth=0, budget=[_MAX_ZIP_ENTRIES])
@@ -83,10 +87,12 @@ def _index_zipfile(zf, prefix: str, depth: int, budget: list) -> list[dict]:
     out = []
     for zi in zf.infolist():
         if zi.is_dir() or budget[0] <= 0:
-            continue
+            continue                                   # budget exhausted: hard stop, skip outright
         path = prefix + zi.filename
         if zi.filename.lower().endswith(".zip") and depth < _MAX_ZIP_DEPTH:
             try:
+                # ponytail: caps bound zip count/depth, not per-entry inflated size; add a size
+                # cap if a real bundle ever needs it
                 with zipfile.ZipFile(io.BytesIO(zf.read(zi.filename))) as nested:
                     children = _index_zipfile(nested, path + "/", depth + 1, budget)
                 if children:                       # expandable: contribute its leaves, not it
