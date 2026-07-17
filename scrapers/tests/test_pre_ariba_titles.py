@@ -48,9 +48,9 @@ def test_matches_a_title_less_award_and_names_it(conn):
                               award_amount="646356.00", source="odata"), overwrite=True)
     conn.commit()
     assert match_pre_ariba_titles(conn, {"2017.BA1": _fixture("2017.BA1")}) == 1
-    row = conn.execute("SELECT title, source FROM solicitation").fetchone()
+    row = conn.execute("SELECT title, title_source FROM solicitation").fetchone()
     assert "Call Number 6032-16-3114" in row["title"]
-    assert row["source"] == "council_pre_ariba"
+    assert row["title_source"] == "council_pre_ariba"
 
 
 def test_an_ambiguous_match_is_dropped_not_guessed(conn):
@@ -133,7 +133,7 @@ def test_two_different_firms_at_the_same_value_are_dropped(conn):
     # Only MeteoGroup shares a token with the agenda's winner, so the match stays unique.
     assert match_pre_ariba_titles(conn, {"2017.BA1": _fixture("2017.BA1")}) == 1
     named = conn.execute("SELECT document_number FROM solicitation "
-                         "WHERE source='council_pre_ariba'").fetchone()[0]
+                         "WHERE title_source='council_pre_ariba'").fetchone()[0]
     assert named == "1234567890"
 
 
@@ -145,3 +145,27 @@ def test_the_looser_key_still_matches_the_real_2017_agenda(conn):
                               award_amount="646356.00", source="odata"), overwrite=True)
     conn.commit()
     assert match_pre_ariba_titles(conn, {"2017.BA1": _fixture("2017.BA1")}) == 1
+
+
+def test_a_sync_cannot_clobber_a_recovered_title_or_its_provenance(conn):
+    """The bug this column exists for.
+
+    `source` records which source last wrote the ROW, and the OData spine owns it: every sync
+    re-upserts every spine row with overwrite=True. Title provenance stored there was silently
+    reset to 'odata' on the next sync — 890 recovered titles ended up claiming to come from
+    the City's feed, while the titles themselves survived because COALESCE only guards NULL.
+    """
+    db.upsert_row(conn, Solicitation("1234567890", title=None, source="odata"), overwrite=True)
+    db.upsert_row(conn, Award("1234567890", supplier_name_raw="MeteoGroup Weather Services Canada Inc.",
+                              award_amount="646356.00", source="odata"), overwrite=True)
+    conn.commit()
+    assert match_pre_ariba_titles(conn, {"2017.BA1": _fixture("2017.BA1")}) == 1
+
+    # The next `tb sync`: the spine re-upserts the row, still with no title of its own.
+    db.upsert_row(conn, Solicitation("1234567890", title=None, source="odata"), overwrite=True)
+    conn.commit()
+
+    row = conn.execute("SELECT title, source, title_source FROM solicitation").fetchone()
+    assert "Call Number 6032-16-3114" in row["title"]      # the title survives
+    assert row["source"] == "odata"                        # the spine owns `source`...
+    assert row["title_source"] == "council_pre_ariba"      # ...but not the provenance

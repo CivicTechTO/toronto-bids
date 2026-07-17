@@ -17,6 +17,19 @@ CREATE TABLE IF NOT EXISTS solicitation (
     ariba_posting_link   TEXT,
     odata_id             TEXT,
     source               TEXT,
+    -- Where the TITLE came from, when the City did not publish one:
+    -- 'bid_award_panel' | 'legacy_ariba_html' | 'council_pre_ariba'. NULL = the City's feed.
+    --
+    -- Separate from `source` deliberately. `source` records which source last wrote the ROW,
+    -- and the OData spine owns that: it re-upserts every row on every sync with
+    -- overwrite=True, so anything a title pass writes to `source` is clobbered by the next
+    -- sync — while the title itself survives, because COALESCE only guards NULL. Storing
+    -- title provenance there made 890 recovered titles silently claim to come from the City
+    -- feed, which is the one thing an archive must never get wrong.
+    --
+    -- This column is NOT on the Solicitation model, so db.upsert_row cannot write it and the
+    -- spine cannot reach it. Only the title passes set it, like supplier_id.
+    title_source         TEXT,
     first_seen           TEXT NOT NULL DEFAULT (datetime('now')),
     last_seen            TEXT NOT NULL DEFAULT (datetime('now'))
 );
