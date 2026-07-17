@@ -1,0 +1,15 @@
+[Unit]
+Description=Run toronto-bids Ariba document capture
+Documentation=https://github.com/CivicTechTO/toronto-bids/blob/main/docs/superpowers/specs/2026-07-17-deployment-design.md
+
+[Timer]
+# Solicitations stay open for weeks, so daily is ample to catch new ones before they close.
+# Noon Toronto keeps it well clear of the 05:30 nightly, so the two never contend for the DB.
+# The box runs UTC; systemd >=252 owns the tz/DST arithmetic (verified with systemd-analyze).
+OnCalendar=*-*-* 12:00:00 America/Toronto
+RandomizedDelaySec=20m
+# A home server is not assumed to be up: run a missed job on the next boot.
+Persistent=true
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,23 @@
+[Unit]
+Description=toronto-bids — archive Ariba solicitation documents (Respond capture)
+Documentation=https://github.com/CivicTechTO/toronto-bids/blob/main/docs/superpowers/specs/2026-07-17-deployment-design.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=%h/toronto-bids/scrapers
+# Same archive as the nightly (%h/tb-data, outside the checkout) — the capture writes
+# ariba/attachments/ and ariba_attachment rows into the shared store, so the nightly's
+# `tb export` includes them.
+Environment=TB_DATA_DIR=%h/tb-data
+# ARIBA_USERNAME / ARIBA_PASSWORD live here (mode 0600, never in git), alongside the Slack
+# webhook. The leading '-' keeps a missing file from being a systemd load error; the capture
+# raises its own clear "creds unset" message instead.
+EnvironmentFile=-%h/.config/toronto-bids/tb.env
+# Headed Chromium under Xvfb (the box is headless). --capture is idempotent and resumable:
+# bundles already on disk are skipped, so a re-run only fetches newly-opened solicitations.
+ExecStart=%h/.local/bin/uv run tb enrich-ariba-attachments --capture --virtual-display
+# The first sweep drives a real browser across ~44 events and can take 1-2h; later runs are
+# fast (mostly skips). Generous ceiling.
+TimeoutStartSec=3h
