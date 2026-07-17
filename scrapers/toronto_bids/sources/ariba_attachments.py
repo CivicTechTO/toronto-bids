@@ -38,9 +38,13 @@ from toronto_bids.linking.document_number import bridge_document_number
 from toronto_bids.models import AribaAttachment
 from toronto_bids.store import db
 
+# The AUTHENTICATED preview path — no `/public/`, no `?anId=ANONYMOUS`. The anonymous URL does
+# not reliably carry the logged-in session, so Respond there pops a "Register/Login" modal
+# instead of opening the Sourcing event (the whole source of the earlier flakiness). This host
+# holds the session cookie set at login, so the authed path shows a working Respond.
 DISCOVERY_PREVIEW_URL = (
-    "https://portal.us.bn.cloud.ariba.com/dashboard/public/appext/"
-    "comsapsbncdiscoveryui#/RfxEvent/preview/{rfx_id}?anId=ANONYMOUS"
+    "https://portal.us.bn.cloud.ariba.com/dashboard/appext/"
+    "comsapsbncdiscoveryui#/RfxEvent/preview/{rfx_id}"
 )
 # Above this a single-zip download is refused by Ariba (the >100 MB warning is only advisory).
 MAX_BUNDLE_MB = 500
@@ -162,23 +166,95 @@ def open_solicitation_events(conn) -> list[dict]:
 def login(page, username: str, password: str, log=lambda _m: None) -> None:
     """Sign the headed browser into the supplier account so Respond reaches the event.
 
-    Credentials come from scrapers/.env (never the repo). The account has no MFA — if that
-    changes, this step lands on a challenge page and raises rather than hanging: an unattended
-    login cannot answer a 2FA prompt, and a CAPTCHA is a hard stop by policy.
+    Credentials come from scrapers/.env (never the repo). SAP's supplier sign-in is TWO steps —
+    username (`#userid`) then password (`#Password`), split by a `.next-button-text` link (an
+    `<a>`, not a `<button>`, so role locators miss it). The page re-renders once just after load
+    and wipes an early fill, so we wait for network-idle plus a settle, then verify the value
+    stuck and re-enter it if not — selectors and this race were both read off the live page.
+
+    The account has no MFA — if that changes, this lands on a challenge page and raises rather
+    than hanging: an unattended login cannot answer a 2FA prompt, and a CAPTCHA is a policy stop.
     """
-    page.goto(config.ARIBA_LOGIN_URL, wait_until="domcontentloaded", timeout=60000)
-    page.fill("input[name='UserName']", username)
-    page.fill("input[name='Password']", password)
-    page.click("button:has-text('Login'), input[type='submit']")
-    page.wait_for_load_state("networkidle", timeout=60000)
+    # Step 1 (username -> Next) is flaky: SAP rotates a CSRF token on a re-render just after
+    # load, and a submit that races it bounces back to a fresh username page. Reloading the
+    # whole page gives a fresh token, so retry the entire step — reload, wait for the URL to
+    # STOP rotating (the tell that the re-render settled), fill, submit — rather than re-poking
+    # a page mid-rotation. Selectors (#userid, the <a> around .next-button-text, #Password) and
+    # this race were all read off the live page.
+    for attempt in range(5):
+        page.goto(config.ARIBA_LOGIN_URL, wait_until="domcontentloaded", timeout=60000)
+        page.wait_for_selector("#userid", state="visible", timeout=30000)
+        _wait_url_stable(page)                        # let the token-rotation reload finish
+        page.fill("#userid", username)
+        if page.input_value("#userid") != username:
+            continue
+        page.click("a:has(.next-button-text)")
+        try:
+            page.wait_for_selector("#Password", state="visible", timeout=15000)
+            break
+        except Exception:
+            continue                                  # bounced — reload for a fresh token
+    else:
+        raise RuntimeError("Could not reach the Ariba password step (username step kept bouncing).")
+
+    page.fill("#Password", password)
+    page.press("#Password", "Enter")
+
+    # The supplier dashboard polls, so it never reaches network-idle — wait on the sign-in form
+    # leaving instead. On success the whole document navigates and #Password detaches; on
+    # failure it stays put and the wait times out, which the checks below then explain.
+    try:
+        page.wait_for_selector("#Password", state="detached", timeout=45000)
+    except Exception:
+        pass
+    page.wait_for_timeout(2000)
+    _dismiss_cookie_banner(page)
+
     body = page.inner_text("body").lower()
-    if "two-factor" in body or "verification code" in body or "captcha" in body:
+    if "verification code" in body or "two-factor" in body or "captcha" in body:
         raise RuntimeError(
             "Ariba presented an MFA/CAPTCHA challenge; unattended login cannot proceed. "
             "Re-authenticate manually or disable 2FA on the archival account.")
-    if "incorrect" in body or "invalid" in body and "password" in body:
-        raise RuntimeError("Ariba rejected the credentials in scrapers/.env.")
+    # Still on the sign-in page (password field present) means the credentials were rejected.
+    if page.query_selector("#Password") is not None:
+        raise RuntimeError("Ariba did not accept the sign-in; check the credentials in scrapers/.env.")
     log("  logged in")
+
+
+def _wait_url_stable(page, checks: int = 4, interval: int = 800) -> None:
+    """Block until the URL stops changing — the sign-in page rotates its CSRF token via a
+    re-render right after load, and its awssk query param changes each time. A URL unchanged
+    across two polls means that settled and it is safe to fill the form."""
+    last = page.url
+    stable = 0
+    for _ in range(checks):
+        page.wait_for_timeout(interval)
+        if page.url == last:
+            stable += 1
+            if stable >= 2:
+                return
+        else:
+            stable = 0
+            last = page.url
+
+
+def _dismiss_cookie_banner(page) -> None:
+    """Decline non-essential cookies if SAP shows the consent dialog — the privacy-preserving
+    choice, and it otherwise overlays the buttons the capture flow needs to click.
+
+    Labels are matched EXACTLY and kept to unambiguous consent wording. A loose "Decline"
+    match once hit the event's "Decline to Respond" button, which withdraws participation —
+    never widen these to a substring that a destructive event control could satisfy.
+    """
+    for label in ("Deny All", "Reject All"):
+        try:
+            btn = page.get_by_role("button", name=label, exact=True)
+            if btn.count() and btn.first.is_visible():
+                btn.first.click()
+                page.wait_for_timeout(500)
+                return
+        except Exception:
+            pass
 
 
 def capture_event(page, event: dict, dest_dir, log=lambda _m: None) -> Path | None:
@@ -189,26 +265,45 @@ def capture_event(page, event: dict, dest_dir, log=lambda _m: None) -> Path | No
     those expected outcomes — the caller isolates real errors per event.
     """
     rfx_id, document_number = event["rfx_id"], event["document_number"]
-    page.goto(DISCOVERY_PREVIEW_URL.format(rfx_id=rfx_id),
-              wait_until="domcontentloaded", timeout=60000)
-    page.wait_for_selector(f"text=ID - {rfx_id}", timeout=45000)
+    if not _open_authed_preview(page, rfx_id):
+        raise RuntimeError(
+            f"Doc{document_number}: the authenticated event preview never loaded "
+            f"(rfx {rfx_id}) — session/SSO did not settle.")
 
     respond = page.get_by_role("button", name="Respond", exact=True)
     if respond.is_disabled():
         log(f"  Doc{document_number}: Respond disabled (closed) — skipped")
         return None
-
     respond.click()
-    page.wait_for_url("**/Sourcing/**", timeout=60000)     # Discovery -> Ariba Sourcing
 
-    # Download Content -> the Export-to-Excel page -> Download Attachments -> the picker.
-    page.get_by_role("button", name="Download Content").click()
-    page.get_by_role("button", name="Download Attachments").first.click()
+    # Respond opens the Sourcing event; wait on its "Download Content" button rather than a URL
+    # glob (the redirect chain varies). If a "Register/Login" modal shows instead, the session
+    # did not carry to this page — fail loudly, don't hang.
+    download_content = page.get_by_role("button", name="Download Content")
+    try:
+        download_content.wait_for(state="visible", timeout=60000)
+    except Exception:
+        if page.get_by_role("button", name="Register/Login").count():
+            raise RuntimeError(
+                f"Doc{document_number}: Ariba served the anonymous view (Register/Login modal); "
+                f"the session did not carry to the preview.")
+        raise
+    _dismiss_cookie_banner(page)
+
+    # Download Content -> the Export-to-Excel page -> Download Attachments -> the picker. The
+    # first Download Content click is sometimes a no-op if the event page is still settling, so
+    # wait for the export page's Download Attachments button and retry the click if it does not
+    # appear rather than clicking blindly into the event page.
+    dl_attachments = page.get_by_role("button", name="Download Attachments")
+    download_content.click()
+    try:
+        dl_attachments.first.wait_for(state="visible", timeout=30000)
+    except Exception:
+        download_content.click()                          # no-op first click — try once more
+        dl_attachments.first.wait_for(state="visible", timeout=30000)
+    dl_attachments.first.click()
     page.wait_for_selector("text=Selected Attachments Summary", timeout=45000)
-
-    # Select every item; the header checkbox is the first checkbox on the picker.
-    page.locator("input[type='checkbox']").first.check()
-    page.wait_for_timeout(1500)                            # totals recompute after select-all
+    _select_all_attachments(page, log=log)
 
     total_mb = _selected_total_mb(page)
     if total_mb is not None and total_mb > MAX_BUNDLE_MB:
@@ -229,12 +324,85 @@ def capture_event(page, event: dict, dest_dir, log=lambda _m: None) -> Path | No
     return target
 
 
+def _open_authed_preview(page, rfx_id: str, attempts: int = 3) -> bool:
+    """Load the event preview in the AUTHENTICATED Discovery app, returning True once it shows.
+
+    The first navigation to the authed URL triggers an SSO redirect that consumes the
+    `#/RfxEvent/preview/<id>` fragment and lands on the app shell (no event). Navigating again,
+    with SSO now settled, routes to the event — verified live: nav1 shows nothing, nav2 shows
+    the event with an enabled Respond. So retry until the `ID - <rfx>` marker appears, dismissing
+    the per-origin cookie banner each pass.
+    """
+    for _ in range(attempts):
+        page.goto(DISCOVERY_PREVIEW_URL.format(rfx_id=rfx_id),
+                  wait_until="domcontentloaded", timeout=60000)
+        page.wait_for_timeout(6000)                       # let the SSO redirect chain settle
+        _dismiss_cookie_banner(page)
+        if page.query_selector(f"text=ID - {rfx_id}") is not None:
+            return True
+    return False
+
+
+def _select_all_attachments(page, log=lambda _m: None) -> None:
+    """Tick the picker's header checkbox to select every file, and verify it took.
+
+    The widget is `<div class="w-chk-container"><input class="w-chk-native"><label
+    class="w-chk"></label></div>`. The real <input> is hidden and empty of size; the visible box
+    is the CSS-drawn sibling `<label class="w-chk">`, and AribaWeb's select-all action fires on a
+    real positional click there (a Playwright `.click()` on the empty label only FOCUSES it, and
+    setting the input's checked flag skips the cascade that ticks every row). So click at the
+    widget's bounding-box centre with the mouse — the first checkbox is the header select-all —
+    and confirm it took by reading the size total (a silent no-select downloads an empty bundle).
+    """
+    def mouse_click_first(selector):
+        box = page.locator(selector).first.bounding_box()
+        if not box:
+            raise RuntimeError(f"no bounding box for {selector}")
+        page.mouse.click(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
+
+    def checked_count():
+        return page.evaluate(
+            "() => Array.from(document.querySelectorAll('input.w-chk-native'))"
+            ".filter(e => e.checked).length")
+
+    strategies = (
+        ("mouse-label", lambda: mouse_click_first("label.w-chk")),
+        ("mouse-container", lambda: mouse_click_first("div.w-chk-container")),
+        ("label-click", lambda: page.locator("label.w-chk").first.click(timeout=6000)),
+    )
+    for name, attempt in strategies:
+        try:
+            attempt()
+            page.wait_for_timeout(3000)                   # the cascade recomputes over an AJAX call
+            # Verify by counting ticked rows, not by parsing the total: the header cascade ticks
+            # every row, so >1 checked box means it took. Parsing the size total proved brittle
+            # (label and value live in different columns), and a silent no-select is worse.
+            if checked_count() > 1:
+                log(f"    select-all via {name}")
+                return
+        except Exception:
+            pass
+    raise RuntimeError("Could not select the attachments (header checkbox did not register).")
+
+
 def _selected_total_mb(page) -> float | None:
-    """The 'Total Size (MB): N' the picker shows once items are selected, or None if unread."""
-    import re
-    text = page.inner_text("body")
-    match = re.search(r"Total Size \(MB\):\s*([\d,.]+)", text)
-    return float(match.group(1).replace(",", "")) if match else None
+    """The 'Total Size (MB): N' the picker shows once items are selected, or None if unread.
+
+    `inner_text` reorders label and value (they sit in separate columns) so the number never
+    follows the colon in the flat rendered text. Scan raw `textContent` in DOM order instead:
+    on the smallest element that wraps both, "Total Size (MB):" and "161.76" are adjacent, so
+    match them together on whichever element that is (the deepest match wins by scanning all).
+    """
+    return page.evaluate(
+        """() => {
+            let best = null;
+            for (const e of document.querySelectorAll('td,div,span,label,p,tr,table,body')) {
+                const m = (e.textContent || '').match(/Total Size \\(MB\\):\\s*([\\d,]+(?:\\.\\d+)?)/);
+                if (m) best = parseFloat(m[1].replace(/,/g, ''));
+            }
+            return best;
+        }"""
+    )
 
 
 def capture_attachments(conn, dest_dir=None, log=lambda _m: None, headless=False) -> int:
