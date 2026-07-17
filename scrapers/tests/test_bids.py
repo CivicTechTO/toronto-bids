@@ -122,3 +122,57 @@ def test_bids_reach_the_export_under_their_council_item(conn):
     assert len(item["bids"]) == 1
     assert item["bids"][0]["bid_price_numeric"] == pytest.approx(163799.50)
     assert item["bids"][0]["hst_basis"] == "excluding"
+
+
+# --- enumerated tables (#87 dry run surfaced these) --------------------------------------
+
+def test_an_undeclared_row_number_column_does_not_shift_the_name_into_the_price():
+    """2019.BA29.5 declares 2 columns but emits 3 cells per row, so the bidder name was
+    landing in bid_price and the name became '1'. 19 rows across the corpus."""
+    html = ("<html><body><h3>BA29.5 - Award of Doc1234567890 to X for Y</h3><table>"
+            "<tr><td>Bidder Name</td><td>Bid Price (Including HST)</td></tr>"
+            "<tr><td>1</td><td>Joe Pace &amp; Sons Contracting Inc.</td><td>$1,219,281</td></tr>"
+            "<tr><td>2</td><td>BDA Inc.</td><td>$1,261,419</td></tr>"
+            "</table></body></html>")
+    bids = parse_bid_tables(html, "2019.BA29")
+    assert [b["bidder_name_raw"] for b in bids] == ["Joe Pace & Sons Contracting Inc.", "BDA Inc."]
+    assert bids[0]["bid_price"] == "$1,219,281"
+
+
+def test_inline_row_numbering_is_stripped_from_the_bidder_name():
+    """'1. Pave Tar Construction Ltd' keyed as '1 pave tar construction ltd' and could never
+    merge with 'Pave Tar Construction Ltd'. 639 rows across the corpus."""
+    html = ("<html><body><h3>BA1.1 - Award of Doc1234567890 to X for Y</h3><table>"
+            "<tr><td>Bidder Name</td><td>Bid Price (including H.S.T.)</td></tr>"
+            "<tr><td>1. Pave Tar Construction Ltd</td><td>$ 937,419</td></tr>"
+            "<tr><td>2) Rafat General Contractor Inc</td><td>$ 1,247,830</td></tr>"
+            "</table></body></html>")
+    assert [b["bidder_name_raw"] for b in parse_bid_tables(html, "2022.BA1")] == [
+        "Pave Tar Construction Ltd", "Rafat General Contractor Inc"]
+
+
+def test_a_number_inside_a_real_company_name_survives():
+    """'2489960 Ontario Inc.' is a real bidder — the numbering rule must not eat it."""
+    html = ("<html><body><h3>BA1.1 - Award of Doc1234567890 to X for Y</h3><table>"
+            "<tr><td>Bidder Name</td><td>Bid Price (including H.S.T.)</td></tr>"
+            "<tr><td>2489960 Ontario Inc.</td><td>$6,590,403</td></tr>"
+            "<tr><td>614128 Ontario Ltd O/A Trisan Construction</td><td>$1,000</td></tr>"
+            "</table></body></html>")
+    assert [b["bidder_name_raw"] for b in parse_bid_tables(html, "2022.BA1")] == [
+        "2489960 Ontario Inc.", "614128 Ontario Ltd O/A Trisan Construction"]
+
+
+def test_footnote_markers_are_stripped_from_the_name_but_kept_on_the_price():
+    """A name is an identifier that must match across sources, so the marker is not part of
+    it — and left on, '**AQUA TECH...' wins display_name's alphabetical sort. A price keeps
+    its marker: the marker sits beside a value we parse, so raw preserves the pairing."""
+    html = ("<html><body><h3>BA1.1 - Award of Doc1234567890 to X for Y</h3><table>"
+            "<tr><td>Bidder Name</td><td>Bid Price (including H.S.T.)</td></tr>"
+            "<tr><td>**AQUA TECH SOLUTIONS INC</td><td>$1*</td></tr>"
+            "<tr><td>Smith and Long Ltd.**</td><td>$2</td></tr>"
+            "<tr><td>*1. Maple-Crete Inc.</td><td>$3</td></tr>"
+            "</table></body></html>")
+    bids = parse_bid_tables(html, "2022.BA1")
+    assert [b["bidder_name_raw"] for b in bids] == [
+        "AQUA TECH SOLUTIONS INC", "Smith and Long Ltd.", "Maple-Crete Inc."]
+    assert bids[0]["bid_price"] == "$1*"     # the price keeps its marker

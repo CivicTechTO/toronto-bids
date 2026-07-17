@@ -352,6 +352,19 @@ _HST_EXCLUDING = re.compile(r"exclud\w*\s*(h\.?s\.?t)", re.I)
 # They point at a note under the table ('*includes contingency', '**found non-compliant'), so
 # the raw string keeps them and only the parse strips them.
 _FOOTNOTE = re.compile(r"[\s*^+†‡§]+$")
+# Some tables enumerate their rows, two different ways, and both corrupt the bidder name:
+#   inline    ['1. Pave Tar Construction Ltd', '$937,419']        -> 639 rows
+#   own column ['1', 'Joe Pace & Sons Inc.', '$1,219,281']        ->  19 rows, and the header
+#              declares only 2 columns, so every cell shifts and the NAME lands in bid_price.
+# Pure presentation — unlike a footnote marker it points at nothing — so it is stripped.
+_ROW_NUMBER_CELL = re.compile(r"^\s*\d+\.?\s*$")
+_ROW_NUMBER_PREFIX = re.compile(r"^\s*\d+[.)]\s+")
+# Footnote markers ride on bidder names too, and on either side: '**AQUA TECH SOLUTIONS INC',
+# 'Smith and Long Ltd.**'. Unlike bid_price — where the marker sits beside a value we parse,
+# so keeping it preserves the pairing — a name is an identifier that has to match across
+# sources. The marker is not part of it, and left on it wins display_name's alphabetical
+# sort ('**AQUA TECH...' before 'AQUA TECH...') and uglifies the dimension.
+_NAME_MARKERS = re.compile(r"^[\s*^+†‡§]+|[\s*^+†‡§]+$")
 
 
 def _hst_basis(header: str) -> str | None:
@@ -398,7 +411,16 @@ def parse_bid_tables(html: str, meeting: str) -> list[dict]:
         price_header = header[price_col] if price_col is not None else None
         for row in rows[1:]:
             cells = [_clean(c.text_content()) for c in row.xpath(".//td|.//th")]
+            # An undeclared leading row-number column shifts every cell left, dropping the
+            # bidder name into the price. Realign against the header before reading either.
+            while (len(cells) > len(header) and cells
+                   and _ROW_NUMBER_CELL.match(cells[0] or "")):
+                cells = cells[1:]
             if not cells or not cells[0]:
+                continue
+            name = _NAME_MARKERS.sub("", _ROW_NUMBER_PREFIX.sub(
+                "", _NAME_MARKERS.sub("", cells[0])))
+            if not name:
                 continue
             price = cells[price_col] if (price_col is not None
                                          and len(cells) > price_col) else None
@@ -407,7 +429,7 @@ def parse_bid_tables(html: str, meeting: str) -> list[dict]:
                 # Pre-2019 items name no document number (Toronto adopted Ariba ~2019), so a
                 # bid can be real and unattributable. Kept anyway — #77 wants exactly these.
                 "document_number": docs[0] if docs else None,
-                "bidder_name_raw": cells[0],
+                "bidder_name_raw": name,
                 "bid_price": price or None,
                 "hst_basis": _hst_basis(price_header) if price_header else None,
                 "price_header": price_header,

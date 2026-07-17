@@ -213,6 +213,10 @@ CREATE TABLE IF NOT EXISTS bid (
     reference          TEXT NOT NULL,   -- council item, e.g. '2022.BA189.2'
     document_number    TEXT,            -- NULL pre-2019: no Ariba doc numbers existed yet
     bidder_name_raw    TEXT NOT NULL,
+    -- Backfilled by build_supplier_dimension, like award/noncompetitive/suspended_firm.
+    -- This is what makes "which firms keep losing?" and "did a suspended firm keep bidding?"
+    -- exact rather than string-matching (#87).
+    supplier_id        INTEGER,
     -- Verbatim, footnote marker and all ('$2,982,036.67*'). The City also writes outcomes
     -- here — 'Non-Compliant', 'No bid', 'N/A' — which is why the raw string is kept: it
     -- records WHY a bid lost, and bid_price_numeric is NULL for exactly those.

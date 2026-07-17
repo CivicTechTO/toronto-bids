@@ -24,12 +24,20 @@ def supplier_key(raw: str | None) -> str:
     return _WS.sub(" ", text).strip()
 
 
-# (source table, its primary-key column) for the tables carrying supplier_name_raw + supplier_id.
+# (source table, its primary-key column) for the tables carrying a supplier name + supplier_id.
+# `bid` is the odd one: it names losing bidders, so most of its 4,751 names never appear in
+# award at all and the dimension roughly doubles. That is the point — a supplier dimension
+# built only from winners cannot answer who lost, who only ever bids unopposed, or whether a
+# suspended firm kept bidding (#87).
 _SUPPLIER_TABLES = [
     ("award", "id"),
     ("noncompetitive", "workspace_number"),
     ("suspended_firm", "id"),
+    ("bid", "id"),
 ]
+
+# bid names its supplier in a different column from the other three.
+_NAME_COLUMN = {"bid": "bidder_name_raw"}
 
 
 def build_supplier_dimension(conn) -> int:
@@ -41,7 +49,8 @@ def build_supplier_dimension(conn) -> int:
     variants_by_key: dict[str, set] = {}
     row_keys: list[tuple[str, object, str]] = []  # (table, pk, key)
     for table, pk in _SUPPLIER_TABLES:
-        for row in conn.execute(f"SELECT {pk} AS pk, supplier_name_raw FROM {table}"):
+        name_col = _NAME_COLUMN.get(table, "supplier_name_raw")
+        for row in conn.execute(f"SELECT {pk} AS pk, {name_col} AS supplier_name_raw FROM {table}"):
             raw = row["supplier_name_raw"]
             key = supplier_key(raw)
             if not key:
