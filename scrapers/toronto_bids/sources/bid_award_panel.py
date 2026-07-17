@@ -688,7 +688,7 @@ _SEGMENTED_BIDDER = re.compile(r"\b(?:Area|Part|Project|Group|Schedule)\s*[\"'�
 # ("St. Marys Cement Inc. (Canada) d.b.a. Canada Building Materials Company", "Corporate
 # Express, Canada Inc. operating as Staples Advantage Canada"), so tightening it to catch the
 # last few unmarked pairs would drop an equal number of genuine awards — a worse trade. Three
-# unmarked pairs survive as single rows; #97 is where they get separated properly.
+# unmarked pairs survive as single rows; #98 is where they get separated properly.
 _MAX_SUPPLIER_NAME = 80
 
 # How council words the net figure drifts with tax history, and the drift is not cosmetic:
@@ -722,7 +722,7 @@ def parse_composite_appendices(text: str) -> list[dict]:
     `split_award` marks the appendices naming several winners. They are real (an aggregates
     standing offer awarded to three firms) and each winner has its own value section, which
     this does not yet separate — so the value here belongs to the first winner only. Flagged
-    rather than dropped or silently fused; see #97.
+    rather than dropped or silently fused; see #98.
     """
     out = []
     for block in _APPENDIX_BLOCK.split(text)[1:]:
@@ -782,7 +782,7 @@ def store_composite_awards(conn) -> int:
                 # One call, several winners, each with its own value section. Recording the
                 # fused name as one firm would invent a supplier that does not exist and hand
                 # it the first winner's money; the dimension would then carry it as real. The
-                # award is genuine and worth having — see #97, which has to separate the
+                # award is genuine and worth having — see #98, which has to separate the
                 # per-winner value sections to do it right.
                 skipped += 1
                 continue
@@ -799,7 +799,7 @@ def store_composite_awards(conn) -> int:
     conn.commit()
     if skipped:
         # Never silent: a bounded skip that nobody prints reads as full coverage later.
-        print(f"    split awards skipped (several winners on one call, #97): {skipped}")
+        print(f"    split awards skipped (several winners on one call, #98): {skipped}")
     return stored
 
 
