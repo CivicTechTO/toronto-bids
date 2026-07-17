@@ -325,9 +325,17 @@ def _cmd_nightly(args) -> int:
 
     try:
         conn = _open_db()
-        before = db.counts(conn)
     except Exception as exc:
         failures.append(("open_db", str(exc)))
+
+    # Separate from the open above: if `conn` opened fine but this raises, blaming "open_db"
+    # would send the reader to the wrong system, and leaving `before` at {} would let a
+    # transient failure that clears by the `after` count fabricate a delta against zero.
+    if conn is not None:
+        try:
+            before = db.counts(conn)
+        except Exception as exc:
+            failures.append(("counts", str(exc)))
 
     if conn is not None:
         http = None

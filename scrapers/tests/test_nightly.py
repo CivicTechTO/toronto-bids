@@ -115,6 +115,26 @@ def test_a_failure_building_the_http_client_does_not_cost_us_the_export(nightly,
     assert (tmp_path / "export" / "bids.json").exists()
 
 
+def test_a_counts_failure_is_labelled_counts_not_open_db(nightly, monkeypatch):
+    """Blaming 'open_db' for a failure in the counting query sends the reader to the wrong
+    system. The open succeeded; the count did not."""
+    posted = []
+    monkeypatch.setattr(notify, "post", lambda text, **k: posted.append(text) or True)
+    calls = {"n": 0}
+    real_counts = cli.db.counts
+    def flaky(conn):
+        calls["n"] += 1
+        if calls["n"] == 1:               # the `before` count fails
+            raise sqlite3.DatabaseError("locked")
+        return real_counts(conn)           # the `after` count recovers
+    monkeypatch.setattr(cli.db, "counts", flaky)
+    assert nightly() == 1
+    assert posted
+    assert "counts: locked" in posted[0]
+    # and the recovered `after` count must NOT be reported as a delta against a zero `before`
+    assert "(+" not in posted[0]
+
+
 def test_a_failure_closing_the_database_does_not_swallow_the_summary(nightly, monkeypatch, conn):
     """A successful export must still get reported: conn.close() raising (a wedged disk, a
     locked file, a competing writer) must not prevent notify.post from firing after a run
