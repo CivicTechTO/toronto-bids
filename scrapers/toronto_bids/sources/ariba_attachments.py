@@ -93,7 +93,7 @@ def _index_zipfile(zf, prefix: str, depth: int, budget: list) -> list[dict]:
             try:
                 # ponytail: caps bound zip count/depth, not per-entry inflated size; add a size
                 # cap if a real bundle ever needs it
-                with zipfile.ZipFile(io.BytesIO(zf.read(zi.filename))) as nested:
+                with zipfile.ZipFile(io.BytesIO(zf.read(zi))) as nested:
                     children = _index_zipfile(nested, path + "/", depth + 1, budget)
                 if children:                       # expandable: contribute its leaves, not it
                     out.extend(children)

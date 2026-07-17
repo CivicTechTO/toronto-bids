@@ -106,7 +106,7 @@ def test_ingest_scans_a_folder_skips_unnamed_zips_and_is_idempotent(conn, tmp_pa
     dest = tmp_path / "store"
 
     assert aa.ingest_downloads(conn, downloads, dest) == 1   # only the Doc-named one
-    # Re-ingesting the same bundle updates in place — UNIQUE(document_number, filename) holds.
+    # Re-ingesting rebuilds the document's rows from the bytes — same count, not a duplicate.
     assert aa.ingest_downloads(conn, downloads, dest) == 1
     total = conn.execute("SELECT COUNT(*) FROM ariba_attachment").fetchone()[0]
     assert total == 1

@@ -237,6 +237,34 @@ def test_documents_nested_under_solicitation(seeded):
     assert form["url"].startswith("https://secure.toronto.ca/")
 
 
+def test_documents_use_leaf_basename_for_name_and_type(seeded):
+    # Extensionless leaf inside a nested zip: name is the leaf, not the container's extension.
+    db.upsert_row(seeded, AribaAttachment(
+        document_number="5672751291", filename="README",
+        path="Base Information.zip/README",
+        file_size=42, crc32="deadbeef", zip_name="Doc5672751291.zip",
+        zip_sha256="a" * 64), overwrite=True)
+    # Leaf several directories deep inside a nested zip: name/type come from the final segment.
+    db.upsert_row(seeded, AribaAttachment(
+        document_number="5672751291", filename="site-plan.pdf",
+        path="Appendix C2.zip/drawings/site-plan.pdf",
+        file_size=99, crc32="beefdead", zip_name="Doc5672751291.zip",
+        zip_sha256="b" * 64), overwrite=True)
+    seeded.commit()
+
+    sol = next(s for s in build_export_document(seeded, generated_at="t")["solicitations"]
+               if s["document_number"] == "5672751291")
+    docs = {d["path"]: d for d in sol["documents"]}
+
+    readme = docs["Base Information.zip/README"]
+    assert readme["name"] == "README"
+    assert readme["type"] is None
+
+    drawing = docs["Appendix C2.zip/drawings/site-plan.pdf"]
+    assert drawing["name"] == "site-plan.pdf"
+    assert drawing["type"] == "pdf"
+
+
 def test_solicitation_without_documents_gets_empty_list(conn):
     db.upsert_row(conn, Solicitation(document_number="1", status="Open", source="odata"),
                   overwrite=True)

@@ -25,8 +25,9 @@ def _parse_json(record: dict, key: str) -> dict:
 def _ext(name: str | None) -> str | None:
     if not name:
         return None
-    dot = name.rfind(".")
-    return name[dot + 1:].lower() if dot != -1 else None
+    leaf = name.rsplit("/", 1)[-1]
+    dot = leaf.rfind(".")
+    return leaf[dot + 1:].lower() if dot != -1 else None
 
 
 def build_export_document(conn, generated_at: str | None = None) -> dict:
@@ -66,11 +67,12 @@ def build_export_document(conn, generated_at: str | None = None) -> dict:
     documents_by_doc: dict[str, list] = {}
     for att in _rows(conn, "SELECT document_number, filename, COALESCE(path, filename) AS path, "
                            "file_size FROM ariba_attachment ORDER BY document_number, path"):
+        leaf = att["path"].rsplit("/", 1)[-1]
         documents_by_doc.setdefault(att["document_number"], []).append({
             "source": "ariba_attachment",
-            "name": att["filename"],
+            "name": leaf,
             "path": att["path"],
-            "type": _ext(att["path"]),
+            "type": _ext(leaf),
             "size_bytes": att["file_size"],
             "url": None,
         })
