@@ -93,8 +93,11 @@ sudo .venv/bin/python -m playwright install-deps chromium   # its shared libs (n
 
 # 2. Ariba credentials, appended to the same 0600 env file as the Slack webhook.
 #    The account must NOT have MFA — an unattended login cannot answer a challenge.
+# `read -r "U?prompt"` is bash-only and fails in zsh ("no coprocess"); prompt separately so
+# this works in either shell.
 umask 077
-read -rp 'ARIBA_USERNAME: ' U; read -rsp 'ARIBA_PASSWORD: ' P; echo
+printf 'ARIBA_USERNAME: '; read -r U
+printf 'ARIBA_PASSWORD: '; read -rs P; echo
 printf 'ARIBA_USERNAME=%s\nARIBA_PASSWORD=%s\n' "$U" "$P" >> ~/.config/toronto-bids/tb.env
 unset U P; chmod 600 ~/.config/toronto-bids/tb.env
 
