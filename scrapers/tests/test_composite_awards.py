@@ -116,9 +116,10 @@ def test_a_wrapped_description_survives_a_blank_line():
 
 # --- split awards: real, and refused rather than fused -----------------------------------
 
-def test_an_enumerated_split_award_is_flagged_not_fused():
-    """One call, three winners, each with its own value section. Recording the fused name as
-    one firm would invent a supplier and hand it the first winner's money."""
+def test_an_enumerated_split_award_is_flagged_when_it_cannot_be_separated():
+    """Council numbered the winners, so there are several however the value section reads.
+    With one figure for three firms there is nothing to apportion, and one row would hand the
+    first winner's money to a firm that does not exist — so it is flagged, not stored."""
     text = ("Call No:\nRFQ 3920-10-0133\nDescription:\nAggregates.\n"
             "Recommended Bidders:\n1. CDR Youngs Aggregates Inc.\n2. Lafarge Aggregates\n"
             "3. Vicdom Sand & Gravel (Ontario) Limited\n"
@@ -126,14 +127,42 @@ def test_an_enumerated_split_award_is_flagged_not_fused():
     assert parse_composite_appendices(text)[0]["split_award"] is True
 
 
-def test_a_segmented_split_award_is_flagged():
-    """The other way council writes a split: by naming the segments."""
+def test_a_segmented_split_award_is_flagged_when_it_cannot_be_separated():
+    """The other way council declares a split: by naming the segments."""
     for name in ('Area "A" – A&F DiCarlo Construction Inc. Area "B" – Pave-Tar Ltd.',
                  'Part "A" and Part "C" – SCI Interiors Part "B" – POI Business Interiors',
                  'Project 1 - GENIVAR Inc. Project 2 – Stantec Consulting Ltd.'):
         text = (f"Call No:\nTender Call 5-2011\nDescription:\nWork.\nRecommended Bidders:\n"
                 f"{name}\nContract Award Value:\n$100.00 net of all applicable taxes\n")
+        assert parse_composite_appendices(text)[0]["split_award"] is True
+
+
+def test_a_parenthetical_is_not_evidence_of_a_single_firm():
+    """The tempting fix that had to be reverted. Some long names are one firm plus what it
+    won; just as many are two firms EACH carrying one. Treating a parenthetical as proof of a
+    single firm recovered ~5 real awards and let in as many invented suppliers — a 735-char
+    prose bleed and a roster of a dozen among them. Both of these stay out."""
+    for name in (
+            # one firm + qualifier — a real award, lost. The premium for the line below.
+            "Lafarge Paving & Construction (for winter season – South, West and North "
+            "Districts) (for summer season – East District)",
+            # two firms, each + qualifier. Identical shape, and storing it invents a supplier.
+            "Coco Paving Limited (for the North, South and West Districts) D. Crupi & Sons "
+            "Limited (for the East District)"):
+        text = (f"Call No:\nRFQ 3905-08-0273\nDescription:\nHot mix asphalt.\n"
+                f"Recommended Bidder:\n{name}\n"
+                f"Contract Award Value:\n$2,535,295.04 (Net of GST)\n")
         assert parse_composite_appendices(text)[0]["split_award"] is True, name
+
+
+def test_the_firm_letter_scheme_is_read_with_or_without_parentheses():
+    """'Firm A)' and 'Firm (A)' are the same scheme; both appear."""
+    text = ("Call No:\nRFQ 1234-11-0001\nDescription:\nElectrical.\n"
+            "Recommended Bidder:\nFirm (A) Powertrade Electric Ltd. Firm (B) Nedco Ontario\n"
+            "Contract Award Value:\nFirm (A) $100.00 net of all applicable taxes\n"
+            "Firm (B) $200.00 net of all applicable taxes\n")
+    assert [i["winner_raw"] for i in parse_composite_appendices(text)] == [
+        "Powertrade Electric Ltd.", "Nedco Ontario"], name
 
 
 def test_a_single_firm_with_a_long_alias_is_not_a_split():
@@ -150,13 +179,117 @@ def test_a_single_firm_with_a_long_alias_is_not_a_split():
         assert parse_composite_appendices(text)[0]["split_award"] is False, name
 
 
-def test_split_awards_are_skipped_rather_than_stored_wrong(conn):
+def test_an_unseparable_split_award_is_skipped_rather_than_stored_wrong(conn):
+    """One figure, three winners: nothing to apportion, so nothing is stored."""
     text = ("Call No:\nRFQ 3920-10-0133\nDescription:\nAggregates.\n"
             "Recommended Bidders:\n1. CDR Youngs Aggregates Inc.\n2. Lafarge Aggregates\n"
             "Contract Award Value:\n$100.00 net of all applicable taxes\n")
     _seed_report(conn, reference="2011.BD5.1", text=text)
     assert store_composite_awards(conn) == 0
     assert conn.execute("SELECT COUNT(*) FROM composite_award").fetchone()[0] == 0
+
+
+# --- #98: separating the winners the value section does key ------------------------------
+
+def test_a_numbered_split_award_becomes_one_row_per_winner(conn):
+    """The real 2011.BD5.1 shape: the value section repeats each winner and gives it its own
+    base term, option periods and total. Each winner takes the FIRST figure in its own run —
+    the same rule as the single-winner case, which steps past the options and the total."""
+    text = ("Call No:\nRFQ 3920-10-0133\nDescription:\nAggregates.\n"
+            "Recommended Bidders:\n1. CDR Youngs Aggregates Inc.\n2. Lafarge Aggregates\n"
+            "Contract Award Value:\n"
+            "1. CDR Youngs Aggregates Inc.\n"
+            "January 1, 2011 to June 30, 2012\n"
+            "$2,589,782.50 net of all applicable taxes and charges;\n"
+            "Option Period 1 - July 1, 2012 to January 30, 2014\n"
+            "$2,690,020.80 net of all applicable taxes and charges;\n"
+            "The total potential contract award is $5,279,803.30 net of all applicable taxes.\n"
+            "2. Lafarge Aggregates\n"
+            "January 1, 2011 to June 30, 2012\n"
+            "$1,100,000.00 net of all applicable taxes and charges;\n")
+    _seed_report(conn, reference="2011.BD5.1", text=text)
+    assert store_composite_awards(conn) == 2
+    rows = conn.execute("SELECT supplier_name_raw, award_value_numeric FROM composite_award "
+                        "ORDER BY award_value_numeric DESC").fetchall()
+    assert [(r["supplier_name_raw"], r["award_value_numeric"]) for r in rows] == [
+        ("CDR Youngs Aggregates Inc.", 2589782.50),
+        ("Lafarge Aggregates", 1100000.00),
+    ]
+    assert conn.execute("SELECT COUNT(DISTINCT call_number) FROM composite_award").fetchone()[0] == 1
+
+
+def test_the_firm_letter_scheme_joins_the_value_to_the_bidder_field():
+    """2009.BD108.1: the value section labels winners 'Firm A)' and only the bidder field
+    names them. The letter is the join."""
+    text = ("Call No:\nRFQ 1234-09-0001\nDescription:\nTree service.\n"
+            "Recommended Bidder:\nFirm A) WM Weller Tree Service Ltd. Firm B) Ontario Line "
+            "Clearing & Tree Service\n"
+            "Contract Award Value:\n"
+            "Firm A) $4,872,017.44 net of GST\n"
+            "Firm B) $2,787,919.68 net of GST\n"
+            "Total potential contract award is $11,976,588.82 net of GST\n")
+    items = parse_composite_appendices(text)
+    assert [(i["winner_raw"], i["award_value"]) for i in items] == [
+        ("WM Weller Tree Service Ltd.", 4872017.44),
+        ("Ontario Line Clearing & Tree Service", 2787919.68),
+    ]
+
+
+def test_a_date_range_never_becomes_a_supplier():
+    """The value section labels its periods exactly as it labels its firms, so 'Option
+    January 1, 2010 to December 31, 2010: $79,800.00' reads as a winner unless refused.
+    Inventing a supplier named after a date range is the failure this pass exists to avoid."""
+    text = ("Call No:\nRFQ 1234-09-0002\nDescription:\nPlumbing.\n"
+            "Recommended Bidder:\nFirm A) Active Mechanical Firm B) Bomben Plumbing & Heating Ltd.\n"
+            "Contract Award Value:\n"
+            "Firm A)\n"
+            "Date of award to December 31, 2009: $76,000.00 net of GST\n"
+            "Option January 1, 2010 to December 31, 2010: $79,800.00 net of GST\n"
+            "Firm B)\n"
+            "Date of award to December 31, 2009: $88,000.00 net of GST\n")
+    items = parse_composite_appendices(text)
+    assert [i["winner_raw"] for i in items] == ["Active Mechanical", "Bomben Plumbing & Heating Ltd."]
+    assert [i["award_value"] for i in items] == [76000.00, 88000.00]
+
+
+def test_a_winner_the_bidder_field_never_names_is_refused():
+    """The bidder field is the authority on WHO won and the value section on HOW MUCH. A
+    'winner' only the value section knows about is a parsing artefact."""
+    text = ("Call No:\nRFQ 1234-09-0003\nDescription:\nWork.\n"
+            "Recommended Bidder:\n1. Real Paving Inc.\n2. Genuine Construction Ltd.\n"
+            "Contract Award Value:\n"
+            "1. Real Paving Inc.\n$100.00 net of all applicable taxes\n"
+            "2. Genuine Construction Ltd.\n$200.00 net of all applicable taxes\n"
+            "3. Phantom Holdings Corp.\n$300.00 net of all applicable taxes\n")
+    assert [i["winner_raw"] for i in parse_composite_appendices(text)] == [
+        "Real Paving Inc.", "Genuine Construction Ltd."]
+
+
+def test_what_a_winner_won_is_stripped_from_its_name():
+    """'WM Weller Tree Service Ltd. – Type I and II Service' would key differently from the
+    same firm elsewhere and fork the supplier dimension. Only a SPACED dash starts a
+    qualifier, so hyphenated firms survive intact."""
+    text = ("Call No:\nRFQ 1234-09-0004\nDescription:\nWork.\n"
+            "Recommended Bidder:\nFirm A) WM Weller Tree Service Ltd. – Type I and II Service "
+            "Firm B) Levitt-Safety - Award Price Schedule A\n"
+            "Contract Award Value:\nFirm A) $100.00 net of GST\nFirm B) $200.00 net of GST\n")
+    assert [i["winner_raw"] for i in parse_composite_appendices(text)] == [
+        "WM Weller Tree Service Ltd.", "Levitt-Safety"]
+
+
+def test_a_parenthetical_qualifier_is_stripped_but_a_real_one_survives():
+    """'Lima's Gardens & Construction Inc. (Northwest, Northeast and Southwest Quadrant)' is
+    the firm plus what it won. 'Vicdom Sand & Gravel (Ontario) Limited' is just the firm —
+    which is why the strip is anchored to the end and gated on how a qualifier opens."""
+    text = ("Call No:\nRFQ 1234-09-0005\nDescription:\nGrounds.\n"
+            "Recommended Bidders:\n1. Lima's Gardens & Construction Inc. (Northwest, Northeast "
+            "and Southwest Quadrant)\n2. Vicdom Sand & Gravel (Ontario) Limited\n"
+            "Contract Award Value:\n"
+            "1. Lima's Gardens & Construction Inc. (Northwest, Northeast and Southwest Quadrant)\n"
+            "$100.00 net of all applicable taxes\n"
+            "2. Vicdom Sand & Gravel (Ontario) Limited\n$200.00 net of all applicable taxes\n")
+    assert [i["winner_raw"] for i in parse_composite_appendices(text)] == [
+        "Lima's Gardens & Construction Inc.", "Vicdom Sand & Gravel (Ontario) Limited"]
 
 
 # --- the keyspace ------------------------------------------------------------------------

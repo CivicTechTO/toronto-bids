@@ -123,7 +123,7 @@ city budget) and carry roughly $15B of the total. The sum is faithful to what th
 published; what the City published is wrong.
 
 **The archive reaches back further than the City's feed does.** For 2009-2011 the feed
-publishes 13 awards in total. The `composite_award` table holds **976 awards worth $2.1B**
+publishes 13 awards in total. The `composite_award` table holds **1,052 awards worth $2.37B**
 for 2009-2012, recovered from the Bid Committee's composite staff reports (#96). They
 predate Ariba, so they are keyed on **Call Number** and join to `solicitation` not at all —
 query them on their own, and aggregate `award_value_numeric`, which is the initial contract
