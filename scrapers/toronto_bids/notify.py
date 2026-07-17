@@ -39,7 +39,7 @@ def summarize(before: dict, after: dict, failures: list, n_sources: int,
     look identical. A nightly line makes silence itself the signal.
     """
     parts = [_count(before, after, key, label) for key, label in _HEADLINE]
-    parts.append(f"export {export_bytes / 1_048_576:.1f} MB" if export_bytes is not None
+    parts.append(f"export {export_bytes / 1_048_576:.1f} MiB" if export_bytes is not None  # binary MiB, matching ls -lh
                  else "export FAILED")
     parts.append(_elapsed(elapsed_s))
     if not failures:

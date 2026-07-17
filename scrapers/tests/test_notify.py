@@ -48,13 +48,13 @@ def test_a_failure_still_reports_the_export():
     """Export runs even after a partial sync — the message must say so, or a reader assumes
     the run produced nothing."""
     text = notify.summarize(BEFORE, AFTER, [("ariba_discovery", "boom")], 9, 30_800_000, 5.0)
-    assert "export 29.4 MB" in text
+    assert "export 29.4 MiB" in text
 
 
 def test_a_missing_export_is_reported_as_missing_not_as_zero():
     text = notify.summarize(BEFORE, AFTER, [("export", "disk full")], 9, None, 5.0)
     assert "export FAILED" in text
-    assert "0.0 MB" not in text
+    assert "0.0 MiB" not in text
 
 
 def test_elapsed_is_human_readable():
