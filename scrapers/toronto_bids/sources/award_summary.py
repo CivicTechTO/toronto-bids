@@ -88,6 +88,11 @@ def download_award_summaries(conn, http, dest_dir=None, log=lambda _m: None) -> 
     Queues on `sha256 IS NULL`, not `text IS NULL` — the #83 lesson: a PDF pdftotext cannot
     read keeps a NULL text forever and would re-download on every run, in perpetuity. The hash
     records that we hold the bytes; the text records whether anything could read them.
+
+    `text` is ARCHIVAL here and nothing parses it (#116): the bids are read from the PDF's own
+    cells by store_award_summary_bids. `layout=True` is kept because it is the more faithful
+    rendering of a columnar form and the bytes are already on disk under it — not because
+    anything depends on it.
     """
     from toronto_bids.sources.council import download_pdf
 
@@ -124,90 +129,145 @@ def download_award_summaries(conn, http, dest_dir=None, log=lambda _m: None) -> 
 
 # --- parsing ------------------------------------------------------------------------------
 #
-# The form is a two-page PDF whose fields land as "Label    value" lines under pdftotext
-# -layout. Section 5 is the bid table:
+# The form is a ruled table end to end — every field is a real (label, value) cell pair, and
+# section 5 is a real bid table. So it is read as CELLS, via pdfplumber, not reconstructed
+# from whitespace (#116). Measured over the 229 archived forms:
 #
-#     5. Bid Summary
-#     Supplier Name                                       Bid Price (Excluding HST)
-#     * indicates non-compliant Supplier                  NOTE: Not applicable for RFP
-#     1. 2489960 ONTARIO INC., O/A Kore Infrastructure    $7,710,000.00
-#     2. CRCE Construction Ltd.                           $8,624,203.50
-_SECTION_5 = re.compile(r"^\s*5\.\s*Bid Summary\s*$", re.M)
-# Section 5 is the last one, so it runs to the end of the document. Do NOT try to bound it by
-# "the next numbered heading": the bidders are numbered too, and `^\d\. [A-Z]` matches
-# "2. CRCE Construction Ltd." — which truncated the table at the second bidder and quietly
-# produced a one-bid parse of a five-bid award. _BID_LINE is strict enough to ignore the page
-# footer that follows.
-_DOC_NUMBER = re.compile(r"Ariba Document No\.[^\n]*?\bDoc(\d{10})\b", re.I)
-_N_BIDS = re.compile(r"Number of Bids Received\s+(?:([A-Za-z]+)\s*)?\(?(\d{1,3})\)?", re.I)
-# "1. Acme Paving Inc.        $7,710,000.00"  /  "2. Beta Ltd.*    Non-Compliant"
+#     forms parsed:  pdftotext 144/229   pdfplumber 205/229
+#     bids stored:   pdftotext 632       pdfplumber 1033
 #
-# The price is OPTIONAL, and that is not tidiness. An RFP publishes its proponents with no
-# price at all ("NOTE: Not applicable for RFP"), so requiring one silently dropped two of the
-# three bidders on every scored RFP and left a one-bid parse of a three-bid award. The Bid
-# Award Panel corpus had the same shape and #84 already stores those as bid_price NULL.
+# 229 of 229 carry ruled tables and none are image-only, which is what separates this corpus
+# from the staff reports #83 measured (ruled tables in only 13-20 of 229 — prose, not tables,
+# so no extractor can invent the structure). The rule is not "pdfplumber is better"; it is
+# "read cells where the PDF HAS cells".
 #
-# The '$' can also sit a long way from its own digits — pdftotext -layout preserves the form's
-# column, and the City right-aligns the number:
-#     '1. ClaimsPro LP                    $                          30,460,650.00'
-# [ \t] throughout, never \s: `\s` matches newlines, so `\d{1,2}[.)]\s*` walked straight off
-# the end of an empty "4." row and captured the page footer on the next line as a bidder
-# ("Page 2 of 2"). A bid is one line.
-_BID_LINE = re.compile(
-    r"^[ \t]*\d{1,2}[.)][ \t]*(?P<name>\S.*?)"
-    r"(?:[ \t]{2,}(?P<price>\$?[ \t]*[\d,]+(?:\.\d{2})?|Non.?Compliant|No Bid|N/A))?[ \t]*$",
-    re.I | re.M)
-# A name is a firm, never a price that leaked out of its column when the optional price group
-# declined to match.
+# The three shapes that beat the whitespace parser, all of them structure pdftotext destroyed:
 #
-# ONLY the '$'. A long digit run looks like a price and is not: numbered Ontario corporations
-# are real bidders — '2489960 Ontario Inc.' won an $8.4M watermain contract and is the very
-# example #87 pins a test on ("the numbering rule must not eat it"). Adding `\d[\d,]{5,}` here
-# dropped it again and took 26 forms' bid tables down with it.
-_NOT_A_NAME = re.compile(r"\$")
-# The price column header carries the basis, exactly as the agendas' did (#94).
-_PRICE_HEADER = re.compile(r"^\s*Supplier Name\s{2,}(?P<hdr>.*?)\s*$", re.M)
-_NAME_MARKERS = re.compile(r"^[\s*^+†‡§]+|[\s*^+†‡§]+$")
+#     ['5. Bid Summary']
+#     ['Supplier Name\n* indicates non-compliant Supplier', 'Bid Price (Excluding HST)\n...']
+#     ['Range:']
+#     ['1. 2489960 ONTARIO INC., O/A Kore Infrastructure', '$7,710,000.00']
+#     ['3. The Stevens Company LTD*', '$ -']          # a non-price; the name cell is still a name
+#     ['Dependable Truck and Tank Limited', '$652,700.00']            # no leading number at all
+#
+_DOC_NUMBER = re.compile(r"\bDoc\s*(\d{10})\b", re.I)
+_COUNT = re.compile(r"(\d{1,3})")
+# The City numbers most bidders and not all of them, so the numbering is stripped where present
+# and never required. Requiring it cost 57 forms their entire bid table.
+_NUMBERING = re.compile(r"^\s*\d{1,2}\s*[.)]\s*")
+# Trailing compliance markers, plus the replacement char pdftotext and pdfplumber both emit for
+# the form's non-Latin glyphs.
+_NAME_MARKERS = re.compile(r"^[\s*^+†‡§�]+|[\s*^+†‡§�]+$")
 _WS = re.compile(r"\s+")
 
 
-def parse_award_summary(text: str) -> dict | None:
+def form_rows(path) -> list[list[str]]:
+    """Every non-empty row of every ruled table in the form, as stripped cells. Does I/O."""
+    import pdfplumber
+
+    rows = []
+    with pdfplumber.open(path) as pdf:
+        for page in pdf.pages:
+            for table in page.extract_tables() or []:
+                for row in table:
+                    cells = [(c or "").strip() for c in row]
+                    if any(cells):
+                        rows.append([c for c in cells if c])
+    return rows
+
+
+def _zip_cell(name_cell: str, price_cell: str) -> list[tuple[str, str | None]]:
+    """Pair one row's bidder lines against its price lines.
+
+    Usually a row is one bidder. A multi-package tender instead puts a whole column in a single
+    cell, exactly as the BD agendas did (#94):
+
+        ['26TW-CPI-17CWD (Package A):\nClean Water Works Inc.*\nAqua Tech...',
+         '$3,551,718.88\n$3,978,656.19\n$5,381,389.24\n$5,668,197.16']
+
+    Same rule as #94, and for the same reason: pairing is positional, so one stray line
+    misattributes every bid after it. Zip the columns and REFUSE an unequal pair rather than
+    guess. The package heading is dropped first — it ends in ':' and has no price beside it.
+
+    **THE PRICE CELL'S LINE COUNT SAYS HOW MANY BIDS THE ROW HOLDS.** A newline inside a name
+    cell is otherwise ambiguous, and guessing costs real bids: pdfplumber wraps a long name
+    within its own cell, so
+
+        ['2489960 Ontario Inc.\no/a Kore Infrastructure Group', '$3,198,000.00']
+
+    is ONE bidder, and reading its two lines as two names against one price refused the pair
+    and silently dropped a bidder from each of 4 forms. One price, one bid — join the name.
+    """
+    prices = [ln.strip() for ln in price_cell.split("\n") if ln.strip()]
+    names = [ln.strip() for ln in name_cell.split("\n") if ln.strip()]
+    names = [n for n in names if not n.endswith(":")]
+    if len(prices) <= 1:
+        name = " ".join(names)
+        if not name:
+            return []
+        # An RFP publishes its proponents with NO price at all ("NOTE: Not applicable for
+        # RFP"). #84 already stores those as bid_price NULL — requiring a price here dropped
+        # every proponent on every scored RFP.
+        return [(name, prices[0] if prices else None)]
+    if len(names) != len(prices):
+        return []
+    return list(zip(names, prices))
+
+
+def parse_award_summary(rows) -> dict | None:
     """{document_number, price_header, hst_basis, declared_bids, bids: [...]} or None.
 
-    Pure: `text` is the pdftotext output already stored in background_pdf.text.
+    Pure: `rows` is what form_rows() read off the PDF, so this is testable against a JSON
+    fixture without pdfplumber or a file — the same fetch/normalize split sources/base.py's
+    Source protocol draws.
     """
     from toronto_bids.sources.bid_award_panel import _hst_basis
 
-    doc = _DOC_NUMBER.search(text or "")
-    start = _SECTION_5.search(text or "")
-    if not (doc and start):
-        return None
-    block = text[start.end():]
-
-    header = _PRICE_HEADER.search(block)
-    price_header = _WS.sub(" ", header.group("hdr")).strip() if header else None
-    declared = _N_BIDS.search(text)
-    bids = []
-    for m in _BID_LINE.finditer(block):
-        name = _NAME_MARKERS.sub("", _WS.sub(" ", m.group("name")).strip())
-        if not name or name.lower().startswith(("note", "range", "supplier name")):
+    doc = declared = price_header = None
+    bids, in_section_5 = [], False
+    for cells in rows:
+        label = cells[0]
+        value = cells[1] if len(cells) > 1 else ""
+        if not in_section_5:
+            # Section 5 is found by its own cell, not by a line anchor. `^\s*5\. Bid Summary$`
+            # failed on 16 forms whose heading cell carries more than the heading.
+            if label.startswith("5.") and "Bid Summary" in label:
+                in_section_5 = True
+            elif "Ariba Document No" in label and _DOC_NUMBER.search(value):
+                doc = _DOC_NUMBER.search(value).group(1)
+            elif "Number of Bids Received" in label and _COUNT.search(value):
+                declared = int(_COUNT.search(value).group(1))
             continue
-        if _NOT_A_NAME.search(name):
-            continue          # the price column leaked into the name; refuse rather than store
-        price = m.group("price")
-        bids.append({"bidder_name_raw": name,
-                     "bid_price": _WS.sub(" ", price).strip() if price else None})
+        if label.startswith("Supplier Name"):
+            # The header cell carries the HST basis, load-bearing exactly as on the agendas
+            # (#94): a price whose basis is unknown cannot be compared with one whose is known.
+            # Its own cell also carries the footnote legend below it — take the first line.
+            price_header = _WS.sub(" ", value.split("\n")[0]).strip() or None
+            continue
+        if label.lower().startswith(("range:", "note")):
+            continue
+        for name, price in _zip_cell(label, value):
+            name = _NAME_MARKERS.sub("", _WS.sub(" ", _NUMBERING.sub("", name)).strip())
+            if not name:
+                continue          # an empty numbered row: the City leaves '5.' blank
+            bids.append({"bidder_name_raw": name,
+                         "bid_price": _WS.sub(" ", price).strip() if price else None})
+    if not (doc and in_section_5):
+        return None
     return {
-        "document_number": normalize_document_number(doc.group(1)),
+        "document_number": normalize_document_number(doc),
         "price_header": price_header,
         "hst_basis": _hst_basis(price_header) if price_header else None,
-        "declared_bids": int(declared.group(2)) if declared else None,
+        "declared_bids": declared,
         "bids": bids,
     }
 
 
 def store_award_summary_bids(conn, log=lambda _m: None) -> int:
     """Parse every archived Award Summary Form into `bid` rows. Idempotent, offline.
+
+    Reads the PDFs already on disk, not `background_pdf.text` — the form is a ruled table and
+    its cells are the record (#116).
 
     `Number of Bids Received` is checked against what section 5 actually yields, and a
     mismatch REFUSES the form rather than storing a partial bid table. The Bid Award Panel
@@ -216,9 +276,13 @@ def store_award_summary_bids(conn, log=lambda _m: None) -> int:
     partial parse is a choice rather than an accident.
     """
     stored = refused = 0
-    for row in conn.execute("SELECT document_number, text FROM background_pdf "
-                            "WHERE kind='award_summary' AND text IS NOT NULL"):
-        parsed = parse_award_summary(row["text"])
+    for row in conn.execute("SELECT document_number, local_path FROM background_pdf "
+                            "WHERE kind='award_summary' AND local_path IS NOT NULL"):
+        try:
+            parsed = parse_award_summary(form_rows(row["local_path"]))
+        except Exception as exc:
+            log(f"    unreadable {row['document_number']}: {exc}")
+            continue
         if not parsed or not parsed["bids"]:
             continue
         declared = parsed["declared_bids"]
