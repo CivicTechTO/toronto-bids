@@ -86,6 +86,28 @@ def build_export_document(conn, generated_at: str | None = None) -> dict:
             "size_bytes": None,
             "url": form["url"],
         })
+    # Staff reports join a solicitation through the bid-bridge (#126): an Ariba-era bid row
+    # carries BOTH the council reference and the document_number, so the link is exact — no
+    # fuzzy matching. Derived from `bid` at query time; the reference side is 1:1 (verified), so
+    # a plain dict is exact and the ORDER BY makes any future many-to-one deterministic.
+    bridge: dict[str, str] = {}
+    for row in _rows(conn, "SELECT DISTINCT reference, document_number FROM bid "
+                           "WHERE reference IS NOT NULL AND document_number IS NOT NULL "
+                           "ORDER BY reference, document_number"):
+        bridge[row["reference"]] = row["document_number"]
+    for report in _rows(conn, "SELECT reference, url FROM background_pdf "
+                              "WHERE kind='bgrd' ORDER BY reference, url"):
+        doc = bridge.get(report["reference"])
+        if doc in sol_docs:                           # attach only to a real solicitation
+            name = report["url"].rsplit("/", 1)[-1]
+            documents_by_doc.setdefault(doc, []).append({
+                "source": "staff_report",
+                "name": name,
+                "path": name,
+                "type": _ext(name),
+                "size_bytes": None,
+                "url": report["url"],
+            })
 
     solicitations = []
     for sol in _rows(conn, "SELECT * FROM solicitation ORDER BY document_number"):

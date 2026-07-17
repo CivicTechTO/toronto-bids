@@ -8,6 +8,7 @@ from toronto_bids.models import (
     AribaPosting,
     Award,
     BackgroundPdf,
+    Bid,
     NonCompetitive,
     Solicitation,
     SuspendedFirm,
@@ -271,3 +272,35 @@ def test_solicitation_without_documents_gets_empty_list(conn):
     conn.commit()
     sol = build_export_document(conn, generated_at="t")["solicitations"][0]
     assert sol["documents"] == []
+
+
+def test_staff_report_surfaces_under_solicitation_via_bid_bridge(seeded):
+    # An Ariba-era bid row carries BOTH the council reference and the document_number.
+    db.upsert_row(seeded, Bid(bidder_name_raw="Acme Co", reference="2020.BA5.3",
+                              document_number="5672751291", bid_price="1000",
+                              source="bid_award_panel"), overwrite=True)
+    db.upsert_row(seeded, BackgroundPdf(
+        url="https://www.toronto.ca/legdocs/mmis/2020/ba/bgrd/backgroundfile-99644.pdf",
+        reference="2020.BA5.3", kind="bgrd"), overwrite=True)
+    seeded.commit()
+
+    sol = next(s for s in build_export_document(seeded, generated_at="t")["solicitations"]
+               if s["document_number"] == "5672751291")
+    report = next(d for d in sol["documents"] if d["source"] == "staff_report")
+    assert report["name"] == "backgroundfile-99644.pdf"
+    assert report["path"] == "backgroundfile-99644.pdf"
+    assert report["type"] == "pdf"
+    assert report["size_bytes"] is None
+    assert report["url"] == "https://www.toronto.ca/legdocs/mmis/2020/ba/bgrd/backgroundfile-99644.pdf"
+    assert set(report) == {"source", "name", "path", "type", "size_bytes", "url"}
+
+
+def test_unbridged_staff_report_stays_out_of_documents(seeded):
+    # A staff report whose reference has no dual-key bid row must not attach to any solicitation.
+    db.upsert_row(seeded, BackgroundPdf(
+        url="https://www.toronto.ca/legdocs/x/backgroundfile-1.pdf",
+        reference="2020.XX9.9", kind="bgrd"), overwrite=True)
+    seeded.commit()
+
+    for s in build_export_document(seeded, generated_at="t")["solicitations"]:
+        assert not any(d["source"] == "staff_report" for d in s["documents"])
