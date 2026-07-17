@@ -3,6 +3,8 @@
 Every step is isolated the way pipeline.run_source already isolates sources: one failure never
 stops the steps behind it. These tests are offline — every network-touching call is patched.
 """
+import sqlite3
+
 import pytest
 
 from toronto_bids import cli, config, notify
@@ -75,3 +77,63 @@ def test_a_failing_run_posts_the_failure(nightly, monkeypatch):
     assert nightly() == 1
     assert posted[0].startswith("❌ toronto-bids")
     assert "ariba_discovery" in posted[0]
+
+
+def test_a_broken_database_still_reports_to_slack(nightly, monkeypatch):
+    """The one class of failure the guards missed. If _open_db raises and nothing catches it,
+    the exception leaves _cmd_nightly and notify.post never fires — the run breaks in exactly
+    the way nobody is told about."""
+    posted = []
+    monkeypatch.setattr(notify, "post", lambda text, **k: posted.append(text) or True)
+    def boom():
+        raise sqlite3.OperationalError("unable to open database file")
+    monkeypatch.setattr(cli, "_open_db", boom)
+    assert nightly() == 1
+    assert posted and posted[0].startswith("❌ toronto-bids")
+    assert "unable to open database file" in posted[0]
+
+
+def test_counting_the_archive_failing_still_reports_to_slack(nightly, monkeypatch):
+    posted = []
+    monkeypatch.setattr(notify, "post", lambda text, **k: posted.append(text) or True)
+    def boom(_conn):
+        raise sqlite3.DatabaseError("database disk image is malformed")
+    monkeypatch.setattr(cli.db, "counts", boom)
+    assert nightly() == 1
+    assert posted and posted[0].startswith("❌ toronto-bids")
+
+
+def test_a_failure_building_the_http_client_does_not_cost_us_the_export(nightly, monkeypatch,
+                                                                       tmp_path):
+    """The export needs only the database — it does not need the network. Losing a good
+    artifact because an HTTP client would not construct is the failure this whole command is
+    shaped to avoid."""
+    def boom(self, *a, **k):
+        raise RuntimeError("no http for you")
+    monkeypatch.setattr(cli.HttpClient, "__init__", boom)
+    assert nightly() == 1
+    assert (tmp_path / "export" / "bids.json").exists()
+
+
+def test_a_failure_closing_the_database_does_not_swallow_the_summary(nightly, monkeypatch, conn):
+    """A successful export must still get reported: conn.close() raising (a wedged disk, a
+    locked file, a competing writer) must not prevent notify.post from firing after a run
+    that otherwise completed cleanly.
+
+    sqlite3.Connection is a C type — its methods can't be monkeypatched directly (`cannot set
+    'close' attribute of immutable type`), so a thin proxy stands in for `conn` and forwards
+    everything except `close`.
+    """
+    posted = []
+    monkeypatch.setattr(notify, "post", lambda text, **k: posted.append(text) or True)
+
+    class _CloseFails:
+        def close(self):
+            raise sqlite3.OperationalError("disk I/O error")
+
+        def __getattr__(self, name):
+            return getattr(conn, name)
+
+    monkeypatch.setattr(cli, "_open_db", lambda: _CloseFails())
+    assert nightly() == 1
+    assert posted and posted[0].startswith("❌ toronto-bids")

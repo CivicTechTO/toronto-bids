@@ -297,10 +297,16 @@ def _cmd_nightly(args) -> int:
     Each step is isolated exactly as pipeline.run_source isolates a source: a failure is
     recorded and the steps behind it still run. In particular the EXPORT RUNS EVEN AFTER A
     PARTIAL SYNC — rows are committed per-source and never deleted, so partial data is still
-    data, and discarding a good artifact over one bad feed would be the worse outcome.
+    data, and discarding a good artifact over one bad feed would be the worse outcome. That
+    reasoning applies just as much to opening the DB and building the HTTP client: those used
+    to sit outside every try, so a dead disk or a network hiccup left `_cmd_nightly` uncaught
+    and notify.post never fired — silence, in the one case a nightly line exists to catch.
+    `conn` and `http` are opened defensively for exactly that reason, and the export runs off
+    `conn` alone — a failed HttpClient must not cost us a good artifact.
 
     Exits non-zero if anything failed, so systemd marks the unit failed and the next run's
-    Slack line is not the only record.
+    Slack line is not the only record. Never raises: every step, including closing what we
+    opened, is caught so notify.summarize/post always run.
     """
     import time
     from pathlib import Path
@@ -311,33 +317,57 @@ def _cmd_nightly(args) -> int:
 
     started = time.monotonic()
     out = lambda m: print(m, flush=True)
-    conn = _open_db()
-    before = db.counts(conn)
     failures: list[tuple[str, str]] = []
-
-    http = HttpClient()
-    try:
-        try:
-            failures.extend(pipeline.sync(conn, http))
-        except Exception as exc:
-            failures.append(("sync", str(exc)))
-        try:
-            download_award_summaries(conn, http, log=out)
-            store_award_summary_bids(conn, log=out)
-        except Exception as exc:
-            failures.append(("award_summary", str(exc)))
-    finally:
-        http.close()
-
+    before: dict = {}
+    after: dict = {}
     export_bytes = None
-    try:
-        written = export_json(conn, Path(config.DATA_DIR) / "export" / "bids.json")
-        export_bytes = written.stat().st_size
-    except Exception as exc:
-        failures.append(("export", str(exc)))
+    conn = None
 
-    after = db.counts(conn)
-    conn.close()
+    try:
+        conn = _open_db()
+        before = db.counts(conn)
+    except Exception as exc:
+        failures.append(("open_db", str(exc)))
+
+    if conn is not None:
+        http = None
+        try:
+            http = HttpClient()
+        except Exception as exc:
+            failures.append(("http_client", str(exc)))
+
+        if http is not None:
+            try:
+                try:
+                    failures.extend(pipeline.sync(conn, http))
+                except Exception as exc:
+                    failures.append(("sync", str(exc)))
+                try:
+                    download_award_summaries(conn, http, log=out)
+                    store_award_summary_bids(conn, log=out)
+                except Exception as exc:
+                    failures.append(("award_summary", str(exc)))
+            finally:
+                try:
+                    http.close()
+                except Exception as exc:
+                    failures.append(("http_close", str(exc)))
+
+        try:
+            written = export_json(conn, Path(config.DATA_DIR) / "export" / "bids.json")
+            export_bytes = written.stat().st_size
+        except Exception as exc:
+            failures.append(("export", str(exc)))
+
+        try:
+            after = db.counts(conn)
+        except Exception as exc:
+            failures.append(("counts", str(exc)))
+
+        try:
+            conn.close()
+        except Exception as exc:
+            failures.append(("conn_close", str(exc)))
 
     text = notify.summarize(before, after, failures, len(pipeline.default_sources()),
                             export_bytes, time.monotonic() - started)
