@@ -27,6 +27,7 @@ import re
 import shutil
 from contextlib import contextmanager
 
+from lxml import etree
 from lxml import html as _html
 from lxml.html import HtmlComment
 
@@ -378,14 +379,22 @@ def store_background_pdfs(conn, agendas: dict) -> int:
 
 
 # Bid tables name their first column six ways across the corpus.
+# The plural is not decoration: BA189.3 heads its table "Suppliers", and without the `s?` the
+# whole table is declined and its five bids are silently dropped. Found by #94, on a BA
+# agenda, because the Bid Committee parser accepted a header the Bid Award Panel one refused.
 _BIDDER_HDR = re.compile(
-    r"^\s*(supplier|bidder|proponent|firm|vendor|company|respondent)"
-    r"[\s/]*(name|or proponent name)?\s*$", re.I)
+    r"^\s*(supplier|bidder|proponent|firm|vendor|company|respondent)s?"
+    r"[\s/]*(name|names|or proponent name)?\s*$", re.I)
 _PRICE_HDR = re.compile(r"bid price|bid amount|price|quotation", re.I)
 # "including H.S.T." vs "excluding H.S.T." is a real difference — 1,307 tables say one and
 # 1,048 the other. A bare price column would silently mix the two bases.
-_HST_INCLUDING = re.compile(r"includ\w*\s*(all applicable taxes|h\.?s\.?t)", re.I)
-_HST_EXCLUDING = re.compile(r"exclud\w*\s*(h\.?s\.?t)", re.I)
+# "incl\w*\.?" not "includ\w*": the Bid Committee overwhelmingly abbreviates, and
+# "Bid Price (Incl. HST)" is its single most common price header (587 of them). Requiring the
+# full word reads those as basis-unknown, which is the one thing a bid price must not be —
+# 5,801 bids include HST and 4,097 exclude it, so an unmarked price is two incomparable
+# things in one column (#84).
+_HST_INCLUDING = re.compile(r"\bincl\w*\.?\s*(all applicable taxes|h\.?s\.?t)", re.I)
+_HST_EXCLUDING = re.compile(r"\bexcl\w*\.?\s*(all applicable taxes|h\.?s\.?t)", re.I)
 # Footnote markers ride on both names and prices: '$2,982,036.67*', 'Smith and Long Ltd.**'.
 # They point at a note under the table ('*includes contingency', '**found non-compliant'), so
 # the raw string keeps them and only the parse strips them.
@@ -411,6 +420,111 @@ def _hst_basis(header: str) -> str | None:
     if _HST_EXCLUDING.search(header):
         return "excluding"
     return None
+
+
+# --- Bid Committee (BD) bid tables (#94) -------------------------------------------------
+#
+# BA lays a bid table out one row per bidder. BD does not, and 417 BD agendas yielded 36 bids
+# because of it. Its columns are single cells holding a <p> per value, so the whole table is:
+#
+#     cell[0]  "Number of Bids:"                                    (a rowspan)
+#     cell[1]  "Firm Name"             / R.E. Cavanagh Electric / Ozz Electric Inc. / ...
+#     cell[2]  "Bid Price (Incl. HST)" / $ 224,156.52 / $ 231,817.47 / ...
+#
+# Two things follow. The heading is a LINE inside a cell, not the table's header row, so
+# _BIDDER_HDR.match(header[0]) never fires. And lxml's text_content() concatenates those <p>
+# runs with no separator, so the cell reads as one blob: "$ 224,156.52$ 231,817.47$ ...".
+# Reading the markup back as lines is what recovers the column.
+#
+# The same agendas also put the bidders in the FOLLOWING rows instead, offset by the rowspan
+# cell, and mix the two freely. Both reduce to the same rule: zip the bidder column's lines
+# against the price column's lines.
+_CELL_BLOCK_END = re.compile(r"</(p|div|li|tr|td)>", re.I)
+_CELL_BR = re.compile(r"<br\s*/?>", re.I)
+
+
+def _cell_lines(cell) -> list[str]:
+    """A table cell's values, one per line of block markup.
+
+    text_content() would fuse them: a BD price column comes back as
+    "$ 224,156.52$ 231,817.47$ 240,633.50" with nothing to split on.
+    """
+    markup = _CELL_BR.sub("\n", etree.tostring(cell, encoding="unicode"))
+    text = _html.fromstring(_CELL_BLOCK_END.sub("\n", markup)).text_content()
+    return [line.strip() for line in text.replace("\xa0", " ").split("\n") if line.strip()]
+
+
+# A BD heading occupies its cell alone ("Firm Name"), unlike the appendix label
+# "Recommended Bidder:" which carries its value beside it.
+_BD_BIDDER_HDR = re.compile(
+    r"^(bidder|firm|proponent|company|contractor|supplier|vendor)s?[\s/]*(name|names)?\s*:?$",
+    re.I)
+# What can stand in a price column: an amount, or the outcome the City writes instead of one.
+_BD_PRICEY = re.compile(r"\$|\d[\d,]*\.\d{2}|non.?compliant|no bid|withdrawn|informal", re.I)
+
+
+def _parse_bd_bid_table(table, reference: str, docs: list) -> list[dict]:
+    """Bids from one Bid Committee table, whichever of its two layouts it uses.
+
+    Returns [] for anything it cannot read cleanly. Unequal columns are REFUSED rather than
+    paired: names and prices are positional, so one stray line (a footnote, a wrapped name)
+    silently attributes a bid to the wrong firm, and a misattributed bid is worse than a
+    missing one.
+    """
+    # Direct children only. These agendas nest a bid table inside the item's outer table, and
+    # the element walk visits both: with .//tr the outer table descends into the inner one and
+    # re-parses rows the row-major path already read, duplicating five of BA189.3's bids.
+    # Scoped this way, every row belongs to exactly one table.
+    rows = table.xpath("./tr|./tbody/tr|./thead/tr")
+    out = []
+    for index, row in enumerate(rows):
+        columns = [_cell_lines(c) for c in row.xpath("./td|./th")]
+        bidder_col = next((i for i, c in enumerate(columns)
+                           if c and _BD_BIDDER_HDR.match(c[0])), None)
+        if bidder_col is None:
+            continue
+        price_col = next((i for i, c in enumerate(columns)
+                          if c and i != bidder_col and _PRICE_HDR.search(c[0])), None)
+        if price_col is None:
+            continue
+        price_header = columns[price_col][0]
+
+        pairs = []
+        if len(columns[bidder_col]) > 1:          # the column's values share its header cell
+            pairs.append((columns[bidder_col][1:], columns[price_col][1:]))
+        for later in rows[index + 1:]:            # ...or sit in the rows below it
+            cells = [_cell_lines(c) for c in later.xpath("./td|./th")]
+            if not cells:
+                break
+            # The header's rowspan cell ("Number of Bids:") is absent from the rows beneath,
+            # shifting every one of their cells left by exactly that much.
+            offset = len(columns) - len(cells)
+            if offset < 0 or bidder_col - offset < 0 or price_col - offset < 0:
+                break
+            if price_col - offset >= len(cells):
+                break
+            names, prices = cells[bidder_col - offset], cells[price_col - offset]
+            if not names or not prices or not any(_BD_PRICEY.search(p) for p in prices):
+                break                              # left the bid table
+            pairs.append((names, prices))
+
+        for names, prices in pairs:
+            if len(names) != len(prices):
+                continue                           # cannot pair positionally; refuse
+            for name, price in zip(names, prices):
+                name = _NAME_MARKERS.sub("", _ROW_NUMBER_PREFIX.sub(
+                    "", _NAME_MARKERS.sub("", name)))
+                if not name or not _BD_PRICEY.search(price):
+                    continue
+                out.append({
+                    "reference": reference,
+                    "document_number": docs[0] if docs else None,
+                    "bidder_name_raw": name,
+                    "bid_price": price or None,
+                    "hst_basis": _hst_basis(price_header),
+                    "price_header": price_header,
+                })
+    return out
 
 
 def parse_bid_tables(html: str, meeting: str) -> list[dict]:
@@ -440,10 +554,18 @@ def parse_bid_tables(html: str, meeting: str) -> list[dict]:
         if el.tag != "table":
             continue
         rows = el.xpath(".//tr")
-        if len(rows) < 2:
+        if not rows:
             continue
         header = [_clean(c.text_content()) for c in rows[0].xpath(".//td|.//th")]
-        if not header or not _BIDDER_HDR.match(header[0]):
+        if not (len(rows) >= 2 and header and _BIDDER_HDR.match(header[0])):
+            # Not BA's shape. Try the Bid Committee's, which puts its heading in a cell rather
+            # than a header row (#94). Additive by construction: only reached once the
+            # row-major path has declined, so BA's 12,733 bids are untouched.
+            #
+            # The `len(rows) >= 2` belongs to the row-major path alone: it wants a header row
+            # plus data rows, whereas a BD table is routinely a SINGLE row whose cells each
+            # hold a whole column. Testing it before the fallback skipped those outright.
+            out.extend(_parse_bd_bid_table(el, reference, docs))
             continue
         price_col = next((i for i, h in enumerate(header) if i and _PRICE_HDR.search(h)), None)
         price_header = header[price_col] if price_col is not None else None
