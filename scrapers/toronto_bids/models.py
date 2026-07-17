@@ -129,8 +129,14 @@ class Bid:
     on every Bid Award Panel agenda. This is what makes the archive answer whether a
     procurement was actually competitive, not merely what it cost.
     """
-    reference: str                       # council item, e.g. '2022.BA189.2'
     bidder_name_raw: str
+    # Both identifiers are partial, and which one is present says where the bid came from.
+    # A Bid Award Panel bid always has a council item and had no document number before 2019
+    # (Toronto had no Ariba). An Award Summary Form bid (#114) is the reverse: it is keyed on
+    # the document number and has no council item at all — the panel that produced council
+    # items was abolished on 2025-10-01. So neither can be required, and `bid_key` COALESCEs
+    # both.
+    reference: str | None = None         # council item, e.g. '2022.BA189.2'
     document_number: str | None = None   # NULL pre-2019: Toronto had no Ariba doc numbers yet
     bid_price: str | None = None         # verbatim, footnote marker and all
     # 'including' | 'excluding' | None. NOT decoration: 5,752 bids are quoted including HST
@@ -154,7 +160,8 @@ class CouncilItem:
 @dataclass(frozen=True)
 class BackgroundPdf:
     url: str
-    reference: str | None = None
+    reference: str | None = None         # council item; NULL for kind='award_summary' (#114)
+    document_number: str | None = None   # set for kind='award_summary'; NULL for council PDFs
     kind: str | None = None
     local_path: str | None = None
     sha256: str | None = None

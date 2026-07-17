@@ -49,6 +49,10 @@ SUSPENDED_FIRMS_URL = (
 COUNCIL_ITEM_URL = "https://secure.toronto.ca/council/agenda-item.do"
 # Downloaded council PDFs.
 COUNCIL_DOCS_DIR = DATA_DIR / "documents" / "council"
+# Award Summary Forms from the Toronto Bids Portal (#114). Kept apart from the council
+# documents: different publisher, different provenance, and they are the only bid source
+# after the Bid Award Panel was abolished on 2025-10-01.
+AWARD_SUMMARY_DIR = DATA_DIR / "documents" / "award_summary"
 
 # Raw Bid Award Panel agenda HTML. Kept because fetching is the Akamai-gated, browser-bound,
 # expensive half (475 pages, ~10 min) while parsing is free and repeatable — and the same

@@ -18,7 +18,7 @@ _TABLES = {
     CouncilItem: ("council_item", ["reference"]),
     BackgroundPdf: ("background_pdf", ["url"]),
     CapitalProject: ("capital_project", ["name"]),
-    Bid: ("bid", ["reference", "bidder_name_raw", "bid_price", "source"]),
+    Bid: ("bid", ["reference", "document_number", "bidder_name_raw", "bid_price", "source"]),
     CompositeAward: ("composite_award", ["call_number", "supplier_name_raw",
                                          "award_value", "source"]),
 }
@@ -29,7 +29,8 @@ _TABLES = {
 _CONFLICT_TARGETS = {
     "award": "document_number, supplier_name_raw, "
              "COALESCE(award_amount, ''), COALESCE(award_date, ''), source",
-    "bid": "reference, bidder_name_raw, COALESCE(bid_price, ''), source",
+    "bid": "COALESCE(reference, ''), COALESCE(document_number, ''), bidder_name_raw, "
+           "COALESCE(bid_price, ''), source",
     "composite_award": "call_number, COALESCE(supplier_name_raw, ''), "
                        "COALESCE(award_value, ''), source",
 }
@@ -47,7 +48,48 @@ def init_db(conn) -> None:
     conn.executescript(schema)
     _add_missing_columns(conn, schema)
     _rebuild_award_for_line_key(conn, schema)
+    _rebuild_bid_for_nullable_reference(conn, schema)
     conn.commit()
+
+
+def _rebuild_bid_for_nullable_reference(conn, schema: str) -> bool:
+    """Drop bid.reference's NOT NULL and widen bid_key to cover document_number (#114).
+
+    Same reasoning as _rebuild_award_for_line_key: `_add_missing_columns` only ADDs columns
+    and `CREATE TABLE IF NOT EXISTS` never alters an existing table, so a database built
+    before #114 keeps `reference TEXT NOT NULL` — which rejects every Award Summary Form bid,
+    because the Bid Award Panel that issued council references was abolished on 2025-10-01 and
+    those bids have no council item to name.
+
+    The index has to move with it. The old key was (reference, bidder_name_raw, bid_price,
+    source); with reference NULL for #114 rows, SQLite treats every one of them as distinct
+    and re-inserts the whole corpus on each run — the exact NULL-in-a-UNIQUE-index trap #73
+    and #84 already hit. The new key COALESCEs both identifiers.
+
+    Rows are copied rather than re-fetched so `first_seen` survives — it is archive metadata
+    no feed can tell us again.
+
+    Returns True if a rebuild happened. Idempotent: a no-op once reference is nullable.
+    """
+    row = conn.execute(
+        "SELECT sql FROM sqlite_master WHERE type='table' AND name='bid'").fetchone()
+    if row is None or "NOT NULL" not in (row["sql"] or "").split("reference")[-1][:24].upper():
+        return False                        # fresh DB, or already rebuilt
+
+    cols = [r[1] for r in conn.execute("PRAGMA table_info(bid)")]
+    quoted = ", ".join(cols)
+    conn.executescript("PRAGMA foreign_keys = OFF;")
+    try:
+        conn.execute("ALTER TABLE bid RENAME TO _bid_pre114")
+        # The rename drags bid_key along, and CREATE INDEX IF NOT EXISTS would then skip it by
+        # name, leaving the rebuilt table with no unique index at all. Free the name first.
+        conn.execute("DROP INDEX IF EXISTS bid_key")
+        conn.executescript(schema)
+        conn.execute(f"INSERT INTO bid ({quoted}) SELECT {quoted} FROM _bid_pre114")
+        conn.execute("DROP TABLE _bid_pre114")
+    finally:
+        conn.executescript("PRAGMA foreign_keys = ON;")
+    return True
 
 
 def _rebuild_award_for_line_key(conn, schema: str) -> bool:
