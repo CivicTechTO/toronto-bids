@@ -12,10 +12,13 @@ the bridge no longer depends on the detail call succeeding.
 import re
 
 # The modern Discovery link: .../RfxEvent/preview/1110017742?anId=ANONYMOUS
-# Older spine rows carry dead formats (discovery.ariba.com/rfx/, merx.com, the retired Lotus
-# Notes callawards.nsf, and literal "n/a"). Those postings closed long ago and are absent from
-# ariba_posting — the public detail API serves open postings only — so parsing them buys
-# nothing. Deliberately unhandled rather than overlooked.
+# Genuinely dead formats: merx.com, the retired Lotus Notes callawards.nsf, literal "n/a" (19
+# rows). Deliberately unhandled.
+#
+# discovery.ariba.com/rfx/<id> (1,380 rows) is NOT dead (#117): it redirects into the modern
+# viewer, which accepts those legacy 8-digit ids directly. Still unhandled *here* because this
+# pass bridges to ariba_posting, which the open-only detail API never populated for them — but
+# a browser renders them fine, closed or not, so this is a gap to fill, not a dead end.
 _RFX_ID = re.compile(r"/RfxEvent/preview/(\d+)")
 
 

@@ -50,6 +50,23 @@ def build_parser() -> argparse.ArgumentParser:
         "action", choices=["unlabelled"],
         help="unlabelled: raw strings with no parse and no verdict in amount_labels.toml")
 
+    p_ariba = sub.add_parser(
+        "enrich-ariba-attachments",
+        help="Archive the solicitation documents behind Ariba's Respond gate (#117). Only "
+             "reaches currently-open postings — a recurring job, not a backfill.")
+    p_ariba.add_argument(
+        "--capture", action="store_true",
+        help="Drive a headed, logged-in Chromium (council extra + scrapers/.env creds) through "
+             "Respond -> Download Content -> Download Attachments for each open solicitation")
+    p_ariba.add_argument(
+        "--ingest", metavar="DIR",
+        help="Index Doc*.zip bundles already sitting in DIR (e.g. a browser's download folder) "
+             "into <DATA_DIR>/ariba/attachments/ and the manifest. No browser.")
+    p_ariba.add_argument(
+        "--headless", action="store_true",
+        help="Run capture headless (Ariba's supplier UI is not Akamai-gated, unlike TMMIS; may "
+             "still trip bot-detection — headed is the default)")
+
     p_titles.add_argument(
         "--reports", action="store_true",
         help="Download the 2009-2012 composite staff-report PDFs first, whose appendices carry "
@@ -262,6 +279,46 @@ def _cmd_enrich_awards(args) -> int:
     return 0
 
 
+def _cmd_enrich_ariba_attachments(args) -> int:
+    """Archive the documents behind Ariba's Respond gate (#117).
+
+    Two entry points on one manifest: --capture drives the browser; --ingest indexes bundles a
+    human already downloaded. Both land in the same ariba_attachment index and the same
+    <DATA_DIR>/ariba/attachments/ store. Nothing is surfaced in the export yet — archive now,
+    publish later.
+    """
+    from toronto_bids.sources import ariba_attachments as aa
+
+    conn = _open_db()
+    out = lambda m: print(m, flush=True)
+    try:
+        before = conn.execute("SELECT COUNT(*) FROM ariba_attachment").fetchone()[0]
+        if args.ingest:
+            print(f"Indexing bundles in {args.ingest}:")
+            print(f"  bundles ingested: {aa.ingest_downloads(conn, args.ingest, log=out)}")
+        elif args.capture:
+            print("Capturing open-solicitation attachment bundles (headed browser):")
+            print(f"  bundles captured: "
+                  f"{aa.capture_attachments(conn, log=out, headless=args.headless)}")
+        else:
+            open_n = len(aa.open_solicitation_events(conn))
+            docs = conn.execute(
+                "SELECT COUNT(DISTINCT document_number) FROM ariba_attachment").fetchone()[0]
+            print(f"Open solicitations with a modern Ariba link: {open_n}")
+            print(f"Solicitations archived so far             : {docs}")
+            print("\nRun with --capture to drive the browser, or --ingest DIR to index bundles "
+                  "already downloaded.")
+            return 0
+        after = conn.execute("SELECT COUNT(*) FROM ariba_attachment").fetchone()[0]
+        docs = conn.execute(
+            "SELECT COUNT(DISTINCT document_number) FROM ariba_attachment").fetchone()[0]
+        print(f"\nIndexed files: {before} -> {after}  ({after - before} new)  "
+              f"across {docs} solicitation(s)")
+    finally:
+        conn.close()
+    return 0
+
+
 def _cmd_amounts(args) -> int:
     """Surface amount strings nobody has ruled on yet.
 
@@ -405,6 +462,8 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_enrich_awards(args)
     if args.command == "amounts":
         return _cmd_amounts(args)
+    if args.command == "enrich-ariba-attachments":
+        return _cmd_enrich_ariba_attachments(args)
     parser.print_help()
     return 0
 
