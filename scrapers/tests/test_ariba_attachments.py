@@ -181,3 +181,21 @@ def test_cli_reindex_rebuilds_from_the_store(tmp_path, monkeypatch, capsys):
     assert cli.main(["enrich-ariba-attachments", "--reindex"]) == 0
     out = capsys.readouterr().out
     assert "Doc1234567891.zip" in out
+
+
+def test_cli_capture_threads_virtual_display(tmp_path, monkeypatch):
+    # --virtual-display must reach capture_attachments (the flag a headless server needs).
+    from toronto_bids import config, cli
+    from toronto_bids.sources import ariba_attachments as aa
+    monkeypatch.setattr(config, "DATA_DIR", tmp_path)
+    monkeypatch.setattr(config, "DB_PATH", tmp_path / "bids.sqlite")
+
+    seen = {}
+
+    def fake_capture(conn, log=lambda _m: None, headless=False, virtual_display=False):
+        seen["virtual_display"] = virtual_display
+        return 0
+
+    monkeypatch.setattr(aa, "capture_attachments", fake_capture)
+    assert cli.main(["enrich-ariba-attachments", "--capture", "--virtual-display"]) == 0
+    assert seen["virtual_display"] is True

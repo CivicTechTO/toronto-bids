@@ -485,7 +485,8 @@ def _selected_total_mb(page) -> float | None:
     )
 
 
-def capture_attachments(conn, dest_dir=None, log=lambda _m: None, headless=False) -> int:
+def capture_attachments(conn, dest_dir=None, log=lambda _m: None, headless=False,
+                        virtual_display=False) -> int:
     """Log in, walk every open solicitation, capture and index each bundle. Resumable.
 
     A bundle already on disk is not re-downloaded — the expensive half is the download, and
@@ -514,21 +515,32 @@ def capture_attachments(conn, dest_dir=None, log=lambda _m: None, headless=False
         return 0
 
     captured = 0
-    with sync_playwright() as pw:
-        browser = pw.chromium.launch(
-            headless=headless, args=["--disable-blink-features=AutomationControlled"])
-        try:
-            page = browser.new_context(accept_downloads=True).new_page()
-            login(page, config.ARIBA_USERNAME, config.ARIBA_PASSWORD, log=log)
-            for i, event in enumerate(pending, 1):
-                try:
-                    saved = capture_event(page, event, dest_dir, log=log)
-                    if saved is not None:
-                        store_bundle(conn, saved, event["document_number"], dest_dir)
-                        captured += 1
-                except Exception as exc:
-                    log(f"  Doc{event['document_number']}: FAILED — {exc}")
-                log(f"    {i}/{len(pending)}")
-        finally:
-            browser.close()
+    # A headed browser is required (Ariba blocks headless login), so a headless server needs a
+    # virtual framebuffer — same Xvfb wrapper as sources/bid_award_panel.py:agenda_fetcher.
+    display = None
+    if virtual_display:
+        from pyvirtualdisplay import Display
+        display = Display(visible=False, size=(1440, 900))
+        display.start()
+    try:
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(
+                headless=headless, args=["--disable-blink-features=AutomationControlled"])
+            try:
+                page = browser.new_context(accept_downloads=True).new_page()
+                login(page, config.ARIBA_USERNAME, config.ARIBA_PASSWORD, log=log)
+                for i, event in enumerate(pending, 1):
+                    try:
+                        saved = capture_event(page, event, dest_dir, log=log)
+                        if saved is not None:
+                            store_bundle(conn, saved, event["document_number"], dest_dir)
+                            captured += 1
+                    except Exception as exc:
+                        log(f"  Doc{event['document_number']}: FAILED — {exc}")
+                    log(f"    {i}/{len(pending)}")
+            finally:
+                browser.close()
+    finally:
+        if display is not None:
+            display.stop()
     return captured

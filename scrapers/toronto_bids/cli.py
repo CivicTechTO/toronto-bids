@@ -70,6 +70,10 @@ def build_parser() -> argparse.ArgumentParser:
         "--reindex", action="store_true",
         help="Rebuild the index from the bundles already on disk under <DATA_DIR>/ariba/"
              "attachments/ (offline, no browser). Needed once after the recursion change (#123).")
+    p_ariba.add_argument(
+        "--virtual-display", action="store_true",
+        help="Run --capture's headed Chromium under Xvfb (headless servers; needs Xvfb "
+             "installed). Ignored by the offline --ingest/--reindex modes.")
 
     p_titles.add_argument(
         "--reports", action="store_true",
@@ -305,8 +309,9 @@ def _cmd_enrich_ariba_attachments(args) -> int:
             print(f"  bundles ingested: {aa.ingest_downloads(conn, args.ingest, log=out)}")
         elif args.capture:
             print("Capturing open-solicitation attachment bundles (headed browser):")
-            print(f"  bundles captured: "
-                  f"{aa.capture_attachments(conn, log=out, headless=args.headless)}")
+            n = aa.capture_attachments(conn, log=out, headless=args.headless,
+                                       virtual_display=args.virtual_display)
+            print(f"  bundles captured: {n}")
         else:
             open_n = len(aa.open_solicitation_events(conn))
             docs = conn.execute(
