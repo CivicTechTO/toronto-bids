@@ -4,6 +4,7 @@ No browser and no network — the login/Respond/download half is exercised live,
 downloaded bundle is where the correctness lives (what document a bundle belongs to, what files
 it holds, and that re-ingesting never duplicates).
 """
+import io
 import zipfile
 
 from toronto_bids.sources import ariba_attachments as aa
@@ -14,6 +15,49 @@ def _make_zip(path, files: dict):
         for name, data in files.items():
             zf.writestr(name, data)
     return path
+
+
+def _zip_bytes(files: dict) -> bytes:
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as zf:
+        for name, data in files.items():
+            zf.writestr(name, data)
+    return buf.getvalue()
+
+
+def test_index_zip_recurses_into_nested_zips_with_full_paths(tmp_path):
+    inner = _zip_bytes({"drawings/site-plan.pdf": b"plan", "notes.txt": b"n"})
+    z = _make_zip(tmp_path / "Doc1.zip", {
+        "PART 1 - RFP.pdf": b"rfp",
+        "Appendix C2 - Planning Documents.zip": inner,
+    })
+    by_path = {e["path"]: e for e in aa.index_zip(z)}
+    # The container zip is gone; its contents surface with prefixed paths.
+    assert set(by_path) == {
+        "PART 1 - RFP.pdf",
+        "Appendix C2 - Planning Documents.zip/drawings/site-plan.pdf",
+        "Appendix C2 - Planning Documents.zip/notes.txt",
+    }
+    nested = by_path["Appendix C2 - Planning Documents.zip/drawings/site-plan.pdf"]
+    assert nested["filename"] == "drawings/site-plan.pdf"   # leaf name within its zip
+    assert nested["file_size"] == len(b"plan")
+    assert int(nested["crc32"], 16) == zipfile.crc32(b"plan")
+
+
+def test_index_zip_records_a_corrupt_nested_zip_as_a_leaf(tmp_path):
+    z = _make_zip(tmp_path / "Doc2.zip", {
+        "good.pdf": b"ok",
+        "broken.zip": b"not a valid zip file",
+    })
+    by_path = {e["path"]: e for e in aa.index_zip(z)}
+    # The unreadable zip is kept as its own leaf rather than lost or fatal.
+    assert set(by_path) == {"good.pdf", "broken.zip"}
+
+
+def test_index_zip_caps_total_entries(tmp_path, monkeypatch):
+    monkeypatch.setattr(aa, "_MAX_ZIP_ENTRIES", 3)
+    z = _make_zip(tmp_path / "Doc3.zip", {f"f{i}.pdf": b"x" for i in range(10)})
+    assert len(aa.index_zip(z)) == 3
 
 
 def test_document_number_comes_from_the_Doc_token_not_stray_digits():
