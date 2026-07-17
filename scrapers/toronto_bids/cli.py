@@ -35,6 +35,12 @@ def build_parser() -> argparse.ArgumentParser:
              "cache, seconds once cached). Without it, only agendas already on disk are used")
     p_titles.add_argument("--virtual-display", action="store_true",
                           help="Run the headed browser under Xvfb (implies --scrape's needs)")
+    p_amounts = sub.add_parser(
+        "amounts", help="Inspect the amount strings the parser refuses (#74)")
+    p_amounts.add_argument(
+        "action", choices=["unlabelled"],
+        help="unlabelled: raw strings with no parse and no verdict in amount_labels.toml")
+
     p_titles.add_argument(
         "--reports", action="store_true",
         help="Download the 2009-2012 composite staff-report PDFs first, whose appendices carry "
@@ -203,6 +209,35 @@ def _cmd_enrich_titles(args) -> int:
     return 0
 
 
+def _cmd_amounts(args) -> int:
+    """Surface amount strings nobody has ruled on yet.
+
+    The discovery half of #74: the labels file handles the 35 known strings, and this is what
+    stops the trickle from future syncs sitting silent until someone happens to look.
+    """
+    from toronto_bids.linking.amount_labels import load_labels, unlabelled_amounts
+
+    conn = _open_db()
+    try:
+        pending = unlabelled_amounts(conn)
+        if not pending:
+            print(f"No unlabelled amounts. ({len(load_labels())} labels in "
+                  f"toronto_bids/data/amount_labels.toml cover every string the parser "
+                  f"refuses.)")
+            return 0
+        print(f"{len(pending)} amount string(s) with no parse and no label:\n")
+        print(f"  {'table':16s} {'rows':>5s}  raw")
+        for row in pending:
+            print(f"  {row['table']:16s} {row['rows']:5d}  {row['raw']!r}")
+        print("\nAdd a verdict for each to toronto_bids/data/amount_labels.toml "
+              "(amount / not_an_amount / corrupt / unknown / not_an_award).")
+    finally:
+        conn.close()
+    # Non-zero so a human or CI notices the queue is non-empty, as `tb sync` does for
+    # failures. An unreviewed amount is a known gap, not an error — but a silent one is worse.
+    return 1
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
@@ -216,6 +251,8 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_enrich_council(args)
     if args.command == "enrich-titles":
         return _cmd_enrich_titles(args)
+    if args.command == "amounts":
+        return _cmd_amounts(args)
     parser.print_help()
     return 0
 

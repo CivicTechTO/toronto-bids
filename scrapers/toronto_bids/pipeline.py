@@ -6,6 +6,7 @@ from toronto_bids.sources.suspended_firms import SuspendedFirmsSource
 from toronto_bids.store import db
 from toronto_bids import config
 from toronto_bids.linking.ariba import bridge_postings_to_spine
+from toronto_bids.linking.amount_labels import apply_amount_labels, backfill_numeric_amounts
 from toronto_bids.linking.supplier import build_supplier_dimension
 from toronto_bids.title import clear_placeholder_titles
 
@@ -72,8 +73,13 @@ def sync(conn, http, sources=None, only=None) -> list[tuple[str, str]]:
     # is in the store, so a partial sync still leaves it internally consistent.
     # title_cleanup leads: it clears placeholder titles COALESCE would otherwise preserve
     # forever (#70), and the passes behind it read titles.
+    # amount_backfill before amount_labels: the label pass and its review queue both read
+    # `*_numeric IS NULL` as "not machine-parseable", which is only true once rows written
+    # before amount.py existed have caught up (#74).
     for name, link in (("title_cleanup", clear_placeholder_titles),
                        ("ariba_bridge", bridge_postings_to_spine),
+                       ("amount_backfill", backfill_numeric_amounts),
+                       ("amount_labels", apply_amount_labels),
                        ("supplier_dimension", build_supplier_dimension)):
         error = _run_linking_pass(conn, name, link)
         if error:

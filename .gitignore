@@ -271,5 +271,10 @@ $RECYCLE.BIN/
 
 # End of https://www.toptal.com/developers/gitignore/api/macos,windows,linux,python,phpunit
 
-downloads/
-data/
+# Anchored to the repo root on purpose. Unanchored, `data/` matches at EVERY level, and it
+# silently swallowed scrapers/toronto_bids/data/ — the package holding amount_labels.toml
+# (#74). `git add -A` skipped it without a word, the tests passed locally because the file was
+# on disk, and CI failed with "No module named 'toronto_bids.data'". These are for downloaded
+# artefacts at the top level, never for source.
+/downloads/
+/data/

@@ -1,0 +1,150 @@
+# Human verdicts on the amount strings the parser refuses (#74).
+#
+# amount.py parses 99.5% of what the City publishes and returns NULL for the rest rather than
+# guessing. Some of the rest are plainly recoverable by a human — 'S2,035,000.00' is obviously
+# $2,035,000.00 — but no rule a machine can apply gets there safely. This file is where that
+# judgement lives.
+#
+# WHY A FILE. A human overriding what the City published is a claim about the public record.
+# Here it arrives as a PR someone can argue with, `git blame` gives who/when/which discussion
+# for free, and the key is the raw string — so if the City later fixes '942467.' to
+# '942467.00', the parser handles it natively and the label simply stops matching. Nothing to
+# invalidate, nothing to maintain.
+#
+# WHERE IT LANDS. Never in *_numeric — that column means "a number the machine derived from
+# what the City published", and it is what makes `numeric IS NULL` a usable review queue.
+# Labels land in *_labelled / *_verdict. SUM(numeric) stays a defensible undercount;
+# SUM(COALESCE(labelled, numeric)) is fuller and opts in knowingly.
+#
+# VERDICTS
+#   amount        the string really is this number; `value` required
+#   not_an_amount correctly NULL — a rate, a formula, a description
+#   corrupt       mashed upstream, unrecoverable; which figure is THE award is unanswerable
+#   unknown       cannot be settled without a source we do not have
+#   not_an_award  the row should not exist. Rows are never deleted (archive semantics), so
+#                 this means "exclude from aggregates" — a different behaviour from
+#                 not_an_amount, which says the row is real and its amount simply is not one.
+#
+# not_an_amount and corrupt matter as much as the corrections: they are a human confirming the
+# NULL is right, which stops the same 35 strings being re-litigated by the next person.
+
+# --- recoverable: the City's own typos ---------------------------------------------------
+
+["S2,035,000.00"]
+verdict = "amount"
+value = 2035000.00
+note = "Leading S is a typo for $ — adjacent key. Digits are unambiguous."
+
+["$982, 900"]
+verdict = "amount"
+value = 982900.00
+note = "Stray space inside the thousands group."
+
+["942467."]
+verdict = "amount"
+value = 942467.00
+note = "Trailing decimal point with no fractional part."
+
+# --- correctly NULL: not amounts at all --------------------------------------------------
+
+["31.65/MT"]
+verdict = "not_an_amount"
+note = "A unit rate ($31.65 per metric tonne), not a contract total. No total is published."
+
+["Metal Items at 109.11000 Percentage of the AMM published price"]
+verdict = "not_an_amount"
+note = "A pricing formula indexed to the American Metal Market price. Not a figure."
+
+# --- a real amount in the wrong currency -------------------------------------------------
+
+["$1,311,936.00 USD"]
+verdict = "unknown"
+note = """Parses cleanly and is the single most tempting entry here, which is why it is not
+labelled. It is USD; every other amount in this archive is CAD. Labelling it 1311936.00 mixes
+currencies into a CAD sum silently — the exact failure amount.py exists to prevent. Settling
+it needs an award-date FX rate we do not hold and cannot source retroactively with
+confidence. Honest NULL beats a plausible wrong number."""
+
+# --- a row that is not an award ----------------------------------------------------------
+
+["j"]
+verdict = "not_an_award"
+note = """Doc 4483761813 carries a real award (MONARCH MECHANICAL LTD / 57700.00, which CKAN
+independently confirms) plus this phantom second row: supplier 'kj', amount 'j'. A junk
+Awarded_Suppliers entry the OData feed carries and CKAN does not. The verdict is not "this
+amount is unparseable" but "this is not an award" — exclude it from aggregates."""
+
+# --- corrupt: several figures concatenated upstream ---------------------------------------
+#
+# The City's own feed has run figures together with no separator. Even where the components
+# are legible, WHICH one is the award amount is unanswerable from the string — first? sum?
+# line items? A guess here would be indistinguishable from data.
+
+["1071956.001099084.001049084.00"]
+verdict = "corrupt"
+note = "Reads as 1071956.00 / 1099084.00 / 1049084.00 concatenated. Which is the award — or is it the sum? Unanswerable without the staff report."
+
+["1026211.001173390.00103107.00"]
+verdict = "corrupt"
+["104304.0025130380.00"]
+verdict = "corrupt"
+["18322.19253664.44"]
+verdict = "corrupt"
+["204802.0015000.00"]
+verdict = "corrupt"
+["28156.56255631.31"]
+verdict = "corrupt"
+["297156.05281947.05281992.05"]
+verdict = "corrupt"
+["464754.612266748.37231148.24197227.80"]
+verdict = "corrupt"
+["51057.001874637.004485223.00"]
+verdict = "corrupt"
+["560250.00154975.00318300.00"]
+verdict = "corrupt"
+["60440.0040310.00"]
+verdict = "corrupt"
+["76500.0025.95625.00"]
+verdict = "corrupt"
+["87000.00546000.00"]
+verdict = "corrupt"
+["950319421379831.75560173.76"]
+verdict = "corrupt"
+["98068.0038833.0826099.31"]
+verdict = "corrupt"
+
+# --- corrupt: a trailing '.25.' the feed appends to an otherwise clean figure -------------
+#
+# Five strings share the shape <amount>.25. — e.g. '960128.38' + '.25.'. The leading figure is
+# legible, but what '.25.' is (a rate? a fraction? a truncated second field?) is not, and
+# taking the prefix would be inventing a rule from five samples.
+
+["960128.38.25."]
+verdict = "corrupt"
+["873567.44.25."]
+verdict = "corrupt"
+["429599.38.25."]
+verdict = "corrupt"
+["37337.50.25."]
+verdict = "corrupt"
+["32423.06.25."]
+verdict = "corrupt"
+
+# --- corrupt: two decimal points, no legible split ----------------------------------------
+
+["3501.872.63"]
+verdict = "corrupt"
+["4762.120.00"]
+verdict = "corrupt"
+["704.000.53"]
+verdict = "corrupt"
+["6889.040.28"]
+verdict = "corrupt"
+["1530.164.00"]
+verdict = "corrupt"
+["2419.000.00"]
+verdict = "corrupt"
+["635.41010."]
+verdict = "corrupt"
+["3.0022.758"]
+verdict = "corrupt"
