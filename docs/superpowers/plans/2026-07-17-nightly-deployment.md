@@ -76,8 +76,17 @@ def test_a_failure_leads_with_it_and_names_the_source_and_error():
     text = notify.summarize(BEFORE, AFTER, [("ariba_discovery", "HTTPError 500")], 9,
                             30_800_000, 192.0)
     assert text.startswith("❌ toronto-bids")
-    assert "1/9 sources FAILED" in text
+    assert "1 failed" in text
     assert "ariba_discovery: HTTPError 500" in text
+
+
+def test_a_failed_step_is_not_reported_as_a_failed_source():
+    """`failures` carries whole-step failures (sync, award_summary, export) alongside the
+    per-source ones pipeline.sync returns. 'N/9 sources FAILED' would call a dead disk a
+    failed City feed."""
+    text = notify.summarize(BEFORE, AFTER, [("export", "disk full")], 9, None, 5.0)
+    assert "sources" not in text
+    assert "export: disk full" in text
 
 
 def test_a_failure_still_reports_the_export():
@@ -192,9 +201,11 @@ def summarize(before: dict, after: dict, failures: list, n_sources: int,
     parts.append(_elapsed(elapsed_s))
     if not failures:
         return f"✅ toronto-bids — {n_sources}/{n_sources} sources ok · " + " · ".join(parts)
+    # NOT "N/{n_sources} sources FAILED": `failures` mixes per-source failures from
+    # pipeline.sync with whole-step failures (sync, award_summary, export), and calling a
+    # dead disk a failed City feed would send someone to the wrong system at 06:00.
     named = ", ".join(f"{name}: {error}" for name, error in failures)
-    return (f"❌ toronto-bids — {len(failures)}/{n_sources} sources FAILED · {named} · "
-            + " · ".join(parts))
+    return f"❌ toronto-bids — {len(failures)} failed · {named} · " + " · ".join(parts)
 
 
 def post(text: str, webhook: str | None = None, log=lambda _m: None) -> bool:
@@ -218,12 +229,12 @@ def post(text: str, webhook: str | None = None, log=lambda _m: None) -> bool:
 - [ ] **Step 4: Run the tests to verify they pass**
 
 Run: `uv run pytest tests/test_notify.py -q`
-Expected: PASS — 10 passed
+Expected: PASS — 11 passed
 
 - [ ] **Step 5: Run the whole suite**
 
 Run: `uv run pytest -q`
-Expected: PASS — 454 passed (444 existing + 10 new)
+Expected: PASS — 455 passed (444 existing + 11 new)
 
 - [ ] **Step 6: Commit**
 
@@ -424,7 +435,7 @@ Expected: PASS — 7 passed
 - [ ] **Step 7: Run the whole suite**
 
 Run: `uv run pytest -q`
-Expected: PASS — 461 passed
+Expected: PASS — 462 passed
 
 - [ ] **Step 8: Commit**
 
