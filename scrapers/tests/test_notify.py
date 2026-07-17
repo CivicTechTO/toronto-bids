@@ -2,8 +2,6 @@
 
 `summarize` is pure, so the whole message is tested offline with no webhook and no network.
 """
-import pytest
-
 from toronto_bids import notify
 
 BEFORE = {"solicitation": 7641, "award": 14157, "bid": 18627, "supplier": 6738}
@@ -73,18 +71,27 @@ def test_post_without_a_webhook_is_a_no_op_and_makes_no_request(monkeypatch):
 
 
 def test_post_sends_the_text_as_a_slack_payload(monkeypatch):
+    class Resp:
+        status_code = 200
     sent = {}
-    monkeypatch.setattr(notify.httpx, "post",
-                        lambda url, **kw: sent.update(url=url, **kw))
+    def fake_post(url, **kw):
+        sent.update(url=url, **kw)
+        return Resp()
+    monkeypatch.setattr(notify.httpx, "post", fake_post)
     assert notify.post("hello", webhook="https://hooks.slack.test/x") is True
     assert sent["url"] == "https://hooks.slack.test/x"
     assert sent["json"] == {"text": "hello"}
 
 
 def test_post_reads_the_webhook_from_the_environment(monkeypatch):
+    class Resp:
+        status_code = 200
     monkeypatch.setenv("TB_SLACK_WEBHOOK", "https://hooks.slack.test/env")
     sent = {}
-    monkeypatch.setattr(notify.httpx, "post", lambda url, **kw: sent.update(url=url))
+    def fake_post(url, **kw):
+        sent.update(url=url)
+        return Resp()
+    monkeypatch.setattr(notify.httpx, "post", fake_post)
     assert notify.post("hello") is True
     assert sent["url"] == "https://hooks.slack.test/env"
 
@@ -98,3 +105,32 @@ def test_a_slack_failure_never_fails_the_run(monkeypatch):
     said = []
     assert notify.post("hello", webhook="https://hooks.slack.test/x", log=said.append) is False
     assert any("slack" in m.lower() for m in said)
+
+
+def test_a_rejected_webhook_is_reported_rather_than_counted_as_sent(monkeypatch):
+    """A revoked webhook returns 4xx without raising. Reporting that as success is how the
+    channel goes quiet while the job believes it is still talking."""
+    class Resp:
+        status_code = 403
+    monkeypatch.setattr(notify.httpx, "post", lambda url, **kw: Resp())
+    said = []
+    assert notify.post("hi", webhook="https://hooks.slack.test/x", log=said.append) is False
+    assert any("403" in m for m in said)
+
+
+def test_a_rejection_never_leaks_the_webhook_into_the_log(monkeypatch):
+    """log() goes to journald. raise_for_status() would put the URL in the exception message
+    and write the credential to the system log — which is why the status code is read by hand."""
+    class Resp:
+        status_code = 403
+    monkeypatch.setattr(notify.httpx, "post", lambda url, **kw: Resp())
+    said = []
+    notify.post("hi", webhook="https://hooks.slack.test/SECRET-TOKEN", log=said.append)
+    assert not any("SECRET-TOKEN" in m for m in said)
+
+
+def test_a_successful_post_returns_true(monkeypatch):
+    class Resp:
+        status_code = 200
+    monkeypatch.setattr(notify.httpx, "post", lambda url, **kw: Resp())
+    assert notify.post("hi", webhook="https://hooks.slack.test/x") is True

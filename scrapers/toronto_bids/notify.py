@@ -62,7 +62,14 @@ def post(text: str, webhook: str | None = None, log=lambda _m: None) -> bool:
     if not webhook:
         return False
     try:
-        httpx.post(webhook, json={"text": text}, timeout=_SLACK_TIMEOUT)
+        response = httpx.post(webhook, json={"text": text}, timeout=_SLACK_TIMEOUT)
+        # Status read by hand, not response.raise_for_status(): that exception's message
+        # embeds the request URL — the webhook IS the credential, and this repo is public.
+        # log() goes to journald, so raise_for_status() here would write the credential to
+        # the system log. Log the status code alone.
+        if response.status_code >= 400:
+            log(f"  slack post rejected: HTTP {response.status_code}")
+            return False
         return True
     except Exception as exc:
         log(f"  slack post failed: {exc}")
