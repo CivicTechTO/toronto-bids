@@ -372,29 +372,21 @@ Replace the body of `store_bundle` (keep the copy-to-canonical and sha lines) so
     return len(entries)
 ```
 
-Add `reindex_bundles` after `ingest_downloads`:
+Add `reindex_bundles` after `ingest_downloads`. It delegates to `ingest_downloads` pointed at the
+store itself — `store_bundle` skips the copy when source == dest, so this rebuilds every bundle in
+place without a duplicate loop:
 
 ```python
 def reindex_bundles(conn, dest_dir=None, log=lambda _m: None) -> int:
-    """Rebuild the index from the zips already under the attachment store. Offline, no browser.
+    """Rebuild the index from the bundles already in the store. Offline, no browser.
 
-    ariba_attachment is a derived index of the bundles on disk, so it can be regenerated whenever
-    the indexing changes (e.g. #123's recursion). Idempotent: each bundle is rebuilt from its
-    bytes. Returns the number of bundles reindexed.
+    ariba_attachment is a derived index of the on-disk zips, so it can be regenerated whenever the
+    indexing changes (e.g. #123's recursion). Just re-ingest the store into itself — store_bundle
+    skips the copy when the source is already the canonical path and rebuilds the rows from the
+    bytes. Idempotent. Returns the number of bundles reindexed.
     """
-    dest_dir = Path(dest_dir if dest_dir is not None else config.ARIBA_ATTACHMENTS_DIR)
-    if not dest_dir.is_dir():
-        return 0
-    n = 0
-    for zip_path in sorted(dest_dir.glob("Doc*.zip")):
-        document_number = document_number_from_zip_name(zip_path.name)
-        if document_number is None:
-            log(f"  skipped {zip_path.name}: no Doc########## in the name")
-            continue
-        files = store_bundle(conn, zip_path, document_number, dest_dir)
-        log(f"  {zip_path.name}: {files} files")
-        n += 1
-    return n
+    root = dest_dir if dest_dir is not None else config.ARIBA_ATTACHMENTS_DIR
+    return ingest_downloads(conn, root, root, log=log)
 ```
 
 - [ ] **Step 4: Run the tests to verify they pass**
