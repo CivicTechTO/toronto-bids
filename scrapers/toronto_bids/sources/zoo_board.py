@@ -4,7 +4,6 @@ Same infrastructure as the Bid Award Panel (#68): TMMIS agendas need the headed 
 report PDFs are plain-HTTP legdocs (e.g. /legdocs/mmis/2025/zb/bgrd/backgroundfile-N.pdf).
 Reuses bid_award_panel's prober — references cannot be derived, so probe-and-confirm.
 """
-import hashlib
 import re
 
 from toronto_bids import config
@@ -36,29 +35,14 @@ def download_zoo_reports(conn, http, agendas: dict, log=lambda _m: None) -> int:
 
     Plain HTTP (legdocs is not Akamai-gated). Queue on sha256 IS NULL (#96).
     """
-    from toronto_bids.sources.trca_board import _pdftotext   # same text extraction
-    config.ZOO_REPORTS_DIR.mkdir(parents=True, exist_ok=True)
+    # Shared resilient fetch loop (skips a dead URL rather than aborting the body, #135).
+    from toronto_bids.sources.trca_board import _store_pending_pdfs
     for meeting, html in agendas.items():
         for pdf in parse_agenda_pdfs(html, meeting):
             db.upsert_row(conn, BackgroundPdf(url=pdf["url"], reference=pdf["reference"],
                                               kind="agency_board"), overwrite=False)
     conn.commit()
-    n = 0
-    for row in conn.execute("SELECT id, url FROM background_pdf "
-                            "WHERE kind='agency_board' AND url LIKE '%/zb/%' "
-                            "AND sha256 IS NULL ORDER BY id").fetchall():
-        blob = http.get_bytes(row["url"])
-        if not blob.startswith(b"%PDF"):
-            continue
-        sha = hashlib.sha256(blob).hexdigest()
-        path = config.ZOO_REPORTS_DIR / f"{sha}.pdf"
-        path.write_bytes(blob)
-        conn.execute("UPDATE background_pdf SET sha256=?, local_path=?, text=? WHERE id=?",
-                     (sha, str(path), _pdftotext(path), row["id"]))
-        conn.commit()
-        n += 1
-        log(f"  zoo report {n}: {row['url']}")
-    return n
+    return _store_pending_pdfs(conn, http, config.ZOO_REPORTS_DIR, "%/zb/%", log, "zoo")
 
 
 # ---------------------------------------------------------------------------
@@ -87,6 +71,12 @@ def parse_zoo_report(text: str, fallback_ref: str, report_url: str | None = None
     native_ref = re.sub(r"\s+", " ", ref_m.group(1)).strip() if ref_m else fallback_ref
     winner_m = _ZOO_WINNER.search(text) or _ZOO_WINNER_AGREEMENT.search(text)
     amount_m = None if confidential else _ZOO_AMOUNT.search(text)
+    # "award" appears in plenty of reports that award nothing (updates, minutes, info
+    # items). Store a row only when something concrete was extracted — a named winner, an
+    # amount, or a confidential-attachment award. Otherwise refuse: a contentless award
+    # row keyed on a meeting reference is worse than none (the archive's guiding rule, #135).
+    if not (winner_m or amount_m or confidential):
+        return None
     title_m = _SUBJECT.search(text)
     return {
         "native_ref": native_ref,

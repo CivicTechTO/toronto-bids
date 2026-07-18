@@ -10,6 +10,9 @@ import hashlib
 import pathlib
 import re
 import subprocess
+from html import unescape
+
+import httpx
 
 from toronto_bids import config
 from toronto_bids.models import AgencyAward, AgencyBid, AgencySolicitation, BackgroundPdf
@@ -105,56 +108,110 @@ _MEETING = re.compile(r"""href=["']([^"']*Meeting\.aspx\?[^"']+)""")
 def _absolute(url: str) -> str:
     if url.startswith("http"):
         return url
-    return config.TRCA_ESCRIBE_BASE.rstrip("/") + "/" + url.lstrip("/").replace("&amp;", "&")
+    return config.TRCA_ESCRIBE_BASE.rstrip("/") + "/" + url.lstrip("/")
 
 
 def escribe_document_urls(html: str) -> list[str]:
-    """Every FileStream + Meeting link on a page, absolute, order-preserving, deduped."""
+    """Every FileStream + Meeting link on a page, absolute, order-preserving, deduped.
+
+    HTML-decode each href before use: some detail pages encode the colon as `&#58;`
+    (and `&` as `&amp;`), so a plain `.replace('&amp;', '&')` leaves `https&#58;//…` — a
+    malformed scheme that crashes the fetch. `unescape` handles every entity (#137).
+    """
     seen, out = set(), []
     for m in (_FILESTREAM.findall(html) + _MEETING.findall(html)):
-        u = _absolute(m.replace("&amp;", "&"))
+        u = _absolute(unescape(m))
         if u not in seen:
             seen.add(u)
             out.append(u)
     return out
 
 
+def meeting_detail_urls(calendar_json: dict) -> list[str]:
+    """Meeting detail-page URLs from a GetCalendarMeetings JSON response (#137).
+
+    The eSCRIBE calendar is rendered client-side from this page-method, so the meeting
+    IDs live here, not in the year landing page's markup (which is why the old static
+    -anchor walk found zero). Only agenda'd meetings are followed — a meeting with no
+    agenda has no report PDFs to index.
+    """
+    urls = []
+    for meeting in calendar_json.get("d", []):
+        mid = meeting.get("ID")
+        if mid and meeting.get("HasAgenda"):
+            urls.append(f"{config.TRCA_ESCRIBE_BASE}Meeting.aspx?Id={mid}"
+                        f"&Agenda=Agenda&lang=English")
+    return urls
+
+
 def download_reports(conn, http, log=lambda _m: None) -> int:
-    """Walk eSCRIBE year pages -> meeting pages -> FileStream PDFs. Resumable.
+    """POST the calendar page-method per year -> meeting pages -> FileStream PDFs. Resumable.
 
     Queue keys on sha256 IS NULL (#96): the hash records that we hold the bytes; text
-    records whether pdftotext could read them. Never re-download for unreadable text.
+    records whether pdftotext could read them. Never re-download for unreadable text. A
+    year whose calendar call fails, or a single meeting page that 404s, is logged and
+    skipped rather than aborting the run.
     """
     config.TRCA_REPORTS_DIR.mkdir(parents=True, exist_ok=True)
     # 1. Index: discover FileStream URLs and upsert a background_pdf row per document.
     for year in config.TRCA_ESCRIBE_YEARS:
-        page = http.get_text(config.TRCA_ESCRIBE_BASE, params={"FillWidth": 1, "Year": year})
-        meeting_urls = [u for u in escribe_document_urls(page) if "Meeting.aspx" in u]
-        log(f"  trca {year}: {len(meeting_urls)} meetings")
-        for murl in meeting_urls:
-            mhtml = http.get_text(murl)
+        try:
+            calendar = http.post_json(config.TRCA_CALENDAR_URL,
+                                      json={"calendarStartDate": f"{year}-01-01",
+                                            "calendarEndDate": f"{year}-12-31"})
+        except httpx.HTTPError as exc:
+            log(f"  trca {year}: calendar fetch failed: {exc}")
+            continue
+        detail_urls = meeting_detail_urls(calendar)
+        log(f"  trca {year}: {len(detail_urls)} meetings")
+        for murl in detail_urls:
+            try:
+                mhtml = http.get_text(murl)
+            except httpx.HTTPError as exc:
+                log(f"  trca skip meeting {murl}: {exc}")
+                continue
             for durl in escribe_document_urls(mhtml):
                 if "ashx" in durl.lower():
                     db.upsert_row(conn, BackgroundPdf(url=durl, kind="agency_board"),
                                   overwrite=False)
         conn.commit()
     # 2. Fetch: everything indexed but not yet held.
+    return _store_pending_pdfs(conn, http, config.TRCA_REPORTS_DIR,
+                               "%escribemeetings%", log, "trca")
+
+
+def _store_pending_pdfs(conn, http, reports_dir, url_like: str, log, prefix: str) -> int:
+    """Fetch every queued (sha256 IS NULL) agency_board PDF matching url_like. Resumable.
+
+    Shared by the TRCA and Zoo download passes — the indexing differs (eSCRIBE walk vs.
+    agenda parse), the fetch loop is identical. A single dead/404 URL is logged and
+    SKIPPED (the row stays queued), never aborting the run: across hundreds of legdocs /
+    eSCRIBE URLs a stray 404 is routine, and get_bytes re-raises 4xx — found live when one
+    dead legdocs URL killed the whole Zoo body after storing 1 of 859 reports (#135).
+    Queue keys on sha256 IS NULL (#96): the hash records we hold the bytes.
+    """
+    reports_dir.mkdir(parents=True, exist_ok=True)
     n = 0
-    for row in conn.execute("SELECT id, url FROM background_pdf "
-                            "WHERE kind='agency_board' AND url LIKE '%escribemeetings%' "
-                            "AND sha256 IS NULL ORDER BY id").fetchall():
-        blob = http.get_bytes(row["url"])
+    for row in conn.execute(
+            "SELECT id, url FROM background_pdf WHERE kind='agency_board' "
+            "AND url LIKE ? AND sha256 IS NULL ORDER BY id", (url_like,)).fetchall():
+        try:
+            blob = http.get_bytes(row["url"])
+        except Exception as exc:            # noqa: BLE001 — 404/5xx/transport OR a malformed
+            # URL (an entity that slipped decoding): one bad URL among thousands must never
+            # abort the batch. Scoped to the single fetch call, so real bugs still surface.
+            log(f"  {prefix} skip {row['url']}: {exc}")
+            continue
         if not blob.startswith(b"%PDF"):
-            continue                       # HTML error page; leave queued
+            continue                        # HTML error page; leave queued
         sha = hashlib.sha256(blob).hexdigest()
-        path = config.TRCA_REPORTS_DIR / f"{sha}.pdf"
+        path = reports_dir / f"{sha}.pdf"
         path.write_bytes(blob)
-        text = _pdftotext(path)
         conn.execute("UPDATE background_pdf SET sha256=?, local_path=?, text=? WHERE id=?",
-                     (sha, str(path), text, row["id"]))
+                     (sha, str(path), _pdftotext(path), row["id"]))
         conn.commit()
         n += 1
-        log(f"  trca report {n}: {row['url']}")
+        log(f"  {prefix} report {n}: {row['url']}")
     return n
 
 

@@ -77,3 +77,14 @@ def test_store_zoo_reports_preserves_public_winner_on_confidential_award(conn):
     assert "Imperial Fence" in row["supplier_name_raw"]
     assert row["value_confidential"] == 1
     assert row["award_amount_numeric"] is None
+
+
+def test_report_mentioning_award_but_extracting_nothing_returns_none():
+    """A committee/info report that merely says 'award' — no winner, no amount, no
+    confidential attachment — must not become an empty award row (#135). Live run
+    surfaced 53 such contentless rows; the archive refuses rather than assert a
+    hollow award (the project's 'a wrong record is worse than none' rule)."""
+    text = ("STAFF REPORT\nSubject: Update on Capital Projects\n"
+            "This report provides an update. Council previously approved the award "
+            "of several contracts. No new decisions are recommended at this time.")
+    assert parse_zoo_report(text, fallback_ref="2020.ZB5") is None

@@ -15,18 +15,25 @@ value_confidential=1 cases. The 2019 Zoo report names its winner publicly. The T
 armour-stone report tabulates all four bidders with opening results; the VOR report is
 the vendor-of-record shape (multiple winners, no per-bid prices).
 
-## trca_escribe_2023.html — SYNTHETIC (#135)
+## trca_getcalendarmeetings_2023q1.json — REAL (#137)
+
+Live capture (2026-07-18) of the eSCRIBE calendar page-method that actually drives
+discovery: `POST https://pub-trca.escribemeetings.com/MeetingsCalendarView.aspx/GetCalendarMeetings`
+with body `{"calendarStartDate":"2023-01-01","calendarEndDate":"2023-03-31"}` → `{"d":[…]}`,
+five agenda'd meetings for Q1 2023, each with `ID` (GUID), `MeetingName`, `StartDate`,
+`HasAgenda`. `meeting_detail_urls` turns these into `Meeting.aspx?Id=<guid>` URLs, whose
+detail pages carry the real `FileStream.ashx?DocumentId=N` report links (verified live:
+22 on the 2023-02-17 Board of Directors meeting). This is the fix for #137 — the reason
+the old static year-page walk found zero.
+
+## trca_escribe_2023.html — SYNTHETIC (#135), a detail-page stand-in
 
 Not a real capture. `curl -sL -A "Mozilla/5.0" "https://pub-trca.escribemeetings.com/?FillWidth=1&Year=2023"`
-was run live on 2026-07-18 (network was available) and returned a real 286KB page, but
-its shape doesn't match a static-HTML walker: the page is a JS-rendered FullCalendar
-widget, and its two literal "Meeting.aspx" occurrences are inside a JS template string
-assembled at click time (`$('#eventLink').attr('href', href = '/Meeting.aspx?Id=' +
-event.id + '&lang=' + ...)`), not `<a href="Meeting.aspx?...">` anchors — so
-`escribe_document_urls`'s regexes correctly find nothing on the real page. It carries no
-`FileStream.ashx` links at all before JS runs. Per the task brief's Step 1 fallback,
-this fixture is hand-written instead, containing the anchor shapes the extractor is
-built to find (`Meeting.aspx?Id=...` and `FileStream.ashx?DocumentId=...`), standing in
-for whatever rendered meeting-list/meeting-detail HTML the real walk would eventually
-see. The extraction unit test exercises correct behavior on this shape regardless of
-where the HTML came from.
+was run live on 2026-07-18 and returned a real 286KB page, but its shape doesn't match a
+static-HTML walker: the page is a JS-rendered FullCalendar widget, and its two literal
+"Meeting.aspx" occurrences are inside a JS template string assembled at click time, not
+`<a href="Meeting.aspx?...">` anchors — so `escribe_document_urls`'s regexes correctly
+find nothing on the real *year* page. (Discovery no longer walks the year page at all —
+it POSTs GetCalendarMeetings, above.) `escribe_document_urls` still runs on the meeting
+*detail* pages, which ARE server-rendered with `FileStream.ashx` anchors; this
+hand-written fixture exercises that extractor on the anchor shapes it must find.

@@ -87,7 +87,10 @@ ARIBA_PASSWORD = os.environ.get("ARIBA_PASSWORD")
 # bids&tenders portal, which stays gated.
 TRCA_ESCRIBE_BASE = "https://pub-trca.escribemeetings.com/"
 TRCA_REPORTS_DIR = DATA_DIR / "agencies" / "trca"
-# eSCRIBE year pages to walk; range() endpoint updated by whoever runs it in 2027 — moot
+# The eSCRIBE calendar is client-rendered from this ASP.NET page-method (JSON); the year
+# landing page carries no static meeting links, so discovery POSTs here per year (#137).
+TRCA_CALENDAR_URL = TRCA_ESCRIBE_BASE + "MeetingsCalendarView.aspx/GetCalendarMeetings"
+# eSCRIBE years to fetch; range() endpoint updated by whoever runs it in 2027 — moot
 # then anyway (Bill 97 amalgamates TRCA 2027-02-01).
 TRCA_ESCRIBE_YEARS = range(2019, 2028)
 

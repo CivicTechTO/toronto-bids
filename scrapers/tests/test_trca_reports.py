@@ -78,3 +78,66 @@ def test_store_trca_reports_lands_rows(conn):
     row = conn.execute("SELECT award_amount_numeric FROM agency_award "
                        "WHERE native_ref='10039751'").fetchone()
     assert row[0] == 1193040.0
+
+
+def test_download_skips_a_dead_url_without_aborting_the_run(tmp_path):
+    """A single 404 among many report URLs must not kill the whole download (#135).
+
+    Found live: legdocs 404s are routine across hundreds of URLs, and get_bytes
+    re-raises 4xx, so an unguarded loop stored 1 of 859 reports then aborted the body.
+    """
+    import httpx
+
+    from toronto_bids.sources.trca_board import _store_pending_pdfs
+    from toronto_bids.store import db
+
+    conn = db.connect(":memory:")
+    db.init_db(conn)
+    good = "https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=1"
+    dead = "https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=2"
+    for url in (good, dead):
+        conn.execute("INSERT INTO background_pdf (url, kind) VALUES (?, 'agency_board')", (url,))
+    conn.commit()
+
+    def _raise_404(url):
+        req = httpx.Request("GET", url)
+        raise httpx.HTTPStatusError("404", request=req,
+                                    response=httpx.Response(404, request=req))
+
+    class _FakeHttp:
+        def get_bytes(self, url, **_kw):
+            return b"%PDF-1.7\ntrailer\n" if url == good else _raise_404(url)
+
+    n = _store_pending_pdfs(conn, _FakeHttp(), tmp_path, "%escribemeetings%",
+                            lambda _m: None, "trca")
+    assert n == 1                                            # the good one stored
+    held = dict(conn.execute(
+        "SELECT url, sha256 IS NOT NULL FROM background_pdf").fetchall())
+    assert held[good] is True or held[good] == 1            # fetched + stored
+    assert held[dead] in (False, 0, None)                  # left queued, not stored
+    conn.close()
+
+
+def test_meeting_detail_urls_from_calendar_json():
+    """#137: the eSCRIBE calendar is client-rendered from the GetCalendarMeetings
+    page-method, so meeting IDs come from its JSON, not static year-page anchors."""
+    import json
+
+    from toronto_bids.sources.trca_board import meeting_detail_urls
+    cal = json.loads(_read("trca_getcalendarmeetings_2023q1.json"))
+    urls = meeting_detail_urls(cal)
+    assert len(urls) == 5                                    # every agenda'd meeting in Q1 2023
+    assert all("Meeting.aspx?Id=" in u for u in urls)
+    assert all(u.startswith("https://pub-trca.escribemeetings.com/") for u in urls)
+    # a real GUID from the fixture, so the URL actually resolves to a detail page
+    assert any("82fa331c-e7cb-4e9a-87e2-093a1a51899f" in u for u in urls)
+
+
+def test_escribe_document_urls_decodes_html_entities():
+    """Some detail-page hrefs encode the colon as &#58; (and & as &amp;). Decode both,
+    or the URL is a malformed scheme that crashes the fetch (#137, found live)."""
+    from toronto_bids.sources.trca_board import escribe_document_urls
+    page = ('<a href="https&#58;//pub-trca.escribemeetings.com/'
+            'FileStream.ashx?DocumentId=10661&amp;lang=en">report</a>')
+    assert escribe_document_urls(page) == [
+        "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=10661&lang=en"]
