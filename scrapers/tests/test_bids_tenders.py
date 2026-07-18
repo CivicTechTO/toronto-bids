@@ -49,6 +49,7 @@ def test_store_listings_inserts_portal_row(conn):
     row = conn.execute("SELECT native_ref, title, status, source FROM agency_solicitation").fetchone()
     assert row["native_ref"] == "RFT-2026-014"
     assert row["source"] == "bids_tenders"
+    assert row["title"] == "Trail Bridge Replacement - Example Creek"
 
 
 def test_store_listings_enriches_a_board_report_row(conn):

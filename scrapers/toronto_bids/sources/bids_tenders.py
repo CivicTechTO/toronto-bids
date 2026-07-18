@@ -13,7 +13,6 @@ validated against a real record. When a bid first appears, `tb enrich-agencies -
 """
 import re
 import time
-from dataclasses import replace
 
 import httpx
 
@@ -117,21 +116,19 @@ def parse_listing(record: dict, buyer_id: int) -> AgencySolicitation:
 
 
 def store_listings(conn, records, buyer_ids: dict) -> int:
-    """Upsert each parsed listing into agency_solicitation. overwrite=True: the portal owns the
-    listing fields (status/dates), so a nightly re-fetch keeps an open bid current, while
-    COALESCE still protects a board-report-supplied title from being nulled. Skips a record
-    whose buyer_slug is not a seeded buyer. Returns rows upserted."""
+    """Upsert each parsed listing into agency_solicitation with overwrite=False (backfill):
+    fills any NULL field — a portal-only solicitation gets its full record including title,
+    while a board-report row keeps its title/status and only has its empty dates filled in.
+    (Nightly status refresh of an open bid is intentionally NOT done here — revisited when the
+    portals have real data and the parser is validated, #135.) Skips a record whose buyer_slug
+    is not a seeded buyer. Returns rows upserted."""
     n = 0
     for record in records:
         buyer_id = buyer_ids.get(record.get("buyer_slug"))
         if buyer_id is None:
             continue
         row = parse_listing(record, buyer_id)
-        # Don't overwrite an existing board-report title with the portal's title.
-        # With overwrite=True, COALESCE(excluded.title, {table}.title) will preserve
-        # the existing non-NULL title if we pass None here.
-        row = replace(row, title=None)
-        db.upsert_row(conn, row, overwrite=True)
+        db.upsert_row(conn, row, overwrite=False)
         n += 1
     conn.commit()
     return n
