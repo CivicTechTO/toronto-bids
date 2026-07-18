@@ -121,3 +121,13 @@ def test_enrich_agencies_offline_parses_cached(conn, monkeypatch, capsys):
     out = capsys.readouterr().out
     assert "trca" in out and "awards" in out
     assert conn.execute("SELECT COUNT(*) FROM agency_award").fetchone()[0] >= 2
+
+
+def test_portal_source_is_gated():
+    import pytest as _pytest
+    from toronto_bids import config
+    from toronto_bids.sources.bids_tenders import fetch_listings
+    assert all(not p["enabled"] for p in config.BIDS_TENDERS_PORTALS), \
+        "a portal was enabled without a recorded permission"
+    with _pytest.raises(PermissionError):
+        fetch_listings(None, config.BIDS_TENDERS_PORTALS[0])

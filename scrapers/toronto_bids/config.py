@@ -95,3 +95,14 @@ TRCA_ESCRIBE_YEARS = range(2019, 2028)
 # as the Bid Award Panel (agendas need a headed browser; report PDFs are plain-HTTP legdocs).
 ZOO_AGENDAS_DIR = DATA_DIR / "agencies" / "zoo" / "agendas"
 ZOO_REPORTS_DIR = DATA_DIR / "agencies" / "zoo"
+
+# bids&tenders portals (#135). `enabled` stays False until the BODY's written permission
+# is recorded in docs/permissions/ and the flipping commit references it — the PMMD/Ariba
+# precedent (#117). The Vendor ToS is clickwrap we have not accepted, and its copyright
+# notice is blanket; "settled" means the body said yes, not our reading of their terms.
+BIDS_TENDERS_PORTALS = [
+    {"slug": "toronto-zoo", "portal_url": "https://torontozoo.bidsandtenders.ca/",
+     "enabled": False, "permission": None},
+    {"slug": "trca", "portal_url": "https://trca.bidsandtenders.ca/",
+     "enabled": False, "permission": None},
+]
