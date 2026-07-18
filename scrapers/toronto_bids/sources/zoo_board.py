@@ -70,6 +70,11 @@ _CONFIDENTIAL = re.compile(r"CONFIDENTIAL\s+ATTACHMENT", re.I)
 _ZOO_WINNER = re.compile(
     r"award(?:ed)?\s+(?:of\s+)?(?:the\s+)?[\w\s–-]{0,80}?\s+to\s+"
     r"([A-Z][A-Za-z0-9&.,'’ \-]+?(?:Inc|Ltd|Limited|Corp|Corporation|Company)\.?)")
+# Alternate phrasing: "execute an agreement with NAME ... for the award of ..." — the
+# perimeter-fence report names its winner this way instead of "award ... to NAME".
+_ZOO_WINNER_AGREEMENT = re.compile(
+    r"agreement\s+with\s+([A-Z][A-Za-z0-9&.,'’ \-]+?(?:Inc|Ltd|Limited|Corp|Corporation|Company)\.?)"
+    r"\s*(?:\([^)]*\))?\s+for\s+the\s+award", re.S)
 _ZOO_AMOUNT = re.compile(r"total\s+cost\s+(?:not\s+to\s+exceed\s+)?(\$[\d,]+(?:\.\d{2})?)", re.I)
 _SUBJECT = re.compile(r"^(?:Subject:|\s*)(.*(?:Tender|RFT|RFP|Award|Contract).*)$", re.M)
 
@@ -80,7 +85,7 @@ def parse_zoo_report(text: str, fallback_ref: str, report_url: str | None = None
     confidential = 1 if _CONFIDENTIAL.search(text) else 0
     ref_m = _ZOO_REF.search(text)
     native_ref = re.sub(r"\s+", " ", ref_m.group(1)).strip() if ref_m else fallback_ref
-    winner_m = _ZOO_WINNER.search(text)
+    winner_m = _ZOO_WINNER.search(text) or _ZOO_WINNER_AGREEMENT.search(text)
     amount_m = None if confidential else _ZOO_AMOUNT.search(text)
     title_m = _SUBJECT.search(text)
     return {
@@ -112,7 +117,7 @@ def store_zoo_reports(conn, buyer_id: int) -> dict:
         counts["solicitations"] += 1
         db.upsert_row(conn, AgencyAward(
             buyer_id=buyer_id, native_ref=got["native_ref"],
-            supplier_name_raw=got["winner"] if not got["confidential"] else None,
+            supplier_name_raw=got["winner"],
             award_amount=got["amount"],
             value_confidential=got["confidential"], award_date=None,
             report_url=got["report_url"], source="zoo_board"), overwrite=True)
