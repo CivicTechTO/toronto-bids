@@ -161,6 +161,17 @@ and attribution conditions in its permission file. Bid documents stay out of sco
 regardless — they sit behind the Vendor clickwrap. Bill 97 amalgamates TRCA away on
 2027-02-01; its capture is deadline-bound.
 
+The bids&tenders **portal listings** (`sources/bids_tenders.py`, #135) are captured over plain
+HTTP — the grid loads from `POST /Module/Tenders/en/Tender/Search/<NodeId>` (session cookie +
+the FIRST antiforgery token; **never send `sort=` — it errors**), no browser. `fetch_listings`
+is gated (`PermissionError` until a body's grant is recorded in `docs/permissions/`); TRCA and
+the Zoo granted 2026-07-18. Rows land in `agency_solicitation` (`overwrite=True`, COALESCE-
+enriching any board-report row with the same `native_ref`). Runs in `tb nightly` (isolated) and
+`tb enrich-agencies --portal`. **Both portals are currently empty (total=0), so parse_listing is
+PROVISIONAL** — mapped to the grid JS's field names, validated only against a synthetic fixture;
+`--record` dumps raw JSON to seed a real fixture when a bid first appears, at which point the
+parser (and a possible portal `agency_award` path) is completed. No bid documents — Vendor clickwrap.
+
 ### Export seam (`export/`)
 
 `build_export_document(conn)` in `export/document.py` is deterministic given a `generated_at` (result-shaping queries ORDER BY, no file I/O); `export_json` is a thin serializer over it. A new publishing destination is another function over the same builder — keep all shaping logic in `document.py`.

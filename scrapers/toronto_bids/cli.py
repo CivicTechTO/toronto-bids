@@ -447,6 +447,14 @@ def _cmd_nightly(args) -> int:
                     store_award_summary_bids(conn, log=out)
                 except Exception as exc:
                     failures.append(("award_summary", str(exc)))
+                try:
+                    from toronto_bids.sources.bids_tenders import run_portal_capture
+                    res = run_portal_capture(conn, log=out)
+                    for slug, v in res.items():
+                        if isinstance(v, str) and v.startswith("FAILED"):
+                            failures.append((f"portal:{slug}", v))
+                except Exception as exc:
+                    failures.append(("portal", str(exc)))
             finally:
                 try:
                     http.close()

@@ -93,3 +93,14 @@ def test_run_portal_capture_isolates_a_failing_body(conn, monkeypatch):
     result = bt.run_portal_capture(conn, log=lambda _m: None)
     assert result["toronto-zoo"] == 1             # zoo still captured
     assert "trca" in result and result["trca"] == "FAILED: boom"   # trca isolated, recorded
+
+
+def test_nightly_wires_up_the_portal_step():
+    """Doc-smoke: `tb nightly` (cli._cmd_nightly) actually calls into this module, isolated
+    the same way sync/award_summary are (#135 asks it never stop the export)."""
+    import inspect
+
+    from toronto_bids import cli
+    src = inspect.getsource(cli._cmd_nightly)
+    assert "bids_tenders import run_portal_capture" in src
+    assert "run_portal_capture(conn" in src

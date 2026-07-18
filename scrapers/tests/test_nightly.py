@@ -18,9 +18,10 @@ def nightly(conn, monkeypatch, tmp_path):
     monkeypatch.setattr(cli.pipeline, "sync", lambda *a, **k: [])
     monkeypatch.setattr(cli.HttpClient, "__init__", lambda self, *a, **k: None)
     monkeypatch.setattr(cli.HttpClient, "close", lambda self: None)
-    from toronto_bids.sources import award_summary
+    from toronto_bids.sources import award_summary, bids_tenders
     monkeypatch.setattr(award_summary, "download_award_summaries", lambda *a, **k: 0)
     monkeypatch.setattr(award_summary, "store_award_summary_bids", lambda *a, **k: 0)
+    monkeypatch.setattr(bids_tenders, "run_portal_capture", lambda *a, **k: {})
     monkeypatch.setattr(notify, "post", lambda *a, **k: False)
     return lambda: cli.main(["nightly"])
 
@@ -60,6 +61,26 @@ def test_a_raising_award_summary_step_does_not_stop_the_export(nightly, monkeypa
     monkeypatch.setattr(award_summary, "download_award_summaries", boom)
     assert nightly() == 1
     assert (tmp_path / "export" / "bids.json").exists()
+
+
+def test_a_raising_portal_step_does_not_stop_the_export(nightly, monkeypatch, tmp_path):
+    """The portal step (bids_tenders.run_portal_capture) is isolated the same way sync and
+    award_summary are: a failure records to `failures` and the export still runs."""
+    from toronto_bids.sources import bids_tenders
+    def boom(*a, **k):
+        raise RuntimeError("portal down")
+    monkeypatch.setattr(bids_tenders, "run_portal_capture", boom)
+    assert nightly() == 1
+    assert (tmp_path / "export" / "bids.json").exists()
+
+
+def test_a_failed_portal_body_is_recorded_but_does_not_fail_the_run_alone(nightly, monkeypatch):
+    """run_portal_capture already isolates per-body; a `FAILED: ...` string in its result dict
+    is surfaced into `failures` (and therefore the exit code), without raising."""
+    from toronto_bids.sources import bids_tenders
+    monkeypatch.setattr(bids_tenders, "run_portal_capture",
+                         lambda *a, **k: {"trca": "FAILED: boom", "toronto-zoo": 0})
+    assert nightly() == 1
 
 
 def test_the_summary_is_posted(nightly, monkeypatch):
