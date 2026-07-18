@@ -141,11 +141,36 @@ def test_export_buyers_section(conn):
     assert all("native_ref" not in s for s in doc["solicitations"])
 
 
-def test_portal_source_is_gated():
+def test_no_portal_is_enabled_without_a_recorded_permission():
+    # The safety invariant, independent of how many bodies have said yes: a portal may be
+    # enabled only with a permission file recorded in docs/permissions/ (#135 / #103).
+    import pathlib
+
+    from toronto_bids import config
+    repo_root = pathlib.Path(__file__).resolve().parents[2]
+    for portal in config.BIDS_TENDERS_PORTALS:
+        if portal["enabled"]:
+            assert portal["permission"], f"{portal['slug']} enabled with no permission recorded"
+            assert (repo_root / portal["permission"]).is_file(), \
+                f"{portal['slug']}'s permission file {portal['permission']} is missing"
+
+
+def test_gate_blocks_a_portal_without_permission():
+    import pytest as _pytest
+    from toronto_bids.sources.bids_tenders import fetch_listings
+    ungranted = {"slug": "example", "portal_url": "https://example.bidsandtenders.ca/",
+                 "enabled": False, "permission": None}
+    with _pytest.raises(PermissionError):
+        fetch_listings(None, ungranted)
+
+
+def test_enabled_portal_has_no_capture_yet():
+    # TRCA and the Zoo have granted permission, so the gate is open — but the listing parser
+    # is still unwritten, so fetch_listings surfaces NotImplementedError, not a silent no-op.
     import pytest as _pytest
     from toronto_bids import config
     from toronto_bids.sources.bids_tenders import fetch_listings
-    assert all(not p["enabled"] for p in config.BIDS_TENDERS_PORTALS), \
-        "a portal was enabled without a recorded permission"
-    with _pytest.raises(PermissionError):
-        fetch_listings(None, config.BIDS_TENDERS_PORTALS[0])
+    enabled = [p for p in config.BIDS_TENDERS_PORTALS if p["enabled"]]
+    assert enabled, "expected at least one enabled portal (TRCA/Zoo permissions recorded)"
+    with _pytest.raises(NotImplementedError):
+        fetch_listings(None, enabled[0])

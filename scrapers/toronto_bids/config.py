@@ -102,7 +102,7 @@ ZOO_REPORTS_DIR = DATA_DIR / "agencies" / "zoo"
 # notice is blanket; "settled" means the body said yes, not our reading of their terms.
 BIDS_TENDERS_PORTALS = [
     {"slug": "toronto-zoo", "portal_url": "https://torontozoo.bidsandtenders.ca/",
-     "enabled": False, "permission": None},
+     "enabled": True, "permission": "docs/permissions/2026-07-18-toronto-zoo.md"},
     {"slug": "trca", "portal_url": "https://trca.bidsandtenders.ca/",
-     "enabled": False, "permission": None},
+     "enabled": True, "permission": "docs/permissions/2026-07-18-trca.md"},
 ]

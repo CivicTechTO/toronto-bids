@@ -151,10 +151,15 @@ portal: TRCA's eSCRIBE (plain HTTP; the results TABLE is fused pdftotext and nev
 mined — bidders come from the bullet list, winners+amounts from the RECOMMENDATION
 clause) and the Zoo's ZB committee on TMMIS (same prober as BA/BD; 2025-era reports
 route values to a CONFIDENTIAL ATTACHMENT → `value_confidential=1`, not fake NULLs).
-**The bids&tenders portal is never fetched**: `sources/bids_tenders.py` is a gate that
-raises until a body's written permission lands in `docs/permissions/` (the PMMD/Ariba
-precedent). Bid documents stay out of scope regardless — they sit behind the Vendor
-clickwrap. Bill 97 amalgamates TRCA away on 2027-02-01; its capture is deadline-bound.
+**The bids&tenders portal is fetched only under recorded permission**: `sources/bids_tenders.py`
+is a gate that raises `PermissionError` until a body's written grant lands in
+`docs/permissions/` and flips its `config.BIDS_TENDERS_PORTALS` entry (the PMMD/Ariba
+precedent). TRCA and the Zoo both granted on 2026-07-18, so both gates are open — but the
+listing parser is still unwritten (`fetch_listings` raises `NotImplementedError`), so
+nothing is fetched yet; that capture is the next step, honouring each body's rate-limit
+and attribution conditions in its permission file. Bid documents stay out of scope
+regardless — they sit behind the Vendor clickwrap. Bill 97 amalgamates TRCA away on
+2027-02-01; its capture is deadline-bound.
 
 ### Export seam (`export/`)
 
