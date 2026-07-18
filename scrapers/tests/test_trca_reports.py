@@ -43,3 +43,7 @@ def test_vor_report_names_both_winners_without_amounts():
     names = [w[0] for w in items[0]["winners"]]
     assert any("D. Bottero" in n for n in names)
     assert any("Newmark Knight Frank" in n for n in names)
+    assert items[0]["bidders"] == [
+        "D. Bottero and Associates Limited",
+        "Newmark Knight Frank Canada Limited",
+    ]
