@@ -140,7 +140,7 @@ The bidders did not stop. `tb enrich-awards --download` archives the Toronto Bid
 - **Staff reports join via the bid-bridge (#126).** The per-solicitation `documents` array also folds in **staff-report PDFs** (`background_pdf` kind='bgrd') through an **exact** council-`reference` ↔ `document_number` link: an Ariba-era Bid Award Panel agenda names both, so a single `bid` row carries both, and `export/document.py` derives the `reference → document_number` map from `bid` at query time (no table). No fuzzy matching, no false-positive surface — the opposite of #77's supplier+amount route. **1,310 reports across 1,237 solicitations**, `source="staff_report"` with the legdocs URL exposed. **Ariba-era only** by nature: pre-2019 council items have no dual-key `bid` row and don't join — that remainder is the deferred #124 surrogate spine's job. A staff report can appear both under its `council_item` and under its bridged solicitation — two views of one PDF, neither wrong.
 - **No MFA on the account, by requirement.** An unattended login cannot answer a 2FA prompt and a CAPTCHA is a policy hard stop; `login` detects a challenge page and raises rather than hanging. Not part of `tb sync`.
 
-### Agency capture (`buyers.py`, `sources/trca_board.py`, `sources/zoo_board.py`, #135) — the fourth keyspace
+### Agency capture (`buyers.py`, `sources/trca_board.py`, `sources/zoo_board.py`, `sources/ep_board.py`, #135) — the fourth keyspace
 
 `tb enrich-agencies`. Agencies/corporations procure outside the PMMD feed (#103); their
 records live in `agency_solicitation`/`agency_award`/`agency_bid` keyed
@@ -171,6 +171,29 @@ so it never clobbers a board-report title, only fills a board row's empty dates)
 PROVISIONAL** — mapped to the grid JS's field names, validated only against a synthetic fixture;
 `--record` dumps raw JSON to seed a real fixture when a bid first appears, at which point the
 parser (and a possible portal `agency_award` path) is completed. No bid documents — Vendor clickwrap.
+
+Exhibition Place (`sources/ep_board.py`, #130) reuses the Zoo pattern: TMMIS EP committee
+(`YYYY.EP<n>.<n>`, headed-browser discovery via the shared prober) → plain-HTTP legdocs
+`bgrd` PDFs → `parse_ep_report` + `parse_ep_bid_table`. **Most EP board reports are not
+procurement awards** (WSIB safety, status updates, governance), so the parser anchors on an
+"award of Contract/RFT … to WINNER" clause and refuses the rest; the WSIB negative fixtures
+(which carry `$` amounts) guard against false positives. EP's award clause puts the project
+between the winner and the amount ("to WINNER **for the <project>** in the amount of $X"), so
+the winner regex is EP-specific, not the shared Zoo pattern. Amount/confidential primitives are
+shared via `sources/agency_report.py`. EP is the first agency source with a structured bidder
+price table (Table 1 → `agency_bid` with prices). On-demand (`--only ep --scrape`), never on
+the browser-free nightly path. The pre-2019 City-spine EP slice (Client_Division "Exhibition
+Place") and these post-2019 Board-of-Governors awards are separate coexisting keyspaces (#130).
+**A confidential report is kept only when its stated MFIPPA reason is commercial/financial
+or acquisition-disposition** — `_EP_NON_PROCUREMENT_REASON` refuses labour-relations,
+personal-matters, property-security and litigation/privilege reports outright, even though
+they too say "agreement" (a Collective Agreement report is not a procurement award). Live
+measurement against all 1,200 held EP reports found 23 such reports being kept as bare or
+garbled awards (`"LiUNA Local 506 applies"`, `"BCC is set"` captured as a winner) before this
+guard; after it, 107 accepted / 1,093 refused, 0 non-procurement leftovers, and every named
+winner is a clean company name. `_EP_AGREEMENT`'s capture is token-gated (each word must
+itself start capitalized, or be a bare connector `and`/`of`/`&`) for the same reason — the old
+free-form class swallowed the sentence past the counterparty's name up to the next `for`/`to`.
 
 ### Export seam (`export/`)
 
