@@ -60,3 +60,22 @@ fixture matches the field names documented in the portal's grid JS
 Addendums, PlanTakers) and exercises parse_listing's mapping mechanics only. `parse_listing`
 is PROVISIONAL until `tb enrich-agencies --portal --record` captures a real record and replaces
 this fixture (#135 deferred item).
+
+## Exhibition Place board-report fixtures (#130)
+
+Real EP Board of Governors reports, captured live 2026-07-18 from legdocs (plain HTTP;
+discovered via the TMMIS EP committee, `YYYY.EP<n>.<n>`). EP's board handles far more than
+procurement, so most reports are NOT awards — the negatives below are load-bearing (they carry
+`$` amounts that must NOT be read as awards).
+
+| fixture | shape | source |
+|---|---|---|
+| ep_award_with_table_2023.txt | AWARD + Table 1 bid prices (Powell Fence, M.J.K., Clearway); RFT No. EP110-2023 | /legdocs/mmis/2023/ep/bgrd/backgroundfile-240943.pdf |
+| ep_confidential_decision_2025.txt | confidential award, winner named (Coca-Cola Canada Bottling Ltd), value withheld | /legdocs/mmis/2025/ex/bgrd/backgroundfile-258727.pdf |
+| ep_confidential_agreement.txt | confidential agreement, counterparty redacted ("a Consumer Show Client") → winner None | 2022-2026 EP term, backgroundfile-230177 |
+| ep_non_award_wsib_report.txt | NEGATIVE: WSIB lost-time-injury safety report; carries `$` (WSIB costs) but no award → must return None | backgroundfile-230165 |
+| ep_non_award_procurement_status.txt | NEGATIVE: procurement status update ("currently in procurement"), no award yet → must return None | backgroundfile-230442 |
+
+EP award clause shape: "award of Contract No. <c> (RFT No. EP###-YYYY) to WINNER for the
+<project> in the amount of $AMOUNT" — text sits between WINNER and the amount phrase, so the
+winner regex is EP-specific (stops at " for "/amount), not the shared Zoo "to WINNER <phrase> $".
