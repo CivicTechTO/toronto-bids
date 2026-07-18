@@ -161,16 +161,11 @@ def test_gate_blocks_a_portal_without_permission():
     ungranted = {"slug": "example", "portal_url": "https://example.bidsandtenders.ca/",
                  "enabled": False, "permission": None}
     with _pytest.raises(PermissionError):
-        fetch_listings(None, ungranted)
+        next(fetch_listings(ungranted))          # generator: gate fires on first pull
 
 
-def test_enabled_portal_has_no_capture_yet():
-    # TRCA and the Zoo have granted permission, so the gate is open — but the listing parser
-    # is still unwritten, so fetch_listings surfaces NotImplementedError, not a silent no-op.
-    import pytest as _pytest
-    from toronto_bids import config
-    from toronto_bids.sources.bids_tenders import fetch_listings
-    enabled = [p for p in config.BIDS_TENDERS_PORTALS if p["enabled"]]
-    assert enabled, "expected at least one enabled portal (TRCA/Zoo permissions recorded)"
-    with _pytest.raises(NotImplementedError):
-        fetch_listings(None, enabled[0])
+def test_search_params_never_include_sort():
+    from toronto_bids.sources.bids_tenders import _search_params
+    p = _search_params(status=1, start=0, limit=50)
+    assert "sort" not in p                        # sort= triggers a server error (verified)
+    assert p == {"status": 1, "limit": 50, "start": 0, "dir": "desc", "from": "", "to": ""}
