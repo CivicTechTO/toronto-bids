@@ -15,6 +15,19 @@ value_confidential=1 cases. The 2019 Zoo report names its winner publicly. The T
 armour-stone report tabulates all four bidders with opening results; the VOR report is
 the vendor-of-record shape (multiple winners, no per-bid prices).
 
+## TRCA parser precision/recall fixtures (#138)
+
+Real reports, captured live 2026-07-18 from `pub-trca.escribemeetings.com` (FileStream), each
+chosen because it broke the first-cut `_AWARD`/`_REFS` regexes — the two originals happened to
+be the clean case, so the offline suite was green while ~69% of the real corpus mis-parsed.
+
+| fixture | why it matters |
+|---|---|
+| trca_rfq_spelled_out_2019.txt (DocumentId=…4474) | ref labelled "Request for Quotation No." spelled out — the abbreviation-only matcher dropped it |
+| trca_contract_label_2019.txt (…3250) | ref labelled `Contract #10008808` (a `#`, not "No.") |
+| trca_multiline_winner_2021.txt (…4837) | winner name spans a pdftotext line break ("W.F. Baird & Associates / Coastal Engineers Ltd.") |
+| trca_overcapture_2021.txt (…4831) | the run-on trigger: the winner clause uses "at a total **annual** cost", so the old `(.+?)` skipped it and captured 268,757 chars to a distant plain "cost" phrase |
+
 ## trca_getcalendarmeetings_2023q1.json — REAL (#137)
 
 Live capture (2026-07-18) of the eSCRIBE calendar page-method that actually drives

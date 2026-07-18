@@ -20,15 +20,29 @@ from toronto_bids.store import db
 
 # 'RFP No. 10036307' / 'RFT No. 10039751, 10039753' — match the ref shape (8 digits),
 # never the label vocabulary (call_number lesson: labels vary, shapes don't).
-_REFS = re.compile(r"\bR[FQ][TPQ]\s*No\.?\s*((?:\d{8}(?:\s*,\s*)?)+)")
+# A TRCA reference is an 8-digit number, and the LABEL in front of it varies far more than
+# the two abbreviations the first cut matched: reports spell out "Request for Quotation No.",
+# write "Contract #10008808", or say "Tender No." — matching only RFT/RFP/RFQ dropped the
+# report entirely (#138). Match the shape (8 digits) in any procurement-label context, never
+# the vocabulary — the same lesson as the Ariba doc-number linking. `_REF_ONE` also absorbs a
+# trailing ", NNNNNNNN and NNNNNNNN" list so a multi-ref call is captured whole.
+_REF_LABEL = r"(?:RF[TPQ]|Request\s+for\s+(?:Proposal|Quotation|Tender)|Contract|Tender)"
+_REF_ONE = re.compile(
+    _REF_LABEL + r"s?\.?\s*(?:No\.?|#)?\s*(\d{8}(?:\s*(?:,|and|&)\s*\d{8})*)", re.I)
 _REF = re.compile(r"\d{8}")
 _TITLE = re.compile(r"^RE:\s*(.+?)(?=^\S|\Z)", re.M | re.S)
-# One award clause: ref ... awarded to WINNER at a total cost not to exceed $AMOUNT.
+# One award clause: "awarded to WINNER at a [total][annual] cost/upset-limit ... $AMOUNT".
+# The ref is NOT required inside the clause (it is associated afterwards by position), and the
+# WINNER is bounded — no '$', at most 90 chars — so it can never run on: the first cut's
+# unbounded `(.+?)` under DOTALL captured 268,757 chars when the nearest cost phrase wasn't the
+# exact expected string (#138). The cost-phrase alternation is widened so the NEAREST one
+# anchors the match. The amount subpattern is the strict grouping form (#73) so a trailing
+# ", plus taxes" comma cannot leak into the number.
 _AWARD = re.compile(
-    r"(?:RFT|RFP|RFQ|Contract)\s*No\.?\s*(\d{8})[^$]*?be\s+awarded\s+to\s+"
-    r"(.+?)\s+at\s+a\s+total\s+cost\s+not\s+to\s+exceed\s+"
-    r"(\$\d{1,3}(?:,\d{3})*(?:\.\d{2})?)",
-    re.S)
+    r"awarded\s+to\s+([^$]{3,90}?)\s+(?:be\s+extended\s+)?"
+    r"at\s+an?\s+(?:total\s+)?(?:annual\s+)?(?:cost|upset\s+limit|fee|price|value)"
+    r"[^$]{0,50}?(\$\s?\d{1,3}(?:,\d{3})*(?:\.\d{2})?)",
+    re.I | re.S)
 # VOR shape: 'establish a Vendor of Record (VOR) arrangement with A and B for ...'
 _VOR = re.compile(r"arrangement\s+with\s+(.+?)\s+for\s+the\s+supply", re.S)
 _BULLETS_HEAD = re.compile(r"received\s+from\s+the\s+following\s+(?:Proponent|vendor)", re.I)
@@ -68,26 +82,39 @@ def _bullet_names(text: str) -> list[str]:
     return names
 
 
+def _ref_occurrences(text: str) -> list[tuple[str, int]]:
+    """Every (8-digit ref, position) mention, in document order. A comma/'and' list under one
+    label yields one entry per number, all sharing the label's position."""
+    occ = []
+    for m in _REF_ONE.finditer(text):
+        for num in _REF.findall(m.group(1)):
+            occ.append((num, m.start()))
+    return occ
+
+
 def parse_trca_report(text: str, report_url: str | None = None) -> list[dict]:
-    refs_m = _REFS.search(text)
-    if not refs_m:
+    occurrences = _ref_occurrences(text)
+    if not occurrences:
         return []
-    refs = _REF.findall(refs_m.group(1))
+    refs = list(dict.fromkeys(num for num, _pos in occurrences))  # ordered, unique
     title_m = _TITLE.search(text)
     title = _squash(title_m.group(1)) if title_m else None
     bidders = _bullet_names(text)
 
     winners_by_ref: dict[str, list] = {r: [] for r in refs}
     seen_amounts_by_ref: dict[str, set] = {r: set() for r in refs}
-    for ref, winner, amount in _AWARD.findall(text):
-        if ref in winners_by_ref:
-            # RECOMMENDATION and RATIONALE both carry an award clause for the same
-            # award, sometimes under different name strings (e.g. legal name vs.
-            # trade name) — dedupe by amount, keeping the first (RECOMMENDATION,
-            # which comes first in document order and carries the fuller legal name).
-            if amount not in seen_amounts_by_ref[ref]:
-                seen_amounts_by_ref[ref].add(amount)
-                winners_by_ref[ref].append((_fix_quotes(_squash(winner)), amount))
+    for m in _AWARD.finditer(text):
+        winner = _fix_quotes(_squash(m.group(1)))
+        amount = m.group(2).replace(" ", "")            # "$ 527,000" -> "$527,000"
+        # Attach the award to the nearest ref mentioned before it — how a multi-ref report
+        # keys each award (armour stone restates "RFT No. 10039753" right before its clause).
+        preceding = [num for num, pos in occurrences if pos <= m.start()]
+        ref = preceding[-1] if preceding else refs[0]
+        # RECOMMENDATION and RATIONALE both carry a clause for the same award, sometimes under
+        # different name strings (legal vs. trade name) — dedupe by amount, keeping the first.
+        if amount not in seen_amounts_by_ref[ref]:
+            seen_amounts_by_ref[ref].add(amount)
+            winners_by_ref[ref].append((winner, amount))
 
     # VOR shape: several winners joined by 'and', no per-winner amounts.
     if not any(winners_by_ref.values()):
@@ -97,8 +124,13 @@ def parse_trca_report(text: str, report_url: str | None = None) -> list[dict]:
             for ref in refs:
                 winners_by_ref[ref] = [(n.strip(), None) for n in names if n.strip()]
 
+    # Only refs that actually carry an award. Broadening ref recall also catches numbers that
+    # are not awards — a losing bid's contract number in the results table (armour stone's
+    # by-barge 10039750), an unrelated contract cited in passing — and a winnerless ref would
+    # be a contentless solicitation row, the same noise the Zoo parser refuses (#135/#138).
     return [{"native_ref": ref, "title": title, "winners": winners_by_ref[ref],
-             "bidders": bidders, "report_url": report_url} for ref in refs]
+             "bidders": bidders, "report_url": report_url}
+            for ref in refs if winners_by_ref[ref]]
 
 
 _FILESTREAM = re.compile(r"""(?:href|src)=["']([^"']*[Ff]ile[Ss]tream\.ashx\?DocumentId=\d+[^"']*)""")

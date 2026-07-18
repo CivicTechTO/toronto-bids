@@ -141,3 +141,45 @@ def test_escribe_document_urls_decodes_html_entities():
             'FileStream.ashx?DocumentId=10661&amp;lang=en">report</a>')
     assert escribe_document_urls(page) == [
         "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=10661&lang=en"]
+
+
+# --- #138: precision + recall against the real corpus -----------------------
+
+def _winners(name):
+    items = parse_trca_report(_read(name + ".txt"))
+    return items, [w for it in items for w in it["winners"]]
+
+
+def test_recall_spelled_out_request_for_quotation_label():
+    items, winners = _winners("trca_rfq_spelled_out_2019")
+    assert items, "report with a spelled-out 'Request for Quotation No.' label must not be dropped"
+    assert any("CDR Young" in (w[0] or "") for w in winners)
+
+
+def test_recall_contract_hash_label():
+    items, winners = _winners("trca_contract_label_2019")
+    assert items, "report labelled 'Contract #NNNNNNNN' must not be dropped"
+    assert any(w[0] == "Hawkins Contracting Services Ltd." for w in winners)
+
+
+def test_multiline_winner_name_is_whole_not_truncated():
+    _items, winners = _winners("trca_multiline_winner_2021")
+    assert any(w[0] == "W.F. Baird & Associates Coastal Engineers Ltd." for w in winners)
+
+
+def test_overcapture_report_now_yields_clean_names():
+    items, winners = _winners("trca_overcapture_2021")
+    assert winners, "the over-capture report must still yield awards"
+    assert any("Wood Environment" in (w[0] or "") for w in winners)
+    assert all(len(w[0]) <= 80 for w in winners)   # was 268757 chars before the fix
+
+
+def test_no_trca_winner_ever_runs_on_across_all_fixtures():
+    import pathlib as _pl
+    for path in sorted(FIXTURES.glob("trca_*.txt")):
+        for it in parse_trca_report(path.read_text()):
+            for name, _amt in it["winners"]:
+                assert name is None or (
+                    len(name) <= 80 and "$" not in name
+                    and " at a " not in name.lower() and "background" not in name.lower()
+                ), f"{path.name}: run-on winner {name!r}"

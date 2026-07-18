@@ -1,0 +1,243 @@
+                                                                                  Item 8.1.
+Section I – Items for Board of Directors Action
+
+TO:           Chair and Members of the Board of Directors
+              Meeting #6/19, Friday, June 21, 2019
+
+FROM:         Sameer Dhalla, Director, Development and Engineering Services
+
+RE:            TORONTO ISLANDS FLOOD CHARACTERIZATION AND RISK
+               ASSESSMENT PROJECT
+               Approval to adopt the Toronto Islands Flood Characterization and Risk
+               Assessment Study as prepared by W.F. Baird & Associates Coastal Engineers
+               Ltd.
+____________________________________________________________________________
+KEY ISSUE
+Report back to the Board of Directors upon conclusion of the Toronto Islands Flood
+Characterization and Risk Assessment Project (Amendment #B74/18).
+
+RECOMMENDATION
+
+IT IS RECOMMENDED THAT the Toronto Islands Flood Characterization and Risk
+Assessment Project report (May 2019) prepared by W.F. Baird & Associates Coastal
+Engineers Ltd. be received;
+
+AND FURTHER THAT staff be directed to work with the City of Toronto to secure funding,
+regulatory approvals, and assist the City with the implementation of the flood mitigation
+alternatives identified in the Toronto Islands Flood Characterization and Risk
+Assessment Project including advancing a Class EA to facilitate implementation of flood
+protection works.
+
+BACKGROUND
+
+At Executive Meeting #6/18, held on August 10, 2018, Resolution #B73/18 was approved as
+follows:
+
+       THAT Contract #10008379 for flood risk characterization and risk assessment
+       engineering services for the Toronto Islands be awarded to W.F. Baird & Associates
+       Coastal Engineers Ltd. at a total cost not to exceed $174,092.00, plus HST, as they are
+       the highest ranked bidder that best meets Toronto and Region Conservation Authority
+       (TRCA) specifications;
+
+       THAT TRCA staff be authorized to approve additional expenditures to a maximum of
+       10% of the total cost of the contract as a contingency allowance, if deemed necessary;
+
+       THAT should staff be unable to execute an acceptable contract with the awarded
+       contractor, staff be authorized to enter into and conclude contract negotiations with the
+       other contractors that submitted tenders, beginning with the next lowest bidder meeting
+       TRCA specifications;
+                                                                                  Item 8.1.
+       AND FURTHER THAT authorized TRCA officials be directed to take all necessary
+       actions to implement the contract, including the signing and execution of any documents.
+
+Also, at Executive Meeting #6/18, held on August 10, 2018, Amendment #B74/18 was approved
+as follows:
+
+       AND FURTHER THAT that TRCA staff report back to the Board at the conclusion of the
+       project.
+
+In the spring of 2017, water levels in Lake Ontario reached levels higher than had been
+measured since record keeping began in 1918. As of the time of writing this report those levels
+have now been matched. The effect of this flooding was significant on the Toronto Islands
+where over 800 residents, almost 30 businesses, and two schools were forced to adapt to rising
+waters and service disruptions. Notably, the closure of the Islands during peak season
+presented a major disruption in tourist and recreational activity which is an important source of
+revenue to the City and local businesses. The island parks also experienced significant
+shoreline erosion, damage and debris accumulation over the spring and summer of 2017. The
+flooding resulted in the activation of the City of Toronto Emergency Operations Centre and
+approximately $8 million in direct and indirect damages related to the closing of Toronto Island
+Park.
+
+In response to the 2017 flood conditions the Toronto and Region Conservation Authority
+(TRCA) and the City of Toronto deployed over 45,000 sandbags, 1000 meter bags, and over a
+dozen industrial pumps to mitigate the effects of the rising water. These assets were positioned
+throughout the islands, leveraging GIS maps with LiDAR imagery that identified areas and
+infrastructure that were threatened by the flood conditions. Mapping also identified the most
+strategic and effective locations to deploy the industrial pumps.
+
+In 2018, TRCA worked with the City of Toronto to repair damaged areas and install naturalized
+berms and sumps to protect strategic areas from potential future funding. The large meter bags
+were removed but the sand was left in place, forming berms that were planted with native
+grasses. Most of the sand from the smaller sandbags was deposited in a central area for future
+use. The installation of ten sumps was completed to collect surface flooding and drain low lying
+and saturated areas with a series of weeper tiles. The City also made significant alterations to
+the ferry docks, allowing for safe passenger embarkation/debarkation for a wider range of lake
+levels.
+
+In 2018, TRCA in collaboration with the City of Toronto, successfully secured $150,000 in grant
+funding from the federal National Disaster Mitigation Program (NDMP), with the City of Toronto
+matching $150,000 for a total of $300,000 for the Toronto Islands Flood Characterization and
+Risk Assessment Project. At TRCA Executive Committee Meeting #6/18 held on August 10,
+2018 Resolution B73/18 approved the award of Contract #10008379 to W.F. Baird & Associates
+Coastal Engineers Ltd. for consulting services to undertake the Toronto Islands Flood
+Characterization and Risk Assessment Project.
+                                                                                    Item 8.1.
+The study consists of four main components:
+
+       1. Flood Characterization Report
+
+       2. Flood Risk Assessment Report
+
+       3. Development of Flood Maps
+
+       4. Flood Mitigation Alternatives Report
+
+Flood Characterization Report
+
+This report describes the conditions that led to the 2017 Lake Ontario high water
+levels; proposes updated return period water levels in Toronto; evaluates the impacts of Plan
+2014 the regulation for the St. Lawrence Seaway and Lake Ontario to regulate water levels on
+Lake Ontario; and reviews recent climate change research related to future Lake Ontario water
+levels. The report concludes that the 2017 high water levels were the result of extreme wet
+weather in the Lake Ontario basin, record inflows from Lake Erie, and reduced outflow capacity
+due to downstream flooding on the St. Lawrence and Ottawa rivers. Return period water level
+analysis indicates that the 100-year return period stillwater level for Lake Ontario should be
+increased from 75.75m to 76.05m International Great Lakes Datum of 1985 (IGLD85). The
+impact of Plan 2014 is estimated to account for 0.07m of this increase, with the remainder of the
+increase attributed to the inclusion of post-regulation data to 2018. With the new peak record
+water levels recorded in 2019, however, the statistical analysis will need to be reviewed once
+more to adjust the 100-year return period water level to account for this year’s significant levels.
+The latest climate change research was also reviewed to estimate potential future changes to
+static water levels, storm surge, and waves at Toronto Islands. Current research suggests that
+average static water levels in the Great Lakes will remain similar or decline slightly due to
+increased evapotranspiration. The anticipated impacts of climate change on static water levels
+are less than the natural variability of long-term lake levels and will likely be manageable within
+the current regulation plan, therefore the consultant did not recommend to further increase or
+decrease the 100-year static water level due to climate change. Climate change considerations
+for specific storm events and correlated surge and wave effects, however, can be considered
+through ensuring sufficient freeboard (the height above the recorded high water mark of a
+structure associated with the water) in the design of mitigation measures.
+
+Flood Risk Assessment Report
+
+The study was commissioned to inform TRCA and the City of Toronto in identifying and
+understanding risk to property and infrastructure on the Toronto Islands. This report quantifies
+the financial costs and other impacts to Toronto Island residents, businesses, and the City of
+Toronto for the different return period flood events under existing conditions. Using a parallel
+process as that for riverine flooding, tangible (financial) damages for Toronto Island residents
+and businesses were estimated using the Alberta Provincial Flood Damages Assessment Study
+(PFDAS) method, which was endorsed by Natural Resources Canada’s Guide to Flood
+Vulnerability Functions. Residential indirect damages such as flood mitigation, cleanup, etc.
+were included as a 15% markup on the structural and contents damages. Non-residential
+                                                                                   Item 8.1.
+indirect damages were estimated using a method of business disruption and productivity rates
+outlined in the Canadian Floodplain Mapping Guidelines Series by Natural Resources Canada.
+All damages were adjusted to Ontario 2017 dollars using indexing methods. Estimated total
+tangible damages to residents and businesses range from $0.5M to $6.5M for the 2-year and
+500-year flood event, respectively. The average annual tangible damages are estimated to be
+$387,000 per year. City of Toronto damages were not included in the damage estimates due to
+the nature of the buildings (no appropriate Provincial Flood Damage Assessment Study
+category), and the fact that indirect damages such as flood mitigation, cleanup, lost ferry
+revenues, lost rents, etc. would not be captured in the damage estimates. Intangible damages
+are non-financial damages such as impacts to health, society, and the environment. The more
+severe intangible impacts include respiratory conditions that could develop due to mould,
+change in the social fabric of the island community, and loss of mature trees.
+
+Flood Mapping
+
+A series of Toronto Islands Flood Depth Maps indicating areas of inundation with varying water
+levels (from 75.3m to 76.2m) were developed. These maps are based on recent LiDAR
+topographic maps and were utilized to prioritize the ongoing response during the 2019 high
+levels, building upon the maps developed by TRCA’s GIS department in 2017.
+
+Flood Mitigation Alternatives Report
+
+This new report identifies flood mitigation alternatives for the areas most affected by the 2017
+flood. Flood mitigation concepts were not developed for private businesses such as the yacht
+clubs, but instead focused on community-scale flood protection measures. The alternatives
+build upon recommendations made by Toronto Island residents and include protecting low-lying
+residential areas with a berm or dyke structure, elevating low-lying roads, increasing the crest
+elevation of shore protection structures, and directing surface drainage to the sumps that were
+installed in 2018. This report presents the conceptual designs, estimated quantities, and
+budgetary cost estimates for the flood mitigation alternatives for six key areas. The estimated
+total cost of the project varies between $13.9M and $15.9M depending on the flood protection
+option at Ward’s Island.
+
+In summary, the Toronto Islands Flood Characterization and Risk Assessment Project provides
+TRCA and the City of Toronto with an improved understanding of flood scenarios and
+community and infrastructure vulnerabilities and risks. It also provides direction on future flood
+mitigation investments, where TRCA’s experience in implementing shoreline and flood
+protection measures throughout the Toronto waterfront areas could be leveraged in the delivery
+of these flood protection measures.
+
+RATIONALE
+
+The Toronto Islands Flood Characterization and Risk Assessment Project was conducted to
+assist the City and TRCA to respond to and plan for future flood conditions. As of June 2019,
+Lake Ontario water levels have exceeded the previous records of 2017 and the utility of this
+study has already been demonstrated during the current flood condition. The Flood
+                                                                                     Item 8.1.
+Characterization Report provided background information that informed the short-term
+mitigation measures for the current scenario. TRCA and the City were able to initiate flood
+mitigation efforts proactively in advance of the 2019 flood. The flood mapping allowed for the
+effective deployment of resources in response to the rising water levels.
+
+The City of Toronto has also initiated a Toronto Islands Park Master Plan and the Toronto
+Islands Flood Characterization and Risk Assessment Project will be a key resource for this
+project. Staff expect that there will be many opportunities integrate the flood protection capital
+works into overall park improvements that benefit the public realm, in keeping with the City of
+Toronto’s Climate Resilience Framework principle of integrating risk reduction with community
+enhancement.
+
+Relationship to Building the Living City, the TRCA 2013-2022 Strategic Plan
+This report supports the following strategies set forth in the TRCA 2013-2022 Strategic Plan:
+Strategy 2 – Manage our regional water resources for current and future generations
+Strategy 4 – Create complete communities that integrate nature and the built
+environment
+Strategy 8 – Gather and share the best sustainability knowledge
+
+FINANCIAL DETAILS
+
+In 2018, TRCA in collaboration with the City of Toronto, successfully secured $150,000 in grant
+funding from the federal NDMP, with the City of Toronto matching funding for a total of $300,000
+for the Toronto Islands Flood Characterization and Risk Assessment Project. Staff entered into
+a Service Level Agreement with the City of Toronto for the development of the Toronto Islands
+Flood Characterization and Risk Assessment Project. Funds for this project are identified in
+account code 251-87.
+
+The Toronto Islands Flood Characterization and Risk Assessment Project presents the
+conceptual designs, estimated quantities and budgetary cost estimates for implementation of
+works that vary between $13.9M and $15.9M depending on the flood protection options.
+Additional costs will include regulatory approvals, public consultation and detailed design. No
+funding sources have confirmed for this work, however once design costs are factored in and
+final construction costs are determined, it may be possible to group the island flood protection
+measures with other waterfront flood protection measures and pursue matching funding through
+the federal Disaster Mitigation and Adaptation Fund.
+
+DETAILS OF WORK TO BE DONE
+
+The Toronto Islands Flood Characterization and Risk Assessment Project will be circulated to
+relevant TRCA and City of Toronto departments.
+
+The Flood Mitigation Alternatives Report outlines flood mitigation alternatives. A Conservation
+Authority or MEA Class Environmental Assessment for Remedial Flood and Erosion Control is
+required to proceed with the development and eventual implementation of flood mitigation
+alternatives. TRCA will continue to work with the City of Toronto to identify and secure funding
+to undertake the Class EA and implementation of the flood mitigation alternatives.
+                                                                           Item 8.1.
+Report prepared by: Danielle Dellandrea, ext. 5240, Rehana Rajabali, ext. 5220
+Emails: ddellandrea@trca.on.ca, rehana.rajabali@trca.ca
+For Information contact: Karen McDonald ext. 5248, Rehana Rajabali ext. 5220
+Emails: karen.mcdonald@trca.ca , rehana.rajabali@trca.ca
+Date: May 30, 2019
+
