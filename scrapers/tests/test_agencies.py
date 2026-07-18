@@ -123,6 +123,24 @@ def test_enrich_agencies_offline_parses_cached(conn, monkeypatch, capsys):
     assert conn.execute("SELECT COUNT(*) FROM agency_award").fetchone()[0] >= 2
 
 
+def test_export_buyers_section(conn):
+    from toronto_bids.export.document import build_export_document
+    ids = seed_buyers(conn)
+    db.upsert_row(conn, AgencyAward(
+        buyer_id=ids["trca"], native_ref="10039751",
+        supplier_name_raw="Gott Natural Stone '99 Inc.", award_amount="$567,648",
+        value_confidential=0, award_date=None, report_url=None, source="trca_board"),
+        overwrite=True)
+    doc = build_export_document(conn, generated_at="2026-07-18T00:00:00+00:00")
+    buyers = {b["slug"]: b for b in doc["buyers"]}
+    assert set(buyers) == {"toronto-zoo", "trca"}
+    assert buyers["trca"]["partnered"] == 1        # consumers can segment
+    assert buyers["trca"]["awards"][0]["native_ref"] == "10039751"
+    assert buyers["toronto-zoo"]["awards"] == []
+    # City-only headline sections keep their meaning: no agency rows leak in.
+    assert all("native_ref" not in s for s in doc["solicitations"])
+
+
 def test_portal_source_is_gated():
     import pytest as _pytest
     from toronto_bids import config
