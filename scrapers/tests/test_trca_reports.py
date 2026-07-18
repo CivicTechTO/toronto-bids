@@ -22,14 +22,18 @@ def test_armour_stone_refs_and_title():
 
 
 def test_armour_stone_winners_and_amounts():
+    # RECOMMENDATION and RATIONALE both carry an award clause for the same award
+    # (same amount, sometimes a different name string) — must dedupe to one winner
+    # per ref, not one row per name variant (#73-class double-count).
     items = {i["native_ref"]: i for i in parse_trca_report(_read("trca_armour_stone_2023.txt"))}
-    w751 = dict(items["10039751"]["winners"])
-    assert '1035477 Ontario Ltd. ("Glenn Windrem Trucking")' in w751 or \
-           any("Glenn Windrem" in k for k in w751)
-    assert "$1,193,040" in w751.values()
-    w753 = dict(items["10039753"]["winners"])
-    assert any("Gott Natural Stone" in k for k in w753)
-    assert "$567,648" in w753.values()
+    assert items["10039751"]["winners"] == [
+        ('1035477 Ontario Ltd. ("Glenn Windrem Trucking")', "$1,193,040"),
+    ]
+    assert len(items["10039751"]["winners"]) == 1
+    assert items["10039753"]["winners"] == [
+        ("Gott Natural Stone '99 Inc.", "$567,648"),
+    ]
+    assert len(items["10039753"]["winners"]) == 1
 
 
 def test_armour_stone_bidder_list_is_clean_bullets():
@@ -69,7 +73,7 @@ def test_store_trca_reports_lands_rows(conn):
         ("https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=14809", text))
     got = store_trca_reports(conn, ids["trca"])
     assert got["solicitations"] == 2         # 10039751 + 10039753
-    assert got["awards"] >= 2                # one winner each, with amounts
+    assert got["awards"] == 2                # one winner each, with amounts (no dupes)
     assert got["bids"] == 8                  # 4 bidders x 2 refs
     row = conn.execute("SELECT award_amount_numeric FROM agency_award "
                        "WHERE native_ref='10039751'").fetchone()

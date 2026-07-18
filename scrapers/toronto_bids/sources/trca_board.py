@@ -75,11 +75,16 @@ def parse_trca_report(text: str, report_url: str | None = None) -> list[dict]:
     bidders = _bullet_names(text)
 
     winners_by_ref: dict[str, list] = {r: [] for r in refs}
+    seen_amounts_by_ref: dict[str, set] = {r: set() for r in refs}
     for ref, winner, amount in _AWARD.findall(text):
         if ref in winners_by_ref:
-            entry = (_fix_quotes(_squash(winner)), amount)
-            if entry not in winners_by_ref[ref]:
-                winners_by_ref[ref].append(entry)
+            # RECOMMENDATION and RATIONALE both carry an award clause for the same
+            # award, sometimes under different name strings (e.g. legal name vs.
+            # trade name) — dedupe by amount, keeping the first (RECOMMENDATION,
+            # which comes first in document order and carries the fuller legal name).
+            if amount not in seen_amounts_by_ref[ref]:
+                seen_amounts_by_ref[ref].add(amount)
+                winners_by_ref[ref].append((_fix_quotes(_squash(winner)), amount))
 
     # VOR shape: several winners joined by 'and', no per-winner amounts.
     if not any(winners_by_ref.values()):
