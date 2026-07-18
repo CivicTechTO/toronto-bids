@@ -5,9 +5,10 @@ report PDFs are plain-HTTP legdocs (e.g. /legdocs/mmis/2025/zb/bgrd/backgroundfi
 Reuses bid_award_panel's prober — references cannot be derived, so probe-and-confirm.
 """
 import hashlib
+import re
 
 from toronto_bids import config
-from toronto_bids.models import BackgroundPdf
+from toronto_bids.models import AgencyAward, AgencySolicitation, BackgroundPdf
 from toronto_bids.sources.bid_award_panel import (cached_agendas, parse_agenda_pdfs,
                                                   scrape_agendas)
 from toronto_bids.store import db
@@ -58,3 +59,63 @@ def download_zoo_reports(conn, http, agendas: dict, log=lambda _m: None) -> int:
         n += 1
         log(f"  zoo report {n}: {row['url']}")
     return n
+
+
+# ---------------------------------------------------------------------------
+# Report parser (pure) + storage (#135 Task 6)
+# ---------------------------------------------------------------------------
+
+_ZOO_REF = re.compile(r"\b(R[FQ][TPQ][\s-]*\d{1,3}(?:\s*\(\d{4}-\d{2}\))?)")
+_CONFIDENTIAL = re.compile(r"CONFIDENTIAL\s+ATTACHMENT", re.I)
+_ZOO_WINNER = re.compile(
+    r"award(?:ed)?\s+(?:of\s+)?(?:the\s+)?[\w\s–-]{0,80}?\s+to\s+"
+    r"([A-Z][A-Za-z0-9&.,'’ \-]+?(?:Inc|Ltd|Limited|Corp|Corporation|Company)\.?)")
+_ZOO_AMOUNT = re.compile(r"total\s+cost\s+(?:not\s+to\s+exceed\s+)?(\$[\d,]+(?:\.\d{2})?)", re.I)
+_SUBJECT = re.compile(r"^(?:Subject:|\s*)(.*(?:Tender|RFT|RFP|Award|Contract).*)$", re.M)
+
+
+def parse_zoo_report(text: str, fallback_ref: str, report_url: str | None = None) -> dict | None:
+    if "award" not in text.lower():
+        return None                          # not an award report
+    confidential = 1 if _CONFIDENTIAL.search(text) else 0
+    ref_m = _ZOO_REF.search(text)
+    native_ref = re.sub(r"\s+", " ", ref_m.group(1)).strip() if ref_m else fallback_ref
+    winner_m = _ZOO_WINNER.search(text)
+    amount_m = None if confidential else _ZOO_AMOUNT.search(text)
+    title_m = _SUBJECT.search(text)
+    return {
+        "native_ref": native_ref,
+        "title": re.sub(r"\s+", " ", title_m.group(1)).strip() if title_m else None,
+        "winner": winner_m.group(1).strip() if winner_m else None,
+        "amount": amount_m.group(1) if amount_m else None,
+        "confidential": confidential,
+        "report_url": report_url,
+    }
+
+
+def store_zoo_reports(conn, buyer_id: int) -> dict:
+    """Parse held ZB reports into agency rows. A confidential award is recorded as an
+    award row with NULL supplier/amount and value_confidential=1 — the award happened;
+    the value is withheld, which is itself a fact worth archiving."""
+    counts = {"solicitations": 0, "awards": 0}
+    for row in conn.execute(
+            "SELECT reference, url, text FROM background_pdf WHERE kind='agency_board' "
+            "AND url LIKE '%/zb/%' AND text IS NOT NULL ORDER BY url").fetchall():
+        got = parse_zoo_report(row["text"], fallback_ref=row["reference"] or row["url"],
+                               report_url=row["url"])
+        if got is None:
+            continue
+        db.upsert_row(conn, AgencySolicitation(
+            buyer_id=buyer_id, native_ref=got["native_ref"], title=got["title"],
+            status="awarded", posted_date=None, closing_date=None, portal_url=None,
+            source="zoo_board"), overwrite=False)
+        counts["solicitations"] += 1
+        db.upsert_row(conn, AgencyAward(
+            buyer_id=buyer_id, native_ref=got["native_ref"],
+            supplier_name_raw=got["winner"] if not got["confidential"] else None,
+            award_amount=got["amount"],
+            value_confidential=got["confidential"], award_date=None,
+            report_url=got["report_url"], source="zoo_board"), overwrite=True)
+        counts["awards"] += 1
+    conn.commit()
+    return counts

@@ -1,5 +1,41 @@
+import pathlib
+
 from toronto_bids.sources.bid_award_panel import discover_meetings
-from toronto_bids.sources.zoo_board import ZB_TERM_STARTS
+from toronto_bids.sources.zoo_board import ZB_TERM_STARTS, parse_zoo_report
+
+FIXTURES = pathlib.Path(__file__).parent / "fixtures" / "agencies"
+
+
+def _read(name):
+    return (FIXTURES / name).read_text()
+
+
+def test_energy_retrofit_names_public_winner():
+    got = parse_zoo_report(_read("zoo_energy_retrofit_2019.txt"), fallback_ref="2019.ZB1.6")
+    assert got["native_ref"] == "RFP 18 (2018-03)"
+    assert got["confidential"] == 0
+    assert "Ecosystem" in got["winner"]
+
+
+def test_red_panda_is_confidential_award():
+    got = parse_zoo_report(_read("zoo_red_panda_2025.txt"), fallback_ref="2025.ZB15.3")
+    assert got["confidential"] == 1
+    assert got["amount"] is None            # value withheld, not unpublished
+    assert got["native_ref"] == "RFP38"     # the report writes it unspaced
+
+
+def test_fallback_ref_when_report_names_none():
+    text = ("REPORT FOR ACTION WITH\nCONFIDENTIAL ATTACHMENT\n"
+            "Subject: Widget Tender Award\n"
+            "This report recommends the award of the widget contract.")
+    got = parse_zoo_report(text, fallback_ref="2025.ZB9.1")
+    assert got["native_ref"] == "2025.ZB9.1"
+
+
+def test_perimeter_fence_extracts_rft_ref():
+    got = parse_zoo_report(_read("zoo_perimeter_fence_2025.txt"), fallback_ref="2025.ZB17.2")
+    assert got["confidential"] == 1
+    assert got["native_ref"] == "RFT-42"
 
 
 def test_discover_meetings_accepts_custom_term_starts():
