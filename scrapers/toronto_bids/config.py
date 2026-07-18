@@ -109,3 +109,7 @@ BIDS_TENDERS_PORTALS = [
     {"slug": "trca", "portal_url": "https://trca.bidsandtenders.ca/",
      "enabled": True, "permission": "docs/permissions/2026-07-18-trca.md"},
 ]
+
+# Raw bids&tenders listing JSON captured by `--record`, one file per record — the seed for
+# real parser fixtures once a portal has data (#135).
+PORTAL_RECORDINGS_DIR = DATA_DIR / "agencies" / "portal_recordings"

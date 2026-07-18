@@ -1,18 +1,174 @@
-"""The bids&tenders portal source (#135) — GATED, and currently a gate only.
+"""The bids&tenders portal source (#135) — listing metadata, PROVISIONAL parser.
 
-Listing capture is written when the first written permission lands in docs/permissions/:
-the parser needs recorded fixtures, and recording a fixture means fetching the portal,
-which is exactly what the gate forbids until then. Bid DOCUMENTS are out of scope
-regardless of permission state — they sit behind the Vendor clickwrap.
+Reads public bid listings from a body's bids&tenders portal via its plain-HTTP JSON grid
+endpoint (no browser). GATED: fetch_listings raises PermissionError unless the portal's
+config entry is enabled, which happens only when the body's written grant is recorded in
+docs/permissions/ (the PMMD/Ariba precedent). Listings only — bid documents sit behind the
+Vendor clickwrap and are never fetched.
+
+PROVISIONAL: as of 2026-07-18 both permitted portals (TRCA, Zoo) are empty, so parse_listing
+is mapped against the field names documented in the portal's own grid JS but has NOT been
+validated against a real record. When a bid first appears, `tb enrich-agencies --portal
+--record` captures real JSON to fixtures and the parser is completed and re-validated.
 """
+import json
+import re
+import time
+
+import httpx
+
+from toronto_bids import config
+from toronto_bids.buyers import seed_buyers
+from toronto_bids.models import AgencySolicitation
+from toronto_bids.store import db
+
+_LANDING = "Module/Tenders/en"
+_SEARCH = "Module/Tenders/en/Tender/Search/"
+_NODE_RE = re.compile(r'id="NodeId"[^>]*value="([^"]+)"')
+_TOKEN_RE = re.compile(r'name="__RequestVerificationToken"[^>]*value="([^"]+)"')
+# The status codes the endpoint accepts (Open / Awarded / Cancelled / ...). The exact
+# code->label mapping is recorded when data first appears; the sweep covers them all.
+_STATUS_CODES = range(0, 6)
+_PAGE = 50
+_DELAY = 1.5
 
 
-def fetch_listings(http, portal: dict):
+def _search_params(status: int, start: int, limit: int = _PAGE) -> dict:
+    # NEVER include 'sort' — 'sort=ClosingDate desc,Id' (space/comma) triggers a server error
+    # that redirects to Error?aspxerrorpath (verified live 2026-07-18). Default order is fine.
+    return {"status": status, "limit": limit, "start": start, "dir": "desc", "from": "", "to": ""}
+
+
+def fetch_listings(portal: dict, *, delay: float = _DELAY, log=lambda _m: None):
+    """Yield every listing record for a portal, across all statuses, paged and rate-limited.
+
+    Manages its own httpx.Client (the antiforgery cookie set on the landing GET must persist
+    to the search POSTs — a session concern specific to this source, not the shared HttpClient).
+    Yields each raw JSON record with `buyer_slug` and `status_code` attached. On an empty portal
+    (total=0, the current reality) this yields nothing — a clean no-op.
+    """
     if not portal.get("enabled"):
         raise PermissionError(
             f"bids&tenders portal '{portal['slug']}' is not enabled: fetching requires the "
             f"body's written permission recorded in docs/permissions/ (see #135 / #103). "
             f"Current permission record: {portal.get('permission')!r}")
-    raise NotImplementedError(
-        "Listing capture is unwritten by design — record fixtures under the granted "
-        "permission first, then implement normalize() against them (spec 2026-07-18).")
+    base = portal["portal_url"].rstrip("/") + "/"
+    client = httpx.Client(
+        headers={"User-Agent": config.USER_AGENT, "X-Requested-With": "XMLHttpRequest"},
+        timeout=config.HTTP_TIMEOUT, follow_redirects=True)
+    try:
+        land = client.get(base + _LANDING).text
+        node_m, tok_m = _NODE_RE.search(land), _TOKEN_RE.search(land)
+        if not (node_m and tok_m):
+            raise RuntimeError(f"bids&tenders {portal['slug']}: no NodeId/token on landing page")
+        node, token = node_m.group(1), tok_m.group(1)   # FIRST token (bidDetail-scoped one 302s)
+        for status in _STATUS_CODES:
+            start = 0
+            while True:
+                time.sleep(delay)                        # rate-limit (permission condition)
+                resp = client.post(base + _SEARCH + node,
+                                   params=_search_params(status, start),
+                                   data={"keywords": "", "__RequestVerificationToken": token})
+                try:
+                    payload = resp.json()
+                except ValueError:
+                    log(f"  {portal['slug']} status={status} start={start}: non-JSON, skipping")
+                    break
+                rows = payload.get("data") or []
+                total = payload.get("total") or 0
+                for rec in rows:
+                    yield {**rec, "buyer_slug": portal["slug"], "status_code": status}
+                start += len(rows)
+                if not rows or start >= total:
+                    break
+    finally:
+        client.close()
+
+
+# Portal base per slug, for building a record's detail URL. Derived from config so the two
+# stay in sync.
+_PORTAL_BASE = {p["slug"]: p["portal_url"].rstrip("/") for p in config.BIDS_TENDERS_PORTALS}
+
+_WS = re.compile(r"\s+")
+
+
+def _native_ref(record: dict) -> str:
+    """The body's own bid identifier, normalized like the board-report path (trim/upper/
+    collapse-ws) so a portal row and a board-report row for one procurement share a key."""
+    raw = record.get("ReferenceNumber") or record.get("BidNumber") or record.get("Id") or ""
+    return _WS.sub(" ", str(raw)).strip().upper()
+
+
+def parse_listing(record: dict, buyer_id: int) -> AgencySolicitation:
+    """Map one raw portal record to an AgencySolicitation. PROVISIONAL (see module docstring):
+    field names/formats are from the grid JS, unverified until a real record is captured."""
+    base = _PORTAL_BASE.get(record.get("buyer_slug"), "")
+    rid = record.get("Id")
+    portal_url = f"{base}/Module/Tenders/en/Tender/Detail/{rid}" if (base and rid) else None
+    return AgencySolicitation(
+        buyer_id=buyer_id,
+        native_ref=_native_ref(record),
+        title=record.get("Title"),
+        status=record.get("StatusText") or record.get("Status"),
+        posted_date=record.get("DatePosted") or record.get("PostDate"),
+        closing_date=record.get("ClosingDate") or record.get("BidClosingDate"),
+        portal_url=portal_url,
+        source="bids_tenders",
+    )
+
+
+def store_listings(conn, records, buyer_ids: dict) -> int:
+    """Upsert each parsed listing into agency_solicitation with overwrite=False (backfill):
+    fills any NULL field — a portal-only solicitation gets its full record including title,
+    while a board-report row keeps its title/status and only has its empty dates filled in.
+    (Nightly status refresh of an open bid is intentionally NOT done here — revisited when the
+    portals have real data and the parser is validated, #135.) Skips a record whose buyer_slug
+    is not a seeded buyer. Returns rows upserted."""
+    n = 0
+    for record in records:
+        buyer_id = buyer_ids.get(record.get("buyer_slug"))
+        if buyer_id is None:
+            continue
+        row = parse_listing(record, buyer_id)
+        db.upsert_row(conn, row, overwrite=False)
+        n += 1
+    conn.commit()
+    return n
+
+
+def record_listings(records, out_dir) -> int:
+    """Write each raw record to out_dir/<slug>-<status>-<n>.json — the seed for real fixtures
+    once a portal has data. Returns the count written."""
+    import pathlib
+    out = pathlib.Path(out_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    n = 0
+    for record in records:
+        slug = record.get("buyer_slug", "unknown")
+        status = record.get("status_code", "x")
+        (out / f"{slug}-{status}-{n}.json").write_text(json.dumps(record, indent=1, default=str))
+        n += 1
+    return n
+
+
+def run_portal_capture(conn, *, record: bool = False, only=None, log=lambda _m: None) -> dict:
+    """Fetch + store (and optionally record) every enabled portal, per-body isolated: one
+    body's failure is caught and reported, never stops the others. Returns {slug: count | 'FAILED: ...'}."""
+    buyer_ids = seed_buyers(conn)
+    result = {}
+    for portal in config.BIDS_TENDERS_PORTALS:
+        if not portal["enabled"]:
+            continue
+        if only and portal["slug"] not in only:
+            continue
+        try:
+            records = list(fetch_listings(portal, log=log))
+            if record:
+                written = record_listings(records, config.PORTAL_RECORDINGS_DIR)
+                log(f"  {portal['slug']}: recorded {written} raw record(s)")
+            result[portal["slug"]] = store_listings(conn, records, buyer_ids)
+            log(f"  {portal['slug']}: {result[portal['slug']]} listing(s) stored")
+        except Exception as exc:                       # per-body isolation (empty portal is fine; a real error is caught)
+            result[portal["slug"]] = f"FAILED: {exc}"
+            log(f"  FAILED {portal['slug']}: {exc}")
+    return result

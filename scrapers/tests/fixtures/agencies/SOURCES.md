@@ -50,3 +50,13 @@ find nothing on the real *year* page. (Discovery no longer walks the year page a
 it POSTs GetCalendarMeetings, above.) `escribe_document_urls` still runs on the meeting
 *detail* pages, which ARE server-rendered with `FileStream.ashx` anchors; this
 hand-written fixture exercises that extractor on the anchor shapes it must find.
+
+## bids_tenders_record_sample.json — SYNTHETIC (#135)
+
+Hand-built, NOT a real capture. As of 2026-07-18 both permitted bids&tenders portals (TRCA,
+Zoo) are empty (total=0, all statuses), so no real listing record exists to record. This
+fixture matches the field names documented in the portal's grid JS
+(Module/Tenders/Resources/scriptsV2/home/index.js: Id, Title, ClosingDate, Documents,
+Addendums, PlanTakers) and exercises parse_listing's mapping mechanics only. `parse_listing`
+is PROVISIONAL until `tb enrich-agencies --portal --record` captures a real record and replaces
+this fixture (#135 deferred item).
