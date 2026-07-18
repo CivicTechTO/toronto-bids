@@ -2,7 +2,11 @@ import sqlite3
 from dataclasses import fields
 from importlib import resources
 
-from toronto_bids.models import Award, Bid, CapitalProject, CompositeAward, NonCompetitive, Solicitation, AribaPosting, AribaAttachment, SuspendedFirm, Supplier, CouncilItem, BackgroundPdf
+from toronto_bids.models import (Award, Bid, Buyer, AgencyAward, AgencyBid,
+                                 AgencySolicitation, CapitalProject, CompositeAward,
+                                 NonCompetitive, Solicitation, AribaPosting,
+                                 AribaAttachment, SuspendedFirm, Supplier, CouncilItem,
+                                 BackgroundPdf)
 
 # model -> (table, conflict-key columns). A model's fields ARE the table's writable
 # columns, in INSERT order; auto/default columns (id, first_seen, last_seen, supplier_id)
@@ -22,6 +26,11 @@ _TABLES = {
     Bid: ("bid", ["reference", "document_number", "bidder_name_raw", "bid_price", "source"]),
     CompositeAward: ("composite_award", ["call_number", "supplier_name_raw",
                                          "award_value", "source"]),
+    Buyer: ("buyer", ["slug"]),
+    AgencySolicitation: ("agency_solicitation", ["buyer_id", "native_ref"]),
+    AgencyAward: ("agency_award", ["buyer_id", "native_ref", "supplier_name_raw",
+                                   "award_amount", "source"]),
+    AgencyBid: ("agency_bid", ["buyer_id", "native_ref", "bidder_name_raw", "source"]),
 }
 
 # Tables whose uniqueness is enforced by an expression index rather than a column list, so
@@ -34,6 +43,8 @@ _CONFLICT_TARGETS = {
            "COALESCE(bid_price, ''), source",
     "composite_award": "call_number, COALESCE(supplier_name_raw, ''), "
                        "COALESCE(award_value, ''), source",
+    "agency_award": "buyer_id, native_ref, COALESCE(supplier_name_raw, ''), "
+                    "COALESCE(award_amount, ''), source",
 }
 
 
@@ -241,7 +252,8 @@ def upsert_row(conn, row, *, overwrite: bool) -> None:
 def counts(conn) -> dict:
     tables = ["solicitation", "award", "noncompetitive", "ariba_posting",
               "suspended_firm", "supplier", "capital_project", "bid", "council_item",
-              "background_pdf", "composite_award", "sync_run"]
+              "background_pdf", "composite_award", "sync_run", "buyer",
+              "agency_solicitation", "agency_award", "agency_bid"]
     return {t: conn.execute(f"SELECT COUNT(*) FROM {t}").fetchone()[0] for t in tables}
 
 
