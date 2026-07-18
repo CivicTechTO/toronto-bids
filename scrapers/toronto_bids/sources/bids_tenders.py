@@ -81,3 +81,35 @@ def fetch_listings(portal: dict, *, delay: float = _DELAY, log=lambda _m: None):
                     break
     finally:
         client.close()
+
+
+# Portal base per slug, for building a record's detail URL. Derived from config so the two
+# stay in sync.
+_PORTAL_BASE = {p["slug"]: p["portal_url"].rstrip("/") for p in config.BIDS_TENDERS_PORTALS}
+
+_WS = re.compile(r"\s+")
+
+
+def _native_ref(record: dict) -> str:
+    """The body's own bid identifier, normalized like the board-report path (trim/upper/
+    collapse-ws) so a portal row and a board-report row for one procurement share a key."""
+    raw = record.get("ReferenceNumber") or record.get("BidNumber") or record.get("Id") or ""
+    return _WS.sub(" ", str(raw)).strip().upper()
+
+
+def parse_listing(record: dict, buyer_id: int) -> AgencySolicitation:
+    """Map one raw portal record to an AgencySolicitation. PROVISIONAL (see module docstring):
+    field names/formats are from the grid JS, unverified until a real record is captured."""
+    base = _PORTAL_BASE.get(record.get("buyer_slug"), "")
+    rid = record.get("Id")
+    portal_url = f"{base}/Module/Tenders/en/Tender/Detail/{rid}" if (base and rid) else None
+    return AgencySolicitation(
+        buyer_id=buyer_id,
+        native_ref=_native_ref(record),
+        title=record.get("Title"),
+        status=record.get("StatusText") or record.get("Status"),
+        posted_date=record.get("DatePosted") or record.get("PostDate"),
+        closing_date=record.get("ClosingDate") or record.get("BidClosingDate"),
+        portal_url=portal_url,
+        source="bids_tenders",
+    )
