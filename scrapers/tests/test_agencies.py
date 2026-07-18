@@ -1,3 +1,4 @@
+import pathlib
 import sqlite3
 
 import pytest
@@ -92,3 +93,31 @@ def test_supplier_dimension_spans_agency_tables(conn):
     linked = conn.execute(
         "SELECT COUNT(*) FROM agency_bid WHERE supplier_id IS NOT NULL").fetchone()[0]
     assert linked == 1
+
+
+def test_enrich_agencies_offline_parses_cached(conn, monkeypatch, capsys):
+    """Offline default: no network, parses whatever background_pdf already holds."""
+    from toronto_bids import cli
+    ids = seed_buyers(conn)
+    text = (pathlib.Path(__file__).parent / "fixtures" / "agencies"
+            / "trca_armour_stone_2023.txt").read_text()
+    conn.execute("INSERT INTO background_pdf (url, kind, sha256, text) "
+                 "VALUES ('https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=14809',"
+                 " 'agency_board', 'x', ?)", (text,))
+    conn.commit()
+
+    class _NoClose:
+        """sqlite3.Connection is a C type — its methods can't be monkeypatched directly
+        (see test_nightly.py's _CloseFails), so proxy everything except close."""
+        def close(self):
+            pass
+
+        def __getattr__(self, name):
+            return getattr(conn, name)
+
+    monkeypatch.setattr(cli, "_open_db", lambda: _NoClose())
+    rc = cli.main(["enrich-agencies", "--only", "trca"])
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "trca" in out and "awards" in out
+    assert conn.execute("SELECT COUNT(*) FROM agency_award").fetchone()[0] >= 2
