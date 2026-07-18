@@ -69,3 +69,27 @@ def test_store_listings_enriches_a_board_report_row(conn):
 def test_store_listings_empty_is_noop(conn):
     ids = seed_buyers(conn)
     assert store_listings(conn, [], ids) == 0
+
+
+def test_record_listings_writes_one_file_per_record(tmp_path):
+    from toronto_bids.sources.bids_tenders import record_listings
+    recs = [dict(_sample(), status_code=1), dict(_sample(), status_code=3)]
+    n = record_listings(recs, tmp_path)
+    assert n == 2
+    written = sorted(p.name for p in tmp_path.glob("*.json"))
+    assert all(name.startswith("trca-") for name in written)
+
+
+def test_run_portal_capture_isolates_a_failing_body(conn, monkeypatch):
+    from toronto_bids.sources import bids_tenders as bt
+    ids = seed_buyers(conn)
+
+    def fake_fetch(portal, **_kw):
+        if portal["slug"] == "trca":
+            raise RuntimeError("boom")            # one body fails
+        yield dict(_sample(), buyer_slug="toronto-zoo")
+
+    monkeypatch.setattr(bt, "fetch_listings", fake_fetch)
+    result = bt.run_portal_capture(conn, log=lambda _m: None)
+    assert result["toronto-zoo"] == 1             # zoo still captured
+    assert "trca" in result and result["trca"] == "FAILED: boom"   # trca isolated, recorded

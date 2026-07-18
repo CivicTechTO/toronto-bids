@@ -11,12 +11,14 @@ is mapped against the field names documented in the portal's own grid JS but has
 validated against a real record. When a bid first appears, `tb enrich-agencies --portal
 --record` captures real JSON to fixtures and the parser is completed and re-validated.
 """
+import json
 import re
 import time
 
 import httpx
 
 from toronto_bids import config
+from toronto_bids.buyers import seed_buyers
 from toronto_bids.models import AgencySolicitation
 from toronto_bids.store import db
 
@@ -132,3 +134,41 @@ def store_listings(conn, records, buyer_ids: dict) -> int:
         n += 1
     conn.commit()
     return n
+
+
+def record_listings(records, out_dir) -> int:
+    """Write each raw record to out_dir/<slug>-<status>-<n>.json — the seed for real fixtures
+    once a portal has data. Returns the count written."""
+    import pathlib
+    out = pathlib.Path(out_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    n = 0
+    for record in records:
+        slug = record.get("buyer_slug", "unknown")
+        status = record.get("status_code", "x")
+        (out / f"{slug}-{status}-{n}.json").write_text(json.dumps(record, indent=1, default=str))
+        n += 1
+    return n
+
+
+def run_portal_capture(conn, *, record: bool = False, only=None, log=lambda _m: None) -> dict:
+    """Fetch + store (and optionally record) every enabled portal, per-body isolated: one
+    body's failure is caught and reported, never stops the others. Returns {slug: count | 'FAILED: ...'}."""
+    buyer_ids = seed_buyers(conn)
+    result = {}
+    for portal in config.BIDS_TENDERS_PORTALS:
+        if not portal["enabled"]:
+            continue
+        if only and portal["slug"] not in only:
+            continue
+        try:
+            records = list(fetch_listings(portal, log=log))
+            if record:
+                written = record_listings(records, config.PORTAL_RECORDINGS_DIR)
+                log(f"  {portal['slug']}: recorded {written} raw record(s)")
+            result[portal["slug"]] = store_listings(conn, records, buyer_ids)
+            log(f"  {portal['slug']}: {result[portal['slug']]} listing(s) stored")
+        except Exception as exc:                       # per-body isolation (empty portal is fine; a real error is caught)
+            result[portal["slug"]] = f"FAILED: {exc}"
+            log(f"  FAILED {portal['slug']}: {exc}")
+    return result

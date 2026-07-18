@@ -103,6 +103,12 @@ def build_parser() -> argparse.ArgumentParser:
                            "council extra; implies --fetch for the Zoo's PDFs)")
     p_ag.add_argument("--virtual-display", action="store_true",
                       help="Run --scrape's headed browser under Xvfb")
+    p_ag.add_argument("--portal", action="store_true",
+                      help="Capture bids&tenders portal listings for enabled+permitted bodies "
+                           "(plain HTTP, rate-limited). Currently a no-op while portals are empty.")
+    p_ag.add_argument("--record", action="store_true",
+                      help="With --portal: also dump each raw JSON record under "
+                           "<DATA_DIR>/agencies/portal_recordings/ to seed parser fixtures.")
     return parser
 
 
@@ -519,6 +525,19 @@ def _cmd_enrich_agencies(args) -> int:
                       f"{got['awards']} awards")
             except Exception as exc:
                 failures.append(("zoo", str(exc)))
+
+        if args.portal:
+            try:
+                from toronto_bids.sources.bids_tenders import run_portal_capture
+                only = None if not args.only else {"trca": "trca", "zoo": "toronto-zoo"}[args.only]
+                res = run_portal_capture(conn, record=args.record,
+                                         only={only} if only else None, log=out)
+                print(f"  portal listings      : {res}")
+                for slug, v in res.items():
+                    if isinstance(v, str) and v.startswith("FAILED"):
+                        failures.append((f"portal:{slug}", v))
+            except Exception as exc:
+                failures.append(("portal", str(exc)))
 
         try:
             print(f"  suppliers            : {build_supplier_dimension(conn)}")
