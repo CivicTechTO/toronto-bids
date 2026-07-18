@@ -117,3 +117,32 @@ def parse_ep_report(text: str, fallback_ref: str, report_url: str | None = None)
         "confidential": confidential,
         "report_url": report_url,
     }
+
+
+# A Table 1 row: a bidder name (letters/&/./,/spaces) followed by its first $ price. The winner
+# row carries a second $ (recommended contract price); take the FIRST. Column-header lines
+# ("Base Bid Price", "Received", "Recommended Contract Price") have no leading firm name + price
+# on the same run and are skipped by requiring a name that ends in a company word OR a name-then-$
+# on one line. Refuse a line that isn't a clean name+price (the #94 rule).
+_EP_BID_ROW = re.compile(
+    r"^\s*([A-Z][A-Za-z0-9&.,'’ \-]{3,60}?)\s+(\$\s?\d{1,3}(?:,\d{3})*\.\d{2})", re.M)
+_EP_TABLE_HEAD = re.compile(r"Table\s+\d[^\n]*Tender\s+Price\s+Submission", re.I)
+
+
+def parse_ep_bid_table(text: str) -> list[tuple[str, str]]:
+    """Every (bidder, base-bid-price) in an EP 'Table 1: Tender Price Submission'. Empty if the
+    report has no such table."""
+    head = _EP_TABLE_HEAD.search(text)
+    if not head:
+        return []
+    # Scope to the region after the header up to a blank-line gap / the next section.
+    tail = text[head.end():head.end() + 1500]
+    rows = []
+    for m in _EP_BID_ROW.finditer(tail):
+        name = re.sub(r"\s+", " ", m.group(1)).strip()
+        price = m.group(2).replace(" ", "")
+        # Skip a column-header fragment that slipped through (no company suffix and generic words).
+        if name.lower() in {"base bid price", "recommended contract price", "received"}:
+            continue
+        rows.append((name, price))
+    return rows

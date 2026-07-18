@@ -36,7 +36,7 @@ def test_ep_buyer_seeded():
 
 import pathlib
 
-from toronto_bids.sources.ep_board import parse_ep_report
+from toronto_bids.sources.ep_board import parse_ep_bid_table, parse_ep_report
 
 FIXTURES = pathlib.Path(__file__).parent / "fixtures" / "agencies"
 
@@ -96,3 +96,30 @@ def test_wsib_safety_report_is_refused_despite_dollar_amounts():
 
 def test_procurement_status_update_is_refused():
     assert parse_ep_report(_read("ep_non_award_procurement_status.txt"), fallback_ref="2023.EP1.5") is None
+
+
+def test_bid_table_extracts_all_three_bidders_with_prices():
+    rows = parse_ep_bid_table(_read("ep_award_with_table_2023.txt"))
+    assert rows == [
+        ("Powell Fence Limited", "$1,484,065.00"),
+        ("M.J.K. Construction Incorporated", "$1,619,001.00"),
+        ("Clearway Construction Incorporated", "$1,851,100.00"),
+    ]
+
+
+def test_bid_table_2019_five_bidders_with_footnote_marker():
+    # 2019 "Table 1: Tender Price Submissions" (plural), 5 bidders, a `*` revised-price marker on
+    # one row — the price capture must stop before the `*`.
+    rows = parse_ep_bid_table(_read("ep_award_2019_multi_bidder.txt"))
+    assert rows == [
+        ("Sutherland-Schultz Ltd.", "$418,854.47"),
+        ("Ontario Electrical Construction Co. Ltd.", "$461,522.00"),
+        ("Modern Niagara Toronto Inc.", "$470,700.00"),      # the trailing * is dropped
+        ("Stevens & Black Electrical Contractors Ltd.", "$518,000.00"),
+        ("Rogol Electric Company Limited", "$546,350.00"),
+    ]
+
+
+def test_bid_table_absent_returns_empty():
+    rows = parse_ep_bid_table(_read("ep_non_award_wsib_report.txt"))
+    assert rows == []                                    # no Table 1 -> no bids
