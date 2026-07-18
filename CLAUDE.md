@@ -165,8 +165,8 @@ The bids&tenders **portal listings** (`sources/bids_tenders.py`, #135) are captu
 HTTP — the grid loads from `POST /Module/Tenders/en/Tender/Search/<NodeId>` (session cookie +
 the FIRST antiforgery token; **never send `sort=` — it errors**), no browser. `fetch_listings`
 is gated (`PermissionError` until a body's grant is recorded in `docs/permissions/`); TRCA and
-the Zoo granted 2026-07-18. Rows land in `agency_solicitation` (`overwrite=True`, COALESCE-
-enriching any board-report row with the same `native_ref`). Runs in `tb nightly` (isolated) and
+the Zoo granted 2026-07-18. Rows land in `agency_solicitation` (`overwrite=False`, backfill — fills only NULL fields,
+so it never clobbers a board-report title, only fills a board row's empty dates). Runs in `tb nightly` (isolated) and
 `tb enrich-agencies --portal`. **Both portals are currently empty (total=0), so parse_listing is
 PROVISIONAL** — mapped to the grid JS's field names, validated only against a synthetic fixture;
 `--record` dumps raw JSON to seed a real fixture when a bid first appears, at which point the
