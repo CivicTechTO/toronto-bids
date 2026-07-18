@@ -1,6 +1,11 @@
 import pathlib
 
-from toronto_bids.sources.trca_board import parse_trca_report
+from toronto_bids.buyers import seed_buyers
+from toronto_bids.sources.trca_board import (
+    escribe_document_urls,
+    parse_trca_report,
+    store_trca_reports,
+)
 
 FIXTURES = pathlib.Path(__file__).parent / "fixtures" / "agencies"
 
@@ -47,3 +52,25 @@ def test_vor_report_names_both_winners_without_amounts():
         "D. Bottero and Associates Limited",
         "Newmark Knight Frank Canada Limited",
     ]
+
+
+def test_escribe_document_urls_extracts_filestream_links():
+    html = _read("trca_escribe_2023.html")
+    urls = escribe_document_urls(html)
+    assert urls, "expected at least one FileStream/Meeting link in the recorded page"
+    assert all(u.startswith("https://pub-trca.escribemeetings.com/") for u in urls)
+
+
+def test_store_trca_reports_lands_rows(conn):
+    ids = seed_buyers(conn)
+    text = _read("trca_armour_stone_2023.txt")
+    conn.execute(
+        "INSERT INTO background_pdf (url, kind, sha256, text) VALUES (?, 'agency_board', 'x', ?)",
+        ("https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=14809", text))
+    got = store_trca_reports(conn, ids["trca"])
+    assert got["solicitations"] == 2         # 10039751 + 10039753
+    assert got["awards"] >= 2                # one winner each, with amounts
+    assert got["bids"] == 8                  # 4 bidders x 2 refs
+    row = conn.execute("SELECT award_amount_numeric FROM agency_award "
+                       "WHERE native_ref='10039751'").fetchone()
+    assert row[0] == 1193040.0

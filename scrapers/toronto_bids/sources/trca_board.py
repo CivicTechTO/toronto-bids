@@ -6,7 +6,14 @@ pdftotext output (names wrap beside prices — the #83 trap) and is never mined;
 bidder LIST comes from the clean '•' bullets after 'received from the following
 Proponent(s)'.
 """
+import hashlib
+import pathlib
 import re
+import subprocess
+
+from toronto_bids import config
+from toronto_bids.models import AgencyAward, AgencyBid, AgencySolicitation, BackgroundPdf
+from toronto_bids.store import db
 
 # 'RFP No. 10036307' / 'RFT No. 10039751, 10039753' — match the ref shape (8 digits),
 # never the label vocabulary (call_number lesson: labels vary, shapes don't).
@@ -84,3 +91,102 @@ def parse_trca_report(text: str, report_url: str | None = None) -> list[dict]:
 
     return [{"native_ref": ref, "title": title, "winners": winners_by_ref[ref],
              "bidders": bidders, "report_url": report_url} for ref in refs]
+
+
+_FILESTREAM = re.compile(r"""(?:href|src)=["']([^"']*[Ff]ile[Ss]tream\.ashx\?DocumentId=\d+[^"']*)""")
+_MEETING = re.compile(r"""href=["']([^"']*Meeting\.aspx\?[^"']+)""")
+
+
+def _absolute(url: str) -> str:
+    if url.startswith("http"):
+        return url
+    return config.TRCA_ESCRIBE_BASE.rstrip("/") + "/" + url.lstrip("/").replace("&amp;", "&")
+
+
+def escribe_document_urls(html: str) -> list[str]:
+    """Every FileStream + Meeting link on a page, absolute, order-preserving, deduped."""
+    seen, out = set(), []
+    for m in (_FILESTREAM.findall(html) + _MEETING.findall(html)):
+        u = _absolute(m.replace("&amp;", "&"))
+        if u not in seen:
+            seen.add(u)
+            out.append(u)
+    return out
+
+
+def download_reports(conn, http, log=lambda _m: None) -> int:
+    """Walk eSCRIBE year pages -> meeting pages -> FileStream PDFs. Resumable.
+
+    Queue keys on sha256 IS NULL (#96): the hash records that we hold the bytes; text
+    records whether pdftotext could read them. Never re-download for unreadable text.
+    """
+    config.TRCA_REPORTS_DIR.mkdir(parents=True, exist_ok=True)
+    # 1. Index: discover FileStream URLs and upsert a background_pdf row per document.
+    for year in config.TRCA_ESCRIBE_YEARS:
+        page = http.get_text(config.TRCA_ESCRIBE_BASE, params={"FillWidth": 1, "Year": year})
+        meeting_urls = [u for u in escribe_document_urls(page) if "Meeting.aspx" in u]
+        log(f"  trca {year}: {len(meeting_urls)} meetings")
+        for murl in meeting_urls:
+            mhtml = http.get_text(murl)
+            for durl in escribe_document_urls(mhtml):
+                if "ashx" in durl.lower():
+                    db.upsert_row(conn, BackgroundPdf(url=durl, kind="agency_board"),
+                                  overwrite=False)
+        conn.commit()
+    # 2. Fetch: everything indexed but not yet held.
+    n = 0
+    for row in conn.execute("SELECT id, url FROM background_pdf "
+                            "WHERE kind='agency_board' AND url LIKE '%escribemeetings%' "
+                            "AND sha256 IS NULL ORDER BY id").fetchall():
+        blob = http.get_bytes(row["url"])
+        if not blob.startswith(b"%PDF"):
+            continue                       # HTML error page; leave queued
+        sha = hashlib.sha256(blob).hexdigest()
+        path = config.TRCA_REPORTS_DIR / f"{sha}.pdf"
+        path.write_bytes(blob)
+        text = _pdftotext(path)
+        conn.execute("UPDATE background_pdf SET sha256=?, local_path=?, text=? WHERE id=?",
+                     (sha, str(path), text, row["id"]))
+        conn.commit()
+        n += 1
+        log(f"  trca report {n}: {row['url']}")
+    return n
+
+
+def _pdftotext(path: pathlib.Path) -> str | None:
+    try:
+        out = subprocess.run(["pdftotext", "-layout", str(path), "-"],
+                             capture_output=True, timeout=120)
+        return out.stdout.decode("utf-8", errors="replace") or None
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        return None
+
+
+def store_trca_reports(conn, buyer_id: int) -> dict:
+    """Parse every held agency_board report into agency_* rows. Offline, idempotent."""
+    counts = {"solicitations": 0, "awards": 0, "bids": 0}
+    for row in conn.execute("SELECT url, text FROM background_pdf "
+                            "WHERE kind='agency_board' AND text IS NOT NULL "
+                            "AND url LIKE '%escribemeetings%' ORDER BY url").fetchall():
+        for item in parse_trca_report(row["text"], report_url=row["url"]):
+            db.upsert_row(conn, AgencySolicitation(
+                buyer_id=buyer_id, native_ref=item["native_ref"], title=item["title"],
+                status="awarded" if item["winners"] else None,
+                posted_date=None, closing_date=None, portal_url=None,
+                source="trca_board"), overwrite=False)
+            counts["solicitations"] += 1
+            for winner, amount in item["winners"]:
+                db.upsert_row(conn, AgencyAward(
+                    buyer_id=buyer_id, native_ref=item["native_ref"],
+                    supplier_name_raw=winner, award_amount=amount,
+                    value_confidential=0, award_date=None,
+                    report_url=item["report_url"], source="trca_board"), overwrite=True)
+                counts["awards"] += 1
+            for bidder in item["bidders"]:
+                db.upsert_row(conn, AgencyBid(
+                    buyer_id=buyer_id, native_ref=item["native_ref"],
+                    bidder_name_raw=bidder, bid_price=None,
+                    report_url=item["report_url"], source="trca_board"), overwrite=True)
+                counts["bids"] += 1
+    conn.commit()
+    return counts

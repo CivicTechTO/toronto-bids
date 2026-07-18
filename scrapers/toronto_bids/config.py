@@ -81,3 +81,12 @@ ARIBA_ATTACHMENTS_DIR = DATA_DIR / "ariba" / "attachments"
 ARIBA_LOGIN_URL = "https://service.ariba.com/Supplier.aw/109590048/aw?awh=r&awssk=login"
 ARIBA_USERNAME = os.environ.get("ARIBA_USERNAME")
 ARIBA_PASSWORD = os.environ.get("ARIBA_PASSWORD")
+
+# TRCA meeting records (#135): current record on eSCRIBE, back-catalogue agenda packages
+# on TRCA's Laserfiche. Both are TRCA's own hosting (open-data licence) — NOT the
+# bids&tenders portal, which stays gated.
+TRCA_ESCRIBE_BASE = "https://pub-trca.escribemeetings.com/"
+TRCA_REPORTS_DIR = DATA_DIR / "agencies" / "trca"
+# eSCRIBE year pages to walk; range() endpoint updated by whoever runs it in 2027 — moot
+# then anyway (Bill 97 amalgamates TRCA 2027-02-01).
+TRCA_ESCRIBE_YEARS = range(2019, 2028)
