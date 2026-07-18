@@ -73,3 +73,22 @@ def test_counts_include_agency_tables(conn):
     got = db.counts(conn)
     for table in ("buyer", "agency_solicitation", "agency_award", "agency_bid"):
         assert table in got
+
+
+def test_supplier_dimension_spans_agency_tables(conn):
+    from toronto_bids.linking.supplier import build_supplier_dimension
+    ids = seed_buyers(conn)
+    db.upsert_row(conn, AgencyAward(
+        buyer_id=ids["trca"], native_ref="10039751",
+        supplier_name_raw="Gott Natural Stone '99 Inc.", award_amount="$567,648",
+        value_confidential=0, award_date=None, report_url=None, source="trca_board"),
+        overwrite=True)
+    db.upsert_row(conn, AgencyBid(
+        buyer_id=ids["trca"], native_ref="10039751",
+        bidder_name_raw="H.R. Doornekamp Construction Ltd.", bid_price=None,
+        report_url=None, source="trca_board"), overwrite=True)
+    n = build_supplier_dimension(conn)
+    assert n == 2   # winner + losing bidder both in the dimension
+    linked = conn.execute(
+        "SELECT COUNT(*) FROM agency_bid WHERE supplier_id IS NOT NULL").fetchone()[0]
+    assert linked == 1
