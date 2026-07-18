@@ -99,9 +99,9 @@ def parse_zoo_report(text: str, fallback_ref: str, report_url: str | None = None
 
 
 def store_zoo_reports(conn, buyer_id: int) -> dict:
-    """Parse held ZB reports into agency rows. A confidential award is recorded as an
-    award row with NULL supplier/amount and value_confidential=1 — the award happened;
-    the value is withheld, which is itself a fact worth archiving."""
+    """Parse held ZB reports into agency rows. A confidential award is recorded with
+    value_confidential=1 and a NULL amount; the publicly-named winner is preserved when
+    the report names one — the flag records the value is withheld, not that the winner is unknown."""
     counts = {"solicitations": 0, "awards": 0}
     for row in conn.execute(
             "SELECT reference, url, text FROM background_pdf WHERE kind='agency_board' "
