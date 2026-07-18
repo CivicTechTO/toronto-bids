@@ -200,7 +200,8 @@ TERM_STARTS = [
 ]
 
 
-def discover_meetings(fetch, log=lambda _m: None, max_per_term=260, stop_after_misses=4):
+def discover_meetings(fetch, log=lambda _m: None, max_per_term=260, stop_after_misses=4,
+                      term_starts=None):
     """Walk each term's meetings, returning {reference: html} for every agenda that exists.
 
     References cannot be derived from the City's published schedule: it lists dates but omits
@@ -212,9 +213,13 @@ def discover_meetings(fetch, log=lambda _m: None, max_per_term=260, stop_after_m
     So: probe, and let each page's own date confirm what it is. Walking n upward within a
     term is cheap because numbering is contiguous; only the session-year prefix has to be
     guessed, and it only ever advances.
+
+    `term_starts` defaults to TERM_STARTS (the BA/BD series). Other TMMIS committees (e.g.
+    the Zoo Board's ZB series, #135) reuse this prober by passing their own list — same
+    probe-and-confirm design, different (series, start_year, term, first_n) tuples.
     """
     found = {}
-    for series, start_year, term, first_n in TERM_STARTS:
+    for series, start_year, term, first_n in (term_starts or TERM_STARTS):
         session = start_year
         misses = 0
         for n in range(first_n, first_n + max_per_term):
@@ -301,12 +306,17 @@ def cached_agendas(agenda_dir) -> dict:
     return {p.stem: p.read_text(errors="replace") for p in sorted(root.glob("*.html"))}
 
 
-def scrape_agendas(agenda_dir, virtual_display: bool = False, log=lambda _m: None) -> dict:
+def scrape_agendas(agenda_dir, virtual_display: bool = False, log=lambda _m: None,
+                   term_starts=None) -> dict:
     """Discover and cache every agenda, returning {reference: html}.
 
     Resumable and safe to re-run: an agenda already on disk is never refetched, so a second
     run costs only the probes past the last meeting. Only misses and new meetings hit the
     network.
+
+    `term_starts` defaults to TERM_STARTS (the BA/BD series) and is forwarded to
+    `discover_meetings` unchanged — see that function for why other TMMIS committees pass
+    their own list instead.
     """
     root = pathlib.Path(agenda_dir)
     root.mkdir(parents=True, exist_ok=True)
@@ -323,7 +333,7 @@ def scrape_agendas(agenda_dir, virtual_display: bool = False, log=lambda _m: Non
                 cached.write_text(match.group(1) if match else html)
             return html
 
-        return discover_meetings(fetch, log=log)
+        return discover_meetings(fetch, log=log, term_starts=term_starts)
 
 
 def parse_agenda_pdfs(html: str, meeting: str) -> list[dict]:

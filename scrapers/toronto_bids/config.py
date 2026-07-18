@@ -90,3 +90,8 @@ TRCA_REPORTS_DIR = DATA_DIR / "agencies" / "trca"
 # eSCRIBE year pages to walk; range() endpoint updated by whoever runs it in 2027 — moot
 # then anyway (Bill 97 amalgamates TRCA 2027-02-01).
 TRCA_ESCRIBE_YEARS = range(2019, 2028)
+
+# Toronto Zoo Board of Management (#135): the ZB committee on TMMIS, same infrastructure
+# as the Bid Award Panel (agendas need a headed browser; report PDFs are plain-HTTP legdocs).
+ZOO_AGENDAS_DIR = DATA_DIR / "agencies" / "zoo" / "agendas"
+ZOO_REPORTS_DIR = DATA_DIR / "agencies" / "zoo"
