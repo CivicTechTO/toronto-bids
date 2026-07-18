@@ -75,6 +75,7 @@ procurement, so most reports are NOT awards — the negatives below are load-bea
 | ep_confidential_agreement.txt | confidential agreement, counterparty redacted ("a Consumer Show Client") → winner None | 2022-2026 EP term, backgroundfile-230177 |
 | ep_non_award_wsib_report.txt | NEGATIVE: WSIB lost-time-injury safety report; carries `$` (WSIB costs) but no award → must return None | backgroundfile-230165 |
 | ep_non_award_procurement_status.txt | NEGATIVE: procurement status update ("currently in procurement"), no award yet → must return None | backgroundfile-230442 |
+| ep_non_award_collective_agreement.txt | NEGATIVE: SYNTHETIC refusal regression test for non-procurement guard; collective-agreement/labour-relations report wrongly kept without guard (the live run found 23 such reports) | test fixture (#130) |
 
 EP award clause shape: "award of Contract No. <c> (RFT No. EP###-YYYY) to WINNER for the
 <project> in the amount of $AMOUNT" — text sits between WINNER and the amount phrase, so the

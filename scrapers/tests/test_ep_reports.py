@@ -98,6 +98,13 @@ def test_procurement_status_update_is_refused():
     assert parse_ep_report(_read("ep_non_award_procurement_status.txt"), fallback_ref="2023.EP1.5") is None
 
 
+def test_confidential_non_procurement_matter_is_refused():
+    # A confidential collective-agreement / labour-relations report is NOT a procurement award,
+    # even though it says "agreement with <Union>" — the guard must refuse it (#130 live run).
+    assert parse_ep_report(_read("ep_non_award_collective_agreement.txt"),
+                           fallback_ref="2024.EP3.5") is None
+
+
 def test_bid_table_extracts_all_three_bidders_with_prices():
     rows = parse_ep_bid_table(_read("ep_award_with_table_2023.txt"))
     assert rows == [
