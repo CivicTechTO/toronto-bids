@@ -59,8 +59,37 @@ _ZOO_WINNER = re.compile(
 _ZOO_WINNER_AGREEMENT = re.compile(
     r"agreement\s+with\s+([A-Z][A-Za-z0-9&.,'’ \-]+?(?:Inc|Ltd|Limited|Corp|Corporation|Company)\.?)"
     r"\s*(?:\([^)]*\))?\s+for\s+the\s+award", re.S)
-_ZOO_AMOUNT = re.compile(r"total\s+cost\s+(?:not\s+to\s+exceed\s+)?(\$[\d,]+(?:\.\d{2})?)", re.I)
+# The amount is written many ways, and "in the amount of" dominates the real corpus (67
+# occurrences vs ~10 for "total cost") — matching only "total cost" left most named awards
+# with a NULL amount (#135). One alternation, reused by the combined award pattern below.
+_AMOUNT_PHRASE = (
+    r"(?:in\s+the\s+amount\s+of|at\s+a\s+(?:total\s+)?cost(?:\s+not\s+to\s+exceed)?(?:\s+of)?"
+    r"|for\s+the\s+(?:total\s+)?(?:sum|amount)\s+of|in\s+an\s+amount\s+not\s+to\s+exceed"
+    r"|total\s+cost\s+(?:not\s+to\s+exceed\s+)?(?:of\s+)?)")
+_MONEY = r"(\$\s?\d{1,3}(?:,\d{3})*(?:\.\d{2})?)"
+_ZOO_AMOUNT = re.compile(r"(?i:" + _AMOUNT_PHRASE + r")\s*" + _MONEY)
+# The primary award pattern: "... to WINNER <amount-phrase> $AMOUNT". The winner is bounded
+# and carries NO legal-suffix requirement — the corpus is full of suffix-less firms
+# ("Tri-Unite Systems", "Precise ParkLink", "Provincial Roofing") that the suffix-anchored
+# regex dropped entirely. The amount phrase on the right anchors the winner's end, the same
+# way the TRCA parser bounds its winner (#138). Case-sensitive leading capital (the winner is
+# a proper noun); the amount phrase is case-insensitive via an inline group.
+_ZOO_AWARD = re.compile(
+    r"\bto\s+([A-Z][A-Za-z0-9&.,'’()/\- ]{2,60}?)\s+(?i:" + _AMOUNT_PHRASE + r")\s*" + _MONEY)
 _SUBJECT = re.compile(r"^(?:Subject:|\s*)(.*(?:Tender|RFT|RFP|Award|Contract).*)$", re.M)
+
+
+# A money match that is really a "$X,YY million" shorthand (comma as the decimal point, then
+# a scale word) captures only the leading "$X" once thousands-grouping is enforced — an
+# obviously wrong tiny figure. Refuse it (NULL the amount, keep the winner) rather than store
+# $1 for a $1.25M award (the archive's refuse-rather-than-guess rule).
+_TRUNCATED_AMOUNT = re.compile(r"\s*(?:[.,]\d|million|billion)", re.I)
+
+
+def _amount_or_none(text: str, m) -> str | None:
+    if m is None or _TRUNCATED_AMOUNT.match(text, m.end()):
+        return None
+    return m.group(m.lastindex).replace(" ", "")
 
 
 def parse_zoo_report(text: str, fallback_ref: str, report_url: str | None = None) -> dict | None:
@@ -69,20 +98,29 @@ def parse_zoo_report(text: str, fallback_ref: str, report_url: str | None = None
     confidential = 1 if _CONFIDENTIAL.search(text) else 0
     ref_m = _ZOO_REF.search(text)
     native_ref = re.sub(r"\s+", " ", ref_m.group(1)).strip() if ref_m else fallback_ref
-    winner_m = _ZOO_WINNER.search(text) or _ZOO_WINNER_AGREEMENT.search(text)
-    amount_m = None if confidential else _ZOO_AMOUNT.search(text)
+    # Primary: winner and amount together ("to WINNER in the amount of $X"), no suffix needed.
+    winner = amount = None
+    combined = None if confidential else _ZOO_AWARD.search(text)
+    if combined:
+        winner, amount = combined.group(1).strip(), _amount_or_none(text, combined)
+    else:
+        # Fallbacks: a suffix-anchored winner (handles confidential reports that name a
+        # winner but withhold the value), and a standalone amount search.
+        winner_m = _ZOO_WINNER.search(text) or _ZOO_WINNER_AGREEMENT.search(text)
+        winner = winner_m.group(1).strip() if winner_m else None
+        amount = None if confidential else _amount_or_none(text, _ZOO_AMOUNT.search(text))
     # "award" appears in plenty of reports that award nothing (updates, minutes, info
     # items). Store a row only when something concrete was extracted — a named winner, an
     # amount, or a confidential-attachment award. Otherwise refuse: a contentless award
     # row keyed on a meeting reference is worse than none (the archive's guiding rule, #135).
-    if not (winner_m or amount_m or confidential):
+    if not (winner or amount or confidential):
         return None
     title_m = _SUBJECT.search(text)
     return {
         "native_ref": native_ref,
         "title": re.sub(r"\s+", " ", title_m.group(1)).strip() if title_m else None,
-        "winner": winner_m.group(1).strip() if winner_m else None,
-        "amount": amount_m.group(1) if amount_m else None,
+        "winner": winner,
+        "amount": amount,
         "confidential": confidential,
         "report_url": report_url,
     }

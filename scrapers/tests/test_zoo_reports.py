@@ -88,3 +88,36 @@ def test_report_mentioning_award_but_extracting_nothing_returns_none():
             "This report provides an update. Council previously approved the award "
             "of several contracts. No new decisions are recommended at this time.")
     assert parse_zoo_report(text, fallback_ref="2020.ZB5") is None
+
+
+# --- Zoo winner/amount recall against the real corpus (the 26-is-too-low fix) ------
+
+def test_amount_phrase_award_with_no_legal_suffix():
+    """'awarded to Tri-Unite Systems in the amount of $410,563' — the winner has no
+    Inc/Ltd suffix and the amount uses 'in the amount of', so the suffix-anchored winner
+    regex and the 'total cost'-only amount regex both missed it and the report was dropped.
+    """
+    got = parse_zoo_report(_read("zoo_amount_phrase_2018.txt"), fallback_ref="2018.ZB23")
+    assert got is not None                              # was dropped as 'empty'
+    assert got["winner"] == "Tri-Unite Systems"
+    assert got["confidential"] == 0
+    from toronto_bids.amount import parse_amount
+    assert parse_amount(got["amount"]) == 410563.00
+
+
+def test_in_the_amount_of_is_parsed():
+    got = parse_zoo_report(_read("zoo_no_suffix_2020.txt"), fallback_ref="2020.ZB9")
+    assert got is not None
+    assert "Midome Construction Services Ltd." in got["winner"]
+    from toronto_bids.amount import parse_amount
+    assert parse_amount(got["amount"]) == 638000.00
+
+
+def test_european_decimal_million_shorthand_refused_not_stored_as_one_dollar():
+    """'$1,25 million' (comma decimal + scale word) captures only '$1' once thousands
+    grouping is enforced — refuse the amount rather than store a bogus $1, keep the winner."""
+    text = ("Subject: Contract Award\nThe Board recommends the award of the tender "
+            "to Acme Builders in the amount of $1,25 million to complete the work.")
+    got = parse_zoo_report(text, fallback_ref="2021.ZB1")
+    assert got is not None and got["winner"] == "Acme Builders"
+    assert got["amount"] is None
