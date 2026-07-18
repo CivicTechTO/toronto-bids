@@ -93,8 +93,8 @@ def build_parser() -> argparse.ArgumentParser:
              "(eSCRIBE, plain HTTP) and Toronto Zoo (ZB agendas on TMMIS). Offline by "
              "default — parses reports already on disk. NEVER touches the bids&tenders "
              "portal (gated on written permission, see docs/permissions/).")
-    p_ag.add_argument("--only", choices=["zoo", "trca"],
-                      help="Run one body instead of both")
+    p_ag.add_argument("--only", choices=["zoo", "trca", "ep"],
+                      help="Run one body instead of all")
     p_ag.add_argument("--fetch", action="store_true",
                       help="Plain-HTTP fetching first: TRCA eSCRIBE listings + report PDFs, "
                            "and legdocs PDFs for Zoo agendas already cached")
@@ -495,7 +495,7 @@ def _cmd_enrich_agencies(args) -> int:
     failures: list[tuple[str, str]] = []
     try:
         ids = seed_buyers(conn)
-        bodies = [args.only] if args.only else ["trca", "zoo"]
+        bodies = [args.only] if args.only else ["trca", "zoo", "ep"]
 
         if "trca" in bodies:
             try:
@@ -533,6 +533,27 @@ def _cmd_enrich_agencies(args) -> int:
                       f"{got['awards']} awards")
             except Exception as exc:
                 failures.append(("zoo", str(exc)))
+
+        if "ep" in bodies:
+            try:
+                from toronto_bids.sources.ep_board import (
+                    cached_ep_agendas, download_ep_reports, scrape_ep_agendas, store_ep_reports)
+                agendas = (scrape_ep_agendas(virtual_display=args.virtual_display, log=out)
+                           if args.scrape else cached_ep_agendas())
+                print(f"  ep EP agendas        : {len(agendas)}"
+                      f" ({'scraped' if args.scrape else 'cached'})")
+                if agendas and (args.fetch or args.scrape):
+                    http = HttpClient()
+                    try:
+                        print(f"  ep reports fetched   : "
+                              f"{download_ep_reports(conn, http, agendas, log=out)}")
+                    finally:
+                        http.close()
+                got = store_ep_reports(conn, ids["exhibition-place"])
+                print(f"  ep stored            : {got['solicitations']} solicitations, "
+                      f"{got['awards']} awards, {got['bids']} bids")
+            except Exception as exc:
+                failures.append(("ep", str(exc)))
 
         if args.portal:
             try:

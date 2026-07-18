@@ -8,6 +8,10 @@ import re
 
 from toronto_bids import config
 from toronto_bids.models import AgencyAward, AgencySolicitation, BackgroundPdf
+from toronto_bids.sources.agency_report import (
+    AMOUNT_PHRASE as _AMOUNT_PHRASE, AMOUNT_RE as _ZOO_AMOUNT,
+    CONFIDENTIAL_RE as _CONFIDENTIAL, MONEY as _MONEY, amount_or_none as _amount_or_none,
+)
 from toronto_bids.sources.bid_award_panel import (cached_agendas, parse_agenda_pdfs,
                                                   scrape_agendas)
 from toronto_bids.store import db
@@ -50,7 +54,6 @@ def download_zoo_reports(conn, http, agendas: dict, log=lambda _m: None) -> int:
 # ---------------------------------------------------------------------------
 
 _ZOO_REF = re.compile(r"\b(R[FQ][TPQ][\s-]*\d{1,3}(?:\s*\(\d{4}-\d{2}\))?)")
-_CONFIDENTIAL = re.compile(r"CONFIDENTIAL\s+ATTACHMENT", re.I)
 _ZOO_WINNER = re.compile(
     r"award(?:ed)?\s+(?:of\s+)?(?:the\s+)?[\w\s–-]{0,80}?\s+to\s+"
     r"([A-Z][A-Za-z0-9&.,'’ \-]+?(?:Inc|Ltd|Limited|Corp|Corporation|Company)\.?)")
@@ -59,15 +62,6 @@ _ZOO_WINNER = re.compile(
 _ZOO_WINNER_AGREEMENT = re.compile(
     r"agreement\s+with\s+([A-Z][A-Za-z0-9&.,'’ \-]+?(?:Inc|Ltd|Limited|Corp|Corporation|Company)\.?)"
     r"\s*(?:\([^)]*\))?\s+for\s+the\s+award", re.S)
-# The amount is written many ways, and "in the amount of" dominates the real corpus (67
-# occurrences vs ~10 for "total cost") — matching only "total cost" left most named awards
-# with a NULL amount (#135). One alternation, reused by the combined award pattern below.
-_AMOUNT_PHRASE = (
-    r"(?:in\s+the\s+amount\s+of|at\s+a\s+(?:total\s+)?cost(?:\s+not\s+to\s+exceed)?(?:\s+of)?"
-    r"|for\s+the\s+(?:total\s+)?(?:sum|amount)\s+of|in\s+an\s+amount\s+not\s+to\s+exceed"
-    r"|total\s+cost\s+(?:not\s+to\s+exceed\s+)?(?:of\s+)?)")
-_MONEY = r"(\$\s?\d{1,3}(?:,\d{3})*(?:\.\d{2})?)"
-_ZOO_AMOUNT = re.compile(r"(?i:" + _AMOUNT_PHRASE + r")\s*" + _MONEY)
 # The primary award pattern: "... to WINNER <amount-phrase> $AMOUNT". The winner is bounded
 # and carries NO legal-suffix requirement — the corpus is full of suffix-less firms
 # ("Tri-Unite Systems", "Precise ParkLink", "Provincial Roofing") that the suffix-anchored
@@ -77,19 +71,6 @@ _ZOO_AMOUNT = re.compile(r"(?i:" + _AMOUNT_PHRASE + r")\s*" + _MONEY)
 _ZOO_AWARD = re.compile(
     r"\bto\s+([A-Z][A-Za-z0-9&.,'’()/\- ]{2,60}?)\s+(?i:" + _AMOUNT_PHRASE + r")\s*" + _MONEY)
 _SUBJECT = re.compile(r"^(?:Subject:|\s*)(.*(?:Tender|RFT|RFP|Award|Contract).*)$", re.M)
-
-
-# A money match that is really a "$X,YY million" shorthand (comma as the decimal point, then
-# a scale word) captures only the leading "$X" once thousands-grouping is enforced — an
-# obviously wrong tiny figure. Refuse it (NULL the amount, keep the winner) rather than store
-# $1 for a $1.25M award (the archive's refuse-rather-than-guess rule).
-_TRUNCATED_AMOUNT = re.compile(r"\s*(?:[.,]\d|million|billion)", re.I)
-
-
-def _amount_or_none(text: str, m) -> str | None:
-    if m is None or _TRUNCATED_AMOUNT.match(text, m.end()):
-        return None
-    return m.group(m.lastindex).replace(" ", "")
 
 
 def parse_zoo_report(text: str, fallback_ref: str, report_url: str | None = None) -> dict | None:

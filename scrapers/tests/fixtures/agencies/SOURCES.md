@@ -60,3 +60,39 @@ fixture matches the field names documented in the portal's grid JS
 Addendums, PlanTakers) and exercises parse_listing's mapping mechanics only. `parse_listing`
 is PROVISIONAL until `tb enrich-agencies --portal --record` captures a real record and replaces
 this fixture (#135 deferred item).
+
+## Exhibition Place board-report fixtures (#130)
+
+Real EP Board of Governors reports, captured live 2026-07-18 from legdocs (plain HTTP;
+discovered via the TMMIS EP committee, `YYYY.EP<n>.<n>`). EP's board handles far more than
+procurement, so most reports are NOT awards — the negatives below are load-bearing (they carry
+`$` amounts that must NOT be read as awards).
+
+| fixture | shape | source |
+|---|---|---|
+| ep_award_with_table_2023.txt | AWARD + Table 1 bid prices (Powell Fence, M.J.K., Clearway); RFT No. EP110-2023 | /legdocs/mmis/2023/ep/bgrd/backgroundfile-240943.pdf |
+| ep_confidential_decision_2025.txt | confidential award, winner named (Coca-Cola Canada Bottling Ltd), value withheld | /legdocs/mmis/2025/ex/bgrd/backgroundfile-258727.pdf |
+| ep_confidential_agreement.txt | confidential agreement, counterparty redacted ("a Consumer Show Client") → winner None | 2022-2026 EP term, backgroundfile-230177 |
+| ep_non_award_wsib_report.txt | NEGATIVE: WSIB lost-time-injury safety report; carries `$` (WSIB costs) but no award → must return None | backgroundfile-230165 |
+| ep_non_award_procurement_status.txt | NEGATIVE: procurement status update ("currently in procurement"), no award yet → must return None | backgroundfile-230442 |
+| ep_non_award_collective_agreement.txt | NEGATIVE: SYNTHETIC refusal regression test for non-procurement guard; collective-agreement/labour-relations report wrongly kept without guard (the live run found 23 such reports) | test fixture (#130) |
+
+EP award clause shape: "award of Contract No. <c> (RFT No. EP###-YYYY) to WINNER for the
+<project> in the amount of $AMOUNT" — text sits between WINNER and the amount phrase, so the
+winner regex is EP-specific (stops at " for "/amount), not the shared Zoo "to WINNER <phrase> $".
+
+### EP award fixtures — 2019 (year variety, #130)
+
+Live-captured 2026-07-18 (EP 2018-2022 term). Table-awards are rare (4 of 151 reports scanned),
+and 2019 EP reports differ from the 2023 seed — the parser must handle both:
+
+| fixture | why it matters |
+|---|---|
+| ep_award_2019_sole_tender.txt (bgrd-131331, 2019.EP2) | winner spans a line break ("Westbury National / Show System Ltd."); `Contract No. 19-085-98518` ref (no RFT-EP); ONE bidder; award $969,415.00 ≠ the sole bid $1,139,944.00 (distinct columns) |
+| ep_award_2019_multi_bidder.txt (bgrd-137241, 2019.EP6) | winner carries a location qualifier ("Sutherland-Schultz Ltd. **of Cambridge, Ontario**") — strip it; 5 bidders; a bid price footnote `*` (revised-price marker) |
+
+Corpus gotchas the parser must handle: (1) winners span pdftotext line breaks → the winner class
+must allow internal whitespace, bounded, stopping at for/at/,/in-the-amount; (2) strip a trailing
+" of <City>, <Province>" location qualifier so the same firm keys consistently; (3) `native_ref`
+is `RFT No. EP###-YYYY` (2023) OR `Contract No. <token>` (2019); (4) both years use "in the amount
+of $X"; (5) a bid price may carry a trailing `*` footnote.

@@ -12,6 +12,11 @@ DEFAULT_BUYERS = [
           notes="Partnered: six municipalities fund it; Toronto pays 62.6% of the 2025 "
                 "operating levy. Bill 97 amalgamates TRCA away 2027-02-01. Venue history "
                 "is mixed (Biddingo through ~2023, then trca.bidsandtenders.ca)."),
+    Buyer(slug="exhibition-place", name="Exhibition Place", kind="agency", partnered=0,
+          funding_share=None, platform="Bonfire",
+          notes="City agency (Board of Governors); left the PMMD feed in 2019 for its own "
+                "Bonfire portal. Awards captured from Board of Governors reports on legdocs "
+                "(TMMIS EP committee); the Bonfire portal is gated (#134)."),
 ]
 
 

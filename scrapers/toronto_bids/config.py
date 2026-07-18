@@ -113,3 +113,8 @@ BIDS_TENDERS_PORTALS = [
 # Raw bids&tenders listing JSON captured by `--record`, one file per record — the seed for
 # real parser fixtures once a portal has data (#135).
 PORTAL_RECORDINGS_DIR = DATA_DIR / "agencies" / "portal_recordings"
+
+# Exhibition Place Board of Governors (#130): the EP committee on TMMIS, same infrastructure
+# as the Zoo's ZB series — headed-browser discovery, plain-HTTP legdocs report PDFs.
+EP_AGENDAS_DIR = DATA_DIR / "agencies" / "ep" / "agendas"
+EP_REPORTS_DIR = DATA_DIR / "agencies" / "ep"
