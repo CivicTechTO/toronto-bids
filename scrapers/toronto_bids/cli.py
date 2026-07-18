@@ -86,6 +86,23 @@ def build_parser() -> argparse.ArgumentParser:
         help="Sync, archive new Award Summary Forms, export, and post a summary to Slack. "
              "What the systemd timer runs — see docs/superpowers/specs/"
              "2026-07-17-deployment-design.md")
+
+    p_ag = sub.add_parser(
+        "enrich-agencies",
+        help="Capture agency/corporation procurement from board records (#135): TRCA "
+             "(eSCRIBE, plain HTTP) and Toronto Zoo (ZB agendas on TMMIS). Offline by "
+             "default — parses reports already on disk. NEVER touches the bids&tenders "
+             "portal (gated on written permission, see docs/permissions/).")
+    p_ag.add_argument("--only", choices=["zoo", "trca"],
+                      help="Run one body instead of both")
+    p_ag.add_argument("--fetch", action="store_true",
+                      help="Plain-HTTP fetching first: TRCA eSCRIBE listings + report PDFs, "
+                           "and legdocs PDFs for Zoo agendas already cached")
+    p_ag.add_argument("--scrape", action="store_true",
+                      help="Discover Zoo ZB agendas on TMMIS first (headed browser, "
+                           "council extra; implies --fetch for the Zoo's PDFs)")
+    p_ag.add_argument("--virtual-display", action="store_true",
+                      help="Run --scrape's headed browser under Xvfb")
     return parser
 
 
@@ -455,6 +472,65 @@ def _cmd_nightly(args) -> int:
     return 1 if failures else 0
 
 
+def _cmd_enrich_agencies(args) -> int:
+    from toronto_bids.buyers import seed_buyers
+    from toronto_bids.linking.supplier import build_supplier_dimension
+
+    conn = _open_db()
+    out = lambda m: print(m, flush=True)
+    failures: list[tuple[str, str]] = []
+    try:
+        ids = seed_buyers(conn)
+        bodies = [args.only] if args.only else ["trca", "zoo"]
+
+        if "trca" in bodies:
+            try:
+                from toronto_bids.sources.trca_board import download_reports, store_trca_reports
+                if args.fetch:
+                    http = HttpClient()
+                    try:
+                        print(f"  trca reports fetched : {download_reports(conn, http, log=out)}")
+                    finally:
+                        http.close()
+                got = store_trca_reports(conn, ids["trca"])
+                print(f"  trca stored          : {got['solicitations']} solicitations, "
+                      f"{got['awards']} awards, {got['bids']} bids")
+            except Exception as exc:
+                failures.append(("trca", str(exc)))
+
+        if "zoo" in bodies:
+            try:
+                from toronto_bids.sources.zoo_board import (
+                    cached_zb_agendas, download_zoo_reports, scrape_zb_agendas,
+                    store_zoo_reports)
+                agendas = (scrape_zb_agendas(virtual_display=args.virtual_display, log=out)
+                           if args.scrape else cached_zb_agendas())
+                print(f"  zoo ZB agendas       : {len(agendas)}"
+                      f" ({'scraped' if args.scrape else 'cached'})")
+                if agendas and (args.fetch or args.scrape):
+                    http = HttpClient()
+                    try:
+                        print(f"  zoo reports fetched  : "
+                              f"{download_zoo_reports(conn, http, agendas, log=out)}")
+                    finally:
+                        http.close()
+                got = store_zoo_reports(conn, ids["toronto-zoo"])
+                print(f"  zoo stored           : {got['solicitations']} solicitations, "
+                      f"{got['awards']} awards")
+            except Exception as exc:
+                failures.append(("zoo", str(exc)))
+
+        try:
+            print(f"  suppliers            : {build_supplier_dimension(conn)}")
+        except Exception as exc:
+            failures.append(("supplier_linking", str(exc)))
+    finally:
+        conn.close()
+    for name, error in failures:
+        print(f"FAILED  {name}: {error}", file=sys.stderr)
+    return 1 if failures else 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
@@ -476,6 +552,8 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_amounts(args)
     if args.command == "enrich-ariba-attachments":
         return _cmd_enrich_ariba_attachments(args)
+    if args.command == "enrich-agencies":
+        return _cmd_enrich_agencies(args)
     parser.print_help()
     return 0
 

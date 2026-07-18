@@ -37,10 +37,15 @@ _SUPPLIER_TABLES = [
     # 2009-2012 winners, from years the City's feed barely covers (#96). Firms that only ever
     # won pre-Ariba would otherwise be absent from the dimension entirely.
     ("composite_award", "id"),
+    # Agency buyers (#135): winners AND losing bidders, so cross-buyer supplier behaviour
+    # (a suspended firm bidding at the Zoo; a firm that loses downtown and wins at TRCA)
+    # is queryable at all. Same rationale as `bid` (#87).
+    ("agency_award", "id"),
+    ("agency_bid", "id"),
 ]
 
-# bid names its supplier in a different column from the other three.
-_NAME_COLUMN = {"bid": "bidder_name_raw"}
+# bid and agency_bid name their supplier in a different column from the others.
+_NAME_COLUMN = {"bid": "bidder_name_raw", "agency_bid": "bidder_name_raw"}
 
 
 def build_supplier_dimension(conn) -> int:

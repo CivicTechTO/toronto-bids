@@ -355,3 +355,89 @@ CREATE TABLE IF NOT EXISTS ariba_attachment (
 );
 
 CREATE INDEX IF NOT EXISTS idx_ariba_attachment_document ON ariba_attachment (document_number);
+
+-- The buyer dimension and agency tables (#135, first consumer of #103's keyspace decision).
+-- Agencies/corporations procure OUTSIDE the City's PMMD feed, each in its own numbering —
+-- a FOURTH keyspace, keyed (buyer_id, native_ref). Deliberately separate from the City
+-- spine for the same reason composite_award is (#96): admitting foreign-keyed rows to
+-- `solicitation` would silently change what every existing COUNT/SUM means. Partnered
+-- bodies (TRCA: Toronto pays 62.6% of the levy) carry a flag so exports can segment.
+CREATE TABLE IF NOT EXISTS buyer (
+    id             INTEGER PRIMARY KEY AUTOINCREMENT,
+    slug           TEXT NOT NULL UNIQUE,
+    name           TEXT,
+    kind           TEXT,             -- 'agency' | 'corporation'
+    partnered      INTEGER,          -- 1 = not wholly City-owned; segment, don't mix
+    funding_share  REAL,             -- Toronto's share where partnered (TRCA: 0.626)
+    platform       TEXT,             -- where it posts (bids&tenders here; MERX/Bonfire later)
+    notes          TEXT,
+    first_seen     TEXT NOT NULL DEFAULT (datetime('now')),
+    last_seen      TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS agency_solicitation (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    buyer_id     INTEGER NOT NULL,
+    -- The body's own identifier, normalized only by trim/uppercase/whitespace-collapse:
+    -- TRCA '10039751', Zoo 'RFT-42' / 'RFP 18 (2018-03)'. Where a report names no ref at
+    -- all, the TMMIS item reference (e.g. '2025.ZB15.3') stands in. No join to the City
+    -- keyspaces is attempted — none can be manufactured.
+    native_ref   TEXT NOT NULL,
+    title        TEXT,
+    status       TEXT,
+    posted_date  TEXT,
+    closing_date TEXT,
+    portal_url   TEXT,
+    source       TEXT,
+    first_seen   TEXT NOT NULL DEFAULT (datetime('now')),
+    last_seen    TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE (buyer_id, native_ref)
+);
+
+CREATE TABLE IF NOT EXISTS agency_award (
+    id                   INTEGER PRIMARY KEY AUTOINCREMENT,
+    buyer_id             INTEGER NOT NULL,
+    native_ref           TEXT NOT NULL,
+    supplier_name_raw    TEXT,
+    supplier_id          INTEGER,
+    -- The extracted dollar token verbatim ('$1,193,040'), never the sentence around it
+    -- (#96: a phrase leaves *_numeric NULL on every row and zeroes every SUM).
+    award_amount         TEXT,
+    award_amount_numeric REAL,
+    -- 1 = the report routes financials to a CONFIDENTIAL ATTACHMENT (Zoo, 2025-era).
+    -- Distinct from "not published": the award happened, the value is deliberately withheld.
+    value_confidential   INTEGER DEFAULT 0,
+    award_date           TEXT,
+    report_url           TEXT,
+    source               TEXT,
+    first_seen           TEXT NOT NULL DEFAULT (datetime('now')),
+    last_seen            TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- COALESCE for the same reason as award_line_key (#73): SQLite treats NULLs as DISTINCT in
+-- a UNIQUE index, and a confidential award has NULL supplier and NULL amount — a bare key
+-- would re-insert it on every run. db._upsert_keyed's conflict target must match exactly.
+CREATE UNIQUE INDEX IF NOT EXISTS agency_award_line_key ON agency_award (
+    buyer_id, native_ref, COALESCE(supplier_name_raw, ''), COALESCE(award_amount, ''), source
+);
+
+CREATE TABLE IF NOT EXISTS agency_bid (
+    id                INTEGER PRIMARY KEY AUTOINCREMENT,
+    buyer_id          INTEGER NOT NULL,
+    native_ref        TEXT NOT NULL,
+    bidder_name_raw   TEXT NOT NULL,
+    supplier_id       INTEGER,
+    -- Usually NULL: TRCA results tables are fused multi-line pdftotext output (the #83
+    -- wrapped-names trap), so per-bid prices are refused rather than guessed. The bidder
+    -- LIST is the competitive fact (#84); prices come from the award lines.
+    bid_price         TEXT,
+    bid_price_numeric REAL,
+    report_url        TEXT,
+    source            TEXT,
+    first_seen        TEXT NOT NULL DEFAULT (datetime('now')),
+    last_seen         TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE (buyer_id, native_ref, bidder_name_raw, source)
+);
+
+CREATE INDEX IF NOT EXISTS idx_agency_award_buyer ON agency_award (buyer_id, native_ref);
+CREATE INDEX IF NOT EXISTS idx_agency_bid_buyer ON agency_bid (buyer_id, native_ref);

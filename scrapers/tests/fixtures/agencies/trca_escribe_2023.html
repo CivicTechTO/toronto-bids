@@ -1,0 +1,23 @@
+<!--
+SYNTHETIC FIXTURE (#135). The real year-list page
+(https://pub-trca.escribemeetings.com/?FillWidth=1&Year=2023) is a JS-rendered
+FullCalendar widget: its "Meeting.aspx" occurrences live inside a JS template string
+built at click-time ($('#eventLink').attr('href', href = '/Meeting.aspx?Id=' + event.id
++ ...)), not as static <a href="Meeting.aspx?..."> anchors, and it carries no
+FileStream.ashx links at all pre-render. curl was tried live (2026-07-18, network
+available) and confirmed this shape before falling back to a hand-written fixture per
+the task brief's Step 1 fallback. This file hand-writes the anchor shapes
+escribe_document_urls() is built to extract, standing in for a rendered meeting-list /
+meeting-detail page.
+-->
+<html>
+<body>
+<div class="MeetingsList">
+  <a href="/Meeting.aspx?Id=abc123&lang=English">Board of Directors - January 27, 2023</a>
+  <a href="/Meeting.aspx?Id=def456&lang=English">Board of Directors - March 31, 2023</a>
+</div>
+<div class="Documents">
+  <a href="/FileStream.ashx?DocumentId=14809&Force=1">Armour Stone Supply and Delivery - Staff Report</a>
+</div>
+</body>
+</html>

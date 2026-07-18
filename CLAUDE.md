@@ -140,6 +140,27 @@ The bidders did not stop. `tb enrich-awards --download` archives the Toronto Bid
 - **Staff reports join via the bid-bridge (#126).** The per-solicitation `documents` array also folds in **staff-report PDFs** (`background_pdf` kind='bgrd') through an **exact** council-`reference` ↔ `document_number` link: an Ariba-era Bid Award Panel agenda names both, so a single `bid` row carries both, and `export/document.py` derives the `reference → document_number` map from `bid` at query time (no table). No fuzzy matching, no false-positive surface — the opposite of #77's supplier+amount route. **1,310 reports across 1,237 solicitations**, `source="staff_report"` with the legdocs URL exposed. **Ariba-era only** by nature: pre-2019 council items have no dual-key `bid` row and don't join — that remainder is the deferred #124 surrogate spine's job. A staff report can appear both under its `council_item` and under its bridged solicitation — two views of one PDF, neither wrong.
 - **No MFA on the account, by requirement.** An unattended login cannot answer a 2FA prompt and a CAPTCHA is a policy hard stop; `login` detects a challenge page and raises rather than hanging. Not part of `tb sync`.
 
+### Agency capture (`buyers.py`, `sources/trca_board.py`, `sources/zoo_board.py`, #135) — the fourth keyspace
+
+`tb enrich-agencies`. Agencies/corporations procure outside the PMMD feed (#103); their
+records live in `agency_solicitation`/`agency_award`/`agency_bid` keyed
+`(buyer_id, native_ref)` — **no join to the City keyspaces is attempted**. The `buyer`
+dimension carries `partnered`/`funding_share` (TRCA: 0.626) so exports segment rather
+than mix; headline counts stay City-only. Award records come from board reports, not the
+portal: TRCA's eSCRIBE (plain HTTP; the results TABLE is fused pdftotext and never
+mined — bidders come from the bullet list, winners+amounts from the RECOMMENDATION
+clause) and the Zoo's ZB committee on TMMIS (same prober as BA/BD; 2025-era reports
+route values to a CONFIDENTIAL ATTACHMENT → `value_confidential=1`, not fake NULLs).
+**The bids&tenders portal is fetched only under recorded permission**: `sources/bids_tenders.py`
+is a gate that raises `PermissionError` until a body's written grant lands in
+`docs/permissions/` and flips its `config.BIDS_TENDERS_PORTALS` entry (the PMMD/Ariba
+precedent). TRCA and the Zoo both granted on 2026-07-18, so both gates are open — but the
+listing parser is still unwritten (`fetch_listings` raises `NotImplementedError`), so
+nothing is fetched yet; that capture is the next step, honouring each body's rate-limit
+and attribution conditions in its permission file. Bid documents stay out of scope
+regardless — they sit behind the Vendor clickwrap. Bill 97 amalgamates TRCA away on
+2027-02-01; its capture is deadline-bound.
+
 ### Export seam (`export/`)
 
 `build_export_document(conn)` in `export/document.py` is deterministic given a `generated_at` (result-shaping queries ORDER BY, no file I/O); `export_json` is a thin serializer over it. A new publishing destination is another function over the same builder — keep all shaping logic in `document.py`.

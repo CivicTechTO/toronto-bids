@@ -81,3 +81,31 @@ ARIBA_ATTACHMENTS_DIR = DATA_DIR / "ariba" / "attachments"
 ARIBA_LOGIN_URL = "https://service.ariba.com/Supplier.aw/109590048/aw?awh=r&awssk=login"
 ARIBA_USERNAME = os.environ.get("ARIBA_USERNAME")
 ARIBA_PASSWORD = os.environ.get("ARIBA_PASSWORD")
+
+# TRCA meeting records (#135): current record on eSCRIBE, back-catalogue agenda packages
+# on TRCA's Laserfiche. Both are TRCA's own hosting (open-data licence) — NOT the
+# bids&tenders portal, which stays gated.
+TRCA_ESCRIBE_BASE = "https://pub-trca.escribemeetings.com/"
+TRCA_REPORTS_DIR = DATA_DIR / "agencies" / "trca"
+# The eSCRIBE calendar is client-rendered from this ASP.NET page-method (JSON); the year
+# landing page carries no static meeting links, so discovery POSTs here per year (#137).
+TRCA_CALENDAR_URL = TRCA_ESCRIBE_BASE + "MeetingsCalendarView.aspx/GetCalendarMeetings"
+# eSCRIBE years to fetch; range() endpoint updated by whoever runs it in 2027 — moot
+# then anyway (Bill 97 amalgamates TRCA 2027-02-01).
+TRCA_ESCRIBE_YEARS = range(2019, 2028)
+
+# Toronto Zoo Board of Management (#135): the ZB committee on TMMIS, same infrastructure
+# as the Bid Award Panel (agendas need a headed browser; report PDFs are plain-HTTP legdocs).
+ZOO_AGENDAS_DIR = DATA_DIR / "agencies" / "zoo" / "agendas"
+ZOO_REPORTS_DIR = DATA_DIR / "agencies" / "zoo"
+
+# bids&tenders portals (#135). `enabled` stays False until the BODY's written permission
+# is recorded in docs/permissions/ and the flipping commit references it — the PMMD/Ariba
+# precedent (#117). The Vendor ToS is clickwrap we have not accepted, and its copyright
+# notice is blanket; "settled" means the body said yes, not our reading of their terms.
+BIDS_TENDERS_PORTALS = [
+    {"slug": "toronto-zoo", "portal_url": "https://torontozoo.bidsandtenders.ca/",
+     "enabled": True, "permission": "docs/permissions/2026-07-18-toronto-zoo.md"},
+    {"slug": "trca", "portal_url": "https://trca.bidsandtenders.ca/",
+     "enabled": True, "permission": "docs/permissions/2026-07-18-trca.md"},
+]

@@ -210,3 +210,57 @@ class AribaAttachment:
     crc32: str | None = None
     zip_name: str | None = None
     zip_sha256: str | None = None
+
+
+@dataclass(frozen=True)
+class Buyer:
+    """One procuring body outside the City's PMMD feed (#135, #103)."""
+    slug: str
+    name: str | None = None
+    kind: str | None = None            # 'agency' | 'corporation'
+    partnered: int = 0
+    funding_share: float | None = None
+    platform: str | None = None
+    notes: str | None = None
+
+
+@dataclass(frozen=True)
+class AgencySolicitation:
+    buyer_id: int
+    native_ref: str
+    title: str | None = None
+    status: str | None = None
+    posted_date: str | None = None
+    closing_date: str | None = None
+    portal_url: str | None = None
+    source: str = ""
+
+
+@dataclass(frozen=True)
+class AgencyAward:
+    buyer_id: int
+    native_ref: str
+    supplier_name_raw: str | None = None
+    award_amount: str | None = None      # extracted dollar token, verbatim — never summable
+    value_confidential: int = 0
+    award_date: str | None = None
+    report_url: str | None = None
+    source: str = ""
+    award_amount_numeric: float | None = field(init=False, default=None)
+
+    def __post_init__(self):
+        object.__setattr__(self, "award_amount_numeric", parse_amount(self.award_amount))
+
+
+@dataclass(frozen=True)
+class AgencyBid:
+    buyer_id: int
+    native_ref: str
+    bidder_name_raw: str
+    bid_price: str | None = None
+    report_url: str | None = None
+    source: str = ""
+    bid_price_numeric: float | None = field(init=False, default=None)
+
+    def __post_init__(self):
+        object.__setattr__(self, "bid_price_numeric", parse_bid_price(self.bid_price))

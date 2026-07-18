@@ -163,6 +163,24 @@ def build_export_document(conn, generated_at: str | None = None) -> dict:
         ci["bids"] = bids_by_ref.get(ci["reference"], [])
         council_items.append(ci)
 
+    # Agency buyers (#135): a fourth keyspace, in its own section so no City-spine
+    # count changes meaning. Partnered buyers carry their flag and funding share so a
+    # consumer can segment — the TRCA scope decision is the reader's, made visible.
+    buyers_out = []
+    for buyer in _rows(conn, "SELECT * FROM buyer ORDER BY slug"):
+        bid_ = buyer["id"]
+        buyers_out.append(_drop(buyer, "id") | {
+            "solicitations": [_drop(r, "id", "buyer_id") for r in _rows(
+                conn, f"SELECT * FROM agency_solicitation WHERE buyer_id={bid_} "
+                      "ORDER BY native_ref")],
+            "awards": [_drop(r, "id", "buyer_id") for r in _rows(
+                conn, f"SELECT * FROM agency_award WHERE buyer_id={bid_} "
+                      "ORDER BY native_ref, supplier_name_raw")],
+            "bids": [_drop(r, "id", "buyer_id") for r in _rows(
+                conn, f"SELECT * FROM agency_bid WHERE buyer_id={bid_} "
+                      "ORDER BY native_ref, bidder_name_raw")],
+        })
+
     return {
         "meta": {
             "generated_at": generated_at,
@@ -178,4 +196,5 @@ def build_export_document(conn, generated_at: str | None = None) -> dict:
         "council_items": council_items,
         "unlinked_ariba_postings": unlinked,
         "unlinked_awards": unlinked_awards,
+        "buyers": buyers_out,
     }
