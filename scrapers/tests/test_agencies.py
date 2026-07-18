@@ -18,7 +18,7 @@ def conn():
 
 def test_seed_buyers_is_idempotent(conn):
     ids = seed_buyers(conn)
-    assert set(ids) == {"toronto-zoo", "trca"}
+    assert set(ids) == {"toronto-zoo", "trca", "exhibition-place"}
     again = seed_buyers(conn)
     assert ids == again
     assert conn.execute("SELECT COUNT(*) FROM buyer").fetchone()[0] == len(DEFAULT_BUYERS)
@@ -133,7 +133,7 @@ def test_export_buyers_section(conn):
         overwrite=True)
     doc = build_export_document(conn, generated_at="2026-07-18T00:00:00+00:00")
     buyers = {b["slug"]: b for b in doc["buyers"]}
-    assert set(buyers) == {"toronto-zoo", "trca"}
+    assert set(buyers) == {"toronto-zoo", "trca", "exhibition-place"}
     assert buyers["trca"]["partnered"] == 1        # consumers can segment
     assert buyers["trca"]["awards"][0]["native_ref"] == "10039751"
     assert buyers["toronto-zoo"]["awards"] == []
