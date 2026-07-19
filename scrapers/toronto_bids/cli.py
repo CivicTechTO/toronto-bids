@@ -113,6 +113,23 @@ def _is_first_of_month() -> bool:
     return date.today().day == 1
 
 
+def _run_step(steps: list, failures: list, name: str, fn) -> None:
+    """Run one nightly step, timing it and recording a step record. On failure the error is
+    ALSO appended to `failures` — the authoritative list the exit code and the report's Failures
+    section read — so the exit-code contract is untouched while the Steps section gains status +
+    timing. `fn` returns a short detail string (or None)."""
+    import time
+    t = time.monotonic()
+    try:
+        detail = fn()
+        steps.append({"name": name, "status": "ok", "detail": detail or "",
+                      "seconds": time.monotonic() - t, "error": None})
+    except Exception as exc:  # isolation: never propagates
+        steps.append({"name": name, "status": "fail", "detail": "",
+                      "seconds": time.monotonic() - t, "error": str(exc)})
+        failures.append((name, str(exc)))
+
+
 def _open_db():
     config.DATA_DIR.mkdir(parents=True, exist_ok=True)
     conn = db.connect(config.DB_PATH)
@@ -412,6 +429,8 @@ def _cmd_nightly(args) -> int:
     after: dict = {}
     export_bytes = None
     conn = None
+    steps: list[dict] = []
+    sources: list[dict] = []
 
     try:
         conn = _open_db()
@@ -437,63 +456,86 @@ def _cmd_nightly(args) -> int:
         if http is not None:
             try:
                 try:
-                    failures.extend(pipeline.sync(conn, http))
-                except Exception as exc:
-                    failures.append(("sync", str(exc)))
+                    sync_cutoff = conn.execute(
+                        "SELECT COALESCE(MAX(id), 0) FROM sync_run").fetchone()[0]
+                except Exception:
+                    sync_cutoff = 0
+
+                def _sync():
+                    src_failures = pipeline.sync(conn, http)
+                    failures.extend(src_failures)
+                    n = len(pipeline.default_sources())
+                    return f"{n} sources"
+                _run_step(steps, failures, "sync", _sync)
+
                 try:
+                    sources.extend(db.sync_runs_since(conn, sync_cutoff))
+                except Exception as exc:
+                    failures.append(("sync_detail", str(exc)))
+
+                def _awards():
                     download_award_summaries(conn, http, log=out)
-                    store_award_summary_bids(conn, log=out)
-                except Exception as exc:
-                    failures.append(("award_summary", str(exc)))
-                try:
+                    return f"{store_award_summary_bids(conn, log=out)} bids stored"
+                _run_step(steps, failures, "award summaries", _awards)
+
+                def _portal():
                     from toronto_bids.sources.bids_tenders import run_portal_capture
                     res = run_portal_capture(conn, log=out)
                     for slug, v in res.items():
                         if isinstance(v, str) and v.startswith("FAILED"):
                             failures.append((f"portal:{slug}", v))
-                except Exception as exc:
-                    failures.append(("portal", str(exc)))
-                try:
+                    total = sum(v for v in res.values() if isinstance(v, int))
+                    return f"{total} listings" if total else "no open bids"
+                _run_step(steps, failures, "portal", _portal)
+
+                def _ariba():
                     from toronto_bids.sources import ariba_attachments as aa
                     n = aa.capture_attachments(conn, log=out, virtual_display=True)
-                    print(f"  ariba attachments    : {n} bundles captured")
-                except Exception as exc:
-                    failures.append(("ariba_attachments", str(exc)))
-                try:
+                    return f"+{n} bundles"
+                _run_step(steps, failures, "ariba attachments", _ariba)
+
+                def _agencies():
                     from toronto_bids.buyers import seed_buyers
+                    a0 = db.counts(conn)
                     ids = seed_buyers(conn)
                     failures.extend(_capture_agency_bodies(
                         conn, ids, bodies=["trca", "zoo", "ep"],
                         fetch=True, scrape=True, virtual_display=True, out=out))
-                except Exception as exc:
-                    failures.append(("agencies", str(exc)))
+                    a1 = db.counts(conn)
+                    da = a1["agency_award"] - a0["agency_award"]
+                    db_ = a1["agency_bid"] - a0["agency_bid"]
+                    return f"+{da} awards, +{db_} bids"
+                _run_step(steps, failures, "agencies", _agencies)
+
                 if _is_first_of_month():
-                    try:
+                    def _council():
                         from functools import partial
                         from toronto_bids.sources.council import (
                             enrich_council, fetch_agenda_item)
                         fetch = partial(fetch_agenda_item, virtual_display=True)
-                        print(f"  council enriched     : "
-                              f"{enrich_council(conn, http, fetch=fetch)}")
-                    except Exception as exc:
-                        failures.append(("council", str(exc)))
+                        n = enrich_council(conn, http, fetch=fetch)
+                        return f"{n} items"
+                    _run_step(steps, failures, "council", _council)
+                else:
+                    steps.append({"name": "council", "status": "skip",
+                                  "detail": "not the 1st", "seconds": 0.0, "error": None})
             finally:
                 try:
                     http.close()
                 except Exception as exc:
                     failures.append(("http_close", str(exc)))
 
-        try:
+        def _supplier():
             from toronto_bids.linking.supplier import build_supplier_dimension
-            print(f"  suppliers            : {build_supplier_dimension(conn)}")
-        except Exception as exc:
-            failures.append(("supplier_linking", str(exc)))
+            return f"{build_supplier_dimension(conn)} suppliers"
+        _run_step(steps, failures, "supplier rebuild", _supplier)
 
-        try:
+        def _export():
+            nonlocal export_bytes
             written = export_json(conn, Path(config.DATA_DIR) / "export" / "bids.json")
             export_bytes = written.stat().st_size
-        except Exception as exc:
-            failures.append(("export", str(exc)))
+            return f"{export_bytes / 1_048_576:.1f} MiB"
+        _run_step(steps, failures, "export", _export)
 
         try:
             after = db.counts(conn)
@@ -505,8 +547,17 @@ def _cmd_nightly(args) -> int:
         except Exception as exc:
             failures.append(("conn_close", str(exc)))
 
-    text = notify.summarize(before, after, failures, len(pipeline.default_sources()),
-                            export_bytes, time.monotonic() - started)
+    report = {
+        "ok": not failures,
+        "steps": steps,
+        "sources": sources,
+        "before": before,
+        "after": after,
+        "failures": failures,
+        "export_bytes": export_bytes,
+        "elapsed_s": time.monotonic() - started,
+    }
+    text = notify.summarize(report)
     print(text)
     for name, error in failures:
         print(f"FAILED  {name}: {error}", file=sys.stderr)

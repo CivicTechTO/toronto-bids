@@ -281,3 +281,16 @@ def finish_sync_run(conn, run_id, *, status, rows_fetched=0, rows_upserted=0, er
         (status, rows_fetched, rows_upserted, error, run_id),
     )
     conn.commit()
+
+
+def sync_runs_since(conn, after_id: int) -> list[dict]:
+    """Every sync_run row newer than after_id, oldest first — one nightly's per-source detail.
+
+    Capture MAX(id) before pipeline.sync, pass it here after, and you get exactly the rows that
+    run wrote (sync_run.id is autoincrement).
+    """
+    cur = conn.execute(
+        "SELECT source, status, rows_fetched, rows_upserted, error "
+        "FROM sync_run WHERE id > ? ORDER BY id", (after_id,))
+    cols = [c[0] for c in cur.description]
+    return [dict(zip(cols, row)) for row in cur.fetchall()]

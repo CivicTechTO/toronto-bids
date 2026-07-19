@@ -96,7 +96,7 @@ def test_the_summary_is_posted(nightly, monkeypatch):
     monkeypatch.setattr(notify, "post", lambda text, **k: posted.append(text) or True)
     assert nightly() == 0
     assert len(posted) == 1
-    assert posted[0].startswith("✅ toronto-bids")
+    assert posted[0].startswith("*✅ toronto-bids nightly*")
 
 
 def test_a_failing_run_posts_the_failure(nightly, monkeypatch):
@@ -104,7 +104,8 @@ def test_a_failing_run_posts_the_failure(nightly, monkeypatch):
     monkeypatch.setattr(notify, "post", lambda text, **k: posted.append(text) or True)
     monkeypatch.setattr(cli.pipeline, "sync", lambda *a, **k: [("ariba_discovery", "boom")])
     assert nightly() == 1
-    assert posted[0].startswith("❌ toronto-bids")
+    assert posted[0].startswith("*❌ toronto-bids nightly*")
+    assert "*Failures" in posted[0]
     assert "ariba_discovery" in posted[0]
 
 
@@ -118,7 +119,7 @@ def test_a_broken_database_still_reports_to_slack(nightly, monkeypatch):
         raise sqlite3.OperationalError("unable to open database file")
     monkeypatch.setattr(cli, "_open_db", boom)
     assert nightly() == 1
-    assert posted and posted[0].startswith("❌ toronto-bids")
+    assert posted and posted[0].startswith("*❌ toronto-bids nightly*")
     assert "unable to open database file" in posted[0]
 
 
@@ -129,7 +130,7 @@ def test_counting_the_archive_failing_still_reports_to_slack(nightly, monkeypatc
         raise sqlite3.DatabaseError("database disk image is malformed")
     monkeypatch.setattr(cli.db, "counts", boom)
     assert nightly() == 1
-    assert posted and posted[0].startswith("❌ toronto-bids")
+    assert posted and posted[0].startswith("*❌ toronto-bids nightly*")
 
 
 def test_a_failure_building_the_http_client_does_not_cost_us_the_export(nightly, monkeypatch,
@@ -185,7 +186,7 @@ def test_a_failure_closing_the_database_does_not_swallow_the_summary(nightly, mo
 
     monkeypatch.setattr(cli, "_open_db", lambda: _CloseFails())
     assert nightly() == 1
-    assert posted and posted[0].startswith("❌ toronto-bids")
+    assert posted and posted[0].startswith("*❌ toronto-bids nightly*")
 
 
 def test_a_raising_ariba_attachment_step_does_not_stop_the_export(nightly, monkeypatch, tmp_path):
@@ -207,6 +208,41 @@ def test_an_agency_body_failure_is_recorded_but_export_still_runs(nightly, monke
     monkeypatch.setattr(cli, "_capture_agency_bodies", lambda *a, **k: [("zoo", "boom")])
     assert nightly() == 1
     assert (tmp_path / "export" / "bids.json").exists()
+
+
+def test_report_has_a_steps_section_naming_each_step(nightly, monkeypatch):
+    posted = {}
+    from toronto_bids import notify
+    monkeypatch.setattr(notify, "post", lambda text, **k: posted.setdefault("text", text))
+    nightly()
+    t = posted["text"]
+    assert "*Steps*" in t
+    for name in ("sync", "award summaries", "ariba attachments", "agencies", "export"):
+        assert name in t
+
+
+def test_a_failed_step_appears_in_both_failures_and_steps(nightly, monkeypatch):
+    posted = {}
+    from toronto_bids import notify
+    monkeypatch.setattr(notify, "post", lambda text, **k: posted.setdefault("text", text))
+    from toronto_bids.sources import ariba_attachments
+    monkeypatch.setattr(ariba_attachments, "capture_attachments",
+                        lambda *a, **k: (_ for _ in ()).throw(RuntimeError("browser died")))
+    assert nightly() == 1
+    t = posted["text"]
+    assert "*Failures (1)*" in t
+    assert "browser died" in t
+    assert "❌ ariba attachments" in t
+
+
+def test_run_step_records_ok_and_isolates_failure():
+    from toronto_bids import cli
+    steps, failures = [], []
+    cli._run_step(steps, failures, "demo", lambda: "+3 things")
+    assert steps[0]["status"] == "ok" and steps[0]["detail"] == "+3 things"
+    cli._run_step(steps, failures, "boom", lambda: (_ for _ in ()).throw(RuntimeError("x")))
+    assert steps[1]["status"] == "fail" and steps[1]["error"] == "x"
+    assert failures == [("boom", "x")]   # failure mirrored for the exit-code contract
 
 
 def test_council_runs_only_on_the_first_of_the_month(nightly, monkeypatch):

@@ -10,26 +10,7 @@ import os
 
 import httpx
 
-# Tables worth a line in a one-line summary. The full set is in `tb status`; this is the
-# headline: what the archive is FOR (solicitations, awards, bids) plus the dimension the bids
-# feed. Everything else is either derived or quiet.
-_HEADLINE = (("solicitation", "solicitations"), ("award", "awards"),
-             ("bid", "bids"), ("supplier", "suppliers"))
 _SLACK_TIMEOUT = 15.0
-
-
-def _count(before: dict, after: dict, key: str, label: str) -> str:
-    """'solicitations 7,653 (+12)', or without the delta when nothing moved.
-
-    An empty `before` means the before-count did not run (the caller passes {} on that
-    failure) — showing a delta against it would render a fake number against a zero nobody
-    measured, so it is omitted entirely rather than computed against 0.
-    """
-    now = after.get(key, 0)
-    if not before:
-        return f"{label} {now:,}"
-    delta = now - before.get(key, 0)
-    return f"{label} {now:,}" + (f" ({delta:+,})" if delta else "")
 
 
 def _elapsed(seconds: float) -> str:
@@ -37,35 +18,88 @@ def _elapsed(seconds: float) -> str:
     return f"{m}m{s:02d}s" if m else f"{s}s"
 
 
-def summarize(before: dict, after: dict, failures: list, n_sources: int,
-              export_bytes: int | None, elapsed_s: float) -> str:
-    """The one-line message. Pure — `export_bytes` is passed in, never stat'ed here.
+_STEP_ICON = {"ok": "✅", "fail": "❌", "skip": "➖"}
 
-    Posted on EVERY run, not only on failure, and that is the design: the failure mode a
-    failures-only alert cannot catch is the timer never firing at all, where silence and health
-    look identical. A nightly line makes silence itself the signal.
+# Nicer labels for the Growth section; unlisted tables fall back to the raw key.
+_LABELS = {
+    "solicitation": "solicitations", "award": "awards", "bid": "bids", "supplier": "suppliers",
+    "noncompetitive": "noncompetitive", "ariba_posting": "ariba postings",
+    "suspended_firm": "suspended firms", "capital_project": "capital projects",
+    "council_item": "council items", "background_pdf": "background pdfs",
+    "composite_award": "composite awards", "agency_solicitation": "agency solicitations",
+    "agency_award": "agency awards", "agency_bid": "agency bids",
+    "ariba_attachment": "ariba files",
+}
+# Housekeeping tables whose growth is noise in a report about the archive.
+_GROWTH_SKIP = {"sync_run", "buyer"}
+
+
+def _growth(before: dict, after: dict) -> list[str]:
+    """'solicitations 7,446 (+12)' for every table that grew. Empty `before` (the count step
+    failed) yields nothing — a delta against a zero nobody measured is a fabricated number."""
+    if not before:
+        return []
+    out = []
+    for key, now in after.items():
+        if key in _GROWTH_SKIP:
+            continue
+        delta = now - before.get(key, 0)
+        if delta:
+            out.append(f"{_LABELS.get(key, key)} {now:,} ({delta:+,})")
+    return out
+
+
+def summarize(report: dict) -> str:
+    """The nightly message — multi-section Slack mrkdwn. Pure and total over a partial report:
+    a missing/empty section is simply omitted, never a KeyError, because the report itself must
+    never be the thing that fails the run it exists to make visible.
     """
-    def _seg(label, key):
-        a = after.get(key)
-        if not a:
-            return None
-        d = a - before.get(key, 0)
-        return f"{label} {a:,} (+{d:,})" if d else None
+    before = report.get("before", {})
+    after = report.get("after", {})
+    failures = report.get("failures", [])
+    steps = report.get("steps", [])
+    sources = report.get("sources", [])
+    export_bytes = report.get("export_bytes")
+    elapsed_s = report.get("elapsed_s", 0.0)
+    ok = report.get("ok", not failures)
 
-    parts = [_count(before, after, key, label) for key, label in _HEADLINE]
-    parts.extend(s for s in (_seg("agency awards", "agency_award"),
-                             _seg("agency bids", "agency_bid"),
-                             _seg("ariba files", "ariba_attachment")) if s)
-    parts.append(f"export {export_bytes / 1_048_576:.1f} MiB" if export_bytes is not None  # binary MiB, matching ls -lh
-                 else "export FAILED")
-    parts.append(_elapsed(elapsed_s))
-    if not failures:
-        return f"✅ toronto-bids — {n_sources}/{n_sources} sources ok · " + " · ".join(parts)
-    # NOT "N/{n_sources} sources FAILED": `failures` mixes per-source failures from
-    # pipeline.sync with whole-step failures (sync, award_summary, export), and calling a
-    # dead disk a failed City feed would send someone to the wrong system at 06:00.
-    named = ", ".join(f"{name}: {error}" for name, error in failures)
-    return f"❌ toronto-bids — {len(failures)} failed · {named} · " + " · ".join(parts)
+    lines = [f"*{'✅' if ok else '❌'} toronto-bids nightly* · {_elapsed(elapsed_s)}"]
+
+    if steps:
+        lines += ["", "*Steps*"]
+        for s in steps:
+            icon = _STEP_ICON.get(s.get("status"), "•")
+            detail = s.get("detail") or s.get("error") or ""
+            dur = s.get("seconds") or 0.0
+            suffix = f" · {_elapsed(dur)}" if dur >= 1 else ""
+            lines.append(f"{icon} {s.get('name', '?')}  {detail}{suffix}".rstrip())
+
+    if sources:
+        lines += ["", "*Sources* (fetched → new)"]
+        ok_segs, warns = [], []
+        for r in sources:
+            fetched = r.get("rows_fetched", 0) or 0
+            new = r.get("rows_upserted", 0) or 0
+            if r.get("status") != "ok" or fetched == 0:
+                extra = "" if r.get("status") == "ok" else f" ({r.get('status')})"
+                warns.append(f"⚠ {r.get('source', '?')} {fetched:,} fetched{extra}")
+            else:
+                ok_segs.append(f"{r.get('source', '?')} {fetched:,} → +{new:,}")
+        if ok_segs:
+            lines.append(" · ".join(ok_segs))
+        lines += warns
+
+    growth = _growth(before, after)
+    if growth:
+        lines += ["", "*Growth*", " · ".join(growth)]
+
+    lines += ["", f"export {'FAILED' if export_bytes is None else f'{export_bytes / 1_048_576:.1f} MiB'}"]
+
+    if failures:
+        lines += ["", f"*Failures ({len(failures)})*"]
+        lines += [f"{name}: {error}" for name, error in failures]
+
+    return "\n".join(lines)
 
 
 def post(text: str, webhook: str | None = None, log=lambda _m: None) -> bool:

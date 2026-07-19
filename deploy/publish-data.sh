@@ -35,7 +35,22 @@ DAY="${TB_PUBLISH_DAY:-$(date +%d)}"
 SNAPSHOT_DATE="${TB_PUBLISH_DATE:-$(date +%F)}"
 DRY_RUN="${TB_PUBLISH_DRY_RUN:-0}"
 
-fail() { echo "publish-data: $*" >&2; exit 1; }
+# Post one line to Slack (best-effort). The webhook is a credential and this repo is public, so
+# it is passed ONLY as the curl URL — never echoed or logged. No webhook -> no-op; dry-run echoes.
+slack_notify() {
+  local msg="$1"
+  if [ "$DRY_RUN" = 1 ]; then
+    echo "DRY-RUN slack: $msg"
+    return 0
+  fi
+  [ -n "${TB_SLACK_WEBHOOK:-}" ] || return 0
+  curl -s -o /dev/null --max-time 15 \
+    -H 'Content-Type: application/json' \
+    --data "$(printf '{"text": %s}' "$(printf '%s' "$msg" | python3 -c 'import json,sys; print(json.dumps(sys.stdin.read()))')")" \
+    "$TB_SLACK_WEBHOOK" || echo "publish-data: WARNING — slack post failed" >&2
+}
+
+fail() { slack_notify "❌ toronto-bids publish — $*"; echo "publish-data: $*" >&2; exit 1; }
 
 gh_run() {
   if [ "$DRY_RUN" = 1 ]; then
@@ -118,5 +133,7 @@ fi
 if ! gh_run workflow run deploy.yml -R "$FRONTEND_REPO"; then
   echo "publish-data: WARNING — could not trigger the frontend deploy on $FRONTEND_REPO (data is published)" >&2
 fi
+
+slack_notify "✅ toronto-bids publish — latest release updated · ${GENERATED_AT} · https://github.com/${DATA_REPO}/releases/tag/latest"
 
 echo "publish-data: done"

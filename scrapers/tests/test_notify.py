@@ -4,82 +4,88 @@
 """
 from toronto_bids import notify
 
-BEFORE = {"solicitation": 7641, "award": 14157, "bid": 18627, "supplier": 6738}
-AFTER = {"solicitation": 7653, "award": 14165, "bid": 18632, "supplier": 6738}
-
 
 def _counts(**kw):
-    base = {k: 0 for k in ("solicitation", "award", "bid", "agency_award",
-                           "agency_bid", "ariba_attachment")}
+    base = {k: 0 for k in ("solicitation", "award", "bid", "supplier",
+                           "agency_award", "agency_bid", "ariba_attachment")}
     base.update(kw)
     return base
 
 
-def test_summary_shows_agency_and_attachment_growth():
+def test_clean_run_header_and_growth():
+    report = {"ok": True, "before": _counts(solicitation=7434, bid=18605),
+              "after": _counts(solicitation=7446, bid=18632),
+              "failures": [], "export_bytes": 32_651_042, "elapsed_s": 3484.0}
+    text = notify.summarize(report)
+    assert text.startswith("*✅ toronto-bids nightly* · 58m04s")
+    assert "*Growth*" in text
+    assert "solicitations 7,446 (+12)" in text
+    assert "bids 18,632 (+27)" in text
+    assert "*Failures*" not in text
+
+
+def test_failed_run_header_and_failures_section():
+    report = {"ok": False, "before": _counts(), "after": _counts(),
+              "failures": [("ariba_attachments", "TimeoutError on Respond")],
+              "export_bytes": 1000, "elapsed_s": 61.0}
+    text = notify.summarize(report)
+    assert text.startswith("*❌ toronto-bids nightly*")
+    assert "*Failures (1)*" in text
+    assert "ariba_attachments: TimeoutError on Respond" in text
+
+
+def test_steps_section_renders_status_detail_and_skip():
+    report = {"ok": True, "before": _counts(), "after": _counts(), "failures": [],
+              "steps": [
+                  {"name": "sync", "status": "ok", "detail": "9/9 sources", "seconds": 192.0, "error": None},
+                  {"name": "council", "status": "skip", "detail": "not the 1st", "seconds": 0.0, "error": None},
+                  {"name": "ariba attachments", "status": "fail", "detail": "", "seconds": 2880.0, "error": "boom"},
+              ],
+              "export_bytes": 1000, "elapsed_s": 3600.0}
+    text = notify.summarize(report)
+    assert "*Steps*" in text
+    assert "✅ sync  9/9 sources · 3m12s" in text
+    assert "➖ council  not the 1st" in text
+    assert "❌ ariba attachments  boom · 48m0" in text[:1000] or "❌ ariba attachments  boom · 48m00s" in text
+
+
+def test_sources_section_flags_zero_fetch():
+    report = {"ok": True, "before": _counts(), "after": _counts(), "failures": [],
+              "sources": [
+                  {"source": "odata_solicitations", "status": "ok", "rows_fetched": 7446, "rows_upserted": 12, "error": None},
+                  {"source": "suspended_firms", "status": "ok", "rows_fetched": 0, "rows_upserted": 0, "error": None},
+              ],
+              "export_bytes": 1000, "elapsed_s": 60.0}
+    text = notify.summarize(report)
+    assert "*Sources* (fetched → new)" in text
+    assert "odata_solicitations 7,446 → +12" in text
+    assert "⚠ suspended_firms 0 fetched" in text
+
+
+def test_nothing_moved_omits_growth_and_empty_before_suppresses_deltas():
+    same = _counts(solicitation=10)
+    assert "*Growth*" not in notify.summarize(
+        {"ok": True, "before": same, "after": same, "failures": [], "export_bytes": 1, "elapsed_s": 1.0})
+    # empty before => before-count failed => no fabricated deltas
+    assert "*Growth*" not in notify.summarize(
+        {"ok": True, "before": {}, "after": _counts(bid=5), "failures": [], "export_bytes": 1, "elapsed_s": 1.0})
+
+
+def test_missing_export_is_reported_as_failed():
+    report = {"ok": False, "before": _counts(), "after": _counts(), "failures": [],
+              "export_bytes": None, "elapsed_s": 60.0}
+    text = notify.summarize(report)
+    assert "export FAILED" in text
+
+
+def test_growth_labels_agency_and_ariba():
     before = _counts(agency_award=100, agency_bid=200, ariba_attachment=1000)
     after = _counts(agency_award=107, agency_bid=215, ariba_attachment=1111)
-    text = notify.summarize(before, after, [], 9, 31_000_000, 12.0)
+    text = notify.summarize({"ok": True, "before": before, "after": after,
+                             "failures": [], "export_bytes": 1, "elapsed_s": 1.0})
     assert "agency awards 107 (+7)" in text
     assert "agency bids 215 (+15)" in text
     assert "ariba files 1,111 (+111)" in text
-
-
-def test_summary_omits_zero_growth_agency_and_attachment_lines():
-    c = _counts(solicitation=10)
-    text = notify.summarize(c, c, [], 9, 1000, 1.0)
-    assert "agency awards" not in text  # nothing captured -> no noise
-
-
-def test_a_healthy_run_leads_with_success_and_the_counts():
-    text = notify.summarize(BEFORE, AFTER, [], 9, 30_800_000, 192.0)
-    assert text.startswith("✅ toronto-bids")
-    assert "9/9 sources ok" in text
-    assert "solicitations 7,653 (+12)" in text
-    assert "awards 14,165 (+8)" in text
-    assert "bids 18,632 (+5)" in text
-
-
-def test_an_unchanged_count_shows_no_delta():
-    """(+0) on every quiet table is noise; a delta appears only when something moved."""
-    text = notify.summarize(BEFORE, AFTER, [], 9, 1, 1.0)
-    assert "suppliers 6,738" in text
-    assert "6,738 (+0)" not in text
-
-
-def test_a_failure_leads_with_it_and_names_the_source_and_error():
-    """The whole point of posting: a failure must be legible without opening a terminal."""
-    text = notify.summarize(BEFORE, AFTER, [("ariba_discovery", "HTTPError 500")], 9,
-                            30_800_000, 192.0)
-    assert text.startswith("❌ toronto-bids")
-    assert "1 failed" in text
-    assert "ariba_discovery: HTTPError 500" in text
-
-
-def test_a_failed_step_is_not_reported_as_a_failed_source():
-    """`failures` carries whole-step failures (sync, award_summary, export) alongside the
-    per-source ones pipeline.sync returns. 'N/9 sources FAILED' would call a dead disk a
-    failed City feed."""
-    text = notify.summarize(BEFORE, AFTER, [("export", "disk full")], 9, None, 5.0)
-    assert "sources" not in text
-    assert "export: disk full" in text
-
-
-def test_a_failure_still_reports_the_export():
-    """Export runs even after a partial sync — the message must say so, or a reader assumes
-    the run produced nothing."""
-    text = notify.summarize(BEFORE, AFTER, [("ariba_discovery", "boom")], 9, 30_800_000, 5.0)
-    assert "export 29.4 MiB" in text
-
-
-def test_a_missing_export_is_reported_as_missing_not_as_zero():
-    text = notify.summarize(BEFORE, AFTER, [("export", "disk full")], 9, None, 5.0)
-    assert "export FAILED" in text
-    assert "0.0 MiB" not in text
-
-
-def test_elapsed_is_human_readable():
-    assert "3m12s" in notify.summarize(BEFORE, AFTER, [], 9, 1, 192.0)
-    assert "45s" in notify.summarize(BEFORE, AFTER, [], 9, 1, 45.0)
 
 
 def test_post_without_a_webhook_is_a_no_op_and_makes_no_request(monkeypatch):
@@ -156,15 +162,6 @@ def test_a_successful_post_returns_true(monkeypatch):
         status_code = 200
     monkeypatch.setattr(notify.httpx, "post", lambda url, **kw: Resp())
     assert notify.post("hi", webhook="https://hooks.slack.test/x") is True
-
-
-def test_a_failed_before_count_shows_no_delta_rather_than_a_fabricated_one():
-    """When the `before` count raised, the caller passes before={}. Rendering (+18,632) against
-    a zero it never actually measured is a fabricated number in the exact mechanism the summary
-    exists for. Show the absolute count, no delta."""
-    text = notify.summarize({}, AFTER, [("counts", "locked")], 9, 30_800_000, 5.0)
-    assert "bids 18,632" in text
-    assert "(+" not in text
 
 
 def test_a_malformed_webhook_exception_never_leaks_the_url_into_the_log(monkeypatch):
