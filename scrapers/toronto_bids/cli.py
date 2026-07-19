@@ -130,6 +130,20 @@ def _run_step(steps: list, failures: list, name: str, fn) -> None:
         failures.append((name, str(exc)))
 
 
+def _report_sources(conn, after_id: int) -> list:
+    """This-run sync_run rows for the DATA fetch sources only — the report's Sources section.
+
+    sync_run also records the schema-drift validator (`schema_check`, which writes 0 rows by
+    nature) and the post-source linking passes (`title_cleanup`, `ariba_bridge`,
+    `amount_backfill`, `amount_labels`, `supplier_dimension`). Those are not fetches — a pass
+    touching 0 rows is normal — so including them would falsely ⚠-flag them as broken every
+    single night. Keep only the real City feeds; a genuine `schema_check` failure still surfaces
+    in the Failures section via pipeline.sync's return.
+    """
+    names = {s.name for s in pipeline.default_sources()} - {"schema_check"}
+    return [r for r in db.sync_runs_since(conn, after_id) if r["source"] in names]
+
+
 def _open_db():
     config.DATA_DIR.mkdir(parents=True, exist_ok=True)
     conn = db.connect(config.DB_PATH)
@@ -469,7 +483,7 @@ def _cmd_nightly(args) -> int:
                 _run_step(steps, failures, "sync", _sync)
 
                 try:
-                    sources.extend(db.sync_runs_since(conn, sync_cutoff))
+                    sources.extend(_report_sources(conn, sync_cutoff))
                 except Exception as exc:
                     failures.append(("sync_detail", str(exc)))
 

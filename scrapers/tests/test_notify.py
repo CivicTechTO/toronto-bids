@@ -57,8 +57,9 @@ def test_sources_section_flags_zero_fetch():
               ],
               "export_bytes": 1000, "elapsed_s": 60.0}
     text = notify.summarize(report)
-    assert "*Sources* (fetched → new)" in text
-    assert "odata_solicitations 7,446 → +12" in text
+    assert "*Sources* (fetched)" in text
+    assert "odata_solicitations 7,446" in text
+    assert "→ +" not in text   # rows_upserted is written-rows, NOT "new" — Growth owns new-record counts
     assert "⚠ suspended_firms 0 fetched" in text
 
 

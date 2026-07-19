@@ -210,6 +210,23 @@ def test_an_agency_body_failure_is_recorded_but_export_still_runs(nightly, monke
     assert (tmp_path / "export" / "bids.json").exists()
 
 
+def test_report_sources_excludes_linking_passes_and_validator(conn):
+    # sync_run records the linking passes and the schema-drift validator too; they are not
+    # fetch sources (a pass touching 0 rows is normal), so the Sources list must drop them —
+    # otherwise every night falsely ⚠-flags title_cleanup/ariba_bridge/schema_check as broken.
+    from toronto_bids import cli
+    from toronto_bids.store import db as _db
+    for src, fetched in (("schema_check", 0), ("odata_solicitations", 7446),
+                         ("supplier_dimension", 8020), ("title_cleanup", 0)):
+        rid = _db.start_sync_run(conn, src)
+        _db.finish_sync_run(conn, rid, status="ok", rows_fetched=fetched, rows_upserted=fetched)
+    names = [r["source"] for r in cli._report_sources(conn, 0)]
+    assert "odata_solicitations" in names
+    assert "schema_check" not in names          # validator, fetches 0 by nature
+    assert "supplier_dimension" not in names     # linking pass, not a fetch
+    assert "title_cleanup" not in names          # linking pass, not a fetch
+
+
 def test_report_has_a_steps_section_naming_each_step(nightly, monkeypatch):
     posted = {}
     from toronto_bids import notify
