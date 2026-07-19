@@ -11,8 +11,9 @@ WorkingDirectory=%h/toronto-bids/scrapers
 # live where a `git pull` cannot reach it.
 Environment=TB_DATA_DIR=%h/tb-data
 # The leading '-' makes this optional: no webhook file -> notify.post() no-ops and the run
-# still succeeds. The file holds credentials (TB_SLACK_WEBHOOK, GH_TOKEN) and is mode 0600;
-# it is never in git. GH_TOKEN, unlike the webhook, is required for the publish step (#146).
+# still succeeds. The file holds credentials (TB_SLACK_WEBHOOK, optional GH_TOKEN) and is mode
+# 0600; it is never in git. Publishing requires gh to be authenticated (a GH_TOKEN here OR a
+# prior `gh auth login` on the box) — the publish step fails loudly otherwise (#146).
 EnvironmentFile=-%h/.config/toronto-bids/tb.env
 # The wrapper runs `tb nightly` then publish-data.sh — publish runs even after a partial sync
 # (the export is still valid) and the unit fails if EITHER step failed, neither masking the

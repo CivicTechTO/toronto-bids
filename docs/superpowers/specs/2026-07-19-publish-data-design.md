@@ -51,8 +51,10 @@ Then it triggers the site build:
   exit). Publishing the data IS the deliverable; a failure must be visible, not swallowed. This
   is the opposite of the Slack webhook, which is a *notification* subordinate to the archive and
   therefore optional.
-- **A missing `GH_TOKEN` → fatal**, for the same reason (unlike `TB_SLACK_WEBHOOK`, which
-  no-ops when unset).
+- **Unauthenticated `gh` → fatal**, for the same reason (unlike `TB_SLACK_WEBHOOK`, which
+  no-ops when unset). The check is `gh auth status`, satisfied by either a `GH_TOKEN` in the
+  environment (an unattended service token) or a prior `gh auth login` on the box — so a box
+  where `gh` is already logged in needs no duplicate credential.
 - **The frontend `workflow run` trigger → best-effort (warn, non-fatal).** The data is already
   published — the acceptance `curl` passes — and letting a downstream trigger's failure report
   the whole publish as failed would mask that success. A warning in the journal is the right
@@ -76,11 +78,13 @@ If the sync fails catastrophically (the DB never opens, no export written), `pub
 finds no `bids.json` and fails — correct: there is genuinely nothing to publish, and the unit is
 already failing on the nightly.
 
-### 2.4 The token is a credential; this repo is public
+### 2.4 Authentication; this repo is public
 
-`GH_TOKEN` lives beside the Slack webhook in `~/.config/toronto-bids/tb.env` (mode `0600`, never
-in git), pulled in by the unit's existing `EnvironmentFile=-`. It needs `repo` scope on
-`toronto-bids-data` (release write) and `workflow` scope on `toronto-bids-frontend` (dispatch).
+Publishing needs `gh` authenticated with `repo` scope on `toronto-bids-data` (release write) and
+`workflow` scope on `toronto-bids-frontend` (dispatch). Either a prior `gh auth login` on the box
+or a `GH_TOKEN` satisfies it. A `GH_TOKEN`, if used, is a credential and lives beside the Slack
+webhook in `~/.config/toronto-bids/tb.env` (mode `0600`, never in git), pulled in by the unit's
+existing `EnvironmentFile=-`.
 
 ### 2.5 Offline self-test
 
