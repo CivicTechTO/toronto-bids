@@ -2,8 +2,14 @@
 
 Design: [`docs/superpowers/specs/2026-07-17-deployment-design.md`](../docs/superpowers/specs/2026-07-17-deployment-design.md)
 
-User-level systemd. The host has no passwordless sudo, and linger is already enabled for the
-operator, so the only privileged step is installing two apt packages.
+User-level systemd. `tb nightly` is a single unified run: sync, award summaries, Ariba
+attachment capture, agency (Zoo/TRCA/EP) board-report scrapes, council enrichment (monthly,
+gated to the 1st), export, then publish. The browser-driven captures run in-line, isolated the
+same way sources are — a failure in one is recorded and never blocks the rest, and export +
+publish still run.
+
+The host has no passwordless sudo, and linger is already enabled for the operator, so the only
+privileged steps are installing a handful of apt packages.
 
 ## 1. Prerequisites (the only step needing a password)
 
@@ -18,6 +24,37 @@ never writes the row, and therefore **re-downloads the same form on every run, f
 
 `pipx` rather than uv's `curl … | sh` installer: distro packages over piping a remote script
 into a shell.
+
+### Browser prerequisites (now required — the nightly drives a headed browser)
+
+`tb enrich-ariba-attachments --capture` (#117) archives the solicitation documents behind
+Ariba's Respond gate, and the agency board-report scrapes (#135) share the same headed-Chromium
+prober. Both now run in-line inside `tb nightly`, so their prerequisites are required, not
+optional:
+
+```shell
+# 1. Xvfb + Chromium's system libraries, and zip (the publish step builds
+#    council-agendas.zip) — the privileged step
+sudo apt install -y xvfb zip
+cd ~/toronto-bids/scrapers
+uv sync --extra council --locked        # playwright + pyvirtualdisplay + python-dotenv
+uv run playwright install chromium      # the browser binary (~150MB, non-privileged)
+sudo .venv/bin/python -m playwright install-deps chromium   # its shared libs (needs root)
+
+# 2. Ariba credentials, appended to the same 0600 env file as the Slack webhook (see §3 below).
+#    The account must NOT have MFA — an unattended login cannot answer a challenge.
+# `read -r "U?prompt"` is bash-only and fails in zsh ("no coprocess"); prompt separately so
+# this works in either shell.
+umask 077
+printf 'ARIBA_USERNAME: '; read -r U
+printf 'ARIBA_PASSWORD: '; read -rs P; echo
+printf 'ARIBA_USERNAME=%s\nARIBA_PASSWORD=%s\n' "$U" "$P" >> ~/.config/toronto-bids/tb.env
+unset U P; chmod 600 ~/.config/toronto-bids/tb.env
+```
+
+The Ariba capture's first run is a full sweep (~1-2h, ~44 open events); later runs are fast (a
+bundle already on disk is skipped). Respond is disabled once a posting closes, so the capture
+only reaches currently-open solicitations — this is why it runs nightly, not once.
 
 ## 2. Code
 
@@ -142,54 +179,15 @@ unzip -q -o /tmp/agendas/council-agendas.zip -d ~/tb-data/council/agendas
 cd ~/toronto-bids/scrapers && TB_DATA_DIR=~/tb-data uv run tb enrich-titles   # offline, no browser
 ```
 
-## Ariba document capture (opt-in, headed browser under Xvfb) — #122
-
-`tb enrich-ariba-attachments --capture` archives the solicitation documents behind Ariba's
-Respond gate (#117). It drives a **headed** Chromium (Ariba blocks headless login), so on this
-headless box it runs under Xvfb via `--virtual-display`. It writes to the **same** `~/tb-data`
-store, so the nightly's `tb export` includes the attachments. Its own timer, separate from
-`tb-nightly` and well clear of it (noon vs 05:30).
-
-Extra prerequisites beyond the base install:
-
-```shell
-# 1. Xvfb + Chromium's system libraries (the privileged step)
-sudo apt install -y xvfb
-cd ~/toronto-bids/scrapers
-uv sync --extra council --locked        # playwright + pyvirtualdisplay + python-dotenv
-uv run playwright install chromium      # the browser binary (~150MB, non-privileged)
-sudo .venv/bin/python -m playwright install-deps chromium   # its shared libs (needs root)
-
-# 2. Ariba credentials, appended to the same 0600 env file as the Slack webhook.
-#    The account must NOT have MFA — an unattended login cannot answer a challenge.
-# `read -r "U?prompt"` is bash-only and fails in zsh ("no coprocess"); prompt separately so
-# this works in either shell.
-umask 077
-printf 'ARIBA_USERNAME: '; read -r U
-printf 'ARIBA_PASSWORD: '; read -rs P; echo
-printf 'ARIBA_USERNAME=%s\nARIBA_PASSWORD=%s\n' "$U" "$P" >> ~/.config/toronto-bids/tb.env
-unset U P; chmod 600 ~/.config/toronto-bids/tb.env
-
-# 3. Units + prove one run before scheduling.
-cp ~/toronto-bids/deploy/tb-ariba-attachments.{service,timer} ~/.config/systemd/user/
-systemctl --user daemon-reload
-systemctl --user start tb-ariba-attachments.service
-journalctl --user -u tb-ariba-attachments -n 50 --no-pager
-systemctl --user enable --now tb-ariba-attachments.timer
-```
-
-The first run is a full sweep (~1-2h, ~44 open events); later runs are fast (a bundle already
-on disk is skipped). Respond is disabled once a posting closes, so the capture only reaches
-currently-open solicitations — this is why it runs daily, not once.
-
 ## What does NOT run here
 
-`enrich-council` and `enrich-titles --scrape` need a **headed** Chromium (TMMIS is Akamai-gated
-and blocks headless). They are not on the timer — but Playwright IS installed now (for the Ariba
-capture above), so they can be run by hand under `--virtual-display` if ever needed:
+`enrich-council` needs a **headed** Chromium (TMMIS is Akamai-gated and blocks headless), but
+Playwright is installed as part of the base setup now (§1, "Browser prerequisites") — it runs
+monthly inside the nightly (gated to the 1st), so there is nothing separate to schedule for it.
 
-- `enrich-titles --scrape` **will never find another agenda** — the Bid Award Panel was
+- The Bid Award Panel title-recovery scrape **will never find another agenda** — the Panel was
   abolished on 2025-10-01 by By-law 766-2025, and the 891 cached pages are the final corpus.
-- `enrich-council` covers 3 suspended firms and changes rarely.
+- `enrich-council` covers 3 suspended firms and changes rarely; it runs monthly inside the
+  nightly (gated to the 1st) rather than every run.
 
-Run them by hand if they are ever needed.
+Run either by hand if ever needed outside the nightly's own schedule.

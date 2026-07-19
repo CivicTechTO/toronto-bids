@@ -1,5 +1,5 @@
 [Unit]
-Description=toronto-bids nightly sync, enrich, export, notify, publish
+Description=toronto-bids nightly: sync, enrich (award summaries, ariba attachments, agency board reports, monthly council), export, publish
 Documentation=https://github.com/CivicTechTO/toronto-bids/blob/main/docs/superpowers/specs/2026-07-19-publish-data-design.md
 After=network-online.target
 Wants=network-online.target
@@ -19,5 +19,6 @@ EnvironmentFile=-%h/.config/toronto-bids/tb.env
 # (the export is still valid) and the unit fails if EITHER step failed, neither masking the
 # other. See docs/superpowers/specs/2026-07-19-publish-data-design.md (#146).
 ExecStart=%h/toronto-bids/deploy/tb-nightly-run.sh
-# A full sync measures ~3 minutes (sync_run, 2026-07-16); the upload adds a little. 30m ceiling.
-TimeoutStartSec=30m
+# Browser captures (Ariba attachments cold sweep ~1-2h; agency scrapes incremental) now run
+# in-line before the export, so the nightly can be long. 3h is a generous ceiling (#unified-nightly).
+TimeoutStartSec=3h
