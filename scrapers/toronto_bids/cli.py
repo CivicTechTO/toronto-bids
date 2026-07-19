@@ -549,8 +549,8 @@ def _cmd_nightly(args) -> int:
 
     report = {
         "ok": not failures,
-        "steps": steps,            # populated in Task 3; [] here
-        "sources": sources,        # populated in Task 3; [] here
+        "steps": steps,
+        "sources": sources,
         "before": before,
         "after": after,
         "failures": failures,
