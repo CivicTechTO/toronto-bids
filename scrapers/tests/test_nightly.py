@@ -210,6 +210,41 @@ def test_an_agency_body_failure_is_recorded_but_export_still_runs(nightly, monke
     assert (tmp_path / "export" / "bids.json").exists()
 
 
+def test_report_has_a_steps_section_naming_each_step(nightly, monkeypatch):
+    posted = {}
+    from toronto_bids import notify
+    monkeypatch.setattr(notify, "post", lambda text, **k: posted.setdefault("text", text))
+    nightly()
+    t = posted["text"]
+    assert "*Steps*" in t
+    for name in ("sync", "award summaries", "ariba attachments", "agencies", "export"):
+        assert name in t
+
+
+def test_a_failed_step_appears_in_both_failures_and_steps(nightly, monkeypatch):
+    posted = {}
+    from toronto_bids import notify
+    monkeypatch.setattr(notify, "post", lambda text, **k: posted.setdefault("text", text))
+    from toronto_bids.sources import ariba_attachments
+    monkeypatch.setattr(ariba_attachments, "capture_attachments",
+                        lambda *a, **k: (_ for _ in ()).throw(RuntimeError("browser died")))
+    assert nightly() == 1
+    t = posted["text"]
+    assert "*Failures (1)*" in t
+    assert "browser died" in t
+    assert "❌ ariba attachments" in t
+
+
+def test_run_step_records_ok_and_isolates_failure():
+    from toronto_bids import cli
+    steps, failures = [], []
+    cli._run_step(steps, failures, "demo", lambda: "+3 things")
+    assert steps[0]["status"] == "ok" and steps[0]["detail"] == "+3 things"
+    cli._run_step(steps, failures, "boom", lambda: (_ for _ in ()).throw(RuntimeError("x")))
+    assert steps[1]["status"] == "fail" and steps[1]["error"] == "x"
+    assert failures == [("boom", "x")]   # failure mirrored for the exit-code contract
+
+
 def test_council_runs_only_on_the_first_of_the_month(nightly, monkeypatch):
     calls = []
     from toronto_bids.sources import council as council_src
