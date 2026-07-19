@@ -109,6 +109,23 @@ def build_export_document(conn, generated_at: str | None = None) -> dict:
                 "url": report["url"],
             })
 
+    # Bids split by which identifier they carry. A bid with a council `reference` (Bid Award
+    # Panel era) nests under its council item, below. A reference-null bid (Award Summary Form,
+    # the post-panel successor #145) has no council item — it nests under its solicitation by
+    # document_number, or, matching no solicitation, lands in unlinked_bids. Same
+    # nested-or-unlinked contract as awards/postings — nothing is dropped.
+    bids_by_ref: dict = {}
+    bids_by_doc: dict[str, list] = {}
+    unlinked_bids: list = []
+    for bid in _rows(conn, "SELECT * FROM bid ORDER BY reference, document_number, bidder_name_raw, id"):
+        cleaned = _drop(bid, "id")
+        if bid["reference"] is not None:
+            bids_by_ref.setdefault(bid["reference"], []).append(cleaned)
+        elif bid["document_number"] in sol_docs:
+            bids_by_doc.setdefault(bid["document_number"], []).append(_drop(cleaned, "document_number"))
+        else:
+            unlinked_bids.append(cleaned)
+
     solicitations = []
     for sol in _rows(conn, "SELECT * FROM solicitation ORDER BY document_number"):
         sol = _drop(sol, "odata_id")
@@ -116,6 +133,7 @@ def build_export_document(conn, generated_at: str | None = None) -> dict:
         sol["awards"] = awards_by_doc.get(doc, [])
         sol["ariba_postings"] = postings_by_doc.get(doc, [])
         sol["documents"] = documents_by_doc.get(doc, [])
+        sol["bids"] = bids_by_doc.get(doc, [])
         solicitations.append(sol)
 
     noncompetitive = [
@@ -150,10 +168,6 @@ def build_export_document(conn, generated_at: str | None = None) -> dict:
     )
 
     pdfs_by_ref: dict[str, list] = {}
-    bids_by_ref = {}
-    for bid in _rows(conn, "SELECT * FROM bid ORDER BY reference, bidder_name_raw, id"):
-        bids_by_ref.setdefault(bid["reference"], []).append(_drop(bid, "id"))
-
     for pdf in _rows(conn, "SELECT * FROM background_pdf ORDER BY reference, url"):
         pdfs_by_ref.setdefault(pdf["reference"], []).append(_drop(pdf, "id", "text", "local_path"))
 
@@ -196,5 +210,6 @@ def build_export_document(conn, generated_at: str | None = None) -> dict:
         "council_items": council_items,
         "unlinked_ariba_postings": unlinked,
         "unlinked_awards": unlinked_awards,
+        "unlinked_bids": unlinked_bids,
         "buyers": buyers_out,
     }
