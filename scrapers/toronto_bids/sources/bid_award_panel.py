@@ -621,7 +621,6 @@ _WINNER = re.compile(r"\bto\s+(.+?)\s+for\s+", re.I)
 # document number gives ground truth: award_amount is the "net of all applicable taxes" one
 # (820/980 = 84%). "including HST" matched 0; "net of HST recoveries" matched 4.
 _NET_OF_TAXES = re.compile(r"\$([\d,]+(?:\.\d+)?)\s*net of all applicable taxes", re.I)
-_ITEM_SPLIT = re.compile(r"B[AD]\d+\.\d+ - ")
 _ITEM_SPLIT_CAP = re.compile(r"(B[AD]\d+\.\d+) - ")   # capturing: keeps the 'BD106.3' item token
 
 

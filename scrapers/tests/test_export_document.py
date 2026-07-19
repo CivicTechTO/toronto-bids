@@ -417,5 +417,30 @@ def test_unbridged_staff_report_stays_out_of_documents(seeded):
         reference="2020.XX9.9", kind="bgrd"), overwrite=True)
     seeded.commit()
 
+
+def test_dual_key_bid_stays_under_council_item_not_solicitation(seeded):
+    # An Ariba-era (#126) dual-key bid: BOTH reference and document_number are set, and the
+    # document_number matches a real solicitation. This PR's re-homing is pre-Ariba only
+    # (document_number IS NULL), so a dual-key bid must keep its #145 placement under its
+    # council item and must NOT be re-homed to the solicitation.
+    from toronto_bids.models import CouncilItem
+    db.upsert_row(seeded, CouncilItem(reference="2020.BA5.3", title="Award"), overwrite=True)
+    db.upsert_row(seeded, Bid(bidder_name_raw="Dual Key Co", reference="2020.BA5.3",
+                              document_number="5672751291", bid_price="42",
+                              source="bid_award_panel"), overwrite=True)
+    seeded.commit()
+
+    doc = build_export_document(seeded, generated_at="t")
+    ci = next(c for c in doc["council_items"] if c["reference"] == "2020.BA5.3")
+    assert any(b["bidder_name_raw"] == "Dual Key Co" for b in ci["bids"])
+
+    sol = next(s for s in doc["solicitations"] if s["document_number"] == "5672751291")
+    assert all(b["bidder_name_raw"] != "Dual Key Co" for b in sol["bids"])
+
+    counts = doc["meta"]["counts"]
+    council = sum(len(c["bids"]) for c in doc["council_items"])
+    nested = sum(len(s["bids"]) for s in doc["solicitations"])
+    assert council + nested + len(doc["unlinked_bids"]) == counts["bid"]
+
     for s in build_export_document(seeded, generated_at="t")["solicitations"]:
         assert not any(d["source"] == "staff_report" for d in s["documents"])

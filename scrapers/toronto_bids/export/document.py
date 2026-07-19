@@ -126,7 +126,7 @@ def build_export_document(conn, generated_at: str | None = None) -> dict:
         cleaned = _drop(bid, "id")
         ref, doc = bid["reference"], bid["document_number"]
         bridged = bridge.get(ref) if ref is not None else None          # pre-Ariba: ref -> sol
-        if ref is not None and bridged in sol_docs:
+        if ref is not None and doc is None and bridged in sol_docs:
             bids_by_doc.setdefault(bridged, []).append(_drop(cleaned, "document_number"))   # under solicitation
         elif ref is not None:
             bids_by_ref.setdefault(ref, []).append(cleaned)             # under council item (unchanged)
