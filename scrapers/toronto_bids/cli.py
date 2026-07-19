@@ -233,7 +233,7 @@ def _cmd_enrich_titles(args) -> int:
     from toronto_bids.sources.bid_award_panel import (
         _BA_REPORTS_WITHOUT_BIDS, _COMPOSITE_REPORTS, cached_agendas,
         download_reports, fill_titles_from_council,
-        match_composite_titles, match_pre_ariba_titles,
+        match_composite_titles, match_pre_ariba_solicitations, match_pre_ariba_titles,
         store_background_pdfs, store_bids, store_composite_awards, store_items)
     from toronto_bids.sources.legacy_titles import fill_titles_from_legacy
 
@@ -261,6 +261,7 @@ def _cmd_enrich_titles(args) -> int:
             # Pre-Ariba items name no document number, so they are matched on
             # (supplier, award value) instead (#77).
             print(f"  titles pre-Ariba    : {match_pre_ariba_titles(conn, agendas)}")
+            print(f"  bids linked pre-Ariba: {match_pre_ariba_solicitations(conn, agendas)}")
 
         # 2009-2012 agendas describe nothing ("Composite Report"); their staff-report
         # appendices carry the awards, and feed them to the same join (#93).
