@@ -4,6 +4,7 @@ from toronto_bids.sources.committee_awards import (
     award_doc_number,
     award_items_from_voting_record,
     parse_committee_bids,
+    store_committee_bids,
 )
 
 FIX = Path(__file__).parent / "fixtures" / "committee"
@@ -43,3 +44,18 @@ def test_parse_rft_opened_the_following_bids():
 
 def test_parse_refuses_a_report_with_no_bid_table():
     assert parse_committee_bids("... the only supplier able to provide ... emergency ...") == []
+
+
+def test_store_committee_bids_attaches_by_document_number(conn):
+    from toronto_bids.store import db
+    from toronto_bids.models import Solicitation, BackgroundPdf
+    db.upsert_row(conn, Solicitation(document_number="4553928310", source="odata"), overwrite=True)
+    db.upsert_row(conn, BackgroundPdf(url="https://x/backgroundfile-1.pdf", document_number="4553928310",
+                  kind="committee_award", text=(FIX / "district2_rfq_doc4553928310.txt").read_text()),
+                  overwrite=True)
+    conn.commit()
+    n = store_committee_bids(conn)
+    assert n == 2
+    rows = conn.execute("SELECT bidder_name_raw, document_number FROM bid WHERE source='committee_award'").fetchall()
+    assert {r[0] for r in rows} >= {"GFL Environmental Inc."}
+    assert all(r[1] == "4553928310" for r in rows)
