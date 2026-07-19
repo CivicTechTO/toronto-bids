@@ -96,7 +96,7 @@ def test_the_summary_is_posted(nightly, monkeypatch):
     monkeypatch.setattr(notify, "post", lambda text, **k: posted.append(text) or True)
     assert nightly() == 0
     assert len(posted) == 1
-    assert posted[0].startswith("✅ toronto-bids")
+    assert posted[0].startswith("*✅ toronto-bids nightly*")
 
 
 def test_a_failing_run_posts_the_failure(nightly, monkeypatch):
@@ -104,7 +104,8 @@ def test_a_failing_run_posts_the_failure(nightly, monkeypatch):
     monkeypatch.setattr(notify, "post", lambda text, **k: posted.append(text) or True)
     monkeypatch.setattr(cli.pipeline, "sync", lambda *a, **k: [("ariba_discovery", "boom")])
     assert nightly() == 1
-    assert posted[0].startswith("❌ toronto-bids")
+    assert posted[0].startswith("*❌ toronto-bids nightly*")
+    assert "*Failures" in posted[0]
     assert "ariba_discovery" in posted[0]
 
 
@@ -118,7 +119,7 @@ def test_a_broken_database_still_reports_to_slack(nightly, monkeypatch):
         raise sqlite3.OperationalError("unable to open database file")
     monkeypatch.setattr(cli, "_open_db", boom)
     assert nightly() == 1
-    assert posted and posted[0].startswith("❌ toronto-bids")
+    assert posted and posted[0].startswith("*❌ toronto-bids nightly*")
     assert "unable to open database file" in posted[0]
 
 
@@ -129,7 +130,7 @@ def test_counting_the_archive_failing_still_reports_to_slack(nightly, monkeypatc
         raise sqlite3.DatabaseError("database disk image is malformed")
     monkeypatch.setattr(cli.db, "counts", boom)
     assert nightly() == 1
-    assert posted and posted[0].startswith("❌ toronto-bids")
+    assert posted and posted[0].startswith("*❌ toronto-bids nightly*")
 
 
 def test_a_failure_building_the_http_client_does_not_cost_us_the_export(nightly, monkeypatch,
@@ -185,7 +186,7 @@ def test_a_failure_closing_the_database_does_not_swallow_the_summary(nightly, mo
 
     monkeypatch.setattr(cli, "_open_db", lambda: _CloseFails())
     assert nightly() == 1
-    assert posted and posted[0].startswith("❌ toronto-bids")
+    assert posted and posted[0].startswith("*❌ toronto-bids nightly*")
 
 
 def test_a_raising_ariba_attachment_step_does_not_stop_the_export(nightly, monkeypatch, tmp_path):

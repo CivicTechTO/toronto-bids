@@ -412,6 +412,8 @@ def _cmd_nightly(args) -> int:
     after: dict = {}
     export_bytes = None
     conn = None
+    steps: list[dict] = []
+    sources: list[dict] = []
 
     try:
         conn = _open_db()
@@ -505,8 +507,17 @@ def _cmd_nightly(args) -> int:
         except Exception as exc:
             failures.append(("conn_close", str(exc)))
 
-    text = notify.summarize(before, after, failures, len(pipeline.default_sources()),
-                            export_bytes, time.monotonic() - started)
+    report = {
+        "ok": not failures,
+        "steps": steps,            # populated in Task 3; [] here
+        "sources": sources,        # populated in Task 3; [] here
+        "before": before,
+        "after": after,
+        "failures": failures,
+        "export_bytes": export_bytes,
+        "elapsed_s": time.monotonic() - started,
+    }
+    text = notify.summarize(report)
     print(text)
     for name, error in failures:
         print(f"FAILED  {name}: {error}", file=sys.stderr)
