@@ -156,8 +156,10 @@ def build_export_document(conn, generated_at: str | None = None) -> dict:
         for firm in _rows(conn, "SELECT * FROM suspended_firm ORDER BY supplier_name_raw, council_authority")
     ]
 
+    # Keep supplier_key: it is the frontend's only stable supplier permalink (#144). supplier_id
+    # is rebuilt from scratch every sync, and display_name shifts as variants accrue.
     suppliers = [
-        _parse_json(_drop(s, "supplier_key"), "variants")
+        _parse_json(dict(s), "variants")
         for s in _rows(conn, "SELECT * FROM supplier ORDER BY display_name")
     ]
 
