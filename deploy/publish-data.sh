@@ -56,9 +56,12 @@ GENERATED_AT="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))[
   || fail "export is not valid JSON with meta.generated_at: $JSON"
 echo "publish-data: export generated_at=$GENERATED_AT"
 
-# 3. A token is required — unlike the optional Slack webhook, publishing is the deliverable.
-if [ "$DRY_RUN" != 1 ] && [ -z "${GH_TOKEN:-}" ]; then
-  fail "GH_TOKEN is unset — cannot publish (add it to ~/.config/toronto-bids/tb.env)"
+# 3. gh must be authenticated — unlike the optional Slack webhook, publishing is the deliverable,
+#    so unauthenticated is a hard failure. Either a GH_TOKEN in the environment (an unattended
+#    service token) or a prior `gh auth login` on the box satisfies this; `gh auth status` covers
+#    both, so we don't force a duplicate credential onto a box where gh is already logged in.
+if [ "$DRY_RUN" != 1 ] && ! gh auth status >/dev/null 2>&1; then
+  fail "gh is not authenticated — set GH_TOKEN in ~/.config/toronto-bids/tb.env or run 'gh auth login'"
 fi
 
 # 4. Fresh gzip beside the json.

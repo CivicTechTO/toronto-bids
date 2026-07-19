@@ -40,18 +40,20 @@ chmod 600 ~/.config/toronto-bids/tb.env
 
 Unset the webhook and `tb nightly` still runs — it just posts nothing.
 
-The **`GH_TOKEN`** is what `deploy/publish-data.sh` uses to upload the nightly export (see
-**Publishing the export**, below). It
-needs `repo` scope on `CivicTechTO/toronto-bids-data` (release write) and `workflow` scope on
-`CivicTechTO/toronto-bids-frontend` (deploy dispatch). Append it to the same file:
+**Publishing** (see **Publishing the export**, below) needs `gh` to be **authenticated** with
+`repo` scope on `CivicTechTO/toronto-bids-data` (release write) and `workflow` scope on
+`CivicTechTO/toronto-bids-frontend` (deploy dispatch). Either works:
 
-```shell
-read -rs T && printf 'GH_TOKEN=%s\n' "$T" >> ~/.config/toronto-bids/tb.env
-chmod 600 ~/.config/toronto-bids/tb.env
-```
+- **A prior `gh auth login` on the box** (check with `gh auth status`) — nothing to add here; or
+- **A `GH_TOKEN`** appended to the same env file, for an unattended service token:
 
-Unlike the webhook, `GH_TOKEN` is **required** for publishing — the nightly's publish step fails
-loudly without it (publishing is the deliverable, not a notification).
+  ```shell
+  read -rs T && printf 'GH_TOKEN=%s\n' "$T" >> ~/.config/toronto-bids/tb.env
+  chmod 600 ~/.config/toronto-bids/tb.env
+  ```
+
+Unlike the webhook, authentication is **required** for publishing — the nightly's publish step
+fails loudly if `gh auth status` fails (publishing is the deliverable, not a notification).
 
 ## 4. Units
 
