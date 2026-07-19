@@ -75,16 +75,18 @@ def summarize(report: dict) -> str:
             lines.append(f"{icon} {s.get('name', '?')}  {detail}{suffix}".rstrip())
 
     if sources:
-        lines += ["", "*Sources* (fetched → new)"]
+        # Fetched rows per data source — did each City feed respond, and with how much. NOT
+        # rows_upserted: that is written-rows (a COALESCE upsert, one record → many rows), which
+        # exceeds fetched and is not "new". The Growth section owns the real new-record counts.
+        lines += ["", "*Sources* (fetched)"]
         ok_segs, warns = [], []
         for r in sources:
             fetched = r.get("rows_fetched", 0) or 0
-            new = r.get("rows_upserted", 0) or 0
             if r.get("status") != "ok" or fetched == 0:
                 extra = "" if r.get("status") == "ok" else f" ({r.get('status')})"
                 warns.append(f"⚠ {r.get('source', '?')} {fetched:,} fetched{extra}")
             else:
-                ok_segs.append(f"{r.get('source', '?')} {fetched:,} → +{new:,}")
+                ok_segs.append(f"{r.get('source', '?')} {fetched:,}")
         if ok_segs:
             lines.append(" · ".join(ok_segs))
         lines += warns
