@@ -27,14 +27,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_titles = sub.add_parser(
         "enrich-titles",
-        help="Recover titles the City never published, from Bid Award Panel agendas "
-             "and the legacy archive (offline unless --scrape)")
-    p_titles.add_argument(
-        "--scrape", action="store_true",
-        help="Fetch Bid Award Panel agendas first (headed browser; ~10 min on a cold "
-             "cache, seconds once cached). Without it, only agendas already on disk are used")
-    p_titles.add_argument("--virtual-display", action="store_true",
-                          help="Run the headed browser under Xvfb (implies --scrape's needs)")
+        help="Recover titles the City never published, from the cached Bid Award Panel "
+             "agendas and the legacy archive (offline; the Panel was abolished 2025-10-01 so "
+             "the cached corpus is final)")
     p_awards = sub.add_parser(
         "enrich-awards",
         help="Archive the Toronto Bids Portal's Award Summary Forms — the losing bidders, "
@@ -190,7 +185,8 @@ def _cmd_enrich_council(args) -> int:
 
 
 def _cmd_enrich_titles(args) -> int:
-    """Fill titles the City never published. Offline by default; --scrape needs a browser.
+    """Fill titles the City never published. Offline: the Bid Award Panel was abolished
+    2025-10-01, so the cached agenda corpus is final and there is no scrape path.
 
     Both fills only ever touch a NULL title, so a title the City published always wins.
     They are ordered council-then-legacy for readable output, not for correctness: the
@@ -200,7 +196,7 @@ def _cmd_enrich_titles(args) -> int:
     from toronto_bids.sources.bid_award_panel import (
         _BA_REPORTS_WITHOUT_BIDS, _COMPOSITE_REPORTS, cached_agendas,
         download_reports, fill_titles_from_council,
-        match_composite_titles, match_pre_ariba_titles, scrape_agendas,
+        match_composite_titles, match_pre_ariba_titles,
         store_background_pdfs, store_bids, store_composite_awards, store_items)
     from toronto_bids.sources.legacy_titles import fill_titles_from_legacy
 
@@ -209,19 +205,14 @@ def _cmd_enrich_titles(args) -> int:
         before = conn.execute(
             "SELECT COUNT(*) FROM solicitation WHERE title IS NULL").fetchone()[0]
 
-        if args.scrape:
-            agendas = scrape_agendas(config.COUNCIL_AGENDAS_DIR,
-                                     virtual_display=args.virtual_display,
-                                     log=lambda m: print(m, flush=True))
-        else:
-            agendas = cached_agendas(config.COUNCIL_AGENDAS_DIR)
-            if not agendas:
-                print(f"No cached agendas in {config.COUNCIL_AGENDAS_DIR} — "
-                      f"run with --scrape to fetch them (needs the 'council' extra).")
+        agendas = cached_agendas(config.COUNCIL_AGENDAS_DIR)
+        if not agendas:
+            print(f"No cached agendas in {config.COUNCIL_AGENDAS_DIR} — download the "
+                  f"council-agendas archive from the data release and unpack it there "
+                  f"(deploy/README.md).")
 
         if agendas:
-            print(f"Bid Award Panel agendas: {len(agendas)}"
-                  f" ({'scraped' if args.scrape else 'cached'})")
+            print(f"Bid Award Panel agendas: {len(agendas)} (cached)")
             print(f"  council items stored: {store_items(conn, agendas)}")
             # The same cached pages are the staff-report index spec §2.3 says does not
             # exist, so index them here rather than make anyone walk the files twice.
