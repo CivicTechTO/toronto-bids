@@ -112,6 +112,20 @@ def build_parser() -> argparse.ArgumentParser:
     p_ag.add_argument("--record", action="store_true",
                       help="With --portal: also dump each raw JSON record under "
                            "<DATA_DIR>/agencies/portal_recordings/ to seed parser fixtures.")
+
+    p_committee = sub.add_parser(
+        "enrich-committee-awards",
+        help="Archive the bid record for committee/Council awards since the Bid Award "
+             "Panel's abolition on 2025-10-01 (#164): voting-record award items -> staff "
+             "report -> bid table. Offline by default -- parses reports already on disk.")
+    p_committee.add_argument(
+        "--scrape", action="store_true",
+        help="Refresh the voting-record index, browser-discover each item's report URL "
+             "(headed Chromium, council extra), and download the reports first")
+    p_committee.add_argument(
+        "--virtual-display", action="store_true",
+        help="Run --scrape's headed browser under Xvfb (headless servers; needs Xvfb "
+             "installed)")
     return parser
 
 
@@ -727,6 +741,83 @@ def _cmd_enrich_agencies(args) -> int:
     return 1 if failures else 0
 
 
+def _cmd_enrich_committee_awards(args) -> int:
+    """Archive the bid record for committee/Council awards since the Bid Award Panel's
+    abolition on 2025-10-01 (#164): voting-record award items -> item page's report ->
+    bid table. Offline by default -- parses reports already on disk, exactly as
+    enrich-titles/enrich-awards do.
+    """
+    from toronto_bids.linking.supplier import build_supplier_dimension
+    from toronto_bids.sources.committee_awards import (
+        award_items_from_voting_record, discover_report_urls, download_committee_reports,
+        fetch_voting_records, store_committee_bids)
+
+    conn = _open_db()
+    out = lambda m: print(m, flush=True)
+    failures: list[tuple[str, str]] = []
+    try:
+        if args.scrape:
+            try:
+                http = HttpClient()
+                try:
+                    csvs = fetch_voting_records(http)
+                    print(f"  voting records fetched     : {len(csvs)}")
+                    items, seen = [], set()
+                    for text in csvs:
+                        for item in award_items_from_voting_record(text):
+                            if item["document_number"] not in seen:
+                                seen.add(item["document_number"])
+                                items.append(item)
+                    print(f"  award items found          : {len(items)}")
+
+                    # Only chase items that name a spine solicitation with no captured
+                    # bid yet -- an item whose bids are already stored (or that doesn't
+                    # match any award we track) is not worth a browser round-trip.
+                    have_bids = {r[0] for r in conn.execute(
+                        "SELECT DISTINCT document_number FROM bid "
+                        "WHERE document_number IS NOT NULL")}
+                    spine = {r[0] for r in conn.execute(
+                        "SELECT document_number FROM solicitation")}
+                    items = [i for i in items if i["document_number"] in spine
+                            and i["document_number"] not in have_bids]
+                    print(f"  items needing bids          : {len(items)}")
+
+                    url_map = discover_report_urls(
+                        items, config.COMMITTEE_ITEMS_DIR,
+                        virtual_display=args.virtual_display, log=out)
+                    print(f"  report urls discovered     : {len(url_map)}")
+
+                    by_doc = {i["reference"]: i["document_number"] for i in items}
+                    url_to_doc = {url: by_doc[ref] for ref, url in url_map.items()
+                                 if ref in by_doc}
+                    print(f"  reports downloaded         : "
+                          f"{download_committee_reports(conn, http, url_to_doc, log=out)}")
+                finally:
+                    http.close()
+            except Exception as exc:
+                failures.append(("scrape", str(exc)))
+
+        try:
+            before = conn.execute(
+                "SELECT COUNT(*) FROM bid WHERE source='committee_award'").fetchone()[0]
+            print(f"  bids from committee reports : {store_committee_bids(conn, log=out)}")
+            after = conn.execute(
+                "SELECT COUNT(*) FROM bid WHERE source='committee_award'").fetchone()[0]
+            print(f"\nCommittee award bids: {before} -> {after} ({after - before} new)")
+        except Exception as exc:
+            failures.append(("store_committee_bids", str(exc)))
+
+        try:
+            print(f"  suppliers                   : {build_supplier_dimension(conn)}")
+        except Exception as exc:
+            failures.append(("supplier_linking", str(exc)))
+    finally:
+        conn.close()
+    for name, error in failures:
+        print(f"FAILED  {name}: {error}", file=sys.stderr)
+    return 1 if failures else 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
@@ -752,6 +843,8 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_enrich_ariba_attachments(args)
     if args.command == "enrich-agencies":
         return _cmd_enrich_agencies(args)
+    if args.command == "enrich-committee-awards":
+        return _cmd_enrich_committee_awards(args)
     parser.print_help()
     return 0
 

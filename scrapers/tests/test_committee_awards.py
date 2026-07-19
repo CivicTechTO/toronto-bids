@@ -4,6 +4,7 @@ from toronto_bids.sources.committee_awards import (
     award_doc_number,
     award_items_from_voting_record,
     parse_committee_bids,
+    report_url_from_item_html,
     store_committee_bids,
 )
 
@@ -44,6 +45,24 @@ def test_parse_rft_opened_the_following_bids():
 
 def test_parse_refuses_a_report_with_no_bid_table():
     assert parse_committee_bids("... the only supplier able to provide ... emergency ...") == []
+
+
+def test_report_url_from_item_html_finds_the_award_report():
+    html = (FIX / "item_2024_GG16_12.html").read_text()
+    url = report_url_from_item_html(html, "4553928310")
+    assert url == "https://www.toronto.ca/legdocs/mmis/2024/gg/bgrd/backgroundfile-248375.pdf"
+
+
+def test_report_url_from_item_html_returns_none_without_a_matching_link():
+    assert report_url_from_item_html("<html><body>No reports here.</body></html>",
+                                     "4553928310") is None
+    # A backgroundfile link that names a different document shouldn't be mistaken for a
+    # match when there's more than one candidate on the page.
+    html = ('<div><span>Award of Doc1111111111</span>'
+            '<a href="https://www.toronto.ca/legdocs/mmis/2024/gg/bgrd/backgroundfile-1.pdf">x</a></div>'
+            '<div><span>Award of Doc2222222222</span>'
+            '<a href="https://www.toronto.ca/legdocs/mmis/2024/gg/bgrd/backgroundfile-2.pdf">x</a></div>')
+    assert report_url_from_item_html(html, "4553928310") is None
 
 
 def test_store_committee_bids_attaches_by_document_number(conn):

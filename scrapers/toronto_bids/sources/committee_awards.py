@@ -1,8 +1,11 @@
 import csv
 import hashlib
 import io
+import pathlib
 import re
 import subprocess
+
+from lxml import html as _html
 
 from toronto_bids import config
 from toronto_bids.amount import parse_bid_price
@@ -91,6 +94,94 @@ def fetch_voting_records(http):
         if r.get("format", "").upper() == "CSV" and r.get("name", "").startswith("member-voting-record-2"):
             csvs.append(http.get_text(r["url"]))
     return csvs
+
+
+def report_url_from_item_html(html: str, document_number: str) -> str | None:
+    """The award report PDF URL from a TMMIS agenda-item page (Step 1 of #164 discovery, PURE).
+
+    The report link sits in the same block as the report's own caption text, which names
+    the award via "... on Award of Doc<n> to <supplier> ...". Preferred: the backgroundfile
+    link whose nearest block ancestor's text contains the document number. Falls back to the
+    page's sole backgroundfile link when there's exactly one candidate and none matched by
+    caption (mirrors bid_award_panel's tolerance for pages that lay the caption out
+    differently) -- but refuses to guess among several unmatched candidates.
+    """
+    root = _html.fromstring(html)
+    seen = set()
+    candidates = []
+    for a in root.xpath("//a[contains(@href, 'backgroundfile')]"):
+        url = a.get("href")
+        if not url or url in seen:
+            continue
+        seen.add(url)
+        candidates.append((a, url))
+    if not candidates:
+        return None
+    for a, url in candidates:
+        ancestor = a.getparent()
+        text = ancestor.text_content() if ancestor is not None else ""
+        if document_number in text:
+            return url
+    if len(candidates) == 1:
+        return candidates[0][1]
+    return None
+
+
+def discover_report_urls(items, cache_dir, *, virtual_display: bool = False,
+                         log=lambda _m: None) -> dict:
+    """Browser-discover each item's award report URL (Step 2 of #164, browser -- no unit test).
+
+    One headed Chromium for the whole run, exactly bid_award_panel.agenda_fetcher's pattern:
+    launching per item would be ruinous across hundreds of committee items. An item already
+    cached under `cache_dir` is not refetched. Returns {reference: url} for the hits only --
+    an item whose report link couldn't be resolved is simply absent, not an error.
+    """
+    try:
+        from playwright.sync_api import sync_playwright
+    except ImportError as exc:
+        raise RuntimeError(
+            "Committee award discovery needs the optional 'council' extra. "
+            "Install it with: uv sync --extra council && uv run playwright install chromium"
+        ) from exc
+
+    cache_dir = pathlib.Path(cache_dir)
+    cache_dir.mkdir(parents=True, exist_ok=True)
+
+    display = None
+    if virtual_display:
+        from pyvirtualdisplay import Display
+        display = Display(visible=False, size=(1440, 900))
+        display.start()
+
+    out = {}
+    try:
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(
+                headless=False, args=["--disable-blink-features=AutomationControlled"])
+            try:
+                page = browser.new_context().new_page()
+                for item in items:
+                    reference = item["reference"]
+                    path = cache_dir / f"{reference}.html"
+                    if path.exists():
+                        page_html = path.read_text()
+                    else:
+                        page.goto(f"{config.COUNCIL_ITEM_URL}?item={reference}",
+                                 wait_until="domcontentloaded", timeout=45000)
+                        page.wait_for_timeout(700)
+                        page_html = page.content()
+                        path.write_text(page_html)
+                    url = report_url_from_item_html(page_html, item["document_number"])
+                    if url:
+                        out[reference] = url
+                    log(f"  committee item {reference}: "
+                        f"{'report found' if url else 'no report link'}")
+            finally:
+                browser.close()
+    finally:
+        if display is not None:
+            display.stop()
+    return out
 
 
 def _pdftotext(path) -> str | None:
