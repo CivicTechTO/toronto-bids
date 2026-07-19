@@ -219,3 +219,49 @@ def test_the_bid_committee_series_is_parsed_like_the_panel():
     assert len(items) == 1
     assert items[0]["reference"] == "2016.BD106.1"
     assert "Morrison Hershfield Limited" in items[0]["title"]
+
+
+def test_parse_pre_ariba_awards_carries_the_reference():
+    from toronto_bids.sources.bid_award_panel import parse_pre_ariba_awards
+    html = ("<html><body><h3>BD106.3 - Award of Request for Quotation No. 3917-12-7226 to "
+            "Accrue Contracting Ltd. for concrete cutting services in the amount of "
+            "$420,000.00 net of all applicable taxes</h3></body></html>")
+    items = parse_pre_ariba_awards(html, meeting="2016.BD106")
+    assert items and items[0]["reference"] == "2016.BD106.3"
+    assert items[0]["winner_raw"] == "Accrue Contracting Ltd."
+    assert round(items[0]["award_value"]) == 420000
+
+
+def test_match_pre_ariba_solicitations_records_a_unique_match(conn):
+    from toronto_bids.store import db
+    from toronto_bids.models import Solicitation, Award
+    from toronto_bids.sources.bid_award_panel import match_pre_ariba_solicitations
+    db.upsert_row(conn, Solicitation(document_number="5672751291", source="odata"), overwrite=True)
+    db.upsert_row(conn, Award(document_number="5672751291", supplier_name_raw="Accrue Contracting Ltd.",
+                              award_amount="420000",
+                              award_date="2016-05-01", source="odata"), overwrite=True)
+    conn.commit()
+    html = ("<html><body><h3>BD106.3 - Award of RFQ 3917-12-7226 to Accrue Contracting Ltd. "
+            "for concrete cutting in the amount of $420,000.00 net of all applicable taxes"
+            "</h3></body></html>")
+    n = match_pre_ariba_solicitations(conn, {"2016.BD106": html})
+    assert n == 1
+    row = conn.execute("SELECT * FROM solicitation_link WHERE reference='2016.BD106.3'").fetchone()
+    assert row["document_number"] == "5672751291" and row["method"] == "council_pre_ariba"
+
+
+def test_match_pre_ariba_solicitations_drops_a_non_unique_match(conn):
+    # two solicitations share (supplier, value) -> ambiguous -> no link recorded (a wrong merge is worse than none)
+    from toronto_bids.store import db
+    from toronto_bids.models import Solicitation, Award
+    from toronto_bids.sources.bid_award_panel import match_pre_ariba_solicitations
+    for doc in ("1111111111", "2222222222"):
+        db.upsert_row(conn, Solicitation(document_number=doc, source="odata"), overwrite=True)
+        db.upsert_row(conn, Award(document_number=doc, supplier_name_raw="Accrue Contracting Ltd.",
+                                  award_amount="420000",
+                                  award_date="2016-05-01", source="odata"), overwrite=True)
+    conn.commit()
+    html = ("<html><body><h3>BD106.3 - Award to Accrue Contracting Ltd. for x in the amount of "
+            "$420,000.00 net of all applicable taxes</h3></body></html>")
+    assert match_pre_ariba_solicitations(conn, {"2016.BD106": html}) == 0
+    assert conn.execute("SELECT COUNT(*) FROM solicitation_link").fetchone()[0] == 0

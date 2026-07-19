@@ -265,6 +265,17 @@ CREATE UNIQUE INDEX IF NOT EXISTS bid_key ON bid (
     COALESCE(bid_price, ''), source
 );
 
+-- Pre-Ariba reference <-> document_number equivalence (#124, the first slice). A 2013-2018
+-- council item and a spine solicitation are the SAME procurement; the City gives no shared
+-- identifier (Call Number vs the 10-digit Ariba number backfilled later, #77), so the match
+-- is (winner, award value) and lives here. Rebuilt each run; a wrong merge is worse than none,
+-- so only a unique match is recorded.
+CREATE TABLE IF NOT EXISTS solicitation_link (
+    reference        TEXT PRIMARY KEY,
+    document_number  TEXT NOT NULL,
+    method           TEXT NOT NULL
+);
+
 -- composite_award holds awards from the 2009-2012 Bid Committee composite reports (#96),
 -- which predate Ariba and so carry no document_number. They are a THIRD KEYSPACE, keyed on
 -- the Call Number, exactly as noncompetitive is keyed on workspace_number: there is no join

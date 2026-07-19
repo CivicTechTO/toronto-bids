@@ -621,10 +621,10 @@ _WINNER = re.compile(r"\bto\s+(.+?)\s+for\s+", re.I)
 # document number gives ground truth: award_amount is the "net of all applicable taxes" one
 # (820/980 = 84%). "including HST" matched 0; "net of HST recoveries" matched 4.
 _NET_OF_TAXES = re.compile(r"\$([\d,]+(?:\.\d+)?)\s*net of all applicable taxes", re.I)
-_ITEM_SPLIT = re.compile(r"B[AD]\d+\.\d+ - ")
+_ITEM_SPLIT_CAP = re.compile(r"(B[AD]\d+\.\d+) - ")   # capturing: keeps the 'BD106.3' item token
 
 
-def parse_pre_ariba_awards(html: str) -> list[dict]:
+def parse_pre_ariba_awards(html: str, meeting: str | None = None) -> list[dict]:
     """Items that name no document number, with the winner and value needed to match them.
 
     Toronto adopted Ariba around 2019, so a 2017-2018 agenda identifies its award by Call
@@ -633,10 +633,17 @@ def parse_pre_ariba_awards(html: str) -> list[dict]:
     `Contract_Number_Purchase_Order` is empty on all 7,592 feed records.
 
     But the item names its winner and its value, and `award` holds both. That is the join.
+
+    When `meeting` is given, each item carries a full council `reference` (e.g. '2016.BD106.3')
+    built from the meeting's year prefix and the item's 'BD106.3' token — so a match can be
+    recorded against the reference (#124), not only used to fill a title.
     """
     text = _WS_LINES.sub(" ", _html.fromstring(html).text_content())
+    parts = _ITEM_SPLIT_CAP.split(text)          # [pre, reftoken1, chunk1, reftoken2, chunk2, ...]
+    year = (meeting or "").split(".")[0] if meeting else None
     out = []
-    for chunk in _ITEM_SPLIT.split(text)[1:]:
+    for i in range(1, len(parts) - 1, 2):
+        reftoken, chunk = parts[i], parts[i + 1]
         head = chunk[:400]
         if _TEN_DIGIT.search(head):
             continue                      # names a doc number — joins directly, not our case
@@ -646,7 +653,8 @@ def parse_pre_ariba_awards(html: str) -> list[dict]:
         amount = parse_amount(value.group(1))
         if amount is None:
             continue
-        out.append({"title": _clean(head.split("\n")[0]),
+        out.append({"reference": f"{year}.{reftoken}" if year else None,
+                    "title": _clean(head.split("\n")[0]),
                     "winner_raw": _clean(winner.group(1)),
                     "award_value": amount})
     return out
@@ -695,8 +703,48 @@ def match_pre_ariba_titles(conn, agendas: dict) -> int:
     for meeting, html in agendas.items():
         if meeting.split(".")[0] >= "2019":
             continue                      # 2019+ names a document number; no need to guess
-        items.extend(parse_pre_ariba_awards(html))
+        items.extend(parse_pre_ariba_awards(html, meeting))
     return match_on_supplier_and_value(conn, items, "council_pre_ariba")
+
+
+def _awards_by_value(conn):
+    """ALL odata awards indexed by rounded value -> [(supplier_tokens, document_number)].
+    Unlike _title_less_awards_by_value, this includes titled solicitations: a solicitation with
+    a title still needs its bids linked."""
+    by_value = {}
+    for row in conn.execute(
+            "SELECT document_number d, supplier_name_raw s, award_amount_numeric v FROM award "
+            "WHERE source='odata' AND award_amount_numeric IS NOT NULL AND supplier_name_raw IS NOT NULL"):
+        by_value.setdefault(round(row["v"]), []).append((supplier_tokens(row["s"]), row["d"]))
+    return by_value
+
+
+def match_pre_ariba_solicitations(conn, agendas: dict) -> int:
+    """Record pre-Ariba reference<->document_number equivalences in solicitation_link (#124).
+
+    Same join as #77's title match — a council item's (winner, award value net-of-taxes) to a
+    solicitation's award — but keyed on the item's REFERENCE, and matched against ALL awards
+    (a titled solicitation still needs its bids linked). Unique match only; a wrong merge is
+    worse than none. Idempotent: the table is rebuilt from the current match each run.
+    """
+    by_value = _awards_by_value(conn)
+    links = {}
+    for meeting, html in agendas.items():
+        if meeting.split(".")[0] >= "2019":
+            continue                          # 2019+ names a document number directly
+        for item in parse_pre_ariba_awards(html, meeting):
+            if not item["reference"]:
+                continue
+            want = supplier_tokens(item["winner_raw"])
+            docs = {doc for toks, doc in by_value.get(round(item["award_value"]), []) if want & toks}
+            if len(docs) == 1:
+                links[item["reference"]] = docs.pop()
+    conn.execute("DELETE FROM solicitation_link")
+    conn.executemany(
+        "INSERT INTO solicitation_link (reference, document_number, method) VALUES (?, ?, 'council_pre_ariba')",
+        list(links.items()))
+    conn.commit()
+    return len(links)
 
 
 # --- composite reports (#93) ------------------------------------------------------------

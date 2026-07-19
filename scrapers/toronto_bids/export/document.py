@@ -95,6 +95,11 @@ def build_export_document(conn, generated_at: str | None = None) -> dict:
                            "WHERE reference IS NOT NULL AND document_number IS NOT NULL "
                            "ORDER BY reference, document_number"):
         bridge[row["reference"]] = row["document_number"]
+    # Pre-Ariba items have no dual-key bid to derive from; solicitation_link records the
+    # (winner,value) match instead (#124). setdefault so a bid-derived bridge is never overridden.
+    for row in _rows(conn, "SELECT reference, document_number FROM solicitation_link "
+                           "ORDER BY reference"):
+        bridge.setdefault(row["reference"], row["document_number"])
     for report in _rows(conn, "SELECT reference, url FROM background_pdf "
                               "WHERE kind='bgrd' ORDER BY reference, url"):
         doc = bridge.get(report["reference"])
@@ -119,10 +124,14 @@ def build_export_document(conn, generated_at: str | None = None) -> dict:
     unlinked_bids: list = []
     for bid in _rows(conn, "SELECT * FROM bid ORDER BY reference, document_number, bidder_name_raw, id"):
         cleaned = _drop(bid, "id")
-        if bid["reference"] is not None:
-            bids_by_ref.setdefault(bid["reference"], []).append(cleaned)
-        elif bid["document_number"] in sol_docs:
-            bids_by_doc.setdefault(bid["document_number"], []).append(_drop(cleaned, "document_number"))
+        ref, doc = bid["reference"], bid["document_number"]
+        bridged = bridge.get(ref) if ref is not None else None          # pre-Ariba: ref -> sol
+        if ref is not None and doc is None and bridged in sol_docs:
+            bids_by_doc.setdefault(bridged, []).append(_drop(cleaned, "document_number"))   # under solicitation
+        elif ref is not None:
+            bids_by_ref.setdefault(ref, []).append(cleaned)             # under council item (unchanged)
+        elif doc in sol_docs:
+            bids_by_doc.setdefault(doc, []).append(_drop(cleaned, "document_number"))       # #145 reference-null
         else:
             unlinked_bids.append(cleaned)
 
