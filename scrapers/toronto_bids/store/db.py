@@ -253,7 +253,7 @@ def counts(conn) -> dict:
     tables = ["solicitation", "award", "noncompetitive", "ariba_posting",
               "suspended_firm", "supplier", "capital_project", "bid", "council_item",
               "background_pdf", "composite_award", "sync_run", "buyer",
-              "agency_solicitation", "agency_award", "agency_bid"]
+              "agency_solicitation", "agency_award", "agency_bid", "ariba_attachment"]
     return {t: conn.execute(f"SELECT COUNT(*) FROM {t}").fetchone()[0] for t in tables}
 
 
