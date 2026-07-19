@@ -71,6 +71,23 @@ def test_nothing_moved_omits_growth_and_empty_before_suppresses_deltas():
         {"ok": True, "before": {}, "after": _counts(bid=5), "failures": [], "export_bytes": 1, "elapsed_s": 1.0})
 
 
+def test_missing_export_is_reported_as_failed():
+    report = {"ok": False, "before": _counts(), "after": _counts(), "failures": [],
+              "export_bytes": None, "elapsed_s": 60.0}
+    text = notify.summarize(report)
+    assert "export FAILED" in text
+
+
+def test_growth_labels_agency_and_ariba():
+    before = _counts(agency_award=100, agency_bid=200, ariba_attachment=1000)
+    after = _counts(agency_award=107, agency_bid=215, ariba_attachment=1111)
+    text = notify.summarize({"ok": True, "before": before, "after": after,
+                             "failures": [], "export_bytes": 1, "elapsed_s": 1.0})
+    assert "agency awards 107 (+7)" in text
+    assert "agency bids 215 (+15)" in text
+    assert "ariba files 1,111 (+111)" in text
+
+
 def test_post_without_a_webhook_is_a_no_op_and_makes_no_request(monkeypatch):
     """Absence of the credential degrades gracefully — this Mac and CI stay silent with no
     separate code path, the same way the rewrite design's goal 3 asks of auth-optional parts."""
