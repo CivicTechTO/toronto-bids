@@ -107,6 +107,12 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _is_first_of_month() -> bool:
+    """The monthly-council gate for the nightly (a test seam)."""
+    from datetime import date
+    return date.today().day == 1
+
+
 def _open_db():
     config.DATA_DIR.mkdir(parents=True, exist_ok=True)
     conn = db.connect(config.DB_PATH)
@@ -375,7 +381,8 @@ def _cmd_amounts(args) -> int:
 
 
 def _cmd_nightly(args) -> int:
-    """The whole unattended run: sync -> award summaries -> export -> tell Slack.
+    """The whole unattended run: sync -> award summaries -> portal -> ariba attachments ->
+    agency board reports -> (monthly) council -> supplier rebuild -> export -> tell Slack.
 
     Each step is isolated exactly as pipeline.run_source isolates a source: a failure is
     recorded and the steps behind it still run. In particular the EXPORT RUNS EVEN AFTER A
@@ -446,11 +453,41 @@ def _cmd_nightly(args) -> int:
                             failures.append((f"portal:{slug}", v))
                 except Exception as exc:
                     failures.append(("portal", str(exc)))
+                try:
+                    from toronto_bids.sources import ariba_attachments as aa
+                    n = aa.capture_attachments(conn, log=out, virtual_display=True)
+                    print(f"  ariba attachments    : {n} bundles captured")
+                except Exception as exc:
+                    failures.append(("ariba_attachments", str(exc)))
+                try:
+                    from toronto_bids.buyers import seed_buyers
+                    ids = seed_buyers(conn)
+                    failures.extend(_capture_agency_bodies(
+                        conn, ids, bodies=["trca", "zoo", "ep"],
+                        fetch=True, scrape=True, virtual_display=True, out=out))
+                except Exception as exc:
+                    failures.append(("agencies", str(exc)))
+                if _is_first_of_month():
+                    try:
+                        from functools import partial
+                        from toronto_bids.sources.council import (
+                            enrich_council, fetch_agenda_item)
+                        fetch = partial(fetch_agenda_item, virtual_display=True)
+                        print(f"  council enriched     : "
+                              f"{enrich_council(conn, http, fetch=fetch)}")
+                    except Exception as exc:
+                        failures.append(("council", str(exc)))
             finally:
                 try:
                     http.close()
                 except Exception as exc:
                     failures.append(("http_close", str(exc)))
+
+        try:
+            from toronto_bids.linking.supplier import build_supplier_dimension
+            print(f"  suppliers            : {build_supplier_dimension(conn)}")
+        except Exception as exc:
+            failures.append(("supplier_linking", str(exc)))
 
         try:
             written = export_json(conn, Path(config.DATA_DIR) / "export" / "bids.json")

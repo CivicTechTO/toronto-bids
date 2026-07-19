@@ -22,6 +22,14 @@ def nightly(conn, monkeypatch, tmp_path):
     monkeypatch.setattr(award_summary, "download_award_summaries", lambda *a, **k: 0)
     monkeypatch.setattr(award_summary, "store_award_summary_bids", lambda *a, **k: 0)
     monkeypatch.setattr(bids_tenders, "run_portal_capture", lambda *a, **k: {})
+    from toronto_bids.sources import ariba_attachments
+    monkeypatch.setattr(ariba_attachments, "capture_attachments", lambda *a, **k: 0)
+    monkeypatch.setattr(cli, "_capture_agency_bodies", lambda *a, **k: [])
+    from toronto_bids.linking import supplier
+    monkeypatch.setattr(supplier, "build_supplier_dimension", lambda *a, **k: 0)
+    monkeypatch.setattr(cli, "_is_first_of_month", lambda: False)
+    from toronto_bids.sources import council as council_src
+    monkeypatch.setattr(council_src, "enrich_council", lambda *a, **k: 0)
     monkeypatch.setattr(notify, "post", lambda *a, **k: False)
     return lambda: cli.main(["nightly"])
 
@@ -178,3 +186,36 @@ def test_a_failure_closing_the_database_does_not_swallow_the_summary(nightly, mo
     monkeypatch.setattr(cli, "_open_db", lambda: _CloseFails())
     assert nightly() == 1
     assert posted and posted[0].startswith("❌ toronto-bids")
+
+
+def test_a_raising_ariba_attachment_step_does_not_stop_the_export(nightly, monkeypatch, tmp_path):
+    from toronto_bids.sources import ariba_attachments
+    monkeypatch.setattr(ariba_attachments, "capture_attachments",
+                        lambda *a, **k: (_ for _ in ()).throw(RuntimeError("browser died")))
+    assert nightly() == 1
+    assert (tmp_path / "export" / "bids.json").exists()
+
+
+def test_a_raising_agency_capture_does_not_stop_the_export(nightly, monkeypatch, tmp_path):
+    monkeypatch.setattr(cli, "_capture_agency_bodies",
+                        lambda *a, **k: (_ for _ in ()).throw(RuntimeError("tmmis blocked")))
+    assert nightly() == 1
+    assert (tmp_path / "export" / "bids.json").exists()
+
+
+def test_an_agency_body_failure_is_recorded_but_export_still_runs(nightly, monkeypatch, tmp_path):
+    monkeypatch.setattr(cli, "_capture_agency_bodies", lambda *a, **k: [("zoo", "boom")])
+    assert nightly() == 1
+    assert (tmp_path / "export" / "bids.json").exists()
+
+
+def test_council_runs_only_on_the_first_of_the_month(nightly, monkeypatch):
+    calls = []
+    from toronto_bids.sources import council as council_src
+    monkeypatch.setattr(council_src, "enrich_council", lambda *a, **k: calls.append(1) or 0)
+    monkeypatch.setattr(cli, "_is_first_of_month", lambda: False)
+    nightly()
+    assert calls == []            # not the 1st -> council skipped
+    monkeypatch.setattr(cli, "_is_first_of_month", lambda: True)
+    nightly()
+    assert calls == [1]           # the 1st -> council runs
