@@ -193,3 +193,18 @@ def test_init_db_adds_missing_column_to_pre_p5a_table():
     row = c.execute("SELECT supplier_id FROM suspended_firm WHERE supplier_name_raw = 'Acme'").fetchone()
     assert row["supplier_id"] == 7
     c.close()
+
+
+def test_sync_runs_since_returns_only_newer_rows(conn):
+    r1 = db.start_sync_run(conn, "odata_solicitations")
+    db.finish_sync_run(conn, r1, status="ok", rows_fetched=7446, rows_upserted=12)
+    cutoff = r1
+    r2 = db.start_sync_run(conn, "ariba_discovery")
+    db.finish_sync_run(conn, r2, status="ok", rows_fetched=1670, rows_upserted=0)
+    r3 = db.start_sync_run(conn, "ckan_awarded")
+    db.finish_sync_run(conn, r3, status="failed", rows_fetched=0, rows_upserted=0, error="boom")
+
+    rows = db.sync_runs_since(conn, cutoff)
+    assert [r["source"] for r in rows] == ["ariba_discovery", "ckan_awarded"]
+    assert rows[0]["rows_fetched"] == 1670 and rows[0]["rows_upserted"] == 0
+    assert rows[1]["status"] == "failed" and rows[1]["error"] == "boom"
