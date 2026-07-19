@@ -79,6 +79,25 @@ fi
 gh_run release upload latest "${ASSETS[@]}" --clobber -R "$DATA_REPO" \
   || fail "upload to the 'latest' release on $DATA_REPO failed"
 
+# 5b. Preserve the FINAL Bid Award Panel agenda corpus as an immutable data asset (#unified-
+#     nightly). The Panel is abolished; these 891 pages never change, so upload once and skip
+#     forever after — a cheap `release view` check per night, no re-upload. Best-effort: the
+#     data publish above is the deliverable; a missing agenda archive must not fail the run.
+AGENDAS_DIR="${TB_AGENDAS_DIR:-$DATA_DIR/council/agendas}"
+if gh_run release view council-agendas -R "$DATA_REPO" >/dev/null 2>&1; then
+  echo "publish-data: council-agendas archive already present — skipping"
+elif [ -d "$AGENDAS_DIR" ] && [ -n "$(ls -A "$AGENDAS_DIR" 2>/dev/null)" ]; then
+  AGENDAS_ZIP="$EXPORT_DIR/council-agendas.zip"
+  ( cd "$AGENDAS_DIR" && zip -q -r -X "$AGENDAS_ZIP" . ) \
+    && gh_run release create council-agendas -R "$DATA_REPO" \
+         --title "Bid Award Panel agenda corpus (final)" \
+         --notes "The 891 cached Bid Award Panel / Bid Committee agendas — the complete, final corpus (the Panel was abolished 2025-10-01). Unpack into <DATA_DIR>/council/agendas/ and run 'tb enrich-titles' to re-derive titles/bids/composite. Immutable." \
+         "$AGENDAS_ZIP" \
+    || echo "publish-data: WARNING — could not publish the council-agendas archive (data is published)" >&2
+else
+  echo "publish-data: WARNING — no cached agendas at $AGENDAS_DIR to archive" >&2
+fi
+
 # 6. On the 1st, cut a dated snapshot for citation (idempotent — skip if it already exists).
 if [ "$DAY" = 01 ]; then
   TAG="snapshot-$SNAPSHOT_DATE"

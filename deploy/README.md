@@ -128,6 +128,20 @@ TB_PUBLISH_DRY_RUN=1 TB_DATA_DIR=~/tb-data deploy/publish-data.sh
 TB_PUBLISH_DRY_RUN=1 TB_PUBLISH_DAY=01 TB_DATA_DIR=~/tb-data deploy/publish-data.sh
 ```
 
+### Provisioning a fresh box from the archives
+
+The DB itself is published (`bids.sqlite` on the `latest` release), so a new box can start from
+it directly. To rebuild the *derived* Bid Award Panel data from primary sources instead (the
+`enrich-titles --scrape` path was retired — the Panel is abolished and the corpus is final),
+download the agenda archive and re-derive offline:
+
+```shell
+gh release download council-agendas -R CivicTechTO/toronto-bids-data -D /tmp/agendas
+mkdir -p ~/tb-data/council/agendas
+unzip -q -o /tmp/agendas/council-agendas.zip -d ~/tb-data/council/agendas
+cd ~/toronto-bids/scrapers && TB_DATA_DIR=~/tb-data uv run tb enrich-titles   # offline, no browser
+```
+
 ## Ariba document capture (opt-in, headed browser under Xvfb) — #122
 
 `tb enrich-ariba-attachments --capture` archives the solicitation documents behind Ariba's
