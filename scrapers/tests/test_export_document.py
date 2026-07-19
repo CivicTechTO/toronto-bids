@@ -367,6 +367,49 @@ def test_empty_store_has_empty_unlinked_bids(conn):
     assert doc["unlinked_bids"] == []
 
 
+def test_pre_ariba_bid_bridges_to_its_solicitation(seeded):
+    # A pre-Ariba bid: has a reference, no document_number. A solicitation_link maps its
+    # reference to a solicitation -> the bid nests under the solicitation, not the council item.
+    from toronto_bids.models import CouncilItem
+    db.upsert_row(seeded, CouncilItem(reference="2016.BD106.3", title="Award"), overwrite=True)
+    db.upsert_row(seeded, Bid(bidder_name_raw="Loser Co", reference="2016.BD106.3",
+                              document_number=None, bid_price="9", source="bid_award_panel"), overwrite=True)
+    seeded.execute("INSERT INTO solicitation_link (reference, document_number, method) "
+                   "VALUES ('2016.BD106.3', '5672751291', 'council_pre_ariba')")
+    seeded.commit()
+    doc = build_export_document(seeded, generated_at="t")
+    sol = next(s for s in doc["solicitations"] if s["document_number"] == "5672751291")
+    assert any(b["bidder_name_raw"] == "Loser Co" for b in sol["bids"])          # under solicitation
+    ci = next(c for c in doc["council_items"] if c["reference"] == "2016.BD106.3")
+    assert all(b["bidder_name_raw"] != "Loser Co" for b in ci["bids"])           # NOT under council item
+
+
+def test_unbridged_pre_ariba_bid_stays_under_its_council_item(seeded):
+    from toronto_bids.models import CouncilItem
+    db.upsert_row(seeded, CouncilItem(reference="2016.BD200.1", title="Award"), overwrite=True)
+    db.upsert_row(seeded, Bid(bidder_name_raw="Orphan Co", reference="2016.BD200.1",
+                              document_number=None, bid_price="9", source="bid_award_panel"), overwrite=True)
+    seeded.commit()  # no solicitation_link row
+    doc = build_export_document(seeded, generated_at="t")
+    ci = next(c for c in doc["council_items"] if c["reference"] == "2016.BD200.1")
+    assert any(b["bidder_name_raw"] == "Orphan Co" for b in ci["bids"])
+
+
+def test_reconciliation_holds_with_a_bridged_pre_ariba_bid(seeded):
+    from toronto_bids.models import CouncilItem
+    db.upsert_row(seeded, CouncilItem(reference="2016.BD106.3", title="Award"), overwrite=True)
+    db.upsert_row(seeded, Bid(bidder_name_raw="Loser Co", reference="2016.BD106.3",
+                              document_number=None, bid_price="9", source="bid_award_panel"), overwrite=True)
+    seeded.execute("INSERT INTO solicitation_link (reference, document_number, method) "
+                   "VALUES ('2016.BD106.3', '5672751291', 'council_pre_ariba')")
+    seeded.commit()
+    doc = build_export_document(seeded, generated_at="t")
+    counts = doc["meta"]["counts"]
+    council = sum(len(c["bids"]) for c in doc["council_items"])
+    nested = sum(len(s["bids"]) for s in doc["solicitations"])
+    assert council + nested + len(doc["unlinked_bids"]) == counts["bid"]
+
+
 def test_unbridged_staff_report_stays_out_of_documents(seeded):
     # A staff report whose reference has no dual-key bid row must not attach to any solicitation.
     db.upsert_row(seeded, BackgroundPdf(
