@@ -92,20 +92,33 @@ marker and everything after it — `O/A` (and `0/A` typo), `operating as`, `d.b.
 R.O.M.→Ross Clair, Holcim→Dufferin, Bell Canada). A **false-merge audit** (do any two distinct
 legal bases collapse together?) is part of the implementation gate, not assumed.
 
-## 5. Rule 3 — garbage-name exclusion (safe)
+## 5. Rule 3 — salvage-then-exclude (refined against the audit)
 
-**Rule.** A supplier name that is footnote/non-name text keys to `""` (skipped — no supplier row,
-award keeps `supplier_id` NULL: an honest "unknown", not an invented firm).
+The blunt "exclude every footnote-matching row" was **measured wrong**: with pattern-only
+detection, **~35 of ~80 flagged rows are real firms wrapped in noise** (`LTH Electric Inspection &
+Service Ltd. Appendix "C" Price Form`, `Fermar Paving Limited* Non-compliant`, `Appendix "C"
+Benson Group Inc.`, `Premier Truck Group (Appendix "C" – Price Form)`). Excluding those sends
+real firms to `supplier_id` NULL — **under-counting**, the opposite of #160's goal. Also **length
+is a bad signal**: legitimate multi-firm consortium names run 100-184 chars (`Alaimo Architecture
+Inc., Bortolotto Design Architects Inc., …`), so a length cutoff false-excludes them. **No length
+rule.**
 
-**Detection** is **pattern-first**, length only as a weak secondary signal (real firm names reach
-~71 chars via `d.b.a.`/`operating as` aliases, so length alone false-excludes): phrases like
-`please see`, `see the link`, `refer to`, `as per`, `non-compliant`, `bidder was found`,
-`scope of work`/`scope for award`, `prequalified`, `appendix … price form`,
-`corrected for mathematical`. The exact pattern set is finalized against the flagged rows with a
-**false-exclude audit** (eyeball the flagged set for any real firm name).
+Two ordered steps, pattern-only:
 
-**Measured impact:** ~115 flagged rows, but only **12 awards / $2.9M** link to them — excluding
-them costs essentially nothing in the aggregates, and they are genuinely non-firms.
+1. **Salvage — strip a tightly-scoped noise wrapper**, then key the firm that remains:
+   `Appendix "<x>" Price Form` runs, a trailing `* Non-compliant …`, and `(Appendix …)`
+   parentheticals. `Fermar Paving Limited* Non-compliant` → `fermar paving limited`. This runs as
+   a normalization step before the default key (and before Rules 1/2, so a salvaged
+   `… Ltd. Appendix …` that is actually numbered still reaches Rule 1).
+2. **Exclude — only pure footnote** (no firm identity) → key `""` (skipped, award keeps
+   `supplier_id` NULL): `please see`, `see prequalified`, `refer to`, `as per`, `various (`,
+   `bid prices …`, `<n> bidder was found …`, `part <A-Z>: …` list-blobs, `the scope of work …`,
+   `corrected for mathematical`, `award amounts have been adjusted`.
+
+**Measured:** 50 rows excluded (all genuine non-firms), ~35 real firms recovered rather than
+dropped, **0 pure-footnote exclusions contain a firm word** (construction/paving/architect firms
+are not dropped). The exact pattern sets are finalized against the flagged rows with a
+**false-exclude audit** at the live gate (§9).
 
 ## 6. Methodology documentation (required deliverable)
 
@@ -155,7 +168,9 @@ No schema change; the dimension is rebuilt, not migrated.
 
 - Cross-firm resolution beyond exact-number / marker rules (e.g. fuzzy name matching, parent/
   subsidiary rollups) — a separate, higher-risk effort.
-- Salvaging a real name buried inside a garbage string (Rule 3 excludes; it does not repair).
+- Rule 3 salvage is limited to the tightly-scoped noise wrappers above (appendix / price-form /
+  non-compliant). It does **not** attempt to parse a firm out of an arbitrary sentence, and a
+  multi-firm list-blob (`Part A: Econolite … Orange Traffic …`) is excluded, not split.
 - Any change to how awards/amounts are parsed — this is purely the supplier *dimension*.
 
 ## 11. Recording
