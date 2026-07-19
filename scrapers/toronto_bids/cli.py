@@ -757,6 +757,7 @@ def _cmd_enrich_committee_awards(args) -> int:
     failures: list[tuple[str, str]] = []
     try:
         if args.scrape:
+            http = None
             try:
                 http = HttpClient()
                 try:
@@ -793,7 +794,8 @@ def _cmd_enrich_committee_awards(args) -> int:
                     print(f"  reports downloaded         : "
                           f"{download_committee_reports(conn, http, url_to_doc, log=out)}")
                 finally:
-                    http.close()
+                    if http is not None:
+                        http.close()
             except Exception as exc:
                 failures.append(("scrape", str(exc)))
 

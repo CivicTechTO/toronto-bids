@@ -163,15 +163,19 @@ def discover_report_urls(items, cache_dir, *, virtual_display: bool = False,
                 for item in items:
                     reference = item["reference"]
                     path = cache_dir / f"{reference}.html"
-                    if path.exists():
-                        page_html = path.read_text()
-                    else:
-                        page.goto(f"{config.COUNCIL_ITEM_URL}?item={reference}",
-                                 wait_until="domcontentloaded", timeout=45000)
-                        page.wait_for_timeout(700)
-                        page_html = page.content()
-                        path.write_text(page_html)
-                    url = report_url_from_item_html(page_html, item["document_number"])
+                    try:
+                        if path.exists():
+                            page_html = path.read_text()
+                        else:
+                            page.goto(f"{config.COUNCIL_ITEM_URL}?item={reference}",
+                                     wait_until="domcontentloaded", timeout=45000)
+                            page.wait_for_timeout(700)
+                            page_html = page.content()
+                            path.write_text(page_html)
+                        url = report_url_from_item_html(page_html, item["document_number"])
+                    except Exception as exc:    # noqa: BLE001 — one dead item must never abort the batch
+                        log(f"  committee item {reference}: skipped ({exc})")
+                        continue
                     if url:
                         out[reference] = url
                     log(f"  committee item {reference}: "
