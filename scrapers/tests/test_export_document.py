@@ -173,6 +173,9 @@ def test_export_has_suppliers_array_and_retains_supplier_id(conn):
     doc = build_export_document(conn, generated_at="t")
     assert len(doc["suppliers"]) == 1
     assert doc["suppliers"][0]["display_name"] == "Compugen Inc."
+    # supplier_key is the frontend's only stable permalink identity (#144): supplier_id is
+    # rebuilt every sync, display_name shifts as variants accrue.
+    assert doc["suppliers"][0]["supplier_key"] == "compugen inc"
     # variants is parsed to a list for consistency with categories
     assert doc["suppliers"][0]["variants"] == ["Compugen Inc."]
     # supplier_id is retained on nested awards so consumers can join to suppliers[]
