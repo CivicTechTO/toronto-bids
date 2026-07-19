@@ -76,10 +76,12 @@ Command: the Step-1 audit script below, run with
 | flagship: `2489960 ONTARIO INC` variant members | 12 |
 
 8,022 raw names collapse to 7,732 real-world entities: 128 keys absorb more
-than one raw variant (2,290 raw-name pairs' worth of duplication across
-those 128 groups is what the earlier conservative-only key was missing), and
-51 rows that carried no recoverable firm identity are excluded rather than
-polluting the dimension with garbage keys.
+than one raw variant. Measuring the duplication those merges recover: of the
+8,022 raw rows, 51 are excluded as pure footnotes, leaving 7,971 keyed rows
+against 7,732 distinct keys — `(8,022 − 51 excluded) − 7,732 distinct keys =
+239 rows collapsed` into an existing key that the earlier conservative-only
+key kept apart. 51 rows that carried no recoverable firm identity are
+excluded rather than polluting the dimension with garbage keys.
 
 ### Audit adjudication
 
@@ -111,9 +113,11 @@ figures above stand unchanged from the first run.
 ## JV attribution
 
 A joint venture or trade-name alias fronted by a numbered lead company folds
-into the lead firm's key, not into a separate "JV" identity. For example
-`'614128 ONTARIO LTD, O/A TRISAN CONSTRUCTION'` and `'TRISAN CONSTRUCTION
-O/A 614128 ONTARIO LTD.'` (trade-name-first ordering) both key to
+into the lead firm's key, not into a separate "JV" identity. The example
+below is illustrative — drawn from the rule's spec, not a pair pulled from
+the live audit run. For example `'614128 ONTARIO LTD, O/A TRISAN
+CONSTRUCTION'` and `'TRISAN CONSTRUCTION O/A 614128 ONTARIO LTD.'`
+(trade-name-first ordering) both key to
 `#614128` — the corporation number is the legal identity regardless of which
 side of the string it appears on, or what trade/JV name surrounds it. This
 is a deliberate simplification: a two-firm joint venture that has *not*
