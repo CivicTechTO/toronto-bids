@@ -27,17 +27,31 @@ cd ~/toronto-bids/scrapers && uv sync --locked
 uv run tb --version
 ```
 
-## 3. The Slack webhook
+## 3. Credentials — the Slack webhook and the publish token
 
-The repo is public. The webhook is a credential and lives only here, mode `0600`:
+The repo is public. Both are credentials and live only here, mode `0600`:
 
 ```shell
 mkdir -p ~/.config/toronto-bids
+umask 077
 read -rs W && printf 'TB_SLACK_WEBHOOK=%s\n' "$W" > ~/.config/toronto-bids/tb.env
 chmod 600 ~/.config/toronto-bids/tb.env
 ```
 
-Unset it and `tb nightly` still runs — it just posts nothing.
+Unset the webhook and `tb nightly` still runs — it just posts nothing.
+
+The **`GH_TOKEN`** is what `deploy/publish-data.sh` uses to upload the nightly export (see
+**Publishing the export**, below). It
+needs `repo` scope on `CivicTechTO/toronto-bids-data` (release write) and `workflow` scope on
+`CivicTechTO/toronto-bids-frontend` (deploy dispatch). Append it to the same file:
+
+```shell
+read -rs T && printf 'GH_TOKEN=%s\n' "$T" >> ~/.config/toronto-bids/tb.env
+chmod 600 ~/.config/toronto-bids/tb.env
+```
+
+Unlike the webhook, `GH_TOKEN` is **required** for publishing — the nightly's publish step fails
+loudly without it (publishing is the deliverable, not a notification).
 
 ## 4. Units
 
@@ -72,6 +86,45 @@ systemctl --user list-timers tb-nightly.timer
 | update | `cd ~/toronto-bids && git pull && cd scrapers && uv sync --locked` |
 
 Updating is deliberately manual.
+
+## Publishing the export — #146
+
+Design: [`docs/superpowers/specs/2026-07-19-publish-data-design.md`](../docs/superpowers/specs/2026-07-19-publish-data-design.md)
+
+The nightly's `ExecStart` is `deploy/tb-nightly-run.sh`, which runs `tb nightly` and then
+`deploy/publish-data.sh`. Publish runs **even after a partial sync** (the export is still valid),
+and the unit fails if **either** step failed — neither masks the other.
+
+`publish-data.sh` uploads `bids.json`, `bids.json.gz`, and `bids.sqlite` to a rolling **`latest`**
+release on `CivicTechTO/toronto-bids-data`, giving the frontend a stable URL:
+
+```
+https://github.com/CivicTechTO/toronto-bids-data/releases/download/latest/bids.json
+```
+
+On the 1st of each month it also cuts a dated `snapshot-YYYY-MM-DD` release (point-in-time
+citation), then triggers the frontend build (`gh workflow run deploy.yml`, best-effort).
+
+**One-time prerequisites** (do these before the first publish):
+
+```shell
+sudo apt install -y gh              # the GitHub CLI (privileged, once)
+# Create the data repo (public). Do this once, from any authenticated machine:
+gh repo create CivicTechTO/toronto-bids-data --public \
+  --description "Nightly export of the Toronto procurement archive (data only)."
+```
+
+Then add `GH_TOKEN` to `~/.config/toronto-bids/tb.env` (§3).
+
+**Self-test before wiring it live** — prints every `gh` command instead of running it, after the
+real artifact/JSON checks and gzip (needs a prior `tb export`, no token, no data repo):
+
+```shell
+cd ~/toronto-bids
+TB_PUBLISH_DRY_RUN=1 TB_DATA_DIR=~/tb-data deploy/publish-data.sh
+# Force the 1st-of-month snapshot path on any day:
+TB_PUBLISH_DRY_RUN=1 TB_PUBLISH_DAY=01 TB_DATA_DIR=~/tb-data deploy/publish-data.sh
+```
 
 ## Ariba document capture (opt-in, headed browser under Xvfb) — #122
 
