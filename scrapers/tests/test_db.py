@@ -208,3 +208,11 @@ def test_sync_runs_since_returns_only_newer_rows(conn):
     assert [r["source"] for r in rows] == ["ariba_discovery", "ckan_awarded"]
     assert rows[0]["rows_fetched"] == 1670 and rows[0]["rows_upserted"] == 0
     assert rows[1]["status"] == "failed" and rows[1]["error"] == "boom"
+
+
+def test_solicitation_link_table_exists_and_is_counted(conn):
+    from toronto_bids.store import db
+    conn.execute("INSERT INTO solicitation_link (reference, document_number, method) "
+                 "VALUES ('2016.BD106.3', '5672751291', 'council_pre_ariba')")
+    conn.commit()
+    assert db.counts(conn)["solicitation_link"] == 1
