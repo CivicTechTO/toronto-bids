@@ -113,6 +113,32 @@ else
   echo "publish-data: WARNING — no cached agendas at $AGENDAS_DIR to archive" >&2
 fi
 
+# 5c. Mirror bids.sqlite to the CORS-enabled R2 bucket for browser-side Datasette-Lite (#155).
+#     GitHub release assets no longer send CORS, so the in-browser SQL page loads the DB from R2
+#     instead. Reuses CLOUDFLARE_API_TOKEN (already in tb.env for provisioning) via wrangler —
+#     overwrite the same object each night so the URL is stable. Best-effort: the GitHub release
+#     is the deliverable; a failed R2 push leaves last night's copy and only warns. Skips cleanly
+#     when R2 is not configured (dev/CI, or before the account is set up).
+R2_BUCKET="${TB_R2_BUCKET:-toronto-bids-data}"
+if [ -z "${CLOUDFLARE_API_TOKEN:-}" ]; then
+  echo "publish-data: R2 not configured (no CLOUDFLARE_API_TOKEN) — skipping the bucket mirror"
+elif [ "$DRY_RUN" = 1 ]; then
+  echo "DRY-RUN wrangler r2 object put $R2_BUCKET/bids.sqlite --file $SQLITE --remote"
+else
+  # systemd's PATH is minimal; make node/npx findable, preferring the newest nvm node.
+  if ! command -v npx >/dev/null 2>&1; then
+    _node_bin="$(ls -d "$HOME"/.nvm/versions/node/*/bin 2>/dev/null | sort -V | tail -1)"
+    [ -n "$_node_bin" ] && PATH="$_node_bin:$PATH"
+  fi
+  # Pinned version so a warm npx cache is reused (no nightly re-resolve of "latest").
+  if npx -y wrangler@4.112.0 r2 object put "$R2_BUCKET/bids.sqlite" \
+        --file "$SQLITE" --remote --content-type application/x-sqlite3 >/dev/null 2>&1; then
+    echo "publish-data: mirrored bids.sqlite to R2 bucket $R2_BUCKET"
+  else
+    echo "publish-data: WARNING — R2 upload of bids.sqlite failed (release is published)" >&2
+  fi
+fi
+
 # 6. On the 1st, cut a dated snapshot for citation (idempotent — skip if it already exists).
 if [ "$DAY" = 01 ]; then
   TAG="snapshot-$SNAPSHOT_DATE"
