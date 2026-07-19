@@ -183,6 +183,36 @@ unzip -q -o /tmp/agendas/council-agendas.zip -d ~/tb-data/council/agendas
 cd ~/toronto-bids/scrapers && TB_DATA_DIR=~/tb-data uv run tb enrich-titles   # offline, no browser
 ```
 
+### R2 mirror of bids.sqlite — for browser-side Datasette-Lite (#155)
+
+GitHub release assets no longer send `Access-Control-Allow-Origin`, so the frontend's in-browser
+SQL page cannot load `bids.sqlite` from the release. `publish-data.sh` therefore also mirrors
+`bids.sqlite` each night to a **CORS-enabled Cloudflare R2 bucket** (overwriting the same object,
+so the URL is stable), reusing `CLOUDFLARE_API_TOKEN` via `wrangler`. The step is **best-effort**
+(a failed push warns; the GitHub release is the deliverable) and **skips cleanly** when
+`CLOUDFLARE_API_TOKEN` is unset.
+
+Public URL: `https://pub-99a890c186c743c19ef7bcd00024dca8.r2.dev/bids.sqlite`
+(Datasette-Lite: `https://lite.datasette.io/?url=<that URL>`).
+
+**One-time R2 setup** (already done for the current deployment):
+
+```shell
+# 1. Enable R2 in the Cloudflare dashboard (accept terms; free tier covers this).
+# 2. Create a scoped API token (Workers R2 Storage: Edit) + note the Account ID; add to tb.env:
+#      CLOUDFLARE_API_TOKEN=...      (0600, gitignored — same file as the Slack webhook)
+#      CLOUDFLARE_ACCOUNT_ID=...
+# 3. Provision the bucket (wrangler runs via npx — no global install):
+wr() { ( set -a; . ~/.config/toronto-bids/tb.env; set +a; npx -y wrangler@latest "$@" ); }
+wr r2 bucket create toronto-bids-data
+wr r2 bucket dev-url enable toronto-bids-data          # -> the public pub-*.r2.dev URL
+# CORS must allow '*' (NOT the frontend origin — Datasette-Lite fetches from lite.datasette.io):
+printf '{"rules":[{"allowed":{"origins":["*"],"methods":["GET","HEAD"],"headers":["*"]},"maxAgeSeconds":3600}]}' > /tmp/r2-cors.json
+wr r2 bucket cors set toronto-bids-data --file /tmp/r2-cors.json
+```
+
+`TB_R2_BUCKET` overrides the bucket name (default `toronto-bids-data`).
+
 ## What does NOT run here
 
 `enrich-council` needs a **headed** Chromium (TMMIS is Akamai-gated and blocks headless), but
