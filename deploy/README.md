@@ -144,6 +144,10 @@ https://github.com/CivicTechTO/toronto-bids-data/releases/download/latest/bids.j
 On the 1st of each month it also cuts a dated `snapshot-YYYY-MM-DD` release (point-in-time
 citation), then triggers the frontend build (`gh workflow run deploy.yml`, best-effort).
 
+The nightly posts two Slack messages: `tb nightly` posts the rich archive report first, then
+`publish-data.sh` posts a one-line publish result (✅ + release URL, or ❌ + reason). Both use
+`TB_SLACK_WEBHOOK` and both no-op silently when it is unset.
+
 **One-time prerequisites** (do these before the first publish):
 
 ```shell
