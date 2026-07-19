@@ -8,6 +8,28 @@ BEFORE = {"solicitation": 7641, "award": 14157, "bid": 18627, "supplier": 6738}
 AFTER = {"solicitation": 7653, "award": 14165, "bid": 18632, "supplier": 6738}
 
 
+def _counts(**kw):
+    base = {k: 0 for k in ("solicitation", "award", "bid", "agency_award",
+                           "agency_bid", "ariba_attachment")}
+    base.update(kw)
+    return base
+
+
+def test_summary_shows_agency_and_attachment_growth():
+    before = _counts(agency_award=100, agency_bid=200, ariba_attachment=1000)
+    after = _counts(agency_award=107, agency_bid=215, ariba_attachment=1111)
+    text = notify.summarize(before, after, [], 9, 31_000_000, 12.0)
+    assert "agency awards 107 (+7)" in text
+    assert "agency bids 215 (+15)" in text
+    assert "ariba files 1,111 (+111)" in text
+
+
+def test_summary_omits_zero_growth_agency_and_attachment_lines():
+    c = _counts(solicitation=10)
+    text = notify.summarize(c, c, [], 9, 1000, 1.0)
+    assert "agency awards" not in text  # nothing captured -> no noise
+
+
 def test_a_healthy_run_leads_with_success_and_the_counts():
     text = notify.summarize(BEFORE, AFTER, [], 9, 30_800_000, 192.0)
     assert text.startswith("✅ toronto-bids")

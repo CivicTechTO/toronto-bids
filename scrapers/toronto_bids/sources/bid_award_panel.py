@@ -190,18 +190,10 @@ def agenda_date(html: str) -> str | None:
 # when that term began, so its meetings there are numbered from 105 (2009.BD105 = 2009-02-04,
 # the earliest the City's schedule lists). Walking from 1 finds nothing and gives up, silently
 # losing every 2009-2010 meeting — which is exactly what happened on the first run.
-TERM_STARTS = [
-    ("BD", 2009, "2006-2010", 105),
-    ("BD", 2011, "2010-2014", 1),
-    ("BD", 2015, "2014-2018", 1),
-    ("BA", 2017, "2014-2018", 1),
-    ("BA", 2019, "2018-2022", 1),
-    ("BA", 2023, "2022-2026", 1),
-]
 
 
 def discover_meetings(fetch, log=lambda _m: None, max_per_term=260, stop_after_misses=4,
-                      term_starts=None):
+                      *, term_starts):
     """Walk each term's meetings, returning {reference: html} for every agenda that exists.
 
     References cannot be derived from the City's published schedule: it lists dates but omits
@@ -214,12 +206,13 @@ def discover_meetings(fetch, log=lambda _m: None, max_per_term=260, stop_after_m
     term is cheap because numbering is contiguous; only the session-year prefix has to be
     guessed, and it only ever advances.
 
-    `term_starts` defaults to TERM_STARTS (the BA/BD series). Other TMMIS committees (e.g.
+    `term_starts` is the committee's term list (e.g. `zoo_board.ZB_TERM_STARTS`); the Bid
+    Award Panel is abolished, so no in-repo default remains. Other TMMIS committees (e.g.
     the Zoo Board's ZB series, #135) reuse this prober by passing their own list — same
     probe-and-confirm design, different (series, start_year, term, first_n) tuples.
     """
     found = {}
-    for series, start_year, term, first_n in (term_starts or TERM_STARTS):
+    for series, start_year, term, first_n in term_starts:
         session = start_year
         misses = 0
         for n in range(first_n, first_n + max_per_term):
@@ -306,15 +299,16 @@ def cached_agendas(agenda_dir) -> dict:
     return {p.stem: p.read_text(errors="replace") for p in sorted(root.glob("*.html"))}
 
 
-def scrape_agendas(agenda_dir, virtual_display: bool = False, log=lambda _m: None,
-                   term_starts=None) -> dict:
+def scrape_agendas(agenda_dir, *, virtual_display: bool = False, log=lambda _m: None,
+                   term_starts) -> dict:
     """Discover and cache every agenda, returning {reference: html}.
 
     Resumable and safe to re-run: an agenda already on disk is never refetched, so a second
     run costs only the probes past the last meeting. Only misses and new meetings hit the
     network.
 
-    `term_starts` defaults to TERM_STARTS (the BA/BD series) and is forwarded to
+    `term_starts` is the committee's term list (e.g. `zoo_board.ZB_TERM_STARTS`); the Bid
+    Award Panel is abolished, so no in-repo default remains. Forwarded to
     `discover_meetings` unchanged — see that function for why other TMMIS committees pass
     their own list instead.
     """

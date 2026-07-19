@@ -45,7 +45,17 @@ def summarize(before: dict, after: dict, failures: list, n_sources: int,
     failures-only alert cannot catch is the timer never firing at all, where silence and health
     look identical. A nightly line makes silence itself the signal.
     """
+    def _seg(label, key):
+        a = after.get(key)
+        if not a:
+            return None
+        d = a - before.get(key, 0)
+        return f"{label} {a:,} (+{d:,})" if d else None
+
     parts = [_count(before, after, key, label) for key, label in _HEADLINE]
+    parts.extend(s for s in (_seg("agency awards", "agency_award"),
+                             _seg("agency bids", "agency_bid"),
+                             _seg("ariba files", "ariba_attachment")) if s)
     parts.append(f"export {export_bytes / 1_048_576:.1f} MiB" if export_bytes is not None  # binary MiB, matching ls -lh
                  else "export FAILED")
     parts.append(_elapsed(elapsed_s))

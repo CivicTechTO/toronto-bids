@@ -87,11 +87,24 @@ def _fake_site(pages):
     return fetch
 
 
+# The BA/BD term list used to be the in-repo default (TERM_STARTS); the Bid Award Panel is
+# abolished and there is no default anymore, so these tests pass their own copy to exercise
+# the same multi-term walk.
+_BA_BD_TERM_STARTS = [
+    ("BD", 2009, "2006-2010", 105),
+    ("BD", 2011, "2010-2014", 1),
+    ("BD", 2015, "2014-2018", 1),
+    ("BA", 2017, "2014-2018", 1),
+    ("BA", 2019, "2018-2022", 1),
+    ("BA", 2023, "2022-2026", 1),
+]
+
+
 def test_discovery_advances_the_session_year_prefix():
     """The year prefix is a session year that rolls over in November, mid-term."""
     found = discover_meetings(
         _fake_site({"2019.BA1": "2018-12-05", "2019.BA2": "2019-01-09"}),
-        max_per_term=2, stop_after_misses=1)
+        max_per_term=2, stop_after_misses=1, term_starts=[("BA", 2019, "2018-2022", 1)])
     assert set(found) == {"2019.BA1", "2019.BA2"}
 
 
@@ -103,7 +116,8 @@ def test_discovery_stops_after_consecutive_misses():
         calls.append(ref)
         return _fake_site(pages)(ref)
 
-    discover_meetings(fetch, max_per_term=200, stop_after_misses=2)
+    discover_meetings(fetch, max_per_term=200, stop_after_misses=2,
+                      term_starts=_BA_BD_TERM_STARTS)
     # It must not walk to 200 just because meeting 2 is absent. Six series/term pairs are
     # walked (BD 2009/2011/2015, BA 2017/2019/2023), each giving up after its own misses,
     # so the floor is ~6 * stop_after_misses * 2 candidate prefixes — nowhere near 6 * 200.
@@ -115,7 +129,7 @@ def test_discovery_handles_two_meetings_on_one_date():
     inferred from date order, and why probing verifies against the page instead."""
     found = discover_meetings(
         _fake_site({"2017.BA1": "2017-01-04", "2017.BA2": "2017-01-04"}),
-        max_per_term=2, stop_after_misses=1)
+        max_per_term=2, stop_after_misses=1, term_starts=[("BA", 2017, "2014-2018", 1)])
     assert set(found) == {"2017.BA1", "2017.BA2"}
 
 
@@ -194,17 +208,6 @@ def test_every_way_tmmis_says_no_is_treated_as_missing():
     assert agenda_is_missing("<html><body>This meeting is not available.</body></html>")
     assert agenda_is_missing("<html><body>Error The Published Report was not found.</body></html>")
     assert not agenda_is_missing(_fixture("2022.BA189"))
-
-
-def test_a_terms_meetings_do_not_always_start_at_one():
-    """BD's 2006-2010 term numbers from 105 — the committee was already sitting when the term
-    began. Walking from 1 finds nothing, gives up, and silently loses every 2009-2010 meeting.
-    """
-    from toronto_bids.sources.bid_award_panel import TERM_STARTS
-
-    starts = {(series, term): first_n for series, _yr, term, first_n in TERM_STARTS}
-    assert starts[("BD", "2006-2010")] == 105
-    assert starts[("BA", "2014-2018")] == 1
 
 
 def test_the_bid_committee_series_is_parsed_like_the_panel():

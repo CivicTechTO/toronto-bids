@@ -95,7 +95,7 @@ def test_enrich_titles_says_so_when_there_is_nothing_cached(monkeypatch, tmp_pat
     _seed_titleless()
     assert cli.main(["enrich-titles"]) == 0
     out = capsys.readouterr().out
-    assert "run with --scrape" in out
+    assert "download the council-agendas archive" in out
     assert "1 -> 1" in out       # nothing named, and it says so rather than claiming success
 
 

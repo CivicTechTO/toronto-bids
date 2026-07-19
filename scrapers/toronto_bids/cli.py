@@ -27,14 +27,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_titles = sub.add_parser(
         "enrich-titles",
-        help="Recover titles the City never published, from Bid Award Panel agendas "
-             "and the legacy archive (offline unless --scrape)")
-    p_titles.add_argument(
-        "--scrape", action="store_true",
-        help="Fetch Bid Award Panel agendas first (headed browser; ~10 min on a cold "
-             "cache, seconds once cached). Without it, only agendas already on disk are used")
-    p_titles.add_argument("--virtual-display", action="store_true",
-                          help="Run the headed browser under Xvfb (implies --scrape's needs)")
+        help="Recover titles the City never published, from the cached Bid Award Panel "
+             "agendas and the legacy archive (offline; the Panel was abolished 2025-10-01 so "
+             "the cached corpus is final)")
     p_awards = sub.add_parser(
         "enrich-awards",
         help="Archive the Toronto Bids Portal's Award Summary Forms — the losing bidders, "
@@ -110,6 +105,12 @@ def build_parser() -> argparse.ArgumentParser:
                       help="With --portal: also dump each raw JSON record under "
                            "<DATA_DIR>/agencies/portal_recordings/ to seed parser fixtures.")
     return parser
+
+
+def _is_first_of_month() -> bool:
+    """The monthly-council gate for the nightly (a test seam)."""
+    from datetime import date
+    return date.today().day == 1
 
 
 def _open_db():
@@ -190,7 +191,8 @@ def _cmd_enrich_council(args) -> int:
 
 
 def _cmd_enrich_titles(args) -> int:
-    """Fill titles the City never published. Offline by default; --scrape needs a browser.
+    """Fill titles the City never published. Offline: the Bid Award Panel was abolished
+    2025-10-01, so the cached agenda corpus is final and there is no scrape path.
 
     Both fills only ever touch a NULL title, so a title the City published always wins.
     They are ordered council-then-legacy for readable output, not for correctness: the
@@ -200,7 +202,7 @@ def _cmd_enrich_titles(args) -> int:
     from toronto_bids.sources.bid_award_panel import (
         _BA_REPORTS_WITHOUT_BIDS, _COMPOSITE_REPORTS, cached_agendas,
         download_reports, fill_titles_from_council,
-        match_composite_titles, match_pre_ariba_titles, scrape_agendas,
+        match_composite_titles, match_pre_ariba_titles,
         store_background_pdfs, store_bids, store_composite_awards, store_items)
     from toronto_bids.sources.legacy_titles import fill_titles_from_legacy
 
@@ -209,19 +211,14 @@ def _cmd_enrich_titles(args) -> int:
         before = conn.execute(
             "SELECT COUNT(*) FROM solicitation WHERE title IS NULL").fetchone()[0]
 
-        if args.scrape:
-            agendas = scrape_agendas(config.COUNCIL_AGENDAS_DIR,
-                                     virtual_display=args.virtual_display,
-                                     log=lambda m: print(m, flush=True))
-        else:
-            agendas = cached_agendas(config.COUNCIL_AGENDAS_DIR)
-            if not agendas:
-                print(f"No cached agendas in {config.COUNCIL_AGENDAS_DIR} — "
-                      f"run with --scrape to fetch them (needs the 'council' extra).")
+        agendas = cached_agendas(config.COUNCIL_AGENDAS_DIR)
+        if not agendas:
+            print(f"No cached agendas in {config.COUNCIL_AGENDAS_DIR} — download the "
+                  f"council-agendas archive from the data release and unpack it there "
+                  f"(deploy/README.md).")
 
         if agendas:
-            print(f"Bid Award Panel agendas: {len(agendas)}"
-                  f" ({'scraped' if args.scrape else 'cached'})")
+            print(f"Bid Award Panel agendas: {len(agendas)} (cached)")
             print(f"  council items stored: {store_items(conn, agendas)}")
             # The same cached pages are the staff-report index spec §2.3 says does not
             # exist, so index them here rather than make anyone walk the files twice.
@@ -384,7 +381,8 @@ def _cmd_amounts(args) -> int:
 
 
 def _cmd_nightly(args) -> int:
-    """The whole unattended run: sync -> award summaries -> export -> tell Slack.
+    """The whole unattended run: sync -> award summaries -> portal -> ariba attachments ->
+    agency board reports -> (monthly) council -> supplier rebuild -> export -> tell Slack.
 
     Each step is isolated exactly as pipeline.run_source isolates a source: a failure is
     recorded and the steps behind it still run. In particular the EXPORT RUNS EVEN AFTER A
@@ -455,11 +453,41 @@ def _cmd_nightly(args) -> int:
                             failures.append((f"portal:{slug}", v))
                 except Exception as exc:
                     failures.append(("portal", str(exc)))
+                try:
+                    from toronto_bids.sources import ariba_attachments as aa
+                    n = aa.capture_attachments(conn, log=out, virtual_display=True)
+                    print(f"  ariba attachments    : {n} bundles captured")
+                except Exception as exc:
+                    failures.append(("ariba_attachments", str(exc)))
+                try:
+                    from toronto_bids.buyers import seed_buyers
+                    ids = seed_buyers(conn)
+                    failures.extend(_capture_agency_bodies(
+                        conn, ids, bodies=["trca", "zoo", "ep"],
+                        fetch=True, scrape=True, virtual_display=True, out=out))
+                except Exception as exc:
+                    failures.append(("agencies", str(exc)))
+                if _is_first_of_month():
+                    try:
+                        from functools import partial
+                        from toronto_bids.sources.council import (
+                            enrich_council, fetch_agenda_item)
+                        fetch = partial(fetch_agenda_item, virtual_display=True)
+                        print(f"  council enriched     : "
+                              f"{enrich_council(conn, http, fetch=fetch)}")
+                    except Exception as exc:
+                        failures.append(("council", str(exc)))
             finally:
                 try:
                     http.close()
                 except Exception as exc:
                     failures.append(("http_close", str(exc)))
+
+        try:
+            from toronto_bids.linking.supplier import build_supplier_dimension
+            print(f"  suppliers            : {build_supplier_dimension(conn)}")
+        except Exception as exc:
+            failures.append(("supplier_linking", str(exc)))
 
         try:
             written = export_json(conn, Path(config.DATA_DIR) / "export" / "bids.json")
@@ -486,6 +514,75 @@ def _cmd_nightly(args) -> int:
     return 1 if failures else 0
 
 
+def _capture_agency_bodies(conn, ids, *, bodies, fetch, scrape, virtual_display, out):
+    """Capture TRCA/Zoo/EP board-report awards+bids, each body isolated. Returns failures.
+
+    Shared by `tb enrich-agencies` and `tb nightly`. TRCA is plain HTTP (eSCRIBE); Zoo and EP
+    need a headed browser for TMMIS discovery, so `scrape`/`virtual_display` apply to them.
+    Does not run the portal step or the supplier rebuild — the caller owns those.
+    """
+    failures: list[tuple[str, str]] = []
+
+    if "trca" in bodies:
+        try:
+            from toronto_bids.sources.trca_board import download_reports, store_trca_reports
+            if fetch:
+                http = HttpClient()
+                try:
+                    print(f"  trca reports fetched : {download_reports(conn, http, log=out)}")
+                finally:
+                    http.close()
+            got = store_trca_reports(conn, ids["trca"])
+            print(f"  trca stored          : {got['solicitations']} solicitations, "
+                  f"{got['awards']} awards, {got['bids']} bids")
+        except Exception as exc:
+            failures.append(("trca", str(exc)))
+
+    if "zoo" in bodies:
+        try:
+            from toronto_bids.sources.zoo_board import (
+                cached_zb_agendas, download_zoo_reports, scrape_zb_agendas, store_zoo_reports)
+            agendas = (scrape_zb_agendas(virtual_display=virtual_display, log=out)
+                       if scrape else cached_zb_agendas())
+            print(f"  zoo ZB agendas       : {len(agendas)}"
+                  f" ({'scraped' if scrape else 'cached'})")
+            if agendas and (fetch or scrape):
+                http = HttpClient()
+                try:
+                    print(f"  zoo reports fetched  : "
+                          f"{download_zoo_reports(conn, http, agendas, log=out)}")
+                finally:
+                    http.close()
+            got = store_zoo_reports(conn, ids["toronto-zoo"])
+            print(f"  zoo stored           : {got['solicitations']} solicitations, "
+                  f"{got['awards']} awards")
+        except Exception as exc:
+            failures.append(("zoo", str(exc)))
+
+    if "ep" in bodies:
+        try:
+            from toronto_bids.sources.ep_board import (
+                cached_ep_agendas, download_ep_reports, scrape_ep_agendas, store_ep_reports)
+            agendas = (scrape_ep_agendas(virtual_display=virtual_display, log=out)
+                       if scrape else cached_ep_agendas())
+            print(f"  ep EP agendas        : {len(agendas)}"
+                  f" ({'scraped' if scrape else 'cached'})")
+            if agendas and (fetch or scrape):
+                http = HttpClient()
+                try:
+                    print(f"  ep reports fetched   : "
+                          f"{download_ep_reports(conn, http, agendas, log=out)}")
+                finally:
+                    http.close()
+            got = store_ep_reports(conn, ids["exhibition-place"])
+            print(f"  ep stored            : {got['solicitations']} solicitations, "
+                  f"{got['awards']} awards, {got['bids']} bids")
+        except Exception as exc:
+            failures.append(("ep", str(exc)))
+
+    return failures
+
+
 def _cmd_enrich_agencies(args) -> int:
     from toronto_bids.buyers import seed_buyers
     from toronto_bids.linking.supplier import build_supplier_dimension
@@ -497,63 +594,9 @@ def _cmd_enrich_agencies(args) -> int:
         ids = seed_buyers(conn)
         bodies = [args.only] if args.only else ["trca", "zoo", "ep"]
 
-        if "trca" in bodies:
-            try:
-                from toronto_bids.sources.trca_board import download_reports, store_trca_reports
-                if args.fetch:
-                    http = HttpClient()
-                    try:
-                        print(f"  trca reports fetched : {download_reports(conn, http, log=out)}")
-                    finally:
-                        http.close()
-                got = store_trca_reports(conn, ids["trca"])
-                print(f"  trca stored          : {got['solicitations']} solicitations, "
-                      f"{got['awards']} awards, {got['bids']} bids")
-            except Exception as exc:
-                failures.append(("trca", str(exc)))
-
-        if "zoo" in bodies:
-            try:
-                from toronto_bids.sources.zoo_board import (
-                    cached_zb_agendas, download_zoo_reports, scrape_zb_agendas,
-                    store_zoo_reports)
-                agendas = (scrape_zb_agendas(virtual_display=args.virtual_display, log=out)
-                           if args.scrape else cached_zb_agendas())
-                print(f"  zoo ZB agendas       : {len(agendas)}"
-                      f" ({'scraped' if args.scrape else 'cached'})")
-                if agendas and (args.fetch or args.scrape):
-                    http = HttpClient()
-                    try:
-                        print(f"  zoo reports fetched  : "
-                              f"{download_zoo_reports(conn, http, agendas, log=out)}")
-                    finally:
-                        http.close()
-                got = store_zoo_reports(conn, ids["toronto-zoo"])
-                print(f"  zoo stored           : {got['solicitations']} solicitations, "
-                      f"{got['awards']} awards")
-            except Exception as exc:
-                failures.append(("zoo", str(exc)))
-
-        if "ep" in bodies:
-            try:
-                from toronto_bids.sources.ep_board import (
-                    cached_ep_agendas, download_ep_reports, scrape_ep_agendas, store_ep_reports)
-                agendas = (scrape_ep_agendas(virtual_display=args.virtual_display, log=out)
-                           if args.scrape else cached_ep_agendas())
-                print(f"  ep EP agendas        : {len(agendas)}"
-                      f" ({'scraped' if args.scrape else 'cached'})")
-                if agendas and (args.fetch or args.scrape):
-                    http = HttpClient()
-                    try:
-                        print(f"  ep reports fetched   : "
-                              f"{download_ep_reports(conn, http, agendas, log=out)}")
-                    finally:
-                        http.close()
-                got = store_ep_reports(conn, ids["exhibition-place"])
-                print(f"  ep stored            : {got['solicitations']} solicitations, "
-                      f"{got['awards']} awards, {got['bids']} bids")
-            except Exception as exc:
-                failures.append(("ep", str(exc)))
+        failures.extend(_capture_agency_bodies(
+            conn, ids, bodies=bodies, fetch=args.fetch, scrape=args.scrape,
+            virtual_display=args.virtual_display, out=out))
 
         if args.portal:
             try:
