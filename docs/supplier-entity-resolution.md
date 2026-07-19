@@ -141,6 +141,14 @@ and its members stay as separate suppliers under Rule 4 (default).
   single-firm rows).
 - **A non-numbered, non-incorporated joint venture is not folded.** See JV
   attribution above — only a numbered-lead JV is recognized.
+- **A numbered company with a trade-name marker but no province token is not
+  caught by the corp-number rule.** Rule 1 requires the number to sit
+  adjacent to a province token (`Ontario`/`Ont`/`Canada`); `'614128 o/a
+  Trisan Construction'` has none, so it falls through to the named
+  trade-name rule and keys as `614128` instead of `#614128` — splitting
+  from the province-bearing variant (`'614128 Ontario Ltd o/a Trisan'` →
+  `#614128`). Not observed in the current corpus (real rows carry the
+  province token), but it is a real residual limit of the anchoring rule.
 - **Any group the audit would flag stays unmerged/unexcluded until fixed.**
   The two audits below (false-merge, false-exclude) are the trip-wire for
   this; both are currently clean (see Measured figures).
