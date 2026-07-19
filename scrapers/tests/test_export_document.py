@@ -295,6 +295,75 @@ def test_staff_report_surfaces_under_solicitation_via_bid_bridge(seeded):
     assert set(report) == {"source", "name", "path", "type", "size_bytes", "url"}
 
 
+def test_reference_null_bid_nests_under_solicitation(seeded):
+    # An Award Summary bid: reference IS NULL, document_number set to a real solicitation.
+    db.upsert_row(seeded, Bid(bidder_name_raw="Post-Panel Co", reference=None,
+                              document_number="5672751291", bid_price="2500",
+                              source="award_summary"), overwrite=True)
+    seeded.commit()
+
+    sol = next(s for s in build_export_document(seeded, generated_at="t")["solicitations"]
+               if s["document_number"] == "5672751291")
+    assert len(sol["bids"]) == 1
+    assert sol["bids"][0]["bidder_name_raw"] == "Post-Panel Co"
+    assert "id" not in sol["bids"][0]
+    assert "document_number" not in sol["bids"][0]   # redundant under the solicitation
+    # It must NOT leak into any council item.
+    assert all(b["bidder_name_raw"] != "Post-Panel Co"
+               for ci in build_export_document(seeded, generated_at="t")["council_items"]
+               for b in ci["bids"])
+
+
+def test_reference_null_bid_with_no_matching_solicitation_goes_to_unlinked_bids(seeded):
+    db.upsert_row(seeded, Bid(bidder_name_raw="Orphan Bidder", reference=None,
+                              document_number="4044346425", bid_price="500",
+                              source="award_summary"), overwrite=True)
+    seeded.commit()
+    doc = build_export_document(seeded, generated_at="t")
+    orphan = [b for b in doc["unlinked_bids"] if b["bidder_name_raw"] == "Orphan Bidder"]
+    assert len(orphan) == 1
+    assert orphan[0]["document_number"] == "4044346425"   # kept for diagnostics
+    assert all(b["bidder_name_raw"] != "Orphan Bidder"
+               for s in doc["solicitations"] for b in s["bids"])
+
+
+def test_reference_bid_stays_under_council_item(conn):
+    from toronto_bids.models import CouncilItem
+    db.upsert_row(conn, CouncilItem(reference="2025.BA5.3", title="Award"), overwrite=True)
+    db.upsert_row(conn, Bid(bidder_name_raw="Panel Bidder", reference="2025.BA5.3",
+                            bid_price="100", source="bid_award_panel"), overwrite=True)
+    conn.commit()
+    doc = build_export_document(conn, generated_at="t")
+    ci = doc["council_items"][0]
+    assert [b["bidder_name_raw"] for b in ci["bids"]] == ["Panel Bidder"]
+    # and it must NOT appear in unlinked_bids
+    assert doc["unlinked_bids"] == []
+
+
+def test_no_bid_is_dropped_counts_reconcile(seeded):
+    from toronto_bids.models import CouncilItem
+    db.upsert_row(seeded, CouncilItem(reference="2020.BA5.3", title="Award"), overwrite=True)
+    db.upsert_row(seeded, Bid(bidder_name_raw="Panel Co", reference="2020.BA5.3",
+                              bid_price="100", source="bid_award_panel"), overwrite=True)
+    db.upsert_row(seeded, Bid(bidder_name_raw="Nested Co", reference=None,
+                              document_number="5672751291", bid_price="200",
+                              source="award_summary"), overwrite=True)
+    db.upsert_row(seeded, Bid(bidder_name_raw="Orphan Co", reference=None,
+                              document_number="4044346425", bid_price="300",
+                              source="award_summary"), overwrite=True)
+    seeded.commit()
+    doc = build_export_document(seeded, generated_at="t")
+    counts = doc["meta"]["counts"]
+    council = sum(len(ci["bids"]) for ci in doc["council_items"])
+    nested = sum(len(s["bids"]) for s in doc["solicitations"])
+    assert council + nested + len(doc["unlinked_bids"]) == counts["bid"]
+
+
+def test_empty_store_has_empty_unlinked_bids(conn):
+    doc = build_export_document(conn, generated_at="t")
+    assert doc["unlinked_bids"] == []
+
+
 def test_unbridged_staff_report_stays_out_of_documents(seeded):
     # A staff report whose reference has no dual-key bid row must not attach to any solicitation.
     db.upsert_row(seeded, BackgroundPdf(
