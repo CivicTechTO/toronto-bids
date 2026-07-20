@@ -155,3 +155,15 @@ def test_manifest_command_writes_sizes(tmp_path):
     assert rc == 0
     doc = json.loads(out.read_text())
     assert doc["artifacts"] == [{"name": "bids.json", "bytes": 12}]
+
+
+# --- bulk exports (#161) ------------------------------------------------------------------
+
+def test_export_writes_parquet_and_csv_bundle(monkeypatch, tmp_path):
+    import toronto_bids.config as config
+    monkeypatch.setattr(config, "DATA_DIR", tmp_path)
+    monkeypatch.setattr(config, "DB_PATH", tmp_path / "bids.sqlite")
+    assert main(["export"]) == 0
+    export_dir = tmp_path / "export"
+    assert (export_dir / "bids-csv.zip").exists()
+    assert (export_dir / "solicitation.parquet").exists()

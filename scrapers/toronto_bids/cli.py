@@ -3,6 +3,7 @@ import sys
 
 from toronto_bids import __version__, config, pipeline
 from toronto_bids.export.json_export import export_json, export_schema
+from toronto_bids.export.tabular_export import write_csv_zip, write_parquet_files
 from toronto_bids.http import HttpClient
 from toronto_bids.store import db
 
@@ -206,6 +207,9 @@ def _cmd_export(args) -> int:
         written = export_json(conn, out_path, generated_at)
         schema_path = out_path.parent / "schema.json"
         export_schema(conn, schema_path, generated_at)
+        write_parquet_files(conn, out_path.parent)
+        write_csv_zip(conn, out_path.parent / "bids-csv.zip")
+        print(f"Wrote Parquet + CSV bulk exports to {out_path.parent}")
         counts = db.counts(conn)
         print(f"Exported {counts['solicitation']} solicitations to {written}")
         print(f"Wrote schema dictionary to {schema_path}")
@@ -580,6 +584,8 @@ def _cmd_nightly(args) -> int:
             # requires it beside bids.json (#168), so the production path must emit it here (the
             # nightly calls export_json directly, not `tb export`).
             export_schema(conn, export_dir / "schema.json", generated_at)
+            write_parquet_files(conn, export_dir)
+            write_csv_zip(conn, export_dir / "bids-csv.zip")
             export_bytes = written.stat().st_size
             return f"{export_bytes / 1_048_576:.1f} MiB"
         _run_step(steps, failures, "export", _export)
