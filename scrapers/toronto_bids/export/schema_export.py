@@ -1,4 +1,6 @@
+import tomllib
 from datetime import datetime, timezone
+from importlib import resources
 
 from toronto_bids.store import db
 
@@ -31,6 +33,13 @@ def _observed_enum(conn, table: str, column: str) -> list:
     return [r[0] for r in rows]
 
 
+def load_descriptions(text: str | None = None) -> dict[str, str]:
+    """The curated column dictionary, keyed '<table>.<column>' -> gloss (#168)."""
+    if text is None:
+        text = resources.files("toronto_bids.data").joinpath("schema_dictionary.toml").read_text()
+    return {key: entry["description"] for key, entry in tomllib.loads(text).items()}
+
+
 def build_schema_document(conn, generated_at: str | None = None) -> dict:
     """A column-level data dictionary generated from the SQLite (#168).
 
@@ -40,6 +49,8 @@ def build_schema_document(conn, generated_at: str | None = None) -> dict:
     """
     if generated_at is None:
         generated_at = datetime.now(timezone.utc).isoformat()
+
+    descriptions = load_descriptions()
 
     tables: dict[str, dict] = {}
     for table in db.EXPORT_TABLES:
@@ -55,6 +66,9 @@ def build_schema_document(conn, generated_at: str | None = None) -> dict:
                 values = _observed_enum(conn, table, row[1])
                 if values:
                     col["enum"] = values
+            gloss = descriptions.get(f"{table}.{row[1]}")
+            if gloss:
+                col["description"] = gloss
             columns.append(col)
         row_count = conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
         tables[table] = {"row_count": row_count, "columns": columns}

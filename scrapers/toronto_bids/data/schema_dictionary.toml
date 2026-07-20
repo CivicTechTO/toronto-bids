@@ -1,0 +1,74 @@
+["solicitation.document_number"]
+description = "10-digit normalized competitive identifier — the join key across award/bid/ariba_posting (the primary key)."
+
+["solicitation.title"]
+description = "The solicitation title. NULL means the City never published one (≈72% of rows); it does NOT mean 'unknown-and-recoverable'. See title_source for recovered titles."
+
+["solicitation.title_source"]
+description = "Where a recovered title came from when the City published none: 'bid_award_panel' | 'legacy_ariba_html' | 'council_pre_ariba'. NULL = the City's own feed."
+
+["solicitation.source"]
+description = "Which source last wrote the ROW (the OData spine owns this and re-upserts every sync). NOT title provenance — that is title_source."
+
+["award.document_number"]
+description = "The solicitation this award line belongs to (joins solicitation.document_number)."
+
+["award.award_amount"]
+description = "The City's published amount string, verbatim ('$1,317,169.92 CAD', 'kj'). Archive fidelity — NOT summable. Aggregate award_amount_numeric instead."
+
+["award.award_amount_numeric"]
+description = "Machine-parsed CAD amount (toronto_bids/amount.py). NULL beside a non-NULL award_amount means the raw string is not a single CAD amount. Aggregate on THIS column."
+
+["award.award_amount_labelled"]
+description = "Human-adjudicated amount for a string the parser refused (#74). Never merged into award_amount_numeric — keep that column machine-only."
+
+["award.award_amount_verdict"]
+description = "The human verdict behind award_amount_labelled: amount | not_an_amount | corrupt | unknown | not_an_award."
+
+["award.source"]
+description = "Award provenance ('odata' spine or 'ckan_awarded' cross-check). The same (document, supplier) can appear once per source — filter source='odata' or GROUP BY to de-duplicate."
+
+["noncompetitive.workspace_number"]
+description = "Identifier for a non-competitive contract — a separate keyspace with no join to document_number."
+
+["noncompetitive.contract_amount"]
+description = "The City's published contract-amount string, verbatim. NOT summable — aggregate contract_amount_numeric."
+
+["noncompetitive.contract_amount_numeric"]
+description = "Machine-parsed CAD contract amount. NULL when the raw string is not a single CAD amount."
+
+["bid.reference"]
+description = "The council item (e.g. '2016.BD106.3') this bid was tabulated under, for Bid Award Panel-era bids. NULL for Award Summary Form bids, which carry a document_number instead."
+
+["bid.document_number"]
+description = "The solicitation this bid belongs to (Award Summary Form era). NULL for panel-era bids, which carry a council reference instead."
+
+["bid.bid_price"]
+description = "The bidder's price, verbatim — including outcome strings the City writes in the price column ('Non-Compliant', 'No bid'). NOT the award value (a bid excludes contingency). Aggregate bid_price_numeric."
+
+["bid.bid_price_numeric"]
+description = "Machine-parsed bid price; NULL for the non-numeric outcome strings above."
+
+["bid.hst_basis"]
+description = "The tax basis a bid_price is stated on. Load-bearing: comparing prices across different bases without it is wrong."
+
+["composite_award.call_number"]
+description = "2009-2012 Call Number — a third keyspace predating Ariba, joining to neither document_number nor workspace_number (#96)."
+
+["composite_award.award_value_numeric"]
+description = "The FIRST net-of-taxes figure (initial term, excluding option years). Option-year/'total potential' figures beside it can be 2× larger and are deliberately not used."
+
+["buyer.partnered"]
+description = "Whether this agency buyer is only partly City-funded (e.g. TRCA). Set so a consumer can segment agency records rather than mix them into City-only headline counts (#135)."
+
+["buyer.funding_share"]
+description = "The City's funding share of a partnered buyer (TRCA: 0.626), for the segmentation above."
+
+["agency_award.value_confidential"]
+description = "1 when the award value was routed to a confidential attachment (MFIPPA) rather than published — a real distinction, not a missing NULL (#135)."
+
+["solicitation_link.reference"]
+description = "A pre-Ariba council item matched to a spine solicitation by (winner, value) — the #124/#165 equivalence, consumed by the export to nest pre-Ariba bids under their solicitation."
+
+["solicitation_link.document_number"]
+description = "The spine solicitation that solicitation_link.reference is the same procurement as."

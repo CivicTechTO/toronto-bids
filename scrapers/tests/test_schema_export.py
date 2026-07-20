@@ -1,4 +1,4 @@
-from toronto_bids.export.schema_export import build_schema_document
+from toronto_bids.export.schema_export import build_schema_document, load_descriptions
 from toronto_bids.models import Award, Solicitation
 from toronto_bids.store import db
 
@@ -58,3 +58,20 @@ def test_non_enum_column_never_gets_enum(conn):
     doc = build_schema_document(conn, generated_at="t")
     cols = {c["name"]: c for c in doc["tables"]["solicitation"]["columns"]}
     assert "enum" not in cols["title"]  # title is not a declared coded column
+
+
+def test_description_applied_where_present(conn):
+    doc = build_schema_document(conn, generated_at="t")
+    cols = {c["name"]: c for c in doc["tables"]["award"]["columns"]}
+    assert "verbatim" in cols["award_amount"]["description"]
+    assert "description" not in cols["first_seen"]  # no gloss for bookkeeping columns
+
+
+def test_every_dictionary_key_resolves_to_a_real_column(conn):
+    # A stale key (renamed/removed column) must surface loudly.
+    real = set()
+    for table in db.EXPORT_TABLES:
+        for row in conn.execute(f"PRAGMA table_info({table})"):
+            real.add(f"{table}.{row[1]}")
+    for key in load_descriptions():
+        assert key in real, f"schema_dictionary.toml key {key!r} is not a real column"
