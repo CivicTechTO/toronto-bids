@@ -75,3 +75,26 @@ def test_every_dictionary_key_resolves_to_a_real_column(conn):
             real.add(f"{table}.{row[1]}")
     for key in load_descriptions():
         assert key in real, f"schema_dictionary.toml key {key!r} is not a real column"
+
+
+from pathlib import Path
+
+from toronto_bids.export.schema_export import build_manifest_document
+
+
+def test_manifest_sizes_and_order(tmp_path):
+    a = tmp_path / "bids.json"; a.write_bytes(b"x" * 10)
+    b = tmp_path / "bids.json.gz"; b.write_bytes(b"y" * 3)
+    doc = build_manifest_document([a, b], generated_at="t")
+    assert doc["generated_at"] == "t"
+    assert doc["artifacts"] == [
+        {"name": "bids.json", "bytes": 10},
+        {"name": "bids.json.gz", "bytes": 3},
+    ]
+
+
+def test_manifest_omits_missing_file(tmp_path):
+    a = tmp_path / "bids.json"; a.write_bytes(b"x" * 5)
+    missing = tmp_path / "nope.sqlite"
+    doc = build_manifest_document([a, missing], generated_at="t")
+    assert [x["name"] for x in doc["artifacts"]] == ["bids.json"]

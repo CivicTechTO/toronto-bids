@@ -1,6 +1,7 @@
 import tomllib
 from datetime import datetime, timezone
 from importlib import resources
+from pathlib import Path
 
 from toronto_bids.store import db
 
@@ -74,3 +75,16 @@ def build_schema_document(conn, generated_at: str | None = None) -> dict:
         tables[table] = {"row_count": row_count, "columns": columns}
 
     return {"generated_at": generated_at, "tables": tables}
+
+
+def build_manifest_document(files, generated_at: str | None = None) -> dict:
+    """Published-artifact file sizes (#168). Pure over the given paths; a file that does not
+    exist is omitted (publish only passes files it has already written/verified)."""
+    if generated_at is None:
+        generated_at = datetime.now(timezone.utc).isoformat()
+    artifacts = []
+    for f in files:
+        p = Path(f)
+        if p.exists():
+            artifacts.append({"name": p.name, "bytes": p.stat().st_size})
+    return {"generated_at": generated_at, "artifacts": artifacts}
