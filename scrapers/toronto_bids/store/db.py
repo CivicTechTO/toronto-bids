@@ -47,6 +47,16 @@ _CONFLICT_TARGETS = {
                     "COALESCE(award_amount, ''), source",
 }
 
+# The published table set — the export dictionary (#168) and counts() share this so they
+# cannot drift. Ordered for a deterministic schema document.
+EXPORT_TABLES = [
+    "solicitation", "award", "noncompetitive", "ariba_posting",
+    "suspended_firm", "supplier", "capital_project", "bid", "council_item",
+    "background_pdf", "composite_award", "sync_run", "buyer",
+    "agency_solicitation", "agency_award", "agency_bid", "ariba_attachment",
+    "solicitation_link",
+]
+
 
 def connect(path) -> sqlite3.Connection:
     conn = sqlite3.connect(path)
@@ -250,12 +260,7 @@ def upsert_row(conn, row, *, overwrite: bool) -> None:
 
 
 def counts(conn) -> dict:
-    tables = ["solicitation", "award", "noncompetitive", "ariba_posting",
-              "suspended_firm", "supplier", "capital_project", "bid", "council_item",
-              "background_pdf", "composite_award", "sync_run", "buyer",
-              "agency_solicitation", "agency_award", "agency_bid", "ariba_attachment",
-              "solicitation_link"]
-    return {t: conn.execute(f"SELECT COUNT(*) FROM {t}").fetchone()[0] for t in tables}
+    return {t: conn.execute(f"SELECT COUNT(*) FROM {t}").fetchone()[0] for t in EXPORT_TABLES}
 
 
 def last_runs(conn) -> list:
