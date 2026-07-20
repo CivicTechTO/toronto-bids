@@ -7,8 +7,9 @@
 # partial sync — the export is valid whenever any rows exist, and a good artifact must not be
 # withheld over one bad feed (the nightly's own per-step isolation ethos, extended one level out).
 #
-# Uploads bids.json, bids.json.gz, bids.sqlite, schema.json, manifest.json to a rolling `latest`
-# release (schema.json + manifest.json added in #168), giving the static
+# Uploads bids.json, bids.json.gz, bids.sqlite, schema.json, manifest.json, bids-csv.zip and the
+# per-table *.parquet files to a rolling `latest` release (schema.json + manifest.json added in
+# #168; the Parquet + CSV bulk formats in #161), giving the static
 # frontend a stable URL. On the 1st of the month it also cuts a dated snapshot-YYYY-MM-DD release
 # (point-in-time citation). Then it triggers the frontend deploy (best-effort).
 #
@@ -34,6 +35,7 @@ GZ="$EXPORT_DIR/bids.json.gz"
 SQLITE="$DATA_DIR/bids.sqlite"
 SCHEMA="$EXPORT_DIR/schema.json"       # written beside bids.json by the nightly `tb export` (#168)
 MANIFEST="$EXPORT_DIR/manifest.json"   # generated here from the actual uploaded bytes
+CSV_ZIP="$EXPORT_DIR/bids-csv.zip"     # bundled per-table CSVs (#161); per-table *.parquet sit beside it
 
 DATA_REPO="${TB_DATA_REPO:-CivicTechTO/toronto-bids-data}"
 FRONTEND_REPO="${TB_FRONTEND_REPO:-CivicTechTO/toronto-bids-frontend}"
@@ -93,13 +95,20 @@ gzip -9 -c "$JSON" > "$GZ" || fail "gzip failed"
 #     missing dictionary is a publish gap the frontend /data/ page depends on.
 [ -f "$SCHEMA" ] || fail "no schema.json at $SCHEMA — did 'tb export' run?"
 
-# 4c. Generate manifest.json from the ACTUAL bytes about to be uploaded, so the stated sizes can
+# 4c. The bulk exports (#161) ride the nightly `tb export` too. Require them — a missing bulk
+#     artifact is a publish gap. The parquet files are per-table; glob and confirm at least one.
+[ -f "$CSV_ZIP" ] || fail "no bids-csv.zip at $CSV_ZIP — did 'tb export' run?"
+PARQUET_FILES=("$EXPORT_DIR"/*.parquet)
+[ -e "${PARQUET_FILES[0]}" ] || fail "no *.parquet in $EXPORT_DIR — did 'tb export' run?"
+
+# 4d. Generate manifest.json from the ACTUAL bytes about to be uploaded, so the stated sizes can
 #     never drift from the assets. Runs for real even in dry-run (like the gzip above) so the
 #     asset list is complete. Row counts live only in schema.json — one generated source.
-"$UV" run --project "$SCRAPERS" tb manifest "$JSON" "$GZ" "$SQLITE" --out "$MANIFEST" \
+"$UV" run --project "$SCRAPERS" tb manifest \
+  "$JSON" "$GZ" "$SQLITE" "$CSV_ZIP" "${PARQUET_FILES[@]}" --out "$MANIFEST" \
   || fail "could not generate manifest.json"
 
-ASSETS=("$JSON" "$GZ" "$SQLITE" "$SCHEMA" "$MANIFEST")
+ASSETS=("$JSON" "$GZ" "$SQLITE" "$SCHEMA" "$MANIFEST" "$CSV_ZIP" "${PARQUET_FILES[@]}")
 
 # 5. Ensure the rolling `latest` release exists, then clobber its assets.
 if ! gh_run release view latest -R "$DATA_REPO" >/dev/null 2>&1; then
