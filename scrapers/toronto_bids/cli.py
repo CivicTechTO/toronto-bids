@@ -2,7 +2,7 @@ import argparse
 import sys
 
 from toronto_bids import __version__, config, pipeline
-from toronto_bids.export.json_export import export_json
+from toronto_bids.export.json_export import export_json, export_schema
 from toronto_bids.http import HttpClient
 from toronto_bids.store import db
 
@@ -19,6 +19,12 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_export = sub.add_parser("export", help="Write the store to a nested JSON artifact")
     p_export.add_argument("--out", help="Output path (default: <DATA_DIR>/export/bids.json)")
+
+    p_manifest = sub.add_parser(
+        "manifest",
+        help="Write manifest.json (published-artifact file sizes) for the given files (#168)")
+    p_manifest.add_argument("files", nargs="+", help="Artifact files to size")
+    p_manifest.add_argument("--out", required=True, help="Output path for manifest.json")
 
     p_enrich = sub.add_parser("enrich-council",
                               help="OPT-IN: fetch council decisions + staff-report PDFs for suspended firms (headed browser)")
@@ -191,15 +197,34 @@ def _cmd_status(args) -> int:
 
 def _cmd_export(args) -> int:
     from pathlib import Path
+    from datetime import datetime, timezone
 
     conn = _open_db()
     try:
         out_path = Path(args.out) if args.out else config.DATA_DIR / "export" / "bids.json"
-        written = export_json(conn, out_path)
+        generated_at = datetime.now(timezone.utc).isoformat()
+        written = export_json(conn, out_path, generated_at)
+        schema_path = out_path.parent / "schema.json"
+        export_schema(conn, schema_path, generated_at)
         counts = db.counts(conn)
         print(f"Exported {counts['solicitation']} solicitations to {written}")
+        print(f"Wrote schema dictionary to {schema_path}")
     finally:
         conn.close()
+    return 0
+
+
+def _cmd_manifest(args) -> int:
+    import json
+    from pathlib import Path
+
+    from toronto_bids.export.schema_export import build_manifest_document
+
+    out_path = Path(args.out)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    document = build_manifest_document(args.files)
+    out_path.write_text(json.dumps(document, indent=2), encoding="utf-8")
+    print(f"Wrote manifest ({len(document['artifacts'])} artifacts) to {out_path}")
     return 0
 
 
@@ -547,7 +572,14 @@ def _cmd_nightly(args) -> int:
 
         def _export():
             nonlocal export_bytes
-            written = export_json(conn, Path(config.DATA_DIR) / "export" / "bids.json")
+            from datetime import datetime, timezone
+            export_dir = Path(config.DATA_DIR) / "export"
+            generated_at = datetime.now(timezone.utc).isoformat()
+            written = export_json(conn, export_dir / "bids.json", generated_at)
+            # schema.json rides the same export step with a shared timestamp — publish-data.sh
+            # requires it beside bids.json (#168), so the production path must emit it here (the
+            # nightly calls export_json directly, not `tb export`).
+            export_schema(conn, export_dir / "schema.json", generated_at)
             export_bytes = written.stat().st_size
             return f"{export_bytes / 1_048_576:.1f} MiB"
         _run_step(steps, failures, "export", _export)
@@ -697,6 +729,8 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_status(args)
     if args.command == "export":
         return _cmd_export(args)
+    if args.command == "manifest":
+        return _cmd_manifest(args)
     if args.command == "nightly":
         return _cmd_nightly(args)
     if args.command == "enrich-council":

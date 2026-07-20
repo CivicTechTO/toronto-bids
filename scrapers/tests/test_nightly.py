@@ -37,6 +37,8 @@ def nightly(conn, monkeypatch, tmp_path):
 def test_a_clean_run_exits_zero_and_writes_the_export(nightly, tmp_path):
     assert nightly() == 0
     assert (tmp_path / "export" / "bids.json").exists()
+    # schema.json rides the export step (#168) — publish-data.sh requires it beside bids.json.
+    assert (tmp_path / "export" / "schema.json").exists()
 
 
 def test_a_failed_source_exits_non_zero_so_systemd_sees_it(nightly, monkeypatch):
