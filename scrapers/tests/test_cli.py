@@ -3,7 +3,10 @@
 The bug these lock down: a sync where every source blew up still printed
 "Sync complete" and exited 0, so nothing — human or cron — could tell.
 """
+import json
+
 from toronto_bids import cli, config, pipeline
+from toronto_bids.cli import main
 from toronto_bids.models import Solicitation
 from toronto_bids.store import db
 
@@ -141,3 +144,14 @@ def test_enrich_titles_does_not_touch_a_title_the_city_published(monkeypatch, tm
     conn = db.connect(config.DB_PATH)
     assert conn.execute("SELECT title FROM solicitation").fetchone()[0] == "Urban Forestry Supplies"
     conn.close()
+
+
+# --- manifest (#168) ---------------------------------------------------------------------
+
+def test_manifest_command_writes_sizes(tmp_path):
+    a = tmp_path / "bids.json"; a.write_bytes(b"x" * 12)
+    out = tmp_path / "manifest.json"
+    rc = main(["manifest", str(a), "--out", str(out)])
+    assert rc == 0
+    doc = json.loads(out.read_text())
+    assert doc["artifacts"] == [{"name": "bids.json", "bytes": 12}]

@@ -7,7 +7,8 @@
 # partial sync — the export is valid whenever any rows exist, and a good artifact must not be
 # withheld over one bad feed (the nightly's own per-step isolation ethos, extended one level out).
 #
-# Uploads bids.json, bids.json.gz, bids.sqlite to a rolling `latest` release, giving the static
+# Uploads bids.json, bids.json.gz, bids.sqlite, schema.json, manifest.json to a rolling `latest`
+# release (schema.json + manifest.json added in #168), giving the static
 # frontend a stable URL. On the 1st of the month it also cuts a dated snapshot-YYYY-MM-DD release
 # (point-in-time citation). Then it triggers the frontend deploy (best-effort).
 #
@@ -22,11 +23,17 @@
 # definite success/failure rather than dying mid-way and leaving a half-updated release.
 set -uo pipefail
 
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRAPERS="$HERE/../scrapers"
+UV="${TB_NIGHTLY_UV:-$(command -v uv || echo "$HOME/.local/bin/uv")}"
+
 DATA_DIR="${TB_DATA_DIR:-$HOME/tb-data}"
 EXPORT_DIR="$DATA_DIR/export"
 JSON="$EXPORT_DIR/bids.json"
 GZ="$EXPORT_DIR/bids.json.gz"
 SQLITE="$DATA_DIR/bids.sqlite"
+SCHEMA="$EXPORT_DIR/schema.json"       # written beside bids.json by the nightly `tb export` (#168)
+MANIFEST="$EXPORT_DIR/manifest.json"   # generated here from the actual uploaded bytes
 
 DATA_REPO="${TB_DATA_REPO:-CivicTechTO/toronto-bids-data}"
 FRONTEND_REPO="${TB_FRONTEND_REPO:-CivicTechTO/toronto-bids-frontend}"
@@ -82,7 +89,17 @@ fi
 # 4. Fresh gzip beside the json.
 gzip -9 -c "$JSON" > "$GZ" || fail "gzip failed"
 
-ASSETS=("$JSON" "$GZ" "$SQLITE")
+# 4b. schema.json is written beside bids.json by the nightly `tb export` (#168). Require it — a
+#     missing dictionary is a publish gap the frontend /data/ page depends on.
+[ -f "$SCHEMA" ] || fail "no schema.json at $SCHEMA — did 'tb export' run?"
+
+# 4c. Generate manifest.json from the ACTUAL bytes about to be uploaded, so the stated sizes can
+#     never drift from the assets. Runs for real even in dry-run (like the gzip above) so the
+#     asset list is complete. Row counts live only in schema.json — one generated source.
+"$UV" run --project "$SCRAPERS" tb manifest "$JSON" "$GZ" "$SQLITE" --out "$MANIFEST" \
+  || fail "could not generate manifest.json"
+
+ASSETS=("$JSON" "$GZ" "$SQLITE" "$SCHEMA" "$MANIFEST")
 
 # 5. Ensure the rolling `latest` release exists, then clobber its assets.
 if ! gh_run release view latest -R "$DATA_REPO" >/dev/null 2>&1; then

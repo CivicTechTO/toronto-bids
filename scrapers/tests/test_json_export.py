@@ -26,3 +26,15 @@ def test_export_writes_utf8_content(conn, tmp_path):
     export_json(conn, out, generated_at="t")
     # ensure_ascii=False keeps accented characters literal, not \u-escaped
     assert "Café Réno" in out.read_text(encoding="utf-8")
+
+
+from toronto_bids.export.json_export import export_schema
+
+
+def test_export_schema_writes_valid_json(conn, tmp_path):
+    out = tmp_path / "schema.json"
+    written = export_schema(conn, out, generated_at="2026-07-20T00:00:00Z")
+    assert written == out
+    doc = json.loads(out.read_text())
+    assert doc["generated_at"] == "2026-07-20T00:00:00Z"
+    assert "solicitation" in doc["tables"]
