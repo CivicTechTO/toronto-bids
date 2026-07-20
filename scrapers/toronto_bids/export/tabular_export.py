@@ -3,6 +3,9 @@ import io
 import zipfile
 from pathlib import Path
 
+import pyarrow as pa
+import pyarrow.parquet as pq
+
 from toronto_bids.store import db
 
 # Columns dropped from the bulk tabular export. The two blobs would dominate file size and are
@@ -47,3 +50,20 @@ def write_csv_zip(conn, out_path) -> Path:
             writer.writerows(rows)
             zf.writestr(f"{table}.csv", buf.getvalue())
     return out_path
+
+
+def write_parquet_files(conn, out_dir) -> list[Path]:
+    """One `<table>.parquet` per EXPORT_TABLES in out_dir. Arrow infers each column's type from
+    its values (an all-NULL column becomes Arrow null type, which Parquet stores fine). For the
+    DuckDB/pandas/Polars audience — the files are individually HTTP-queryable (#161)."""
+    out_dir = Path(out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    written = []
+    for table in db.EXPORT_TABLES:
+        cols, rows = _read_table(conn, table)
+        data = {col: [row[i] for row in rows] for i, col in enumerate(cols)}
+        arrow_table = pa.table(data)
+        path = out_dir / f"{table}.parquet"
+        pq.write_table(arrow_table, path)
+        written.append(path)
+    return written
