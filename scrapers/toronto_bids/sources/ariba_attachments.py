@@ -493,13 +493,7 @@ def capture_attachments(conn, dest_dir=None, log=lambda _m: None, headless=False
     Respond is idempotent (re-responding just re-opens the event). One event's failure is
     logged and never ends the run, exactly as pipeline.run_source isolates a source.
     """
-    try:
-        from playwright.sync_api import sync_playwright
-    except ImportError as exc:
-        raise RuntimeError(
-            "Ariba attachment capture needs the optional 'council' extra. "
-            "Install it with: uv sync --extra council && uv run playwright install chromium"
-        ) from exc
+    from playwright.sync_api import sync_playwright
 
     if not (config.ARIBA_USERNAME and config.ARIBA_PASSWORD):
         raise RuntimeError(

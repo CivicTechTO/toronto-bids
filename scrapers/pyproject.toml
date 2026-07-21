@@ -8,16 +8,14 @@ dependencies = [
     "lxml>=6.1.1",
     "pdfplumber>=0.11.10",
     "pyarrow>=17",
-]
-
-[project.optional-dependencies]
-# Opt-in TMMIS council + background-PDF enrichment (`tb enrich-council`).
-# Needs a headed browser (Akamai blocks headless); pyvirtualdisplay runs it
-# under Xvfb on a headless server. Install with: uv sync --extra council
-council = [
+    # Headed-Chromium capture is no longer optional: `tb nightly` runs the Ariba-attachment
+    # capture (#117) and the TMMIS council/agency board scrapes in-line, so playwright is a
+    # mandatory dependency (Akamai blocks headless, so a real browser is unavoidable).
+    # pyvirtualdisplay runs Chromium under Xvfb on a headless server; python-dotenv reads the
+    # supplier login from scrapers/.env (#117). The browser BINARY is still a separate,
+    # non-pip step: `uv run playwright install chromium` (+ its system libs).
     "playwright>=1.61.0",
     "pyvirtualdisplay>=3.0",
-    # Reads the supplier login from scrapers/.env for `tb enrich-ariba-attachments` (#117).
     "python-dotenv>=1.0",
 ]
 

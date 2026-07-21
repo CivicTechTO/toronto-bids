@@ -119,13 +119,7 @@ def agenda_fetcher(virtual_display: bool = False):
     and ruinous here: enumerating ~474 meetings means launching Chromium ~474 times, and
     startup would dominate the run. One browser, many pages.
     """
-    try:
-        from playwright.sync_api import sync_playwright
-    except ImportError as exc:
-        raise RuntimeError(
-            "Bid Award Panel enrichment needs the optional 'council' extra. "
-            "Install it with: uv sync --extra council && uv run playwright install chromium"
-        ) from exc
+    from playwright.sync_api import sync_playwright
 
     display = None
     if virtual_display:

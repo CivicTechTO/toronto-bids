@@ -703,12 +703,8 @@ dependencies = [
     { name = "httpx" },
     { name = "lxml" },
     { name = "pdfplumber" },
-    { name = "pyarrow" },
-]
-
-[package.optional-dependencies]
-council = [
     { name = "playwright" },
+    { name = "pyarrow" },
     { name = "python-dotenv" },
     { name = "pyvirtualdisplay" },
 ]
@@ -723,12 +719,11 @@ requires-dist = [
     { name = "httpx" },
     { name = "lxml", specifier = ">=6.1.1" },
     { name = "pdfplumber", specifier = ">=0.11.10" },
-    { name = "playwright", marker = "extra == 'council'", specifier = ">=1.61.0" },
+    { name = "playwright", specifier = ">=1.61.0" },
     { name = "pyarrow", specifier = ">=17" },
-    { name = "python-dotenv", marker = "extra == 'council'", specifier = ">=1.0" },
-    { name = "pyvirtualdisplay", marker = "extra == 'council'", specifier = ">=3.0" },
+    { name = "python-dotenv", specifier = ">=1.0" },
+    { name = "pyvirtualdisplay", specifier = ">=3.0" },
 ]
-provides-extras = ["council"]
 
 [package.metadata.requires-dev]
 dev = [{ name = "pytest" }]
