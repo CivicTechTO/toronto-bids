@@ -61,6 +61,20 @@ def test_a_short_or_addressy_number_is_not_a_corp_number():
     # 3-digit / non-corp-length numbers must not trigger Rule 1
     assert supplier_key("123 Ontario Street Holdings Inc.") != "#123"
 
+def test_numbered_company_with_marker_but_no_province_token_still_keys_to_the_number():
+    # #171: the trade-name marker (o/a) itself proves the leading digits are the legal corp
+    # number, so a numbered company keys to #<number> even without an adjacent province token.
+    # Both raw variants below are the SAME firm and must not split into two supplier_ids
+    # (which then collide as frontend slugs: '#1818620' and '1818620' both slugify to '1818620').
+    assert supplier_key("1818620 Ontario Ltd. o/a Emission Tree") == "#1818620"   # Rule 1
+    assert supplier_key("1818620 o/a Emission Tree") == "#1818620"                # was: bare "1818620"
+    assert supplier_key("1818620 Ontario Ltd. o/a Emission Tree") == \
+           supplier_key("1818620 o/a Emission Tree")
+
+def test_marker_with_short_leading_number_is_not_a_corp_number():
+    # guard: a marker after a non-corp-length (3-digit) leading number must NOT mint #123
+    assert supplier_key("123 Main o/a Corner Store") != "#123"
+
 
 # --- Rule 2: named-company trade-name folding, guarded ---
 def test_named_trade_name_folds_to_the_legal_base():

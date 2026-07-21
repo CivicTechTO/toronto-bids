@@ -24,6 +24,13 @@ _FOOTNOTE = re.compile(
 # Rule 1: a corporation number (6-7 digits) adjacent to a province token, anywhere in the name.
 _CORP = re.compile(r"\b(\d{6,7})\s+(?:ontario|ont|canada|quebec|qc)\b", re.IGNORECASE)
 
+# Rule 2 corp-number: a numbered company whose legal name (the part before a trade-name marker)
+# LEADS with a 6-7 digit corp number but carries no adjacent province token, so Rule 1 misses
+# it (#171). The marker itself proves the leading digits are the legal identity, so this keys to
+# Rule 1's exact `#<number>` format — otherwise `"1818620 o/a X"` and `"1818620 Ontario Ltd o/a
+# X"` split one firm into two keys (and collide as frontend slugs).
+_LEADING_CORP = re.compile(r"^(\d{6,7})\b")
+
 # Rule 2: a trailing trade-name marker (and everything after it).
 _MARK = re.compile(
     r"\s*(?:,\s*)?(?:\bo/?a\b|\b0/a\b|\boperating as\b|\bc\.?o\.?b\.?(?:\s*as)?\b|"
@@ -59,8 +66,10 @@ def supplier_key(raw: str | None) -> str:
       1. salvage noise wrappers, then exclude pure footnote -> "" (caller skips).
       2. a corporation number adjacent to a province token, anywhere -> "#<number>"
          (the number IS the legal identity; Inc/Ltd/Incorporated/O-A/JV are noise).
-      3. a trailing trade-name marker on a NON-numbered name -> the legal base, but only when
-         the base is not generic (guards the 'ontario ltd' over-merge).
+      3. a trailing trade-name marker: if the legal base (the part before the marker) leads
+         with a 6-7 digit corp number -> "#<number>" (Rule 1's format, for numbered companies
+         with no adjacent province token, #171); otherwise the legal base, but only when that
+         base is not generic (guards the 'ontario ltd' over-merge).
       4. otherwise today's conservative normalization (legal suffix kept).
     Returns "" for blank/garbage. Pure and total; never raises.
     """
@@ -74,6 +83,9 @@ def supplier_key(raw: str | None) -> str:
         return f"#{m.group(1)}"
     if _MARK.search(salvaged):                                 # Rule 2 (guarded)
         base = _normalize(_MARK.sub("", salvaged))
+        cm = _LEADING_CORP.match(base)                          # Rule 2 corp-number (#171)
+        if cm:
+            return f"#{cm.group(1)}"
         if base and base not in _GENERIC_BASE and any(t not in _LEGAL_SUFFIX for t in base.split()):
             return base
     return _normalize(salvaged)                                # Rule 4 default
@@ -129,6 +141,17 @@ def build_supplier_dimension(conn) -> int:
             Supplier(supplier_key=key, display_name=ordered[0], variants=json.dumps(ordered)),
             overwrite=True,
         )
+
+    # 2b. Prune orphan rows — keys that no longer occur in any source. This dimension is rebuilt
+    # from scratch (supplier_id is not a stable id; supplier_key is the permalink, #144), so the
+    # upsert above never deletes. A stale row left behind after a key's FORMAT changes under it
+    # (a numbered company re-keying '1818620' -> '#1818620', #171; or #162's earlier reformat)
+    # collides with its own replacement and breaks the frontend's slug build. Delete by explicit
+    # id list rather than `NOT IN (...)` to sidestep SQLite's host-parameter limit on large runs.
+    live = set(variants_by_key)
+    stale_ids = [r["supplier_id"] for r in conn.execute("SELECT supplier_id, supplier_key FROM supplier")
+                 if r["supplier_key"] not in live]
+    conn.executemany("DELETE FROM supplier WHERE supplier_id = ?", [(i,) for i in stale_ids])
 
     # 3. Recompute FKs from scratch each run: clear all, then set the matched rows below.
     # (A row whose name blanked out since last run must lose its stale supplier_id.)

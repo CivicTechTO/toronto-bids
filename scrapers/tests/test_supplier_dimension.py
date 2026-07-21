@@ -62,6 +62,41 @@ def test_blank_supplier_name_is_skipped(conn):
     assert db.counts(conn)["supplier"] == 0
 
 
+def test_stale_supplier_row_is_pruned_when_its_key_stops_occurring(conn):
+    # #171: the dimension is rebuilt from scratch, so a supplier row whose key no longer occurs
+    # in ANY source (the raw name changed, or supplier_key's format changed under it — e.g. a
+    # numbered company re-keying '1818620' -> '#1818620') must be DELETED, not left behind. A
+    # lingering stale row collides with its own replacement and breaks the frontend's slug build.
+    db.upsert_row(conn, Award(document_number="3303123110", supplier_name_raw="Compugen Inc.",
+                              source="odata"), overwrite=True)
+    conn.commit()
+    build_supplier_dimension(conn)
+    assert db.counts(conn)["supplier"] == 1
+    # The raw name changes; the old key no longer occurs in any source table.
+    conn.execute("UPDATE award SET supplier_name_raw='Different Firm Ltd.' "
+                 "WHERE document_number='3303123110'")
+    conn.commit()
+    build_supplier_dimension(conn)
+    keys = {r[0] for r in conn.execute("SELECT supplier_key FROM supplier")}
+    assert keys == {supplier_key("Different Firm Ltd.")}   # old 'compugen inc' pruned
+    assert db.counts(conn)["supplier"] == 1
+
+
+def test_numbered_reformat_prunes_the_old_bare_key(conn):
+    # The concrete #171 shape: the same two raw variants of one numbered company must resolve to
+    # a SINGLE supplier row keyed '#<number>' — no leftover bare-number row to collide with it.
+    db.upsert_row(conn, Award(document_number="3303123110",
+                              supplier_name_raw="1818620 Ontario Ltd. o/a Emission Tree",
+                              source="odata"), overwrite=True)
+    db.upsert_row(conn, Award(document_number="5749398870",
+                              supplier_name_raw="1818620 o/a Emission Tree",
+                              source="ckan_awarded"), overwrite=True)
+    conn.commit()
+    build_supplier_dimension(conn)
+    keys = {r[0] for r in conn.execute("SELECT supplier_key FROM supplier")}
+    assert keys == {"#1818620"}
+
+
 def test_backfill_clears_stale_fk_when_name_blanks(conn):
     db.upsert_row(conn, Award(document_number="3303123110", supplier_name_raw="Compugen Inc.",
                               source="odata"), overwrite=True)
