@@ -37,7 +37,7 @@ optional:
 #    council-agendas.zip) — the privileged step
 sudo apt install -y xvfb zip
 cd ~/toronto-bids/scrapers
-uv sync --extra council --locked        # playwright + pyvirtualdisplay + python-dotenv
+uv sync --locked                        # playwright + pyvirtualdisplay + python-dotenv are base deps now
 uv run playwright install chromium      # the browser binary (~150MB, non-privileged)
 sudo .venv/bin/python -m playwright install-deps chromium   # its shared libs (needs root)
 

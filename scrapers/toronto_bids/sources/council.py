@@ -92,13 +92,7 @@ def fetch_agenda_item(reference: str, virtual_display: bool = False) -> str:
     On a headless server pass virtual_display=True to run Chromium under Xvfb (needs Xvfb
     installed). Not unit-tested — exercised by the live smoke.
     """
-    try:
-        from playwright.sync_api import sync_playwright
-    except ImportError as exc:
-        raise RuntimeError(
-            "Council enrichment needs the optional 'council' extra. "
-            "Install it with: uv sync --extra council && uv run playwright install chromium"
-        ) from exc
+    from playwright.sync_api import sync_playwright
 
     display = None
     if virtual_display:

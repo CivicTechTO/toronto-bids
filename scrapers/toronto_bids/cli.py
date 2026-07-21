@@ -58,8 +58,9 @@ def build_parser() -> argparse.ArgumentParser:
              "reaches currently-open postings — a recurring job, not a backfill.")
     p_ariba.add_argument(
         "--capture", action="store_true",
-        help="Drive a headed, logged-in Chromium (council extra + scrapers/.env creds) through "
-             "Respond -> Download Content -> Download Attachments for each open solicitation")
+        help="Drive a headed, logged-in Chromium (needs `playwright install chromium` + "
+             "scrapers/.env creds) through Respond -> Download Content -> Download Attachments "
+             "for each open solicitation")
     p_ariba.add_argument(
         "--ingest", metavar="DIR",
         help="Index Doc*.zip bundles already sitting in DIR (e.g. a browser's download folder) "
@@ -101,8 +102,8 @@ def build_parser() -> argparse.ArgumentParser:
                       help="Plain-HTTP fetching first: TRCA eSCRIBE listings + report PDFs, "
                            "and legdocs PDFs for Zoo agendas already cached")
     p_ag.add_argument("--scrape", action="store_true",
-                      help="Discover Zoo ZB agendas on TMMIS first (headed browser, "
-                           "council extra; implies --fetch for the Zoo's PDFs)")
+                      help="Discover Zoo ZB agendas on TMMIS first (headed browser, needs "
+                           "`playwright install chromium`; implies --fetch for the Zoo's PDFs)")
     p_ag.add_argument("--virtual-display", action="store_true",
                       help="Run --scrape's headed browser under Xvfb")
     p_ag.add_argument("--portal", action="store_true",
