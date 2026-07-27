@@ -12,9 +12,12 @@ the design, both observed live, not assumed:
 
   * Respond is DISABLED once a posting closes. So this only ever reaches solicitations OPEN at
     capture time — a recurring job, not a backfill. Whatever closes before we look is gone.
-  * The bundle download hard-stops above 500 MB as a single zip (>100 MB only warns). Events
-    over 500 MB are logged and skipped rather than silently truncated — per-Part download is
-    the upgrade path, not built until an event needs it.
+  * The bundle download hard-stops above 500 MB as a single zip (>100 MB only warns). Ariba's
+    own advice there is "select specific items and perform multiple downloads", and that is
+    what happens: an oversized event is captured in BATCHES (`ariba_batch`, #174), each under
+    the ceiling, merged into the canonical `Doc<n>.zip` only once every planned row is captured
+    or recorded un-capturable. Nothing is silently truncated, and an incomplete capture stays
+    pending rather than being canonicalised.
 
 Two halves, split the way the rest of the package splits fetch from normalize:
 
@@ -311,9 +314,13 @@ def _dismiss_cookie_banner(page) -> None:
 def capture_event(page, event: dict, dest_dir, log=lambda _m: None) -> Path | None:
     """Drive one open event through Respond -> Download Content -> Download Attachments.
 
-    Returns the saved bundle path, or None if the event could not be captured (Respond
-    disabled = already closed; bundle over the 500 MB single-zip ceiling). Never raises for
-    those expected outcomes — the caller isolates real errors per event.
+    Returns the saved bundle path, or None if the event could not be captured this run (Respond
+    disabled = already closed; an incomplete batched capture that will resume next run). Never
+    raises for those expected outcomes — the caller isolates real errors per event.
+
+    A bundle over the 500 MB single-zip ceiling is NOT skipped: it is captured in batches
+    (`ariba_batch.capture_in_batches`, #174), which resumes across runs and writes the canonical
+    `Doc<n>.zip` only on completion.
     """
     rfx_id, document_number = event["rfx_id"], event["document_number"]
     dest_dir = Path(dest_dir)
@@ -328,16 +335,33 @@ def capture_event(page, event: dict, dest_dir, log=lambda _m: None) -> Path | No
         # Respond dies the moment a posting closes, so any batches we already hold can never
         # be completed. Merging 3 of 5 is permanently better than nothing -- this is the whole
         # reason partial captures are retained (#174).
-        # posting_open=False is the assertion, not a formality: finalise_partial refuses to
-        # canonicalise a capture that could still complete, and this branch is the one place
-        # that knows the posting is closed.
-        salvaged = ariba_batch.finalise_partial(
-            document_number, dest_dir, posting_open=False, log=log)
-        if salvaged is not None:
-            log(f"  Doc{document_number}: closed mid-capture — salvaged what we had")
-            return salvaged
-        log(f"  Doc{document_number}: Respond disabled (closed) — skipped")
-        return None
+        #
+        # But salvage is DESTRUCTIVE in one direction: finalise_partial writes the canonical
+        # Doc<n>.zip, and capture_attachments then treats the event as archived forever. This is
+        # a single-page app that renders Respond disabled until the event data lands, so ONE
+        # instantaneous read is not evidence a posting closed. Two guards, cheapest first:
+        # nothing to salvage means nothing a spurious read can damage, so skip without paying
+        # for the confirmation wait; and where partials do exist, require the disabled state to
+        # hold across several reads before canonicalising anything.
+        pdir = ariba_batch.partial_dir(dest_dir, document_number)
+        if not pdir.exists():
+            log(f"  Doc{document_number}: Respond disabled (closed) — skipped")
+            return None
+        if _respond_stably_disabled(page, respond):
+            # posting_open=False is the assertion, not a formality: finalise_partial refuses to
+            # canonicalise a capture that could still complete, and this branch is the one place
+            # that knows the posting is closed.
+            salvaged = ariba_batch.finalise_partial(
+                document_number, dest_dir, posting_open=False, log=log)
+            if salvaged is not None:
+                log(f"  Doc{document_number}: closed mid-capture — salvaged what we had")
+                return salvaged
+            log(f"  Doc{document_number}: Respond disabled (closed) — skipped")
+            return None
+        # Disabled once, enabled on a later read: the page was still settling. Fall through and
+        # capture normally — the partials stay partials and resume below.
+        log(f"  Doc{document_number}: Respond read disabled once then enabled — treating the "
+            f"posting as open, partials kept")
     respond.click()
 
     # Respond opens the Sourcing event, but some events refuse access even so — invite-only, or
@@ -379,17 +403,30 @@ def capture_event(page, event: dict, dest_dir, log=lambda _m: None) -> Path | No
         log(f"  Doc{document_number}: bundle {total_mb:.0f} MB > {MAX_BUNDLE_MB} MB — "
             f"capturing in batches")
         picker = AribaPicker(page, log=log)
-        # Read while everything from _select_all_attachments is still selected -- this is the
-        # only value that distinguishes a complete row_keys() enumeration from a short one.
+        # Read while everything from _select_all_attachments is still selected -- these are the
+        # only values that distinguish a complete row_keys() enumeration from a short one, and
+        # a complete merge from one missing files.
         expected_count = picker.selected_count()
+        file_count = picker.file_count()
+        if file_count is None:
+            # `file_count` lands in the fingerprint, and the fingerprint is compared verbatim
+            # against the one the partials were planned under: a run that reads the count and a
+            # run that does not would disagree, and a disagreement DISCARDS every downloaded
+            # batch. So an unreadable count refuses the whole batched capture for this run
+            # rather than entering the fingerprint as a guess -- partials on disk are untouched
+            # and the event simply stays pending (#174).
+            log(f"  Doc{document_number}: could not read the picker's 'Total Number' — "
+                f"refusing to plan a batched capture against an unknown file count")
+            return None
         fingerprint = ariba_batch.make_fingerprint(
-            picker.row_keys(expected_count=expected_count), picker.file_count(), total_mb)
+            picker.row_keys(expected_count=expected_count), file_count, total_mb)
         # The batching loop accumulates from an empty picker; the header-checkbox toggle is
         # ~10s versus ~2 minutes of deselecting rows one at a time, and raises if it doesn't
         # actually land on zero.
         picker.clear_selection()
-        # Reached only past the `respond.is_disabled()` check above, i.e. the posting is open --
-        # which is what lets capture_in_batches discard partials it cannot identify.
+        # Reached only past the Respond check above, which concluded the posting is OPEN (either
+        # enabled outright, or disabled on one read and enabled on the next) -- that is what lets
+        # capture_in_batches discard partials it cannot identify.
         return ariba_batch.capture_in_batches(
             picker, document_number, dest_dir, fingerprint, posting_open=True, log=log)
 
@@ -420,6 +457,29 @@ def _open_authed_preview(page, rfx_id: str, attempts: int = 3) -> bool:
         if page.query_selector(f"text=ID - {rfx_id}") is not None:
             return True
     return False
+
+
+def _respond_stably_disabled(page, respond, reads: int = 3, interval_ms: int = 1500) -> bool:
+    """Whether Respond is disabled on several reads a short wait apart, not just once.
+
+    Only called where partials exist, because the answer decides whether to CANONICALISE an
+    incomplete capture (see capture_event): the Discovery preview is a single-page app that
+    renders its buttons disabled until the event data lands, so one instantaneous `is_disabled()`
+    is a state the page passes THROUGH, not a fact about the posting. Agreement across reads is
+    the cheapest evidence that separates the two.
+
+    A read that raises (the button re-rendering out from under the locator mid-poll) is not
+    evidence of a closed posting either, so it answers False. That errs toward keeping the
+    partials and retrying next run — the recoverable direction.
+    """
+    for _ in range(max(reads - 1, 1)):
+        page.wait_for_timeout(interval_ms)
+        try:
+            if not respond.is_disabled():
+                return False
+        except Exception:
+            return False
+    return True
 
 
 _PERMISSION_DENIED = "do not have the correct permission to view the event"
@@ -610,17 +670,37 @@ class AribaPicker:
         return out
 
     def _hover_row_list(self) -> None:
-        """Move the mouse over a rendered row so the next wheel event actually lands on it.
+        """Move the mouse over a rendered DATA row so the next wheel event lands on the list.
 
         Playwright dispatches wheel events wherever the mouse last was; nothing else
         positions it. If the widget only listens for wheel on itself, an unhovered wheel
         could silently do nothing -- which reads in `row_keys` exactly like "reached the
         end of the list", not like a no-op. Re-resolved on every call, never held across a
         re-render, same discipline as `_locate`.
+
+        **A data row from the middle of the CURRENT window, never `.first`.** `.first` is the
+        header select-all (`clear_selection` uses exactly that locator for it), which is where
+        the mouse already sits after `_select_all_attachments` clicked it -- so hovering it
+        changed nothing, and once the first wheel scrolled the header out of view it moved the
+        mouse to an off-screen coordinate, strictly worse than not moving at all. `_rendered()`
+        keys only rows carrying an outline number, so the header is excluded by construction;
+        searching outward from the middle keeps the mouse on a row that is genuinely inside the
+        viewport as the window slides.
         """
-        box = self.page.locator("div.w-chk-container").first.bounding_box()
-        if box:
-            self.page.mouse.move(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
+        indexes = sorted(self._rendered().values())
+        if not indexes:
+            return
+        height = (self.page.viewport_size or {}).get("height")
+        middle = len(indexes) // 2
+        for i in sorted(range(len(indexes)), key=lambda j: abs(j - middle)):
+            box = self.page.locator("div.w-chk-container").nth(indexes[i]).bounding_box()
+            if not box:
+                continue
+            y = box["y"] + box["height"] / 2
+            if y < 0 or (height is not None and y > height):
+                continue                       # rendered but scrolled out of the viewport
+            self.page.mouse.move(box["x"] + box["width"] / 2, y)
+            return
 
     def row_keys(self, expected_count: int | None = None) -> list:
         """Every row's outline number, in order, scrolling to defeat virtualisation.
@@ -640,12 +720,21 @@ class AribaPicker:
         elsewhere from the picker's own "Selected Items" total while everything is selected
         (`selected_count`), closes that gap -- pass it here to turn a short enumeration into a
         raised error instead of a quietly incomplete plan handed to the batching loop.
+
+        **The top of the list is established by evidence, not by a keypress.** This used to
+        press `Home` and assume the list moved; `keyboard.press` goes to whatever has focus, and
+        after `_select_all_attachments`'s positional mouse click nothing establishes that the
+        row list is the focus target, so any row above the starting scroll position was simply
+        never enumerated. It matters twice over, because `accumulate_batches` calls this a
+        SECOND time -- by which point the first call deliberately left the list scrolled to its
+        end, i.e. the exact position where an unverified `Home` loses everything. So sweep UP
+        first, under the same consecutive-no-growth discipline as the downward pass, and keep
+        what that finds: reaching the top then becomes an observation, and the result no longer
+        depends on focus or on where the list happened to be.
         """
         STABLE_PASSES = 3
         MAX_PASSES = 45
 
-        self.page.keyboard.press("Home")
-        self.page.wait_for_timeout(800)
         seen, order = set(), []
 
         def collect():
@@ -654,20 +743,25 @@ class AribaPicker:
                     seen.add(key)
                     order.append(key)
 
-        collect()
-        stable = 0
-        for _ in range(MAX_PASSES):
-            before = len(seen)
-            self._hover_row_list()
-            self.page.mouse.wheel(0, 2000)
-            self.page.wait_for_timeout(350)
+        def sweep(delta_y: int) -> None:
+            """Wheel one direction until several consecutive passes add no new keys."""
             collect()
-            if len(seen) == before:
-                stable += 1
-                if stable >= STABLE_PASSES:
-                    break
-            else:
-                stable = 0
+            stable = 0
+            for _ in range(MAX_PASSES):
+                before = len(seen)
+                self._hover_row_list()
+                self.page.mouse.wheel(0, delta_y)
+                self.page.wait_for_timeout(350)
+                collect()
+                if len(seen) == before:
+                    stable += 1
+                    if stable >= STABLE_PASSES:
+                        return
+                else:
+                    stable = 0
+
+        sweep(-2000)                     # up to the top, collecting on the way
+        sweep(2000)                      # then the downward sweep, from a known position
         order.sort(key=lambda k: [int(p) for p in k.split(".")])
         self.log(f"    picker rows: {len(order)}")
         if expected_count is not None and len(order) < expected_count:
@@ -678,48 +772,143 @@ class AribaPicker:
         return order
 
     def selected_count(self) -> int | None:
-        """The picker's own 'Selected Items' total, or None if unread.
+        """The picker's own 'Selected Items' total, or None if genuinely unread.
 
         Only meaningful while everything is selected (see `parse_selected_items`) -- the
         intended use is right after `_select_all_attachments`, feeding the result into
         `row_keys(expected_count=...)` as the ground truth enumeration is checked against.
+
+        **Two reads, and a loud None.** This figure sits in the same summary block as
+        `Total Size (MB)`, whose reader needs a second DOM-order pass for exactly one reason:
+        `inner_text` can reorder label and value across columns, so the number does not always
+        follow the colon. Reading only `inner_text` here meant that reordering (or any
+        exception, all swallowed) returned None, `row_keys(expected_count=None)` then skipped
+        its guard entirely, and the one mechanism whose whole job is to make under-enumeration
+        LOUD went silent at the moment it was needed. So: same two-read shape, and when the
+        count is truly unreadable, say so rather than passing None on unremarked.
         """
         try:
-            return parse_selected_items(self.page.inner_text("body"))
+            count = parse_selected_items(self.page.inner_text("body"))
         except Exception:
-            return None
+            count = None
+        if count is None:
+            try:
+                count = self.page.evaluate(
+                    """() => {
+                        let best = null;
+                        for (const e of document.querySelectorAll(
+                                'td,div,span,label,p,tr,table,body')) {
+                            const m = (e.textContent || '').match(
+                                /Selected\\s*Items\\s*:\\s*([\\d,]+)/);
+                            if (m) best = parseInt(m[1].replace(/,/g, ''), 10);
+                        }
+                        return best;
+                    }""")
+            except Exception:
+                count = None
+        if count is None:
+            self.log("    warning: could not read the picker's 'Selected Items' total — "
+                     "row_keys will run without its short-enumeration guard")
+        return count
 
     def total_mb(self):
         return _selected_total_mb(self.page)
 
-    def file_count(self) -> int:
+    def file_count(self) -> int | None:
+        """The picker's 'Total Number' of files, or None if unread.
+
+        Whitespace is matched the way `_TOTAL_MB` matches it (`\\s*` before the colon): the
+        picker writes these labels with NON-BREAKING spaces and tabs, and a pattern demanding a
+        literal `Total Number:` is the same blindness that made the 500 MB guard miss 792.41 MB.
+
+        **None, never 0.** This value goes into the fingerprint, which is compared verbatim
+        against the one the partials were planned under, and it goes into the durable
+        `.omitted.json` as `expected_files`. A miss returning 0 would therefore either flip the
+        fingerprint comparison on a later run -- deleting every downloaded batch of an event too
+        big to download in one piece -- or record `expected_files: 0` against a real count. The
+        caller refuses to plan a capture at all rather than let either happen (capture_event).
+        """
         n = self.page.evaluate(
-            """() => { const m = document.body.innerText.match(/Total\\s*Number:\\s*([\\d,]+)/);
+            """() => { const m = document.body.innerText.match(
+                           /Total\\s*Number\\s*:\\s*([\\d,]+)/);
                        return m ? m[1].replace(/,/g, '') : null; }""")
-        return int(n) if n else 0
+        if n is None:
+            self.log("    warning: could not read the picker's 'Total Number' of files")
+            return None
+        return int(n)
 
     # --- writes --------------------------------------------------------------------------
     def _locate(self, key: str):
-        """Re-resolve the row's checkbox, scrolling it into the window first."""
+        """Re-resolve the row's checkbox, scrolling it into the window first.
+
+        Returns `(locator, rendered index)` -- the index is how the row's OWN checked state is
+        read (`_row_checked`), which a count of ticked boxes cannot tell you.
+
+        The scroll is re-verified rather than trusted: the list is virtualised, so scrolling
+        changes which logical row each rendered index holds, and an index read before the scroll
+        can address a different row after it. So the rendering is read again afterwards and the
+        pair is only returned once `key` still sits at the index the locator was resolved from;
+        otherwise the loop simply re-resolves against the new rendering (the row is in view by
+        then, so `scroll_into_view_if_needed` is a no-op and the second pass agrees).
+        """
         for _ in range(40):
             rendered = self._rendered()
             if key in rendered:
-                loc = self.page.locator("div.w-chk-container").nth(rendered[key])
+                index = rendered[key]
+                loc = self.page.locator("div.w-chk-container").nth(index)
                 loc.scroll_into_view_if_needed(timeout=10000)
                 self.page.wait_for_timeout(200)
-                return loc
+                if self._rendered().get(key) == index:
+                    return loc, index
+                continue                       # the scroll slid the window — re-resolve
             self.page.mouse.wheel(0, 2000)
             self.page.wait_for_timeout(300)
         raise RuntimeError(f"row {key} never appeared in the picker window")
 
+    def _row_checked(self, index: int) -> bool | None:
+        """Whether the row at `index` is ticked, or None if that index no longer exists."""
+        return self.page.evaluate(
+            "(i) => { const e = document.querySelectorAll('input.w-chk-native')[i];"
+            "         return e ? e.checked : null; }", index)
+
     def set_selected(self, key: str, value: bool) -> None:
-        before = self._checked()
-        loc = self._locate(key)
+        """Put row `key` into state `value` -- idempotent, and verified on the row itself.
+
+        Two things this must not be. It must not be a **blind toggle**: the picker is an outline
+        TREE whose header demonstrably cascades to descendants, so if a parent row cascades to
+        its children too, iterating in outline order would tick `4` (turning `4.1` on with it)
+        and then UNTICK `4.1`. Reading the target row's own `checked` state and clicking only on
+        a mismatch makes the method mean what its name says regardless of what the caller
+        believes the picker's state to be.
+
+        And its settle predicate must not be a **count**: `_checked()` counts only the ~51
+        RENDERED inputs, and `_locate` scrolls, which changes which logical rows those are. A
+        baseline sampled before the scroll (as it was) could be satisfied by the scroll alone --
+        returning from a click that never landed, and letting the batching layer record a row in
+        a sidecar it is not actually in. Keyed on the row reaching the requested state, no
+        baseline is needed at all.
+        """
+        loc, index = self._locate(key)
+        if self._row_checked(index) is value:
+            return                                     # already there (e.g. a parent cascade)
         box = loc.bounding_box()
         if not box:
             raise RuntimeError(f"row {key} has no bounding box")
         self.page.mouse.click(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
-        self._settle(lambda n: n != before)
+
+        def reached(_count):
+            rendered = self._rendered()
+            return key in rendered and self._row_checked(rendered[key]) is value
+
+        self._settle(reached)
+        # _settle only warns on timeout, and a silently unlanded click is precisely the failure
+        # that puts a row in a sidecar naming bytes we never downloaded. Re-locate (so a row
+        # merely scrolled out of the window is not mistaken for a failed click) and refuse.
+        _loc, index = self._locate(key)
+        if self._row_checked(index) is not value:
+            raise RuntimeError(
+                f"row {key} did not reach selected={value} — refusing to plan batches against "
+                f"a selection the picker did not accept")
 
     def clear_selection(self) -> None:
         """Untick every row via the header checkbox, never row by row.
@@ -739,10 +928,18 @@ class AribaPicker:
         immediately if it is already zero, and if the click-and-settle doesn't land on zero,
         raises rather than returning -- the batching loop assumes an empty picker to accumulate
         into, and handing it an unknown selection state is worse than stopping here.
+
+        The header is scrolled into view before its box is read, for the same reason `_locate`
+        does it: this runs straight after `row_keys`, which leaves the list scrolled to its END,
+        and `bounding_box()` on an element above the viewport yields a negative y. The click
+        would then land on nothing, `_settle` would burn its full 45s, and the guard below would
+        raise — blocking the one capture that needs this path at all.
         """
         if self._checked() == 0:
             return
         loc = self.page.locator("div.w-chk-container").first
+        loc.scroll_into_view_if_needed(timeout=10000)
+        self.page.wait_for_timeout(200)
         box = loc.bounding_box()
         if not box:
             raise RuntimeError("no bounding box for the header checkbox")

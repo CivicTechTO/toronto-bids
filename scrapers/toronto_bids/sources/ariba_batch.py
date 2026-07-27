@@ -145,6 +145,15 @@ def accumulate_batches(picker, threshold_mb: float = BATCH_THRESHOLD_MB,
         omitted.append(key)
         log(f"    row {key}: exceeds {threshold_mb:.0f} MB alone — omitted")
 
+    # This is the SECOND enumeration of the same list (capture_event ran the first, while
+    # everything was still selected, to build the fingerprint) and it is deliberately guarded
+    # differently: `expected_count` is unreadable here, because that figure only exists while a
+    # selection does and this loop starts from an empty picker. So a short read here is not
+    # caught at this line -- it is caught later, by _finalise_live's completeness gate, which
+    # walks the FINGERPRINT's row list and refuses to write the canonical zip while any planned
+    # row is uncaptured. The cost of a short read is therefore liveness (the event stays pending
+    # and re-plans next run), never a bundle finalised around a gap. Do not read the absence of
+    # an expected_count here as the guard covering both call sites.
     for key in picker.row_keys():
         if key in skip:
             continue
