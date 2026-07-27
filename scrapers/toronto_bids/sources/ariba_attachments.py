@@ -636,6 +636,16 @@ def _selected_total_mb(page) -> float | None:
 
 _ROW_KEY = re.compile(r"^\s*(\d+(?:\.\d+)*)\s")
 
+
+def _outline_sort_key(key: str) -> list:
+    """An outline number as a numeric tuple, so `4.10` sorts after `4.9` rather than before it.
+
+    `row_keys` orders its result this way; `_locate` reuses the exact same function to decide
+    which way to scroll (#174) — the two must never disagree about what "before"/"after" means
+    for an outline number, and a second hand-rolled comparison would risk exactly that drift.
+    """
+    return [int(p) for p in key.split(".")]
+
 # The picker identifies itself by this heading -- `capture_event` waits for it before touching
 # anything in the widget, so it is the same evidence throughout.
 PICKER_HEADING = "Selected Attachments Summary"
@@ -832,7 +842,7 @@ class AribaPicker:
         # The sweeps move a real mouse over the widget. Attribute a navigation to them here
         # rather than let the next caller's page.evaluate report a destroyed execution context.
         self._require_picker("the row-list scroll sweep")
-        order.sort(key=lambda k: [int(p) for p in k.split(".")])
+        order.sort(key=_outline_sort_key)
         excluded = sorted(unkeyed)
         detail = f" (+{len(excluded)} excluded, no outline number: {excluded})" if excluded else ""
         self.log(f"    picker rows: {len(order)}{detail}")
@@ -911,11 +921,82 @@ class AribaPicker:
         return int(n)
 
     # --- writes --------------------------------------------------------------------------
+    def _direction_to(self, target: list, rendered: dict) -> int:
+        """Which way to wheel to bring `target` (an `_outline_sort_key`) into view, given the
+        keys currently rendered. -1 is up, +1 is down.
+
+        Compares numerically (`_outline_sort_key`, the same ordering `row_keys` sorts its
+        result by) rather than as plain strings, since `"4.10" < "4.9"` as strings but not as
+        outline numbers. If `target` sorts before everything rendered it lies above the window;
+        after everything, below. Called fresh on every `_locate` pass rather than decided once,
+        because each scroll moves the window and a direction chosen from a stale read can carry
+        the search straight past a target the last scroll just brought into reach.
+        """
+        keys = sorted(rendered, key=_outline_sort_key)
+        if target < _outline_sort_key(keys[0]):
+            return -1
+        if target > _outline_sort_key(keys[-1]):
+            return 1
+        # Falls between two rendered keys without matching either -- not expected against a
+        # contiguous virtualised window, but if it happens, head toward the nearer half rather
+        # than defaulting to a fixed direction that could walk away from the target.
+        mid = _outline_sort_key(keys[len(keys) // 2])
+        return -1 if target < mid else 1
+
+    def _sweep_to_edge(self, direction: int, max_passes: int = 12) -> None:
+        """Wheel `direction` until several consecutive passes render no new content, or a keyed
+        row appears.
+
+        Used only when the current window holds no keyed rows at all -- just the "Title"
+        header / "Totals" summary row, or a transient empty render -- so `_direction_to` has
+        nothing to compare the target against. Same discipline `row_keys` uses to find the top
+        by evidence rather than by assuming where the list already sits, but bounded and small:
+        this is a rescue for one row, not a full-list enumeration, and it hands back to
+        `_locate`'s normal per-pass direction comparison the moment any keyed row is visible.
+        """
+        _, unkeyed = self._rendered_split()
+        prev = len(unkeyed)
+        stable = 0
+        for _ in range(max_passes):
+            self._hover_row_list()
+            self.page.mouse.wheel(0, 2000 * direction)
+            self.page.wait_for_timeout(300)
+            keyed, unkeyed = self._rendered_split()
+            if keyed:
+                return                          # a keyed row rendered -- back to normal search
+            cur = len(unkeyed)
+            if cur == prev:
+                stable += 1
+                if stable >= 2:
+                    return                      # genuinely at an edge, nothing keyed to show
+            else:
+                stable = 0
+            prev = cur
+
     def _locate(self, key: str):
         """Re-resolve the row's checkbox, scrolling it into the window first.
 
         Returns `(locator, rendered index)` -- the index is how the row's OWN checked state is
         read (`_row_checked`), which a count of ticked boxes cannot tell you.
+
+        **Searches toward the target, not just downward (#174).** `row_keys` sweeps the whole
+        list to enumerate it and therefore always leaves the window scrolled to the BOTTOM; the
+        batching loop then asks for rows in ascending outline order starting at `1`, at the TOP.
+        A one-directional (downward) search wheels the target further away on every pass and
+        never finds it. So each pass compares `key` against whatever is currently rendered
+        (`_direction_to`, ordered numerically -- a string compare would put `4.10` before `4.9`)
+        and wheels whichever way the target actually lies, re-deriving the direction after every
+        scroll since the window moves. If the window renders no keyed rows at all, there is
+        nothing to compare against, so `_sweep_to_edge` finds a known edge by evidence first
+        (row_keys' own trick for the same problem), and normal direction comparison resumes as
+        soon as a keyed row appears.
+
+        **Cheap on the access pattern this is actually called with.** The batching loop calls
+        this ~84 times, once per row, in ascending outline order -- so besides the very first
+        call (which walks from row_keys' bottom back to the top), each target is usually already
+        rendered or one short scroll from the last one. This never rescans the whole list to
+        find a row; it only ever asks "which way from here", which is what keeps the amortised
+        cost near one scroll per row instead of one sweep per row.
 
         The scroll is re-verified rather than trusted: the list is virtualised, so scrolling
         changes which logical row each rendered index holds, and an index read before the scroll
@@ -924,6 +1005,9 @@ class AribaPicker:
         otherwise the loop simply re-resolves against the new rendering (the row is in view by
         then, so `scroll_into_view_if_needed` is a no-op and the second pass agrees).
         """
+        target = _outline_sort_key(key)
+        searched_up = searched_down = False
+        last_window = "(never read)"
         for _ in range(40):
             rendered = self._rendered()
             if key in rendered:
@@ -934,9 +1018,29 @@ class AribaPicker:
                 if self._rendered().get(key) == index:
                     return loc, index
                 continue                       # the scroll slid the window — re-resolve
-            self.page.mouse.wheel(0, 2000)
-            self.page.wait_for_timeout(300)
-        raise RuntimeError(f"row {key} never appeared in the picker window")
+
+            if rendered:
+                direction = self._direction_to(target, rendered)
+                last_window = f"keys {sorted(rendered, key=_outline_sort_key)}"
+                searched_up = searched_up or direction < 0
+                searched_down = searched_down or direction > 0
+                self.page.mouse.wheel(0, 2000 * direction)
+                self.page.wait_for_timeout(300)
+            else:
+                # Nothing keyed rendered -- try whichever edge hasn't been ruled out yet.
+                direction = -1 if not searched_up else 1
+                searched_up = searched_up or direction < 0
+                searched_down = searched_down or direction > 0
+                self._sweep_to_edge(direction)
+                _, unkeyed = self._rendered_split()
+                last_window = f"no keyed rows (unkeyed: {sorted(unkeyed)})"
+
+        directions = ", ".join(
+            d for d, tried in (("up", searched_up), ("down", searched_down)) if tried
+        ) or "neither direction"
+        raise RuntimeError(
+            f"row {key} never appeared in the picker window after searching {directions} -- "
+            f"window last held {last_window}")
 
     def _row_checked(self, index: int) -> bool | None:
         """Whether the row at `index` is ticked, or None if that index no longer exists."""
