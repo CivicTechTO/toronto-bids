@@ -368,3 +368,47 @@ def test_finalise_partial_merges_what_we_have_when_the_posting_closes(tmp_path):
 
 def test_finalise_partial_is_none_when_there_is_nothing_to_finalise(tmp_path):
     assert ariba_batch.finalise_partial("5713434353", tmp_path) is None
+
+
+def test_finalise_partial_salvages_a_batch_absent_from_the_manifest(tmp_path):
+    """A crash between `download_to()` writing a batch and the following `write_manifest()`
+    leaves a valid batch-NN.zip on disk that the manifest never recorded. Since a batch can
+    never be re-fetched once the posting closes, finalise_partial must still pick it up from
+    disk rather than silently dropping it (and then deleting it via the pdir rmtree)."""
+    pdir = ariba_batch.partial_dir(tmp_path, "5713434353")
+    _make_zip(pdir / "batch-01.zip", {"A.pdf": b"a"})
+    _make_zip(pdir / "batch-02.zip", {"B.pdf": b"b"})  # written, but never made it into the manifest
+    ariba_batch.write_manifest(
+        pdir, ariba_batch.make_fingerprint(["1.1"], 54, 792.41),
+        batches=[["1.1"]], omitted=[])
+
+    bundle = ariba_batch.finalise_partial("5713434353", tmp_path)
+
+    assert bundle == tmp_path / "Doc5713434353.zip"
+    with zipfile.ZipFile(bundle) as zf:
+        assert sorted(zf.namelist()) == ["A.pdf", "B.pdf"]
+
+
+def test_read_manifest_returns_none_on_corrupt_json(tmp_path):
+    """A torn write (crash mid-write, or corruption at rest) must degrade to "no manifest"
+    rather than raising -- an uncaught JSONDecodeError here would abort the whole capture."""
+    pdir = tmp_path / "pdir"
+    pdir.mkdir()
+    (pdir / ariba_batch.MANIFEST_NAME).write_text('{"fingerprint": {"row_keys": [')
+
+    assert ariba_batch.read_manifest(pdir) is None
+
+
+def test_finalise_partial_salvages_from_disk_when_manifest_is_corrupt(tmp_path):
+    """Even with no readable manifest at all, the batch zips on disk must not be lost -- this
+    is what makes degrading a corrupt manifest to None safe rather than lossy."""
+    pdir = ariba_batch.partial_dir(tmp_path, "5713434353")
+    _make_zip(pdir / "batch-01.zip", {"A.pdf": b"a"})
+    _make_zip(pdir / "batch-02.zip", {"B.pdf": b"b"})
+    (pdir / ariba_batch.MANIFEST_NAME).write_text("not json at all")
+
+    bundle = ariba_batch.finalise_partial("5713434353", tmp_path)
+
+    assert bundle == tmp_path / "Doc5713434353.zip"
+    with zipfile.ZipFile(bundle) as zf:
+        assert sorted(zf.namelist()) == ["A.pdf", "B.pdf"]

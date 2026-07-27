@@ -41,19 +41,40 @@ def make_fingerprint(row_keys, file_count, total_mb) -> dict:
 
 
 def read_manifest(pdir) -> dict | None:
+    """Read the manifest, treating unreadable/corrupt JSON the same as a missing manifest.
+
+    A torn write (a crash mid `write_manifest`, before the atomic replace below lands, or
+    corruption at rest) must degrade to "no manifest" rather than raising -- an uncaught
+    JSONDecodeError here would abort the whole capture. This degradation is safe, not lossy:
+    `_finalise` reads batch zips from DISK, not from this manifest, so `finalise_partial` can
+    still salvage every downloaded batch even with no manifest at all. Only the `omitted` /
+    `expected_files` bookkeeping is lost, never bytes that can no longer be re-fetched.
+    """
     path = Path(pdir) / MANIFEST_NAME
     if not path.exists():
         return None
-    return json.loads(path.read_text())
+    try:
+        return json.loads(path.read_text())
+    except (json.JSONDecodeError, OSError):
+        return None
 
 
 def write_manifest(pdir, fingerprint: dict, batches, omitted) -> Path:
+    """Write the manifest atomically.
+
+    `capture_in_batches` calls this after every batch, so the window for a torn write (a
+    crash mid-write leaving truncated JSON) is no longer negligible. Build the temp file
+    beside the target and `os.replace()` it into position -- the same pattern `merge_bundles`
+    uses for the bundle itself -- so a reader never observes a partial write.
+    """
     pdir = Path(pdir)
     pdir.mkdir(parents=True, exist_ok=True)
     path = pdir / MANIFEST_NAME
-    path.write_text(json.dumps(
+    tmp_path = path.with_suffix(path.suffix + ".tmp")
+    tmp_path.write_text(json.dumps(
         {"fingerprint": fingerprint, "batches": [list(b) for b in batches],
          "omitted": list(omitted)}, indent=2))
+    os.replace(tmp_path, path)
     return path
 
 
@@ -255,13 +276,24 @@ def capture_in_batches(picker, document_number: str, dest_dir, fingerprint: dict
         write_manifest(pdir, fingerprint, done_batches, omitted)
         log(f"    batch {len(done_batches)}: {len(batch)} row(s) -> {path.name}")
 
-    return _finalise(pdir, document_number, dest_dir, done_batches, omitted,
+    return _finalise(pdir, document_number, dest_dir, omitted,
                      fingerprint.get("file_count"), log)
 
 
-def _finalise(pdir, document_number, dest_dir, batches, omitted, expected_files, log):
-    parts = [_batch_path(pdir, i + 1) for i in range(len(batches))]
-    parts = [p for p in parts if p.exists()]
+def _finalise(pdir, document_number, dest_dir, omitted, expected_files, log):
+    """Merge whatever batch zips are actually ON DISK in `pdir`.
+
+    Deliberately reads the batch list from disk (`glob`), not from the manifest: a batch zip
+    is written by `picker.download_to(path)` and only recorded by the following
+    `write_manifest` call on the NEXT line, so a process-level crash in that window leaves a
+    valid batch-NN.zip that the manifest never lists. Deriving `parts` from the manifest's
+    batch count (as this used to) would silently exclude that file from the merge and then
+    delete it via the `rmtree` below -- permanently losing bytes that, once a posting closes,
+    can never be re-downloaded. `expected_files`/`omitted` still come from the manifest --
+    they describe the whole event and aren't derivable from the zips alone. Zero-padded
+    `batch-{n:02d}` naming makes the lexicographic glob sort correct up to 99 batches.
+    """
+    parts = sorted(Path(pdir).glob("batch-*.zip"))
     if not parts:
         return None
     target = Path(dest_dir) / f"Doc{document_number}.zip"
@@ -282,8 +314,8 @@ def finalise_partial(document_number: str, dest_dir, log=lambda _m: None):
     dest_dir = Path(dest_dir)
     pdir = partial_dir(dest_dir, document_number)
     manifest = read_manifest(pdir)
-    if not manifest:
-        return None
-    return _finalise(pdir, document_number, dest_dir, manifest["batches"],
-                     manifest.get("omitted", []),
-                     manifest.get("fingerprint", {}).get("file_count"), log)
+    # A missing OR corrupt manifest must not give up on the batches -- _finalise reads them
+    # from disk regardless, so this only loses the omitted/expected_files bookkeeping.
+    omitted = manifest.get("omitted", []) if manifest else []
+    expected_files = manifest.get("fingerprint", {}).get("file_count") if manifest else None
+    return _finalise(pdir, document_number, dest_dir, omitted, expected_files, log)
