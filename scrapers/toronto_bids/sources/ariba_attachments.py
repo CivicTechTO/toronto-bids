@@ -530,6 +530,150 @@ def _selected_total_mb(page) -> float | None:
     )
 
 
+_ROW_KEY = re.compile(r"^\s*(\d+(?:\.\d+)*)\s")
+
+
+class AribaPicker:
+    """Playwright adapter satisfying ariba_batch's Picker protocol (#174).
+
+    Two hazards this class exists to contain, both measured live:
+
+    * **The row list is virtualised.** A fixed 51 checkboxes render as a sliding window over
+      ~85 logical rows -- at the top of the list index 9 is "4.1 Form A", after scrolling it is
+      "5 Part 5 - Pricing Form". So rows are addressed by OUTLINE NUMBER, and enumeration has
+      to scroll the whole list. Reading only what is rendered would silently plan over ~51 of
+      ~85 rows, which looks like a clean capture that is quietly missing files.
+    * **Handles detach.** The picker re-renders after every selection, so a locator is
+      re-resolved at the moment of use and never held across a click.
+    """
+
+    def __init__(self, page, log=lambda _m: None):
+        self.page = page
+        self.log = log
+
+    # --- reads ---------------------------------------------------------------------------
+    def _rendered(self) -> dict:
+        """{outline key: rendered index} for the rows currently in the DOM."""
+        rows = self.page.evaluate(
+            """() => Array.from(document.querySelectorAll('input.w-chk-native'))
+                 .map((e, i) => { const tr = e.closest('tr');
+                                  return [i, ((tr ? tr.innerText : '') || '').trim()]; })""")
+        out = {}
+        for index, text in rows:
+            m = _ROW_KEY.match(text.replace("\xa0", " "))
+            if m:
+                out.setdefault(m.group(1), index)
+        return out
+
+    def row_keys(self) -> list:
+        """Every row's outline number, in order, scrolling to defeat virtualisation."""
+        self.page.keyboard.press("Home")
+        self.page.wait_for_timeout(800)
+        seen, order = set(), []
+        for _ in range(40):
+            for key in self._rendered():
+                if key not in seen:
+                    seen.add(key)
+                    order.append(key)
+            before = len(seen)
+            self.page.mouse.wheel(0, 2000)
+            self.page.wait_for_timeout(350)
+            for key in self._rendered():
+                if key not in seen:
+                    seen.add(key)
+                    order.append(key)
+            if len(seen) == before:
+                break
+        order.sort(key=lambda k: [int(p) for p in k.split(".")])
+        self.log(f"    picker rows: {len(order)}")
+        return order
+
+    def total_mb(self):
+        return _selected_total_mb(self.page)
+
+    def file_count(self) -> int:
+        n = self.page.evaluate(
+            """() => { const m = document.body.innerText.match(/Total\\s*Number:\\s*([\\d,]+)/);
+                       return m ? m[1].replace(/,/g, '') : null; }""")
+        return int(n) if n else 0
+
+    # --- writes --------------------------------------------------------------------------
+    def _locate(self, key: str):
+        """Re-resolve the row's checkbox, scrolling it into the window first."""
+        for _ in range(40):
+            rendered = self._rendered()
+            if key in rendered:
+                loc = self.page.locator("div.w-chk-container").nth(rendered[key])
+                loc.scroll_into_view_if_needed(timeout=10000)
+                self.page.wait_for_timeout(200)
+                return loc
+            self.page.mouse.wheel(0, 2000)
+            self.page.wait_for_timeout(300)
+        raise RuntimeError(f"row {key} never appeared in the picker window")
+
+    def set_selected(self, key: str, value: bool) -> None:
+        before = self._checked()
+        loc = self._locate(key)
+        box = loc.bounding_box()
+        if not box:
+            raise RuntimeError(f"row {key} has no bounding box")
+        self.page.mouse.click(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
+        self._settle(lambda n: n != before)
+
+    def clear_selection(self) -> None:
+        """Untick every row via the header checkbox, never row by row.
+
+        The batching loop needs an empty selection to start accumulating from once the initial
+        select-all shows the bundle is over the ceiling. Deselecting ~85 rows individually would
+        cost ~2 minutes (each toggle settles in ~1.5s); the header checkbox is the same cascade
+        `_select_all_attachments` rides to turn every row ON, and it is just as fast in reverse
+        (~10s) -- so this is that select-all's mirror image, not a loop over `set_selected`.
+        """
+        loc = self.page.locator("div.w-chk-container").first
+        box = loc.bounding_box()
+        if not box:
+            raise RuntimeError("no bounding box for the header checkbox")
+        self.page.mouse.click(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
+        self._settle(lambda n: n == 0)
+
+    def _checked(self) -> int:
+        return self.page.evaluate(
+            "() => Array.from(document.querySelectorAll('input.w-chk-native'))"
+            ".filter(e => e.checked).length")
+
+    def _settle(self, ready, timeout_ms: int = 45000) -> None:
+        """Poll until `ready(checked_count)` holds for two consecutive readings.
+
+        NEVER sleep a guess -- that was #174's root cause. Requiring two stable ticks, not one,
+        guards against reading mid-cascade, the same reason `_select_all_attachments` waits for
+        more than one checked row rather than trusting the first non-zero count.
+        """
+        waited, prev, stable = 0, None, 0
+        while waited < timeout_ms:
+            self.page.wait_for_timeout(500)
+            waited += 500
+            cur = (self._checked(), _selected_total_mb(self.page))
+            stable = stable + 1 if cur == prev else 0
+            prev = cur
+            if stable >= 2 and ready(cur[0]):
+                return
+        self.log("    warning: selection never settled within "
+                 f"{timeout_ms / 1000:.0f}s — continuing on the last reading")
+
+    def download_to(self, path):
+        """Click Download Attachments and block until a complete file sits at `path`.
+
+        `save_as` resolves only once the download stream has finished writing, which is what
+        makes this safe: capture_in_batches validates the zip as a zip immediately after this
+        returns, so a partially-arrived file must never be observable at `path`. Nothing here
+        creates `path` ahead of the download landing.
+        """
+        with self.page.expect_download(timeout=300000) as dl:
+            self.page.get_by_role("button", name="Download Attachments").last.click()
+        dl.value.save_as(str(path))
+        return path
+
+
 def capture_attachments(conn, dest_dir=None, log=lambda _m: None, headless=False,
                         virtual_display=False) -> int:
     """Log in, walk every open solicitation, capture and index each bundle. Resumable.
