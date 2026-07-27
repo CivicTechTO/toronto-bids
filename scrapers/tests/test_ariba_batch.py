@@ -192,6 +192,42 @@ def test_a_name_collision_refuses_rather_than_overwriting(tmp_path):
         ariba_batch.merge_bundles([a, b], tmp_path / "Doc3.zip")
 
 
+def test_a_failed_merge_leaves_no_target_behind(tmp_path):
+    """capture_attachments treats Doc<n>.zip existing as "already archived" -- a partial
+    merge that left a readable-but-incomplete file there would be silent, permanent data
+    loss, since nothing would ever retry it. The target must not exist after a raised merge,
+    and the input batches must be untouched."""
+    a = _make_zip(tmp_path / "batch-01.zip", {"Same.pdf": b"one"})
+    b = _make_zip(tmp_path / "batch-02.zip", {"Same.pdf": b"two"})
+    a_before = a.read_bytes()
+    b_before = b.read_bytes()
+    target = tmp_path / "Doc3.zip"
+
+    with pytest.raises(RuntimeError, match="collision"):
+        ariba_batch.merge_bundles([a, b], target)
+
+    assert not target.exists()
+    assert not list(tmp_path.glob("Doc3.zip.*"))  # no stray temp file either
+    assert a.read_bytes() == a_before
+    assert b.read_bytes() == b_before
+
+
+def test_merge_preserves_member_date_time(tmp_path):
+    """The copy loop must pass the source ZipInfo, not the bare filename, or every merged
+    member's date_time resets to 1980-01-01 and its compression reverts to the archive
+    default -- an inconsistency with normal single-download bundles, which keep both."""
+    path = tmp_path / "batch-01.zip"
+    with zipfile.ZipFile(path, "w") as zf:
+        info = zipfile.ZipInfo("Report.pdf", date_time=(2019, 6, 15, 10, 30, 0))
+        zf.writestr(info, b"report bytes")
+
+    target, _ = ariba_batch.merge_bundles([path], tmp_path / "Doc6.zip")
+
+    with zipfile.ZipFile(target) as zf:
+        merged = zf.getinfo("Report.pdf")
+        assert merged.date_time == (2019, 6, 15, 10, 30, 0)
+
+
 def test_directory_entries_are_not_counted_as_files(tmp_path):
     path = tmp_path / "batch-01.zip"
     with zipfile.ZipFile(path, "w") as zf:

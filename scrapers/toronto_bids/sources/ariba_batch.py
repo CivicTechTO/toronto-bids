@@ -8,6 +8,7 @@ The Playwright adapter lives in ariba_attachments.py.
 Design: docs/superpowers/specs/2026-07-27-oversized-ariba-bundle-capture-design.md
 """
 import json
+import os
 import shutil
 import zipfile
 from pathlib import Path
@@ -138,26 +139,44 @@ def merge_bundles(part_paths, target, expected_files: int | None = None,
     would have produced, which is why store_bundle / reindex_bundles / the export need no
     change at all.
 
+    Builds into a temporary path beside `target` and moves it into place only on success, so
+    `target` is never observed in a partial state. Without this, a collision on a later batch
+    (or a disk error, or an interrupted run) would still leave Python closing the ZipFile
+    during stack unwind -- writing a proper central directory over whatever was copied so far.
+    That result is readable and testzip()-clean, which is indistinguishable from a finished
+    capture to capture_attachments' "does Doc<n>.zip exist" check, so an aborted merge would
+    never be retried: silent, permanent data loss.
+
     Returns (target, merged_member_count).
     """
     target = Path(target)
     target.parent.mkdir(parents=True, exist_ok=True)
+    tmp_target = target.with_suffix(target.suffix + ".tmp")
     seen: dict[str, str] = {}
 
-    with zipfile.ZipFile(target, "w", zipfile.ZIP_DEFLATED, allowZip64=True) as out:
-        for part in part_paths:
-            part = Path(part)
-            with zipfile.ZipFile(part) as src:
-                for info in src.infolist():
-                    if info.is_dir():
-                        continue
-                    if info.filename in seen:
-                        raise RuntimeError(
-                            f"name collision merging {part.name}: {info.filename!r} already "
-                            f"came from {seen[info.filename]} — refusing to overwrite")
-                    seen[info.filename] = part.name
-                    with src.open(info) as fsrc, out.open(info.filename, "w") as fdst:
-                        shutil.copyfileobj(fsrc, fdst, 1 << 20)
+    try:
+        with zipfile.ZipFile(tmp_target, "w", zipfile.ZIP_DEFLATED, allowZip64=True) as out:
+            for part in part_paths:
+                part = Path(part)
+                with zipfile.ZipFile(part) as src:
+                    for info in src.infolist():
+                        if info.is_dir():
+                            continue
+                        if info.filename in seen:
+                            raise RuntimeError(
+                                f"name collision merging {part.name}: {info.filename!r} already "
+                                f"came from {seen[info.filename]} — refusing to overwrite")
+                        seen[info.filename] = part.name
+                        # Pass the source ZipInfo, not the bare filename, so date_time and
+                        # compress_type carry across instead of resetting to the archive
+                        # default -- bytes/CRC are untouched either way.
+                        with src.open(info) as fsrc, out.open(info, "w") as fdst:
+                            shutil.copyfileobj(fsrc, fdst, 1 << 20)
+    except BaseException:
+        tmp_target.unlink(missing_ok=True)
+        raise
+
+    os.replace(tmp_target, target)
 
     count = len(seen)
     # One-sided is not enough here: we know exactly how many files Ariba said it had. Compare
