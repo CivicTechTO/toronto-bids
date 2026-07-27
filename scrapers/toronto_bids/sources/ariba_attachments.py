@@ -677,10 +677,116 @@ def _on_picker(page, timeout_ms: int = 5000) -> bool:
         waited += 250
 
 
+# The row-list scroll container, found the same way every time it is needed (#174 fix5).
+#
+# NOT by class name -- `div.yScroll.tableBody` is one release's CSS, brittle by nature.
+# NOT by "the element with the most checkboxes" -- that returns the outer wrapper, which
+# contains the header select-all row too and measured a scroll range of only ~221 px on the
+# live page. The right discriminator, measured live: walk each row checkbox's ancestor chain
+# (stopping before <html>/<body>, so the page's OWN 221 px scroller is never a candidate even
+# though it technically has one too) and keep the ancestor with the LARGEST scroll range
+# (scrollHeight - clientHeight) among those holding more than one row checkbox. On the live
+# page that is unambiguous: the row list at ~3129 px versus the page/wrapper at ~221 px.
+# Inlined into the body of each arrow function below (rather than declared at top level and
+# concatenated in front of them) so each of _CONTAINER_STATE_JS / _PROGRAMMATIC_SCROLL_JS
+# stays a single, self-contained function literal -- two top-level statements (a `function`
+# declaration followed by an `() => {}` expression) parse ambiguously depending on how the
+# embedding evaluate() call wraps the string, and one shape of that ambiguity really did fail
+# ("Malformed arrow function parameter list") when tried standalone.
+_FIND_CONTAINER_BODY_JS = """
+    function tbFindContainer() {
+        const EDGE = 1;
+        const checkboxes = Array.from(document.querySelectorAll('input.w-chk-native'));
+        const seen = new Set();
+        let best = null, bestRange = -1;
+        for (const cb of checkboxes) {
+            let el = cb.parentElement;
+            while (el && el !== document.documentElement && el !== document.body) {
+                if (!seen.has(el)) {
+                    seen.add(el);
+                    const range = el.scrollHeight - el.clientHeight;
+                    const count = el.querySelectorAll('input.w-chk-native').length;
+                    if (count > 1 && range > EDGE && range > bestRange) {
+                        bestRange = range;
+                        best = el;
+                    }
+                }
+                el = el.parentElement;
+            }
+        }
+        return best;
+    }
+"""
+
+# Returns the container's current scrollTop/scrollHeight/clientHeight plus a hover point,
+# or null if no container qualifies -- callers must fail loudly on null rather than scroll
+# blindly. The container is scrolled into view FIRST (the page scrolls too, per the class
+# docstring, so a hover point computed before that could be slid out from under the cursor by
+# the time the wheel fires), and the hover point comes only from the container's OWN checkbox
+# descendants -- never `.first` on the page, which is the header sitting outside the list --
+# clamped to the container's visible rect so it is provably over the strip, not merely
+# "rendered somewhere on the page".
+_CONTAINER_STATE_JS = """
+() => {""" + _FIND_CONTAINER_BODY_JS + """
+    const best = tbFindContainer();
+    if (!best) return null;
+    let rect = best.getBoundingClientRect();
+    if (rect.top < 0 || rect.bottom > window.innerHeight) {
+        best.scrollIntoView({block: 'center', inline: 'nearest'});
+        rect = best.getBoundingClientRect();
+    }
+    const rowBoxes = Array.from(best.querySelectorAll('input.w-chk-native'));
+    let hoverX = rect.left + rect.width / 2;
+    let hoverY = rect.top + rect.height / 2;
+    if (rowBoxes.length > 0) {
+        const mid = rowBoxes[Math.floor(rowBoxes.length / 2)];
+        const row = mid.closest('tr') || mid.closest('.w-chk-container') || mid;
+        const rb = row.getBoundingClientRect();
+        let x = rb.left + rb.width / 2;
+        let y = rb.top + rb.height / 2;
+        y = Math.max(rect.top + 1, Math.min(rect.bottom - 1, y));
+        y = Math.max(1, Math.min(window.innerHeight - 1, y));
+        x = Math.max(rect.left + 1, Math.min(rect.right - 1, x));
+        hoverX = x;
+        hoverY = y;
+    }
+    return {
+        scrollTop: best.scrollTop,
+        scrollHeight: best.scrollHeight,
+        clientHeight: best.clientHeight,
+        hoverX: hoverX,
+        hoverY: hoverY,
+    };
+}
+"""
+
+# The OPTIONAL programmatic path (#174): assigning scrollTop directly removes the mouse from
+# the equation entirely, but whether the virtualised list re-renders on a programmatic
+# assignment (versus only on a real wheel/scroll gesture) has NOT been verified live. So this
+# only ever reports whether the assignment moved scrollTop at all; `_wheel_step` additionally
+# checks the rendered keys actually changed before trusting it, and disables further attempts
+# on this picker the first time that verification fails.
+_PROGRAMMATIC_SCROLL_JS = """
+(deltaY) => {""" + _FIND_CONTAINER_BODY_JS + """
+    const best = tbFindContainer();
+    if (!best) return null;
+    const before = best.scrollTop;
+    best.scrollTop = before + deltaY;
+    const after = best.scrollTop;
+    return {
+        before: before,
+        after: after,
+        moved: after !== before,
+        maxScroll: Math.max(best.scrollHeight - best.clientHeight, 0),
+    };
+}
+"""
+
+
 class AribaPicker:
     """Playwright adapter satisfying ariba_batch's Picker protocol (#174).
 
-    Two hazards this class exists to contain, both measured live:
+    Three hazards this class exists to contain, all measured live:
 
     * **The row list is virtualised.** A fixed 51 checkboxes render as a sliding window over
       ~85 logical rows -- at the top of the list index 9 is "4.1 Form A", after scrolling it is
@@ -689,11 +795,31 @@ class AribaPicker:
       ~85 rows, which looks like a clean capture that is quietly missing files.
     * **Handles detach.** The picker re-renders after every selection, so a locator is
       re-resolved at the moment of use and never held across a click.
+    * **There are TWO scrollers, and the header checkbox sits outside the one that matters
+      (measured, fix5, #174).** The page itself scrolls (941/720 px, range 221) and so does the
+      row list, a ~225 px strip holding ~3354 px of rows (range ~3129). A wheel event lands
+      wherever the mouse last was, so a wheel not over the strip silently scrolls the *page* and
+      leaves the list untouched -- the "dead wheel" that sank five earlier fixes. Worse, the page
+      carries 51 `input.w-chk-native` elements but the row list contains only 50: the header
+      select-all checkbox is structurally OUTSIDE the scrollable strip. Every earlier hover used
+      `.first`, which is precisely the header -- parking the cursor off the list on every attempt.
+      `_container_state`/`_hover_row_list`/`_wheel_step` fix this at the root: the container is
+      found by the largest scroll range among elements holding more than one row checkbox
+      (excluding `<html>`/`<body>`, and NOT "most checkboxes" -- that returns the outer wrapper,
+      range ~221, which contains the header too), a hover point comes only from the container's
+      own checkbox descendants, and every scroll is verified against the container's own
+      `scrollTop` -- a native, immediate signal, unlike inferring success from the rendered row
+      window, which is what let this stay broken through five prior guesses.
     """
 
     def __init__(self, page, log=lambda _m: None):
         self.page = page
         self.log = log
+        # Set True the first time a programmatic scrollTop assignment fails verification (moved
+        # scrollTop but nothing re-rendered, or found no container at all) -- once disproved on
+        # this page instance there is no reason to keep paying for the extra evaluate() on every
+        # subsequent scroll; the hover+wheel path below is the mechanism actually proven to work.
+        self._programmatic_scroll_disabled = False
 
     # --- reads ---------------------------------------------------------------------------
     def _rendered_split(self) -> tuple[dict, dict]:
@@ -729,51 +855,143 @@ class AribaPicker:
         keyed, _ = self._rendered_split()
         return keyed
 
-    def _hover_row_list(self) -> None:
-        """Move the mouse over a rendered DATA row so the next wheel event lands on the list.
+    def _container_state(self) -> dict:
+        """Fresh geometry + scrollTop of the row-list container, re-found on every call.
 
-        Playwright dispatches wheel events wherever the mouse last was; nothing else
-        positions it. If the widget only listens for wheel on itself, an unhovered wheel
-        could silently do nothing -- which reads in `row_keys` exactly like "reached the
-        end of the list", not like a no-op. Re-resolved on every call, never held across a
-        re-render, same discipline as `_locate`.
+        Never a held handle -- the picker re-renders on every selection (the class docstring's
+        second hazard), so this runs `_CONTAINER_STATE_JS` (walk each row checkbox's own
+        ancestor chain, keep the one with the largest scroll range) fresh each time rather than
+        caching an element reference that a re-render could invalidate underneath it.
 
-        **A data row from the middle of the CURRENT window, never `.first`.** `.first` is the
-        header select-all (which is what `_select_all_attachments` and `clear_selection` both
-        click, via its `label.w-chk`), which is where the mouse already sits after
-        `_select_all_attachments` clicked it -- so hovering it
-        changed nothing, and once the first wheel scrolled the header out of view it moved the
-        mouse to an off-screen coordinate, strictly worse than not moving at all. `_rendered()`
-        keys only rows carrying an outline number, so the header is excluded by construction;
-        searching outward from the middle keeps the mouse on a row that is genuinely inside the
-        viewport as the window slides.
+        Raises rather than returning something to scroll blindly against: a caller with no
+        container has nothing safe to hover or wheel, and every prior guess that tried anyway
+        (guessing a class name, guessing "most checkboxes") is exactly what five earlier fixes
+        got wrong (#174 fix5).
         """
-        indexes = sorted(self._rendered().values())
-        if not indexes:
-            return
-        height = (self.page.viewport_size or {}).get("height")
-        middle = len(indexes) // 2
-        for i in sorted(range(len(indexes)), key=lambda j: abs(j - middle)):
-            box = self.page.locator("div.w-chk-container").nth(indexes[i]).bounding_box()
-            if not box:
-                continue
-            y = box["y"] + box["height"] / 2
-            if y < 0 or (height is not None and y > height):
-                continue                       # rendered but scrolled out of the viewport
-            self.page.mouse.move(box["x"] + box["width"] / 2, y)
-            return
+        state = self.page.evaluate(_CONTAINER_STATE_JS)
+        if state is None:
+            raise RuntimeError(
+                "the attachment picker's scrollable row-list container could not be found -- "
+                "no element besides <html>/<body> has both a nonzero scroll range and more "
+                "than one row checkbox descendant (#174 fix5). Refusing to scroll blindly.")
+        return state
+
+    def _hover_row_list(self) -> dict:
+        """Move the mouse over a row genuinely inside the row-list container, and return the
+        container's freshly-read state (scrollTop, scroll range, the hover point used).
+
+        Playwright dispatches wheel events wherever the mouse last was; nothing else positions
+        it. **The header select-all checkbox sits OUTSIDE the scrollable row list** (measured:
+        51 `input.w-chk-native` on the page, 50 inside the list container -- #174 fix5), so a
+        `.first` locator -- what every earlier attempt hovered -- parks the cursor on the
+        header every time: a wheel from there can move the *page* (which also scrolls, per the
+        class docstring) and leave the list completely untouched. That is the "dead wheel" that
+        made this take six live runs.
+
+        The hover point comes from `_container_state`, which builds it only from the
+        container's OWN checkbox descendants and clamps it to the container's visible rect, so
+        it is provably over the strip rather than merely "rendered somewhere on the page". The
+        container is also scrolled into view there before the point is computed, so the page's
+        own scroll cannot slide the strip out from under the cursor between the read and the
+        wheel that follows.
+        """
+        state = self._container_state()
+        self.page.mouse.move(state["hoverX"], state["hoverY"])
+        return state
+
+    def _wheel_step(self, delta_y: int) -> dict:
+        """Scroll the row-list container by one wheel step, verified by ITS OWN scrollTop.
+
+        This is the single scrolling primitive `row_keys`'s sweeps and `_locate`'s directional
+        search both now share (#174 fix5) -- the divergence between two ad-hoc scroll
+        implementations was itself part of why this took six runs to fix.
+
+        **Verified by scrollTop, not by the rendered row window.** scrollTop is a native
+        browser property that updates the instant an actual scroll happens, wheel or
+        programmatic; the virtualised re-render that repaints new rows can lag a frame behind
+        it. Inferring "did the scroll land" from the rendered keys (what every earlier attempt
+        did) conflates a real no-op with a render that just hasn't caught up yet -- this reads
+        the one signal that cannot be fooled that way.
+
+        Tries an OPTIONAL programmatic `scrollTop` assignment first -- it would remove the
+        mouse from the equation entirely, but whether this virtualised list re-renders on a
+        programmatic assignment (as opposed to only a genuine wheel/scroll gesture) has not
+        been verified live. So it is trusted only if BOTH the container's scrollTop moved AND
+        the rendered keys actually changed; otherwise `_programmatic_scroll_disabled` is
+        latched so later calls do not keep paying for an evaluate() already shown not to work,
+        and control falls through to the hover+wheel path, which is the mechanism actually
+        proven to work against the live page.
+
+        Returns `{before, after, moved, at_edge, max_scroll}`. `at_edge` means the container
+        was already at that end of its scroll range (scrollTop 0 for an upward step, or the max
+        for a downward one) *before* this step -- a legitimate reason for `moved` to be False,
+        as opposed to a dead wheel, which is `moved=False` while NOT at an edge.
+        """
+        EDGE_TOL = 2
+
+        if not self._programmatic_scroll_disabled:
+            before_keys = tuple(sorted(self._rendered()))
+            programmatic = self.page.evaluate(_PROGRAMMATIC_SCROLL_JS, delta_y)
+            if programmatic is None:
+                # No container at all -- not a fact about the programmatic mechanism, just
+                # nothing to scroll. Disable it (the hover+wheel path below raises its own,
+                # clearer "container not found" error via `_container_state`) rather than
+                # paying for this evaluate() again on every later call.
+                self._programmatic_scroll_disabled = True
+            elif not programmatic["moved"]:
+                at_edge = (
+                    (delta_y < 0 and programmatic["before"] <= EDGE_TOL)
+                    or (delta_y > 0
+                        and programmatic["before"] >= programmatic["maxScroll"] - EDGE_TOL)
+                )
+                if at_edge:
+                    # A legitimate no-op (already at that end of the range) -- not evidence the
+                    # mechanism doesn't work, so it stays enabled for later calls.
+                    return {"before": programmatic["before"], "after": programmatic["after"],
+                            "moved": False, "at_edge": True,
+                            "max_scroll": programmatic["maxScroll"]}
+                self._programmatic_scroll_disabled = True
+                self.log("    programmatic scrollTop assignment did not move the container "
+                         "while not at an edge -- using hover+wheel for the rest of this "
+                         "capture")
+            else:
+                self.page.wait_for_timeout(300)
+                after_keys = tuple(sorted(self._rendered()))
+                # Verified only if the rendered keys actually changed -- a scrollTop move with
+                # no re-render is exactly the "not verified live" case the docstring warns
+                # about, so it is not trusted even though the assignment technically moved.
+                if after_keys != before_keys:
+                    return {"before": programmatic["before"], "after": programmatic["after"],
+                            "moved": True, "at_edge": False,
+                            "max_scroll": programmatic["maxScroll"]}
+                self._programmatic_scroll_disabled = True
+                self.log("    programmatic scrollTop assignment unverified (scrollTop moved "
+                         "but nothing re-rendered) -- using hover+wheel for the rest of this "
+                         "capture")
+
+        before = self._hover_row_list()
+        self.page.mouse.wheel(0, delta_y)
+        self.page.wait_for_timeout(300)
+        after = self._container_state()
+        max_scroll = max(after["scrollHeight"] - after["clientHeight"], 0)
+        moved = abs(after["scrollTop"] - before["scrollTop"]) > 0.5
+        at_edge = (
+            (delta_y < 0 and before["scrollTop"] <= EDGE_TOL)
+            or (delta_y > 0 and before["scrollTop"] >= max_scroll - EDGE_TOL)
+        )
+        return {"before": before["scrollTop"], "after": after["scrollTop"], "moved": moved,
+                "at_edge": at_edge, "max_scroll": max_scroll}
 
     def row_keys(self, expected_count: int | None = None) -> list:
         """Every row's outline number, in order, scrolling to defeat virtualisation.
 
-        One non-growing read is not proof the list is exhausted. Each pass is one wheel
-        scroll, one fixed wait, one read -- if the virtualised re-render lags past that wait
-        even once (slow box, GC pause, a stalled XHR), a single-sample stop concludes the
-        list is done when it has merely stalled, and under-reports silently. So this
-        requires several CONSECUTIVE no-growth passes before concluding exhaustion, the same
-        discipline `_settle` uses (two consecutive stable reads, not one) rather than `_locate`
-        which retries up to 40 times and then raises loudly on absence -- the failure mode
-        here is symmetric to that one and gets the same scepticism.
+        Each sweep direction stops on the container's own `scrollTop` reaching that end of its
+        scroll range (`_wheel_step`'s `at_edge`), not on the rendered row window going quiet --
+        scrollTop is a native property that updates the instant a scroll actually lands, so it
+        cannot be foxed by the virtualised re-render lagging a frame behind, the way inferring
+        exhaustion from "no new keys this pass" could (and did -- see `_wheel_step` and the
+        class docstring, #174 fix5). A wheel that neither moves scrollTop nor sits at an edge is
+        a dead wheel and `_wheel_step`/this sweep raise rather than silently under-enumerating.
 
         A live run reaching the true count does not by itself prove this logic is sound: it
         cannot distinguish "found all rows because the algorithm is right" from "found them
@@ -806,8 +1024,8 @@ class AribaPicker:
         sweep could only diverge from the list everything downstream is checked against, and
         live it did: 84 rows here, 50 on the re-read (#174).
         """
-        STABLE_PASSES = 3
         MAX_PASSES = 45
+        STALL_LIMIT = 3           # consecutive dead (non-edge, non-moving) wheels before raising
 
         seen, order = set(), []
         unkeyed: set = set()                        # trimmed text of seen-but-unkeyed rows
@@ -821,21 +1039,30 @@ class AribaPicker:
             unkeyed.update(unkeyed_rows)
 
         def sweep(delta_y: int) -> None:
-            """Wheel one direction until several consecutive passes add no new rows."""
+            """Wheel one direction until the container's own scrollTop reaches that edge."""
             collect()
-            stable = 0
+            stalled = 0
             for _ in range(MAX_PASSES):
-                before = len(seen) + len(unkeyed)
-                self._hover_row_list()
-                self.page.mouse.wheel(0, delta_y)
-                self.page.wait_for_timeout(350)
+                step = self._wheel_step(delta_y)
                 collect()
-                if len(seen) + len(unkeyed) == before:
-                    stable += 1
-                    if stable >= STABLE_PASSES:
-                        return
-                else:
-                    stable = 0
+                if step["moved"]:
+                    stalled = 0
+                    continue
+                if step["at_edge"]:
+                    self.page.wait_for_timeout(300)      # let a trailing re-render land
+                    collect()
+                    return
+                stalled += 1
+                if stalled >= STALL_LIMIT:
+                    raise RuntimeError(
+                        f"row_keys: the row-list wheel (delta={delta_y}) did not move the "
+                        f"container's scrollTop across {stalled} consecutive attempts while "
+                        f"not at an edge (scrollTop stuck at {step['before']}, range "
+                        f"0..{step['max_scroll']}) -- the wheel is not reaching the row list")
+            raise RuntimeError(
+                f"row_keys: exhausted {MAX_PASSES} scroll passes (delta={delta_y}) without "
+                "the container's scrollTop ever reaching an edge -- refusing to hand a "
+                "possibly-incomplete row list to the batching loop")
 
         sweep(-2000)                     # up to the top, collecting on the way
         sweep(2000)                      # then the downward sweep, from a known position
@@ -943,36 +1170,6 @@ class AribaPicker:
         mid = _outline_sort_key(keys[len(keys) // 2])
         return -1 if target < mid else 1
 
-    def _sweep_to_edge(self, direction: int, max_passes: int = 12) -> None:
-        """Wheel `direction` until several consecutive passes render no new content, or a keyed
-        row appears.
-
-        Used only when the current window holds no keyed rows at all -- just the "Title"
-        header / "Totals" summary row, or a transient empty render -- so `_direction_to` has
-        nothing to compare the target against. Same discipline `row_keys` uses to find the top
-        by evidence rather than by assuming where the list already sits, but bounded and small:
-        this is a rescue for one row, not a full-list enumeration, and it hands back to
-        `_locate`'s normal per-pass direction comparison the moment any keyed row is visible.
-        """
-        _, unkeyed = self._rendered_split()
-        prev = len(unkeyed)
-        stable = 0
-        for _ in range(max_passes):
-            self._hover_row_list()
-            self.page.mouse.wheel(0, 2000 * direction)
-            self.page.wait_for_timeout(300)
-            keyed, unkeyed = self._rendered_split()
-            if keyed:
-                return                          # a keyed row rendered -- back to normal search
-            cur = len(unkeyed)
-            if cur == prev:
-                stable += 1
-                if stable >= 2:
-                    return                      # genuinely at an edge, nothing keyed to show
-            else:
-                stable = 0
-            prev = cur
-
     def _locate(self, key: str):
         """Re-resolve the row's checkbox, scrolling it into the window first.
 
@@ -986,10 +1183,12 @@ class AribaPicker:
         never finds it. So each pass compares `key` against whatever is currently rendered
         (`_direction_to`, ordered numerically -- a string compare would put `4.10` before `4.9`)
         and wheels whichever way the target actually lies, re-deriving the direction after every
-        scroll since the window moves. If the window renders no keyed rows at all, there is
-        nothing to compare against, so `_sweep_to_edge` finds a known edge by evidence first
-        (row_keys' own trick for the same problem), and normal direction comparison resumes as
-        soon as a keyed row appears.
+        scroll since the window moves. If the window renders no keyed rows at all (just the
+        header / "Totals" row, or a transient empty render), there is nothing to compare
+        against, so this tries whichever edge direction hasn't been ruled out yet -- the same
+        one wheel-step-at-a-time approach as the normal case, since `_wheel_step`'s `at_edge`
+        now answers "is there anything more that way" directly rather than needing a separate
+        multi-pass rescue.
 
         **Cheap on the access pattern this is actually called with.** The batching loop calls
         this ~84 times, once per row, in ascending outline order -- so besides the very first
@@ -1005,30 +1204,19 @@ class AribaPicker:
         otherwise the loop simply re-resolves against the new rendering (the row is in view by
         then, so `scroll_into_view_if_needed` is a no-op and the second pass agrees).
 
-        **Hovers the row list before every wheel (#174).** Playwright dispatches `mouse.wheel`
-        wherever the mouse last was -- it does not target an element. `row_keys` already gets
-        this right by calling `_hover_row_list()` before each of its scrolls; this method used
-        to wheel blind, so whenever the cursor was left elsewhere (concretely: `clear_selection`
-        parks it on the header checkbox, off the scrollable list, right before the batching loop
-        starts calling this once per row) every wheel here was a no-op. A live run showed the
-        symptom exactly: 84 rows enumerated, direction correctly computed as "up" for a
-        low-numbered target, yet the window stayed pinned to the bottom 50 keys through the
-        whole retry budget. Re-resolved on every call, same as `_hover_row_list` documents.
-
-        **A wheel that does nothing is not evidence the row is absent (#174).** Before this fix
-        the two looked identical: both exhaust the retry budget and land on the same "never
-        appeared" message. So each pass takes a window signature (keyed keys + unkeyed text)
-        before scrolling and compares it to the previous pass's signature; if the window reads
-        identically across a couple of consecutive scroll attempts, that is treated as proof the
-        wheel isn't landing and raised as its own distinct error -- separate from, and checked
-        before, the generic exhaustion case below.
+        **Every scroll goes through `_wheel_step` -- the one shared, scrollTop-verified
+        primitive (#174 fix5), the same one `row_keys`'s sweeps use.** Two ad-hoc scroll
+        implementations that could silently disagree about what "landed" meant is what made
+        this take six live runs; there is now exactly one. A dead wheel -- `_wheel_step` reports
+        `moved=False` while NOT at an edge -- is raised immediately rather than retried into the
+        generic "never appeared" exhaustion case below, because the two failures have different
+        causes and only one of them means the row is actually absent.
         """
         target = _outline_sort_key(key)
         searched_up = searched_down = False
         last_window = "(never read)"
-        prev_signature = None
         stalled = 0
-        STALL_LIMIT = 2                    # consecutive no-op scrolls before calling it a dead wheel
+        STALL_LIMIT = 2                    # consecutive dead wheels before calling it a dead wheel
         for _ in range(40):
             keyed, unkeyed = self._rendered_split()
             if key in keyed:
@@ -1040,36 +1228,34 @@ class AribaPicker:
                     return loc, index
                 continue                       # the scroll slid the window — re-resolve
 
-            signature = (tuple(sorted(keyed)), tuple(sorted(unkeyed)))
             if keyed:
                 direction = self._direction_to(target, keyed)
                 last_window = f"keys {sorted(keyed, key=_outline_sort_key)}"
-                searched_up = searched_up or direction < 0
-                searched_down = searched_down or direction > 0
-                self._hover_row_list()
-                self.page.mouse.wheel(0, 2000 * direction)
-                self.page.wait_for_timeout(300)
             else:
                 # Nothing keyed rendered -- try whichever edge hasn't been ruled out yet.
                 direction = -1 if not searched_up else 1
-                searched_up = searched_up or direction < 0
-                searched_down = searched_down or direction > 0
-                self._sweep_to_edge(direction)     # hovers internally, same discipline
                 last_window = f"no keyed rows (unkeyed: {sorted(unkeyed)})"
+            searched_up = searched_up or direction < 0
+            searched_down = searched_down or direction > 0
 
-            if signature == prev_signature:
-                stalled += 1
-                if stalled >= STALL_LIMIT:
-                    raise RuntimeError(
-                        f"row {key}: the picker window has not changed across "
-                        f"{stalled + 1} consecutive scroll attempts -- the wheel is not "
-                        "reaching the row list (mouse likely parked off the scrollable list, "
-                        "e.g. on the header checkbox from a prior click), which is evidence "
-                        f"the scroll is dead, not that row {key} is absent. window held "
-                        f"{last_window}")
-            else:
+            step = self._wheel_step(2000 * direction)
+            if step["moved"]:
                 stalled = 0
-            prev_signature = signature
+                continue
+            if step["at_edge"]:
+                # Genuinely nothing further that way -- not evidence of a dead wheel, and not
+                # evidence the row is absent either (it may still be found from the other
+                # direction, or the window may re-render with a keyed row on the next pass).
+                stalled = 0
+                continue
+            stalled += 1
+            if stalled >= STALL_LIMIT:
+                raise RuntimeError(
+                    f"row {key}: the row-list wheel (direction="
+                    f"{'up' if direction < 0 else 'down'}) did not move the container's "
+                    f"scrollTop across {stalled} consecutive attempts while not at an edge "
+                    f"(scrollTop stuck at {step['before']}, range 0..{step['max_scroll']}) -- "
+                    f"the wheel is not reaching the row list. window last held {last_window}")
 
         directions = ", ".join(
             d for d, tried in (("up", searched_up), ("down", searched_down)) if tried
