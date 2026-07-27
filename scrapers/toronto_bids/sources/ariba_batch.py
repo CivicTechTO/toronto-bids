@@ -241,7 +241,19 @@ def capture_in_batches(picker, document_number: str, dest_dir, fingerprint: dict
     pdir = partial_dir(dest_dir, document_number)
     manifest = read_manifest(pdir)
 
-    if manifest and not manifest_is_current(manifest, fingerprint):
+    if manifest is None:
+        # Missing OR corrupt -- either way we cannot trust what's already recorded, and a good
+        # orphaned batch may already occupy batch-01.zip: restarting numbering at 1 below would
+        # silently overwrite it. Discard and restart clean, exactly like the stale-fingerprint
+        # branch. This is safe PRECISELY HERE: capture_in_batches only ever runs while the
+        # posting is still open (its caller checks the portal's Respond control first), so
+        # anything discarded can simply be re-downloaded. The closed-posting path goes through
+        # finalise_partial / _finalise instead, which read batches from disk and never discard.
+        if pdir.exists():
+            log(f"  Doc{document_number}: missing/corrupt manifest — discarding partials and "
+                f"restarting")
+            shutil.rmtree(pdir, ignore_errors=True)
+    elif not manifest_is_current(manifest, fingerprint):
         log(f"  Doc{document_number}: event changed since the last run — discarding partials")
         shutil.rmtree(pdir, ignore_errors=True)
         manifest = None
@@ -266,8 +278,14 @@ def capture_in_batches(picker, document_number: str, dest_dir, fingerprint: dict
         try:
             picker.download_to(path)
         except Exception as exc:                  # noqa: BLE001 — keep what we already have
+            # download_to can fail partway through writing path, leaving a truncated
+            # batch-NN.zip. To _finalise's glob that debris is indistinguishable from a good
+            # batch and would abort the merge (BadZipFile) for every sibling batch too --
+            # remove it here rather than let it accumulate. Earlier, already-completed batches
+            # are untouched.
+            path.unlink(missing_ok=True)
             log(f"  Doc{document_number}: batch {len(done_batches) + 1} failed ({exc}) — "
-                f"partials kept, will resume")
+                f"earlier batches kept, will resume")
             return None
         finally:
             for key in batch:
@@ -280,8 +298,26 @@ def capture_in_batches(picker, document_number: str, dest_dir, fingerprint: dict
                      fingerprint.get("file_count"), log)
 
 
+def _openable_zip(path) -> bool:
+    """Whether `path` opens as a zip with a readable central directory.
+
+    Deliberately NOT `testzip()`: that decompresses every member to verify its CRC, which is
+    ruinous on a bundle whose members reach 88.7 MB. `zipfile.ZipFile()` already parses the
+    central directory on open (it seeks from EOF to find it), so a truncated or corrupt file
+    fails right here -- that is enough to catch the debris finding 2 is about without paying
+    for a full decompress pass.
+    """
+    try:
+        with zipfile.ZipFile(path) as zf:
+            zf.infolist()
+        return True
+    except (zipfile.BadZipFile, OSError):
+        return False
+
+
 def _finalise(pdir, document_number, dest_dir, omitted, expected_files, log):
-    """Merge whatever batch zips are actually ON DISK in `pdir`.
+    """Merge whatever batch zips are actually ON DISK in `pdir` -- but only the ones that
+    survive validation.
 
     Deliberately reads the batch list from disk (`glob`), not from the manifest: a batch zip
     is written by `picker.download_to(path)` and only recorded by the following
@@ -292,8 +328,23 @@ def _finalise(pdir, document_number, dest_dir, omitted, expected_files, log):
     can never be re-downloaded. `expected_files`/`omitted` still come from the manifest --
     they describe the whole event and aren't derivable from the zips alone. Zero-padded
     `batch-{n:02d}` naming makes the lexicographic glob sort correct up to 99 batches.
+
+    Disk truth still needs to be VALIDATED truth: a batch left truncated by a crash before this
+    fix's download-failure cleanup existed (or from any other source of debris) is, to a bare
+    glob, indistinguishable from a good batch, and `merge_bundles` raises `BadZipFile` on it --
+    which would abort the salvage of every sibling batch, turning "3 of 5 is better than
+    nothing" into "0 of 5 and an exception". Each unopenable file is skipped and named in the
+    durable `omitted` record instead, so the gap survives past this run's log.
     """
-    parts = sorted(Path(pdir).glob("batch-*.zip"))
+    all_parts = sorted(Path(pdir).glob("batch-*.zip"))
+    parts = []
+    omitted = list(omitted)
+    for part in all_parts:
+        if _openable_zip(part):
+            parts.append(part)
+        else:
+            log(f"  Doc{document_number}: {part.name} will not open as a zip — skipped")
+            omitted.append(part.name)
     if not parts:
         return None
     target = Path(dest_dir) / f"Doc{document_number}.zip"
@@ -317,5 +368,10 @@ def finalise_partial(document_number: str, dest_dir, log=lambda _m: None):
     # A missing OR corrupt manifest must not give up on the batches -- _finalise reads them
     # from disk regardless, so this only loses the omitted/expected_files bookkeeping.
     omitted = manifest.get("omitted", []) if manifest else []
+    # None here is a deliberate "we do not know", not a stand-in for zero: it flows into
+    # merge_bundles' one-sided shortfall check (`expected_files is not None and ...`, which
+    # simply skips the comparison) and then into write_omitted, where it lands as JSON
+    # `"expected_files": null`. That reads as "count unknown" to anyone greping the .omitted.json
+    # later, which is the honest answer when the manifest itself could not be read.
     expected_files = manifest.get("fingerprint", {}).get("file_count") if manifest else None
     return _finalise(pdir, document_number, dest_dir, omitted, expected_files, log)

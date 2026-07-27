@@ -389,6 +389,72 @@ def test_finalise_partial_salvages_a_batch_absent_from_the_manifest(tmp_path):
         assert sorted(zf.namelist()) == ["A.pdf", "B.pdf"]
 
 
+def test_a_corrupt_manifest_discards_the_partials_and_replans(tmp_path):
+    """A corrupt manifest must not resume numbering at batch-01 while leaving other orphaned
+    batch files untouched (finding 1). Without a clean discard, a re-plan that today needs
+    fewer batches than a previous, unrecorded attempt would overwrite batch-01.zip with fresh
+    content but leave a stale batch-02.zip sitting on disk -- which _finalise's glob then
+    merges into the final bundle as leftover debris. Discarding the whole partial dir first
+    (like the stale-fingerprint branch does) prevents that leak."""
+    picker = FakePicker({"1.1": 100})   # today's plan fits in a single batch
+    pdir = ariba_batch.partial_dir(tmp_path, "5713434353")
+    _make_zip(pdir / "batch-01.zip", {"OLD1.pdf": b"stale"})
+    _make_zip(pdir / "batch-02.zip", {"OLD2.pdf": b"stale-leftover"})  # debris from an
+    # earlier, abandoned attempt that the corrupt manifest never recorded
+    (pdir / ariba_batch.MANIFEST_NAME).write_text("not json at all")
+
+    fp = ariba_batch.make_fingerprint(picker.row_keys(), 1, 100.0)
+    bundle = ariba_batch.capture_in_batches(
+        picker, "5713434353", tmp_path, fp, threshold_mb=450)
+
+    assert bundle.exists()
+    with zipfile.ZipFile(bundle) as zf:
+        names = zf.namelist()
+        assert "OLD2.pdf" not in names   # the orphaned leftover batch must not leak in
+        assert "OLD1.pdf" not in names
+        assert "1.1.pdf" in names        # today's fresh download for the only current row
+
+
+def test_a_failed_download_leaves_no_partial_batch_file_behind(tmp_path):
+    """A download that fails partway can leave a truncated batch-NN.zip on disk -- to
+    _finalise's glob that debris is indistinguishable from a good batch and would abort the
+    merge of every sibling batch (finding 2). The failure handler must remove it."""
+    class WritesThenDies(FakePicker):
+        def download_to(self, path):
+            path.write_bytes(b"PK\x03\x04truncated garbage")  # partial write, then boom
+            raise RuntimeError("connection reset")
+
+    picker = WritesThenDies({"1.1": 300, "1.2": 300})
+    fp = ariba_batch.make_fingerprint(picker.row_keys(), 2, 600.0)
+
+    result = ariba_batch.capture_in_batches(
+        picker, "5713434353", tmp_path, fp, threshold_mb=450)
+
+    assert result is None
+    pdir = ariba_batch.partial_dir(tmp_path, "5713434353")
+    assert list(pdir.glob("batch-*.zip")) == []
+
+
+def test_finalise_partial_skips_a_corrupt_batch_and_merges_the_rest(tmp_path):
+    """One corrupt batch must not abort recovery of its siblings (finding 2) -- and the gap
+    must be durable, not just a log line."""
+    pdir = ariba_batch.partial_dir(tmp_path, "5713434353")
+    _make_zip(pdir / "batch-01.zip", {"A.pdf": b"a"})
+    (pdir / "batch-02.zip").write_bytes(b"not a zip at all")
+    _make_zip(pdir / "batch-03.zip", {"C.pdf": b"c"})
+    ariba_batch.write_manifest(
+        pdir, ariba_batch.make_fingerprint(["1.1", "1.2", "1.3"], 3, 3.0),
+        batches=[["1.1"], ["1.2"], ["1.3"]], omitted=[])
+
+    bundle = ariba_batch.finalise_partial("5713434353", tmp_path)
+
+    assert bundle == tmp_path / "Doc5713434353.zip"
+    with zipfile.ZipFile(bundle) as zf:
+        assert sorted(zf.namelist()) == ["A.pdf", "C.pdf"]
+    body = json.loads((tmp_path / "Doc5713434353.omitted.json").read_text())
+    assert "batch-02.zip" in body["omitted"]
+
+
 def test_read_manifest_returns_none_on_corrupt_json(tmp_path):
     """A torn write (crash mid-write, or corruption at rest) must degrade to "no manifest"
     rather than raising -- an uncaught JSONDecodeError here would abort the whole capture."""
