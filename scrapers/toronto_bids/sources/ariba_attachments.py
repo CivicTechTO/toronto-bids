@@ -656,18 +656,38 @@ class AribaPicker:
         self.log = log
 
     # --- reads ---------------------------------------------------------------------------
-    def _rendered(self) -> dict:
-        """{outline key: rendered index} for the rows currently in the DOM."""
+    def _rendered_split(self) -> tuple[dict, dict]:
+        """Split the rows currently in the DOM into (keyed, unkeyed) by outline number.
+
+        A keyed row maps its outline number to its rendered checkbox index -- exactly what
+        `_rendered()` returned before this split existed. An unkeyed row has no leading
+        outline number (the header "Title" select-all row, the trailing "Totals" summary
+        row) -- it is neither an attachment nor addressable by outline number, so it is
+        keyed on its own trimmed text instead: stable enough not to double-count as the
+        virtualised window slides the same row past this read many times, unlike a DOM
+        index, which is reused by whatever row next occupies that slot. A row with no text
+        at all (an empty virtualisation placeholder) is dropped from both -- it was never
+        "seen", just reserved DOM space.
+        """
         rows = self.page.evaluate(
             """() => Array.from(document.querySelectorAll('input.w-chk-native'))
                  .map((e, i) => { const tr = e.closest('tr');
                                   return [i, ((tr ? tr.innerText : '') || '').trim()]; })""")
-        out = {}
+        keyed: dict = {}
+        unkeyed: dict = {}
         for index, text in rows:
-            m = _ROW_KEY.match(text.replace("\xa0", " "))
+            text = text.replace("\xa0", " ").strip()
+            m = _ROW_KEY.match(text)
             if m:
-                out.setdefault(m.group(1), index)
-        return out
+                keyed.setdefault(m.group(1), index)
+            elif text:
+                unkeyed.setdefault(text, index)
+        return keyed, unkeyed
+
+    def _rendered(self) -> dict:
+        """{outline key: rendered index} for the rows currently in the DOM."""
+        keyed, _ = self._rendered_split()
+        return keyed
 
     def _hover_row_list(self) -> None:
         """Move the mouse over a rendered DATA row so the next wheel event lands on the list.
@@ -721,6 +741,15 @@ class AribaPicker:
         (`selected_count`), closes that gap -- pass it here to turn a short enumeration into a
         raised error instead of a quietly incomplete plan handed to the batching loop.
 
+        **"Selected Items" counts rows this method deliberately excludes.** A live run
+        against 85 selected items enumerated 84 outline-keyed rows and tripped the guard --
+        but two rows the picker renders carry no outline number at all: the "Title"
+        header select-all and a trailing "Totals" summary row. Neither is an attachment
+        and neither belongs in the batching loop, yet the picker's own count apparently
+        includes at least one of them. Comparing `expected_count` against the keyed count
+        alone conflates "row I never saw" with "row I saw and rightly threw away", so the
+        guard is validated against keyed + unkeyed-but-seen instead (see `_rendered_split`).
+
         **The top of the list is established by evidence, not by a keypress.** This used to
         press `Home` and assume the list moved; `keyboard.press` goes to whatever has focus, and
         after `_select_all_attachments`'s positional mouse click nothing establishes that the
@@ -736,24 +765,27 @@ class AribaPicker:
         MAX_PASSES = 45
 
         seen, order = set(), []
+        unkeyed: set = set()                        # trimmed text of seen-but-unkeyed rows
 
         def collect():
-            for key in self._rendered():
+            keyed_rows, unkeyed_rows = self._rendered_split()
+            for key in keyed_rows:
                 if key not in seen:
                     seen.add(key)
                     order.append(key)
+            unkeyed.update(unkeyed_rows)
 
         def sweep(delta_y: int) -> None:
-            """Wheel one direction until several consecutive passes add no new keys."""
+            """Wheel one direction until several consecutive passes add no new rows."""
             collect()
             stable = 0
             for _ in range(MAX_PASSES):
-                before = len(seen)
+                before = len(seen) + len(unkeyed)
                 self._hover_row_list()
                 self.page.mouse.wheel(0, delta_y)
                 self.page.wait_for_timeout(350)
                 collect()
-                if len(seen) == before:
+                if len(seen) + len(unkeyed) == before:
                     stable += 1
                     if stable >= STABLE_PASSES:
                         return
@@ -763,12 +795,15 @@ class AribaPicker:
         sweep(-2000)                     # up to the top, collecting on the way
         sweep(2000)                      # then the downward sweep, from a known position
         order.sort(key=lambda k: [int(p) for p in k.split(".")])
-        self.log(f"    picker rows: {len(order)}")
-        if expected_count is not None and len(order) < expected_count:
+        excluded = sorted(unkeyed)
+        detail = f" (+{len(excluded)} excluded, no outline number: {excluded})" if excluded else ""
+        self.log(f"    picker rows: {len(order)}{detail}")
+        total_seen = len(order) + len(excluded)
+        if expected_count is not None and total_seen < expected_count:
             raise RuntimeError(
-                f"row_keys enumerated only {len(order)} of {expected_count} row(s) the "
-                "picker reports selected -- refusing to hand a short row list to the "
-                "batching loop")
+                f"row_keys enumerated {len(order)} keyed + {len(excluded)} unkeyed "
+                f"{excluded} = {total_seen} of {expected_count} row(s) the picker reports "
+                "selected -- refusing to hand a short row list to the batching loop")
         return order
 
     def selected_count(self) -> int | None:
