@@ -362,6 +362,30 @@ def test_capture_in_batches_refuses_a_closed_posting(tmp_path):
             picker, "5713434353", tmp_path, fp, posting_open=False, threshold_mb=450)
 
 
+def test_capture_in_batches_refuses_a_fingerprint_without_row_keys(tmp_path):
+    """A fingerprint dict missing `row_keys` entirely used to make the completeness gate a
+    no-op (#174 finding 1): `missing` in `_finalise_live` came back empty no matter what was
+    actually captured, so the canonical zip was written around a real gap. Observed live: a
+    fingerprint of `{'file_count': 2, 'total_mb': 600.0}` produced `Doc1.zip` with the gate
+    silently disabled. Refuse it up front, the same way `posting_open` is."""
+    picker = FakePicker({"1.1": 100})
+    fp = {"file_count": 2, "total_mb": 600.0}   # no row_keys at all
+
+    with pytest.raises(ValueError, match="row_keys"):
+        ariba_batch.capture_in_batches(
+            picker, "5713434353", tmp_path, fp, posting_open=True, threshold_mb=450)
+
+
+def test_capture_in_batches_refuses_a_fingerprint_with_empty_row_keys(tmp_path):
+    """An empty list is just as unusable for a completeness decision as a missing key."""
+    picker = FakePicker({"1.1": 100})
+    fp = ariba_batch.make_fingerprint([], 0, 0.0)
+
+    with pytest.raises(ValueError, match="row_keys"):
+        ariba_batch.capture_in_batches(
+            picker, "5713434353", tmp_path, fp, posting_open=True, threshold_mb=450)
+
+
 def test_capture_in_batches_refuses_an_unstated_posting_state(tmp_path):
     """A truthy non-bool is a caller who has not actually checked."""
     picker = FakePicker({"1.1": 100})
@@ -716,6 +740,66 @@ def test_finalise_partial_records_an_unattributable_corrupt_batch_separately(tmp
     body = json.loads((tmp_path / "Doc5713434353.omitted.json").read_text())
     assert body["omitted"] == []
     assert body["unreadable_batches"] == ["batch-02.zip"]
+
+
+def test_finalise_partial_preserves_an_unreadable_batch_rather_than_deleting_it(tmp_path):
+    """`_openable_zip` fails only because a zip's central directory is written last, at EOF --
+    a batch truncated well into its download can still hold hundreds of intact members a
+    lenient tool could recover. `finalise_partial` used to end with an unconditional
+    `shutil.rmtree(pdir)`, destroying exactly the bytes it had just declared unrecoverable
+    (#174 finding 2). On the live path that discard is fine (re-download is free); on salvage
+    nothing justifies it, since the posting is closed and those bytes can never come back."""
+    pdir = ariba_batch.partial_dir(tmp_path, "5713434353")
+    ariba_batch.write_sidecar(pdir, 1, ["1.1"])
+    _make_zip(pdir / "batch-01.zip", {"A.pdf": b"a"})
+    truncated = b"PK\x03\x04" + b"plenty of real, recoverable-looking bytes" * 10
+    (pdir / "batch-02.zip").write_bytes(truncated)   # no sidecar -> unidentified, unreadable
+    ariba_batch.write_manifest(pdir, ariba_batch.make_fingerprint(["1.1"], 2, 2.0), omitted=[])
+
+    bundle = ariba_batch.finalise_partial("5713434353", tmp_path, posting_open=False)
+
+    assert bundle == tmp_path / "Doc5713434353.zip"
+    assert (pdir / "batch-02.zip").exists()
+    assert (pdir / "batch-02.zip").read_bytes() == truncated
+
+
+def test_a_corrupt_sidecar_beside_a_good_zip_does_not_fabricate_a_gap(tmp_path):
+    """scan_batches puts both an unreadable sidecar and its unclaimed zip into `unidentified`.
+    finalise_partial's loop used to test `path.suffix == ".zip"`, so a corrupt `batch-02.json`
+    fell into the `unreadable` branch even though `batch-02.zip` opened and merged perfectly --
+    one good batch produced a phantom `unreadable_batches` entry and an `.omitted.json` for a
+    complete bundle (#174 finding 3)."""
+    pdir = ariba_batch.partial_dir(tmp_path, "5713434353")
+    ariba_batch.write_sidecar(pdir, 1, ["1.1"])
+    _make_zip(pdir / "batch-01.zip", {"A.pdf": b"a"})
+    (pdir / "batch-02.json").write_text("{not json")
+    _make_zip(pdir / "batch-02.zip", {"B.pdf": b"b"})
+    ariba_batch.write_manifest(pdir, ariba_batch.make_fingerprint(["1.1"], 2, 2.0), omitted=[])
+
+    bundle = ariba_batch.finalise_partial("5713434353", tmp_path, posting_open=False)
+
+    with zipfile.ZipFile(bundle) as zf:
+        assert sorted(zf.namelist()) == ["A.pdf", "B.pdf"]
+    assert not (tmp_path / "Doc5713434353.omitted.json").exists()
+
+
+def test_finalise_partial_names_rows_that_never_got_a_sidecar(tmp_path):
+    """The fingerprint planned three rows; only one was ever attempted before the posting
+    closed, so no sidecar -- not even an interrupted one -- exists for the other two.
+    `interrupted` has nothing to say about a row it never saw a batch number for, so this gap
+    was previously invisible except as a smaller `actual_files` count. Reuse the same row-list
+    expression `_finalise_live` uses so salvage names the specific rows lost (#174 finding 4)."""
+    pdir = ariba_batch.partial_dir(tmp_path, "5713434353")
+    ariba_batch.write_sidecar(pdir, 1, ["1.1"])
+    _make_zip(pdir / "batch-01.zip", {"A.pdf": b"a"})
+    ariba_batch.write_manifest(
+        pdir, ariba_batch.make_fingerprint(["1.1", "1.2", "1.3"], 3, 3.0), omitted=[])
+
+    bundle = ariba_batch.finalise_partial("5713434353", tmp_path, posting_open=False)
+
+    assert bundle == tmp_path / "Doc5713434353.zip"
+    body = json.loads((tmp_path / "Doc5713434353.omitted.json").read_text())
+    assert body["omitted"] == ["1.2", "1.3"]
 
 
 def test_read_manifest_returns_none_on_corrupt_json(tmp_path):

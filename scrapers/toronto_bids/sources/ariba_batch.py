@@ -426,6 +426,19 @@ def capture_in_batches(picker, document_number: str, dest_dir, fingerprint: dict
             f"{posting_open!r} — it discards partials it cannot identify, which is only safe "
             f"while they can be re-downloaded. Use finalise_partial for a closed posting.")
 
+    # The completeness gate in _finalise_live decides whether every PLANNED row is captured or
+    # un-capturable by walking fingerprint["row_keys"]. A fingerprint missing that field (or
+    # carrying an empty one) makes that walk a no-op -- `missing` comes back empty and the gate
+    # degrades from "verify completeness" to "merge whatever is complete", writing the canonical
+    # zip around a real gap. Refuse here, at the one place the fingerprint enters a capture,
+    # rather than let it silently defang the gate at merge time. make_fingerprint always
+    # populates this field, so nothing that plans a fingerprint correctly can trip this.
+    if not fingerprint.get("row_keys"):
+        raise ValueError(
+            f"fingerprint has no row_keys ({fingerprint!r}) — a completeness decision cannot "
+            f"be made without knowing what was planned; refusing rather than treating an "
+            f"unplannable fingerprint as trivially complete.")
+
     dest_dir = Path(dest_dir)
     pdir = partial_dir(dest_dir, document_number)
     manifest = read_manifest(pdir)
@@ -505,11 +518,26 @@ def capture_in_batches(picker, document_number: str, dest_dir, fingerprint: dict
 
 def _merge_and_record(parts, pdir, document_number, dest_dir, omitted, expected_files, log,
                       unreadable=()):
-    """Merge `parts` into the canonical bundle, record the gap, drop the working directory."""
+    """Merge `parts` into the canonical bundle, record the gap, drop the working directory.
+
+    `unreadable` batch files are the exception to dropping the working directory: `_openable_zip`
+    fails only because a zip's central directory is written last, at EOF, so a batch truncated
+    partway through a download can still hold hundreds of intact members a lenient tool could
+    recover later. The live path (capture_in_batches) never reaches here with anything
+    unreadable -- it discards those immediately, while re-fetching is still free -- so this only
+    ever fires from the salvage path, once the posting has closed and those bytes can never be
+    re-fetched. Keeping the whole partial directory (rather than moving files one at a time)
+    keeps the on-disk story simple: everything this run could not account for is exactly what is
+    still sitting in `.partial/Doc<n>/` beside the `.omitted.json` that says so.
+    """
     target = Path(dest_dir) / f"Doc{document_number}.zip"
     target, count = merge_bundles(parts, target, expected_files=expected_files, log=log)
     write_omitted(target, omitted, expected_files, count, unreadable=unreadable)
-    shutil.rmtree(pdir, ignore_errors=True)
+    if unreadable:
+        log(f"  Doc{document_number}: {len(unreadable)} unreadable batch file(s) kept in "
+            f"{pdir} — bytes that can never be re-fetched are not deleted")
+    else:
+        shutil.rmtree(pdir, ignore_errors=True)
     log(f"  Doc{document_number}: merged {len(parts)} batch(es) -> {target.name} ({count} files)")
     return target
 
@@ -530,7 +558,10 @@ def _finalise_live(pdir, document_number, dest_dir, fingerprint, omitted, log):
     complete, interrupted, unidentified = scan_batches(pdir)
     captured = {k for b in complete for k in b["row_keys"]}
     covered = captured | set(omitted)
-    missing = [k for k in (fingerprint.get("row_keys") or []) if k not in covered]
+    # capture_in_batches refuses a fingerprint without row_keys before this is ever reached, so
+    # indexing directly (rather than `.get(...) or []`) is deliberate: a degraded fingerprint
+    # here would be a bug upstream, not a case to quietly tolerate.
+    missing = [k for k in fingerprint["row_keys"] if k not in covered]
 
     if missing or interrupted or unidentified:
         log(f"  Doc{document_number}: {len(missing)} row(s) still uncaptured — partials kept, "
@@ -591,15 +622,34 @@ def finalise_partial(document_number: str, dest_dir, *, posting_open: bool,
         omitted.extend(k for k in entry["row_keys"] if k not in omitted)
 
     for path in unidentified:
+        # `unidentified` mixes two different kinds of residue: a sidecar too corrupt to read
+        # (names no rows, but its own batch-NN.zip -- if any -- is examined on its own below,
+        # since scan_batches leaves that number unclaimed) and an orphaned zip with no sidecar
+        # at all. Skipping anything that is not itself a `.zip` here is what keeps a corrupt
+        # `batch-02.json` from being reported as an "unreadable batch" beside a `batch-02.zip`
+        # that opened and merged just fine -- one real batch must not produce two entries.
+        if path.suffix != ".zip":
+            continue
         # Bytes we cannot attribute are still bytes we can never re-fetch: keep any zip that
         # opens, and merge it in batch-number order with the rest.
-        if path.suffix == ".zip" and _openable_zip(path):
+        if _openable_zip(path):
             log(f"  Doc{document_number}: {path.name} has no sidecar — merged anyway, its rows "
                 f"are unknown")
             parts.append(path)
         else:
             log(f"  Doc{document_number}: {path.name} will not open — skipped, rows unknown")
             unreadable.append(path.name)
+
+    # A row the fingerprint planned but that never got a sidecar at all (the run stopped, or the
+    # posting closed, before that row was ever attempted) is a gap `interrupted` cannot see --
+    # there is no batch number to iterate. Reuse _finalise_live's own expression so salvage names
+    # the specific rows lost instead of only shrinking `expected_files` vs `actual_files`.
+    fingerprint = manifest.get("fingerprint") if manifest else None
+    if fingerprint:
+        captured = {k for b in complete for k in b["row_keys"]}
+        covered = captured | set(omitted)
+        never_attempted = [k for k in (fingerprint.get("row_keys") or []) if k not in covered]
+        omitted.extend(k for k in never_attempted if k not in omitted)
 
     if not parts:
         return None
