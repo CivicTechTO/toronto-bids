@@ -41,8 +41,11 @@ design turns that clean skip into a capture.
 | observation | consequence |
 |---|---|
 | The picker table has **only a Title column** — no per-row size | Batches cannot be pre-computed. The only way to learn a selection's size is to select it and read the summary. |
-| `Total Size (MB): 792.41`, `Max Size (MB): 88.7`, `Total Number: 54`, `Selected Items: 85` | Rows ≠ files: Part-header rows tick their children. Bookkeeping must count **files**, not ticked rows. |
-| The select-all cascade takes ~10 s and scales with item count | Every selection change is an async recompute. Poll for it; never sleep a guess (#174). |
+| **The row list is VIRTUALISED as a sliding window.** The DOM holds a fixed 51 checkboxes, but *which* rows they are changes with scroll position — at the top of the list row 9 is `4.1 Form A`, after scrolling to the end it is `5 Part 5 - Pricing Form`. `Selected Items: 85` exceeds the 51 rendered. | **Row indices are not stable** — not across runs, not even across scrolls within a run. Rows must be keyed by their **outline number** (`5.2.1.2.1.3`), and enumeration requires scrolling the whole list and de-duplicating. A naive "did the checkbox count grow?" test reports NO and is misleading. |
+| **Only the top `Title` checkbox cascades.** Ticking `5 Part 5 - Pricing Form` gave `checked 0→1, total 0.0→0.0`. | Part rows select only themselves and carry no size. Per-Part batching was never viable; row-by-row is the only option. Attachments hang off specific leaf rows. |
+| Element handles **detach** after every selection — the picker re-renders | Never hold a handle across a selection. Re-resolve the locator each time, and scroll the target into view before clicking. |
+| A single-row toggle settles in **~1.5 s**; the select-all cascade takes ~10 s | An ~85-row pass costs 2–3 minutes. Affordable, and only for events over the ceiling. Poll for settling; never sleep a guess (#174). |
+| `Total Number` reads **0 when nothing is selected** | It is a property of the *selection*, not of the event. It is only meaningful at full selection, which constrains what the fingerprint can be built from. |
 | Respond dies at close | Partial progress must survive between runs. |
 
 ## Architecture
@@ -53,12 +56,17 @@ narrow interface, and only a thin adapter touches Playwright.
 
 ```
 Picker (protocol, 5 methods)
-    row_count()            -> int
-    set_selected(i, bool)  -> None     # ticks/unticks, waits for the recompute to settle
-    total_mb()             -> float | None
-    file_count()           -> int      # the picker's 'Total Number', NOT ticked rows
-    download_to(path)      -> Path
+    row_keys()               -> list[str]   # outline numbers, in order; scrolls to enumerate
+    set_selected(key, bool)  -> None        # scrolls into view, ticks/unticks, waits to settle
+    total_mb()               -> float | None
+    file_count()             -> int         # the picker's 'Total Number' for the SELECTION
+    download_to(path)        -> Path
 ```
+
+**Keys, not indices.** The list is virtualised, so `nth(i)` addresses the rendered window rather
+than the logical row. Every method that names a row names it by outline number (`5.2.1.2.1.3`),
+and `AribaPicker` resolves that to a live locator at the moment of use — re-resolving each time,
+because the picker re-renders and detaches handles after every selection.
 
 - **`AribaPicker`** — the real implementation over `page`. Thin: locator calls plus the
   poll-don't-sleep discipline.
@@ -87,8 +95,9 @@ Measuring is the expensive part, so the first run measures and writes a *plan*; 
 only what is missing.
 
 ```
-run 1:  measure row-by-row -> plan = [[rows 0-8], [rows 9-14], ...] -> manifest.json
-        download each batch -> batch-01.zip, batch-02.zip, ...
+run 1:  enumerate row keys (scrolling the virtualised list) -> measure row-by-row
+        -> plan = [["1.1","2.1",...], ["5.2.1.3.1",...], ...]   (outline keys, NEVER indices)
+        -> manifest.json, then download each batch -> batch-01.zip, batch-02.zip, ...
 run 2:  fingerprint matches -> load plan -> download only batches whose zip is absent
         all present -> merge -> Doc<n>.zip -> store_bundle -> delete .partial/
 ```
@@ -101,9 +110,15 @@ Working state lives outside the canonical namespace so nothing else sees it:
     batch-01.zip
 ```
 
-**Fingerprint** = `(row_count, file_count, total_mb)`. A mismatch means the City changed the event
-(an addendum) and the plan is stale: discard the partials and re-plan, rather than merge batches
-from two different versions of the same event.
+**Fingerprint** = `(ordered list of row keys, file_count-at-full-selection, total_mb-at-full-selection)`.
+The two counts are properties of the *selection*, not the event — `Total Number` reads 0 with
+nothing ticked — so they are captured during the initial select-all that detects the overflow in
+the first place, which the flow already performs. The row-key list is the primary signal and is
+readable without selecting anything.
+
+A mismatch means the City changed the event (this one gained four addenda while we were looking at
+it — `6.1` through `6.4`), so the plan is stale: discard the partials and re-plan, rather than
+merge batches from two different versions of the same event.
 
 Two files hold "what is missing", and they are not the same thing:
 
@@ -133,12 +148,15 @@ event we cannot re-run is not where we want to discover the boundary condition.
   this does not bite yet.)
 - **`total_mb()` returning `None`** aborts the batched capture outright. #174 was a guard that
   had gone blind; a batcher that cannot measure must not guess.
-- **Part-header cascade asymmetry — an open question, resolved by probe before implementation.**
-  Header rows tick their children (85 selected vs 54 files). It is **not yet known whether
-  unticking a header fully unticks its children**; if it does not, a flushed batch leaks into the
-  next. Probe: tick a Part header, read the total, untick it, confirm the total returns to zero.
-  If asymmetric, the loop does a full `clear_selection()` after each flush and re-selects the next
-  batch explicitly — costlier, but known in advance rather than discovered mid-implementation.
+- **Cascade — probed and resolved (2026-07-27).** The open question was whether unticking a Part
+  header fully unticks its children. It does not arise: **only the top `Title` checkbox cascades
+  at all.** Ticking `5 Part 5 - Pricing Form` moved `checked 0→1` and left `total` at `0.0`, so an
+  intermediate row selects only itself and contributes no size. No clear-and-reselect step is
+  needed, and per-Part batching (approach B) is not merely unoptimised but unavailable.
+- **Enumeration must scroll.** Because the list is virtualised, `row_keys()` scrolls from top to
+  bottom accumulating outline numbers and de-duplicating. Enumerating only what is rendered would
+  silently plan over ~51 of ~85 rows — the failure would look like a successful capture that is
+  quietly missing files, which is the worst shape of bug for an archive.
 
 ## Merge
 
@@ -183,12 +201,17 @@ All offline, no browser:
 | single item over ceiling → omitted, not infinitely retried | `FakePicker` |
 | `total_mb()` → `None` aborts rather than guesses | `FakePicker` |
 | plan replay skips batches already on disk | manifest + tmp zips |
-| stale fingerprint discards and re-plans | manifest |
+| stale fingerprint (row keys changed) discards and re-plans | manifest |
+| **plan is keyed by outline number, never row index** | `FakePicker` whose index→key mapping shifts between calls, mimicking the sliding window |
 | merge preserves CRCs; collision refuses; count check fires | fixture zips |
 
-Two live steps, in order: the **cascade-symmetry probe** before writing the loop, and one
-**end-to-end capture of `Doc5713434353`**, which doubles as the acceptance test — a 792 MB event
-in roughly two batches is precisely the case.
+The virtualisation test matters most: a `FakePicker` that deliberately reshuffles which index maps
+to which key is the only thing standing between us and a capture that silently plans over the
+wrong rows.
+
+One live step remains: an **end-to-end capture of `Doc5713434353`**, which doubles as the
+acceptance test — a 792 MB event in roughly two batches is precisely the case. (The cascade probe
+is done; its findings are folded into the constraints table above.)
 
 ## Out of scope
 
