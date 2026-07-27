@@ -357,6 +357,20 @@ def capture_files(source, document_number: str, dest_dir, log=lambda _m: None):
             f"empty bundle, which would mark this event archived permanently")
 
     expected = source.expected_count()
+    # The picker's `Total Number` counts ATTACHMENTS; `files` counts what the tree traversal
+    # found. It is NOT yet established live that these count the same thing -- a nested archive
+    # could render as one tree file but several picker attachments, which would make either
+    # direction of mismatch a permanent phantom. So a shortfall is LOGGED loudly here and folded
+    # into the durable `.omitted.json` below (via expected/actual), never refused: Respond dies
+    # the instant a posting closes, so bytes beat strictness, and an unverified check must not be
+    # able to block the only path that gets them. Do NOT tighten this into a raise without first
+    # confirming live that the two counts are commensurable -- that is a distinct condition from
+    # the zero-files case above, which stays fatal because it means the event withheld its
+    # content outright, not that two counters merely disagree.
+    if expected is not None and len(files) < expected:
+        log(f"  Doc{document_number}: the traversal found {len(files)} file(s) against the "
+            f"picker's {expected} — SHORT by {expected - len(files)}; recording the gap in "
+            f"Doc{document_number}.omitted.json rather than refusing the capture")
     fingerprint = make_fingerprint(files, expected)
     pdir = partial_dir(dest_dir, document_number)
     manifest = read_manifest(pdir)

@@ -1906,9 +1906,15 @@ class AribaFileSource:
         and #174 spent six live runs learning that a silent short read looks exactly like
         success. So the picker's count is read FIRST (it is an independent ground truth -- a
         file behind a section that never expanded is invisible to this traversal and to nothing
-        else), the event view is restored and confirmed, and a shortfall against that count
-        RAISES: a short read that returns normally becomes a permanently-archived bundle with a
-        hole in it, because `capture_attachments` treats `Doc<n>.zip` as proof forever.
+        else) and logged alongside the traversal's own count below.
+
+        **A shortfall against that count is NOT raised here.** It used to be, but the check is
+        PROVISIONAL -- it is not established that "Total Number" on the picker and "files found
+        in the tree" count the same thing, and an unverified check must not be able to block the
+        only path that gets these bytes before a posting closes (#174). `ariba_files.capture_files`
+        is the pure layer that owns this comparison: it logs the shortfall loudly and folds it
+        into the durable `Doc<n>.omitted.json`, but always proceeds with what was found. Only a
+        traversal that finds ZERO files is fatal, and that check lives there too, not here.
         """
         expected = self.expected_count()
         self._require_event_view("the content-tree traversal")
@@ -1930,13 +1936,6 @@ class AribaFileSource:
             self.log(f"    content tree: {len(collided)} link(s) indistinguishable from another "
                      f"(same row text, same position, same name) and collapsed: "
                      f"{sorted(collided.values())}")
-
-        if expected is not None and len(files) < expected:
-            raise RuntimeError(
-                f"the content tree listed {len(files)} file(s) against the picker's "
-                f"{expected} — refusing to build a bundle from a short traversal, which "
-                f"`capture_attachments` would treat as this event's complete archive forever "
-                f"(#174). Sections expanded: {opened}.")
         return files
 
     # --- download ------------------------------------------------------------------------
@@ -2050,10 +2049,15 @@ class AribaFileSource:
 
         PROVISIONAL in one respect only: it is not yet established live that the picker's
         `Total Number` and the tree's file count are commensurable (see the spec; Task 5
-        validates against the known 54). `list_files` raises on a SHORTFALL against it -- the
-        direction that hides a missing document -- and `capture_files` records an overshoot in
-        the durable `.omitted.json` rather than refusing. If the two turn out to count
-        different things, this is the one guard to revisit, with the measurement in hand.
+        validates against the known 54) -- a nested archive counted as many attachments but one
+        tree file would make either direction of mismatch a permanent phantom. So `capture_files`
+        RECORDS a disagreement in either direction (short or over) in the durable `.omitted.json`
+        and logs it loudly, but never refuses on it: the portal disables downloading the instant
+        a posting closes, so bytes beat strictness, and an unverified check must not be able to
+        block the only path that gets them. Do not tighten this back into a raise without first
+        confirming live that the two counts are commensurable. The one comparison that IS still
+        fatal -- zero files found -- is a different condition (content withheld, not miscounted)
+        and lives in `capture_files` too.
         """
         if self._expected is _UNREAD:
             self._expected = self._read_expected_count()

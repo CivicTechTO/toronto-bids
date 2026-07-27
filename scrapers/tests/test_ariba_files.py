@@ -289,6 +289,29 @@ def test_a_count_mismatch_records_rather_than_refusing(tmp_path):
     assert body["expected_files"] == 54 and body["actual_files"] == 1
 
 
+def test_a_short_traversal_is_logged_loudly_and_never_raises(tmp_path):
+    """The #174 correction: "a short traversal must be loud" does not mean "must raise".
+
+    A review round asked for the shortfall to be loud, and a since-reverted change answered
+    that with a `raise` in the traversal itself -- which would abort every capture the moment
+    the picker's Total Number and the tree's file count disagreed, even though it is NOT
+    established that the two count the same thing (a nested archive's members vs. one tree
+    file, say). Respond dies the instant a posting closes, so an unverified check must never be
+    able to block the only path that gets these bytes. This pins both halves together: the
+    capture still completes (`test_a_count_mismatch_records_rather_than_refusing` covers the
+    durable `.omitted.json` side of that already) AND the gap is surfaced through `log`, not
+    left silent until someone thinks to open the JSON file mid-run.
+    """
+    messages = []
+    source = FakeFileSource(["a.pdf"], expected=54)
+
+    bundle = ariba_files.capture_files(source, "5713434353", tmp_path, log=messages.append)
+
+    assert bundle.exists()                       # recorded, never refused
+    assert any("54" in m and "SHORT" in m for m in messages), (
+        f"no loud shortfall log naming both counts among: {messages}")
+
+
 def test_an_unknown_expected_count_is_recorded_as_unknown_not_zero(tmp_path):
     """`expected=None` reaches the record as JSON null -- unconditionally asserted."""
     source = FakeFileSource(["a.pdf"], expected=None)
