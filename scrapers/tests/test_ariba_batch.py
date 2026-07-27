@@ -84,7 +84,11 @@ class FakePicker:
         return len([k for k in self.selected if self.sizes[k] > 0])
 
     def download_to(self, path):
-        path.write_bytes(b"zip")
+        # A real download is a zip -- merge_bundles opens each batch as one, so the fake must
+        # produce one too, with an entry per selected row to keep merged names distinct.
+        with zipfile.ZipFile(path, "w") as zf:
+            for key in sorted(self.selected):
+                zf.writestr(f"{key}.pdf", key.encode())
         self.downloads.append(sorted(self.selected))
         return path
 
@@ -269,3 +273,98 @@ def test_write_omitted_writes_nothing_when_the_capture_is_complete(tmp_path):
 
     assert ariba_batch.write_omitted(bundle, [], expected_files=3, actual_files=3) is None
     assert not (tmp_path / "Doc1.omitted.json").exists()
+
+
+def test_a_clean_run_downloads_every_batch_and_merges(tmp_path):
+    picker = FakePicker({"1.1": 300, "1.2": 300})
+    fp = ariba_batch.make_fingerprint(picker.row_keys(), 2, 600.0)
+
+    bundle = ariba_batch.capture_in_batches(
+        picker, "5713434353", tmp_path, fp, threshold_mb=450)
+
+    assert bundle == tmp_path / "Doc5713434353.zip"
+    assert bundle.exists()
+    assert picker.downloads == [["1.1"], ["1.2"]]
+    assert not ariba_batch.partial_dir(tmp_path, "5713434353").exists()
+
+
+def test_an_interrupted_run_keeps_its_batches(tmp_path):
+    """Respond dies at close, so downloaded bytes must survive a failure."""
+    class Flaky(FakePicker):
+        def download_to(self, path):
+            if len(self.downloads) == 1:
+                raise RuntimeError("network died")
+            return super().download_to(path)
+
+    picker = Flaky({"1.1": 300, "1.2": 300})
+    fp = ariba_batch.make_fingerprint(picker.row_keys(), 2, 600.0)
+
+    result = ariba_batch.capture_in_batches(
+        picker, "5713434353", tmp_path, fp, threshold_mb=450)
+
+    assert result is None
+    pdir = ariba_batch.partial_dir(tmp_path, "5713434353")
+    assert (pdir / "batch-01.zip").exists()
+    assert ariba_batch.read_manifest(pdir)["batches"] == [["1.1"]]
+
+
+def test_a_resumed_run_skips_batches_already_on_disk(tmp_path):
+    picker = FakePicker({"1.1": 300, "1.2": 300})
+    fp = ariba_batch.make_fingerprint(picker.row_keys(), 2, 600.0)
+    pdir = ariba_batch.partial_dir(tmp_path, "5713434353")
+    _make_zip(pdir / "batch-01.zip", {"A.pdf": b"a"})
+    ariba_batch.write_manifest(pdir, fp, batches=[["1.1"]], omitted=[])
+
+    bundle = ariba_batch.capture_in_batches(
+        picker, "5713434353", tmp_path, fp, threshold_mb=450)
+
+    assert bundle.exists()
+    assert picker.downloads == [["1.2"]]          # 1.1 was NOT re-downloaded
+
+
+def test_a_stale_fingerprint_discards_the_partials_and_replans(tmp_path):
+    picker = FakePicker({"1.1": 300, "1.2": 300})
+    pdir = ariba_batch.partial_dir(tmp_path, "5713434353")
+    _make_zip(pdir / "batch-01.zip", {"A.pdf": b"a"})
+    ariba_batch.write_manifest(
+        pdir, ariba_batch.make_fingerprint(["1.1"], 1, 300.0), batches=[["1.1"]], omitted=[])
+
+    fresh = ariba_batch.make_fingerprint(picker.row_keys(), 2, 600.0)
+    bundle = ariba_batch.capture_in_batches(
+        picker, "5713434353", tmp_path, fresh, threshold_mb=450)
+
+    assert bundle.exists()
+    assert picker.downloads == [["1.1"], ["1.2"]]  # everything re-downloaded
+
+
+def test_an_omitted_row_still_lets_the_bundle_complete(tmp_path):
+    picker = FakePicker({"1.1": 100, "big": 600})
+    fp = ariba_batch.make_fingerprint(picker.row_keys(), 2, 700.0)
+
+    bundle = ariba_batch.capture_in_batches(
+        picker, "5713434353", tmp_path, fp, threshold_mb=450)
+
+    assert bundle.exists()
+    assert json.loads((tmp_path / "Doc5713434353.omitted.json").read_text())["omitted"] == ["big"]
+
+
+def test_finalise_partial_merges_what_we_have_when_the_posting_closes(tmp_path):
+    """3 of 5 batches is permanently better than nothing once Respond is disabled."""
+    pdir = ariba_batch.partial_dir(tmp_path, "5713434353")
+    _make_zip(pdir / "batch-01.zip", {"A.pdf": b"a"})
+    _make_zip(pdir / "batch-02.zip", {"B.pdf": b"b"})
+    ariba_batch.write_manifest(
+        pdir, ariba_batch.make_fingerprint(["1.1", "1.2"], 54, 792.41),
+        batches=[["1.1"], ["1.2"]], omitted=[])
+
+    bundle = ariba_batch.finalise_partial("5713434353", tmp_path)
+
+    assert bundle == tmp_path / "Doc5713434353.zip"
+    with zipfile.ZipFile(bundle) as zf:
+        assert sorted(zf.namelist()) == ["A.pdf", "B.pdf"]
+    body = json.loads((tmp_path / "Doc5713434353.omitted.json").read_text())
+    assert body["expected_files"] == 54 and body["actual_files"] == 2
+
+
+def test_finalise_partial_is_none_when_there_is_nothing_to_finalise(tmp_path):
+    assert ariba_batch.finalise_partial("5713434353", tmp_path) is None

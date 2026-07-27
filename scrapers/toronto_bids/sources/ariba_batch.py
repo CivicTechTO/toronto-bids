@@ -201,3 +201,89 @@ def write_omitted(bundle_path, omitted, expected_files, actual_files) -> Path | 
         {"omitted": list(omitted), "expected_files": expected_files,
          "actual_files": actual_files}, indent=2))
     return path
+
+
+def _batch_path(pdir, n: int) -> Path:
+    return Path(pdir) / f"batch-{n:02d}.zip"
+
+
+def capture_in_batches(picker, document_number: str, dest_dir, fingerprint: dict,
+                       threshold_mb: float = BATCH_THRESHOLD_MB, log=lambda _m: None):
+    """Download an oversized event in batches and merge them into Doc<n>.zip.
+
+    Resumable: each completed batch is appended to the manifest as it lands, so a failure
+    keeps its bytes and the next run continues from there. Returns the canonical bundle path
+    once every batch is in hand, else None -- and because the canonical zip is only written on
+    completion, an incomplete event simply stays in capture_attachments' pending list.
+    """
+    dest_dir = Path(dest_dir)
+    pdir = partial_dir(dest_dir, document_number)
+    manifest = read_manifest(pdir)
+
+    if manifest and not manifest_is_current(manifest, fingerprint):
+        log(f"  Doc{document_number}: event changed since the last run — discarding partials")
+        shutil.rmtree(pdir, ignore_errors=True)
+        manifest = None
+
+    done_batches = list(manifest["batches"]) if manifest else []
+    omitted = list(manifest["omitted"]) if manifest else []
+    done_keys = {k for batch in done_batches for k in batch}
+    if done_keys:
+        log(f"  Doc{document_number}: resuming — {len(done_batches)} batch(es) already on disk")
+
+    new_batches, new_omitted = accumulate_batches(
+        picker, threshold_mb=threshold_mb, skip_keys=done_keys, log=log)
+    omitted.extend(k for k in new_omitted if k not in omitted)
+
+    pdir.mkdir(parents=True, exist_ok=True)
+    write_manifest(pdir, fingerprint, done_batches, omitted)
+
+    for batch in new_batches:
+        for key in batch:
+            picker.set_selected(key, True)
+        path = _batch_path(pdir, len(done_batches) + 1)
+        try:
+            picker.download_to(path)
+        except Exception as exc:                  # noqa: BLE001 — keep what we already have
+            log(f"  Doc{document_number}: batch {len(done_batches) + 1} failed ({exc}) — "
+                f"partials kept, will resume")
+            return None
+        finally:
+            for key in batch:
+                picker.set_selected(key, False)
+        done_batches.append(batch)
+        write_manifest(pdir, fingerprint, done_batches, omitted)
+        log(f"    batch {len(done_batches)}: {len(batch)} row(s) -> {path.name}")
+
+    return _finalise(pdir, document_number, dest_dir, done_batches, omitted,
+                     fingerprint.get("file_count"), log)
+
+
+def _finalise(pdir, document_number, dest_dir, batches, omitted, expected_files, log):
+    parts = [_batch_path(pdir, i + 1) for i in range(len(batches))]
+    parts = [p for p in parts if p.exists()]
+    if not parts:
+        return None
+    target = Path(dest_dir) / f"Doc{document_number}.zip"
+    target, count = merge_bundles(parts, target, expected_files=expected_files, log=log)
+    write_omitted(target, omitted, expected_files, count)
+    shutil.rmtree(pdir, ignore_errors=True)
+    log(f"  Doc{document_number}: merged {len(parts)} batch(es) -> {target.name} ({count} files)")
+    return target
+
+
+def finalise_partial(document_number: str, dest_dir, log=lambda _m: None):
+    """Merge whatever batches exist, for a posting that closed mid-capture.
+
+    Respond is disabled the moment a posting closes, so those batches can never be completed.
+    Keeping 3 of 5 is permanently better than nothing -- this is the whole reason partial
+    captures are retained. Returns the bundle path, or None if there is nothing to finalise.
+    """
+    dest_dir = Path(dest_dir)
+    pdir = partial_dir(dest_dir, document_number)
+    manifest = read_manifest(pdir)
+    if not manifest:
+        return None
+    return _finalise(pdir, document_number, dest_dir, manifest["batches"],
+                     manifest.get("omitted", []),
+                     manifest.get("fingerprint", {}).get("file_count"), log)
