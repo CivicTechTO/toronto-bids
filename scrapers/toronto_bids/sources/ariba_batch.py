@@ -63,3 +63,63 @@ def manifest_is_current(manifest, fingerprint: dict) -> bool:
     if not manifest:
         return False
     return manifest.get("fingerprint") == fingerprint
+
+
+def accumulate_batches(picker, threshold_mb: float = BATCH_THRESHOLD_MB,
+                       skip_keys=(), log=lambda _m: None):
+    """Group the picker's rows into selections that each stay under `threshold_mb`.
+
+    There is no per-row size in the picker -- the only way to learn a selection's size is to
+    select it and read the summary -- so this ticks one row at a time and measures. Rows are
+    addressed by OUTLINE KEY, never by index: the list is virtualised and indices are unstable
+    across runs and even across scrolls.
+
+    Returns (batches, omitted). `omitted` names rows that exceed the threshold ALONE and can
+    therefore never be captured; they are recorded rather than retried, or the event would be
+    permanently un-completable and we would re-drive a browser over it nightly forever.
+    """
+    skip = set(skip_keys)
+    batches, omitted, current = [], [], []
+
+    def measure():
+        total = picker.total_mb()
+        if total is None:
+            raise RuntimeError(
+                "could not read the picker's Total Size -- refusing to guess at batch sizes")
+        return total
+
+    def omit(key):
+        """A row over the threshold ALONE can never be captured, in any batch."""
+        omitted.append(key)
+        log(f"    row {key}: exceeds {threshold_mb:.0f} MB alone — omitted")
+
+    for key in picker.row_keys():
+        if key in skip:
+            continue
+        picker.set_selected(key, True)
+        total = measure()
+        if total <= threshold_mb:
+            current.append(key)
+            continue
+
+        # Over the line. Back this row out and decide what it means.
+        picker.set_selected(key, False)
+        if not current:
+            omit(key)
+            continue
+
+        batches.append(current)
+        for done in current:
+            picker.set_selected(done, False)
+        current = [key]
+        picker.set_selected(key, True)
+        if measure() > threshold_mb:          # alone it still does not fit
+            picker.set_selected(key, False)
+            omit(key)
+            current = []
+
+    if current:
+        batches.append(current)
+        for done in current:
+            picker.set_selected(done, False)
+    return batches, omitted

@@ -49,3 +49,105 @@ def test_a_manifest_without_a_fingerprint_is_not_current():
     fp = ariba_batch.make_fingerprint(["1.1"], 1, 1.0)
     assert ariba_batch.manifest_is_current({}, fp) is False
     assert ariba_batch.manifest_is_current(None, fp) is False
+
+
+class FakePicker:
+    """Picker stand-in with a known size table. Keys only -- an int key is a bug.
+
+    The real list is virtualised (a fixed 51 rendered checkboxes sliding over ~85 logical
+    rows), so any code that addresses a row by index is wrong. This fake enforces that by
+    refusing non-string keys outright.
+    """
+
+    def __init__(self, sizes: dict, unmeasurable=False):
+        self.sizes = dict(sizes)          # {outline key: MB}
+        self.unmeasurable = unmeasurable
+        self.selected = set()
+        self.downloads = []
+
+    def row_keys(self):
+        return list(self.sizes)
+
+    def set_selected(self, key, value):
+        if not isinstance(key, str):
+            raise AssertionError(f"row addressed by {type(key).__name__}, not outline key")
+        if key not in self.sizes:
+            raise KeyError(key)
+        self.selected.add(key) if value else self.selected.discard(key)
+
+    def total_mb(self):
+        if self.unmeasurable:
+            return None
+        return round(sum(self.sizes[k] for k in self.selected), 2)
+
+    def file_count(self):
+        return len([k for k in self.selected if self.sizes[k] > 0])
+
+    def download_to(self, path):
+        path.write_bytes(b"zip")
+        self.downloads.append(sorted(self.selected))
+        return path
+
+
+def test_batches_never_exceed_the_threshold():
+    picker = FakePicker({"1.1": 200, "1.2": 200, "1.3": 200, "1.4": 100})
+
+    batches, omitted = ariba_batch.accumulate_batches(picker, threshold_mb=450)
+
+    assert omitted == []
+    for batch in batches:
+        assert sum(picker.sizes[k] for k in batch) <= 450
+    assert [k for b in batches for k in b] == ["1.1", "1.2", "1.3", "1.4"]
+
+
+def test_it_packs_greedily_in_row_order():
+    picker = FakePicker({"1.1": 300, "1.2": 100, "1.3": 400})
+
+    batches, _ = ariba_batch.accumulate_batches(picker, threshold_mb=450)
+
+    assert batches == [["1.1", "1.2"], ["1.3"]]
+
+
+def test_a_single_row_over_the_ceiling_is_omitted_not_retried_forever():
+    """It can never be captured; the bundle must still be able to complete."""
+    picker = FakePicker({"1.1": 100, "big": 600, "1.2": 100})
+
+    batches, omitted = ariba_batch.accumulate_batches(picker, threshold_mb=450)
+
+    assert omitted == ["big"]
+    assert [k for b in batches for k in b] == ["1.1", "1.2"]
+
+
+def test_an_unmeasurable_total_aborts_rather_than_guessing():
+    """#174 was a guard gone blind; a batcher that cannot measure must not proceed."""
+    picker = FakePicker({"1.1": 10}, unmeasurable=True)
+
+    with pytest.raises(RuntimeError, match="could not read"):
+        ariba_batch.accumulate_batches(picker, threshold_mb=450)
+
+
+def test_rows_are_addressed_by_key_never_by_index():
+    """FakePicker raises on a non-str key; this passing proves no index addressing."""
+    picker = FakePicker({"5.2.1.2.1.3": 10, "6.2.1": 20})
+
+    batches, _ = ariba_batch.accumulate_batches(picker, threshold_mb=450)
+
+    assert batches == [["5.2.1.2.1.3", "6.2.1"]]
+
+
+def test_already_completed_keys_are_skipped_on_resume():
+    picker = FakePicker({"1.1": 100, "1.2": 100, "1.3": 100})
+
+    batches, _ = ariba_batch.accumulate_batches(
+        picker, threshold_mb=450, skip_keys={"1.1", "1.2"})
+
+    assert batches == [["1.3"]]
+
+
+def test_it_leaves_nothing_selected_between_batches():
+    """A flushed batch must not leak into the next one."""
+    picker = FakePicker({"1.1": 300, "1.2": 300})
+
+    ariba_batch.accumulate_batches(picker, threshold_mb=450)
+
+    assert picker.selected == set()
