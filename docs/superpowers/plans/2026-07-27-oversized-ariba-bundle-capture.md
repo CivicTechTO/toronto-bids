@@ -589,9 +589,11 @@ git commit -m "feat(ariba): merge batch zips into one canonical bundle (#174)"
 
 **Interfaces:**
 - Consumes: `accumulate_batches`, `merge_bundles`, `write_omitted`, manifest helpers.
-- Produces: `capture_in_batches(picker, document_number, dest_dir, fingerprint, threshold_mb=BATCH_THRESHOLD_MB, log=...) -> Path | None` — returns the canonical bundle path once every batch is in hand, else `None` (partials kept for the next run); `finalise_partial(document_number, dest_dir, log=...) -> Path | None` — merge whatever batches exist, for the posting-closed case.
+- Produces: `capture_in_batches(picker, document_number, dest_dir, fingerprint, *, posting_open, threshold_mb=BATCH_THRESHOLD_MB, log=...) -> Path | None` — returns the canonical bundle path once every batch is in hand, else `None` (partials kept for the next run); `finalise_partial(document_number, dest_dir, *, posting_open, log=...) -> Path | None` — merge whatever batches exist, for the posting-closed case.
 
 **Design note:** the spec describes "plan then replay". This implements the equivalent *incremental* form — each completed batch is appended to the manifest as it lands, and a resume skips those keys and continues measuring the rest. Functionally the same, and strictly more correct: run 1 never measured the rows it did not reach, so there is no plan to replay for them.
+
+**Amended by the root fix (#174, follow-up):** a batch's identity is now the `batch-NN.json` sidecar written *before* its zip, not its position in a list, and `manifest.json` no longer carries a `batches` array (`write_manifest(pdir, fingerprint, omitted)`). The live and salvage policies are split — the live path re-downloads a missing/unopenable batch and refuses to write `Doc<n>.zip` while any planned row is uncaptured; only the salvage path skips what will not open. Both functions take a **required keyword-only `posting_open: bool`** and refuse the wrong state: `capture_in_batches(..., posting_open=True)`, `finalise_partial(..., posting_open=False)`. The code blocks below in Tasks 4 and 6 predate that and are kept as a record of the original task; **follow the shipped module, and the amended Task 6 snippets.**
 
 - [ ] **Step 1: Write the failing test**
 
@@ -982,7 +984,11 @@ with:
         # Respond dies the moment a posting closes, so any batches we already hold can never
         # be completed. Merging 3 of 5 is permanently better than nothing -- this is the whole
         # reason partial captures are retained (#174).
-        salvaged = ariba_batch.finalise_partial(document_number, dest_dir, log=log)
+        # posting_open=False is the assertion, not a formality: finalise_partial refuses to
+        # canonicalise a capture that could still complete, and this branch is the one place
+        # that knows the posting is closed.
+        salvaged = ariba_batch.finalise_partial(
+            document_number, dest_dir, posting_open=False, log=log)
         if salvaged is not None:
             log(f"  Doc{document_number}: closed mid-capture — salvaged what we had")
             return salvaged
@@ -1017,8 +1023,10 @@ with:
             picker.row_keys(), picker.file_count(), total_mb)
         for key in fingerprint["row_keys"]:      # clear the select-all before batching
             picker.set_selected(key, False)
+        # Reached only past the `respond.is_disabled()` check above, i.e. the posting is open --
+        # which is what lets capture_in_batches discard partials it cannot identify.
         return ariba_batch.capture_in_batches(
-            picker, document_number, dest_dir, fingerprint, log=log)
+            picker, document_number, dest_dir, fingerprint, posting_open=True, log=log)
 ```
 
 Add the import at the top of the module, beside the other `toronto_bids` imports:
