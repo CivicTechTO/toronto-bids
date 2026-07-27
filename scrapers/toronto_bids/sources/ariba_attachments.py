@@ -38,6 +38,7 @@ from pathlib import Path
 from toronto_bids import config
 from toronto_bids.linking.document_number import bridge_document_number
 from toronto_bids.models import AribaAttachment
+from toronto_bids.sources import ariba_batch
 from toronto_bids.store import db
 
 # The AUTHENTICATED preview path — no `/public/`, no `?anId=ANONYMOUS`. The anonymous URL does
@@ -315,6 +316,8 @@ def capture_event(page, event: dict, dest_dir, log=lambda _m: None) -> Path | No
     those expected outcomes — the caller isolates real errors per event.
     """
     rfx_id, document_number = event["rfx_id"], event["document_number"]
+    dest_dir = Path(dest_dir)
+    dest_dir.mkdir(parents=True, exist_ok=True)
     if not _open_authed_preview(page, rfx_id):
         raise RuntimeError(
             f"Doc{document_number}: the authenticated event preview never loaded "
@@ -322,6 +325,17 @@ def capture_event(page, event: dict, dest_dir, log=lambda _m: None) -> Path | No
 
     respond = page.get_by_role("button", name="Respond", exact=True)
     if respond.is_disabled():
+        # Respond dies the moment a posting closes, so any batches we already hold can never
+        # be completed. Merging 3 of 5 is permanently better than nothing -- this is the whole
+        # reason partial captures are retained (#174).
+        # posting_open=False is the assertion, not a formality: finalise_partial refuses to
+        # canonicalise a capture that could still complete, and this branch is the one place
+        # that knows the posting is closed.
+        salvaged = ariba_batch.finalise_partial(
+            document_number, dest_dir, posting_open=False, log=log)
+        if salvaged is not None:
+            log(f"  Doc{document_number}: closed mid-capture — salvaged what we had")
+            return salvaged
         log(f"  Doc{document_number}: Respond disabled (closed) — skipped")
         return None
     respond.click()
@@ -360,13 +374,25 @@ def capture_event(page, event: dict, dest_dir, log=lambda _m: None) -> Path | No
 
     total_mb = _selected_total_mb(page)
     if total_mb is not None and total_mb > MAX_BUNDLE_MB:
-        # ponytail: single-zip only; per-Part download is the upgrade path when one is needed.
-        log(f"  Doc{document_number}: bundle {total_mb:.0f} MB > {MAX_BUNDLE_MB} MB single-zip "
-            f"limit — skipped, needs per-Part capture")
-        return None
+        # Ariba disables its own Download button over 500 MB and says "select specific items
+        # and perform multiple downloads" -- so do exactly that (#174).
+        log(f"  Doc{document_number}: bundle {total_mb:.0f} MB > {MAX_BUNDLE_MB} MB — "
+            f"capturing in batches")
+        picker = AribaPicker(page, log=log)
+        # Read while everything from _select_all_attachments is still selected -- this is the
+        # only value that distinguishes a complete row_keys() enumeration from a short one.
+        expected_count = picker.selected_count()
+        fingerprint = ariba_batch.make_fingerprint(
+            picker.row_keys(expected_count=expected_count), picker.file_count(), total_mb)
+        # The batching loop accumulates from an empty picker; the header-checkbox toggle is
+        # ~10s versus ~2 minutes of deselecting rows one at a time, and raises if it doesn't
+        # actually land on zero.
+        picker.clear_selection()
+        # Reached only past the `respond.is_disabled()` check above, i.e. the posting is open --
+        # which is what lets capture_in_batches discard partials it cannot identify.
+        return ariba_batch.capture_in_batches(
+            picker, document_number, dest_dir, fingerprint, posting_open=True, log=log)
 
-    dest_dir = Path(dest_dir)
-    dest_dir.mkdir(parents=True, exist_ok=True)
     target = dest_dir / f"Doc{document_number}.zip"
     # The server assembles the zip ("Processing request …") before the download starts, so the
     # wait is generous; expect_download resolves when the stream begins, not when it finishes.
