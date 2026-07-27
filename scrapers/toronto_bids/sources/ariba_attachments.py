@@ -393,7 +393,7 @@ def capture_event(page, event: dict, dest_dir, log=lambda _m: None) -> Path | No
         download_content.click()                          # no-op first click — try once more
         dl_attachments.first.wait_for(state="visible", timeout=30000)
     dl_attachments.first.click()
-    page.wait_for_selector("text=Selected Attachments Summary", timeout=45000)
+    page.wait_for_selector(f"text={PICKER_HEADING}", timeout=45000)
     _select_all_attachments(page, log=log)
 
     total_mb = _selected_total_mb(page)
@@ -636,6 +636,36 @@ def _selected_total_mb(page) -> float | None:
 
 _ROW_KEY = re.compile(r"^\s*(\d+(?:\.\d+)*)\s")
 
+# The picker identifies itself by this heading -- `capture_event` waits for it before touching
+# anything in the widget, so it is the same evidence throughout.
+PICKER_HEADING = "Selected Attachments Summary"
+
+
+def _on_picker(page, timeout_ms: int = 5000) -> bool:
+    """Whether the attachment picker is still the page in front of us.
+
+    Every read the batching layer makes is a `page.evaluate`, and a navigation turns those into
+    `Execution context was destroyed, most likely because of a navigation` -- an error that names
+    neither what navigated nor when. The picker carries `Done` buttons at top-right AND
+    bottom-right, so a positional click that misses its target can leave the widget entirely, and
+    that is what a live run did (#174). Checking the heading right after each click attributes the
+    navigation to the action that caused it.
+
+    Polled, never slept: a navigation in flight makes `query_selector` raise, which is "not known
+    yet", not "gone". Only a clean read with no heading is evidence of absence.
+    """
+    waited = 0
+    while True:
+        try:
+            if page.query_selector(f"text={PICKER_HEADING}") is not None:
+                return True
+        except Exception:
+            pass                                   # mid-navigation DOM churn — no answer yet
+        if waited >= timeout_ms:
+            return False
+        page.wait_for_timeout(250)
+        waited += 250
+
 
 class AribaPicker:
     """Playwright adapter satisfying ariba_batch's Picker protocol (#174).
@@ -699,8 +729,9 @@ class AribaPicker:
         re-render, same discipline as `_locate`.
 
         **A data row from the middle of the CURRENT window, never `.first`.** `.first` is the
-        header select-all (`clear_selection` uses exactly that locator for it), which is where
-        the mouse already sits after `_select_all_attachments` clicked it -- so hovering it
+        header select-all (which is what `_select_all_attachments` and `clear_selection` both
+        click, via its `label.w-chk`), which is where the mouse already sits after
+        `_select_all_attachments` clicked it -- so hovering it
         changed nothing, and once the first wheel scrolled the header out of view it moved the
         mouse to an off-screen coordinate, strictly worse than not moving at all. `_rendered()`
         keys only rows carrying an outline number, so the header is excluded by construction;
@@ -754,12 +785,16 @@ class AribaPicker:
         press `Home` and assume the list moved; `keyboard.press` goes to whatever has focus, and
         after `_select_all_attachments`'s positional mouse click nothing establishes that the
         row list is the focus target, so any row above the starting scroll position was simply
-        never enumerated. It matters twice over, because `accumulate_batches` calls this a
-        SECOND time -- by which point the first call deliberately left the list scrolled to its
-        end, i.e. the exact position where an unverified `Home` loses everything. So sweep UP
-        first, under the same consecutive-no-growth discipline as the downward pass, and keep
-        what that finds: reaching the top then becomes an observation, and the result no longer
-        depends on focus or on where the list happened to be.
+        never enumerated. Nothing guarantees the list starts at the top -- the select-all click,
+        and any scrolling the picker did while its cascade landed, leave it wherever they leave
+        it. So sweep UP first, under the same consecutive-no-growth discipline as the downward
+        pass, and keep what that finds: reaching the top becomes an observation, and the result
+        no longer depends on focus or on where the list happened to be.
+
+        **This runs exactly once per capture.** Its result is the fingerprint's row list, which
+        `ariba_batch.accumulate_batches` is then HANDED -- it does not re-enumerate. A second
+        sweep could only diverge from the list everything downstream is checked against, and
+        live it did: 84 rows here, 50 on the re-read (#174).
         """
         STABLE_PASSES = 3
         MAX_PASSES = 45
@@ -794,6 +829,9 @@ class AribaPicker:
 
         sweep(-2000)                     # up to the top, collecting on the way
         sweep(2000)                      # then the downward sweep, from a known position
+        # The sweeps move a real mouse over the widget. Attribute a navigation to them here
+        # rather than let the next caller's page.evaluate report a destroyed execution context.
+        self._require_picker("the row-list scroll sweep")
         order.sort(key=lambda k: [int(p) for p in k.split(".")])
         excluded = sorted(unkeyed)
         detail = f" (+{len(excluded)} excluded, no outline number: {excluded})" if excluded else ""
@@ -945,6 +983,21 @@ class AribaPicker:
                 f"row {key} did not reach selected={value} — refusing to plan batches against "
                 f"a selection the picker did not accept")
 
+    def _require_picker(self, action: str) -> None:
+        """Refuse to continue if `action` left the attachment picker.
+
+        Raised HERE rather than at the next `page.evaluate`, which reports only
+        `Execution context was destroyed, most likely because of a navigation` -- true, opaque,
+        and several steps removed from whatever navigated (#174).
+        """
+        if not _on_picker(self.page):
+            raise RuntimeError(
+                f"{action} navigated away from the attachment picker (its "
+                f"'{PICKER_HEADING}' heading is gone, and the page is at {self.page.url}). The "
+                f"picker has Done buttons at both top-right and bottom-right, so a positional "
+                f"click that misses its target leaves the widget — refusing rather than reading "
+                f"a picker that is no longer there.")
+
     def clear_selection(self) -> None:
         """Untick every row via the header checkbox, never row by row.
 
@@ -953,6 +1006,18 @@ class AribaPicker:
         cost ~2 minutes (each toggle settles in ~1.5s); the header checkbox is the same cascade
         `_select_all_attachments` rides to turn every row ON, and it is just as fast in reverse
         (~10s) -- so this is that select-all's mirror image, not a loop over `set_selected`.
+
+        **It clicks what `_select_all_attachments` clicks: `label.w-chk`.** That is the visible,
+        CSS-drawn box, and it is the one locator on this widget measured working against the live
+        site ("select-all via mouse-label" is what the log prints). This used to take the box of
+        the enclosing `div.w-chk-container` instead — a larger box, whose centre is not
+        necessarily over the checkbox, on a page carrying a `Done` button at each end of the
+        picker. A live run went straight from this click to `Execution context was destroyed`
+        (#174), which is what leaving the picker looks like. Re-resolved and scrolled into view
+        at the moment of use, as `_locate` does: this runs straight after `row_keys`, which leaves
+        the list wherever its sweeps ended, and `bounding_box()` on an element above the viewport
+        yields a negative y — the click would land on nothing, `_settle` would burn its full 45s,
+        and the guard below would raise.
 
         The header checkbox TOGGLES the whole cascade rather than forcing it off, so a blind
         click here is only correct when something is already selected. Called with nothing
@@ -963,22 +1028,19 @@ class AribaPicker:
         immediately if it is already zero, and if the click-and-settle doesn't land on zero,
         raises rather than returning -- the batching loop assumes an empty picker to accumulate
         into, and handing it an unknown selection state is worse than stopping here.
-
-        The header is scrolled into view before its box is read, for the same reason `_locate`
-        does it: this runs straight after `row_keys`, which leaves the list scrolled to its END,
-        and `bounding_box()` on an element above the viewport yields a negative y. The click
-        would then land on nothing, `_settle` would burn its full 45s, and the guard below would
-        raise — blocking the one capture that needs this path at all.
         """
         if self._checked() == 0:
             return
-        loc = self.page.locator("div.w-chk-container").first
+        loc = self.page.locator("label.w-chk").first
         loc.scroll_into_view_if_needed(timeout=10000)
         self.page.wait_for_timeout(200)
         box = loc.bounding_box()
         if not box:
             raise RuntimeError("no bounding box for the header checkbox")
         self.page.mouse.click(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
+        # Before anything reads the page again: every read below is a page.evaluate, and one on a
+        # navigated page fails with an error that names neither the cause nor the click.
+        self._require_picker("clear_selection's header-checkbox click")
         self._settle(lambda n: n == 0)
         if self._checked() != 0:
             raise RuntimeError(

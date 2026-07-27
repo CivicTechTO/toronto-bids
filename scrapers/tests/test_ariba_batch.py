@@ -106,7 +106,7 @@ class FakePicker:
 def test_batches_never_exceed_the_threshold():
     picker = FakePicker({"1.1": 200, "1.2": 200, "1.3": 200, "1.4": 100})
 
-    batches, omitted = ariba_batch.accumulate_batches(picker, threshold_mb=450)
+    batches, omitted = ariba_batch.accumulate_batches(picker, picker.row_keys(), threshold_mb=450)
 
     assert omitted == []
     for batch in batches:
@@ -117,7 +117,7 @@ def test_batches_never_exceed_the_threshold():
 def test_it_packs_greedily_in_row_order():
     picker = FakePicker({"1.1": 300, "1.2": 100, "1.3": 400})
 
-    batches, _ = ariba_batch.accumulate_batches(picker, threshold_mb=450)
+    batches, _ = ariba_batch.accumulate_batches(picker, picker.row_keys(), threshold_mb=450)
 
     assert batches == [["1.1", "1.2"], ["1.3"]]
 
@@ -126,7 +126,7 @@ def test_a_single_row_over_the_ceiling_is_omitted_not_retried_forever():
     """It can never be captured; the bundle must still be able to complete."""
     picker = FakePicker({"1.1": 100, "big": 600, "1.2": 100})
 
-    batches, omitted = ariba_batch.accumulate_batches(picker, threshold_mb=450)
+    batches, omitted = ariba_batch.accumulate_batches(picker, picker.row_keys(), threshold_mb=450)
 
     assert omitted == ["big"]
     assert [k for b in batches for k in b] == ["1.1", "1.2"]
@@ -137,14 +137,14 @@ def test_an_unmeasurable_total_aborts_rather_than_guessing():
     picker = FakePicker({"1.1": 10}, unmeasurable=True)
 
     with pytest.raises(RuntimeError, match="could not read"):
-        ariba_batch.accumulate_batches(picker, threshold_mb=450)
+        ariba_batch.accumulate_batches(picker, picker.row_keys(), threshold_mb=450)
 
 
 def test_rows_are_addressed_by_key_never_by_index():
     """FakePicker raises on a non-str key; this passing proves no index addressing."""
     picker = FakePicker({"5.2.1.2.1.3": 10, "6.2.1": 20})
 
-    batches, _ = ariba_batch.accumulate_batches(picker, threshold_mb=450)
+    batches, _ = ariba_batch.accumulate_batches(picker, picker.row_keys(), threshold_mb=450)
 
     assert batches == [["5.2.1.2.1.3", "6.2.1"]]
 
@@ -153,7 +153,7 @@ def test_already_completed_keys_are_skipped_on_resume():
     picker = FakePicker({"1.1": 100, "1.2": 100, "1.3": 100})
 
     batches, _ = ariba_batch.accumulate_batches(
-        picker, threshold_mb=450, skip_keys={"1.1", "1.2"})
+        picker, picker.row_keys(), threshold_mb=450, skip_keys={"1.1", "1.2"})
 
     assert batches == [["1.3"]]
 
@@ -162,9 +162,52 @@ def test_it_leaves_nothing_selected_between_batches():
     """A flushed batch must not leak into the next one."""
     picker = FakePicker({"1.1": 300, "1.2": 300})
 
-    ariba_batch.accumulate_batches(picker, threshold_mb=450)
+    ariba_batch.accumulate_batches(picker, picker.row_keys(), threshold_mb=450)
 
     assert picker.selected == set()
+
+
+def test_it_plans_the_keys_it_is_given_and_never_re_enumerates():
+    """The row list is an ARGUMENT, not something the batcher fetches for itself (#174).
+
+    Live, `accumulate_batches` called `picker.row_keys()` a second time -- from an empty picker,
+    where the short-read guard's `expected_count` is unreadable -- and got 50 rows where the
+    guarded enumeration had got 84. A plan over less than two-thirds of the solicitation, and
+    one that could only ever disagree with the fingerprint every downstream check is written
+    against. This picker raises if anything re-reads it.
+    """
+    class NeverEnumerates(FakePicker):
+        def row_keys(self):
+            raise AssertionError("accumulate_batches must not re-enumerate the picker")
+
+    picker = NeverEnumerates({"1.1": 100, "1.2": 100, "1.3": 100})
+
+    batches, omitted = ariba_batch.accumulate_batches(
+        picker, ["1.1", "1.2", "1.3"], threshold_mb=450)
+
+    assert batches == [["1.1", "1.2", "1.3"]]
+    assert omitted == []
+
+
+def test_a_short_picker_read_cannot_shrink_the_plan(tmp_path):
+    """capture_in_batches plans the FINGERPRINT's rows, whatever the page would say now.
+
+    The picker here would enumerate one row of three -- exactly the live failure shape. The
+    capture must still cover all three and finalise, because the fingerprint is the authority.
+    """
+    class ShortRead(FakePicker):
+        def row_keys(self):
+            return ["1.1"]
+
+    picker = ShortRead({"1.1": 100, "1.2": 100, "1.3": 100})
+    fp = ariba_batch.make_fingerprint(["1.1", "1.2", "1.3"], 3, 300.0)
+
+    bundle = ariba_batch.capture_in_batches(
+        picker, "5713434353", tmp_path, fp, posting_open=True, threshold_mb=450)
+
+    assert bundle == tmp_path / "Doc5713434353.zip"
+    with zipfile.ZipFile(bundle) as zf:
+        assert sorted(zf.namelist()) == ["1.1.pdf", "1.2.pdf", "1.3.pdf"]
 
 
 def _make_zip(path, files: dict):
@@ -539,18 +582,34 @@ def test_a_batch_that_downloads_corrupt_does_not_finalise_the_bundle(tmp_path):
 
 def test_no_canonical_zip_while_a_planned_row_is_uncaptured(tmp_path):
     """Completion is measured against the fingerprint's own row list: every planned row must
-    be in a complete batch or recorded un-capturable. A row the picker no longer offers is a
-    gap, and a gap must leave the event pending rather than look finished."""
-    picker = FakePicker({"1.1": 300, "1.2": 300})
-    fp = ariba_batch.make_fingerprint(["1.1", "1.2", "1.3"], 3, 900.0)   # 1.3 never appears
+    be in a complete batch or recorded un-capturable. A gap must leave the event pending
+    rather than look finished -- capture_attachments gates on that filename existing."""
+    pdir = ariba_batch.partial_dir(tmp_path, "5713434353")
+    ariba_batch.write_sidecar(pdir, 1, ["1.1"])
+    _make_zip(pdir / "batch-01.zip", {"A.pdf": b"a"})
+    fp = ariba_batch.make_fingerprint(["1.1", "1.2"], 2, 600.0)    # 1.2 was never captured
 
-    result = ariba_batch.capture_in_batches(
-        picker, "5713434353", tmp_path, fp, posting_open=True, threshold_mb=450)
+    result = ariba_batch._finalise_live(pdir, "5713434353", tmp_path, fp, [], lambda _m: None)
 
     assert result is None
     assert not (tmp_path / "Doc5713434353.zip").exists()
-    pdir = ariba_batch.partial_dir(tmp_path, "5713434353")
-    assert sorted(p.name for p in pdir.glob("batch-*.zip")) == ["batch-01.zip", "batch-02.zip"]
+    assert (pdir / "batch-01.zip").exists()                        # partials kept for next run
+
+
+def test_a_planned_row_the_picker_no_longer_offers_fails_loudly(tmp_path):
+    """The plan is the fingerprint's, so a row that has since vanished from the picker is an
+    error, not a quiet omission (#174). FakePicker raises KeyError; the real adapter raises
+    `row <k> never appeared in the picker window` from `_locate`. Either way the event fails
+    this run, is isolated per-event by capture_attachments, and re-plans next run -- what must
+    not happen is a canonical zip written over the missing row."""
+    picker = FakePicker({"1.1": 300, "1.2": 300})
+    fp = ariba_batch.make_fingerprint(["1.1", "1.2", "1.3"], 3, 900.0)   # 1.3 never appears
+
+    with pytest.raises(KeyError):
+        ariba_batch.capture_in_batches(
+            picker, "5713434353", tmp_path, fp, posting_open=True, threshold_mb=450)
+
+    assert not (tmp_path / "Doc5713434353.zip").exists()
 
 
 def test_a_stale_fingerprint_discards_the_partials_and_replans(tmp_path):

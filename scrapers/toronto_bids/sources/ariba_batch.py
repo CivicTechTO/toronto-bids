@@ -117,12 +117,22 @@ def manifest_is_current(manifest, fingerprint: dict) -> bool:
     return manifest.get("fingerprint") == fingerprint
 
 
-def accumulate_batches(picker, threshold_mb: float = BATCH_THRESHOLD_MB,
+def accumulate_batches(picker, row_keys, threshold_mb: float = BATCH_THRESHOLD_MB,
                        skip_keys=(), log=lambda _m: None):
-    """Group the picker's rows into selections that each stay under `threshold_mb`.
+    """Group `row_keys` into selections that each stay under `threshold_mb`.
+
+    **`row_keys` is the plan, and it is given, never fetched.** It is the list the fingerprint
+    was built from -- enumerated ONCE, while the select-all was still in place, under
+    `row_keys(expected_count=...)`'s short-read guard. This function used to call
+    `picker.row_keys()` itself, which could only ever diverge from that list: the guard's
+    `expected_count` is unreadable from an empty picker, the page has been through a
+    clear_selection since, and a live run duly enumerated 84 rows the first time and 50 the
+    second -- a plan over less than two-thirds of the solicitation. Everything downstream (the
+    completeness gate in `_finalise_live`, the resume logic, `finalise_partial`'s
+    never-attempted diff) is written against the fingerprint's list, so this must be too.
 
     There is no per-row size in the picker -- the only way to learn a selection's size is to
-    select it and read the summary -- so this ticks one row at a time and measures. Rows are
+    select it and measure -- so this ticks one row at a time and reads the summary. Rows are
     addressed by OUTLINE KEY, never by index: the list is virtualised and indices are unstable
     across runs and even across scrolls.
 
@@ -145,16 +155,10 @@ def accumulate_batches(picker, threshold_mb: float = BATCH_THRESHOLD_MB,
         omitted.append(key)
         log(f"    row {key}: exceeds {threshold_mb:.0f} MB alone — omitted")
 
-    # This is the SECOND enumeration of the same list (capture_event ran the first, while
-    # everything was still selected, to build the fingerprint) and it is deliberately guarded
-    # differently: `expected_count` is unreadable here, because that figure only exists while a
-    # selection does and this loop starts from an empty picker. So a short read here is not
-    # caught at this line -- it is caught later, by _finalise_live's completeness gate, which
-    # walks the FINGERPRINT's row list and refuses to write the canonical zip while any planned
-    # row is uncaptured. The cost of a short read is therefore liveness (the event stays pending
-    # and re-plans next run), never a bundle finalised around a gap. Do not read the absence of
-    # an expected_count here as the guard covering both call sites.
-    for key in picker.row_keys():
+    # `row_keys` is the caller's list, enumerated once under the guard -- there is no second
+    # enumeration here to under-read (see the docstring). The picker is only written to and
+    # measured from this point on.
+    for key in row_keys:
         if key in skip:
             continue
         picker.set_selected(key, True)
@@ -481,8 +485,13 @@ def capture_in_batches(picker, document_number: str, dest_dir, fingerprint: dict
     if complete:
         log(f"  Doc{document_number}: resuming — {len(complete)} complete batch(es) on disk")
 
+    # The fingerprint's row list is the plan -- the same list `_finalise_live` gates completeness
+    # against below. Re-reading it off the picker here would be a second enumeration of a page
+    # whose state has changed since (the select-all is gone, so the short-read guard's
+    # `expected_count` is unreadable), and it could only ever diverge from what we are checked
+    # against: live, it read 50 rows where the guarded enumeration read 84.
     new_batches, new_omitted = accumulate_batches(
-        picker, threshold_mb=threshold_mb, skip_keys=done_keys, log=log)
+        picker, fingerprint["row_keys"], threshold_mb=threshold_mb, skip_keys=done_keys, log=log)
     omitted.extend(k for k in new_omitted if k not in omitted)
 
     # The manifest carries only the fingerprint and the un-capturable rows, neither of which
