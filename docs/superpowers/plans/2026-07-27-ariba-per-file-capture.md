@@ -606,7 +606,7 @@ class AribaFileSource:
         self.page.wait_for_timeout(500)
         opened = self._expand_references()
 
-        seen, out = set(), []
+        seen, out, occurrences = set(), [], {}
         for _ in range(30):
             before = len(seen)
             for entry in self.page.evaluate(
@@ -619,11 +619,27 @@ class AribaFileSource:
                 name = entry["name"]
                 if not _FILENAME.search(name) or name.startswith("http"):
                     continue
-                key = (name, entry["row"])
-                if key in seen:
+                dedupe = (name, entry["row"])
+                if dedupe in seen:
                     continue
-                seen.add(key)
-                out.append({"key": str(len(out)), "name": name, "row": entry["row"]})
+                seen.add(dedupe)
+                # KEY CONTRACT: stable across repeated traversals and INDEPENDENT OF POSITION.
+                # A positional key (an enumeration index) silently defeats ariba_files'
+                # fingerprint: the ordered (key, name) pairs come out byte-identical after a
+                # reorder, and a resumed run then adopts the files on disk positionally --
+                # reproducing the exact Critical that round found (one document twice, another
+                # lost, counts matching, no gap recorded). So the key is built from the row's
+                # own OUTLINE NUMBER (its position in the content tree, e.g. "3.1", which is a
+                # stable label rather than a traversal index) plus the filename, with an
+                # occurrence counter only for repeats inside one row.
+                outline = ""
+                m = re.match(r"\s*(\d+(?:\.\d+)*)\s", entry["row"])
+                if m:
+                    outline = m.group(1)
+                base = f"{outline}#{name}"
+                occurrences[base] = occurrences.get(base, 0) + 1
+                key = base if occurrences[base] == 1 else f"{base}#{occurrences[base]}"
+                out.append({"key": key, "name": name, "row": entry["row"]})
             self.page.mouse.wheel(0, 1200)
             self.page.wait_for_timeout(400)
             if len(seen) == before:
