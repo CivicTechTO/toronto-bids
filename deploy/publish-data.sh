@@ -150,18 +150,24 @@ if [ -z "${CLOUDFLARE_API_TOKEN:-}" ]; then
   echo "publish-data: R2 not configured (no CLOUDFLARE_API_TOKEN) — skipping the bucket mirror"
 elif [ "$DRY_RUN" = 1 ]; then
   echo "DRY-RUN wrangler r2 object put $R2_BUCKET/bids.sqlite --file $SQLITE --remote"
+elif ! . "$HERE/resolve-node.sh" || ! tb_resolve_node; then
+  # systemd's PATH is minimal AND carries Ubuntu's Node 20 npx, which satisfies a presence
+  # check but not wrangler (>= 22). Gating on presence is what silently killed this mirror for
+  # eight nights — see deploy/resolve-node.sh (#173).
+  # :-22 matters: if the source itself failed the var is unbound, and `set -u` would abort
+  # the whole publish over a best-effort mirror.
+  echo "publish-data: WARNING — no Node >= ${TB_NODE_MIN_MAJOR:-22} for wrangler;" \
+       "R2 mirror skipped (release is published)" >&2
 else
-  # systemd's PATH is minimal; make node/npx findable, preferring the newest nvm node.
-  if ! command -v npx >/dev/null 2>&1; then
-    _node_bin="$(ls -d "$HOME"/.nvm/versions/node/*/bin 2>/dev/null | sort -V | tail -1)"
-    [ -n "$_node_bin" ] && PATH="$_node_bin:$PATH"
-  fi
   # Pinned version so a warm npx cache is reused (no nightly re-resolve of "latest").
-  if npx -y wrangler@4.112.0 r2 object put "$R2_BUCKET/bids.sqlite" \
-        --file "$SQLITE" --remote --content-type application/x-sqlite3 >/dev/null 2>&1; then
+  # wrangler's stderr is CAPTURED, never discarded: sending it to /dev/null is precisely why
+  # this failed unnoticed from 2026-07-19 to 2026-07-27 (#173).
+  if _r2_err="$(npx -y wrangler@4.112.0 r2 object put "$R2_BUCKET/bids.sqlite" \
+        --file "$SQLITE" --remote --content-type application/x-sqlite3 2>&1 >/dev/null)"; then
     echo "publish-data: mirrored bids.sqlite to R2 bucket $R2_BUCKET"
   else
     echo "publish-data: WARNING — R2 upload of bids.sqlite failed (release is published)" >&2
+    printf 'publish-data: wrangler said: %s\n' "$_r2_err" >&2
   fi
 fi
 
