@@ -98,18 +98,41 @@ class FakeFileSource:
     the picker's count really can be unreadable and that path has to be reachable from a test.
     `append=True` models an adapter that appends to (rather than truncates) the path it is
     handed, which is what makes a leftover `.part` dangerous.
+
+    Without `keys`, identity defaults to `name#occurrence` (`_default_keys` below) -- stable
+    and INDEPENDENT of a file's position among files with different names, satisfying the `key`
+    contract in the module docstring for the common case. It still cannot tell apart two files
+    that share a name (there is no name-only way to do that): that case needs `keys=` passed
+    explicitly. A bare positional default (the index into the list) would look the same shape
+    but carry zero real identity, silently defeating exactly the fingerprint this module tests.
     """
 
     def __init__(self, names, expected=_UNSET, fail_on=(), contents=None, keys=None,
                  kill_on=(), append=False):
         self.names = list(names)
-        self.keys = list(keys) if keys is not None else [str(i) for i in range(len(self.names))]
+        self.keys = list(keys) if keys is not None else self._default_keys(self.names)
         self.expected = len(self.names) if expected is _UNSET else expected
         self.fail_on = set(fail_on)
         self.kill_on = set(kill_on)
         self.contents = contents or {}
         self.append = append
         self.downloaded = []
+
+    @staticmethod
+    def _default_keys(names):
+        """`name#occurrence` -- stable across calls and NOT derived from list position.
+
+        Two different names get different keys no matter where they sit in the list; two
+        occurrences of the SAME name get distinct-but-deterministic keys rather than colliding
+        on a bare index. Still cannot represent two DIFFERENT documents that share a name --
+        nothing about a name alone can -- so that case must pass `keys=` explicitly.
+        """
+        counts: dict = {}
+        out = []
+        for name in names:
+            counts[name] = counts.get(name, 0) + 1
+            out.append(f"{name}#{counts[name]}")
+        return out
 
     def list_files(self):
         return [{"key": k, "name": n, "row": n} for k, n in zip(self.keys, self.names)]
@@ -459,6 +482,158 @@ def test_finalise_partial_keeps_a_part_file_rather_than_deleting_it(tmp_path):
     assert json.loads((tmp_path / "Doc5713434353.omitted.json").read_text())["omitted"] == [
         "b.pdf"]
     assert (pdir / "files" / "b.pdf.part").exists()
+
+
+# --- F1: an unreadable (missing OR corrupt) manifest must not adopt partials positionally --
+
+def test_a_corrupt_manifest_discards_partials_instead_of_trusting_them_positionally(tmp_path):
+    """`files/report.pdf` already holds DOC-X on disk; the manifest is truncated/corrupt.
+
+    Pre-fix, `read_manifest` returning None fell straight through `if manifest and ...`
+    (None is falsy) without discarding anything, so the existing file was trusted
+    POSITIONALLY. This run's listing comes back reordered ([Y, X] instead of [X, Y]), so
+    `report.pdf` is adopted as already-complete for what is now Y's slot, Y's real bytes are
+    never fetched, and `report_2.pdf` downloads X again -- the bundle holds DOC-X twice, DOC-Y
+    never, and the counts match so no gap is recorded. That is the Critical verbatim, reached
+    through the "corrupt" half of `manifest is None` rather than the "missing" half.
+    """
+    doc = "5713434353"
+    pdir = ariba_files.partial_dir(tmp_path, doc)
+    (pdir / "files").mkdir(parents=True)
+    (pdir / "files" / "report.pdf").write_bytes(b"DOC-X")
+    (pdir / ariba_files.MANIFEST_NAME).write_text("{not valid json")   # truncated / corrupt
+
+    source = FakeFileSource(["report.pdf", "report.pdf"], keys=["Y", "X"],
+                            contents={"X": b"DOC-X", "Y": b"DOC-Y"})
+
+    bundle = ariba_files.capture_files(source, doc, tmp_path)
+
+    with zipfile.ZipFile(bundle) as zf:
+        assert {zf.read(n) for n in zf.namelist()} == {b"DOC-X", b"DOC-Y"}   # neither lost
+    assert not (tmp_path / f"Doc{doc}.omitted.json").exists()       # nothing missing, no gap
+    assert source.downloaded.count("report.pdf") == 2                # both re-fetched, not adopted
+
+
+# --- F2: the fingerprint's identity guarantee needs keys that are stable and non-positional -
+
+def test_a_stable_nonsequential_key_reorder_survives_after_an_interrupted_run(tmp_path):
+    """Same shape as the archive-corrupting case, with keys that are not sequential integers.
+
+    `key` only defends the fingerprint if it is stable across traversals and independent of
+    position -- never derived from a file's index in the listing. This pins that contract with
+    arbitrary, non-sequential identifiers rather than "0"/"1", so a regression that silently
+    made key derivation positional again (in `FakeFileSource`'s default, or in a real adapter)
+    could not hide behind keys that merely happen to look like stable strings.
+    """
+    doc = "5713434353"
+    contents = {"aria-QQ7": b"DOC-Q", "aria-ZZ2": b"DOC-Z"}
+    run1 = FakeFileSource(["report.pdf", "report.pdf"], keys=["aria-QQ7", "aria-ZZ2"],
+                          contents=contents, kill_on=["aria-ZZ2"])
+    with pytest.raises(KeyboardInterrupt):
+        ariba_files.capture_files(run1, doc, tmp_path)
+    assert (ariba_files.partial_dir(tmp_path, doc) / "files" / "report.pdf").exists()
+
+    run2 = FakeFileSource(["report.pdf", "report.pdf"], keys=["aria-ZZ2", "aria-QQ7"],
+                          contents=contents)
+    bundle = ariba_files.capture_files(run2, doc, tmp_path)
+
+    with zipfile.ZipFile(bundle) as zf:
+        assert {zf.read(n) for n in zf.namelist()} == {b"DOC-Q", b"DOC-Z"}   # neither lost
+    assert not (tmp_path / f"Doc{doc}.omitted.json").exists()
+
+
+def test_fake_file_source_default_keys_are_not_positional(tmp_path):
+    """The fake's default (no `keys=` given) must satisfy the same contract real adapters do.
+
+    A file's default key must depend on its NAME, not the index it happens to sit at: two
+    unique names get the same keys regardless of order, and duplicates of the same name get
+    distinct-but-deterministic keys (`name#occurrence`) rather than colliding on a bare index.
+    """
+    forward = {f["name"]: f["key"] for f in FakeFileSource(["a.pdf", "b.pdf"]).list_files()}
+    backward = {f["name"]: f["key"] for f in FakeFileSource(["b.pdf", "a.pdf"]).list_files()}
+    assert forward == backward           # same identity regardless of position in the listing
+
+    dup_keys = [f["key"] for f in FakeFileSource(["dup.pdf", "dup.pdf"]).list_files()]
+    assert len(set(dup_keys)) == 2       # distinct, not both "dup.pdf" nor a bare index
+    assert dup_keys != ["0", "1"]        # not the old positional default
+
+
+# --- Minor 3: the stale-record unlink must run AFTER the bundle, never before ---------------
+
+def test_a_stale_gap_record_survives_if_the_bundle_write_then_fails(tmp_path, monkeypatch):
+    """A previous run left a real gap recorded. This run has nothing missing, but the bundle
+    write itself then fails, so `Doc<n>.zip` never lands. If the stale record were cleared up
+    front (before `build_bundle` even runs) "absence means nothing is missing" becomes false:
+    no bundle stands, and now nothing describes why.
+    """
+    stale = tmp_path / "Doc5713434353.omitted.json"
+    stale.write_text(json.dumps({"omitted": ["gone.pdf"], "expected_files": 2,
+                                 "actual_files": 1}))
+    source = FakeFileSource(["a.pdf"])
+
+    def boom(files, target):
+        raise OSError("ENOSPC: no space left on device")
+
+    monkeypatch.setattr(ariba_files, "build_bundle", boom)
+
+    with pytest.raises(OSError):
+        ariba_files.capture_files(source, "5713434353", tmp_path)
+
+    assert stale.exists()                                    # not cleared -- no bundle landed
+    assert not (tmp_path / "Doc5713434353.zip").exists()
+
+
+def test_finalise_partial_keeps_a_stale_gap_record_if_the_bundle_write_then_fails(
+        tmp_path, monkeypatch):
+    """`finalise_partial` has the same shape as `capture_files` here -- see the test above."""
+    stale = tmp_path / "Doc5713434353.omitted.json"
+    stale.write_text(json.dumps({"omitted": ["gone.pdf"], "expected_files": 2,
+                                 "actual_files": 1}))
+    source = FakeFileSource(["a.pdf"])
+    pdir = ariba_files.partial_dir(tmp_path, "5713434353")
+    (pdir / "files").mkdir(parents=True)
+    (pdir / "files" / "a.pdf").write_bytes(b"aaa")
+    ariba_files.write_manifest(pdir, ariba_files.make_fingerprint(source.list_files(), 1))
+
+    def boom(files, target):
+        raise OSError("ENOSPC: no space left on device")
+
+    monkeypatch.setattr(ariba_files, "build_bundle", boom)
+
+    with pytest.raises(OSError):
+        ariba_files.finalise_partial("5713434353", tmp_path, posting_open=False)
+
+    assert stale.exists()
+    assert not (tmp_path / "Doc5713434353.zip").exists()
+
+
+# --- Minor 5: a gap must name a duplicate by its disambiguated zip name, not a bare label ---
+
+def test_omitted_names_a_duplicate_by_its_disambiguated_zip_name(tmp_path):
+    """Two `report.pdf`s, one fails -- the gap record must say WHICH one, not just the label."""
+    source = FakeFileSource(["report.pdf", "report.pdf"], keys=["A", "B"], fail_on=["B"])
+
+    bundle = ariba_files.capture_files(source, "5713434353", tmp_path)
+
+    with zipfile.ZipFile(bundle) as zf:
+        assert zf.namelist() == ["report.pdf"]
+    body = json.loads((tmp_path / "Doc5713434353.omitted.json").read_text())
+    assert body["omitted"] == ["report_2.pdf"]           # not the ambiguous "report.pdf"
+
+
+def test_finalise_partial_names_a_duplicate_omission_by_its_disambiguated_zip_name(tmp_path):
+    source = FakeFileSource(["report.pdf", "report.pdf"], keys=["A", "B"])
+    pdir = ariba_files.partial_dir(tmp_path, "5713434353")
+    (pdir / "files").mkdir(parents=True)
+    (pdir / "files" / "report.pdf").write_bytes(b"AAA")      # only the first is on disk
+    ariba_files.write_manifest(pdir, ariba_files.make_fingerprint(source.list_files(), 2))
+
+    bundle = ariba_files.finalise_partial("5713434353", tmp_path, posting_open=False)
+
+    with zipfile.ZipFile(bundle) as zf:
+        assert zf.namelist() == ["report.pdf"]
+    body = json.loads((tmp_path / "Doc5713434353.omitted.json").read_text())
+    assert body["omitted"] == ["report_2.pdf"]
 
 
 def test_finalise_partial_salvages_files_a_lost_manifest_cannot_name(tmp_path):

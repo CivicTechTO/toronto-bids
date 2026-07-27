@@ -19,6 +19,13 @@ a 3-method FileSource protocol:
     download(file, dest)  -> Path                 TRUNCATES and saves to EXACTLY dest, or raises
     expected_count()      -> int | None           the picker's authoritative Total Number
 
+`key` CONTRACT: it must be STABLE across repeated traversals of the same event and INDEPENDENT
+of position -- never derived from a file's index in the listing. `make_fingerprint` below keys
+on the ordered `(key, name)` pairs precisely so a resumed run can tell whether the same document
+is still in the same slot; a positional key (`str(index)`) trivially has the right shape while
+carrying zero identity information, which silently defeats that fingerprint the moment two files
+share a name -- see `make_fingerprint`'s docstring for the exact reproduction.
+
 `download` writes to the path it is handed and nothing else: the `.part` staging and the
 os.replace live here, because atomicity is the property most worth testing and the adapter is
 the half that cannot be unit-tested. It must TRUNCATE that path rather than append to or
@@ -139,7 +146,7 @@ def read_manifest(pdir):
     try:
         return json.loads(path.read_text())
     except (OSError, json.JSONDecodeError):
-        return None            # missing OR corrupt degrades to "no manifest" -- re-traverse
+        return None            # missing OR corrupt: callers discard partials and re-traverse
 
 
 def write_manifest(pdir, fingerprint: dict) -> Path:
@@ -157,21 +164,38 @@ def write_omitted(bundle_path, omitted, expected_files, actual_files):
 
     Written only when something is actually missing, so its ABSENCE is meaningful evidence that
     nothing is. It outlives the capture (the partial manifest does not), so a gap is greppable
-    later without reading logs.
+    later without reading logs. Atomic (tmp + os.replace), the same way the ephemeral
+    `write_manifest` is -- this is the durable artifact and deserves at least as much care.
 
-    Which is exactly why the complete case UNLINKS rather than merely returning: a capture that
-    omitted a file and a later run that captured everything write the same bundle path, and a
-    stale record left beside it would go on claiming a gap that no longer exists. "Absence means
-    nothing is missing" only holds if absence is something this function actively produces.
+    A no-op (returns None, touches nothing on disk) when there is nothing to record. Clearing a
+    STALE record from an EARLIER run is a different decision with a different timing requirement
+    -- see `clear_omitted_when_complete`, which must run only after the bundle itself exists.
     """
-    path = Path(bundle_path).with_suffix(".omitted.json")
     if not omitted and expected_files == actual_files:
-        path.unlink(missing_ok=True)
         return None
-    path.write_text(json.dumps(
+    path = Path(bundle_path).with_suffix(".omitted.json")
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    tmp.write_text(json.dumps(
         {"omitted": list(omitted), "expected_files": expected_files,
          "actual_files": actual_files}, indent=2))
+    os.replace(tmp, path)
     return path
+
+
+def clear_omitted_when_complete(bundle_path, omitted, expected_files, actual_files):
+    """Unlink a stale gap record left by an EARLIER run, now that this run is complete.
+
+    Call this only AFTER `build_bundle` has returned successfully. A capture that once omitted
+    a file and a later run that captures everything write the same bundle path, and a stale
+    record left beside it would go on claiming a gap that no longer exists -- but "absence means
+    nothing is missing" only holds if the bundle backing that claim actually landed. Clearing
+    the record before `build_bundle` runs (or while it might still fail) would leave an
+    incomplete or entirely absent `Doc<n>.zip` standing next to a gap record that was just
+    erased -- exactly the state this whole mechanism exists to prevent.
+    """
+    if omitted or expected_files != actual_files:
+        return
+    Path(bundle_path).with_suffix(".omitted.json").unlink(missing_ok=True)
 
 
 def capture_files(source, document_number: str, dest_dir, log=lambda _m: None):
@@ -192,7 +216,17 @@ def capture_files(source, document_number: str, dest_dir, log=lambda _m: None):
     fingerprint = make_fingerprint(files, expected)
     pdir = partial_dir(dest_dir, document_number)
     manifest = read_manifest(pdir)
-    if manifest and manifest.get("fingerprint") != fingerprint:
+    if manifest is None:
+        # Missing OR corrupt: `read_manifest` cannot tell "no partials yet" from "a manifest we
+        # cannot trust", so both must discard rather than fall through and adopt whatever is
+        # already in `files/` POSITIONALLY -- the sibling batched capture (ariba_batch.py's
+        # `capture_in_batches`) makes the identical call for the identical reason. Discarding an
+        # empty or nonexistent directory costs nothing.
+        if pdir.exists():
+            log(f"  Doc{document_number}: missing/unreadable manifest — discarding partials "
+                f"and restarting")
+        shutil.rmtree(pdir, ignore_errors=True)
+    elif manifest.get("fingerprint") != fingerprint:
         log(f"  Doc{document_number}: event changed since the last run — discarding partials")
         shutil.rmtree(pdir, ignore_errors=True)
     fdir = pdir / "files"
@@ -229,7 +263,11 @@ def capture_files(source, document_number: str, dest_dir, log=lambda _m: None):
                 # `.tmp`, then let it through. Recording an interrupt as "this file is missing
                 # from Ariba" would be a false durable claim about the event.
                 raise
-            omitted.append(entry["name"])
+            # Recorded by its DISAMBIGUATED zip name, not the raw label: `unique_names` exists
+            # precisely because names collide, so a bare label ("report.pdf") cannot say WHICH
+            # of two same-named documents this is. `zip_name` is already in scope for exactly
+            # this entry.
+            omitted.append(zip_name)
             log(f"    {entry['name']}: download failed ({exc}) — omitted")
             continue
         captured.append((dest, zip_name))
@@ -245,9 +283,15 @@ def capture_files(source, document_number: str, dest_dir, log=lambda _m: None):
     # record whose ABSENCE means "nothing is missing" would be the thing that went missing. A
     # record with no bundle beside it is the harmless direction: nothing reads it, and the next
     # run rewrites it.
+    #
+    # Clearing a STALE record from an earlier run runs in the OPPOSITE order: only after
+    # `build_bundle` has actually landed the new bundle, never before it or around a failure --
+    # an incomplete or absent `Doc<n>.zip` standing beside a just-erased gap record would make
+    # "absence means nothing is missing" false.
     target = dest_dir / f"Doc{document_number}.zip"
     write_omitted(target, omitted, expected, len(captured))
     build_bundle(captured, target)
+    clear_omitted_when_complete(target, omitted, expected, len(captured))
     shutil.rmtree(pdir, ignore_errors=True)
     log(f"  Doc{document_number}: captured {len(captured)} file(s) -> {target.name}")
     return target
@@ -295,7 +339,9 @@ def finalise_partial(document_number: str, dest_dir, *, posting_open: bool,
             captured.append((path, zip_name))
             taken.add(zip_name)
         else:
-            omitted.append(pair[1])
+            # Disambiguated zip name, not the raw label -- see the identical comment in
+            # capture_files.
+            omitted.append(zip_name)
 
     leftover = []
     if fdir.is_dir():
@@ -313,9 +359,11 @@ def finalise_partial(document_number: str, dest_dir, *, posting_open: bool,
         return None
 
     target = dest_dir / f"Doc{document_number}.zip"
-    # Gap record first, for the same reason capture_files does it: see the comment there.
+    # Gap record first, and the stale-clear only after `build_bundle` succeeds -- for the same
+    # reasons capture_files does both: see the comments there.
     write_omitted(target, omitted, fingerprint.get("expected_count"), len(captured))
     build_bundle(captured, target)
+    clear_omitted_when_complete(target, omitted, fingerprint.get("expected_count"), len(captured))
     if leftover:
         log(f"  Doc{document_number}: {len(leftover)} interrupted transfer(s) kept in {pdir} — "
             f"bytes that can never be re-fetched are not deleted")
