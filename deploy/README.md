@@ -195,6 +195,16 @@ so the URL is stable), reusing `CLOUDFLARE_API_TOKEN` via `wrangler`. The step i
 Public URL: `https://pub-99a890c186c743c19ef7bcd00024dca8.r2.dev/bids.sqlite`
 (Datasette-Lite: `https://lite.datasette.io/?url=<that URL>`).
 
+**This step needs Node >= 22, and the distro's Node is not it (#173).** Ubuntu's `nodejs`
+package installs `/usr/bin/node` + `/usr/bin/npx` at **v20**, and `/usr/bin` *is* on systemd's
+minimal PATH — so a `command -v npx` check passes on the server while `wrangler` (>= 4 requires
+Node >= 22) exits 1 immediately. That combination silently broke this mirror on every nightly
+run from 2026-07-19 to 2026-07-27: the commands above work when you paste them into a login
+shell (nvm's Node is first on *your* PATH) and fail under systemd. `deploy/resolve-node.sh`
+now resolves a Node by **version, never by presence**, preferring the newest suitable nvm
+install; `TB_NODE_MIN_MAJOR` tracks wrangler's floor. Keep an nvm Node >= 22 installed on the
+box — there is no other source of one.
+
 **One-time R2 setup** (already done for the current deployment):
 
 ```shell
