@@ -802,6 +802,47 @@ def test_finalise_partial_names_rows_that_never_got_a_sidecar(tmp_path):
     assert body["omitted"] == ["1.2", "1.3"]
 
 
+def test_finalise_partial_does_not_flag_rows_covered_by_an_anonymous_zip(tmp_path):
+    """An unidentified-but-openable zip's rows are unknowable, not never-attempted. Its bytes
+    land in the bundle, but nothing names which rows they satisfy -- so the never-attempted
+    diff, which only credits rows found in a sidecar-named `complete` batch, cannot tell those
+    rows apart from ones truly never attempted. Before the fix, this produced a spurious
+    `.omitted.json` claiming row "1.2" was lost even though batch-02's bytes (holding "1.2"'s
+    content) are sitting right there in the merged bundle -- a numerically complete 2-of-2
+    merge falsely reported as incomplete (#174)."""
+    pdir = ariba_batch.partial_dir(tmp_path, "5713434353")
+    ariba_batch.write_sidecar(pdir, 1, ["1.1"])
+    _make_zip(pdir / "batch-01.zip", {"A.pdf": b"a"})
+    _make_zip(pdir / "batch-02.zip", {"B.pdf": b"b"})   # no sidecar; holds row "1.2"'s content
+    ariba_batch.write_manifest(
+        pdir, ariba_batch.make_fingerprint(["1.1", "1.2"], 2, 2.0), omitted=[])
+
+    bundle = ariba_batch.finalise_partial("5713434353", tmp_path, posting_open=False)
+
+    with zipfile.ZipFile(bundle) as zf:
+        assert sorted(zf.namelist()) == ["A.pdf", "B.pdf"]
+    # A complete 2-of-2 merge must not carry a record claiming data loss.
+    assert not (tmp_path / "Doc5713434353.omitted.json").exists()
+
+
+def test_finalise_partial_still_names_genuinely_never_attempted_rows(tmp_path):
+    """No anonymous zip merges here, so the never-attempted diff still applies and still
+    catches a row that was planned but never even got a batch number before the posting
+    closed -- confirming the guard above only suppresses the diff when it would actually be
+    ambiguous, not whenever salvage runs."""
+    pdir = ariba_batch.partial_dir(tmp_path, "5713434353")
+    ariba_batch.write_sidecar(pdir, 1, ["1.1"])
+    _make_zip(pdir / "batch-01.zip", {"A.pdf": b"a"})
+    ariba_batch.write_manifest(
+        pdir, ariba_batch.make_fingerprint(["1.1", "1.2"], 2, 2.0), omitted=[])
+
+    bundle = ariba_batch.finalise_partial("5713434353", tmp_path, posting_open=False)
+
+    assert bundle == tmp_path / "Doc5713434353.zip"
+    body = json.loads((tmp_path / "Doc5713434353.omitted.json").read_text())
+    assert body["omitted"] == ["1.2"]
+
+
 def test_read_manifest_returns_none_on_corrupt_json(tmp_path):
     """A torn write (crash mid-write, or corruption at rest) must degrade to "no manifest"
     rather than raising -- an uncaught JSONDecodeError here would abort the whole capture."""

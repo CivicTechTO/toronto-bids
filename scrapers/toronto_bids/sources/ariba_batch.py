@@ -615,6 +615,9 @@ def finalise_partial(document_number: str, dest_dir, *, posting_open: bool,
     complete, interrupted, unidentified = scan_batches(pdir)
     parts = [b["zip"] for b in complete]
     unreadable = []
+    # Whether an unidentified-but-openable zip went into `parts`. Its bytes are merged, but
+    # nothing names which rows it holds -- see the guard on the never-attempted diff below.
+    anonymous_merged = False
 
     for entry in interrupted:
         log(f"  Doc{document_number}: batch {entry['number']:02d} never completed — its "
@@ -636,6 +639,7 @@ def finalise_partial(document_number: str, dest_dir, *, posting_open: bool,
             log(f"  Doc{document_number}: {path.name} has no sidecar — merged anyway, its rows "
                 f"are unknown")
             parts.append(path)
+            anonymous_merged = True
         else:
             log(f"  Doc{document_number}: {path.name} will not open — skipped, rows unknown")
             unreadable.append(path.name)
@@ -644,8 +648,17 @@ def finalise_partial(document_number: str, dest_dir, *, posting_open: bool,
     # posting closed, before that row was ever attempted) is a gap `interrupted` cannot see --
     # there is no batch number to iterate. Reuse _finalise_live's own expression so salvage names
     # the specific rows lost instead of only shrinking `expected_files` vs `actual_files`.
+    #
+    # But this diff is only trustworthy when NOTHING went into `parts` anonymously: it credits a
+    # row as "attempted" only by finding it in a sidecar-named `complete` batch, so a row whose
+    # bytes rode in on an unidentified-but-openable zip looks identical to one truly never
+    # attempted -- the diff cannot tell "unknown identity" from "never happened". Flagging it as
+    # omitted would be a false claim of data loss for bytes that are sitting right there in the
+    # bundle this run just wrote. When that ambiguity exists, fall back to the weaker
+    # expected_files/actual_files comparison `write_omitted` already does -- which exists
+    # precisely for cases like this one, where we cannot say more than "the counts don't match".
     fingerprint = manifest.get("fingerprint") if manifest else None
-    if fingerprint:
+    if fingerprint and not anonymous_merged:
         captured = {k for b in complete for k in b["row_keys"]}
         covered = captured | set(omitted)
         never_attempted = [k for k in (fingerprint.get("row_keys") or []) if k not in covered]
