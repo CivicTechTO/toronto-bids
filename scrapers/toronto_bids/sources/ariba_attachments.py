@@ -1004,14 +1004,35 @@ class AribaPicker:
         pair is only returned once `key` still sits at the index the locator was resolved from;
         otherwise the loop simply re-resolves against the new rendering (the row is in view by
         then, so `scroll_into_view_if_needed` is a no-op and the second pass agrees).
+
+        **Hovers the row list before every wheel (#174).** Playwright dispatches `mouse.wheel`
+        wherever the mouse last was -- it does not target an element. `row_keys` already gets
+        this right by calling `_hover_row_list()` before each of its scrolls; this method used
+        to wheel blind, so whenever the cursor was left elsewhere (concretely: `clear_selection`
+        parks it on the header checkbox, off the scrollable list, right before the batching loop
+        starts calling this once per row) every wheel here was a no-op. A live run showed the
+        symptom exactly: 84 rows enumerated, direction correctly computed as "up" for a
+        low-numbered target, yet the window stayed pinned to the bottom 50 keys through the
+        whole retry budget. Re-resolved on every call, same as `_hover_row_list` documents.
+
+        **A wheel that does nothing is not evidence the row is absent (#174).** Before this fix
+        the two looked identical: both exhaust the retry budget and land on the same "never
+        appeared" message. So each pass takes a window signature (keyed keys + unkeyed text)
+        before scrolling and compares it to the previous pass's signature; if the window reads
+        identically across a couple of consecutive scroll attempts, that is treated as proof the
+        wheel isn't landing and raised as its own distinct error -- separate from, and checked
+        before, the generic exhaustion case below.
         """
         target = _outline_sort_key(key)
         searched_up = searched_down = False
         last_window = "(never read)"
+        prev_signature = None
+        stalled = 0
+        STALL_LIMIT = 2                    # consecutive no-op scrolls before calling it a dead wheel
         for _ in range(40):
-            rendered = self._rendered()
-            if key in rendered:
-                index = rendered[key]
+            keyed, unkeyed = self._rendered_split()
+            if key in keyed:
+                index = keyed[key]
                 loc = self.page.locator("div.w-chk-container").nth(index)
                 loc.scroll_into_view_if_needed(timeout=10000)
                 self.page.wait_for_timeout(200)
@@ -1019,11 +1040,13 @@ class AribaPicker:
                     return loc, index
                 continue                       # the scroll slid the window — re-resolve
 
-            if rendered:
-                direction = self._direction_to(target, rendered)
-                last_window = f"keys {sorted(rendered, key=_outline_sort_key)}"
+            signature = (tuple(sorted(keyed)), tuple(sorted(unkeyed)))
+            if keyed:
+                direction = self._direction_to(target, keyed)
+                last_window = f"keys {sorted(keyed, key=_outline_sort_key)}"
                 searched_up = searched_up or direction < 0
                 searched_down = searched_down or direction > 0
+                self._hover_row_list()
                 self.page.mouse.wheel(0, 2000 * direction)
                 self.page.wait_for_timeout(300)
             else:
@@ -1031,9 +1054,22 @@ class AribaPicker:
                 direction = -1 if not searched_up else 1
                 searched_up = searched_up or direction < 0
                 searched_down = searched_down or direction > 0
-                self._sweep_to_edge(direction)
-                _, unkeyed = self._rendered_split()
+                self._sweep_to_edge(direction)     # hovers internally, same discipline
                 last_window = f"no keyed rows (unkeyed: {sorted(unkeyed)})"
+
+            if signature == prev_signature:
+                stalled += 1
+                if stalled >= STALL_LIMIT:
+                    raise RuntimeError(
+                        f"row {key}: the picker window has not changed across "
+                        f"{stalled + 1} consecutive scroll attempts -- the wheel is not "
+                        "reaching the row list (mouse likely parked off the scrollable list, "
+                        "e.g. on the header checkbox from a prior click), which is evidence "
+                        f"the scroll is dead, not that row {key} is absent. window held "
+                        f"{last_window}")
+            else:
+                stalled = 0
+            prev_signature = signature
 
         directions = ", ".join(
             d for d, tried in (("up", searched_up), ("down", searched_down)) if tried
