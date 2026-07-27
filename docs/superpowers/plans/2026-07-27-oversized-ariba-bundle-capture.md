@@ -352,6 +352,11 @@ def accumulate_batches(picker, threshold_mb: float = BATCH_THRESHOLD_MB,
                 "could not read the picker's Total Size -- refusing to guess at batch sizes")
         return total
 
+    def omit(key):
+        """A row over the threshold ALONE can never be captured, in any batch."""
+        omitted.append(key)
+        log(f"    row {key}: exceeds {threshold_mb:.0f} MB alone — omitted")
+
     for key in picker.row_keys():
         if key in skip:
             continue
@@ -364,9 +369,7 @@ def accumulate_batches(picker, threshold_mb: float = BATCH_THRESHOLD_MB,
         # Over the line. Back this row out and decide what it means.
         picker.set_selected(key, False)
         if not current:
-            # It is over the threshold on its own -- uncapturable, not merely awkward.
-            omitted.append(key)
-            log(f"    row {key}: exceeds {threshold_mb:.0f} MB alone — omitted")
+            omit(key)
             continue
 
         batches.append(current)
@@ -376,8 +379,7 @@ def accumulate_batches(picker, threshold_mb: float = BATCH_THRESHOLD_MB,
         picker.set_selected(key, True)
         if measure() > threshold_mb:          # alone it still does not fit
             picker.set_selected(key, False)
-            omitted.append(key)
-            log(f"    row {key}: exceeds {threshold_mb:.0f} MB alone — omitted")
+            omit(key)
             current = []
 
     if current:
