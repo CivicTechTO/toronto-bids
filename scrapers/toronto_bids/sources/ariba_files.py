@@ -15,16 +15,24 @@ it, its layout is our choice, which is why naming matters here and never did bef
 This module is PURE -- no Playwright import. The adapter lives in ariba_attachments.py, above
 a 3-method FileSource protocol:
 
-    list_files()          -> [{key, name, row}]   traversal, including expanding References
+    list_files()          -> [{key, name, row, ordinal}]  traversal, References expanded
     download(file, dest)  -> Path                 TRUNCATES and saves to EXACTLY dest, or raises
     expected_count()      -> int | None           the picker's authoritative Total Number
 
+**Every PURE decision in that traversal lives here, not in the adapter** -- `is_document_name`
+(which labels name a document), `anchor_key` (what a listed file IS), `listing_from_anchors`
+(which repeats are duplicates, and what was discarded) and `order_listing`. They were written
+inside the Playwright class, which is untestable by convention, and two of them are what the
+archive's integrity rests on. The adapter reads the DOM and clicks; it decides nothing.
+
 `key` CONTRACT: it must be STABLE across repeated traversals of the same event and INDEPENDENT
-of position -- never derived from a file's index in the listing. `make_fingerprint` below keys
-on the ordered `(key, name)` pairs precisely so a resumed run can tell whether the same document
-is still in the same slot; a positional key (`str(index)`) trivially has the right shape while
-carrying zero identity information, which silently defeats that fingerprint the moment two files
-share a name -- see `make_fingerprint`'s docstring for the exact reproduction.
+of position -- never derived from a file's index in the listing, and never from a counter that
+increments in traversal order, which is the same thing wearing a different name (see
+`anchor_key`). `make_fingerprint` below keys on the ordered `(key, name)` pairs precisely so a
+resumed run can tell whether the same document is still in the same slot; a positional key
+(`str(index)`) trivially has the right shape while carrying zero identity information, which
+silently defeats that fingerprint the moment two files share a name -- see `make_fingerprint`'s
+docstring for the exact reproduction.
 
 `download` writes to the path it is handed and nothing else: the `.part` staging and the
 os.replace live here, because atomicity is the property most worth testing and the adapter is
@@ -44,9 +52,145 @@ Design: docs/superpowers/specs/2026-07-27-ariba-per-file-capture-design.md
 """
 import json
 import os
+import re
 import shutil
 import zipfile
 from pathlib import Path
+
+# Extensions a City solicitation actually publishes. NOT anchored to end-of-string: a content-tree
+# anchor routinely renders its own size after the filename ("Appendix C2.pdf (1.2 MB)"), and the
+# `$`-anchored pattern this replaces silently skipped every one of those -- a document missing
+# from an archive that cannot be re-fetched. `(?![A-Za-z0-9])` keeps `notes.pdfx` out while
+# letting anything non-alphanumeric (space, comma, bracket, end) follow the extension.
+#
+# The list is deliberately wider than "what we have seen": drawings arrive as .dwf/.dxf beside
+# .dwg, pricing forms as macro-enabled .xlsm, scans as .tif, correspondence as .msg/.eml, and
+# bundles as .7z/.gz/.tar/.rar/.kmz. Every omission here is a silent drop, so err wide -- a
+# non-document that slips through fails loudly at download, which is the recoverable direction.
+_DOCUMENT_EXTENSION = re.compile(
+    r"\.(7z|bmp|csv|dgn|docx?|dwf|dwg|dxf|eml|gif|gz|jpe?g|kmz|msg|odt|pdf|png|pptx?|rar|rtf|"
+    r"tar|tiff?|txt|xlsm|xlsx?|xml|zip)(?![A-Za-z0-9])", re.I)
+
+# A row that LEADS with an outline number ("3.1 Drawings Package ...") -- the content tree's own
+# address for that row, and the most stable identity a row can offer. Sub-rows behind a
+# `References` toggle carry none, which is exactly the case the adapter's old key got wrong.
+_OUTLINE = re.compile(r"^(\d+(?:\.\d+)*)(?:\s|$)")
+
+
+def is_document_name(name) -> bool:
+    """Whether an anchor's label names a downloadable document. PURE.
+
+    A URL is not a document label: the content tree carries ordinary hyperlinks beside its
+    attachments, and one ending in `.pdf` would otherwise be planned as a file to download.
+    """
+    text = " ".join((name or "").replace("\xa0", " ").split())
+    if not text or text.lower().startswith(("http://", "https://", "www.")):
+        return False
+    return bool(_DOCUMENT_EXTENSION.search(text))
+
+
+def row_identity(row_text) -> str:
+    """The tree row an anchor sits in, as a stable string. PURE.
+
+    The row's outline number when it has one -- the tree's own address, unchanged by anything
+    the traversal does -- and the row's flattened text otherwise. Both are properties of the
+    document's PLACE; neither is a fact about when a traversal reached it.
+    """
+    text = " ".join((row_text or "").replace("\xa0", " ").split())
+    m = _OUTLINE.match(text)
+    return m.group(1) if m else text
+
+
+def anchor_key(anchor) -> str:
+    """A listed file's IDENTITY: row identity + within-row ordinal + filename. PURE.
+
+    **The one thing this must not be is positional.** The key the adapter used to build was
+    `outline#name` plus an occurrence counter that incremented in TRAVERSAL ORDER, so two files
+    sharing a base got `#2` for *when they were seen* rather than for *what they are*. That is
+    a positional key wearing a stable key's clothes, and it defeats `make_fingerprint` exactly
+    as the module docstring warns: the ordered (key, name) pairs come back byte-identical after
+    a reorder, the resumed run adopts the partials, the listing is zipped against `unique_names`
+    positionally, and the bundle holds one document twice and another never -- counts matching,
+    so no gap is recorded. Silently wrong, permanently.
+
+    Two reachable routes made that reproducible rather than theoretical. A `References` sub-row
+    is its own `<tr>` whose text does not lead with a number, so `outline` was `""` for **every
+    file behind every toggle** -- and the bulk of the files live there. And two rows can share
+    an outline number's row text. Neither "degrades safely": the fallback WAS the positional
+    counter.
+
+    The ordinal fixes it because a row's DOM order is a property of the row, not of the sweep
+    that read it -- the anchor is the 2nd link in row 3.1 no matter which pass sees it, which
+    is precisely what a listing index can never say.
+    """
+    ordinal = anchor.get("ordinal")
+    try:
+        ordinal = int(ordinal)
+    except (TypeError, ValueError):
+        ordinal = 0
+    name = " ".join((anchor.get("name") or "").replace("\xa0", " ").split())
+    return f"{row_identity(anchor.get('row'))}#{ordinal}#{name}"
+
+
+def listing_from_anchors(anchors) -> dict:
+    """One DOM read of every `<a>` -> `{files, rejected, collided}`. PURE.
+
+    `anchors` are `{name, row, ordinal}` dicts in DOM order; any other field they carry (the
+    adapter's own `index`, which addresses an element within ONE read and must never leave it)
+    is read here and not passed on. Returns the FileSource listing plus what it threw away,
+    because both discards
+    are ways a document goes missing from an archive that cannot be re-fetched, and neither may
+    be silent:
+
+    * `rejected` -- labels `is_document_name` refused. The adapter logs them, so a widened
+      extension list is a data question with evidence rather than a guess.
+    * `collided` -- entries whose key another entry in the SAME read already took. With the
+      ordinal in the key this can no longer happen within one row (the old `(name, row)` rule
+      dropped a second same-named link there with no log and no count); it survives only for
+      two rows whose flattened text is genuinely identical, which we cannot tell apart. That
+      collapse is recorded rather than left as a hole nothing mentions.
+
+    Repeats ACROSS reads are ordinary -- the traversal re-reads the whole DOM on every scroll
+    pass -- and the caller merges by key.
+    """
+    files, rejected, collided, seen = [], [], [], set()
+    for anchor in anchors:
+        name = " ".join((anchor.get("name") or "").replace("\xa0", " ").split())
+        if not is_document_name(name):
+            if name:
+                rejected.append(name)
+            continue
+        key = anchor_key(anchor)
+        if key in seen:
+            collided.append({"key": key, "name": name})
+            continue
+        seen.add(key)
+        files.append({"key": key, "name": name, "row": anchor.get("row") or "",
+                      "ordinal": anchor.get("ordinal") or 0})
+    return {"files": files, "rejected": rejected, "collided": collided}
+
+
+def _listing_sort_key(entry) -> tuple:
+    identity = row_identity(entry.get("row"))
+    m = _OUTLINE.match(identity)
+    if m and identity == m.group(1):
+        return (0, [int(p) for p in identity.split(".")], "", entry.get("ordinal") or 0)
+    return (1, [], identity, entry.get("ordinal") or 0)
+
+
+def order_listing(files) -> list:
+    """Put a merged listing into TREE order, not sweep order. PURE.
+
+    The traversal sweeps up and then down, so first-seen order depends on where the list
+    happened to be sitting -- and that order goes straight into `make_fingerprint`, where a
+    difference between two runs discards every partial on disk. Ordering by the row's own
+    address instead makes the fingerprint a fact about the event.
+
+    Outline rows sort numerically (`4.10` after `4.9`, the same trap `_outline_sort_key`
+    exists for on the picker side), then unnumbered rows by their text, then by within-row
+    ordinal so two links in one row keep their DOM order.
+    """
+    return sorted(files, key=_listing_sort_key)
 
 
 def unique_names(names) -> list:

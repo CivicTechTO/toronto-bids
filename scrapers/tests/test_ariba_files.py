@@ -649,3 +649,181 @@ def test_finalise_partial_salvages_files_a_lost_manifest_cannot_name(tmp_path):
         assert zf.namelist() == ["a.pdf"]
     body = json.loads((tmp_path / "Doc5713434353.omitted.json").read_text())
     assert body["expected_files"] is None and body["actual_files"] == 1
+
+
+# --- the pure decisions the Playwright adapter used to make itself (#174) ------------------
+#
+# Three decisions lived inside `AribaFileSource`, which is untestable by convention: which
+# anchor labels name a document, how a listed file is IDENTIFIED, and which repeats are
+# duplicates. Two of them are what the archive's integrity rests on -- a positional identity
+# reproduces the corruption `make_fingerprint` exists to catch, and a name-keyed one cannot
+# address the right document at all. They live here now, and these are the tests that pin them.
+
+
+class TestIsDocumentName:
+    """The filename predicate. A silent reject is a document missing from the archive."""
+
+    def test_a_plain_filename_is_a_document(self):
+        assert ariba_files.is_document_name("Addendum 1.pdf")
+
+    def test_trailing_metadata_does_not_hide_the_extension(self):
+        """The `$`-anchored pattern this replaces skipped every row rendering its own size."""
+        assert ariba_files.is_document_name("Appendix C2 - Drawings.pdf (1.2 MB)")
+        assert ariba_files.is_document_name("site.dwg   4,102 KB")
+
+    def test_the_formats_the_anchored_list_omitted(self):
+        for name in ("plan.dwf", "prices.xlsm", "scan.tif", "scan.tiff", "notice.msg",
+                     "bundle.7z", "dump.gz", "site.kmz"):
+            assert ariba_files.is_document_name(name), name
+
+    def test_the_formats_that_were_always_covered(self):
+        for name in ("a.pdf", "a.zip", "a.doc", "a.docx", "a.xls", "a.xlsx", "a.dwg", "a.rtf",
+                     "a.txt", "a.jpg", "a.jpeg", "a.png", "a.csv", "a.ppt", "a.pptx"):
+            assert ariba_files.is_document_name(name), name
+
+    def test_the_extension_is_matched_case_insensitively(self):
+        assert ariba_files.is_document_name("PLAN.DWG")
+
+    def test_a_bare_label_is_not_a_document(self):
+        for name in ("References", "Download this attachment", "", "   ", "Section 3.1"):
+            assert not ariba_files.is_document_name(name), name
+
+    def test_a_url_is_not_a_document_even_when_it_ends_in_pdf(self):
+        assert not ariba_files.is_document_name("https://example.org/a.pdf")
+        assert not ariba_files.is_document_name("http://example.org/a.pdf")
+        assert not ariba_files.is_document_name("www.example.org/a.pdf")
+
+    def test_an_extension_glued_to_more_letters_is_not_an_extension(self):
+        assert not ariba_files.is_document_name("notes.pdfx")
+
+
+class TestAnchorKey:
+    """Identity, and the one property that matters: it is a fact about the document's place in
+    the tree, never about when the traversal reached it."""
+
+    def test_a_row_that_leads_with_an_outline_number_keys_on_it(self):
+        key = ariba_files.anchor_key(
+            {"row": "3.1 Drawings Package plan.dwg 787.7 MB", "name": "plan.dwg", "ordinal": 0})
+        assert key.startswith("3.1#")
+
+    def test_a_row_with_no_outline_number_keys_on_its_own_text(self):
+        """The References sub-rows -- where the brief says the bulk of the files live -- are
+        their own `<tr>` and carry no outline number. The old fallback was an empty prefix plus
+        a traversal-order counter, i.e. positional."""
+        key = ariba_files.anchor_key(
+            {"row": "Addendum 1.pdf 2.1 MB", "name": "Addendum 1.pdf", "ordinal": 0})
+        assert "Addendum 1.pdf 2.1 MB" in key
+        assert not key.startswith("#")
+
+    def test_two_files_in_one_row_sharing_a_name_are_different_documents(self):
+        a = ariba_files.anchor_key({"row": "3.1 Parts", "name": "report.pdf", "ordinal": 0})
+        b = ariba_files.anchor_key({"row": "3.1 Parts", "name": "report.pdf", "ordinal": 1})
+        assert a != b
+
+    def test_the_same_filename_in_two_different_rows_is_two_documents(self):
+        a = ariba_files.anchor_key({"row": "3.1 Part A", "name": "report.pdf", "ordinal": 0})
+        b = ariba_files.anchor_key({"row": "4.2 Part B", "name": "report.pdf", "ordinal": 0})
+        assert a != b
+
+    def test_the_key_survives_a_reordered_traversal(self):
+        entry = {"row": "4.2 Part B", "name": "report.pdf", "ordinal": 1}
+        assert ariba_files.anchor_key(entry) == ariba_files.anchor_key(dict(entry))
+
+    def test_whitespace_and_nbsp_in_the_row_do_not_change_the_key(self):
+        a = ariba_files.anchor_key({"row": "3.1  Part\xa0A", "name": "a.pdf", "ordinal": 0})
+        b = ariba_files.anchor_key({"row": "3.1 Part A", "name": "a.pdf", "ordinal": 0})
+        assert a == b
+
+
+class TestListingFromAnchors:
+    """One DOM read -> the listing. Rejects and collapses are RETURNED, never swallowed."""
+
+    def test_it_keeps_both_of_two_same_named_files_in_one_row(self):
+        """The `(name, row)` dedupe dropped the second one with no log and no count."""
+        result = ariba_files.listing_from_anchors([
+            {"row": "3.1 Parts", "name": "report.pdf", "ordinal": 0},
+            {"row": "3.1 Parts", "name": "report.pdf", "ordinal": 1},
+        ])
+        assert [f["name"] for f in result["files"]] == ["report.pdf", "report.pdf"]
+        assert result["files"][0]["key"] != result["files"][1]["key"]
+        assert result["collided"] == []
+
+    def test_it_reports_what_it_rejected(self):
+        result = ariba_files.listing_from_anchors([
+            {"row": "3.1", "name": "a.pdf", "ordinal": 0},
+            {"row": "3.1", "name": "References", "ordinal": 1},
+        ])
+        assert [f["name"] for f in result["files"]] == ["a.pdf"]
+        assert result["rejected"] == ["References"]
+
+    def test_a_second_reading_of_the_same_anchor_is_one_file(self):
+        """Traversal re-reads the whole DOM on every scroll pass."""
+        anchor = {"row": "3.1 Parts", "name": "a.pdf", "ordinal": 0}
+        result = ariba_files.listing_from_anchors([dict(anchor), dict(anchor)])
+        assert len(result["files"]) == 1
+
+    def test_an_indistinguishable_duplicate_is_reported_not_silently_dropped(self):
+        """Two rows whose flattened text is identical: we cannot tell them apart, so the
+        collapse is recorded rather than left as a hole nothing mentions."""
+        anchor = {"row": "Attachments a.pdf", "name": "a.pdf", "ordinal": 0}
+        result = ariba_files.listing_from_anchors([dict(anchor), dict(anchor)])
+        assert len(result["files"]) == 1
+        assert result["collided"] == [{"key": result["files"][0]["key"], "name": "a.pdf"}]
+
+    def test_the_entry_carries_the_ordinal_the_adapter_needs_to_click_it(self):
+        result = ariba_files.listing_from_anchors(
+            [{"row": "3.1 Parts", "name": "a.pdf", "ordinal": 2}])
+        assert result["files"][0]["ordinal"] == 2
+
+    def test_no_key_encodes_the_listing_position(self):
+        """The exact Critical: with a positional key the ordered (key, name) pairs come out
+        byte-identical after a reorder, so a resumed run adopts the partials POSITIONALLY --
+        one document stored twice, another lost, counts matching, no gap recorded."""
+        anchors = [{"row": "3.1 Part A", "name": "report.pdf", "ordinal": 0},
+                   {"row": "4.2 Part B", "name": "report.pdf", "ordinal": 0}]
+        forward = ariba_files.listing_from_anchors(anchors)["files"]
+        reverse = ariba_files.listing_from_anchors(list(reversed(anchors)))["files"]
+
+        assert {f["key"] for f in forward} == {f["key"] for f in reverse}
+        assert (ariba_files.make_fingerprint(forward, 2)
+                != ariba_files.make_fingerprint(reverse, 2))
+
+    def test_an_empty_read_is_an_empty_listing(self):
+        assert ariba_files.listing_from_anchors([]) == {
+            "files": [], "rejected": [], "collided": []}
+
+
+class TestOrderListing:
+    """The bundle's order must be a property of the tree, not of where a sweep started."""
+
+    def test_outline_rows_sort_numerically_not_as_strings(self):
+        files = ariba_files.listing_from_anchors([
+            {"row": "4.10 Late", "name": "j.pdf", "ordinal": 0},
+            {"row": "4.9 Early", "name": "i.pdf", "ordinal": 0},
+        ])["files"]
+        assert [f["name"] for f in ariba_files.order_listing(files)] == ["i.pdf", "j.pdf"]
+
+    def test_two_files_in_one_row_stay_in_their_dom_order(self):
+        files = ariba_files.listing_from_anchors([
+            {"row": "3.1 Parts", "name": "b.pdf", "ordinal": 1},
+            {"row": "3.1 Parts", "name": "a.pdf", "ordinal": 0},
+        ])["files"]
+        assert [f["name"] for f in ariba_files.order_listing(files)] == ["a.pdf", "b.pdf"]
+
+    def test_unnumbered_rows_sort_after_numbered_ones_deterministically(self):
+        files = ariba_files.listing_from_anchors([
+            {"row": "Addendum 2.pdf 1 MB", "name": "Addendum 2.pdf", "ordinal": 0},
+            {"row": "3.1 Parts", "name": "a.pdf", "ordinal": 0},
+            {"row": "Addendum 1.pdf 1 MB", "name": "Addendum 1.pdf", "ordinal": 0},
+        ])["files"]
+        assert [f["name"] for f in ariba_files.order_listing(files)] == [
+            "a.pdf", "Addendum 1.pdf", "Addendum 2.pdf"]
+
+    def test_the_order_does_not_depend_on_the_order_it_was_given(self):
+        anchors = [{"row": "3.1 A", "name": "a.pdf", "ordinal": 0},
+                   {"row": "3.2 B", "name": "b.pdf", "ordinal": 0},
+                   {"row": "Addendum.pdf", "name": "Addendum.pdf", "ordinal": 0}]
+        forward = ariba_files.order_listing(ariba_files.listing_from_anchors(anchors)["files"])
+        reverse = ariba_files.order_listing(
+            ariba_files.listing_from_anchors(list(reversed(anchors)))["files"])
+        assert forward == reverse

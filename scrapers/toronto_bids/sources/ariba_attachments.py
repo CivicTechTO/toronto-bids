@@ -41,7 +41,7 @@ from pathlib import Path
 from toronto_bids import config
 from toronto_bids.linking.document_number import bridge_document_number
 from toronto_bids.models import AribaAttachment
-from toronto_bids.sources import ariba_batch
+from toronto_bids.sources import ariba_batch, ariba_files
 from toronto_bids.store import db
 
 # The AUTHENTICATED preview path — no `/public/`, no `?anId=ANONYMOUS`. The anonymous URL does
@@ -677,7 +677,14 @@ def _on_picker(page, timeout_ms: int = 5000) -> bool:
         waited += 250
 
 
-# The row-list scroll container, found the same way every time it is needed (#174 fix5).
+# The scroll container, found the same way every time it is needed (#174 fix5).
+#
+# Parametrised by a MARKER selector (`opts.marker`) -- the thing a row of this list reliably
+# contains. For the attachment picker that is `input.w-chk-native` (a row checkbox); for the
+# event's content tree it is `a` (a document link). The finding RULE is identical and is the
+# one measured against the live page, which is the whole point of there being one copy: two
+# ad-hoc scroll implementations that could silently disagree about what "landed" meant is what
+# made this take six live runs.
 #
 # NOT by class name -- `div.yScroll.tableBody` is one release's CSS, brittle by nature.
 # NOT by "the element with the most checkboxes" -- that returns the outer wrapper, which
@@ -694,18 +701,18 @@ def _on_picker(page, timeout_ms: int = 5000) -> bool:
 # embedding evaluate() call wraps the string, and one shape of that ambiguity really did fail
 # ("Malformed arrow function parameter list") when tried standalone.
 _FIND_CONTAINER_BODY_JS = """
-    function tbFindContainer() {
+    function tbFindContainer(marker, allowDocument) {
         const EDGE = 1;
-        const checkboxes = Array.from(document.querySelectorAll('input.w-chk-native'));
+        const markers = Array.from(document.querySelectorAll(marker));
         const seen = new Set();
         let best = null, bestRange = -1;
-        for (const cb of checkboxes) {
+        for (const cb of markers) {
             let el = cb.parentElement;
             while (el && el !== document.documentElement && el !== document.body) {
                 if (!seen.has(el)) {
                     seen.add(el);
                     const range = el.scrollHeight - el.clientHeight;
-                    const count = el.querySelectorAll('input.w-chk-native').length;
+                    const count = el.querySelectorAll(marker).length;
                     if (count > 1 && range > EDGE && range > bestRange) {
                         bestRange = range;
                         best = el;
@@ -714,7 +721,17 @@ _FIND_CONTAINER_BODY_JS = """
                 el = el.parentElement;
             }
         }
+        // The picker's row list is an inner strip and <html>/<body> must never stand in for it
+        // (the page's own 221 px scroller is what five earlier fixes kept hitting instead). The
+        // event's content tree is the opposite: it scrolls the PAGE. So the document scroller is
+        // a candidate only where the caller says this list can be page-scrolled, and only when
+        // nothing inner qualifies -- a real inner container still wins.
+        if (!best && allowDocument) best = document.scrollingElement || document.documentElement;
         return best;
+    }
+    function tbIsDocument(el) {
+        return el === document.scrollingElement || el === document.documentElement
+            || el === document.body;
     }
 """
 
@@ -727,15 +744,21 @@ _FIND_CONTAINER_BODY_JS = """
 # clamped to the container's visible rect so it is provably over the strip, not merely
 # "rendered somewhere on the page".
 _CONTAINER_STATE_JS = """
-() => {""" + _FIND_CONTAINER_BODY_JS + """
-    const best = tbFindContainer();
+(opts) => {""" + _FIND_CONTAINER_BODY_JS + """
+    const best = tbFindContainer(opts.marker, opts.allowDocument);
     if (!best) return null;
-    let rect = best.getBoundingClientRect();
-    if (rect.top < 0 || rect.bottom > window.innerHeight) {
+    const isDoc = tbIsDocument(best);
+    // scrollIntoView on the document scroller would jump the page to the top -- fighting the
+    // very sweep that called this. The viewport IS the document scroller's visible rect.
+    let rect = isDoc
+        ? {top: 0, left: 0, right: window.innerWidth, bottom: window.innerHeight,
+           width: window.innerWidth, height: window.innerHeight}
+        : best.getBoundingClientRect();
+    if (!isDoc && (rect.top < 0 || rect.bottom > window.innerHeight)) {
         best.scrollIntoView({block: 'center', inline: 'nearest'});
         rect = best.getBoundingClientRect();
     }
-    const rowBoxes = Array.from(best.querySelectorAll('input.w-chk-native'));
+    const rowBoxes = Array.from(best.querySelectorAll(opts.marker));
     let hoverX = rect.left + rect.width / 2;
     let hoverY = rect.top + rect.height / 2;
     if (rowBoxes.length > 0) {
@@ -772,14 +795,15 @@ _CONTAINER_STATE_JS = """
 # means the next person to touch this -- or the next release that reshapes the DOM -- reads the
 # geometry instead of inferring it from failures.
 _GEOMETRY_JS = """
-() => {""" + _FIND_CONTAINER_BODY_JS + """
-    const best = tbFindContainer();
-    const onPage = document.querySelectorAll('input.w-chk-native').length;
+(opts) => {""" + _FIND_CONTAINER_BODY_JS + """
+    const best = tbFindContainer(opts.marker, opts.allowDocument);
+    const onPage = document.querySelectorAll(opts.marker).length;
     const doc = document.scrollingElement || document.documentElement;
     return {
         found: !!best,
+        isDocument: best ? tbIsDocument(best) : false,
         onPage: onPage,
-        inContainer: best ? best.querySelectorAll('input.w-chk-native').length : 0,
+        inContainer: best ? best.querySelectorAll(opts.marker).length : 0,
         range: best ? best.scrollHeight - best.clientHeight : 0,
         clientHeight: best ? best.clientHeight : 0,
         pageRange: doc ? doc.scrollHeight - doc.clientHeight : 0,
@@ -794,9 +818,10 @@ _GEOMETRY_JS = """
 # checks the rendered keys actually changed before trusting it, and disables further attempts
 # on this picker the first time that verification fails.
 _PROGRAMMATIC_SCROLL_JS = """
-(deltaY) => {""" + _FIND_CONTAINER_BODY_JS + """
-    const best = tbFindContainer();
+(opts) => {""" + _FIND_CONTAINER_BODY_JS + """
+    const best = tbFindContainer(opts.marker, opts.allowDocument);
     if (!best) return null;
+    const deltaY = opts.deltaY;
     const before = best.scrollTop;
     best.scrollTop = before + deltaY;
     const after = best.scrollTop;
@@ -808,6 +833,192 @@ _PROGRAMMATIC_SCROLL_JS = """
     };
 }
 """
+
+
+class _ListScroller:
+    """Container-aware, scrollTop-verified scrolling for one long list (#174 fix5).
+
+    **One implementation, used by both lists that need scrolling** -- the attachment picker's
+    virtualised row strip (marker `input.w-chk-native`) and the event's content tree (marker
+    `a`). Two ad-hoc scroll implementations that could silently disagree about what "landed"
+    meant is itself part of why the picker took six live runs to fix; a bare `page.mouse.wheel`
+    on the content tree would have been a third.
+
+    `signature` is a callable returning a hashable snapshot of what the list currently RENDERS.
+    It is used for one thing only: deciding whether the optional programmatic scroll actually
+    re-rendered anything (see `step`).
+    """
+
+    def __init__(self, page, marker: str, signature, log=lambda _m: None,
+                 allow_document: bool = False, label: str = "list"):
+        self.page = page
+        self.marker = marker
+        self.signature = signature
+        self.log = log
+        self.allow_document = allow_document
+        self.label = label
+        # Set True the first time a programmatic scrollTop assignment fails verification (moved
+        # scrollTop but nothing re-rendered, or found no container at all) -- once disproved on
+        # this page instance there is no reason to keep paying for the extra evaluate() on every
+        # subsequent scroll; the hover+wheel path below is the mechanism actually proven to work.
+        self._programmatic_scroll_disabled = False
+
+    def _args(self, **extra) -> dict:
+        return {"marker": self.marker, "allowDocument": self.allow_document, **extra}
+
+    def state(self) -> dict:
+        """Fresh geometry + scrollTop of the scroll container, re-found on every call.
+
+        Never a held handle -- the picker re-renders on every selection (`AribaPicker`'s second
+        hazard), so this runs `_CONTAINER_STATE_JS` (walk each marker's own ancestor chain, keep
+        the one with the largest scroll range) fresh each time rather than caching an element
+        reference that a re-render could invalidate underneath it.
+
+        Raises rather than returning something to scroll blindly against: a caller with no
+        container has nothing safe to hover or wheel, and every prior guess that tried anyway
+        (guessing a class name, guessing "most checkboxes") is exactly what five earlier fixes
+        got wrong (#174 fix5).
+        """
+        state = self.page.evaluate(_CONTAINER_STATE_JS, self._args())
+        if state is None:
+            raise RuntimeError(
+                f"{self.label}: the scrollable container could not be found -- no element "
+                f"besides <html>/<body> has both a nonzero scroll range and more than one "
+                f"'{self.marker}' descendant (#174 fix5). Refusing to scroll blindly.")
+        return state
+
+    def log_geometry(self) -> None:
+        """State the list's actual structure once per capture, instead of assuming it.
+
+        Seven live runs were spent fixing this widget's scrolling without measuring the DOM it
+        scrolls. The fact that resolved it was one count -- markers on the page versus inside
+        the container -- which says outright whether the header select-all sits outside the row
+        list (it does), and therefore whether a `.first` hover can ever land on the strip (it
+        cannot). Every one of those runs would have printed the answer in its first line.
+
+        Best-effort by design: a geometry read that fails must never be what stops a capture,
+        so it logs and returns. The guards that actually protect correctness -- the dead-wheel
+        check, the enumeration count, the completeness gate -- are elsewhere and are not
+        best-effort.
+        """
+        try:
+            g = self.page.evaluate(_GEOMETRY_JS, self._args())
+        except Exception as exc:                       # noqa: BLE001 — diagnostics never block
+            self.log(f"    {self.label} geometry: unreadable ({exc})")
+            return
+        if not g or not g.get("found"):
+            self.log(f"    {self.label} geometry: NO scroll container found "
+                     f"({(g or {}).get('onPage', '?')} '{self.marker}' on the page)")
+            return
+        outside = g["onPage"] - g["inContainer"]
+        where = "the page itself" if g.get("isDocument") else "an inner container"
+        self.log(
+            f"    {self.label} geometry: scrolls {where}, {g['clientHeight']}px tall, scroll "
+            f"range {g['range']}px; {g['inContainer']}/{g['onPage']} '{self.marker}' inside it "
+            f"({outside} outside); page range {g['pageRange']}px")
+
+    def hover(self) -> dict:
+        """Move the mouse over a row genuinely inside the container, and return the container's
+        freshly-read state (scrollTop, scroll range, the hover point used).
+
+        Playwright dispatches wheel events wherever the mouse last was; nothing else positions
+        it. **The picker's header select-all checkbox sits OUTSIDE its scrollable row list**
+        (measured: 51 `input.w-chk-native` on the page, 50 inside the list container -- #174
+        fix5), so a `.first` locator -- what every earlier attempt hovered -- parks the cursor on
+        the header every time: a wheel from there can move the *page* (which also scrolls) and
+        leave the list completely untouched. That is the "dead wheel" that made this take six
+        live runs.
+
+        The hover point comes from `state()`, which builds it only from the container's OWN
+        marker descendants and clamps it to the container's visible rect, so it is provably over
+        the strip rather than merely "rendered somewhere on the page". The container is also
+        scrolled into view there before the point is computed, so the page's own scroll cannot
+        slide the strip out from under the cursor between the read and the wheel that follows.
+        """
+        state = self.state()
+        self.page.mouse.move(state["hoverX"], state["hoverY"])
+        return state
+
+    def step(self, delta_y: int) -> dict:
+        """Scroll the container by one wheel step, verified by ITS OWN scrollTop.
+
+        This is the single scrolling primitive every sweep and directional search shares
+        (#174 fix5).
+
+        **Verified by scrollTop, not by the rendered row window.** scrollTop is a native
+        browser property that updates the instant an actual scroll happens, wheel or
+        programmatic; the virtualised re-render that repaints new rows can lag a frame behind
+        it. Inferring "did the scroll land" from the rendered keys (what every earlier attempt
+        did) conflates a real no-op with a render that just hasn't caught up yet -- this reads
+        the one signal that cannot be fooled that way.
+
+        Tries an OPTIONAL programmatic `scrollTop` assignment first -- it would remove the
+        mouse from the equation entirely, but whether a virtualised list re-renders on a
+        programmatic assignment (as opposed to only a genuine wheel/scroll gesture) has not
+        been verified live. So it is trusted only if BOTH the container's scrollTop moved AND
+        `signature()` actually changed; otherwise `_programmatic_scroll_disabled` is latched so
+        later calls do not keep paying for an evaluate() already shown not to work, and control
+        falls through to the hover+wheel path, which is the mechanism actually proven to work
+        against the live page.
+
+        Returns `{before, after, moved, at_edge, max_scroll}`. `at_edge` means the container
+        was already at that end of its scroll range (scrollTop 0 for an upward step, or the max
+        for a downward one) *before* this step -- a legitimate reason for `moved` to be False,
+        as opposed to a dead wheel, which is `moved=False` while NOT at an edge.
+        """
+        EDGE_TOL = 2
+
+        if not self._programmatic_scroll_disabled:
+            before_keys = self.signature()
+            programmatic = self.page.evaluate(
+                _PROGRAMMATIC_SCROLL_JS, self._args(deltaY=delta_y))
+            if programmatic is None:
+                # No container at all -- not a fact about the programmatic mechanism, just
+                # nothing to scroll. Disable it (the hover+wheel path below raises its own,
+                # clearer "container not found" error via `state()`) rather than paying for
+                # this evaluate() again on every later call.
+                self._programmatic_scroll_disabled = True
+            elif not programmatic["moved"]:
+                at_edge = (
+                    (delta_y < 0 and programmatic["before"] <= EDGE_TOL)
+                    or (delta_y > 0
+                        and programmatic["before"] >= programmatic["maxScroll"] - EDGE_TOL)
+                )
+                if at_edge:
+                    # A legitimate no-op (already at that end of the range) -- not evidence the
+                    # mechanism doesn't work, so it stays enabled for later calls.
+                    return {"before": programmatic["before"], "after": programmatic["after"],
+                            "moved": False, "at_edge": True,
+                            "max_scroll": programmatic["maxScroll"]}
+                self._programmatic_scroll_disabled = True
+                self.log(f"    {self.label}: programmatic scrollTop assignment did not move the "
+                         f"container while not at an edge -- using hover+wheel from here")
+            else:
+                self.page.wait_for_timeout(300)
+                # Verified only if the rendering actually changed -- a scrollTop move with no
+                # re-render is exactly the "not verified live" case the docstring warns about,
+                # so it is not trusted even though the assignment technically moved.
+                if self.signature() != before_keys:
+                    return {"before": programmatic["before"], "after": programmatic["after"],
+                            "moved": True, "at_edge": False,
+                            "max_scroll": programmatic["maxScroll"]}
+                self._programmatic_scroll_disabled = True
+                self.log(f"    {self.label}: programmatic scrollTop assignment unverified "
+                         f"(scrollTop moved but nothing re-rendered) -- using hover+wheel "
+                         f"from here")
+
+        before = self.hover()
+        self.page.mouse.wheel(0, delta_y)
+        self.page.wait_for_timeout(300)
+        after = self.state()
+        max_scroll = max(after["scrollHeight"] - after["clientHeight"], 0)
+        moved = abs(after["scrollTop"] - before["scrollTop"]) > 0.5
+        at_edge = (
+            (delta_y < 0 and before["scrollTop"] <= EDGE_TOL)
+            or (delta_y > 0 and before["scrollTop"] >= max_scroll - EDGE_TOL)
+        )
+        return {"before": before["scrollTop"], "after": after["scrollTop"], "moved": moved,
+                "at_edge": at_edge, "max_scroll": max_scroll}
 
 
 class AribaPicker:
@@ -842,11 +1053,11 @@ class AribaPicker:
     def __init__(self, page, log=lambda _m: None):
         self.page = page
         self.log = log
-        # Set True the first time a programmatic scrollTop assignment fails verification (moved
-        # scrollTop but nothing re-rendered, or found no container at all) -- once disproved on
-        # this page instance there is no reason to keep paying for the extra evaluate() on every
-        # subsequent scroll; the hover+wheel path below is the mechanism actually proven to work.
-        self._programmatic_scroll_disabled = False
+        # The one container-aware, scrollTop-verified scrolling primitive, shared with the
+        # content-tree traversal (`AribaFileSource`) so the two can never drift apart.
+        self._scroller = _ListScroller(
+            page, "input.w-chk-native", lambda: tuple(sorted(self._rendered())), log=log,
+            label="picker row list")
 
     # --- reads ---------------------------------------------------------------------------
     def _rendered_split(self) -> tuple[dict, dict]:
@@ -883,160 +1094,20 @@ class AribaPicker:
         return keyed
 
     def _container_state(self) -> dict:
-        """Fresh geometry + scrollTop of the row-list container, re-found on every call.
-
-        Never a held handle -- the picker re-renders on every selection (the class docstring's
-        second hazard), so this runs `_CONTAINER_STATE_JS` (walk each row checkbox's own
-        ancestor chain, keep the one with the largest scroll range) fresh each time rather than
-        caching an element reference that a re-render could invalidate underneath it.
-
-        Raises rather than returning something to scroll blindly against: a caller with no
-        container has nothing safe to hover or wheel, and every prior guess that tried anyway
-        (guessing a class name, guessing "most checkboxes") is exactly what five earlier fixes
-        got wrong (#174 fix5).
-        """
-        state = self.page.evaluate(_CONTAINER_STATE_JS)
-        if state is None:
-            raise RuntimeError(
-                "the attachment picker's scrollable row-list container could not be found -- "
-                "no element besides <html>/<body> has both a nonzero scroll range and more "
-                "than one row checkbox descendant (#174 fix5). Refusing to scroll blindly.")
-        return state
+        """The row-list container's fresh geometry -- see `_ListScroller.state`."""
+        return self._scroller.state()
 
     def _log_geometry(self) -> None:
-        """State the picker's actual structure once per capture, instead of assuming it.
-
-        Seven live runs were spent fixing this widget's scrolling without measuring the DOM it
-        scrolls. The fact that resolved it was one count -- checkboxes on the page versus inside
-        the container -- which says outright whether the header select-all sits outside the row
-        list (it does), and therefore whether a `.first` hover can ever land on the strip (it
-        cannot). Every one of those runs would have printed the answer in its first line.
-
-        Best-effort by design: a geometry read that fails must never be what stops a capture,
-        so it logs and returns. The guards that actually protect correctness -- the dead-wheel
-        check, the enumeration count, the completeness gate -- are elsewhere and are not
-        best-effort.
-        """
-        try:
-            g = self.page.evaluate(_GEOMETRY_JS)
-        except Exception as exc:                       # noqa: BLE001 — diagnostics never block
-            self.log(f"    picker geometry: unreadable ({exc})")
-            return
-        if not g or not g.get("found"):
-            self.log("    picker geometry: NO scroll container found "
-                     f"({(g or {}).get('onPage', '?')} checkboxes on the page)")
-            return
-        outside = g["onPage"] - g["inContainer"]
-        self.log(
-            f"    picker geometry: list {g['clientHeight']}px tall, scroll range {g['range']}px; "
-            f"{g['inContainer']}/{g['onPage']} checkboxes inside it "
-            f"({outside} outside — the header select-all); page range {g['pageRange']}px")
+        """Print the picker's measured structure once per capture (`_ListScroller`)."""
+        self._scroller.log_geometry()
 
     def _hover_row_list(self) -> dict:
-        """Move the mouse over a row genuinely inside the row-list container, and return the
-        container's freshly-read state (scrollTop, scroll range, the hover point used).
-
-        Playwright dispatches wheel events wherever the mouse last was; nothing else positions
-        it. **The header select-all checkbox sits OUTSIDE the scrollable row list** (measured:
-        51 `input.w-chk-native` on the page, 50 inside the list container -- #174 fix5), so a
-        `.first` locator -- what every earlier attempt hovered -- parks the cursor on the
-        header every time: a wheel from there can move the *page* (which also scrolls, per the
-        class docstring) and leave the list completely untouched. That is the "dead wheel" that
-        made this take six live runs.
-
-        The hover point comes from `_container_state`, which builds it only from the
-        container's OWN checkbox descendants and clamps it to the container's visible rect, so
-        it is provably over the strip rather than merely "rendered somewhere on the page". The
-        container is also scrolled into view there before the point is computed, so the page's
-        own scroll cannot slide the strip out from under the cursor between the read and the
-        wheel that follows.
-        """
-        state = self._container_state()
-        self.page.mouse.move(state["hoverX"], state["hoverY"])
-        return state
+        """Park the mouse over a row genuinely inside the list -- see `_ListScroller.hover`."""
+        return self._scroller.hover()
 
     def _wheel_step(self, delta_y: int) -> dict:
-        """Scroll the row-list container by one wheel step, verified by ITS OWN scrollTop.
-
-        This is the single scrolling primitive `row_keys`'s sweeps and `_locate`'s directional
-        search both now share (#174 fix5) -- the divergence between two ad-hoc scroll
-        implementations was itself part of why this took six runs to fix.
-
-        **Verified by scrollTop, not by the rendered row window.** scrollTop is a native
-        browser property that updates the instant an actual scroll happens, wheel or
-        programmatic; the virtualised re-render that repaints new rows can lag a frame behind
-        it. Inferring "did the scroll land" from the rendered keys (what every earlier attempt
-        did) conflates a real no-op with a render that just hasn't caught up yet -- this reads
-        the one signal that cannot be fooled that way.
-
-        Tries an OPTIONAL programmatic `scrollTop` assignment first -- it would remove the
-        mouse from the equation entirely, but whether this virtualised list re-renders on a
-        programmatic assignment (as opposed to only a genuine wheel/scroll gesture) has not
-        been verified live. So it is trusted only if BOTH the container's scrollTop moved AND
-        the rendered keys actually changed; otherwise `_programmatic_scroll_disabled` is
-        latched so later calls do not keep paying for an evaluate() already shown not to work,
-        and control falls through to the hover+wheel path, which is the mechanism actually
-        proven to work against the live page.
-
-        Returns `{before, after, moved, at_edge, max_scroll}`. `at_edge` means the container
-        was already at that end of its scroll range (scrollTop 0 for an upward step, or the max
-        for a downward one) *before* this step -- a legitimate reason for `moved` to be False,
-        as opposed to a dead wheel, which is `moved=False` while NOT at an edge.
-        """
-        EDGE_TOL = 2
-
-        if not self._programmatic_scroll_disabled:
-            before_keys = tuple(sorted(self._rendered()))
-            programmatic = self.page.evaluate(_PROGRAMMATIC_SCROLL_JS, delta_y)
-            if programmatic is None:
-                # No container at all -- not a fact about the programmatic mechanism, just
-                # nothing to scroll. Disable it (the hover+wheel path below raises its own,
-                # clearer "container not found" error via `_container_state`) rather than
-                # paying for this evaluate() again on every later call.
-                self._programmatic_scroll_disabled = True
-            elif not programmatic["moved"]:
-                at_edge = (
-                    (delta_y < 0 and programmatic["before"] <= EDGE_TOL)
-                    or (delta_y > 0
-                        and programmatic["before"] >= programmatic["maxScroll"] - EDGE_TOL)
-                )
-                if at_edge:
-                    # A legitimate no-op (already at that end of the range) -- not evidence the
-                    # mechanism doesn't work, so it stays enabled for later calls.
-                    return {"before": programmatic["before"], "after": programmatic["after"],
-                            "moved": False, "at_edge": True,
-                            "max_scroll": programmatic["maxScroll"]}
-                self._programmatic_scroll_disabled = True
-                self.log("    programmatic scrollTop assignment did not move the container "
-                         "while not at an edge -- using hover+wheel for the rest of this "
-                         "capture")
-            else:
-                self.page.wait_for_timeout(300)
-                after_keys = tuple(sorted(self._rendered()))
-                # Verified only if the rendered keys actually changed -- a scrollTop move with
-                # no re-render is exactly the "not verified live" case the docstring warns
-                # about, so it is not trusted even though the assignment technically moved.
-                if after_keys != before_keys:
-                    return {"before": programmatic["before"], "after": programmatic["after"],
-                            "moved": True, "at_edge": False,
-                            "max_scroll": programmatic["maxScroll"]}
-                self._programmatic_scroll_disabled = True
-                self.log("    programmatic scrollTop assignment unverified (scrollTop moved "
-                         "but nothing re-rendered) -- using hover+wheel for the rest of this "
-                         "capture")
-
-        before = self._hover_row_list()
-        self.page.mouse.wheel(0, delta_y)
-        self.page.wait_for_timeout(300)
-        after = self._container_state()
-        max_scroll = max(after["scrollHeight"] - after["clientHeight"], 0)
-        moved = abs(after["scrollTop"] - before["scrollTop"]) > 0.5
-        at_edge = (
-            (delta_y < 0 and before["scrollTop"] <= EDGE_TOL)
-            or (delta_y > 0 and before["scrollTop"] >= max_scroll - EDGE_TOL)
-        )
-        return {"before": before["scrollTop"], "after": after["scrollTop"], "moved": moved,
-                "at_edge": at_edge, "max_scroll": max_scroll}
+        """One scrollTop-verified wheel step -- see `_ListScroller.step`."""
+        return self._scroller.step(delta_y)
 
     def row_keys(self, expected_count: int | None = None) -> list:
         """Every row's outline number, in order, scrolling to defeat virtualisation.
@@ -1469,7 +1540,81 @@ class AribaPicker:
         return path
 
 
-_FILENAME = re.compile(r"\.(pdf|zip|docx?|xlsx?|dwg|rtf|txt|jpe?g|png|csv|pptx?)$", re.I)
+# Every `<a>` on the page, with the two facts `ariba_files.anchor_key` needs to identify a
+# document by its PLACE in the tree: the row it sits in, and its ordinal WITHIN that row. Both
+# are properties of the DOM, so they are the same on every pass; the traversal's own progress
+# is nowhere in them. `index` is this read's position in `document.querySelectorAll('a')` and is
+# used ONLY to tag an element for a click inside the same read -- it is never part of a key.
+_ANCHORS_JS = """
+() => Array.from(document.querySelectorAll('a')).map((e, i) => {
+    const row = e.closest('tr') || e.parentElement;
+    const anchors = row ? Array.from(row.querySelectorAll('a')) : [];
+    return {
+        index: i,
+        name: ((e.innerText || e.textContent) || '').replace(/\\s+/g, ' ').trim(),
+        row: ((row ? (row.innerText || row.textContent) : '') || '')
+                .replace(/\\s+/g, ' ').trim().slice(0, 120),
+        ordinal: Math.max(anchors.indexOf(e), 0),
+    };
+})
+"""
+
+# Tag ONE anchor, addressed by its index in the read that just resolved it and re-verified by
+# its label before the tag lands. A stale index (the tree re-rendered between the read and this
+# call) therefore fails loudly instead of tagging a different document.
+_TAG_ANCHOR_JS = """
+(want) => {
+    for (const e of document.querySelectorAll('[data-tb-file]')) {
+        e.removeAttribute('data-tb-file');
+    }
+    const a = document.querySelectorAll('a')[want.index];
+    if (!a) return false;
+    const text = ((a.innerText || a.textContent) || '').replace(/\\s+/g, ' ').trim();
+    if (text !== want.name) return false;
+    a.setAttribute('data-tb-file', '1');
+    return true;
+}
+"""
+
+# The `References` toggles, innermost match only (an ancestor wrapping the whole tree also
+# contains the word), each tagged twice: `data-tb-toggle` is a per-read click target, and
+# `data-tb-refid` is a durable identity assigned once and never reassigned, so a section is
+# never clicked twice across rounds. `aria-expanded`, where the widget publishes it, says
+# outright whether a section is already open.
+_REFERENCE_TOGGLES_JS = """
+() => {
+    for (const e of document.querySelectorAll('[data-tb-toggle]')) {
+        e.removeAttribute('data-tb-toggle');
+    }
+    window.__tbRefSeq = window.__tbRefSeq || 0;
+    const matches = [];
+    for (const el of document.querySelectorAll('a,button,span,div,td,th,li')) {
+        const txt = ((el.innerText || el.textContent) || '').replace(/\\s+/g, ' ').trim();
+        if (!/references/i.test(txt) || txt.length > 40) continue;
+        matches.push(el);
+    }
+    const inner = matches.filter(el => !matches.some(o => o !== el && el.contains(o)));
+    return inner.map((el, i) => {
+        el.setAttribute('data-tb-toggle', String(i));
+        if (!el.hasAttribute('data-tb-refid')) {
+            el.setAttribute('data-tb-refid', String(++window.__tbRefSeq));
+        }
+        const holder = el.closest('[aria-expanded]');
+        const rect = el.getBoundingClientRect();
+        return {
+            id: String(i),
+            refid: el.getAttribute('data-tb-refid'),
+            text: ((el.innerText || el.textContent) || '').replace(/\\s+/g, ' ').trim(),
+            expanded: holder ? holder.getAttribute('aria-expanded') : null,
+            visible: !!(rect.width || rect.height),
+        };
+    });
+}
+"""
+
+_DOWNLOAD_MENU_ITEM = "Download this attachment"
+
+_UNREAD = object()                 # "expected_count has not been read yet" -- None is an answer
 
 
 class AribaFileSource:
@@ -1480,118 +1625,413 @@ class AribaFileSource:
     each with its own "Download this attachment" menu, and no file exceeds 88.7 MB -- so no
     ceiling is ever in play here.
 
-    Thin on purpose. Naming, resume, atomicity and the count check all live in ariba_files,
-    which is unit-tested; this class only traverses and clicks.
+    **Thin means it decides nothing.** Naming, resume, atomicity, the count check -- and now
+    the filename predicate, the identity of a listed file, and the dedupe rule -- all live in
+    `ariba_files`, which is unit-tested. This class reads the DOM, scrolls, and clicks. Every
+    pure decision it used to make itself is a function over there with tests against it, which
+    is the point of the seam: the two decisions the archive's integrity rests on were
+    unreachable by any test while they lived in here.
+
+    Four things this class exists to get right, each of which silently corrupts an archive that
+    cannot be re-fetched if it does not:
+
+    * **Identity is never positional** (`ariba_files.anchor_key`). The key is row identity +
+      within-row ordinal + filename, all facts about the document's place in the tree. The
+      counter this replaces incremented in TRAVERSAL order, so two files sharing a base got
+      their `#2` for when they were seen -- which reproduces `make_fingerprint`'s exact
+      Critical: identical ordered pairs after a reorder, partials adopted positionally, one
+      document stored twice and another lost, counts matching, no gap recorded.
+    * **`download` addresses ONE document, not a label.** It re-reads the tree, finds the
+      anchor whose KEY matches, and clicks that element -- never `get_by_text(name).first`,
+      which resolves both of two same-named documents to the same first link and stores the
+      same bytes twice on a single clean run, again with matching counts and no gap record.
+    * **Expansion is idempotent and evidence-based.** A `References` control keeps its label
+      after it opens, so a second blind click COLLAPSES what the first one opened -- the same
+      lesson `AribaPicker.clear_selection` records for the header checkbox. Sections are
+      tracked by a durable DOM id, `aria-expanded` is honoured where present, and a click that
+      shrinks the link count is undone and reported.
+    * **The count is read BEFORE the traversal, and the event view is restored after.** Reading
+      it drives Download Content -> Download Attachments -> picker -> Done, which leaves the
+      page somewhere else entirely and discards every expansion; a traversal after that hunts
+      on the wrong page. So it is read first, the event view is re-established through
+      `_open_authed_preview` + Respond, and both the traversal and every download refuse to run
+      until that view is confirmed by evidence.
     """
 
-    def __init__(self, page, log=lambda _m: None):
+    MAX_SCROLL_PASSES = 40
+    STALL_LIMIT = 3               # consecutive dead (non-edge, non-moving) wheels before raising
+
+    def __init__(self, page, rfx_id: str | None = None, log=lambda _m: None):
         self.page = page
+        self.rfx_id = rfx_id
         self.log = log
+        self._expected = _UNREAD
+        self._toggled: set = set()
+        # The same container-aware, scrollTop-verified primitive the picker uses -- not a bare
+        # `mouse.wheel`, which is every mistake `AribaPicker` spent six live runs unlearning:
+        # wheeling without hovering the scroll container, never verifying scrollTop moved, no
+        # stall tolerance, and only ever scrolling down. `allow_document` because this list,
+        # unlike the picker's inner strip, may well scroll the page itself.
+        self._scroller = _ListScroller(
+            page, "a", self._anchor_signature, log=log, allow_document=True,
+            label="content tree")
+
+    # --- reads ---------------------------------------------------------------------------
+    def _read_anchors(self) -> list:
+        return self.page.evaluate(_ANCHORS_JS)
+
+    def _anchor_count(self) -> int:
+        return self.page.evaluate("() => document.querySelectorAll('a').length")
+
+    def _anchor_signature(self):
+        """What the tree currently renders, as keys -- `_ListScroller`'s re-render evidence."""
+        try:
+            anchors = self._read_anchors()
+        except Exception:                             # noqa: BLE001 — mid-render churn
+            return ()
+        listing = ariba_files.listing_from_anchors(anchors)
+        return tuple(sorted(f["key"] for f in listing["files"]))
+
+    # --- the event view ------------------------------------------------------------------
+    def _on_event_view(self) -> bool:
+        """Whether the event's All Content view -- not the picker, not the export page -- is in
+        front of us. Evidence, the way `_on_picker` and `_wait_post_respond` take evidence."""
+        try:
+            if self.page.query_selector(f"text={PICKER_HEADING}") is not None:
+                return False
+            dc = self.page.get_by_role("button", name="Download Content")
+            return bool(dc.count()) and dc.first.is_visible()
+        except Exception:                             # noqa: BLE001 — mid-navigation churn
+            return False
+
+    def _wait_event_view(self, timeout_ms: int = 15000) -> bool:
+        waited = 0
+        while True:
+            if self._on_event_view():
+                return True
+            if waited >= timeout_ms:
+                return False
+            self.page.wait_for_timeout(250)
+            waited += 250
+
+    def _require_event_view(self, action: str) -> None:
+        if self._wait_event_view(timeout_ms=5000):
+            return
+        raise RuntimeError(
+            f"{action} would run on the wrong page: the event's All Content view is not in "
+            f"front of us (no visible 'Download Content' button; the page is at "
+            f"{self.page.url}). Traversing or clicking here would silently address whatever "
+            f"else is rendered — refusing (#174).")
+
+    def _restore_event_view(self) -> None:
+        """Put the event's All Content view back after the picker read navigated away.
+
+        Nothing else does: the picker's `Done` returns to the export page, and every
+        `References` section opened before it is gone. Re-entry is the same door `capture_event`
+        uses -- `_open_authed_preview` then Respond, which is idempotent (re-responding just
+        re-opens the event) -- and it is confirmed by evidence before returning.
+        """
+        if self._wait_event_view(timeout_ms=8000):
+            return
+        if not self.rfx_id:
+            raise RuntimeError(
+                "the picker read left the event's All Content view and this source was built "
+                "without an rfx_id, so it cannot navigate back — refusing to traverse the "
+                "wrong page (#174).")
+        for _ in range(2):
+            if not _open_authed_preview(self.page, self.rfx_id):
+                continue
+            try:
+                self.page.get_by_role("button", name="Respond", exact=True).click(timeout=15000)
+            except Exception as exc:                  # noqa: BLE001 — one attempt, not the run
+                self.log(f"    could not re-enter the event via Respond ({exc})")
+                continue
+            outcome = _wait_post_respond(
+                self.page, self.page.get_by_role("button", name="Download Content"))
+            _dismiss_cookie_banner(self.page)
+            if outcome == "event" and self._wait_event_view(timeout_ms=15000):
+                self.log("    event content view restored after the picker read")
+                # Anything opened before the picker read is closed again -- so is the record of
+                # having opened it, or `_expand_references` would skip every section.
+                self._toggled.clear()
+                return
+        raise RuntimeError(
+            f"the event's All Content view could not be restored after reading the picker's "
+            f"file count (rfx {self.rfx_id}) — refusing to traverse or download against "
+            f"whatever page is in front of us instead (#174).")
 
     # --- traversal -----------------------------------------------------------------------
-    def _expand_references(self) -> int:
-        """Open every `References` toggle; the bulk of the files live behind them."""
-        opened = 0
-        for _ in range(20):
-            links = self.page.get_by_text("References", exact=False)
-            n = links.count()
-            progressed = False
-            for i in range(n):
-                item = links.nth(i)
+    def _reference_toggles(self) -> list:
+        try:
+            return self.page.evaluate(_REFERENCE_TOGGLES_JS) or []
+        except Exception as exc:                      # noqa: BLE001 — reported, never fatal
+            self.log(f"    could not read the References toggles ({exc})")
+            return []
+
+    def _await_anchor_count_change(self, baseline: int, timeout_ms: int = 8000) -> int:
+        """Poll until the number of links on the page moves off `baseline`, then let it settle.
+
+        The evidence a toggle actually did something. Never a sleep: a section that renders in
+        700 ms and a section that does nothing look identical to a fixed wait.
+        """
+        waited = 0
+        while True:
+            try:
+                count = self._anchor_count()
+            except Exception:                         # noqa: BLE001 — mid-render churn
+                count = baseline
+            if count != baseline:
+                self.page.wait_for_timeout(400)       # let the rest of the section land
                 try:
-                    if not item.is_visible():
-                        continue
-                    item.click(timeout=5000)
-                    self.page.wait_for_timeout(600)
-                    opened += 1
-                    progressed = True
-                except Exception:                 # noqa: BLE001 — one toggle, not the run
+                    return self._anchor_count()
+                except Exception:                     # noqa: BLE001
+                    return count
+            if waited >= timeout_ms:
+                return baseline
+            self.page.wait_for_timeout(250)
+            waited += 250
+
+    def _open_section(self, cand: dict) -> bool:
+        """Click one `References` toggle and prove it OPENED rather than closed."""
+        before = self._anchor_count()
+        try:
+            loc = self.page.locator(f'[data-tb-toggle="{cand["id"]}"]').first
+            loc.scroll_into_view_if_needed(timeout=5000)
+            loc.click(timeout=5000)
+        except Exception as exc:                      # noqa: BLE001 — one toggle, not the run
+            self.log(f"    References toggle {cand['text']!r} did not click ({exc})")
+            return False
+        after = self._await_anchor_count_change(before)
+        if after > before:
+            return True
+        if after < before:
+            # The label survives expansion, so a control we had not recorded may already have
+            # been open -- exactly what `AribaPicker.clear_selection` documents for the header
+            # checkbox. Put it back rather than leaving the tree in a parity accident.
+            self.log(f"    References toggle {cand['text']!r} COLLAPSED an open section "
+                     f"({before} -> {after} links) — re-opening it")
+            try:
+                self.page.locator(f'[data-tb-toggle="{cand["id"]}"]').first.click(timeout=5000)
+                self._await_anchor_count_change(after)
+            except Exception as exc:                  # noqa: BLE001
+                self.log(f"      could not re-open it ({exc})")
+            return False
+        self.log(f"    References toggle {cand['text']!r} revealed nothing")
+        return False
+
+    def _expand_references(self, max_rounds: int = 6) -> int:
+        """Open every `References` section exactly once; the bulk of the files live behind them.
+
+        Returns the number of sections that DEMONSTRABLY opened (the page's link count grew),
+        not the number of clicks. The version this replaces clicked every match up to 20 times
+        over: `progressed` was set by any click landing, so it never stopped early, and the
+        matcher still matched the control after expansion -- so pass 2 closed what pass 1
+        opened and the final state was a parity accident.
+        """
+        expanded = 0
+        for _ in range(max_rounds):
+            clicked = 0
+            for cand in self._reference_toggles():
+                if cand["refid"] in self._toggled:
+                    continue                          # already handled -- never click twice
+                if (cand["expanded"] or "").lower() == "true":
+                    self._toggled.add(cand["refid"])  # the widget says it is already open
                     continue
-            if not progressed:
-                break
-        return opened
+                if not cand["visible"]:
+                    continue                          # behind a section not yet opened
+                self._toggled.add(cand["refid"])
+                clicked += 1
+                if self._open_section(cand):
+                    expanded += 1
+            if not clicked:
+                break                                 # nothing left that has not been handled
+        return expanded
+
+    def _sweep(self) -> tuple:
+        """Scroll the whole tree, merging every read by KEY. Mirrors `AribaPicker.row_keys`.
+
+        Each direction stops on the container's own `scrollTop` reaching that end of its range
+        (`_ListScroller.step`'s `at_edge`), never on "a pass added nothing" -- the stop
+        condition `row_keys` exists in its current form because it was measured wrong. A wheel
+        that neither moves scrollTop nor sits at an edge is a dead wheel and raises rather than
+        silently under-reading. The upward sweep runs first because nothing guarantees the tree
+        starts at the top, and a downward-only traversal simply never sees what is above it.
+        """
+        by_key: dict = {}
+        rejected: dict = {}
+        collided: dict = {}
+
+        def collect():
+            listing = ariba_files.listing_from_anchors(self._read_anchors())
+            for entry in listing["files"]:
+                by_key.setdefault(entry["key"], entry)
+            for name in listing["rejected"]:
+                rejected[name] = rejected.get(name, 0) + 1
+            for hit in listing["collided"]:
+                collided[hit["key"]] = hit["name"]
+
+        def sweep(delta_y: int) -> None:
+            collect()
+            stalled = 0
+            for _ in range(self.MAX_SCROLL_PASSES):
+                step = self._scroller.step(delta_y)
+                collect()
+                if step["moved"]:
+                    stalled = 0
+                    continue
+                if step["at_edge"]:
+                    self.page.wait_for_timeout(300)   # let a trailing re-render land
+                    collect()
+                    return
+                stalled += 1
+                if stalled >= self.STALL_LIMIT:
+                    raise RuntimeError(
+                        f"the content tree's wheel (delta={delta_y}) did not move the "
+                        f"container's scrollTop across {stalled} consecutive attempts while "
+                        f"not at an edge (stuck at {step['before']}, range "
+                        f"0..{step['max_scroll']}) — the wheel is not reaching the tree")
+            raise RuntimeError(
+                f"the content tree exhausted {self.MAX_SCROLL_PASSES} scroll passes "
+                f"(delta={delta_y}) without ever reaching an edge — refusing to plan a capture "
+                f"against a possibly-incomplete file list")
+
+        sweep(-2000)
+        sweep(2000)
+        return list(by_key.values()), rejected, collided
 
     def list_files(self) -> list:
-        """Every downloadable document in the content tree, in traversal order.
+        """Every downloadable document in the content tree, in TREE order.
 
-        Scrolls and expands until repeated passes find nothing new, then LOGS the count. A
-        traversal that quietly sees 6 rows instead of 60 is the failure that matters here, and
-        #174 spent six live runs learning that a silent short read looks exactly like success.
+        A traversal that quietly sees 6 files instead of 60 is the failure that matters here,
+        and #174 spent six live runs learning that a silent short read looks exactly like
+        success. So the picker's count is read FIRST (it is an independent ground truth -- a
+        file behind a section that never expanded is invisible to this traversal and to nothing
+        else), the event view is restored and confirmed, and a shortfall against that count
+        RAISES: a short read that returns normally becomes a permanently-archived bundle with a
+        hole in it, because `capture_attachments` treats `Doc<n>.zip` as proof forever.
         """
-        self.page.keyboard.press("Home")
-        self.page.wait_for_timeout(500)
+        expected = self.expected_count()
+        self._require_event_view("the content-tree traversal")
         opened = self._expand_references()
+        files, rejected, collided = self._sweep()
+        files = ariba_files.order_listing(files)
 
-        seen, out, occurrences = set(), [], {}
-        for _ in range(30):
-            before = len(seen)
-            for entry in self.page.evaluate(
-                """() => Array.from(document.querySelectorAll('a'))
-                     .map(e => ({name: (e.innerText || '').trim(),
-                                 row: ((e.closest('tr') || {}).innerText || '')
-                                        .replace(/\\s+/g, ' ').trim().slice(0, 120)}))
-                     .filter(x => x.name)"""
-            ):
-                name = entry["name"]
-                if not _FILENAME.search(name) or name.startswith("http"):
-                    continue
-                dedupe = (name, entry["row"])
-                if dedupe in seen:
-                    continue
-                seen.add(dedupe)
-                # KEY CONTRACT: stable across repeated traversals and INDEPENDENT OF POSITION.
-                # A positional key (an enumeration index) silently defeats ariba_files'
-                # fingerprint: the ordered (key, name) pairs come out byte-identical after a
-                # reorder, and a resumed run then adopts the files on disk positionally --
-                # reproducing the exact Critical that round found (one document twice, another
-                # lost, counts matching, no gap recorded). So the key is built from the row's
-                # own OUTLINE NUMBER (its position in the content tree, e.g. "3.1", which is a
-                # stable label rather than a traversal index) plus the filename, with an
-                # occurrence counter only for repeats inside one row.
-                outline = ""
-                m = re.match(r"\s*(\d+(?:\.\d+)*)\s", entry["row"])
-                if m:
-                    outline = m.group(1)
-                base = f"{outline}#{name}"
-                occurrences[base] = occurrences.get(base, 0) + 1
-                key = base if occurrences[base] == 1 else f"{base}#{occurrences[base]}"
-                out.append({"key": key, "name": name, "row": entry["row"]})
-            self.page.mouse.wheel(0, 1200)
-            self.page.wait_for_timeout(400)
-            if len(seen) == before:
-                break
+        self.log(f"    content tree: {len(files)} file(s), {opened} References section(s) "
+                 f"expanded, picker count {expected if expected is not None else 'unknown'}")
+        if rejected:
+            # Named, because the alternative is a document silently absent from an archive
+            # nobody can re-fetch. The predicate this replaced was `$`-anchored (so it skipped
+            # every label rendering its own size) over a short extension list (no .dwf, .xlsm,
+            # .tif, .msg, .7z, .gz, .kmz) — and this log is how you would ever find that out.
+            sample = sorted(rejected)[:10]
+            self.log(f"    content tree: {len(rejected)} label(s) not taken for documents "
+                     f"(showing {len(sample)}): {sample}")
+        if collided:
+            self.log(f"    content tree: {len(collided)} link(s) indistinguishable from another "
+                     f"(same row text, same position, same name) and collapsed: "
+                     f"{sorted(collided.values())}")
 
-        self.log(f"    content tree: {len(out)} file(s), {opened} References section(s) expanded")
-        return out
+        if expected is not None and len(files) < expected:
+            raise RuntimeError(
+                f"the content tree listed {len(files)} file(s) against the picker's "
+                f"{expected} — refusing to build a bundle from a short traversal, which "
+                f"`capture_attachments` would treat as this event's complete archive forever "
+                f"(#174). Sections expanded: {opened}.")
+        return files
 
     # --- download ------------------------------------------------------------------------
+    def _match_anchor(self, key: str):
+        """The one anchor in the current DOM whose KEY is `key`, or None. Never `.first`."""
+        matches = [a for a in self._read_anchors()
+                   if ariba_files.is_document_name(a["name"])
+                   and ariba_files.anchor_key(a) == key]
+        if len(matches) > 1:
+            raise RuntimeError(
+                f"{len(matches)} links in the content tree share the identity {key!r} — "
+                f"refusing to guess which document to download")
+        return matches[0] if matches else None
+
+    def _resolve_anchor(self, file: dict):
+        """Tag and return the anchor for THIS document, scrolling to find it if need be.
+
+        Keyed on identity, not on the label: `get_by_text(name).first` resolves both of two
+        same-named documents to the same link, so the same bytes land twice under two names
+        and the second document is never fetched -- both "successful", counts matching, no gap
+        record, on a single clean run. `.first` also risks a hidden or collapsed match.
+        """
+        match = self._match_anchor(file["key"])
+        if match is None:
+            for delta in (-3000, 3000):
+                for _ in range(self.MAX_SCROLL_PASSES):
+                    step = self._scroller.step(delta)
+                    match = self._match_anchor(file["key"])
+                    if match is not None or step["at_edge"] or not step["moved"]:
+                        break
+                if match is not None:
+                    break
+        if match is None:
+            raise RuntimeError(
+                f"{file['name']}: no link in the content tree carries the identity "
+                f"{file['key']!r} — refusing to download whatever else shares its label")
+        if not self.page.evaluate(
+                _TAG_ANCHOR_JS, {"index": match["index"], "name": match["name"]}):
+            raise RuntimeError(
+                f"{file['name']}: the content tree re-rendered between resolving this link and "
+                f"clicking it — refusing rather than clicking a stale position")
+        return self.page.locator('a[data-tb-file="1"]').first
+
+    def _await_menu_item(self, file: dict, timeout_ms: int = 15000):
+        """Poll for a VISIBLE 'Download this attachment' entry -- never sleep a guess.
+
+        These entries exist for every attachment row and only one is visible at a time, so a
+        `.first` locator picks a hidden one and times out (observed). A fixed 600 ms wait
+        standing in for this condition means a menu that renders in 700 ms raises, and that
+        document is omitted from an archive that cannot be re-fetched.
+        """
+        waited, seen = 0, 0
+        while True:
+            item = self.page.get_by_text(_DOWNLOAD_MENU_ITEM, exact=False)
+            try:
+                seen = item.count()
+                for i in range(seen):
+                    candidate = item.nth(i)
+                    if candidate.is_visible():
+                        return candidate
+            except Exception:                         # noqa: BLE001 — menu mid-render
+                pass
+            if waited >= timeout_ms:
+                raise RuntimeError(
+                    f"{file['name']}: the menu did not open within {timeout_ms / 1000:.0f}s "
+                    f"(no VISIBLE '{_DOWNLOAD_MENU_ITEM}' among {seen} candidates)")
+            self.page.wait_for_timeout(250)
+            waited += 250
+
+    def _dismiss_menu(self) -> None:
+        """Close the attachment menu so a stray overlay cannot intercept the next click."""
+        try:
+            self.page.keyboard.press("Escape")
+            self.page.wait_for_timeout(200)
+        except Exception:                             # noqa: BLE001 — best effort by nature
+            pass
+
     def download(self, file: dict, dest) -> Path:
         """Save ONE document to exactly `dest`, or raise.
 
-        `.part` staging and the rename are the caller's job (ariba_files) -- this writes where
-        it is told. Opening the filename's menu is required: the "Download this attachment"
-        entries exist for every attachment row and only one is visible at a time, so a `.first`
-        locator picks a hidden one and times out (observed).
+        `.part` staging, the rename and the parent directory are the caller's job
+        (`ariba_files.capture_files`) -- this writes where it is told and nothing else.
         """
         dest = Path(dest)
-        dest.parent.mkdir(parents=True, exist_ok=True)
-        link = self.page.get_by_text(file["name"], exact=True).first
+        self._require_event_view(f"downloading {file['name']}")
+        link = self._resolve_anchor(file)
         link.scroll_into_view_if_needed(timeout=10000)
         link.click(timeout=15000)
-        self.page.wait_for_timeout(600)
-        item = self.page.get_by_text("Download this attachment", exact=False)
-        visible = None
-        for i in range(item.count()):
-            if item.nth(i).is_visible():
-                visible = item.nth(i)
-                break
-        if visible is None:
-            raise RuntimeError(
-                f"{file['name']}: the menu did not open (no visible "
-                f"'Download this attachment' among {item.count()} candidates)")
-        with self.page.expect_download(timeout=300000) as dl:
-            visible.click()
-        dl.value.save_as(str(dest))
+        try:
+            item = self._await_menu_item(file)
+            with self.page.expect_download(timeout=300000) as dl:
+                item.click()
+            dl.value.save_as(str(dest))
+        finally:
+            self._dismiss_menu()
         return dest
 
     # --- the picker's count, and nothing else --------------------------------------------
@@ -1599,10 +2039,28 @@ class AribaFileSource:
         """The picker's authoritative `Total Number`, read WITHOUT downloading anything.
 
         An independent ground truth: the content tree could hide a file behind a References
-        section that never expanded, and the traversal would never know. PROVISIONAL -- it is
-        not yet established that the picker's attachment count and the tree's file count are
-        commensurable (see the spec); Task 5 validates the check itself against the known 54.
+        section that never expanded, and the traversal would never know.
+
+        **Read once, before the traversal, and the event view restored afterwards.** This
+        drives Download Content -> Download Attachments -> picker -> Done, which leaves the
+        event's All Content view and discards every expansion made under it; running it BETWEEN
+        `list_files()` and the downloads (which is the order `capture_files` calls the protocol
+        in) left every later click hunting on the wrong page. Memoised, so `capture_files`'s own
+        call after `list_files()` costs nothing and navigates nowhere.
+
+        PROVISIONAL in one respect only: it is not yet established live that the picker's
+        `Total Number` and the tree's file count are commensurable (see the spec; Task 5
+        validates against the known 54). `list_files` raises on a SHORTFALL against it -- the
+        direction that hides a missing document -- and `capture_files` records an overshoot in
+        the durable `.omitted.json` rather than refusing. If the two turn out to count
+        different things, this is the one guard to revisit, with the measurement in hand.
         """
+        if self._expected is _UNREAD:
+            self._expected = self._read_expected_count()
+            self._restore_event_view()
+        return self._expected
+
+    def _read_expected_count(self) -> int | None:
         try:
             dc = self.page.get_by_role("button", name="Download Content")
             da = self.page.get_by_role("button", name="Download Attachments")
@@ -1610,16 +2068,15 @@ class AribaFileSource:
             try:
                 da.first.wait_for(state="visible", timeout=30000)
             except Exception:
-                dc.click()
+                dc.click()                            # no-op first click — try once more
                 da.first.wait_for(state="visible", timeout=30000)
             da.first.click()
             self.page.wait_for_selector(f"text={PICKER_HEADING}", timeout=45000)
             _select_all_attachments(self.page, log=self.log)
             count = AribaPicker(self.page, log=self.log).file_count()
             self.page.get_by_role("button", name="Done").first.click()
-            self.page.wait_for_timeout(1500)
             return count
-        except Exception as exc:                  # noqa: BLE001 — advisory, never blocks
+        except Exception as exc:                      # noqa: BLE001 — advisory, never blocks
             self.log(f"    could not read the picker's file count ({exc}) — recording unknown")
             return None
 
