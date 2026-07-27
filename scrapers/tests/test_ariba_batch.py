@@ -151,3 +151,85 @@ def test_it_leaves_nothing_selected_between_batches():
     ariba_batch.accumulate_batches(picker, threshold_mb=450)
 
     assert picker.selected == set()
+
+
+def _make_zip(path, files: dict):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with zipfile.ZipFile(path, "w") as zf:
+        for name, data in files.items():
+            zf.writestr(name, data)
+    return path
+
+
+def test_merge_reproduces_a_single_download(tmp_path):
+    """Merging top-level members yields the layout one download would have produced."""
+    a = _make_zip(tmp_path / "batch-01.zip", {"Part1.pdf": b"aaa", "Part2.pdf": b"bb"})
+    b = _make_zip(tmp_path / "batch-02.zip", {"Drawings.zip": b"PK-not-really"})
+
+    target, count = ariba_batch.merge_bundles([a, b], tmp_path / "Doc1.zip")
+
+    assert count == 3
+    with zipfile.ZipFile(target) as zf:
+        assert sorted(zf.namelist()) == ["Drawings.zip", "Part1.pdf", "Part2.pdf"]
+        assert zf.read("Part1.pdf") == b"aaa"
+
+
+def test_merge_preserves_crc_so_the_index_is_unchanged(tmp_path):
+    a = _make_zip(tmp_path / "batch-01.zip", {"A.pdf": b"hello world"})
+    before = {i.filename: i.CRC for i in zipfile.ZipFile(a).infolist()}
+
+    target, _ = ariba_batch.merge_bundles([a], tmp_path / "Doc2.zip")
+
+    after = {i.filename: i.CRC for i in zipfile.ZipFile(target).infolist()}
+    assert after == before
+
+
+def test_a_name_collision_refuses_rather_than_overwriting(tmp_path):
+    a = _make_zip(tmp_path / "batch-01.zip", {"Same.pdf": b"one"})
+    b = _make_zip(tmp_path / "batch-02.zip", {"Same.pdf": b"two"})
+
+    with pytest.raises(RuntimeError, match="collision"):
+        ariba_batch.merge_bundles([a, b], tmp_path / "Doc3.zip")
+
+
+def test_directory_entries_are_not_counted_as_files(tmp_path):
+    path = tmp_path / "batch-01.zip"
+    with zipfile.ZipFile(path, "w") as zf:
+        zf.writestr("folder/", b"")
+        zf.writestr("folder/A.pdf", b"a")
+
+    _, count = ariba_batch.merge_bundles([path], tmp_path / "Doc4.zip")
+
+    assert count == 1
+
+
+def test_a_shortfall_against_the_expected_count_is_reported(tmp_path):
+    a = _make_zip(tmp_path / "batch-01.zip", {"A.pdf": b"a"})
+    lines = []
+
+    _, count = ariba_batch.merge_bundles(
+        [a], tmp_path / "Doc5.zip", expected_files=54, log=lines.append)
+
+    assert count == 1
+    assert any("54" in line and "1" in line for line in lines)
+
+
+def test_write_omitted_records_the_gap_durably(tmp_path):
+    bundle = tmp_path / "Doc5713434353.zip"
+    bundle.write_bytes(b"z")
+
+    path = ariba_batch.write_omitted(bundle, ["big.pdf"], expected_files=54, actual_files=53)
+
+    assert path == tmp_path / "Doc5713434353.omitted.json"
+    body = json.loads(path.read_text())
+    assert body["omitted"] == ["big.pdf"]
+    assert body["expected_files"] == 54
+    assert body["actual_files"] == 53
+
+
+def test_write_omitted_writes_nothing_when_the_capture_is_complete(tmp_path):
+    bundle = tmp_path / "Doc1.zip"
+    bundle.write_bytes(b"z")
+
+    assert ariba_batch.write_omitted(bundle, [], expected_files=3, actual_files=3) is None
+    assert not (tmp_path / "Doc1.omitted.json").exists()
