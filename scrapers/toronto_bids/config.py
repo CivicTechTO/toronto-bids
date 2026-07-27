@@ -68,6 +68,10 @@ AWARD_SUMMARY_DIR = DATA_DIR / "documents" / "award_summary"
 # pages carry the supplier/amount/Call Number that the pre-Ariba years need (#77).
 COUNCIL_AGENDAS_DIR = DATA_DIR / "council" / "agendas"
 
+# TMMIS agenda-item pages for committee awards after the Bid Award Panel's abolition
+# (#164) — kept apart from COUNCIL_AGENDAS_DIR, which holds the (retired) BA/BD series.
+COMMITTEE_ITEMS_DIR = DATA_DIR / "council" / "committee_items"
+
 # Archived Ariba posting pages from the legacy rescue; their <title> is the real
 # solicitation title (#65).
 LEGACY_ARIBA_DIR = DATA_DIR / "legacy" / "azure" / "ariba_data"

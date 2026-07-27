@@ -128,6 +128,38 @@ The bidders did not stop. `tb enrich-awards --download` archives the Toronto Bid
 - **Four traps this parser hit, all previously documented elsewhere:** an RFP lists proponents with **no price at all** (`NOTE: Not applicable for RFP`) so the price must be optional (#84 stores these as NULL); `2489960 Ontario Inc.` is a **real firm**, so a "long digit run means a leaked price" guard eats it (#87 pins the same lesson — reading cells removes the reason that guard existed, since a name cell cannot contain a price that leaked out of the price cell); `\s` matches newlines, so `\d{1,2}[.)]\s*` walked off an empty `4.` row and captured `Page 2 of 2` as a bidder; and **the numbering is not always there** — requiring it cost 57 of 229 forms their entire bid table, so it is stripped where present and never required.
 - **Coverage is bounded and will stay bounded**: the form exists only **over $500,000** — the panel had no floor — so the bid record thins permanently for small awards. The City also says "a portion of work ... will be manual"; 223 of 244 post-cutover awards carry one (91%).
 
+### Committee/Council awards (`sources/committee_awards.py`, #164) — a ~1% slice, measured
+
+`tb enrich-committee-awards`. The other half of "where awards went after the panel" (#114): the
+awards too large for the CPO go to a Standing Committee or Council. The route is voting-record
+CSV → agenda-item page (headed browser) → staff-report PDF → bid table, storing into `bid` /
+`background_pdf` with **no new tables** (a committee bid keys like a #114 award-summary bid —
+`reference` NULL, `document_number` set). Offline by default; `--scrape` drives the browser.
+Self-bounding: it only chases items that name a spine solicitation and have no bids yet.
+
+**It works end to end and recovers almost nothing. That is the finding, and it is measured —
+do not reopen it expecting a better parser to help (the #83 pattern).** First live run:
+11 award items found, 8 needing bids, 8/8 discovered, 8/8 downloaded, **3 bids from 2 reports**.
+
+- **The join key is the ceiling, not the parser.** Discovery keeps only items whose *Agenda Item
+  Title* carries a 10-digit doc number. Of **9,444** distinct agenda items, 109 are
+  award/contract-like and **only 11 name one**. Against the #164 target set — 4,942 odata awards
+  with no captured bids, of which **431 are ≥$5M totalling $25.53B** — exactly **4** are
+  reachable this way.
+- **The 98 unreachable award-like items are mostly not losses.** The sample is dominated by
+  `Amendment to Blanket Contract` and `Non-Competitive Contract`, which have no bids by nature.
+  Widening the title regex buys far less than the raw count suggests.
+- **RFTs/RFQs tabulate bids; RFPs narrate them.** That is why 6 of 8 reports yielded nothing.
+  `_BID_TABLE_ANCHORS` refuses unless `Summary of Bids Received` or `opened the following bids`
+  is present — correct behaviour (#130 discipline), not a gap: an RFP report says
+  *"The City received one submission ... from: Carla Construction and Maintenance Ltd."* in prose
+  and names no losing proponents at all. The unbuilt cheap win is that prose pattern.
+- **Most competitive awards never reach committee**, being staff-delegated or panel-handled —
+  the same mechanism #83 measured on titles. Committee is the exception tier, so a committee
+  route can only ever be a thin slice.
+- Report bytes land content-addressed at `documents/committee_award/<sha256>.pdf`, so re-parsing
+  is offline and free — the queue keys on `sha256`, never `text` (#96's lesson).
+
 ### Ariba attachments (`sources/ariba_attachments.py`, #117) — the documents behind Respond
 
 `tb enrich-ariba-attachments`. The City posts every competitive solicitation to Ariba Discovery, but the **actual documents** — RFP parts, drawings, addenda, environmental assessments, pricing forms — live inside the Sourcing event, not on the Discovery posting. The preview renders `Attachments (0)`; the files are reachable only "as participating Supplier", i.e. after clicking **Respond**. Authorized by PMMD in writing (2026-07, on the City's open-by-default policy); Respond registers our supplier account as an event participant for archival access and **never submits a bid**.
