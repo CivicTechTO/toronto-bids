@@ -30,6 +30,7 @@ Not part of `tb sync`. Run via `tb enrich-ariba-attachments`.
 """
 import hashlib
 import io
+import re
 import shutil
 import zipfile
 from pathlib import Path
@@ -423,16 +424,28 @@ def _wait_post_respond(page, download_content, timeout_ms: int = 60000) -> str:
     return "timeout"
 
 
-def _select_all_attachments(page, log=lambda _m: None) -> None:
-    """Tick the picker's header checkbox to select every file, and verify it took.
+def _select_all_attachments(page, log=lambda _m: None, timeout_ms: int = 90000) -> None:
+    """Tick the picker's header checkbox to select every file, and wait for the cascade to land.
 
     The widget is `<div class="w-chk-container"><input class="w-chk-native"><label
     class="w-chk"></label></div>`. The real <input> is hidden and empty of size; the visible box
     is the CSS-drawn sibling `<label class="w-chk">`, and AribaWeb's select-all action fires on a
     real positional click there (a Playwright `.click()` on the empty label only FOCUSES it, and
     setting the input's checked flag skips the cascade that ticks every row). So click at the
-    widget's bounding-box centre with the mouse — the first checkbox is the header select-all —
-    and confirm it took by reading the size total (a silent no-select downloads an empty bundle).
+    widget's bounding-box centre with the mouse — the first checkbox is the header select-all.
+
+    **The cascade is an AJAX call whose duration scales with the item count, so POLL for it —
+    never sleep a guess (#174).** This slept a flat 3000ms and then counted. Measured live on
+    Doc5713434353 (51 attachments): the header ticks instantly, the other 50 land at **~10.3s**.
+    So the count was read mid-cascade, a working click looked like a dead checkbox, and the loop
+    then ran the *next* strategy — whose click toggled the header back off and restarted the
+    cascade. Three strategies x 3s meant that event could never be captured, while the 49
+    smaller ones cascaded inside 3s and always were. The bug scaled with the event, which is
+    exactly why it looked like one broken posting rather than a broken wait.
+
+    Verify by counting ticked rows, not by parsing the size total: the header cascade ticks every
+    row, so >1 checked box means it took. Parsing the total proved brittle (label and value live
+    in different columns) and a silent no-select downloads an empty bundle.
     """
     def mouse_click_first(selector):
         box = page.locator(selector).first.bounding_box()
@@ -450,34 +463,66 @@ def _select_all_attachments(page, log=lambda _m: None) -> None:
         ("mouse-container", lambda: mouse_click_first("div.w-chk-container")),
         ("label-click", lambda: page.locator("label.w-chk").first.click(timeout=6000)),
     )
+    poll_ms = 500
+    # A click that lands ticks the HEADER almost at once; only the row cascade is slow. So a
+    # click still showing zero ticked after this grace never registered — that, and only that,
+    # is grounds to try the next strategy. Falling through while a cascade is in flight is the
+    # #174 bug itself.
+    grace_ms = 3000
+
     for name, attempt in strategies:
         try:
             attempt()
-            page.wait_for_timeout(3000)                   # the cascade recomputes over an AJAX call
-            # Verify by counting ticked rows, not by parsing the total: the header cascade ticks
-            # every row, so >1 checked box means it took. Parsing the size total proved brittle
-            # (label and value live in different columns), and a silent no-select is worse.
-            if checked_count() > 1:
-                log(f"    select-all via {name}")
-                return
         except Exception:
-            pass
-    raise RuntimeError("Could not select the attachments (header checkbox did not register).")
+            continue                                      # e.g. no bounding box — try the next
+        waited = 0
+        while waited < timeout_ms:
+            page.wait_for_timeout(poll_ms)
+            waited += poll_ms
+            count = checked_count()
+            if count > 1:
+                log(f"    select-all via {name} (cascade landed in {waited / 1000:.0f}s)")
+                return
+            if count == 0 and waited >= grace_ms:
+                break                                     # never registered — next strategy
+    raise RuntimeError(
+        f"Could not select the attachments (the header checkbox did not select any rows "
+        f"within {timeout_ms / 1000:.0f}s).")
+
+
+# The picker writes the summary label with NON-BREAKING spaces and separates the value with
+# tabs -- "Total\xa0Size\xa0(MB):\t\t792.41". A literal space in the pattern therefore never
+# matches, which is how the 500 MB guard went blind on Doc5713434353 (#174): the page showed
+# 792.41, `_selected_total_mb` returned None, the ceiling check was skipped, and capture_event
+# clicked a disabled Download button until it timed out. `\s` covers space, tab and \xa0 alike.
+_TOTAL_MB = re.compile(r"Total\s*Size\s*\(MB\)\s*:\s*([\d,]+(?:\.\d+)?)")
+
+
+def parse_total_mb(text: str | None) -> float | None:
+    """The 'Total Size (MB): N' figure from the picker's summary text, or None. PURE."""
+    m = _TOTAL_MB.search(text or "")
+    return float(m.group(1).replace(",", "")) if m else None
 
 
 def _selected_total_mb(page) -> float | None:
     """The 'Total Size (MB): N' the picker shows once items are selected, or None if unread.
 
-    `inner_text` reorders label and value (they sit in separate columns) so the number never
-    follows the colon in the flat rendered text. Scan raw `textContent` in DOM order instead:
-    on the smallest element that wraps both, "Total Size (MB):" and "161.76" are adjacent, so
-    match them together on whichever element that is (the deepest match wins by scanning all).
+    Two reads, because neither alone is reliable. `inner_text` can reorder label and value (they
+    sit in separate columns) so the number does not always follow the colon; the raw `textContent`
+    scan in DOM order finds the smallest element wrapping both. Try the flat text first -- it is
+    what the summary actually renders -- then fall back to the DOM-order scan.
     """
+    try:
+        total = parse_total_mb(page.inner_text("body"))
+    except Exception:
+        total = None
+    if total is not None:
+        return total
     return page.evaluate(
         """() => {
             let best = null;
             for (const e of document.querySelectorAll('td,div,span,label,p,tr,table,body')) {
-                const m = (e.textContent || '').match(/Total Size \\(MB\\):\\s*([\\d,]+(?:\\.\\d+)?)/);
+                const m = (e.textContent || '').match(/Total\\s*Size\\s*\\(MB\\)\\s*:\\s*([\\d,]+(?:\\.\\d+)?)/);
                 if (m) best = parseFloat(m[1].replace(/,/g, ''));
             }
             return best;
