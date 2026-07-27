@@ -1469,6 +1469,161 @@ class AribaPicker:
         return path
 
 
+_FILENAME = re.compile(r"\.(pdf|zip|docx?|xlsx?|dwg|rtf|txt|jpe?g|png|csv|pptx?)$", re.I)
+
+
+class AribaFileSource:
+    """Playwright adapter satisfying ariba_files' FileSource protocol (#174).
+
+    The bundle path could not reach this event's documents: picker row 3.1 is atomic and holds
+    787.71 MB. The event page's `All Content` view exposes the same documents INDIVIDUALLY,
+    each with its own "Download this attachment" menu, and no file exceeds 88.7 MB -- so no
+    ceiling is ever in play here.
+
+    Thin on purpose. Naming, resume, atomicity and the count check all live in ariba_files,
+    which is unit-tested; this class only traverses and clicks.
+    """
+
+    def __init__(self, page, log=lambda _m: None):
+        self.page = page
+        self.log = log
+
+    # --- traversal -----------------------------------------------------------------------
+    def _expand_references(self) -> int:
+        """Open every `References` toggle; the bulk of the files live behind them."""
+        opened = 0
+        for _ in range(20):
+            links = self.page.get_by_text("References", exact=False)
+            n = links.count()
+            progressed = False
+            for i in range(n):
+                item = links.nth(i)
+                try:
+                    if not item.is_visible():
+                        continue
+                    item.click(timeout=5000)
+                    self.page.wait_for_timeout(600)
+                    opened += 1
+                    progressed = True
+                except Exception:                 # noqa: BLE001 — one toggle, not the run
+                    continue
+            if not progressed:
+                break
+        return opened
+
+    def list_files(self) -> list:
+        """Every downloadable document in the content tree, in traversal order.
+
+        Scrolls and expands until repeated passes find nothing new, then LOGS the count. A
+        traversal that quietly sees 6 rows instead of 60 is the failure that matters here, and
+        #174 spent six live runs learning that a silent short read looks exactly like success.
+        """
+        self.page.keyboard.press("Home")
+        self.page.wait_for_timeout(500)
+        opened = self._expand_references()
+
+        seen, out, occurrences = set(), [], {}
+        for _ in range(30):
+            before = len(seen)
+            for entry in self.page.evaluate(
+                """() => Array.from(document.querySelectorAll('a'))
+                     .map(e => ({name: (e.innerText || '').trim(),
+                                 row: ((e.closest('tr') || {}).innerText || '')
+                                        .replace(/\\s+/g, ' ').trim().slice(0, 120)}))
+                     .filter(x => x.name)"""
+            ):
+                name = entry["name"]
+                if not _FILENAME.search(name) or name.startswith("http"):
+                    continue
+                dedupe = (name, entry["row"])
+                if dedupe in seen:
+                    continue
+                seen.add(dedupe)
+                # KEY CONTRACT: stable across repeated traversals and INDEPENDENT OF POSITION.
+                # A positional key (an enumeration index) silently defeats ariba_files'
+                # fingerprint: the ordered (key, name) pairs come out byte-identical after a
+                # reorder, and a resumed run then adopts the files on disk positionally --
+                # reproducing the exact Critical that round found (one document twice, another
+                # lost, counts matching, no gap recorded). So the key is built from the row's
+                # own OUTLINE NUMBER (its position in the content tree, e.g. "3.1", which is a
+                # stable label rather than a traversal index) plus the filename, with an
+                # occurrence counter only for repeats inside one row.
+                outline = ""
+                m = re.match(r"\s*(\d+(?:\.\d+)*)\s", entry["row"])
+                if m:
+                    outline = m.group(1)
+                base = f"{outline}#{name}"
+                occurrences[base] = occurrences.get(base, 0) + 1
+                key = base if occurrences[base] == 1 else f"{base}#{occurrences[base]}"
+                out.append({"key": key, "name": name, "row": entry["row"]})
+            self.page.mouse.wheel(0, 1200)
+            self.page.wait_for_timeout(400)
+            if len(seen) == before:
+                break
+
+        self.log(f"    content tree: {len(out)} file(s), {opened} References section(s) expanded")
+        return out
+
+    # --- download ------------------------------------------------------------------------
+    def download(self, file: dict, dest) -> Path:
+        """Save ONE document to exactly `dest`, or raise.
+
+        `.part` staging and the rename are the caller's job (ariba_files) -- this writes where
+        it is told. Opening the filename's menu is required: the "Download this attachment"
+        entries exist for every attachment row and only one is visible at a time, so a `.first`
+        locator picks a hidden one and times out (observed).
+        """
+        dest = Path(dest)
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        link = self.page.get_by_text(file["name"], exact=True).first
+        link.scroll_into_view_if_needed(timeout=10000)
+        link.click(timeout=15000)
+        self.page.wait_for_timeout(600)
+        item = self.page.get_by_text("Download this attachment", exact=False)
+        visible = None
+        for i in range(item.count()):
+            if item.nth(i).is_visible():
+                visible = item.nth(i)
+                break
+        if visible is None:
+            raise RuntimeError(
+                f"{file['name']}: the menu did not open (no visible "
+                f"'Download this attachment' among {item.count()} candidates)")
+        with self.page.expect_download(timeout=300000) as dl:
+            visible.click()
+        dl.value.save_as(str(dest))
+        return dest
+
+    # --- the picker's count, and nothing else --------------------------------------------
+    def expected_count(self) -> int | None:
+        """The picker's authoritative `Total Number`, read WITHOUT downloading anything.
+
+        An independent ground truth: the content tree could hide a file behind a References
+        section that never expanded, and the traversal would never know. PROVISIONAL -- it is
+        not yet established that the picker's attachment count and the tree's file count are
+        commensurable (see the spec); Task 5 validates the check itself against the known 54.
+        """
+        try:
+            dc = self.page.get_by_role("button", name="Download Content")
+            da = self.page.get_by_role("button", name="Download Attachments")
+            dc.click()
+            try:
+                da.first.wait_for(state="visible", timeout=30000)
+            except Exception:
+                dc.click()
+                da.first.wait_for(state="visible", timeout=30000)
+            da.first.click()
+            self.page.wait_for_selector(f"text={PICKER_HEADING}", timeout=45000)
+            _select_all_attachments(self.page, log=self.log)
+            count = AribaPicker(self.page, log=self.log).file_count()
+            self.page.get_by_role("button", name="Done").first.click()
+            self.page.wait_for_timeout(1500)
+            return count
+        except Exception as exc:                  # noqa: BLE001 — advisory, never blocks
+            self.log(f"    could not read the picker's file count ({exc}) — recording unknown")
+            return None
+
+
 def capture_attachments(conn, dest_dir=None, log=lambda _m: None, headless=False,
                         virtual_display=False) -> int:
     """Log in, walk every open solicitation, capture and index each bundle. Resumable.
