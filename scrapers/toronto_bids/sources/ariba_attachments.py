@@ -497,11 +497,29 @@ def _select_all_attachments(page, log=lambda _m: None, timeout_ms: int = 90000) 
 # clicked a disabled Download button until it timed out. `\s` covers space, tab and \xa0 alike.
 _TOTAL_MB = re.compile(r"Total\s*Size\s*\(MB\)\s*:\s*([\d,]+(?:\.\d+)?)")
 
+# The picker's summary also carries "Selected Items: 85" alongside "Total Size (MB)" and
+# "Total Number" (probed live, docs/superpowers/specs/2026-07-27-oversized-ariba-bundle-capture-
+# design.md) -- same NON-BREAKING-space rendering as `_TOTAL_MB`, so `\s` here too.
+_SELECTED_ITEMS = re.compile(r"Selected\s*Items\s*:\s*([\d,]+)")
+
 
 def parse_total_mb(text: str | None) -> float | None:
     """The 'Total Size (MB): N' figure from the picker's summary text, or None. PURE."""
     m = _TOTAL_MB.search(text or "")
     return float(m.group(1).replace(",", "")) if m else None
+
+
+def parse_selected_items(text: str | None) -> int | None:
+    """The 'Selected Items: N' figure from the picker's summary text, or None. PURE.
+
+    Ground truth for how many logical rows the picker holds -- but only while everything is
+    selected (`Total Number`, and this figure with it, reads 0 with nothing selected, per the
+    probe findings). Meant to be read right after `_select_all_attachments` and passed as
+    `AribaPicker.row_keys`'s `expected_count`, so a scroll-enumeration that comes up short
+    raises instead of silently planning over a partial row list.
+    """
+    m = _SELECTED_ITEMS.search(text or "")
+    return int(m.group(1).replace(",", "")) if m else None
 
 
 def _selected_total_mb(page) -> float | None:
@@ -565,28 +583,85 @@ class AribaPicker:
                 out.setdefault(m.group(1), index)
         return out
 
-    def row_keys(self) -> list:
-        """Every row's outline number, in order, scrolling to defeat virtualisation."""
+    def _hover_row_list(self) -> None:
+        """Move the mouse over a rendered row so the next wheel event actually lands on it.
+
+        Playwright dispatches wheel events wherever the mouse last was; nothing else
+        positions it. If the widget only listens for wheel on itself, an unhovered wheel
+        could silently do nothing -- which reads in `row_keys` exactly like "reached the
+        end of the list", not like a no-op. Re-resolved on every call, never held across a
+        re-render, same discipline as `_locate`.
+        """
+        box = self.page.locator("div.w-chk-container").first.bounding_box()
+        if box:
+            self.page.mouse.move(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
+
+    def row_keys(self, expected_count: int | None = None) -> list:
+        """Every row's outline number, in order, scrolling to defeat virtualisation.
+
+        One non-growing read is not proof the list is exhausted. Each pass is one wheel
+        scroll, one fixed wait, one read -- if the virtualised re-render lags past that wait
+        even once (slow box, GC pause, a stalled XHR), a single-sample stop concludes the
+        list is done when it has merely stalled, and under-reports silently. So this
+        requires several CONSECUTIVE no-growth passes before concluding exhaustion, the same
+        discipline `_settle` uses (two consecutive stable reads, not one) rather than `_locate`
+        which retries up to 40 times and then raises loudly on absence -- the failure mode
+        here is symmetric to that one and gets the same scepticism.
+
+        A live run reaching the true count does not by itself prove this logic is sound: it
+        cannot distinguish "found all rows because the algorithm is right" from "found them
+        because the fixed wait happened to be enough that day". `expected_count`, read
+        elsewhere from the picker's own "Selected Items" total while everything is selected
+        (`selected_count`), closes that gap -- pass it here to turn a short enumeration into a
+        raised error instead of a quietly incomplete plan handed to the batching loop.
+        """
+        STABLE_PASSES = 3
+        MAX_PASSES = 45
+
         self.page.keyboard.press("Home")
         self.page.wait_for_timeout(800)
         seen, order = set(), []
-        for _ in range(40):
+
+        def collect():
             for key in self._rendered():
                 if key not in seen:
                     seen.add(key)
                     order.append(key)
+
+        collect()
+        stable = 0
+        for _ in range(MAX_PASSES):
             before = len(seen)
+            self._hover_row_list()
             self.page.mouse.wheel(0, 2000)
             self.page.wait_for_timeout(350)
-            for key in self._rendered():
-                if key not in seen:
-                    seen.add(key)
-                    order.append(key)
+            collect()
             if len(seen) == before:
-                break
+                stable += 1
+                if stable >= STABLE_PASSES:
+                    break
+            else:
+                stable = 0
         order.sort(key=lambda k: [int(p) for p in k.split(".")])
         self.log(f"    picker rows: {len(order)}")
+        if expected_count is not None and len(order) < expected_count:
+            raise RuntimeError(
+                f"row_keys enumerated only {len(order)} of {expected_count} row(s) the "
+                "picker reports selected -- refusing to hand a short row list to the "
+                "batching loop")
         return order
+
+    def selected_count(self) -> int | None:
+        """The picker's own 'Selected Items' total, or None if unread.
+
+        Only meaningful while everything is selected (see `parse_selected_items`) -- the
+        intended use is right after `_select_all_attachments`, feeding the result into
+        `row_keys(expected_count=...)` as the ground truth enumeration is checked against.
+        """
+        try:
+            return parse_selected_items(self.page.inner_text("body"))
+        except Exception:
+            return None
 
     def total_mb(self):
         return _selected_total_mb(self.page)
@@ -628,13 +703,29 @@ class AribaPicker:
         cost ~2 minutes (each toggle settles in ~1.5s); the header checkbox is the same cascade
         `_select_all_attachments` rides to turn every row ON, and it is just as fast in reverse
         (~10s) -- so this is that select-all's mirror image, not a loop over `set_selected`.
+
+        The header checkbox TOGGLES the whole cascade rather than forcing it off, so a blind
+        click here is only correct when something is already selected. Called with nothing
+        selected, it would select everything instead of clearing it -- and the failure is
+        nearly silent: `_settle`'s predicate (`n == 0`) then waits for a count moving the wrong
+        direction, times out at 45s, logs a warning, and returns normally, leaving the picker
+        fully selected with no signal to the caller. So this reads the count first and returns
+        immediately if it is already zero, and if the click-and-settle doesn't land on zero,
+        raises rather than returning -- the batching loop assumes an empty picker to accumulate
+        into, and handing it an unknown selection state is worse than stopping here.
         """
+        if self._checked() == 0:
+            return
         loc = self.page.locator("div.w-chk-container").first
         box = loc.bounding_box()
         if not box:
             raise RuntimeError("no bounding box for the header checkbox")
         self.page.mouse.click(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
         self._settle(lambda n: n == 0)
+        if self._checked() != 0:
+            raise RuntimeError(
+                "clear_selection did not reach zero -- picker left in an unknown selection "
+                "state, refusing to hand it to the batching loop")
 
     def _checked(self) -> int:
         return self.page.evaluate(
