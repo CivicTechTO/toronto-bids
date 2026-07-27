@@ -760,6 +760,33 @@ _CONTAINER_STATE_JS = """
 }
 """
 
+# One-time geometry self-check (#174 retrospective). Reports the picker's actual structure
+# rather than assuming it: which element scrolls, how far, and -- the fact that mattered --
+# how many row checkboxes live on the PAGE versus INSIDE the container.
+#
+# This exists because seven live runs were spent fixing the scroll mechanism without once
+# measuring the structure it operated on. The decisive fact was a single count: 51 checkboxes
+# on the page, 50 in the list, so the header select-all sits OUTSIDE the scrollable strip and
+# every `.first` hover parked the cursor off the list. A probe surfaced it in one line; four
+# fixes had already shipped without it. Printing it on every capture costs one evaluate() and
+# means the next person to touch this -- or the next release that reshapes the DOM -- reads the
+# geometry instead of inferring it from failures.
+_GEOMETRY_JS = """
+() => {""" + _FIND_CONTAINER_BODY_JS + """
+    const best = tbFindContainer();
+    const onPage = document.querySelectorAll('input.w-chk-native').length;
+    const doc = document.scrollingElement || document.documentElement;
+    return {
+        found: !!best,
+        onPage: onPage,
+        inContainer: best ? best.querySelectorAll('input.w-chk-native').length : 0,
+        range: best ? best.scrollHeight - best.clientHeight : 0,
+        clientHeight: best ? best.clientHeight : 0,
+        pageRange: doc ? doc.scrollHeight - doc.clientHeight : 0,
+    };
+}
+"""
+
 # The OPTIONAL programmatic path (#174): assigning scrollTop directly removes the mouse from
 # the equation entirely, but whether the virtualised list re-renders on a programmatic
 # assignment (versus only on a real wheel/scroll gesture) has NOT been verified live. So this
@@ -875,6 +902,35 @@ class AribaPicker:
                 "no element besides <html>/<body> has both a nonzero scroll range and more "
                 "than one row checkbox descendant (#174 fix5). Refusing to scroll blindly.")
         return state
+
+    def _log_geometry(self) -> None:
+        """State the picker's actual structure once per capture, instead of assuming it.
+
+        Seven live runs were spent fixing this widget's scrolling without measuring the DOM it
+        scrolls. The fact that resolved it was one count -- checkboxes on the page versus inside
+        the container -- which says outright whether the header select-all sits outside the row
+        list (it does), and therefore whether a `.first` hover can ever land on the strip (it
+        cannot). Every one of those runs would have printed the answer in its first line.
+
+        Best-effort by design: a geometry read that fails must never be what stops a capture,
+        so it logs and returns. The guards that actually protect correctness -- the dead-wheel
+        check, the enumeration count, the completeness gate -- are elsewhere and are not
+        best-effort.
+        """
+        try:
+            g = self.page.evaluate(_GEOMETRY_JS)
+        except Exception as exc:                       # noqa: BLE001 — diagnostics never block
+            self.log(f"    picker geometry: unreadable ({exc})")
+            return
+        if not g or not g.get("found"):
+            self.log("    picker geometry: NO scroll container found "
+                     f"({(g or {}).get('onPage', '?')} checkboxes on the page)")
+            return
+        outside = g["onPage"] - g["inContainer"]
+        self.log(
+            f"    picker geometry: list {g['clientHeight']}px tall, scroll range {g['range']}px; "
+            f"{g['inContainer']}/{g['onPage']} checkboxes inside it "
+            f"({outside} outside — the header select-all); page range {g['pageRange']}px")
 
     def _hover_row_list(self) -> dict:
         """Move the mouse over a row genuinely inside the row-list container, and return the
@@ -1026,6 +1082,8 @@ class AribaPicker:
         """
         MAX_PASSES = 45
         STALL_LIMIT = 3           # consecutive dead (non-edge, non-moving) wheels before raising
+
+        self._log_geometry()
 
         seen, order = set(), []
         unkeyed: set = set()                        # trimmed text of seen-but-unkeyed rows
