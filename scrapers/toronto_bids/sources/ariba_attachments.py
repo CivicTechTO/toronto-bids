@@ -997,6 +997,12 @@ _EXPAND_ALL_JS = """
 
 _DOWNLOAD_MENU_ITEM = "Download this attachment"
 
+# How many times `_ensure_clickable` re-runs the References expansion before giving up (#183).
+# 2 is what the live measurement needed (pass 1 left the document hidden, pass 2 revealed it);
+# 3 leaves one spare without turning a genuinely unreachable control into a long stall, since
+# every pass costs a full toggle sweep.
+_EXPAND_ATTEMPTS = 3
+
 
 class AribaFileSource:
     """Playwright adapter satisfying ariba_files' FileSource protocol (#174).
@@ -1571,17 +1577,13 @@ class AribaFileSource:
         """
         waited = 0
         while True:
-            try:
-                item = self.page.get_by_text(_DOWNLOAD_MENU_ITEM, exact=False)
-                visible = sum(1 for i in range(item.count()) if item.nth(i).is_visible())
-            except Exception:                         # noqa: BLE001 — menu mid-render churn
-                visible = None
+            visible = self._visible_menu_items()      # -1 when the DOM is mid-render
             if visible == 0:
                 return
             if waited >= timeout_ms:
                 raise RuntimeError(
                     f"{file['name']}: a previous attachment's menu is still open "
-                    f"({visible if visible is not None else 'an unreadable number of'} "
+                    f"({visible if visible >= 0 else 'an unreadable number of'} "
                     f"visible '{_DOWNLOAD_MENU_ITEM}' item(s)) -- refusing to click the next "
                     f"anchor, which would resolve to the stale menu and save the WRONG "
                     f"document's bytes under this one's name")
@@ -1663,9 +1665,8 @@ class AribaFileSource:
             dl.value.save_as(str(dest))
             return dest
 
-        link.click(timeout=15000)
         try:
-            item = self._await_menu_item(file)
+            item = self._open_attachment_menu(file, link)
             with self.page.expect_download(timeout=300000) as dl:
                 item.click()
             dl.value.save_as(str(dest))
@@ -1673,8 +1674,87 @@ class AribaFileSource:
             self._dismiss_menu()
         return dest
 
+    def _open_attachment_menu(self, file: dict, link, attempts: int = 2):
+        """Click a PML trigger until its menu actually opens, and return the visible item (#183).
+
+        **A trigger click is swallowed when the previous document's menu was closed by Escape.**
+        Measured across two independent events, and this is the whole of #183's `Part 2` mystery:
+
+            Doc5713434353   Part 1 ok   Part 2 FAILED   Part 3 ok
+            Doc5540340341   Part 1 ok   Part 2 FAILED   Part 3 ok
+
+        Works, fails, works -- parity, not a bad row. A live probe confirmed both halves: the
+        three PMLs own three mutually exclusive menu containers (opening one closes another), and
+        a CLEAN click on the very `Part 2` anchor that fails in a real run opens its menu in ~3s.
+        So the row is fine; the widget's state is not. `_dismiss_menu`'s Escape hides the previous
+        menu visually while AribaWeb still believes it is open, so the next trigger click is
+        consumed as a close and no menu appears -- one widget over from the same trap
+        `_open_section` records for the References toggles, where a blind second click COLLAPSES
+        what the first one opened.
+
+        **The retry is safe for the exact reason `_await_menu_clear` is the wrong-bytes guard.**
+        That hazard (#174 M1) is a STALE menu supplying the previous document's bytes under this
+        one's name, and it needs a VISIBLE menu item to happen. `_await_menu_item` only raises
+        when zero are visible -- the identical precondition `_await_menu_clear` establishes before
+        the first click -- so at that moment there is nothing stale to resolve to and clicking the
+        same trigger again can only open the menu it names. The zero is re-verified immediately
+        before the retry rather than inferred from the raise, because the menu could in principle
+        land in the gap between them, and a second click then would close what just opened.
+
+        Bounded to `attempts` clicks, and it only costs time on a document that would otherwise be
+        omitted outright: the first click succeeds on every document that already worked.
+        """
+        last = None
+        for attempt in range(attempts):
+            if attempt:
+                still_clear = self._visible_menu_items() == 0
+                if not still_clear:
+                    # The menu landed between the raise and here -- clicking again would close
+                    # it. Take what is there through the normal wait instead of re-clicking.
+                    self.log(f"    {file['name']}: menu appeared late — not re-clicking")
+                    return self._await_menu_item(file)
+                self.log(f"    {file['name']}: trigger click {attempt} opened no menu "
+                         f"(swallowed by the previous menu's Escape, #183) — clicking again")
+            link.click(timeout=15000)
+            try:
+                return self._await_menu_item(file)
+            except RuntimeError as exc:
+                last = exc
+        raise last
+
+    def _visible_menu_items(self) -> int:
+        """How many 'Download this attachment' entries are visible right now. Unreadable DOM
+        counts as "not zero" -- the callers use zero as permission to click, and permission must
+        never be granted on an unanswered question."""
+        try:
+            item = self.page.get_by_text(_DOWNLOAD_MENU_ITEM, exact=False)
+            return sum(1 for i in range(item.count()) if item.nth(i).is_visible())
+        except Exception:                             # noqa: BLE001 — menu mid-render churn
+            return -1
+
     def _ensure_clickable(self, file: dict, link) -> None:
         """Make the document's control visible, or raise saying so.
+
+        **ONE re-expansion pass is not always enough; up to `_EXPAND_ATTEMPTS` are (#183).**
+        Measured, on a real capture of Doc5540340341 with the PML fix above already in place:
+        the single pass this used to do left `Appendices ....zip` hidden and the document was
+        omitted; a second pass made it visible and it captured, taking the event from 3/4 to
+        4/4. The log line the second pass emits is the evidence, and the same shape is what
+        #183 reported for `schedule-b2.pdf`.
+
+        **WHY a second pass helps is NOT established, and this deliberately does not claim it
+        is.** #174 already recorded the same unexplained behaviour from the other direction --
+        re-running the expansion restores visibility while reporting it opened ZERO sections,
+        so the toggles still read as expanded and something about the pass re-shows the popup
+        as a side effect. It is tempting to reach for the parity explanation proved for the PML
+        triggers in `_open_attachment_menu` (an Escape leaves the widget believing its menu is
+        open, so the next click is consumed as a close), and the two may well be the same bug --
+        but that was proved by measuring the PML case specifically, and nothing here has
+        measured the References trigger. Treat the mechanism as open.
+
+        That is exactly why the post-condition is checked after every pass rather than the pass
+        being trusted, and why a still-hidden control raises instead of proceeding into a
+        `scroll_into_view` timeout that says nothing about why.
 
         **The menu guard hides the documents it is protecting (#174).** Measured: right after
         the traversal expands them, all 36 reference attachments in one container are visible;
@@ -1692,17 +1772,20 @@ class AribaFileSource:
         trusts it: the post-condition is checked directly and a still-hidden control raises
         rather than proceeding into a `scroll_into_view` timeout that says nothing about why.
         """
-        try:
-            if link.is_visible():
-                link.scroll_into_view_if_needed(timeout=10000)
-                return
-        except Exception:                             # noqa: BLE001 — treat as "not visible yet"
-            pass
-        # `_expand_references` skips any section it has already opened, so the record of having
-        # opened them has to go before it will act at all -- the same reset `_restore_event_view`
-        # performs for the same reason.
-        self._toggled.clear()
-        self._expand_references()
+        for attempt in range(_EXPAND_ATTEMPTS):
+            try:
+                if link.is_visible():
+                    link.scroll_into_view_if_needed(timeout=10000)
+                    return
+            except Exception:                         # noqa: BLE001 — treat as "not visible yet"
+                pass
+            # `_expand_references` skips any section it has already opened, so the record of
+            # having opened them has to go before it will act at all.
+            self._toggled.clear()
+            self._expand_references()
+            if attempt:
+                self.log(f"    {file['name']}: still hidden after re-expansion pass "
+                         f"{attempt} — running another (#183)")
         try:
             if link.is_visible():
                 link.scroll_into_view_if_needed(timeout=10000)
