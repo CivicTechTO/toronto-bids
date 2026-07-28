@@ -232,6 +232,21 @@ early-exit guard, and once at the end on success) and `r2_mirror` as its own row
 on a real attempt (success, a wrangler failure, or no suitable Node) — the deliberate
 not-configured skip (no `CLOUDFLARE_API_TOKEN`) gets no row, same as the nightly's own
 `council: skip (not the 1st)`. `TB_PUBLISH_DRY_RUN=1` skips recording entirely.
+`record_step`/`verify_artifact_size` live in `deploy/publish-lib.sh`, sourced by
+`publish-data.sh` — split out purely so `tests/test_publish_lib.py` can drive them directly.
+
+**Recording an exit code is not the same as verifying the artifact (#176, the deferred half of
+the R2 incident above).** The wrangler command that failed for 8 nights was at least failing
+*loudly* once its stderr was captured — but a step recording "I exited 0" is still one step
+removed from "the thing I was supposed to publish is actually there and the right size." After
+every real publish (never in dry-run), `verify_artifact_size` sends a HEAD request to
+`bids.sqlite`'s two public URLs and compares `Content-Length` to the local file, recording
+`github_release_freshness` and (only when R2 is configured for this deployment) `r2_freshness`
+as their own `sync_run` rows — distinct from `publish`/`r2_mirror`, and running regardless of
+which upload branch fired tonight, so it also catches a short write that an upload command
+reported as a success. `TB_R2_PUBLIC_URL` overrides the R2 dev URL this check reads (default is
+the one two sections up). Read-only, best-effort: never retries or re-uploads, and a mismatch
+here does not fail the overall `publish` step.
 
 ## What does NOT run here
 
