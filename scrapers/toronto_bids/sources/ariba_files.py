@@ -101,6 +101,18 @@ def row_identity(row_text) -> str:
     return m.group(1) if m else text
 
 
+def is_outline_row(row_text) -> bool:
+    """Whether a row's text leads with an outline number ('3.1 Drawings Package ...'). PURE.
+
+    Used as a POSITIVE marker that the content tree specifically -- not merely "not the
+    picker" -- is the page in front of us (#174 M4): an outline-numbered row is the tree's
+    own address for a top-level row, and nothing on the export page (the other place the old,
+    purely-negative check could land on) renders anything shaped like it.
+    """
+    text = " ".join((row_text or "").replace("\xa0", " ").split())
+    return bool(_OUTLINE.match(text))
+
+
 def anchor_key(anchor) -> str:
     """A listed file's IDENTITY: row identity + within-row ordinal + filename. PURE.
 
@@ -152,6 +164,13 @@ def listing_from_anchors(anchors) -> dict:
 
     Repeats ACROSS reads are ordinary -- the traversal re-reads the whole DOM on every scroll
     pass -- and the caller merges by key.
+
+    `ordinal` on each entry is trusted as given: the reader that built `anchors` (`_ANCHORS_JS`
+    in the adapter) is what scopes it to document-named siblings within the anchor's own row
+    element (#174 M3) -- that scoping cannot be redone here from the flattened `row` TEXT
+    alone, because two genuinely different row elements can render identical text (see
+    `test_an_indistinguishable_duplicate_is_reported_not_silently_dropped`), and grouping by
+    that text would wrongly treat them as one row's two anchors instead of two rows' one each.
     """
     files, rejected, collided, seen = [], [], [], set()
     for anchor in anchors:
@@ -303,7 +322,7 @@ def write_manifest(pdir, fingerprint: dict) -> Path:
     return path
 
 
-def write_omitted(bundle_path, omitted, expected_files, actual_files):
+def write_omitted(bundle_path, omitted, expected_files, actual_files, collided: int = 0):
     """Durable record of what a bundle does NOT contain, beside the bundle itself.
 
     Written only when something is actually missing, so its ABSENCE is meaningful evidence that
@@ -311,22 +330,32 @@ def write_omitted(bundle_path, omitted, expected_files, actual_files):
     later without reading logs. Atomic (tmp + os.replace), the same way the ephemeral
     `write_manifest` is -- this is the durable artifact and deserves at least as much care.
 
+    `collided` is the count of links the traversal found INDISTINGUISHABLE from one another
+    and collapsed (`listing_from_anchors`'s `collided`, #174 Low) -- a gap that never shows up
+    as a shortfall against `expected_files`, since the collapsed entry still counts once. It
+    used to reach only the log, on the PROVISIONAL count-mismatch line; folding it in here
+    makes it greppable on its own terms rather than inferred from a log a human has to have
+    been watching.
+
     A no-op (returns None, touches nothing on disk) when there is nothing to record. Clearing a
     STALE record from an EARLIER run is a different decision with a different timing requirement
     -- see `clear_omitted_when_complete`, which must run only after the bundle itself exists.
     """
-    if not omitted and expected_files == actual_files:
+    if not omitted and not collided and expected_files == actual_files:
         return None
     path = Path(bundle_path).with_suffix(".omitted.json")
     tmp = path.with_suffix(path.suffix + ".tmp")
-    tmp.write_text(json.dumps(
-        {"omitted": list(omitted), "expected_files": expected_files,
-         "actual_files": actual_files}, indent=2))
+    body = {"omitted": list(omitted), "expected_files": expected_files,
+            "actual_files": actual_files}
+    if collided:
+        body["collided"] = collided
+    tmp.write_text(json.dumps(body, indent=2))
     os.replace(tmp, path)
     return path
 
 
-def clear_omitted_when_complete(bundle_path, omitted, expected_files, actual_files):
+def clear_omitted_when_complete(bundle_path, omitted, expected_files, actual_files,
+                                collided: int = 0):
     """Unlink a stale gap record left by an EARLIER run, now that this run is complete.
 
     Call this only AFTER `build_bundle` has returned successfully. A capture that once omitted
@@ -336,8 +365,11 @@ def clear_omitted_when_complete(bundle_path, omitted, expected_files, actual_fil
     the record before `build_bundle` runs (or while it might still fail) would leave an
     incomplete or entirely absent `Doc<n>.zip` standing next to a gap record that was just
     erased -- exactly the state this whole mechanism exists to prevent.
+
+    `collided` gates this the same way `omitted` does: counts matching is not evidence nothing
+    is wrong when a collision was silently collapsed this run too.
     """
-    if omitted or expected_files != actual_files:
+    if omitted or collided or expected_files != actual_files:
         return
     Path(bundle_path).with_suffix(".omitted.json").unlink(missing_ok=True)
 
@@ -371,6 +403,12 @@ def capture_files(source, document_number: str, dest_dir, log=lambda _m: None):
         log(f"  Doc{document_number}: the traversal found {len(files)} file(s) against the "
             f"picker's {expected} — SHORT by {expected - len(files)}; recording the gap in "
             f"Doc{document_number}.omitted.json rather than refusing the capture")
+    # Optional: a source may report how many links it found INDISTINGUISHABLE from one
+    # another and collapsed (#174 Low). That gap never shows up as a shortfall against
+    # `expected` -- the collapsed entry still counts once -- so it is read here, defensively
+    # (the FileSource protocol's other three methods stay a hard requirement; this one is not),
+    # and folded into the durable record below rather than living only in the traversal's log.
+    collided_count = getattr(source, "collided_count", lambda: 0)() or 0
     fingerprint = make_fingerprint(files, expected)
     pdir = partial_dir(dest_dir, document_number)
     manifest = read_manifest(pdir)
@@ -447,9 +485,10 @@ def capture_files(source, document_number: str, dest_dir, log=lambda _m: None):
     # an incomplete or absent `Doc<n>.zip` standing beside a just-erased gap record would make
     # "absence means nothing is missing" false.
     target = dest_dir / f"Doc{document_number}.zip"
-    write_omitted(target, omitted, expected, len(captured))
+    write_omitted(target, omitted, expected, len(captured), collided=collided_count)
     build_bundle(captured, target)
-    clear_omitted_when_complete(target, omitted, expected, len(captured))
+    clear_omitted_when_complete(target, omitted, expected, len(captured),
+                                collided=collided_count)
     shutil.rmtree(pdir, ignore_errors=True)
     log(f"  Doc{document_number}: captured {len(captured)} file(s) -> {target.name}")
     return target

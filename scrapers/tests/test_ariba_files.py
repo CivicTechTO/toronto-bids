@@ -816,6 +816,22 @@ class TestListingFromAnchors:
             "files": [], "rejected": [], "collided": []}
 
 
+class TestIsOutlineRow:
+    """A positive marker that the content tree, not some other page, is in front of us
+    (#174 M4) -- an outline-numbered row is the tree's own row addressing and nothing else
+    on the event's pages looks like it."""
+
+    def test_a_row_leading_with_an_outline_number_is_true(self):
+        assert ariba_files.is_outline_row("3.1 Drawings Package plan.dwg 787.7 MB")
+
+    def test_a_row_with_no_outline_number_is_false(self):
+        assert not ariba_files.is_outline_row("Addendum 1.pdf 2.1 MB")
+
+    def test_none_and_empty_are_false(self):
+        assert not ariba_files.is_outline_row(None)
+        assert not ariba_files.is_outline_row("")
+
+
 class TestOrderListing:
     """The bundle's order must be a property of the tree, not of where a sweep started."""
 
@@ -850,3 +866,66 @@ class TestOrderListing:
         reverse = ariba_files.order_listing(
             ariba_files.listing_from_anchors(list(reversed(anchors)))["files"])
         assert forward == reverse
+
+
+# --- Low: a dropped collision is greppable in the durable record, not just the log (#174) --
+
+def test_write_omitted_records_a_collided_count(tmp_path):
+    path = ariba_files.write_omitted(tmp_path / "Doc1.zip", [], 3, 3, collided=1)
+
+    assert path is not None
+    assert json.loads(path.read_text())["collided"] == 1
+
+
+def test_write_omitted_is_still_a_noop_when_nothing_is_missing_or_collided(tmp_path):
+    assert ariba_files.write_omitted(tmp_path / "Doc1.zip", [], 3, 3) is None
+    assert ariba_files.write_omitted(tmp_path / "Doc1.zip", [], 3, 3, collided=0) is None
+
+
+def test_clear_omitted_when_complete_keeps_a_record_a_collision_still_explains(tmp_path):
+    """Counts matching is not evidence nothing is wrong when a collision was dropped."""
+    stale = (tmp_path / "Doc1.zip").with_suffix(".omitted.json")
+    stale.write_text(json.dumps(
+        {"omitted": [], "expected_files": 1, "actual_files": 1, "collided": 1}))
+
+    ariba_files.clear_omitted_when_complete(tmp_path / "Doc1.zip", [], 1, 1, collided=1)
+
+    assert stale.exists()
+
+
+def test_clear_omitted_when_complete_still_clears_a_clean_stale_record(tmp_path):
+    stale = (tmp_path / "Doc1.zip").with_suffix(".omitted.json")
+    stale.write_text(json.dumps({"omitted": [], "expected_files": 1, "actual_files": 1}))
+
+    ariba_files.clear_omitted_when_complete(tmp_path / "Doc1.zip", [], 1, 1)
+
+    assert not stale.exists()
+
+
+def test_capture_files_folds_a_collided_count_from_the_source_into_the_omitted_record(
+        tmp_path):
+    """`list_files` can drop a collision (two rows read as identical, #174) that never shows
+    up as a shortfall against `expected_count` -- so it must reach the durable record on its
+    own terms, not only through the PROVISIONAL count-mismatch log line."""
+    class SourceWithCollisions(FakeFileSource):
+        def collided_count(self):
+            return 2
+
+    source = SourceWithCollisions(["a.pdf"])
+
+    ariba_files.capture_files(source, "5713434353", tmp_path)
+
+    body = json.loads((tmp_path / "Doc5713434353.omitted.json").read_text())
+    assert body["collided"] == 2
+
+
+def test_capture_files_defaults_collided_to_zero_for_a_source_without_the_method(tmp_path):
+    """The FileSource protocol's other three methods must not gain a hard new requirement --
+    `collided_count` is read defensively, so a source that lacks it is just uncounted, not
+    broken."""
+    source = FakeFileSource(["a.pdf", "bad.pdf"], fail_on=["bad.pdf"])
+
+    ariba_files.capture_files(source, "5713434353", tmp_path)
+
+    body = json.loads((tmp_path / "Doc5713434353.omitted.json").read_text())
+    assert body.get("collided", 0) == 0

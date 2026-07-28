@@ -1545,18 +1545,44 @@ class AribaPicker:
 # are properties of the DOM, so they are the same on every pass; the traversal's own progress
 # is nowhere in them. `index` is this read's position in `document.querySelectorAll('a')` and is
 # used ONLY to tag an element for a click inside the same read -- it is never part of a key.
+#
+# **`ordinal` is scoped to DOCUMENT-named siblings only, not every `<a>` in the row (#174 M3).**
+# The row can carry non-document links too -- a `References` toggle, a stray "Download this
+# attachment" menu item left open from a previous document -- and any of those sitting ahead of
+# a document shifted the identity of every document after it in that row: two same-named
+# documents in one row could resolve to each other's ordinal. Filtering here, against the row's
+# OWN `<a>` elements, is also the only place this can be done soundly: the anchor dicts this
+# function hands back flatten `row` to TEXT, and two genuinely different row elements can render
+# identical text, so redoing this filter in Python from the flattened list afterwards cannot
+# tell them apart and would wrongly treat two rows' one document each as one row's two (see
+# `ariba_files.listing_from_anchors`'s docstring). The extension list mirrors
+# `ariba_files.is_document_name` -- keep the two in sync if the vocabulary changes.
 _ANCHORS_JS = """
-() => Array.from(document.querySelectorAll('a')).map((e, i) => {
-    const row = e.closest('tr') || e.parentElement;
-    const anchors = row ? Array.from(row.querySelectorAll('a')) : [];
-    return {
-        index: i,
-        name: ((e.innerText || e.textContent) || '').replace(/\\s+/g, ' ').trim(),
-        row: ((row ? (row.innerText || row.textContent) : '') || '')
-                .replace(/\\s+/g, ' ').trim().slice(0, 120),
-        ordinal: Math.max(anchors.indexOf(e), 0),
+() => {
+    const isDocLabel = (raw) => {
+        const t = (raw || '').replace(/\\s+/g, ' ').trim();
+        if (!t) return false;
+        const lower = t.toLowerCase();
+        if (lower.startsWith('http://') || lower.startsWith('https://')
+                || lower.startsWith('www.')) {
+            return false;
+        }
+        return /\\.(7z|bmp|csv|dgn|docx?|dwf|dwg|dxf|eml|gif|gz|jpe?g|kmz|msg|odt|pdf|png|pptx?|rar|rtf|tar|tiff?|txt|xlsm|xlsx?|xml|zip)(?![a-z0-9])/i.test(t);
     };
-})
+    return Array.from(document.querySelectorAll('a')).map((e, i) => {
+        const row = e.closest('tr') || e.parentElement;
+        const anchors = row ? Array.from(row.querySelectorAll('a')) : [];
+        const docAnchors = anchors.filter(
+            (a) => isDocLabel((a.innerText || a.textContent) || ''));
+        return {
+            index: i,
+            name: ((e.innerText || e.textContent) || '').replace(/\\s+/g, ' ').trim(),
+            row: ((row ? (row.innerText || row.textContent) : '') || '')
+                    .replace(/\\s+/g, ' ').trim().slice(0, 120),
+            ordinal: Math.max(docAnchors.indexOf(e), 0),
+        };
+    });
+}
 """
 
 # Tag ONE anchor, addressed by its index in the read that just resolved it and re-verified by
@@ -1667,6 +1693,11 @@ class AribaFileSource:
         self.log = log
         self._expected = _UNREAD
         self._toggled: set = set()
+        # Set by `list_files()` from `_sweep()`'s own count -- how many links the traversal
+        # found INDISTINGUISHABLE from one another and collapsed. Exposed via `collided_count()`
+        # so `ariba_files.capture_files` can fold it into the durable `.omitted.json` record
+        # rather than it living only in this class's log (#174 Low).
+        self._collided_count = 0
         # The same container-aware, scrollTop-verified primitive the picker uses -- not a bare
         # `mouse.wheel`, which is every mistake `AribaPicker` spent six live runs unlearning:
         # wheeling without hovering the scroll container, never verifying scrollTop moved, no
@@ -1695,14 +1726,41 @@ class AribaFileSource:
     # --- the event view ------------------------------------------------------------------
     def _on_event_view(self) -> bool:
         """Whether the event's All Content view -- not the picker, not the export page -- is in
-        front of us. Evidence, the way `_on_picker` and `_wait_post_respond` take evidence."""
+        front of us. Evidence, the way `_on_picker` and `_wait_post_respond` take evidence.
+
+        **A NEGATIVE check alone is not enough (#174 M4).** "No picker heading, and a visible
+        Download Content button" also describes the export page reached right after the
+        picker's `Done` -- `capture_event`'s own comment notes the chain is Download Content ->
+        export page -> Download Attachments, and if that page renders its own Download Content
+        button, the old check is satisfied there too and `_restore_event_view` short-circuits
+        onto the wrong page, silently traversing or downloading against whatever is actually in
+        front of it. So a POSITIVE marker of the content tree itself is required as well:
+        either the "All Content" label the tree renders (and the export page does not), or at
+        least one outline-numbered row -- the tree's own row addressing, and nothing the export
+        page has anything like.
+        """
         try:
             if self.page.query_selector(f"text={PICKER_HEADING}") is not None:
                 return False
             dc = self.page.get_by_role("button", name="Download Content")
-            return bool(dc.count()) and dc.first.is_visible()
+            if not (bool(dc.count()) and dc.first.is_visible()):
+                return False
+            if self.page.get_by_text("All Content", exact=False).count():
+                return True
+            return self._has_outline_row()
         except Exception:                             # noqa: BLE001 — mid-navigation churn
             return False
+
+    def _has_outline_row(self) -> bool:
+        """Whether at least one row currently in the DOM leads with an outline number
+        ('3.1 ...') -- the second, independent positive marker `_on_event_view` checks
+        (#174 M4). Best-effort: an unreadable DOM here is "no evidence yet", not a crash.
+        """
+        try:
+            anchors = self._read_anchors()
+        except Exception:                             # noqa: BLE001 — mid-render churn
+            return False
+        return any(ariba_files.is_outline_row(a.get("row")) for a in anchors)
 
     def _wait_event_view(self, timeout_ms: int = 15000) -> bool:
         waited = 0
@@ -1915,9 +1973,18 @@ class AribaFileSource:
         is the pure layer that owns this comparison: it logs the shortfall loudly and folds it
         into the durable `Doc<n>.omitted.json`, but always proceeds with what was found. Only a
         traversal that finds ZERO files is fatal, and that check lives there too, not here.
+
+        **The tree's geometry is logged once here, on a live run of the brand-new
+        `allow_document=True` scroll path (#174 M2).** `AribaPicker` states its row list's
+        structure this way already; this traversal never did, though the module's own
+        docstring names that exact diagnostic as the one that would have ended the picker's
+        six-live-run debugging streak in its first line. Logged AFTER `_require_event_view`
+        confirms the content tree, not the picker or the export page, is actually in front of
+        the geometry read.
         """
         expected = self.expected_count()
         self._require_event_view("the content-tree traversal")
+        self._scroller.log_geometry()
         opened = self._expand_references()
         files, rejected, collided = self._sweep()
         files = ariba_files.order_listing(files)
@@ -1932,11 +1999,18 @@ class AribaFileSource:
             sample = sorted(rejected)[:10]
             self.log(f"    content tree: {len(rejected)} label(s) not taken for documents "
                      f"(showing {len(sample)}): {sample}")
+        self._collided_count = len(collided)
         if collided:
             self.log(f"    content tree: {len(collided)} link(s) indistinguishable from another "
                      f"(same row text, same position, same name) and collapsed: "
                      f"{sorted(collided.values())}")
         return files
+
+    def collided_count(self) -> int:
+        """How many links `list_files()` found indistinguishable from one another and
+        collapsed -- read by `ariba_files.capture_files` so the gap reaches the durable
+        `.omitted.json` record, not only this class's log (#174 Low)."""
+        return self._collided_count
 
     # --- download ------------------------------------------------------------------------
     def _match_anchor(self, key: str):
@@ -1979,6 +2053,40 @@ class AribaFileSource:
                 f"clicking it — refusing rather than clicking a stale position")
         return self.page.locator('a[data-tb-file="1"]').first
 
+    def _await_menu_clear(self, file: dict, timeout_ms: int = 10000) -> None:
+        """Refuse to click the next anchor while a PREVIOUS attachment's menu is still open
+        (#174 M1 -- a wrong-bytes hazard, not a flakiness one).
+
+        Documents are downloaded in tree order, so a menu `_dismiss_menu`'s best-effort Escape
+        failed to close survives as the FIRST visible 'Download this attachment' item on the
+        page -- and that precedes the menu THIS click is about to open. `_await_menu_item` has
+        no way to tell the two apart: it takes the first visible item, full stop. So a stale
+        menu silently supplies the PREVIOUS document's bytes under the NEXT document's name --
+        counts match, nothing is missing, and no gap record is written, because nothing failed.
+        That is a strictly worse outcome than the retry a failed Escape actually costs (a false
+        claim this replaces -- see `_dismiss_menu`). Polling here for ZERO visible menu items
+        before the anchor is even clicked turns "the menu I am about to open is the one this
+        click opened" from an assumption into evidence.
+        """
+        waited = 0
+        while True:
+            try:
+                item = self.page.get_by_text(_DOWNLOAD_MENU_ITEM, exact=False)
+                visible = sum(1 for i in range(item.count()) if item.nth(i).is_visible())
+            except Exception:                         # noqa: BLE001 — menu mid-render churn
+                visible = None
+            if visible == 0:
+                return
+            if waited >= timeout_ms:
+                raise RuntimeError(
+                    f"{file['name']}: a previous attachment's menu is still open "
+                    f"({visible if visible is not None else 'an unreadable number of'} "
+                    f"visible '{_DOWNLOAD_MENU_ITEM}' item(s)) -- refusing to click the next "
+                    f"anchor, which would resolve to the stale menu and save the WRONG "
+                    f"document's bytes under this one's name")
+            self.page.wait_for_timeout(250)
+            waited += 250
+
     def _await_menu_item(self, file: dict, timeout_ms: int = 15000):
         """Poll for a VISIBLE 'Download this attachment' entry -- never sleep a guess.
 
@@ -1986,8 +2094,13 @@ class AribaFileSource:
         `.first` locator picks a hidden one and times out (observed). A fixed 600 ms wait
         standing in for this condition means a menu that renders in 700 ms raises, and that
         document is omitted from an archive that cannot be re-fetched.
+
+        `_await_menu_clear` (called before the anchor is ever clicked) is what guarantees the
+        item this returns belongs to the anchor just clicked, not a stale survivor -- see its
+        docstring. This is a plain "wait for the thing to appear" poll.
         """
-        waited, seen = 0, 0
+        waited = 0
+        seen = None                # None = "not yet counted", distinct from a real 0
         while True:
             item = self.page.get_by_text(_DOWNLOAD_MENU_ITEM, exact=False)
             try:
@@ -2001,12 +2114,24 @@ class AribaFileSource:
             if waited >= timeout_ms:
                 raise RuntimeError(
                     f"{file['name']}: the menu did not open within {timeout_ms / 1000:.0f}s "
-                    f"(no VISIBLE '{_DOWNLOAD_MENU_ITEM}' among {seen} candidates)")
+                    f"(no VISIBLE '{_DOWNLOAD_MENU_ITEM}' among "
+                    f"{seen if seen is not None else 'an unreadable number of'} candidates)")
             self.page.wait_for_timeout(250)
             waited += 250
 
     def _dismiss_menu(self) -> None:
-        """Close the attachment menu so a stray overlay cannot intercept the next click."""
+        """Best-effort: close the attachment menu so it does not linger into the next click.
+
+        Escape here is NOT the mechanism that protects the archive from wrong bytes --
+        `_await_menu_clear` is, by polling for zero visible menu items before the next anchor
+        is ever clicked (#174 M1). Before that guard existed, a failed Escape (silently
+        swallowed, and never verified to have landed) cost exactly what M1 describes: the
+        NEXT document downloaded under the wrong menu, saved under the wrong name, with
+        nothing to show a gap ever opened. That is not "at most a retry on the next click" --
+        it is a silently corrupted archive entry. With `_await_menu_clear` in place, a failed
+        Escape now costs only a slower clear (the poll waits out whatever Escape didn't), so
+        this can stay best-effort.
+        """
         try:
             self.page.keyboard.press("Escape")
             self.page.wait_for_timeout(200)
@@ -2021,6 +2146,10 @@ class AribaFileSource:
         """
         dest = Path(dest)
         self._require_event_view(f"downloading {file['name']}")
+        # Before the anchor is even clicked: refuse to proceed while a previous document's
+        # menu is still open (#174 M1). See `_await_menu_clear`'s docstring for the wrong-bytes
+        # hazard this closes.
+        self._await_menu_clear(file)
         link = self._resolve_anchor(file)
         link.scroll_into_view_if_needed(timeout=10000)
         link.click(timeout=15000)
