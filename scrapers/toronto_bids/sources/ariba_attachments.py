@@ -60,8 +60,6 @@ DISCOVERY_PREVIEW_URL = (
     "https://portal.us.bn.cloud.ariba.com/dashboard/appext/"
     "comsapsbncdiscoveryui#/RfxEvent/preview/{rfx_id}"
 )
-# Above this a single-zip download is refused by Ariba (the >100 MB warning is only advisory).
-MAX_BUNDLE_MB = 500
 
 
 # --- pure: manifest + storage -------------------------------------------------------------
@@ -481,175 +479,11 @@ def _wait_post_respond(page, download_content, timeout_ms: int = 60000) -> str:
     return "timeout"
 
 
-def _select_all_attachments(page, log=lambda _m: None, timeout_ms: int = 90000) -> None:
-    """Tick the picker's header checkbox to select every file, and wait for the cascade to land.
-
-    **Currently unused by the live capture path** — its only caller, `_read_expected_count`, was
-    removed with the picker-count comparison it fed (#185; see `AribaPicker`'s docstring). Kept
-    on disk, tested (`tests/test_ariba_select_all.py`), for the same reason.
-
-    The widget is `<div class="w-chk-container"><input class="w-chk-native"><label
-    class="w-chk"></label></div>`. The real <input> is hidden and empty of size; the visible box
-    is the CSS-drawn sibling `<label class="w-chk">`, and AribaWeb's select-all action fires on a
-    real positional click there (a Playwright `.click()` on the empty label only FOCUSES it, and
-    setting the input's checked flag skips the cascade that ticks every row). So click at the
-    widget's bounding-box centre with the mouse — the first checkbox is the header select-all.
-
-    **The cascade is an AJAX call whose duration scales with the item count, so POLL for it —
-    never sleep a guess (#174).** This slept a flat 3000ms and then counted. Measured live on
-    Doc5713434353 (51 attachments): the header ticks instantly, the other 50 land at **~10.3s**.
-    So the count was read mid-cascade, a working click looked like a dead checkbox, and the loop
-    then ran the *next* strategy — whose click toggled the header back off and restarted the
-    cascade. Three strategies x 3s meant that event could never be captured, while the 49
-    smaller ones cascaded inside 3s and always were. The bug scaled with the event, which is
-    exactly why it looked like one broken posting rather than a broken wait.
-
-    Verify by counting ticked rows, not by parsing the size total: the header cascade ticks every
-    row, so >1 checked box means it took. Parsing the total proved brittle (label and value live
-    in different columns) and a silent no-select downloads an empty bundle.
-    """
-    def mouse_click_first(selector):
-        box = page.locator(selector).first.bounding_box()
-        if not box:
-            raise RuntimeError(f"no bounding box for {selector}")
-        page.mouse.click(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
-
-    def checked_count():
-        return page.evaluate(
-            "() => Array.from(document.querySelectorAll('input.w-chk-native'))"
-            ".filter(e => e.checked).length")
-
-    strategies = (
-        ("mouse-label", lambda: mouse_click_first("label.w-chk")),
-        ("mouse-container", lambda: mouse_click_first("div.w-chk-container")),
-        ("label-click", lambda: page.locator("label.w-chk").first.click(timeout=6000)),
-    )
-    poll_ms = 500
-    # A click that lands ticks the HEADER almost at once; only the row cascade is slow. So a
-    # click still showing zero ticked after this grace never registered — that, and only that,
-    # is grounds to try the next strategy. Falling through while a cascade is in flight is the
-    # #174 bug itself.
-    grace_ms = 3000
-
-    for name, attempt in strategies:
-        try:
-            attempt()
-        except Exception:
-            continue                                      # e.g. no bounding box — try the next
-        waited = 0
-        while waited < timeout_ms:
-            page.wait_for_timeout(poll_ms)
-            waited += poll_ms
-            count = checked_count()
-            if count > 1:
-                log(f"    select-all via {name} (cascade landed in {waited / 1000:.0f}s)")
-                return
-            if count == 0 and waited >= grace_ms:
-                break                                     # never registered — next strategy
-    raise RuntimeError(
-        f"Could not select the attachments (the header checkbox did not select any rows "
-        f"within {timeout_ms / 1000:.0f}s).")
-
-
-# The picker writes the summary label with NON-BREAKING spaces and separates the value with
-# tabs -- "Total\xa0Size\xa0(MB):\t\t792.41". A literal space in the pattern therefore never
-# matches, which is how the 500 MB guard went blind on Doc5713434353 (#174): the page showed
-# 792.41, `_selected_total_mb` returned None, the ceiling check was skipped, and capture_event
-# clicked a disabled Download button until it timed out. `\s` covers space, tab and \xa0 alike.
-_TOTAL_MB = re.compile(r"Total\s*Size\s*\(MB\)\s*:\s*([\d,]+(?:\.\d+)?)")
-
-# The picker's summary also carries "Selected Items: 85" alongside "Total Size (MB)" and
-# "Total Number" (probed live, docs/superpowers/specs/2026-07-27-oversized-ariba-bundle-capture-
-# design.md) -- same NON-BREAKING-space rendering as `_TOTAL_MB`, so `\s` here too.
-_SELECTED_ITEMS = re.compile(r"Selected\s*Items\s*:\s*([\d,]+)")
-
-
-def parse_total_mb(text: str | None) -> float | None:
-    """The 'Total Size (MB): N' figure from the picker's summary text, or None. PURE."""
-    m = _TOTAL_MB.search(text or "")
-    return float(m.group(1).replace(",", "")) if m else None
-
-
-def parse_selected_items(text: str | None) -> int | None:
-    """The 'Selected Items: N' figure from the picker's summary text, or None. PURE.
-
-    Ground truth for how many logical rows the picker holds -- but only while everything is
-    selected (`Total Number`, and this figure with it, reads 0 with nothing selected, per the
-    probe findings). Meant to be read right after `_select_all_attachments` and passed as
-    `AribaPicker.row_keys`'s `expected_count`, so a scroll-enumeration that comes up short
-    raises instead of silently planning over a partial row list.
-    """
-    m = _SELECTED_ITEMS.search(text or "")
-    return int(m.group(1).replace(",", "")) if m else None
-
-
-def _selected_total_mb(page) -> float | None:
-    """The 'Total Size (MB): N' the picker shows once items are selected, or None if unread.
-
-    Two reads, because neither alone is reliable. `inner_text` can reorder label and value (they
-    sit in separate columns) so the number does not always follow the colon; the raw `textContent`
-    scan in DOM order finds the smallest element wrapping both. Try the flat text first -- it is
-    what the summary actually renders -- then fall back to the DOM-order scan.
-    """
-    try:
-        total = parse_total_mb(page.inner_text("body"))
-    except Exception:
-        total = None
-    if total is not None:
-        return total
-    return page.evaluate(
-        """() => {
-            let best = null;
-            for (const e of document.querySelectorAll('td,div,span,label,p,tr,table,body')) {
-                const m = (e.textContent || '').match(/Total\\s*Size\\s*\\(MB\\)\\s*:\\s*([\\d,]+(?:\\.\\d+)?)/);
-                if (m) best = parseFloat(m[1].replace(/,/g, ''));
-            }
-            return best;
-        }"""
-    )
-
-
-_ROW_KEY = re.compile(r"^\s*(\d+(?:\.\d+)*)\s")
-
-
-def _outline_sort_key(key: str) -> list:
-    """An outline number as a numeric tuple, so `4.10` sorts after `4.9` rather than before it.
-
-    `row_keys` orders its result this way; `_locate` reuses the exact same function to decide
-    which way to scroll (#174) — the two must never disagree about what "before"/"after" means
-    for an outline number, and a second hand-rolled comparison would risk exactly that drift.
-    """
-    return [int(p) for p in key.split(".")]
-
-# The picker identifies itself by this heading -- `capture_event` waits for it before touching
-# anything in the widget, so it is the same evidence throughout.
+# The picker identifies itself by this heading -- `_on_event_view` checks for its ABSENCE as
+# part of confirming the content tree (not the picker) is in front of us. `_on_picker`, the
+# function that used to check for its PRESENCE, was retired with `AribaPicker` (#195) — this
+# constant is the one piece of that cluster still load-bearing.
 PICKER_HEADING = "Selected Attachments Summary"
-
-
-def _on_picker(page, timeout_ms: int = 5000) -> bool:
-    """Whether the attachment picker is still the page in front of us.
-
-    Every read the batching layer makes is a `page.evaluate`, and a navigation turns those into
-    `Execution context was destroyed, most likely because of a navigation` -- an error that names
-    neither what navigated nor when. The picker carries `Done` buttons at top-right AND
-    bottom-right, so a positional click that misses its target can leave the widget entirely, and
-    that is what a live run did (#174). Checking the heading right after each click attributes the
-    navigation to the action that caused it.
-
-    Polled, never slept: a navigation in flight makes `query_selector` raise, which is "not known
-    yet", not "gone". Only a clean read with no heading is evidence of absence.
-    """
-    waited = 0
-    while True:
-        try:
-            if page.query_selector(f"text={PICKER_HEADING}") is not None:
-                return True
-        except Exception:
-            pass                                   # mid-navigation DOM churn — no answer yet
-        if waited >= timeout_ms:
-            return False
-        page.wait_for_timeout(250)
-        waited += 250
 
 
 # The scroll container, found the same way every time it is needed (#174 fix5).
@@ -870,10 +704,11 @@ class _ListScroller:
     def state(self) -> dict:
         """Fresh geometry + scrollTop of the scroll container, re-found on every call.
 
-        Never a held handle -- the picker re-renders on every selection (`AribaPicker`'s second
-        hazard), so this runs `_CONTAINER_STATE_JS` (walk each marker's own ancestor chain, keep
-        the one with the largest scroll range) fresh each time rather than caching an element
-        reference that a re-render could invalidate underneath it.
+        Never a held handle -- the picker re-renders on every selection (the second hazard the
+        now-retired `AribaPicker` was built to contain, #195), so this runs `_CONTAINER_STATE_JS`
+        (walk each marker's own ancestor chain, keep the one with the largest scroll range) fresh
+        each time rather than caching an element reference that a re-render could invalidate
+        underneath it.
 
         Raises rather than returning something to scroll blindly against: a caller with no
         container has nothing safe to hover or wheel, and every prior guess that tried anyway
@@ -1020,537 +855,6 @@ class _ListScroller:
         )
         return {"before": before["scrollTop"], "after": after["scrollTop"], "moved": moved,
                 "at_edge": at_edge, "max_scroll": max_scroll}
-
-
-class AribaPicker:
-    """Playwright adapter that satisfied `ariba_batch.py`'s Picker protocol (#174) before that
-    module was retired (#186).
-
-    **Currently unused by the live capture path (#185).** Its last caller was
-    `AribaFileSource._read_expected_count`, removed when the picker-count comparison it fed was
-    proven to compare incommensurable quantities (54 picker vs. 39 traversal vs. 178 true leaves
-    on the one validated event). Kept on disk rather than deleted: it is tested, its
-    scroll/selection logic solves real, hard-won hazards (below) that a future picker-driven
-    feature would otherwise re-learn from scratch, and deleting working code as a side effect of
-    an unrelated fix was not #185's call to make. Its own retirement is tracked separately (#195).
-    A docstring or two below still describes call sites that no longer exist (`capture_event`,
-    `.omitted.json`'s `expected_files`) — left as-is as history of what this class was built for,
-    not a claim about current behaviour.
-
-    Three hazards this class exists to contain, all measured live:
-
-    * **The row list is virtualised.** A fixed 51 checkboxes render as a sliding window over
-      ~85 logical rows -- at the top of the list index 9 is "4.1 Form A", after scrolling it is
-      "5 Part 5 - Pricing Form". So rows are addressed by OUTLINE NUMBER, and enumeration has
-      to scroll the whole list. Reading only what is rendered would silently plan over ~51 of
-      ~85 rows, which looks like a clean capture that is quietly missing files.
-    * **Handles detach.** The picker re-renders after every selection, so a locator is
-      re-resolved at the moment of use and never held across a click.
-    * **There are TWO scrollers, and the header checkbox sits outside the one that matters
-      (measured, fix5, #174).** The page itself scrolls (941/720 px, range 221) and so does the
-      row list, a ~225 px strip holding ~3354 px of rows (range ~3129). A wheel event lands
-      wherever the mouse last was, so a wheel not over the strip silently scrolls the *page* and
-      leaves the list untouched -- the "dead wheel" that sank five earlier fixes. Worse, the page
-      carries 51 `input.w-chk-native` elements but the row list contains only 50: the header
-      select-all checkbox is structurally OUTSIDE the scrollable strip. Every earlier hover used
-      `.first`, which is precisely the header -- parking the cursor off the list on every attempt.
-      `_container_state`/`_hover_row_list`/`_wheel_step` fix this at the root: the container is
-      found by the largest scroll range among elements holding more than one row checkbox
-      (excluding `<html>`/`<body>`, and NOT "most checkboxes" -- that returns the outer wrapper,
-      range ~221, which contains the header too), a hover point comes only from the container's
-      own checkbox descendants, and every scroll is verified against the container's own
-      `scrollTop` -- a native, immediate signal, unlike inferring success from the rendered row
-      window, which is what let this stay broken through five prior guesses.
-    """
-
-    def __init__(self, page, log=lambda _m: None):
-        self.page = page
-        self.log = log
-        # The one container-aware, scrollTop-verified scrolling primitive, shared with the
-        # content-tree traversal (`AribaFileSource`) so the two can never drift apart.
-        self._scroller = _ListScroller(
-            page, "input.w-chk-native", lambda: tuple(sorted(self._rendered())), log=log,
-            label="picker row list")
-
-    # --- reads ---------------------------------------------------------------------------
-    def _rendered_split(self) -> tuple[dict, dict]:
-        """Split the rows currently in the DOM into (keyed, unkeyed) by outline number.
-
-        A keyed row maps its outline number to its rendered checkbox index -- exactly what
-        `_rendered()` returned before this split existed. An unkeyed row has no leading
-        outline number (the header "Title" select-all row, the trailing "Totals" summary
-        row) -- it is neither an attachment nor addressable by outline number, so it is
-        keyed on its own trimmed text instead: stable enough not to double-count as the
-        virtualised window slides the same row past this read many times, unlike a DOM
-        index, which is reused by whatever row next occupies that slot. A row with no text
-        at all (an empty virtualisation placeholder) is dropped from both -- it was never
-        "seen", just reserved DOM space.
-        """
-        rows = self.page.evaluate(
-            """() => Array.from(document.querySelectorAll('input.w-chk-native'))
-                 .map((e, i) => { const tr = e.closest('tr');
-                                  return [i, ((tr ? tr.innerText : '') || '').trim()]; })""")
-        keyed: dict = {}
-        unkeyed: dict = {}
-        for index, text in rows:
-            text = text.replace("\xa0", " ").strip()
-            m = _ROW_KEY.match(text)
-            if m:
-                keyed.setdefault(m.group(1), index)
-            elif text:
-                unkeyed.setdefault(text, index)
-        return keyed, unkeyed
-
-    def _rendered(self) -> dict:
-        """{outline key: rendered index} for the rows currently in the DOM."""
-        keyed, _ = self._rendered_split()
-        return keyed
-
-    def _container_state(self) -> dict:
-        """The row-list container's fresh geometry -- see `_ListScroller.state`."""
-        return self._scroller.state()
-
-    def _log_geometry(self) -> None:
-        """Print the picker's measured structure once per capture (`_ListScroller`)."""
-        self._scroller.log_geometry()
-
-    def _hover_row_list(self) -> dict:
-        """Park the mouse over a row genuinely inside the list -- see `_ListScroller.hover`."""
-        return self._scroller.hover()
-
-    def _wheel_step(self, delta_y: int) -> dict:
-        """One scrollTop-verified wheel step -- see `_ListScroller.step`."""
-        return self._scroller.step(delta_y)
-
-    def row_keys(self, expected_count: int | None = None) -> list:
-        """Every row's outline number, in order, scrolling to defeat virtualisation.
-
-        Each sweep direction stops on the container's own `scrollTop` reaching that end of its
-        scroll range (`_wheel_step`'s `at_edge`), not on the rendered row window going quiet --
-        scrollTop is a native property that updates the instant a scroll actually lands, so it
-        cannot be foxed by the virtualised re-render lagging a frame behind, the way inferring
-        exhaustion from "no new keys this pass" could (and did -- see `_wheel_step` and the
-        class docstring, #174 fix5). A wheel that neither moves scrollTop nor sits at an edge is
-        a dead wheel and `_wheel_step`/this sweep raise rather than silently under-enumerating.
-
-        A live run reaching the true count does not by itself prove this logic is sound: it
-        cannot distinguish "found all rows because the algorithm is right" from "found them
-        because the fixed wait happened to be enough that day". `expected_count`, read
-        elsewhere from the picker's own "Selected Items" total while everything is selected
-        (`selected_count`), closes that gap -- pass it here to turn a short enumeration into a
-        raised error instead of a quietly incomplete plan handed to the batching loop.
-
-        **"Selected Items" counts rows this method deliberately excludes.** A live run
-        against 85 selected items enumerated 84 outline-keyed rows and tripped the guard --
-        but two rows the picker renders carry no outline number at all: the "Title"
-        header select-all and a trailing "Totals" summary row. Neither is an attachment
-        and neither belongs in the batching loop, yet the picker's own count apparently
-        includes at least one of them. Comparing `expected_count` against the keyed count
-        alone conflates "row I never saw" with "row I saw and rightly threw away", so the
-        guard is validated against keyed + unkeyed-but-seen instead (see `_rendered_split`).
-
-        **The top of the list is established by evidence, not by a keypress.** This used to
-        press `Home` and assume the list moved; `keyboard.press` goes to whatever has focus, and
-        after `_select_all_attachments`'s positional mouse click nothing establishes that the
-        row list is the focus target, so any row above the starting scroll position was simply
-        never enumerated. Nothing guarantees the list starts at the top -- the select-all click,
-        and any scrolling the picker did while its cascade landed, leave it wherever they leave
-        it. So sweep UP first, under the same consecutive-no-growth discipline as the downward
-        pass, and keep what that finds: reaching the top becomes an observation, and the result
-        no longer depends on focus or on where the list happened to be.
-
-        **This runs exactly once per capture.** Its result was the fingerprint's row list, which
-        `ariba_batch.py`'s `accumulate_batches` (retired #186) was then HANDED -- it did not
-        re-enumerate. A second sweep could only diverge from the list everything downstream is
-        checked against, and live it did: 84 rows here, 50 on the re-read (#174).
-        """
-        MAX_PASSES = 45
-        STALL_LIMIT = 3           # consecutive dead (non-edge, non-moving) wheels before raising
-
-        self._log_geometry()
-
-        seen, order = set(), []
-        unkeyed: set = set()                        # trimmed text of seen-but-unkeyed rows
-
-        def collect():
-            keyed_rows, unkeyed_rows = self._rendered_split()
-            for key in keyed_rows:
-                if key not in seen:
-                    seen.add(key)
-                    order.append(key)
-            unkeyed.update(unkeyed_rows)
-
-        def sweep(delta_y: int) -> None:
-            """Wheel one direction until the container's own scrollTop reaches that edge."""
-            collect()
-            stalled = 0
-            for _ in range(MAX_PASSES):
-                step = self._wheel_step(delta_y)
-                collect()
-                if step["moved"]:
-                    stalled = 0
-                    continue
-                if step["at_edge"]:
-                    self.page.wait_for_timeout(300)      # let a trailing re-render land
-                    collect()
-                    return
-                stalled += 1
-                if stalled >= STALL_LIMIT:
-                    raise RuntimeError(
-                        f"row_keys: the row-list wheel (delta={delta_y}) did not move the "
-                        f"container's scrollTop across {stalled} consecutive attempts while "
-                        f"not at an edge (scrollTop stuck at {step['before']}, range "
-                        f"0..{step['max_scroll']}) -- the wheel is not reaching the row list")
-            raise RuntimeError(
-                f"row_keys: exhausted {MAX_PASSES} scroll passes (delta={delta_y}) without "
-                "the container's scrollTop ever reaching an edge -- refusing to hand a "
-                "possibly-incomplete row list to the batching loop")
-
-        sweep(-2000)                     # up to the top, collecting on the way
-        sweep(2000)                      # then the downward sweep, from a known position
-        # The sweeps move a real mouse over the widget. Attribute a navigation to them here
-        # rather than let the next caller's page.evaluate report a destroyed execution context.
-        self._require_picker("the row-list scroll sweep")
-        order.sort(key=_outline_sort_key)
-        excluded = sorted(unkeyed)
-        detail = f" (+{len(excluded)} excluded, no outline number: {excluded})" if excluded else ""
-        self.log(f"    picker rows: {len(order)}{detail}")
-        total_seen = len(order) + len(excluded)
-        if expected_count is not None and total_seen < expected_count:
-            raise RuntimeError(
-                f"row_keys enumerated {len(order)} keyed + {len(excluded)} unkeyed "
-                f"{excluded} = {total_seen} of {expected_count} row(s) the picker reports "
-                "selected -- refusing to hand a short row list to the batching loop")
-        return order
-
-    def selected_count(self) -> int | None:
-        """The picker's own 'Selected Items' total, or None if genuinely unread.
-
-        Only meaningful while everything is selected (see `parse_selected_items`) -- the
-        intended use is right after `_select_all_attachments`, feeding the result into
-        `row_keys(expected_count=...)` as the ground truth enumeration is checked against.
-
-        **Two reads, and a loud None.** This figure sits in the same summary block as
-        `Total Size (MB)`, whose reader needs a second DOM-order pass for exactly one reason:
-        `inner_text` can reorder label and value across columns, so the number does not always
-        follow the colon. Reading only `inner_text` here meant that reordering (or any
-        exception, all swallowed) returned None, `row_keys(expected_count=None)` then skipped
-        its guard entirely, and the one mechanism whose whole job is to make under-enumeration
-        LOUD went silent at the moment it was needed. So: same two-read shape, and when the
-        count is truly unreadable, say so rather than passing None on unremarked.
-        """
-        try:
-            count = parse_selected_items(self.page.inner_text("body"))
-        except Exception:
-            count = None
-        if count is None:
-            try:
-                count = self.page.evaluate(
-                    """() => {
-                        let best = null;
-                        for (const e of document.querySelectorAll(
-                                'td,div,span,label,p,tr,table,body')) {
-                            const m = (e.textContent || '').match(
-                                /Selected\\s*Items\\s*:\\s*([\\d,]+)/);
-                            if (m) best = parseInt(m[1].replace(/,/g, ''), 10);
-                        }
-                        return best;
-                    }""")
-            except Exception:
-                count = None
-        if count is None:
-            self.log("    warning: could not read the picker's 'Selected Items' total — "
-                     "row_keys will run without its short-enumeration guard")
-        return count
-
-    def total_mb(self):
-        return _selected_total_mb(self.page)
-
-    def file_count(self) -> int | None:
-        """The picker's 'Total Number' of files, or None if unread.
-
-        Whitespace is matched the way `_TOTAL_MB` matches it (`\\s*` before the colon): the
-        picker writes these labels with NON-BREAKING spaces and tabs, and a pattern demanding a
-        literal `Total Number:` is the same blindness that made the 500 MB guard miss 792.41 MB.
-
-        **None, never 0.** This value goes into the fingerprint, which is compared verbatim
-        against the one the partials were planned under, and it goes into the durable
-        `.omitted.json` as `expected_files`. A miss returning 0 would therefore either flip the
-        fingerprint comparison on a later run -- deleting every downloaded batch of an event too
-        big to download in one piece -- or record `expected_files: 0` against a real count. The
-        caller refuses to plan a capture at all rather than let either happen (capture_event).
-        """
-        n = self.page.evaluate(
-            """() => { const m = document.body.innerText.match(
-                           /Total\\s*Number\\s*:\\s*([\\d,]+)/);
-                       return m ? m[1].replace(/,/g, '') : null; }""")
-        if n is None:
-            self.log("    warning: could not read the picker's 'Total Number' of files")
-            return None
-        return int(n)
-
-    # --- writes --------------------------------------------------------------------------
-    def _direction_to(self, target: list, rendered: dict) -> int:
-        """Which way to wheel to bring `target` (an `_outline_sort_key`) into view, given the
-        keys currently rendered. -1 is up, +1 is down.
-
-        Compares numerically (`_outline_sort_key`, the same ordering `row_keys` sorts its
-        result by) rather than as plain strings, since `"4.10" < "4.9"` as strings but not as
-        outline numbers. If `target` sorts before everything rendered it lies above the window;
-        after everything, below. Called fresh on every `_locate` pass rather than decided once,
-        because each scroll moves the window and a direction chosen from a stale read can carry
-        the search straight past a target the last scroll just brought into reach.
-        """
-        keys = sorted(rendered, key=_outline_sort_key)
-        if target < _outline_sort_key(keys[0]):
-            return -1
-        if target > _outline_sort_key(keys[-1]):
-            return 1
-        # Falls between two rendered keys without matching either -- not expected against a
-        # contiguous virtualised window, but if it happens, head toward the nearer half rather
-        # than defaulting to a fixed direction that could walk away from the target.
-        mid = _outline_sort_key(keys[len(keys) // 2])
-        return -1 if target < mid else 1
-
-    def _locate(self, key: str):
-        """Re-resolve the row's checkbox, scrolling it into the window first.
-
-        Returns `(locator, rendered index)` -- the index is how the row's OWN checked state is
-        read (`_row_checked`), which a count of ticked boxes cannot tell you.
-
-        **Searches toward the target, not just downward (#174).** `row_keys` sweeps the whole
-        list to enumerate it and therefore always leaves the window scrolled to the BOTTOM; the
-        batching loop then asks for rows in ascending outline order starting at `1`, at the TOP.
-        A one-directional (downward) search wheels the target further away on every pass and
-        never finds it. So each pass compares `key` against whatever is currently rendered
-        (`_direction_to`, ordered numerically -- a string compare would put `4.10` before `4.9`)
-        and wheels whichever way the target actually lies, re-deriving the direction after every
-        scroll since the window moves. If the window renders no keyed rows at all (just the
-        header / "Totals" row, or a transient empty render), there is nothing to compare
-        against, so this tries whichever edge direction hasn't been ruled out yet -- the same
-        one wheel-step-at-a-time approach as the normal case, since `_wheel_step`'s `at_edge`
-        now answers "is there anything more that way" directly rather than needing a separate
-        multi-pass rescue.
-
-        **Cheap on the access pattern this is actually called with.** The batching loop calls
-        this ~84 times, once per row, in ascending outline order -- so besides the very first
-        call (which walks from row_keys' bottom back to the top), each target is usually already
-        rendered or one short scroll from the last one. This never rescans the whole list to
-        find a row; it only ever asks "which way from here", which is what keeps the amortised
-        cost near one scroll per row instead of one sweep per row.
-
-        The scroll is re-verified rather than trusted: the list is virtualised, so scrolling
-        changes which logical row each rendered index holds, and an index read before the scroll
-        can address a different row after it. So the rendering is read again afterwards and the
-        pair is only returned once `key` still sits at the index the locator was resolved from;
-        otherwise the loop simply re-resolves against the new rendering (the row is in view by
-        then, so `scroll_into_view_if_needed` is a no-op and the second pass agrees).
-
-        **Every scroll goes through `_wheel_step` -- the one shared, scrollTop-verified
-        primitive (#174 fix5), the same one `row_keys`'s sweeps use.** Two ad-hoc scroll
-        implementations that could silently disagree about what "landed" meant is what made
-        this take six live runs; there is now exactly one. A dead wheel -- `_wheel_step` reports
-        `moved=False` while NOT at an edge -- is raised immediately rather than retried into the
-        generic "never appeared" exhaustion case below, because the two failures have different
-        causes and only one of them means the row is actually absent.
-        """
-        target = _outline_sort_key(key)
-        searched_up = searched_down = False
-        last_window = "(never read)"
-        stalled = 0
-        STALL_LIMIT = 2                    # consecutive dead wheels before calling it a dead wheel
-        for _ in range(40):
-            keyed, unkeyed = self._rendered_split()
-            if key in keyed:
-                index = keyed[key]
-                loc = self.page.locator("div.w-chk-container").nth(index)
-                loc.scroll_into_view_if_needed(timeout=10000)
-                self.page.wait_for_timeout(200)
-                if self._rendered().get(key) == index:
-                    return loc, index
-                continue                       # the scroll slid the window — re-resolve
-
-            if keyed:
-                direction = self._direction_to(target, keyed)
-                last_window = f"keys {sorted(keyed, key=_outline_sort_key)}"
-            else:
-                # Nothing keyed rendered -- try whichever edge hasn't been ruled out yet.
-                direction = -1 if not searched_up else 1
-                last_window = f"no keyed rows (unkeyed: {sorted(unkeyed)})"
-            searched_up = searched_up or direction < 0
-            searched_down = searched_down or direction > 0
-
-            step = self._wheel_step(2000 * direction)
-            if step["moved"]:
-                stalled = 0
-                continue
-            if step["at_edge"]:
-                # Genuinely nothing further that way -- not evidence of a dead wheel, and not
-                # evidence the row is absent either (it may still be found from the other
-                # direction, or the window may re-render with a keyed row on the next pass).
-                stalled = 0
-                continue
-            stalled += 1
-            if stalled >= STALL_LIMIT:
-                raise RuntimeError(
-                    f"row {key}: the row-list wheel (direction="
-                    f"{'up' if direction < 0 else 'down'}) did not move the container's "
-                    f"scrollTop across {stalled} consecutive attempts while not at an edge "
-                    f"(scrollTop stuck at {step['before']}, range 0..{step['max_scroll']}) -- "
-                    f"the wheel is not reaching the row list. window last held {last_window}")
-
-        directions = ", ".join(
-            d for d, tried in (("up", searched_up), ("down", searched_down)) if tried
-        ) or "neither direction"
-        raise RuntimeError(
-            f"row {key} never appeared in the picker window after searching {directions} -- "
-            f"window last held {last_window}")
-
-    def _row_checked(self, index: int) -> bool | None:
-        """Whether the row at `index` is ticked, or None if that index no longer exists."""
-        return self.page.evaluate(
-            "(i) => { const e = document.querySelectorAll('input.w-chk-native')[i];"
-            "         return e ? e.checked : null; }", index)
-
-    def set_selected(self, key: str, value: bool) -> None:
-        """Put row `key` into state `value` -- idempotent, and verified on the row itself.
-
-        Two things this must not be. It must not be a **blind toggle**: the picker is an outline
-        TREE whose header demonstrably cascades to descendants, so if a parent row cascades to
-        its children too, iterating in outline order would tick `4` (turning `4.1` on with it)
-        and then UNTICK `4.1`. Reading the target row's own `checked` state and clicking only on
-        a mismatch makes the method mean what its name says regardless of what the caller
-        believes the picker's state to be.
-
-        And its settle predicate must not be a **count**: `_checked()` counts only the ~51
-        RENDERED inputs, and `_locate` scrolls, which changes which logical rows those are. A
-        baseline sampled before the scroll (as it was) could be satisfied by the scroll alone --
-        returning from a click that never landed, and letting the batching layer record a row in
-        a sidecar it is not actually in. Keyed on the row reaching the requested state, no
-        baseline is needed at all.
-        """
-        loc, index = self._locate(key)
-        if self._row_checked(index) is value:
-            return                                     # already there (e.g. a parent cascade)
-        box = loc.bounding_box()
-        if not box:
-            raise RuntimeError(f"row {key} has no bounding box")
-        self.page.mouse.click(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
-
-        def reached(_count):
-            rendered = self._rendered()
-            return key in rendered and self._row_checked(rendered[key]) is value
-
-        self._settle(reached)
-        # _settle only warns on timeout, and a silently unlanded click is precisely the failure
-        # that puts a row in a sidecar naming bytes we never downloaded. Re-locate (so a row
-        # merely scrolled out of the window is not mistaken for a failed click) and refuse.
-        _loc, index = self._locate(key)
-        if self._row_checked(index) is not value:
-            raise RuntimeError(
-                f"row {key} did not reach selected={value} — refusing to plan batches against "
-                f"a selection the picker did not accept")
-
-    def _require_picker(self, action: str) -> None:
-        """Refuse to continue if `action` left the attachment picker.
-
-        Raised HERE rather than at the next `page.evaluate`, which reports only
-        `Execution context was destroyed, most likely because of a navigation` -- true, opaque,
-        and several steps removed from whatever navigated (#174).
-        """
-        if not _on_picker(self.page):
-            raise RuntimeError(
-                f"{action} navigated away from the attachment picker (its "
-                f"'{PICKER_HEADING}' heading is gone, and the page is at {self.page.url}). The "
-                f"picker has Done buttons at both top-right and bottom-right, so a positional "
-                f"click that misses its target leaves the widget — refusing rather than reading "
-                f"a picker that is no longer there.")
-
-    def clear_selection(self) -> None:
-        """Untick every row via the header checkbox, never row by row.
-
-        The batching loop needs an empty selection to start accumulating from once the initial
-        select-all shows the bundle is over the ceiling. Deselecting ~85 rows individually would
-        cost ~2 minutes (each toggle settles in ~1.5s); the header checkbox is the same cascade
-        `_select_all_attachments` rides to turn every row ON, and it is just as fast in reverse
-        (~10s) -- so this is that select-all's mirror image, not a loop over `set_selected`.
-
-        **It clicks what `_select_all_attachments` clicks: `label.w-chk`.** That is the visible,
-        CSS-drawn box, and it is the one locator on this widget measured working against the live
-        site ("select-all via mouse-label" is what the log prints). This used to take the box of
-        the enclosing `div.w-chk-container` instead — a larger box, whose centre is not
-        necessarily over the checkbox, on a page carrying a `Done` button at each end of the
-        picker. A live run went straight from this click to `Execution context was destroyed`
-        (#174), which is what leaving the picker looks like. Re-resolved and scrolled into view
-        at the moment of use, as `_locate` does: this runs straight after `row_keys`, which leaves
-        the list wherever its sweeps ended, and `bounding_box()` on an element above the viewport
-        yields a negative y — the click would land on nothing, `_settle` would burn its full 45s,
-        and the guard below would raise.
-
-        The header checkbox TOGGLES the whole cascade rather than forcing it off, so a blind
-        click here is only correct when something is already selected. Called with nothing
-        selected, it would select everything instead of clearing it -- and the failure is
-        nearly silent: `_settle`'s predicate (`n == 0`) then waits for a count moving the wrong
-        direction, times out at 45s, logs a warning, and returns normally, leaving the picker
-        fully selected with no signal to the caller. So this reads the count first and returns
-        immediately if it is already zero, and if the click-and-settle doesn't land on zero,
-        raises rather than returning -- the batching loop assumes an empty picker to accumulate
-        into, and handing it an unknown selection state is worse than stopping here.
-        """
-        if self._checked() == 0:
-            return
-        loc = self.page.locator("label.w-chk").first
-        loc.scroll_into_view_if_needed(timeout=10000)
-        self.page.wait_for_timeout(200)
-        box = loc.bounding_box()
-        if not box:
-            raise RuntimeError("no bounding box for the header checkbox")
-        self.page.mouse.click(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
-        # Before anything reads the page again: every read below is a page.evaluate, and one on a
-        # navigated page fails with an error that names neither the cause nor the click.
-        self._require_picker("clear_selection's header-checkbox click")
-        self._settle(lambda n: n == 0)
-        if self._checked() != 0:
-            raise RuntimeError(
-                "clear_selection did not reach zero -- picker left in an unknown selection "
-                "state, refusing to hand it to the batching loop")
-
-    def _checked(self) -> int:
-        return self.page.evaluate(
-            "() => Array.from(document.querySelectorAll('input.w-chk-native'))"
-            ".filter(e => e.checked).length")
-
-    def _settle(self, ready, timeout_ms: int = 45000) -> None:
-        """Poll until `ready(checked_count)` holds for two consecutive readings.
-
-        NEVER sleep a guess -- that was #174's root cause. Requiring two stable ticks, not one,
-        guards against reading mid-cascade, the same reason `_select_all_attachments` waits for
-        more than one checked row rather than trusting the first non-zero count.
-        """
-        waited, prev, stable = 0, None, 0
-        while waited < timeout_ms:
-            self.page.wait_for_timeout(500)
-            waited += 500
-            cur = (self._checked(), _selected_total_mb(self.page))
-            stable = stable + 1 if cur == prev else 0
-            prev = cur
-            if stable >= 2 and ready(cur[0]):
-                return
-        self.log("    warning: selection never settled within "
-                 f"{timeout_ms / 1000:.0f}s — continuing on the last reading")
-
-    def download_to(self, path):
-        """Click Download Attachments and block until a complete file sits at `path`.
-
-        `save_as` resolves only once the download stream has finished writing, which is what
-        makes this safe: capture_in_batches validates the zip as a zip immediately after this
-        returns, so a partially-arrived file must never be observable at `path`. Nothing here
-        creates `path` ahead of the download landing.
-        """
-        with self.page.expect_download(timeout=300000) as dl:
-            self.page.get_by_role("button", name="Download Attachments").last.click()
-        dl.value.save_as(str(path))
-        return path
 
 
 # Every `<a>` on the page, with the two facts `ariba_files.anchor_key` needs to identify a
@@ -1709,8 +1013,12 @@ class AribaFileSource:
     is the point of the seam: the two decisions the archive's integrity rests on were
     unreachable by any test while they lived in here.
 
-    Four things this class exists to get right, each of which silently corrupts an archive that
-    cannot be re-fetched if it does not:
+    Three things this class exists to get right, each of which silently corrupts an archive that
+    cannot be re-fetched if it does not. (A fourth used to sit here -- reading the picker's count
+    before the traversal and restoring the event view after, since that round trip navigated away
+    from it. Removed in #185 once the picker's count was proven incommensurable with anything
+    this class or `ariba_files` could check it against, which also retired the round trip and
+    the navigate-away problem it existed to undo.)
 
     * **Identity is never positional** (`ariba_files.anchor_key`). The key is row identity +
       within-row ordinal + filename, all facts about the document's place in the tree. The
@@ -1724,15 +1032,9 @@ class AribaFileSource:
       same bytes twice on a single clean run, again with matching counts and no gap record.
     * **Expansion is idempotent and evidence-based.** A `References` control keeps its label
       after it opens, so a second blind click COLLAPSES what the first one opened -- the same
-      lesson `AribaPicker.clear_selection` records for the header checkbox. Sections are
-      tracked by a durable DOM id, `aria-expanded` is honoured where present, and a click that
-      shrinks the link count is undone and reported.
-    * **The count is read BEFORE the traversal, and the event view is restored after.** Reading
-      it drives Download Content -> Download Attachments -> picker -> Done, which leaves the
-      page somewhere else entirely and discards every expansion; a traversal after that hunts
-      on the wrong page. So it is read first, the event view is re-established through
-      `_open_authed_preview` + Respond, and both the traversal and every download refuse to run
-      until that view is confirmed by evidence.
+      lesson the now-retired `AribaPicker.clear_selection` recorded for the header checkbox
+      (#195). Sections are tracked by a durable DOM id, `aria-expanded` is honoured where
+      present, and a click that shrinks the link count is undone and reported.
     """
 
     MAX_SCROLL_PASSES = 40
@@ -1757,11 +1059,11 @@ class AribaFileSource:
         # DOM ids already clicked this run. What keeps the name-based last resort from
         # resolving a second `report.pdf` back onto the first one's anchor (`pick_unclaimed`).
         self._claimed: set = set()
-        # The same container-aware, scrollTop-verified primitive the picker uses -- not a bare
-        # `mouse.wheel`, which is every mistake `AribaPicker` spent six live runs unlearning:
-        # wheeling without hovering the scroll container, never verifying scrollTop moved, no
-        # stall tolerance, and only ever scrolling down. `allow_document` because this list,
-        # unlike the picker's inner strip, may well scroll the page itself.
+        # The same container-aware, scrollTop-verified primitive the now-retired `AribaPicker`
+        # used (#195) -- not a bare `mouse.wheel`, which is every mistake it spent six live runs
+        # unlearning: wheeling without hovering the scroll container, never verifying scrollTop
+        # moved, no stall tolerance, and only ever scrolling down. `allow_document` because this
+        # list, unlike the picker's inner strip, may well scroll the page itself.
         self._scroller = _ListScroller(
             page, "a", self._anchor_signature, log=log, allow_document=True,
             label="content tree")
@@ -1785,7 +1087,8 @@ class AribaFileSource:
     # --- the event view ------------------------------------------------------------------
     def _on_event_view(self) -> bool:
         """Whether the event's All Content view -- not the picker, not the export page -- is in
-        front of us. Evidence, the way `_on_picker` and `_wait_post_respond` take evidence.
+        front of us. Evidence, the way `_wait_post_respond` takes evidence (and the now-retired
+        `_on_picker`, #195, did for the picker's own presence).
 
         **A NEGATIVE check alone is not enough (#174 M4).** "No picker heading, and a visible
         Download Content button" also describes the export page reached right after the
@@ -1889,8 +1192,9 @@ class AribaFileSource:
             return True
         if after < before:
             # The label survives expansion, so a control we had not recorded may already have
-            # been open -- exactly what `AribaPicker.clear_selection` documents for the header
-            # checkbox. Put it back rather than leaving the tree in a parity accident.
+            # been open -- exactly what the now-retired `AribaPicker.clear_selection` documented
+            # for the header checkbox (#195). Put it back rather than leaving the tree in a
+            # parity accident.
             self.log(f"    References toggle {cand['text']!r} COLLAPSED an open section "
                      f"({before} -> {after} links) — re-opening it")
             try:
@@ -2038,12 +1342,13 @@ class AribaFileSource:
         return expanded
 
     def _sweep(self) -> tuple:
-        """Scroll the whole tree, merging every read by KEY. Mirrors `AribaPicker.row_keys`.
+        """Scroll the whole tree, merging every read by KEY. Mirrored the now-retired
+        `AribaPicker.row_keys` (#195).
 
         Each direction stops on the container's own `scrollTop` reaching that end of its range
-        (`_ListScroller.step`'s `at_edge`), never on "a pass added nothing" -- the stop
-        condition `row_keys` exists in its current form because it was measured wrong. A wheel
-        that neither moves scrollTop nor sits at an edge is a dead wheel and raises rather than
+        (`_ListScroller.step`'s `at_edge`), never on "a pass added nothing" -- that stop
+        condition takes this shape because a count-based one was measured wrong. A wheel that
+        neither moves scrollTop nor sits at an edge is a dead wheel and raises rather than
         silently under-reading. The upward sweep runs first because nothing guarantees the tree
         starts at the top, and a downward-only traversal simply never sees what is above it.
         """
@@ -2102,11 +1407,12 @@ class AribaFileSource:
         ZERO files is fatal, and that check lives in `ariba_files.capture_files`, not here.
 
         **The tree's geometry is logged once here, on a live run of the brand-new
-        `allow_document=True` scroll path (#174 M2).** `AribaPicker` states its row list's
-        structure this way already; this traversal never did, though the module's own
-        docstring names that exact diagnostic as the one that would have ended the picker's
-        six-live-run debugging streak in its first line. Logged AFTER `_require_event_view`
-        confirms the content tree, not the picker or the export page, is actually in front of
+        `allow_document=True` scroll path (#174 M2).** The now-retired `AribaPicker` (#195)
+        stated its row list's structure this way already; this traversal never did, though the
+        module's own docstring named that exact diagnostic as the one that would have ended the
+        picker's six-live-run debugging streak in its first line. Logged AFTER
+        `_require_event_view` confirms the content tree, not the picker or the export page, is
+        actually in front of
         the geometry read.
 
         **The event view renders only the first Part's row until 'All Content' is clicked,
