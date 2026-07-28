@@ -5,29 +5,36 @@ The City posts every competitive solicitation to SAP Ariba Discovery, but the ac
 Sourcing event, downloadable only "as a participating Supplier", i.e. after clicking Respond.
 The Discovery preview shows `Attachments (0)`; the files are genuinely not there (verified
 across the corpus, #117). Respond registers our account as a participant — we never submit a
-bid — and unlocks a server-zipped bundle of every document.
+bid — and unlocks the event's content.
 
-Authorized by PMMD (2026-07, on the City's own open-by-default policy). Two hard limits shape
-the design, both observed live, not assumed:
+Authorized by PMMD (2026-07, on the City's own open-by-default policy). One hard limit shapes
+the design, observed live, not assumed:
 
   * Respond is DISABLED once a posting closes. So this only ever reaches solicitations OPEN at
-    capture time — a recurring job, not a backfill. Whatever closes before we look is gone.
-  * The bundle download hard-stops above 500 MB as a single zip (>100 MB only warns). Ariba's
-    own advice there is "select specific items and perform multiple downloads", and that is
-    what happens: an oversized event is captured in BATCHES (`ariba_batch`, #174), each under
-    the ceiling, merged into the canonical `Doc<n>.zip` only once every planned row is captured
-    or recorded un-capturable. Nothing is silently truncated, and an incomplete capture stays
-    pending rather than being canonicalised.
+    capture time — a recurring job, not a backfill. Whatever closes before we look is gone —
+    which is why a partial capture already on disk is salvaged (`ariba_files.finalise_partial`)
+    rather than abandoned: those bytes can never be re-fetched once Respond is gone.
+
+Documents are captured ONE FILE AT A TIME from the event's own content tree
+(`ariba_files`/`AribaFileSource`, #174), never as a single server-zipped bundle. Ariba's bundle
+download hard-stops above 500 MB as a single zip (>100 MB only warns), and one real event's own
+picker row is atomic at 787.71 MB — a single selectable unit that no amount of splitting the
+SELECTION could ever get under the ceiling. The content tree exposes the same documents
+individually, each capped around 88.7 MB, so per-file capture has no ceiling to special-case at
+all. (The batched-bundle path that preceded this, `ariba_batch.py`, stays on disk — tested,
+unused — pending a separate retirement; `capture_event` no longer calls it.)
 
 Two halves, split the way the rest of the package splits fetch from normalize:
 
-  * PURE / testable (no browser, no network): index a downloaded bundle's central directory
-    and store the manifest — `document_number_from_zip_name`, `index_zip`, `store_bundle`,
+  * PURE / testable (no browser, no network): `ariba_files` builds the canonical `Doc<n>.zip`
+    from individually downloaded documents (naming, atomic zip, resume across runs) and this
+    module indexes it — `document_number_from_zip_name`, `index_zip`, `store_bundle`,
     `ingest_downloads`. This is the INDEX the DB holds; the bytes stay on disk under
     <DATA_DIR>/ariba/attachments/ and are never committed.
   * BROWSER-bound (headed Chromium behind the `council` extra, logged into a real supplier
-    account from scrapers/.env): drive Respond -> Download Content -> Download Attachments and
-    capture the zip — `login`, `capture_event`, `capture_attachments`.
+    account from scrapers/.env): drive Respond, then traverse the event's content tree and
+    download each document individually — `login`, `capture_event`, `capture_attachments`,
+    `AribaFileSource`.
 
 Not part of `tb sync`. Run via `tb enrich-ariba-attachments`.
 """
@@ -41,7 +48,7 @@ from pathlib import Path
 from toronto_bids import config
 from toronto_bids.linking.document_number import bridge_document_number
 from toronto_bids.models import AribaAttachment
-from toronto_bids.sources import ariba_batch, ariba_files
+from toronto_bids.sources import ariba_files
 from toronto_bids.store import db
 
 # The AUTHENTICATED preview path — no `/public/`, no `?anId=ANONYMOUS`. The anonymous URL does
@@ -312,15 +319,17 @@ def _dismiss_cookie_banner(page) -> None:
 
 
 def capture_event(page, event: dict, dest_dir, log=lambda _m: None) -> Path | None:
-    """Drive one open event through Respond -> Download Content -> Download Attachments.
+    """Drive one open event through Respond, then capture its documents one file at a time.
 
     Returns the saved bundle path, or None if the event could not be captured this run (Respond
-    disabled = already closed; an incomplete batched capture that will resume next run). Never
-    raises for those expected outcomes — the caller isolates real errors per event.
+    disabled = already closed with nothing salvageable; a traversal that captured no file this
+    run, leaving the event pending). Never raises for those expected outcomes — the caller
+    isolates real errors per event.
 
-    A bundle over the 500 MB single-zip ceiling is NOT skipped: it is captured in batches
-    (`ariba_batch.capture_in_batches`, #174), which resumes across runs and writes the canonical
-    `Doc<n>.zip` only on completion.
+    Per-file capture (`ariba_files.capture_files`, #174) has no size ceiling to special-case:
+    Ariba's own bundle download hard-stops above 500 MB as a single zip, but the event's content
+    tree exposes every document individually and none exceeds ~88.7 MB, so nothing here is ever
+    "too large" the way a picker selection could be.
     """
     rfx_id, document_number = event["rfx_id"], event["document_number"]
     dest_dir = Path(dest_dir)
@@ -332,8 +341,8 @@ def capture_event(page, event: dict, dest_dir, log=lambda _m: None) -> Path | No
 
     respond = page.get_by_role("button", name="Respond", exact=True)
     if respond.is_disabled():
-        # Respond dies the moment a posting closes, so any batches we already hold can never
-        # be completed. Merging 3 of 5 is permanently better than nothing -- this is the whole
+        # Respond dies the moment a posting closes, so any files we already hold can never be
+        # completed. Salvaging 30 of 54 is permanently better than nothing -- this is the whole
         # reason partial captures are retained (#174).
         #
         # But salvage is DESTRUCTIVE in one direction: finalise_partial writes the canonical
@@ -343,7 +352,13 @@ def capture_event(page, event: dict, dest_dir, log=lambda _m: None) -> Path | No
         # nothing to salvage means nothing a spurious read can damage, so skip without paying
         # for the confirmation wait; and where partials do exist, require the disabled state to
         # hold across several reads before canonicalising anything.
-        pdir = ariba_batch.partial_dir(dest_dir, document_number)
+        #
+        # ariba_files.partial_dir/finalise_partial, NOT ariba_batch's -- per-file capture keeps
+        # its working directory under a different namespace (ariba_files.PARTIAL_DIRNAME) so the
+        # two mechanisms cannot collide, and salvaging from the wrong one finds nothing on disk
+        # here, logs "skipped", and abandons bytes that can never be re-fetched once Respond is
+        # gone. See ariba_files.partial_dir's docstring.
+        pdir = ariba_files.partial_dir(dest_dir, document_number)
         if not pdir.exists():
             log(f"  Doc{document_number}: Respond disabled (closed) — skipped")
             return None
@@ -351,7 +366,7 @@ def capture_event(page, event: dict, dest_dir, log=lambda _m: None) -> Path | No
             # posting_open=False is the assertion, not a formality: finalise_partial refuses to
             # canonicalise a capture that could still complete, and this branch is the one place
             # that knows the posting is closed.
-            salvaged = ariba_batch.finalise_partial(
+            salvaged = ariba_files.finalise_partial(
                 document_number, dest_dir, posting_open=False, log=log)
             if salvaged is not None:
                 log(f"  Doc{document_number}: closed mid-capture — salvaged what we had")
@@ -381,63 +396,19 @@ def capture_event(page, event: dict, dest_dir, log=lambda _m: None) -> Path | No
         raise RuntimeError(f"Doc{document_number}: the Sourcing event never loaded after Respond.")
     _dismiss_cookie_banner(page)
 
-    # Download Content -> the Export-to-Excel page -> Download Attachments -> the picker. The
-    # first Download Content click is sometimes a no-op if the event page is still settling, so
-    # wait for the export page's Download Attachments button and retry the click if it does not
-    # appear rather than clicking blindly into the event page.
-    dl_attachments = page.get_by_role("button", name="Download Attachments")
-    download_content.click()
-    try:
-        dl_attachments.first.wait_for(state="visible", timeout=30000)
-    except Exception:
-        download_content.click()                          # no-op first click — try once more
-        dl_attachments.first.wait_for(state="visible", timeout=30000)
-    dl_attachments.first.click()
-    page.wait_for_selector(f"text={PICKER_HEADING}", timeout=45000)
-    _select_all_attachments(page, log=log)
-
-    total_mb = _selected_total_mb(page)
-    if total_mb is not None and total_mb > MAX_BUNDLE_MB:
-        # Ariba disables its own Download button over 500 MB and says "select specific items
-        # and perform multiple downloads" -- so do exactly that (#174).
-        log(f"  Doc{document_number}: bundle {total_mb:.0f} MB > {MAX_BUNDLE_MB} MB — "
-            f"capturing in batches")
-        picker = AribaPicker(page, log=log)
-        # Read while everything from _select_all_attachments is still selected -- these are the
-        # only values that distinguish a complete row_keys() enumeration from a short one, and
-        # a complete merge from one missing files.
-        expected_count = picker.selected_count()
-        file_count = picker.file_count()
-        if file_count is None:
-            # `file_count` lands in the fingerprint, and the fingerprint is compared verbatim
-            # against the one the partials were planned under: a run that reads the count and a
-            # run that does not would disagree, and a disagreement DISCARDS every downloaded
-            # batch. So an unreadable count refuses the whole batched capture for this run
-            # rather than entering the fingerprint as a guess -- partials on disk are untouched
-            # and the event simply stays pending (#174).
-            log(f"  Doc{document_number}: could not read the picker's 'Total Number' — "
-                f"refusing to plan a batched capture against an unknown file count")
-            return None
-        fingerprint = ariba_batch.make_fingerprint(
-            picker.row_keys(expected_count=expected_count), file_count, total_mb)
-        # The batching loop accumulates from an empty picker; the header-checkbox toggle is
-        # ~10s versus ~2 minutes of deselecting rows one at a time, and raises if it doesn't
-        # actually land on zero.
-        picker.clear_selection()
-        # Reached only past the Respond check above, which concluded the posting is OPEN (either
-        # enabled outright, or disabled on one read and enabled on the next) -- that is what lets
-        # capture_in_batches discard partials it cannot identify.
-        return ariba_batch.capture_in_batches(
-            picker, document_number, dest_dir, fingerprint, posting_open=True, log=log)
-
-    target = dest_dir / f"Doc{document_number}.zip"
-    # The server assembles the zip ("Processing request …") before the download starts, so the
-    # wait is generous; expect_download resolves when the stream begins, not when it finishes.
-    with page.expect_download(timeout=300000) as dl:
-        page.get_by_role("button", name="Download Attachments").last.click()
-    dl.value.save_as(str(target))
-    log(f"  Doc{document_number}: captured {target.name}")
-    return target
+    # Per-file capture (#174). The bundle path is retired here: it server-zips a SELECTION and
+    # is hard-stopped at 500 MB, which cannot reach an event whose row 3.1 is atomic at
+    # 787.71 MB. Every individual file is <= 88.7 MB, so this path has no ceiling at all.
+    source = AribaFileSource(page, rfx_id=rfx_id, log=log)
+    # Count first: it is cheap, it fails early, and it returns to the event's content-tree view
+    # via Done -- which is where the traversal `capture_files` is about to run needs to land.
+    # `expected_count()` is memoised on `source` (see its docstring), so this read and
+    # `capture_files`'s own call to it after `list_files()` share one result -- the picker is
+    # driven exactly once, not once per call site.
+    expected = source.expected_count()
+    if expected is not None:
+        log(f"  Doc{document_number}: picker reports {expected} attachment(s)")
+    return ariba_files.capture_files(source, document_number, dest_dir, log=log)
 
 
 def _open_authed_preview(page, rfx_id: str, attempts: int = 3) -> bool:
