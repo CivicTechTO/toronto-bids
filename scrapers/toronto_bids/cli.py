@@ -167,6 +167,40 @@ def _report_sources(conn, after_id: int) -> list:
     return [r for r in db.sync_runs_since(conn, after_id) if r["source"] in names]
 
 
+def _sync_detail(conn, after_id: int) -> str:
+    """What the sync step actually consisted of, read back from `sync_run` (#178).
+
+    The old detail was `len(pipeline.default_sources())` — a static 9 that undercounted the 14
+    units the run records by exactly the five post-source passes, and that could not have
+    noticed if a source had failed. It is derived from the run now, and every category is
+    named, because the one number in the summary that claims coverage should not need a
+    reader who knows which of the three kinds `default_sources()` happens to contain.
+
+    Failures are counted from the rows, not from `pipeline.sync`'s return: both linking passes
+    and sources record their own status, so this stays right if a future unit is added to
+    either list.
+    """
+    rows = db.sync_runs_since(conn, after_id)
+    if not rows:
+        return "nothing recorded"
+    pass_names = {name for name, _fn in pipeline.linking_passes()}
+    checks = sum(1 for r in rows if r["source"] == "schema_check")
+    passes = sum(1 for r in rows if r["source"] in pass_names)
+    failed = sum(1 for r in rows if r["status"] != "ok")
+    def n(count, singular, plural):
+        return f"{count} {singular if count == 1 else plural}"
+
+    parts = []
+    if checks:
+        parts.append("schema check" if checks == 1
+                     else n(checks, "schema check", "schema checks"))
+    parts.append(n(len(rows) - checks - passes, "source", "sources"))
+    parts.append(n(passes, "pass", "passes"))
+    if failed:
+        parts.append(f"{failed} FAILED")
+    return " · ".join(parts)
+
+
 def _open_db():
     config.DATA_DIR.mkdir(parents=True, exist_ok=True)
     conn = db.connect(config.DB_PATH)
@@ -521,12 +555,19 @@ def _cmd_nightly(args) -> int:
                 except Exception:
                     sync_cutoff = 0
 
+                sync_failures: list = []
+
                 def _sync():
-                    src_failures = pipeline.sync(conn, http)
-                    failures.extend(src_failures)
-                    n = len(pipeline.default_sources())
-                    return f"{n} sources"
+                    sync_failures.extend(pipeline.sync(conn, http))
+                    failures.extend(sync_failures)
+                    return _sync_detail(conn, sync_cutoff)
                 _run_step(steps, failures, "sync", _sync)
+                # `pipeline.sync` RETURNS its failures rather than raising — that is what
+                # per-source isolation means — so `_run_step` only ever saw the ok branch and
+                # a night where every feed died still read `✅ sync`. Set it from the run's own
+                # verdict (#178). Raising instead would double-count into `failures`.
+                if sync_failures:
+                    steps[-1]["status"] = "fail"
 
                 try:
                     sources.extend(_report_sources(conn, sync_cutoff))

@@ -231,6 +231,78 @@ def test_report_sources_excludes_linking_passes_and_validator(conn):
     assert "title_cleanup" not in names          # linking pass, not a fetch
 
 
+# --- #178: the sync step's headline must describe the run, not a static list ------------
+
+def _record(conn, source, status="ok"):
+    from toronto_bids.store import db as _db
+    rid = _db.start_sync_run(conn, source)
+    _db.finish_sync_run(conn, rid, status=status, error=None if status == "ok" else "boom")
+
+
+def test_sync_detail_counts_every_unit_the_run_recorded(conn):
+    """The old detail was `len(default_sources())` — a static 9 against the 14 rows a real
+    run writes, undercounting by exactly the five post-source passes (#178)."""
+    from toronto_bids import cli, pipeline
+    _record(conn, "schema_check")
+    for s in pipeline.default_sources():
+        if s.name != "schema_check":
+            _record(conn, s.name)
+    for name, _fn in pipeline.linking_passes():
+        _record(conn, name)
+
+    detail = cli._sync_detail(conn, 0)
+    assert detail == "schema check · 8 sources · 5 passes"
+    # The categories account for every row, which is the property that actually broke.
+    assert 1 + 8 + 5 == len(cli.db.sync_runs_since(conn, 0)) == 14
+
+
+def test_sync_detail_names_a_failure_wherever_it_happened(conn):
+    """A linking pass is isolated and recorded exactly like a source, so a pass failure is a
+    real sync failure — the thing the old count could not have accounted for."""
+    from toronto_bids import cli
+    _record(conn, "schema_check")
+    _record(conn, "odata_solicitations")
+    _record(conn, "supplier_dimension", status="failed")
+    assert cli._sync_detail(conn, 0) == "schema check · 1 source · 1 pass · 1 FAILED"
+
+
+def test_sync_detail_says_so_when_the_run_recorded_nothing(conn):
+    """`0 sources · 0 passes` reads like a healthy empty run; it is a broken one."""
+    from toronto_bids import cli
+    assert cli._sync_detail(conn, 0) == "nothing recorded"
+
+
+def test_linking_passes_is_the_list_sync_actually_runs(conn):
+    """The count is only honest while the report's idea of the passes and the pipeline's are
+    the same object. Run sync with no sources and read back what it recorded."""
+    from toronto_bids import pipeline
+    from toronto_bids.store import db as _db
+    assert pipeline.sync(conn, http=None, sources=[]) == []
+    recorded = [r["source"] for r in _db.sync_runs_since(conn, 0)]
+    assert recorded == [name for name, _fn in pipeline.linking_passes()]
+
+
+def test_a_failed_source_marks_the_sync_step_failed(nightly, monkeypatch):
+    """pipeline.sync RETURNS failures rather than raising — per-source isolation — so
+    _run_step only ever saw the ok branch and a night where every feed died still read
+    `✅ sync` (#178)."""
+    posted = {}
+    from toronto_bids import notify
+    monkeypatch.setattr(notify, "post", lambda text, **k: posted.setdefault("text", text))
+    monkeypatch.setattr(cli.pipeline, "sync", lambda *a, **k: [("ariba_discovery", "boom")])
+    assert nightly() == 1
+    assert "❌ sync" in posted["text"]
+    assert "✅ sync" not in posted["text"]
+
+
+def test_a_clean_sync_step_still_reads_ok(nightly, monkeypatch):
+    posted = {}
+    from toronto_bids import notify
+    monkeypatch.setattr(notify, "post", lambda text, **k: posted.setdefault("text", text))
+    nightly()
+    assert "✅ sync" in posted["text"]
+
+
 def test_report_has_a_steps_section_naming_each_step(nightly, monkeypatch):
     posted = {}
     from toronto_bids import notify

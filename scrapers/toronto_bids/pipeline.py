@@ -33,6 +33,23 @@ def default_sources():
     ]
 
 
+def linking_passes():
+    """The post-source passes, in run order. Named here rather than inline in `sync` so the
+    nightly report can count what a run actually consists of without restating the list (#178).
+
+    title_cleanup leads: it clears placeholder titles COALESCE would otherwise preserve
+    forever (#70), and the passes behind it read titles.
+    amount_backfill before amount_labels: the label pass and its review queue both read
+    `*_numeric IS NULL` as "not machine-parseable", which is only true once rows written
+    before amount.py existed have caught up (#74).
+    """
+    return (("title_cleanup", clear_placeholder_titles),
+            ("ariba_bridge", bridge_postings_to_spine),
+            ("amount_backfill", backfill_numeric_amounts),
+            ("amount_labels", apply_amount_labels),
+            ("supplier_dimension", build_supplier_dimension))
+
+
 def run_source(conn, http, source):
     """Run one source; record a sync_run. Never raises — returns (fetched, upserted, error).
 
@@ -70,17 +87,9 @@ def sync(conn, http, sources=None, only=None) -> list[tuple[str, str]]:
         if error:
             failures.append((source.name, error))
     # Post-source passes run after every source, and regardless of --only: they read whatever
-    # is in the store, so a partial sync still leaves it internally consistent.
-    # title_cleanup leads: it clears placeholder titles COALESCE would otherwise preserve
-    # forever (#70), and the passes behind it read titles.
-    # amount_backfill before amount_labels: the label pass and its review queue both read
-    # `*_numeric IS NULL` as "not machine-parseable", which is only true once rows written
-    # before amount.py existed have caught up (#74).
-    for name, link in (("title_cleanup", clear_placeholder_titles),
-                       ("ariba_bridge", bridge_postings_to_spine),
-                       ("amount_backfill", backfill_numeric_amounts),
-                       ("amount_labels", apply_amount_labels),
-                       ("supplier_dimension", build_supplier_dimension)):
+    # is in the store, so a partial sync still leaves it internally consistent. Order and
+    # rationale live in linking_passes().
+    for name, link in linking_passes():
         error = _run_linking_pass(conn, name, link)
         if error:
             failures.append((name, error))
