@@ -13,11 +13,18 @@ So this captures files one at a time and builds the canonical zip ourselves. Bec
 it, its layout is our choice, which is why naming matters here and never did before.
 
 This module is PURE -- no Playwright import. The adapter lives in ariba_attachments.py, above
-a 3-method FileSource protocol:
+a 2-method FileSource protocol:
 
     list_files()          -> [{key, name, row, ordinal}]  traversal, References expanded
     download(file, dest)  -> Path                 TRUNCATES and saves to EXACTLY dest, or raises
-    expected_count()      -> int | None           the picker's authoritative Total Number
+
+A third method, `expected_count()`, used to sit here -- the picker's `Total Number`, read as an
+independent ground truth and compared against the traversal's own count. Removed (#185): the
+first live comparison found the picker reporting 54 against a traversal of 39 and a true leaf
+count of 178 after nested expansion. Three quantities, no derivable relationship between any
+two of them, so every capture of that event recorded a `SHORT by 15` gap that did not exist --
+in an archive whose value rests on honest gap records, a permanent false one is worse than no
+check. See CLAUDE.md's Ariba attachments section for the measurement.
 
 **Every PURE decision in that traversal lives here, not in the adapter** -- `is_document_name`
 (which labels name a document), `anchor_key` (what a listed file IS), `listing_from_anchors`
@@ -382,7 +389,7 @@ def partial_dir(dest_dir, document_number: str) -> Path:
     return Path(dest_dir) / PARTIAL_DIRNAME / f"Doc{document_number}"
 
 
-def make_fingerprint(files, expected_count) -> dict:
+def make_fingerprint(files) -> dict:
     """Identity of the event as we traversed it: the ORDERED (key, name) pairs it listed.
 
     Order is load-bearing, and a sorted name multiset was silently wrong. `capture_files`
@@ -396,11 +403,12 @@ def make_fingerprint(files, expected_count) -> dict:
 
     So the pairs are compared in order and any reorder or identity substitution invalidates the
     partials, which costs a re-download and nothing else. Lists (not tuples) because this is
-    compared against a manifest read back from JSON. The expected count rides along for the same
-    reason it always did: an addendum landing between runs is a different version of the
-    solicitation, and mixing two versions into one bundle would be worse than re-fetching.
+    compared against a manifest read back from JSON. No longer carries an `expected_count` (#185)
+    -- the picker's count it used to ride along with was proven incommensurable with this list's
+    own length, so it protected nothing an addendum-mid-capture wasn't already caught by: a
+    changed `files` list already invalidates the fingerprint on its own.
     """
-    return {"files": [[f["key"], f["name"]] for f in files], "expected_count": expected_count}
+    return {"files": [[f["key"], f["name"]] for f in files]}
 
 
 def read_manifest(pdir):
@@ -421,7 +429,7 @@ def write_manifest(pdir, fingerprint: dict) -> Path:
     return path
 
 
-def write_omitted(bundle_path, omitted, expected_files, actual_files, collided: int = 0):
+def write_omitted(bundle_path, omitted, collided: int = 0):
     """Durable record of what a bundle does NOT contain, beside the bundle itself.
 
     Written only when something is actually missing, so its ABSENCE is meaningful evidence that
@@ -429,23 +437,26 @@ def write_omitted(bundle_path, omitted, expected_files, actual_files, collided: 
     later without reading logs. Atomic (tmp + os.replace), the same way the ephemeral
     `write_manifest` is -- this is the durable artifact and deserves at least as much care.
 
-    `collided` is the count of links the traversal found INDISTINGUISHABLE from one another
-    and collapsed (`listing_from_anchors`'s `collided`, #174 Low) -- a gap that never shows up
-    as a shortfall against `expected_files`, since the collapsed entry still counts once. It
-    used to reach only the log, on the PROVISIONAL count-mismatch line; folding it in here
-    makes it greppable on its own terms rather than inferred from a log a human has to have
-    been watching.
+    `collided` is the count of links the traversal found INDISTINGUISHABLE from one another and
+    collapsed (`listing_from_anchors`'s `collided`, #174 Low) -- a gap that never shows up in
+    `omitted`, since the collapsed entry still counts once.
+
+    No longer takes an `expected_files`/`actual_files` comparison against the picker (#185): the
+    picker's `Total Number` was proven incommensurable with the traversal's own count (54 vs. 39
+    vs. 178 true leaves on the one validated event), so every successful capture of that event
+    wrote a phantom gap here -- `omitted: []` beside `expected_files: 54, actual_files: 37` --
+    describing a shortfall that did not exist. The only things that can now make this write
+    anything are real: a file that failed to download, or a link the traversal collapsed.
 
     A no-op (returns None, touches nothing on disk) when there is nothing to record. Clearing a
     STALE record from an EARLIER run is a different decision with a different timing requirement
     -- see `clear_omitted_when_complete`, which must run only after the bundle itself exists.
     """
-    if not omitted and not collided and expected_files == actual_files:
+    if not omitted and not collided:
         return None
     path = Path(bundle_path).with_suffix(".omitted.json")
     tmp = path.with_suffix(path.suffix + ".tmp")
-    body = {"omitted": list(omitted), "expected_files": expected_files,
-            "actual_files": actual_files}
+    body = {"omitted": list(omitted)}
     if collided:
         body["collided"] = collided
     tmp.write_text(json.dumps(body, indent=2))
@@ -453,8 +464,7 @@ def write_omitted(bundle_path, omitted, expected_files, actual_files, collided: 
     return path
 
 
-def clear_omitted_when_complete(bundle_path, omitted, expected_files, actual_files,
-                                collided: int = 0):
+def clear_omitted_when_complete(bundle_path, omitted, collided: int = 0):
     """Unlink a stale gap record left by an EARLIER run, now that this run is complete.
 
     Call this only AFTER `build_bundle` has returned successfully. A capture that once omitted
@@ -466,9 +476,10 @@ def clear_omitted_when_complete(bundle_path, omitted, expected_files, actual_fil
     erased -- exactly the state this whole mechanism exists to prevent.
 
     `collided` gates this the same way `omitted` does: counts matching is not evidence nothing
-    is wrong when a collision was silently collapsed this run too.
+    is wrong when a collision was silently collapsed this run too. No longer compares against
+    the picker's count (#185) -- see `write_omitted`.
     """
-    if omitted or collided or expected_files != actual_files:
+    if omitted or collided:
         return
     Path(bundle_path).with_suffix(".omitted.json").unlink(missing_ok=True)
 
@@ -487,28 +498,17 @@ def capture_files(source, document_number: str, dest_dir, log=lambda _m: None):
             f"Doc{document_number}: the content tree listed no files — refusing to write an "
             f"empty bundle, which would mark this event archived permanently")
 
-    expected = source.expected_count()
-    # The picker's `Total Number` counts ATTACHMENTS; `files` counts what the tree traversal
-    # found. It is NOT yet established live that these count the same thing -- a nested archive
-    # could render as one tree file but several picker attachments, which would make either
-    # direction of mismatch a permanent phantom. So a shortfall is LOGGED loudly here and folded
-    # into the durable `.omitted.json` below (via expected/actual), never refused: Respond dies
-    # the instant a posting closes, so bytes beat strictness, and an unverified check must not be
-    # able to block the only path that gets them. Do NOT tighten this into a raise without first
-    # confirming live that the two counts are commensurable -- that is a distinct condition from
-    # the zero-files case above, which stays fatal because it means the event withheld its
-    # content outright, not that two counters merely disagree.
-    if expected is not None and len(files) < expected:
-        log(f"  Doc{document_number}: the traversal found {len(files)} file(s) against the "
-            f"picker's {expected} — SHORT by {expected - len(files)}; recording the gap in "
-            f"Doc{document_number}.omitted.json rather than refusing the capture")
-    # Optional: a source may report how many links it found INDISTINGUISHABLE from one
-    # another and collapsed (#174 Low). That gap never shows up as a shortfall against
-    # `expected` -- the collapsed entry still counts once -- so it is read here, defensively
-    # (the FileSource protocol's other three methods stay a hard requirement; this one is not),
-    # and folded into the durable record below rather than living only in the traversal's log.
+    # The picker's `Total Number` comparison that used to run here was removed (#185): the
+    # first live comparison found the picker reporting 54 against a traversal of 39 and a true
+    # leaf count of 178, three quantities with no derivable relationship, so every successful
+    # capture of that event recorded a phantom `SHORT by 15` gap. See CLAUDE.md.
+    #
+    # Optional: a source may report how many links it found INDISTINGUISHABLE from one another
+    # and collapsed (#174 Low) -- read here, defensively (the FileSource protocol's other method,
+    # `download`, stays a hard requirement; this one is not), and folded into the durable record
+    # below rather than living only in the traversal's log.
     collided_count = getattr(source, "collided_count", lambda: 0)() or 0
-    fingerprint = make_fingerprint(files, expected)
+    fingerprint = make_fingerprint(files)
     pdir = partial_dir(dest_dir, document_number)
     manifest = read_manifest(pdir)
     if manifest is None:
@@ -611,10 +611,9 @@ def capture_files(source, document_number: str, dest_dir, log=lambda _m: None):
     # an incomplete or absent `Doc<n>.zip` standing beside a just-erased gap record would make
     # "absence means nothing is missing" false.
     target = dest_dir / f"Doc{document_number}.zip"
-    write_omitted(target, omitted, expected, len(captured), collided=collided_count)
+    write_omitted(target, omitted, collided=collided_count)
     build_bundle(captured, target)
-    clear_omitted_when_complete(target, omitted, expected, len(captured),
-                                collided=collided_count)
+    clear_omitted_when_complete(target, omitted, collided=collided_count)
     shutil.rmtree(pdir, ignore_errors=True)
     log(f"  Doc{document_number}: captured {len(captured)} file(s) -> {target.name}")
     return target
@@ -635,7 +634,8 @@ def finalise_partial(document_number: str, dest_dir, *, posting_open: bool,
     omitted by NAME (the same way capture_files names them), and write the gap record before the
     bundle. The manifest's fingerprint supplies the names and the disk layout, so a lost or
     corrupt manifest costs the naming, never the bytes: anything sitting in `files/` is bundled
-    under its own disk name regardless, with the shortfall left to the expected/actual counts.
+    under its own disk name regardless, with no way to name what else was owed (there is no
+    picker comparison to fall back on either, per #185 — it was never a reliable signal here).
 
     A leftover `.part` is a truncated transfer -- never a bundle member, and never deleted
     either, since those bytes can no longer be re-fetched. Its file is recorded missing and the
@@ -684,9 +684,9 @@ def finalise_partial(document_number: str, dest_dir, *, posting_open: bool,
     target = dest_dir / f"Doc{document_number}.zip"
     # Gap record first, and the stale-clear only after `build_bundle` succeeds -- for the same
     # reasons capture_files does both: see the comments there.
-    write_omitted(target, omitted, fingerprint.get("expected_count"), len(captured))
+    write_omitted(target, omitted)
     build_bundle(captured, target)
-    clear_omitted_when_complete(target, omitted, fingerprint.get("expected_count"), len(captured))
+    clear_omitted_when_complete(target, omitted)
     if leftover:
         log(f"  Doc{document_number}: {len(leftover)} interrupted transfer(s) kept in {pdir} — "
             f"bytes that can never be re-fetched are not deleted")
