@@ -21,8 +21,9 @@ download hard-stops above 500 MB as a single zip (>100 MB only warns), and one r
 picker row is atomic at 787.71 MB — a single selectable unit that no amount of splitting the
 SELECTION could ever get under the ceiling. The content tree exposes the same documents
 individually, each capped around 88.7 MB, so per-file capture has no ceiling to special-case at
-all. (The batched-bundle path that preceded this, `ariba_batch.py`, stays on disk — tested,
-unused — pending a separate retirement; `capture_event` no longer calls it.)
+all. (The batched-bundle path that preceded this, `ariba_batch.py`, was retired in #186 once
+per-file capture had archived a real event end to end and its inherited lessons were confirmed
+to live independently in `ariba_files.py`.)
 
 Two halves, split the way the rest of the package splits fetch from normalize:
 
@@ -353,11 +354,11 @@ def capture_event(page, event: dict, dest_dir, log=lambda _m: None) -> Path | No
         # for the confirmation wait; and where partials do exist, require the disabled state to
         # hold across several reads before canonicalising anything.
         #
-        # ariba_files.partial_dir/finalise_partial, NOT ariba_batch's -- per-file capture keeps
-        # its working directory under a different namespace (ariba_files.PARTIAL_DIRNAME) so the
-        # two mechanisms cannot collide, and salvaging from the wrong one finds nothing on disk
-        # here, logs "skipped", and abandons bytes that can never be re-fetched once Respond is
-        # gone. See ariba_files.partial_dir's docstring.
+        # ariba_files.partial_dir/finalise_partial, NOT ariba_batch.py's (retired #186) -- per-
+        # file capture kept its working directory under a different namespace
+        # (ariba_files.PARTIAL_DIRNAME) so the two mechanisms could never collide, and salvaging
+        # from the wrong one found nothing on disk, logged "skipped", and abandoned bytes that
+        # can never be re-fetched once Respond is gone. See ariba_files.partial_dir's docstring.
         pdir = ariba_files.partial_dir(dest_dir, document_number)
         if not pdir.exists():
             log(f"  Doc{document_number}: Respond disabled (closed) — skipped")
@@ -1022,18 +1023,19 @@ class _ListScroller:
 
 
 class AribaPicker:
-    """Playwright adapter satisfying ariba_batch's Picker protocol (#174).
+    """Playwright adapter that satisfied `ariba_batch.py`'s Picker protocol (#174) before that
+    module was retired (#186).
 
     **Currently unused by the live capture path (#185).** Its last caller was
     `AribaFileSource._read_expected_count`, removed when the picker-count comparison it fed was
     proven to compare incommensurable quantities (54 picker vs. 39 traversal vs. 178 true leaves
-    on the one validated event). Kept on disk rather than deleted, the same way `ariba_batch.py`
-    was after its own retirement: it is tested, its scroll/selection logic solves real,
-    hard-won hazards (below) that a future picker-driven feature would otherwise re-learn from
-    scratch, and deleting working code as a side effect of an unrelated fix is not this issue's
-    call to make. A docstring or two below still describes call sites that no longer exist
-    (`capture_event`, `.omitted.json`'s `expected_files`) — left as-is as history of what this
-    class was built for, not a claim about current behaviour.
+    on the one validated event). Kept on disk rather than deleted: it is tested, its
+    scroll/selection logic solves real, hard-won hazards (below) that a future picker-driven
+    feature would otherwise re-learn from scratch, and deleting working code as a side effect of
+    an unrelated fix was not #185's call to make. Its own retirement is tracked separately (#195).
+    A docstring or two below still describes call sites that no longer exist (`capture_event`,
+    `.omitted.json`'s `expected_files`) — left as-is as history of what this class was built for,
+    not a claim about current behaviour.
 
     Three hazards this class exists to contain, all measured live:
 
@@ -1157,10 +1159,10 @@ class AribaPicker:
         pass, and keep what that finds: reaching the top becomes an observation, and the result
         no longer depends on focus or on where the list happened to be.
 
-        **This runs exactly once per capture.** Its result is the fingerprint's row list, which
-        `ariba_batch.accumulate_batches` is then HANDED -- it does not re-enumerate. A second
-        sweep could only diverge from the list everything downstream is checked against, and
-        live it did: 84 rows here, 50 on the re-read (#174).
+        **This runs exactly once per capture.** Its result was the fingerprint's row list, which
+        `ariba_batch.py`'s `accumulate_batches` (retired #186) was then HANDED -- it did not
+        re-enumerate. A second sweep could only diverge from the list everything downstream is
+        checked against, and live it did: 84 rows here, 50 on the re-read (#174).
         """
         MAX_PASSES = 45
         STALL_LIMIT = 3           # consecutive dead (non-edge, non-moving) wheels before raising

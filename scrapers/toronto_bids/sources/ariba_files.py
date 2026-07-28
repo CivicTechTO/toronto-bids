@@ -51,9 +51,12 @@ into a corrupt file that then becomes canonical.
 `key` is a file's IDENTITY in the listing and `name` is only its label: two different documents
 routinely share a name, so the fingerprint below keys on the ORDERED (key, name) pairs.
 
-The small path/manifest helpers below are deliberately NOT imported from ariba_batch. They are
-a few lines each, and depending on a module slated for deletion would invert the retirement
-order (see the spec's "out of scope").
+The small path/manifest helpers below were deliberately NOT imported from ariba_batch.py while
+it still existed. They were a few lines each, and depending on a module slated for deletion
+would have inverted the retirement order (see the spec's "out of scope"). ariba_batch.py was
+removed in #186 once per-file capture had archived a real event end to end and its three
+inherited lessons (atomic bundle write, corrupt-manifest discard, gap-record-before-bundle)
+were confirmed to live independently here.
 
 Design: docs/superpowers/specs/2026-07-27-ariba-per-file-capture-design.md
 """
@@ -379,12 +382,14 @@ def partial_dir(dest_dir, document_number: str) -> Path:
     Outside the canonical `Doc<n>.zip` namespace on purpose: capture_attachments decides what
     is already archived by testing for that file, so a partial capture must be invisible to it.
 
-    And deliberately NOT `.partial/`, which the batched capture (ariba_batch) uses: the two held
-    the same path, with the same `manifest.json` name and incompatible schemas, so whichever
-    module looked first self-healed by discarding the other's work -- and the closed-posting
-    branch in capture_event ran the BATCH salvage over a per-file directory, found no
-    `batch-*.zip`, logged "skipped", and abandoned downloaded files that can never be re-fetched.
-    Separate namespaces remove the whole class rather than arbitrating it.
+    And deliberately NOT `.partial/`, which the batched capture (`ariba_batch.py`, retired in
+    #186) used: the two held the same path, with the same `manifest.json` name and incompatible
+    schemas, so whichever module looked first self-healed by discarding the other's work -- and
+    the closed-posting branch in capture_event ran the BATCH salvage over a per-file directory,
+    found no `batch-*.zip`, logged "skipped", and abandoned downloaded files that can never be
+    re-fetched. Separate namespaces removed the whole class rather than arbitrating it -- kept
+    even after ariba_batch.py's removal, since a stray `.partial/` from an old checkout must
+    still never collide with this one.
     """
     return Path(dest_dir) / PARTIAL_DIRNAME / f"Doc{document_number}"
 
@@ -514,9 +519,10 @@ def capture_files(source, document_number: str, dest_dir, log=lambda _m: None):
     if manifest is None:
         # Missing OR corrupt: `read_manifest` cannot tell "no partials yet" from "a manifest we
         # cannot trust", so both must discard rather than fall through and adopt whatever is
-        # already in `files/` POSITIONALLY -- the sibling batched capture (ariba_batch.py's
-        # `capture_in_batches`) makes the identical call for the identical reason. Discarding an
-        # empty or nonexistent directory costs nothing.
+        # already in `files/` POSITIONALLY -- `ariba_batch.py`'s retired `capture_in_batches`
+        # made the identical call for the identical reason (#186 confirmed this lesson lives
+        # here independently before that module was removed). Discarding an empty or
+        # nonexistent directory costs nothing.
         if pdir.exists():
             log(f"  Doc{document_number}: missing/unreadable manifest — discarding partials "
                 f"and restarting")
@@ -598,13 +604,13 @@ def capture_files(source, document_number: str, dest_dir, log=lambda _m: None):
             f"permanently); keeping the partials and leaving the event pending")
         return None
 
-    # The gap record goes down BEFORE the bundle, the same way ariba_batch writes a batch's
-    # sidecar before its zip. Once Doc<n>.zip exists, capture_attachments treats the event as
-    # archived forever -- so a record that failed to write after it (ENOSPC is not hypothetical
-    # when the next call writes 787 MB) would leave the gap undescribed permanently, and the
-    # record whose ABSENCE means "nothing is missing" would be the thing that went missing. A
-    # record with no bundle beside it is the harmless direction: nothing reads it, and the next
-    # run rewrites it.
+    # The gap record goes down BEFORE the bundle, the same way ariba_batch.py (retired #186)
+    # wrote a batch's sidecar before its zip. Once Doc<n>.zip exists, capture_attachments
+    # treats the event as archived forever -- so a record that failed to write after it (ENOSPC
+    # is not hypothetical when the next call writes 787 MB) would leave the gap undescribed
+    # permanently, and the record whose ABSENCE means "nothing is missing" would be the thing
+    # that went missing. A record with no bundle beside it is the harmless direction: nothing
+    # reads it, and the next run rewrites it.
     #
     # Clearing a STALE record from an earlier run runs in the OPPOSITE order: only after
     # `build_bundle` has actually landed the new bundle, never before it or around a failure --
