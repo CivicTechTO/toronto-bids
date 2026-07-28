@@ -222,6 +222,56 @@ def test_when_every_file_fails_nothing_is_archived_and_the_partials_are_kept(tmp
     assert (ariba_files.partial_dir(tmp_path, "5713434353") / "files").is_dir()
 
 
+def test_a_run_that_captured_almost_nothing_stays_pending_instead_of_archiving(tmp_path):
+    """A wholesale download failure must not mint a bundle, because a bundle is permanent.
+
+    Measured, not hypothetical: two live #174 runs downloaded 1 of 39 listed documents (the
+    content tree stopped resolving mid-run) and both wrote `Doc<n>.zip` holding that one file.
+    `Doc<n>.zip` existing is what `capture_attachments` reads as "archived" -- so on an
+    unattended nightly the event is closed out at 2% forever, its 38 lost documents described
+    only in a gap record nothing acts on, and Respond dies with the posting so no later run can
+    ever fix it. Both were caught by hand; nothing in the code would have caught either.
+
+    This is deliberately NOT the `expected` (picker) comparison beside it, which stays a
+    record-never-refuse: that count is provisional and may not even be commensurable, so it
+    must not gate a capture. This one measures the run against the traversal's OWN listing --
+    ground truth this module produced -- where a near-total shortfall means the run broke, not
+    that the event is short. Broken runs are worth retrying; short events are not.
+    """
+    source = FakeFileSource(["a.pdf", "b.pdf", "c.pdf", "d.pdf", "e.pdf"],
+                            fail_on=["b.pdf", "c.pdf", "d.pdf", "e.pdf"])
+    messages = []
+
+    assert ariba_files.capture_files(source, "5713434353", tmp_path,
+                                     log=messages.append) is None
+
+    assert not (tmp_path / "Doc5713434353.zip").exists()
+    # No gap record either: it is the bundle's companion, and one standing alone would claim a
+    # capture happened here.
+    assert not (tmp_path / "Doc5713434353.omitted.json").exists()
+    # The one file that DID arrive is kept, so the retry resumes rather than refetching it.
+    assert (ariba_files.partial_dir(tmp_path, "5713434353") / "files" / "a.pdf").is_file()
+    assert any("1 of 5" in m for m in messages), messages
+
+
+def test_a_mostly_successful_capture_is_still_archived_with_its_gap_recorded(tmp_path):
+    """The floor above catches a broken RUN, so it must not catch an ordinary bad file.
+
+    Losing some documents is the expected steady state here -- Ariba 500s, a file goes missing
+    -- and the design's answer is to bundle what arrived and record the rest. If the floor
+    swallowed that case it would convert every routine omission into an event that never
+    archives at all, which is the opposite failure.
+    """
+    source = FakeFileSource(["a.pdf", "b.pdf", "c.pdf", "d.pdf"], fail_on=["d.pdf"])
+
+    bundle = ariba_files.capture_files(source, "5713434353", tmp_path)
+
+    with zipfile.ZipFile(bundle) as zf:
+        assert sorted(zf.namelist()) == ["a.pdf", "b.pdf", "c.pdf"]
+    assert json.loads((tmp_path / "Doc5713434353.omitted.json").read_text())["omitted"] == [
+        "d.pdf"]
+
+
 def test_resume_skips_files_already_complete_on_disk(tmp_path):
     source = FakeFileSource(["a.pdf", "b.pdf"])
     pdir = ariba_files.partial_dir(tmp_path, "5713434353")

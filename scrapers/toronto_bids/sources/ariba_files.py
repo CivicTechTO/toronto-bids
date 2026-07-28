@@ -76,6 +76,11 @@ _DOCUMENT_EXTENSION = re.compile(
 # `References` toggle carry none, which is exactly the case the adapter's old key got wrong.
 _OUTLINE = re.compile(r"^(\d+(?:\.\d+)*)(?:\s|$)")
 
+# The smallest share of its OWN listing a capture may deliver and still be archived. Below this
+# the run broke rather than the event being short, so `capture_files` keeps its partials and
+# leaves the event pending instead of writing a permanent bundle. See the long note at its use.
+_MIN_CAPTURE_RATIO = 0.5
+
 
 def is_document_name(name) -> bool:
     """Whether an anchor's label names a downloadable document. PURE.
@@ -470,6 +475,33 @@ def capture_files(source, document_number: str, dest_dir, log=lambda _m: None):
 
     if not captured:
         log(f"  Doc{document_number}: no file downloaded — leaving the event pending")
+        return None
+
+    # A near-total download failure is a BROKEN RUN, not a short event, and must not archive.
+    #
+    # `Doc<n>.zip` existing is the whole of what `capture_attachments` reads as "this event is
+    # done" -- there is no other flag -- so a bundle holding 1 of 39 documents closes the event
+    # out at 2% permanently, and Respond dies with the posting, so no later run can reopen it.
+    # Two live #174 runs did exactly that (the content tree stopped resolving mid-run); both
+    # wrote the bundle, both were caught by hand, and on the unattended nightly neither would
+    # have been. The gap record was perfect each time and changed nothing, because nothing acts
+    # on it.
+    #
+    # This is a DIFFERENT check from the `expected` comparison above, which deliberately records
+    # rather than refuses. That one compares against the picker -- provisional, possibly not even
+    # counting the same things -- so it must never gate a capture. This one compares the run
+    # against the traversal's own listing, ground truth this module produced moments earlier, so
+    # a near-total shortfall can only mean the acquisition broke. Returning None keeps the
+    # partials, so the retry resumes from whatever did arrive rather than refetching it.
+    #
+    # The floor is deliberately LOW. Routine omissions (an Ariba 500, one dead file) are the
+    # expected steady state and must still archive with their gap recorded; only a wholesale
+    # failure is caught. Half is a round number comfortably below any plausible partial capture
+    # and far above the 2% the live runs produced.
+    if len(captured) < _MIN_CAPTURE_RATIO * len(files):
+        log(f"  Doc{document_number}: only {len(captured)} of {len(files)} listed document(s) "
+            f"downloaded — too few to archive (a bundle would mark this event captured "
+            f"permanently); keeping the partials and leaving the event pending")
         return None
 
     # The gap record goes down BEFORE the bundle, the same way ariba_batch writes a batch's
