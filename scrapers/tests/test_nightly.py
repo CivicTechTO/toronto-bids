@@ -303,6 +303,99 @@ def test_a_clean_sync_step_still_reads_ok(nightly, monkeypatch):
     assert "✅ sync" in posted["text"]
 
 
+# --- #176: every nightly step writes a sync_run row, not just the 14 sync sources ---------
+
+def _sync_run_sources(conn):
+    from toronto_bids.store import db as _db
+    return {r["source"]: r["status"] for r in _db.last_runs(conn)}
+
+
+class _KeepOpen:
+    """`nightly()` closes the connection it's given, same as a real process would on exit.
+    sqlite3.Connection is a C type and can't be monkeypatched directly (#176's own tests need
+    the SAME pattern `test_a_failure_closing_the_database_does_not_swallow_the_summary` above
+    already established) — this proxy forwards everything except `close`, so the test can
+    still query `sync_run` afterward."""
+    def __init__(self, conn):
+        self._conn = conn
+
+    def close(self):
+        pass
+
+    def __getattr__(self, name):
+        return getattr(self._conn, name)
+
+
+def test_nightly_records_a_sync_run_row_for_every_step_but_sync(nightly, monkeypatch, conn):
+    """Before this, everything past the 14 `tb sync` sources — award summaries, portal, Ariba
+    attachments, agencies, export, supplier rebuild — wrote nothing durable, so a step failing
+    every night was invisible to `tb status` (#176). "sync" itself is deliberately excluded —
+    it already writes 14 rows of its own via pipeline.sync."""
+    monkeypatch.setattr(cli, "_open_db", lambda: _KeepOpen(conn))
+    nightly()
+    sources = _sync_run_sources(conn)
+    for step in ("award summaries", "portal", "ariba attachments", "agencies",
+                "supplier rebuild", "export"):
+        assert sources.get(step) == "ok", sources
+    assert "sync" not in sources
+
+
+def test_council_is_recorded_only_when_it_actually_runs(nightly, monkeypatch, conn):
+    """The 1st-of-the-month gate short-circuits before `_run_step` — a skip must not fabricate
+    a sync_run row (there is nothing to report a status for)."""
+    monkeypatch.setattr(cli, "_open_db", lambda: _KeepOpen(conn))
+    nightly()
+    assert "council" not in _sync_run_sources(conn)
+
+
+def test_a_swallowed_agencies_failure_marks_the_step_and_the_sync_run_row_failed(
+        nightly, monkeypatch, conn):
+    """`_capture_agency_bodies` records a per-body failure into the shared `failures` list
+    rather than raising (per-body isolation) — so `_agencies()` itself never raises, and
+    `_run_step` alone would read this as ✅ agencies, exactly the #178 pattern one level up.
+    The sync_run row must be corrected too, not just the Steps entry — that row is the whole
+    point of #176."""
+    monkeypatch.setattr(cli, "_open_db", lambda: _KeepOpen(conn))
+    monkeypatch.setattr(cli, "_capture_agency_bodies",
+                        lambda *a, **k: [("trca", "eSCRIBE unreachable")])
+    posted = {}
+    monkeypatch.setattr(notify, "post", lambda text, **k: posted.setdefault("text", text))
+    assert nightly() == 1
+    assert "❌ agencies" in posted["text"]
+    row = conn.execute(
+        "SELECT status, error FROM sync_run WHERE source='agencies'").fetchone()
+    assert row["status"] == "failed"
+    assert "eSCRIBE unreachable" in row["error"]
+
+
+def test_a_swallowed_portal_failure_marks_the_step_and_the_sync_run_row_failed(
+        nightly, monkeypatch, conn):
+    monkeypatch.setattr(cli, "_open_db", lambda: _KeepOpen(conn))
+    from toronto_bids.sources import bids_tenders
+    monkeypatch.setattr(bids_tenders, "run_portal_capture",
+                        lambda *a, **k: {"trca": "FAILED: 403 Forbidden"})
+    posted = {}
+    monkeypatch.setattr(notify, "post", lambda text, **k: posted.setdefault("text", text))
+    assert nightly() == 1
+    assert "❌ portal" in posted["text"]
+    row = conn.execute(
+        "SELECT status, error FROM sync_run WHERE source='portal'").fetchone()
+    assert row["status"] == "failed"
+    assert "403 Forbidden" in row["error"]
+
+
+def test_a_step_that_raises_is_recorded_failed_in_sync_run_too(nightly, monkeypatch, conn):
+    monkeypatch.setattr(cli, "_open_db", lambda: _KeepOpen(conn))
+    from toronto_bids.sources import ariba_attachments
+    monkeypatch.setattr(ariba_attachments, "capture_attachments",
+                        lambda *a, **k: (_ for _ in ()).throw(RuntimeError("browser died")))
+    assert nightly() == 1
+    row = conn.execute(
+        "SELECT status, error FROM sync_run WHERE source='ariba attachments'").fetchone()
+    assert row["status"] == "failed"
+    assert row["error"] == "browser died"
+
+
 def test_report_has_a_steps_section_naming_each_step(nightly, monkeypatch):
     posted = {}
     from toronto_bids import notify
@@ -346,5 +439,14 @@ def test_council_runs_only_on_the_first_of_the_month(nightly, monkeypatch):
     nightly()
     assert calls == []            # not the 1st -> council skipped
     monkeypatch.setattr(cli, "_is_first_of_month", lambda: True)
+    # `nightly()` closes the connection it was given, same as a real process would on exit —
+    # the fixture's `_open_db` always returns the SAME connection object, so a second call in
+    # the same test needs a fresh one (#176 gave `_run_step` its first genuinely unmocked SQL
+    # write in this path, which is what turned "closed but never actually touched" into a
+    # real `ProgrammingError` here).
+    from toronto_bids.store import db as _db
+    fresh = _db.connect(":memory:")
+    _db.init_db(fresh)
+    monkeypatch.setattr(cli, "_open_db", lambda: fresh)
     nightly()
     assert calls == [1]           # the 1st -> council runs
