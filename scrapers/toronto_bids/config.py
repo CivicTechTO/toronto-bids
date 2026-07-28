@@ -83,8 +83,24 @@ ARIBA_ATTACHMENTS_DIR = DATA_DIR / "ariba" / "attachments"
 # (the repo is public — credentials never go in it). Respond is authorized by PMMD (#117), but
 # a bid is never submitted.
 ARIBA_LOGIN_URL = "https://service.ariba.com/Supplier.aw/109590048/aw?awh=r&awssk=login"
-ARIBA_USERNAME = os.environ.get("ARIBA_USERNAME")
-ARIBA_PASSWORD = os.environ.get("ARIBA_PASSWORD")
+# scrapers/.env ships in git with placeholder values (so the repo can stay public) — on a
+# machine with no OTHER .env, load_dotenv() above sets these placeholders into the real
+# environment, and they read back as non-empty strings. `capture_attachments`'s own "creds
+# unset" guard checks truthiness, which a placeholder satisfies, so it never fired: login()
+# proceeded and died 30s later inside Playwright with no hint why the fill failed (#184). A
+# placeholder reads as unset here instead — the one place both `capture_attachments` and any
+# future caller check.
+_ARIBA_PLACEHOLDER = {"ARIBA_USERNAME": "your-ariba-supplier-username",
+                      "ARIBA_PASSWORD": "your-ariba-supplier-password"}
+
+
+def _real_env(name: str) -> str | None:
+    value = os.environ.get(name)
+    return None if value == _ARIBA_PLACEHOLDER.get(name) else value
+
+
+ARIBA_USERNAME = _real_env("ARIBA_USERNAME")
+ARIBA_PASSWORD = _real_env("ARIBA_PASSWORD")
 
 # TRCA meeting records (#135): current record on eSCRIBE, back-catalogue agenda packages
 # on TRCA's Laserfiche. Both are TRCA's own hosting (open-data licence) — NOT the

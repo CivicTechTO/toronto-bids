@@ -183,6 +183,39 @@ def test_cli_reindex_rebuilds_from_the_store(tmp_path, monkeypatch, capsys):
     assert "Doc1234567891.zip" in out
 
 
+def test_capture_attachments_fails_fast_with_no_credentials(conn, monkeypatch):
+    """The guard fires BEFORE Playwright ever touches a browser — a genuinely unset credential
+    must not cost a 30s login timeout to discover (#184)."""
+    from toronto_bids import config
+    monkeypatch.setattr(config, "ARIBA_USERNAME", None)
+    monkeypatch.setattr(config, "ARIBA_PASSWORD", None)
+    try:
+        aa.capture_attachments(conn)
+        assert False, "expected a RuntimeError"
+    except RuntimeError as exc:
+        assert "unset" in str(exc)
+        assert "scrapers/.env" in str(exc)
+
+
+def test_capture_attachments_fails_fast_on_a_placeholder_credential(conn, monkeypatch):
+    """The exact #184 scenario end to end: scrapers/.env still holds the committed example's
+    placeholder values, so os.environ reads them back as non-empty strings. Runs the real
+    `config._real_env` over that placeholder (proving it resolves to None, not just asserting
+    it) and feeds the result to capture_attachments — the guard must react exactly as it does
+    to a truly-missing credential, with no Playwright import required to see it."""
+    from toronto_bids import config
+    monkeypatch.setenv("ARIBA_USERNAME", "your-ariba-supplier-username")
+    placeholder_resolved = config._real_env("ARIBA_USERNAME")
+    assert placeholder_resolved is None
+    monkeypatch.setattr(config, "ARIBA_USERNAME", placeholder_resolved)
+    monkeypatch.setattr(config, "ARIBA_PASSWORD", None)
+    try:
+        aa.capture_attachments(conn)
+        assert False, "expected a RuntimeError"
+    except RuntimeError as exc:
+        assert "unset" in str(exc)
+
+
 def test_cli_capture_threads_virtual_display(tmp_path, monkeypatch):
     # --virtual-display must reach capture_attachments (the flag a headless server needs).
     from toronto_bids import config, cli
