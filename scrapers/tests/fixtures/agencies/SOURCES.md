@@ -51,6 +51,21 @@ it POSTs GetCalendarMeetings, above.) `escribe_document_urls` still runs on the 
 *detail* pages, which ARE server-rendered with `FileStream.ashx` anchors; this
 hand-written fixture exercises that extractor on the anchor shapes it must find.
 
+## trca_escribe_meeting_assets.html — REAL, TRIMMED (#175)
+
+Verbatim fragments of a real meeting detail page,
+`Meeting.aspx?Id=61119747-5c38-4080-a3f8-0d45952a03b7&Agenda=Agenda&lang=English`
+(Board of Directors), fetched 2026-07-28; the live page is 131,700 bytes and only the
+surrounding markup was cut away. This is the fixture the synthetic
+`trca_escribe_2023.html` above could not be: it carries the two shapes that broke the
+extractor, exactly as eSCRIBE emits them —
+`<link rel='stylesheet' type='text/css' href='/FileStream.ashx?DocumentId=3253'>` and
+`<DIV class='AgendaHeaderLogo' ><img  src='filestream.ashx?DocumentId=3251' ...>`. Both
+were fetched live the same day: 3253 returns `text/css`, 3251 returns `image/jpeg` (the
+TRCA logo, the same 22,692 bytes on all 230 meeting pages). It also carries a document
+anchor whose `href` is NOT the first attribute (`<a class='Link' tabindex='15' href=...>`),
+which is the ordinary shape on these pages.
+
 ## bids_tenders_record_sample.json — SYNTHETIC (#135)
 
 Hand-built, NOT a real capture. As of 2026-07-18 both permitted bids&tenders portals (TRCA,
