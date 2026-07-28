@@ -165,17 +165,9 @@ _WS = re.compile(r"\s+")
 
 def form_rows(path) -> list[list[str]]:
     """Every non-empty row of every ruled table in the form, as stripped cells. Does I/O."""
-    import pdfplumber
+    from toronto_bids.sources.pdf_tables import all_tables
 
-    rows = []
-    with pdfplumber.open(path) as pdf:
-        for page in pdf.pages:
-            for table in page.extract_tables() or []:
-                for row in table:
-                    cells = [(c or "").strip() for c in row]
-                    if any(cells):
-                        rows.append([c for c in cells if c])
-    return rows
+    return all_tables(path)
 
 
 def parse_award_summary(rows) -> dict | None:

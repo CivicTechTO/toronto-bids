@@ -99,3 +99,41 @@ def zip_columns(name_cell, price_cell):
     if len(names) != len(prices):
         return []
     return list(zip(names, prices))
+
+
+def all_tables(path):
+    """Every non-empty row of every table in the PDF, as stripped cells with empties DROPPED.
+
+    Column position is not preserved — this is for forms read as (label, value) pairs, where a
+    blank trailing cell is noise. Use `caption_tables` when column INDEX matters. Does I/O.
+    """
+    import pdfplumber
+
+    rows = []
+    with pdfplumber.open(path) as pdf:
+        for page in pdf.pages:
+            for table in page.extract_tables() or []:
+                for row in table:
+                    cells = [(c or "").strip() for c in row]
+                    if any(cells):
+                        rows.append([c for c in cells if c])
+    return rows
+
+
+def caption_tables(path, caption_re):
+    """The table under each `caption_re` match, as RAW cells — empties KEPT.
+
+    Column index is load-bearing here (column 1 is the price column whether or not column 2 is
+    blank), so unlike `all_tables` this must not compact a row. Does I/O; every structural
+    decision belongs to `choose_tables`, which is pure.
+    """
+    import pdfplumber
+
+    pages = []
+    with pdfplumber.open(path) as pdf:
+        for page in pdf.pages:
+            captions = [m["top"] for m in
+                        page.search(caption_re.pattern, regex=True, case=False)]
+            tables = [(t.bbox[1], t.extract()) for t in page.find_tables()]
+            pages.append((captions, tables))
+    return choose_tables(pages)

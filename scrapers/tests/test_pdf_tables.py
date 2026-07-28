@@ -1,5 +1,12 @@
+import pathlib
+import re
+
+import pytest
+
 from toronto_bids.sources.pdf_tables import (choose_tables, is_continuation, is_price,
                                              zip_columns)
+
+FIXTURES = pathlib.Path(__file__).parent / "fixtures"
 
 HDR = ["Bidder", "Bid Price Received", "Recommended\nContract Price"]
 R1 = ["Powell Fence Limited", "$1,484,065.00", "$1,484,065.00"]
@@ -91,3 +98,9 @@ def test_a_proponent_with_no_price_at_all_is_still_a_bid():
 
 def test_an_empty_name_yields_nothing():
     assert zip_columns("", "$1.00") == []
+
+
+def test_caption_tables_on_a_pdf_with_no_tables_returns_nothing():
+    pytest.importorskip("pdfplumber")
+    from toronto_bids.sources.pdf_tables import caption_tables
+    assert caption_tables(FIXTURES / "tiny.pdf", re.compile(r"Table\s+1", re.I)) == []
