@@ -126,6 +126,40 @@ systemctl --user list-timers tb-nightly.timer
 
 Updating is deliberately manual.
 
+## Schedule: Tuesday through Saturday, not daily (#180)
+
+The City does not transact on weekends, and a 05:30 run reports on the **previous** day — so
+Saturday's run (covering Friday, a full business day) is worth keeping, but Sunday's (covering
+Saturday) and Monday's (covering Sunday) are not. Measured over an 11-day window: zero new rows
+in any table on either day, and the City's own Ariba `close_date` values never land on a
+weekend at all (n=48 dated postings). `deploy/tb-nightly.timer` reflects this:
+`OnCalendar=Tue..Sat *-*-* 05:30:00 America/Toronto`.
+
+**Accepted tradeoff:** a solicitation whose window opens only over the weekend and closes Monday
+at noon gets its last capture chance at Saturday's run — about 2.5 days out, versus same-day
+Monday under the old daily schedule. The Ariba capture step is idempotent and resumable (a
+bundle already on disk is never refetched), so this only affects what a single run might miss
+entirely, not anything already captured on an earlier day.
+
+**A side effect worth knowing about:** skipping two nights means the published artifacts'
+`generated_at` can be up to 3 days old over a weekend (Saturday's run through Tuesday's). That is
+accurate rather than stale data going unnoticed — nothing changed at the source — but if the
+frontend ever surfaces a bare "last updated" timestamp, it is worth a line explaining the
+weekday cadence rather than reading as an outage.
+
+**If you find a `tb-ariba-attachments.timer`/`.service` under `~/.config/systemd/user/` on a
+live box, it should not be there.** Ariba attachment capture was unified into `tb nightly`'s
+in-line steps on 2026-07-19 (#135/#146) and the standalone timer was removed from git the same
+day — but on at least one deployment the installed unit files were never actually disabled, so
+Ariba capture ran twice a day (05:30 inline, plus the orphaned noon timer) for over a week before
+#180 found it via `systemctl --user list-timers`. Finish the retirement:
+
+```shell
+systemctl --user disable --now tb-ariba-attachments.timer
+rm ~/.config/systemd/user/tb-ariba-attachments.{timer,service}
+systemctl --user daemon-reload
+```
+
 ## Publishing the export — #146
 
 Design: [`docs/superpowers/specs/2026-07-19-publish-data-design.md`](../docs/superpowers/specs/2026-07-19-publish-data-design.md)
