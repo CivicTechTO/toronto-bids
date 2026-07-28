@@ -858,13 +858,23 @@ def _cmd_enrich_agencies(args) -> int:
         if args.portal:
             try:
                 from toronto_bids.sources.bids_tenders import run_portal_capture
-                only = None if not args.only else {"trca": "trca", "zoo": "toronto-zoo"}[args.only]
-                res = run_portal_capture(conn, record=args.record,
-                                         only={only} if only else None, log=out)
-                print(f"  portal listings      : {res}")
-                for slug, v in res.items():
-                    if isinstance(v, str) and v.startswith("FAILED"):
-                        failures.append((f"portal:{slug}", v))
+                # `args.only` names a BODY ("trca"/"zoo"/"ep"), but the portal is keyed by its
+                # own SLUG ("toronto-zoo" for the zoo) — and EP has no bids&tenders portal at
+                # all (#134, Bonfire instead). `--only ep --portal` is a reachable combination
+                # (--only accepts any body), so indexing this map raised an uncaught KeyError
+                # that the surrounding try/except then reported as a portal FAILURE for a body
+                # that was never supposed to have one (#152). `.get` + a clean skip instead.
+                portal_slug = {"trca": "trca", "zoo": "toronto-zoo"}.get(args.only)
+                if args.only and portal_slug is None:
+                    print(f"  portal listings      : {args.only} has no bids&tenders portal "
+                          f"— skipping")
+                else:
+                    res = run_portal_capture(conn, record=args.record,
+                                             only={portal_slug} if portal_slug else None, log=out)
+                    print(f"  portal listings      : {res}")
+                    for slug, v in res.items():
+                        if isinstance(v, str) and v.startswith("FAILED"):
+                            failures.append((f"portal:{slug}", v))
             except Exception as exc:
                 failures.append(("portal", str(exc)))
 
