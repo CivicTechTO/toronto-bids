@@ -1591,6 +1591,12 @@ _ANCHORS_JS = """
             // The anchor's own DOM id -- the LIVE half of the identity split (ariba_files
             // `document_key`). Measured unique across every document anchor on this event.
             id: e.id || '',
+            // What KIND of document control this is, read from what the DOM publishes rather
+            // than inferred (ariba_files `anchor_kind`). PMI items download on a direct click;
+            // PML links open a menu first. Treating all of them as PML failed all 36 PMIs.
+            role: e.getAttribute('role') || '',
+            bh: e.getAttribute('bh') || '',
+            cls: (e.className || '').toString(),
             name: ((e.innerText || e.textContent) || '').replace(/\\s+/g, ' ').trim(),
             row: ((row ? (row.innerText || row.textContent) : '') || '')
                     .replace(/\\s+/g, ' ').trim().slice(0, 120),
@@ -2383,7 +2389,17 @@ class AribaFileSource:
         # hazard this closes.
         self._await_menu_clear(file)
         link = self._resolve_anchor(file)
-        link.scroll_into_view_if_needed(timeout=10000)
+        self._ensure_clickable(file, link)
+
+        # A popup-menu ITEM is already inside its menu: clicking it downloads outright, and
+        # there is no `Download this attachment` to wait for (`ariba_files.anchor_kind`).
+        # Sending it down the PML path is what failed all 36 of them in run 5.
+        if file.get("kind") == ariba_files.MENU_ITEM:
+            with self.page.expect_download(timeout=300000) as dl:
+                link.click(timeout=15000)
+            dl.value.save_as(str(dest))
+            return dest
+
         link.click(timeout=15000)
         try:
             item = self._await_menu_item(file)
@@ -2393,6 +2409,47 @@ class AribaFileSource:
         finally:
             self._dismiss_menu()
         return dest
+
+    def _ensure_clickable(self, file: dict, link) -> None:
+        """Make the document's control visible, or raise saying so.
+
+        **The menu guard hides the documents it is protecting (#174).** Measured: right after
+        the traversal expands them, all 36 reference attachments in one container are visible;
+        a single Escape -- exactly what `_await_menu_clear`/`_dismiss_menu` press between
+        downloads to close a stale menu -- drops that to 0 visible, with all 36 still in the
+        DOM. That is the whole cause of run 5's 36 `scroll_into_view` timeouts. The guard is
+        right to exist (it closes a real wrong-bytes hazard); it simply also shuts the menus the
+        menu-item documents live in, so they have to be re-opened before each one.
+
+        **Restoration is attempted, then VERIFIED, because the mechanism is not understood.**
+        Re-running the traversal's expansion restores visibility (0 -> 36 measured) while
+        reporting that it opened ZERO sections -- so the toggles still read as expanded and
+        something about the pass re-shows the popup as a side effect. A fix resting on an
+        unexplained side effect is how this issue produced five live runs, so nothing here
+        trusts it: the post-condition is checked directly and a still-hidden control raises
+        rather than proceeding into a `scroll_into_view` timeout that says nothing about why.
+        """
+        try:
+            if link.is_visible():
+                link.scroll_into_view_if_needed(timeout=10000)
+                return
+        except Exception:                             # noqa: BLE001 — treat as "not visible yet"
+            pass
+        # `_expand_references` skips any section it has already opened, so the record of having
+        # opened them has to go before it will act at all -- the same reset `_restore_event_view`
+        # performs for the same reason.
+        self._toggled.clear()
+        self._expand_references()
+        try:
+            if link.is_visible():
+                link.scroll_into_view_if_needed(timeout=10000)
+                return
+        except Exception:                             # noqa: BLE001 — falls through to the raise
+            pass
+        raise RuntimeError(
+            f"{file['name']}: its control is in the DOM but not visible, and re-opening the "
+            f"References sections did not reveal it — refusing to click something that is not "
+            f"on screen (#174)")
 
     # --- the picker's count, and nothing else --------------------------------------------
     def expected_count(self) -> int | None:

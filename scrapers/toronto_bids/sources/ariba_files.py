@@ -169,6 +169,39 @@ def anchor_key(anchor) -> str:
     return f"{row_identity(anchor.get('row'))}#{ordinal}#{name}"
 
 
+MENU_ITEM = "menu-item"
+TREE_LINK = "tree-link"
+
+
+def anchor_kind(anchor) -> str:
+    """Which of the two document shapes this anchor is, and therefore how it downloads. PURE.
+
+    Measured on the live event (#174): its 39 documents are not one kind of thing.
+
+        36  role=menuitem  bh=PMI  class=w-pmi-item    35 of them in ONE container
+         3  (plain link)   bh=PML  class=leg-p-r-9     Part 1, Part 2, Part 3
+
+    AribaWeb's own vocabulary names them: PML is a popup-menu LINK (a trigger that opens a menu
+    holding `Download this attachment`), PMI is a popup-menu ITEM (already inside such a menu,
+    and clicking it downloads DIRECTLY -- measured: one click on `Attachment 1 Field Services
+    Manual Appendix E.zip` yielded 246,873 bytes with no intermediate menu at all).
+
+    The capture treated all 39 as PML, so it opened a menu that does not exist for the 36 and
+    waited for a `Download this attachment` that never appears. Every one of them failed.
+
+    Read from the role/bh/class the DOM publishes rather than inferred from position, so a
+    document that moves in the tree does not change kind. Anything unrecognised is a TREE_LINK:
+    that path opens a menu and checks what it got, so a misclassification there fails loudly,
+    whereas guessing MENU_ITEM would click an arbitrary link and take whatever came back.
+    """
+    role = (anchor.get("role") or "").strip().lower()
+    bh = (anchor.get("bh") or "").strip().upper()
+    cls = (anchor.get("cls") or "").strip().lower()
+    if role == "menuitem" or bh == "PMI" or "w-pmi-item" in cls:
+        return MENU_ITEM
+    return TREE_LINK
+
+
 def pick_unclaimed(anchors, name, claimed):
     """The anchor to click for `name`, ignoring ones already used this run. PURE.
 
@@ -250,7 +283,8 @@ def listing_from_anchors(anchors) -> dict:
         # one would differ on every run and discard the partials every time.
         files.append({"key": key, "name": name, "row": anchor.get("row") or "",
                       "ordinal": anchor.get("ordinal") or 0,
-                      "handle": anchor.get("id") or ""})
+                      "handle": anchor.get("id") or "",
+                      "kind": anchor_kind(anchor)})
     return {"files": files, "rejected": rejected, "collided": collided}
 
 

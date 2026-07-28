@@ -872,6 +872,30 @@ class TestHandleAndUnclaimed:
         anchors = [{"name": "Attachment\xa01  Report.zip", "id": "_1"}]
         assert ariba_files.pick_unclaimed(anchors, "Attachment 1 Report.zip", set())["id"] == "_1"
 
+    def test_a_popup_menu_item_is_recognised_by_any_of_the_three_markers(self):
+        """Measured live: 36 of this event's 39 documents are PMI menu items and only 3 are PML
+        tree links. Clicking a PMI downloads directly; the code opened a menu that does not
+        exist for them and waited for a control that never appears, failing all 36."""
+        for anchor in ({"role": "menuitem"}, {"bh": "PMI"}, {"cls": "w-pmi-item rr"}):
+            assert ariba_files.anchor_kind(anchor) == ariba_files.MENU_ITEM, anchor
+
+    def test_a_tree_link_is_not_mistaken_for_a_menu_item(self):
+        assert ariba_files.anchor_kind(
+            {"bh": "PML", "cls": "leg-p-r-9"}) == ariba_files.TREE_LINK
+
+    def test_an_unrecognised_anchor_defaults_to_the_self_checking_path(self):
+        """TREE_LINK opens a menu and checks what it got, so a misclassification there fails
+        loudly. Defaulting to MENU_ITEM would click an arbitrary link and keep whatever came
+        back, which in an archive nobody can re-fetch is the worse direction."""
+        assert ariba_files.anchor_kind({}) == ariba_files.TREE_LINK
+
+    def test_the_listing_carries_the_kind(self):
+        files = ariba_files.listing_from_anchors([
+            {"name": "a.pdf", "row": "1.1 x", "ordinal": 0, "id": "_1", "bh": "PML"},
+            {"name": "b.zip", "row": "3.1 y", "ordinal": 0, "id": "_2", "role": "menuitem"},
+        ])["files"]
+        assert [f["kind"] for f in files] == [ariba_files.TREE_LINK, ariba_files.MENU_ITEM]
+
     def test_an_id_less_anchor_is_matchable_but_never_counts_as_claimed(self):
         """`claimed` holds ids; an anchor with no id cannot be excluded by one, and must not be
         excluded by the empty string either or every id-less document would be unreachable."""
