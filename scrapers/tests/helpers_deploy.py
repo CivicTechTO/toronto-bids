@@ -11,6 +11,8 @@ import subprocess
 
 DEPLOY = pathlib.Path(__file__).resolve().parents[2] / "deploy"
 RESOLVE_NODE = DEPLOY / "resolve-node.sh"
+PUBLISH_LIB = DEPLOY / "publish-lib.sh"
+SCRAPERS_DIR = pathlib.Path(__file__).resolve().parents[1]
 
 # The tests hand bash a PATH containing ONLY stub dirs, so nothing may be looked up on it —
 # not bash, not the stubs' interpreter. Absolute paths throughout; `#!/bin/sh` rather than
@@ -41,6 +43,24 @@ def run_resolver(tmp_path, path_dirs, home, env=None) -> subprocess.CompletedPro
         "PATH": os.pathsep.join(str(p) for p in path_dirs),
         "HOME": str(home),
     }
+    full_env.update(env or {})
+    return subprocess.run(
+        [BASH, "-c", script],
+        capture_output=True, text=True, env=full_env, cwd=tmp_path,
+    )
+
+
+def run_publish_lib(tmp_path, script_body: str, env=None) -> subprocess.CompletedProcess:
+    """Source publish-lib.sh and run `script_body` after it (#176).
+
+    Unlike `run_resolver`, this inherits the real PATH: `record_step` shells out to the real
+    `tb` CLI via `uv`, and `verify_artifact_size` shells out to real `curl` — these are the
+    exact functions publish-data.sh calls in production, just without the whole publish flow
+    (a real GitHub release, wrangler, Slack) around them. `env` sets/overrides DRY_RUN, UV,
+    SCRAPERS, TB_DATA_DIR — the variables publish-lib.sh's functions read as globals.
+    """
+    script = f'. "{PUBLISH_LIB}"\n{script_body}\n'
+    full_env = dict(os.environ)
     full_env.update(env or {})
     return subprocess.run(
         [BASH, "-c", script],

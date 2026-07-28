@@ -18,7 +18,8 @@
 #
 # Self-test: TB_PUBLISH_DRY_RUN=1 prints every `gh` command instead of running it, after the real
 # artifact/JSON checks and gzip. TB_PUBLISH_DAY / TB_PUBLISH_DATE force the snapshot path on any
-# day; TB_DATA_REPO / TB_FRONTEND_REPO override the targets for a fork.
+# day; TB_DATA_REPO / TB_FRONTEND_REPO override the targets for a fork. TB_R2_PUBLIC_URL
+# overrides the R2 bucket's public dev URL used by the post-publish freshness check (#176).
 #
 # Deliberately NOT `set -e`: every fallible step is guarded with `|| fail`, so publish runs to a
 # definite success/failure rather than dying mid-way and leaving a half-updated release.
@@ -59,24 +60,9 @@ slack_notify() {
     "$TB_SLACK_WEBHOOK" || echo "publish-data: WARNING — slack post failed" >&2
 }
 
-# Write one sync_run row via `tb record-step` (#176). publish-data.sh is bash, downstream of
-# `tb nightly` in its own systemd unit, so it can't call `_run_step` directly — before this it
-# reported its own outcome only to the journal and Slack, and `tb status` read 14/14 ok while
-# this very script's R2 mirror had been dead for 8 nights (#173). Best-effort and silent on its
-# own failure: a monitoring convenience call must never be why the actual publish looks broken.
-# Skipped in dry-run — nothing real happened, so nothing real should be recorded.
-record_step() {
-  local name="$1" status="$2" err="${3:-}"
-  if [ "$DRY_RUN" = 1 ]; then
-    echo "DRY-RUN record-step $name $status${err:+ ($err)}"
-    return 0
-  fi
-  if [ -n "$err" ]; then
-    "$UV" run --project "$SCRAPERS" tb record-step "$name" "$status" --error "$err" >/dev/null 2>&1
-  else
-    "$UV" run --project "$SCRAPERS" tb record-step "$name" "$status" >/dev/null 2>&1
-  fi || echo "publish-data: WARNING — could not record step '$name' to sync_run" >&2
-}
+# record_step/verify_artifact_size live in publish-lib.sh, sourced so pytest can drive them
+# directly (#176) — the same split resolve-node.sh got in #173, for the same reason.
+. "$HERE/publish-lib.sh"
 
 fail() {
   record_step publish failed "$*"
@@ -200,6 +186,28 @@ else
     echo "publish-data: WARNING — R2 upload of bids.sqlite failed (release is published)" >&2
     printf 'publish-data: wrangler said: %s\n' "$_r2_err" >&2
     record_step r2_mirror failed "$_r2_err"
+  fi
+fi
+
+# 5d. Verify what's actually LIVE right now, independent of which branch fired above (#176,
+#     deferred from the comment on #173). `r2_mirror`/the GH upload step record whether
+#     TONIGHT's write command reported success; this instead re-reads the public URL, so it
+#     also catches a stale object left behind by a run whose upload branch claimed success on a
+#     short write, or by a code path this fix doesn't yet know about. Read-only, best-effort,
+#     never blocks or retries the publish that already happened. `github_release_freshness`
+#     runs whenever gh is authenticated (required earlier in this script, so always outside
+#     DRY_RUN); `r2_freshness` only when R2 is configured for this deployment at all — same
+#     "not configured = no row" rule as the mirror itself, since a dev/CI box with no bucket
+#     has nothing to be stale.
+if [ "$DRY_RUN" = 1 ]; then
+  echo "DRY-RUN skip artifact freshness verification"
+else
+  verify_artifact_size github_release_freshness \
+    "https://github.com/${DATA_REPO}/releases/download/latest/bids.sqlite" "$SQLITE"
+  if [ -n "${CLOUDFLARE_API_TOKEN:-}" ]; then
+    verify_artifact_size r2_freshness \
+      "${TB_R2_PUBLIC_URL:-https://pub-99a890c186c743c19ef7bcd00024dca8.r2.dev}/bids.sqlite" \
+      "$SQLITE"
   fi
 fi
 
