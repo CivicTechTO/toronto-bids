@@ -22,6 +22,7 @@ TMMIS is Akamai-gated: plain HTTP gets 403 (verified), as does anything without 
 browser. So fetching needs the headed Chromium behind the `council` extra, exactly as
 sources/council.py already does. Parsing is pure and testable against saved HTML.
 """
+import json
 import pathlib
 import re
 import shutil
@@ -187,7 +188,8 @@ def agenda_date(html: str) -> str | None:
 
 
 def discover_meetings(fetch, log=lambda _m: None, max_per_term=260, stop_after_misses=4,
-                      *, term_starts):
+                      *, term_starts, closed_terms: dict | None = None,
+                      on_term_closed=lambda key, last_n: None):
     """Walk each term's meetings, returning {reference: html} for every agenda that exists.
 
     References cannot be derived from the City's published schedule: it lists dates but omits
@@ -204,12 +206,32 @@ def discover_meetings(fetch, log=lambda _m: None, max_per_term=260, stop_after_m
     Award Panel is abolished, so no in-repo default remains. Other TMMIS committees (e.g.
     the Zoo Board's ZB series, #135) reuse this prober by passing their own list — same
     probe-and-confirm design, different (series, start_year, term, first_n) tuples.
+
+    Every term but the LAST in `term_starts` is, by construction, a closed council term: it is
+    followed by a newer one, which only happens once the term it precedes has already ended and
+    can never produce another meeting (#177). Once such a term's miss boundary is found, that
+    boundary is permanent — but nothing remembered it, so every run re-walked into the same
+    dead miss range on live network probes, forever, for a term that provably cannot change. Two
+    hooks, not a hardcoded rule: `closed_terms` (`{f"{series}{term}": last_real_n}`) lets a
+    closed term skip straight to its known end instead of probing past it, and
+    `on_term_closed(key, last_n)` fires the first time a non-final term's boundary is confirmed,
+    so the caller can persist it. Passing neither reproduces the old always-probe behaviour
+    exactly — this is additive, not a change to what a fresh run discovers.
     """
     found = {}
-    for series, start_year, term, first_n in term_starts:
+    closed_terms = closed_terms or {}
+    last_index = len(term_starts) - 1
+    for i, (series, start_year, term, first_n) in enumerate(term_starts):
+        key = f"{series}{term}"
+        cap = first_n + max_per_term - 1
+        # The cap only ever narrows a HISTORICAL term. The last entry is the one still
+        # accepting new meetings, so it must always be probed for real — never frozen by a
+        # stale or mistaken closed_terms entry.
+        if i != last_index and key in closed_terms:
+            cap = min(cap, closed_terms[key])
         session = start_year
         misses = 0
-        for n in range(first_n, first_n + max_per_term):
+        for n in range(first_n, cap + 1):
             html = ref = None
             # The prefix only ever advances, and only at a November boundary.
             for candidate in (session, session + 1):
@@ -222,7 +244,10 @@ def discover_meetings(fetch, log=lambda _m: None, max_per_term=260, stop_after_m
                 misses += 1
                 log(f"  {series} {term}: no meeting {n} (miss {misses}/{stop_after_misses})")
                 if misses >= stop_after_misses:
-                    log(f"  {series} {term}: stopping after {n - misses} meetings")
+                    last_n = n - misses
+                    log(f"  {series} {term}: stopping after {last_n} meetings")
+                    if i != last_index and key not in closed_terms:
+                        on_term_closed(key, last_n)
                     break
                 continue
             misses = 0
@@ -293,13 +318,40 @@ def cached_agendas(agenda_dir) -> dict:
     return {p.stem: p.read_text(errors="replace") for p in sorted(root.glob("*.html"))}
 
 
+def _closed_terms_path(agenda_dir) -> pathlib.Path:
+    return pathlib.Path(agenda_dir) / ".closed_terms.json"
+
+
+def _load_closed_terms(agenda_dir) -> dict:
+    """A historical term's confirmed miss boundary, `{"EP2018-2022": 27}`-shaped (#177).
+
+    Missing or corrupt reads as empty rather than raising: this is a resumability cache, not
+    a record — losing it costs one term's worth of miss-probing on the next run, exactly the
+    pre-#177 behaviour, never a wrong discovery.
+    """
+    path = _closed_terms_path(agenda_dir)
+    if not path.exists():
+        return {}
+    try:
+        return json.loads(path.read_text())
+    except (json.JSONDecodeError, OSError):
+        return {}
+
+
 def scrape_agendas(agenda_dir, *, virtual_display: bool = False, log=lambda _m: None,
                    term_starts) -> dict:
     """Discover and cache every agenda, returning {reference: html}.
 
     Resumable and safe to re-run: an agenda already on disk is never refetched, so a second
-    run costs only the probes past the last meeting. Only misses and new meetings hit the
-    network.
+    run costs only the probes past the last meeting — but "the last meeting" is only ever
+    moving for the CURRENT term. Every earlier term_starts entry is a closed council term (a
+    newer one already follows it in the list, which only happens once the term it precedes has
+    ended), so its miss boundary is permanent. Before #177 nothing remembered that, and every
+    run re-probed every closed term's dead miss range on live network requests, forever —
+    for the EP body alone, most of a nightly nine-figure minute count. `.closed_terms.json`
+    in `agenda_dir` records each closed term's confirmed last meeting the first time
+    `discover_meetings` finds it, so later runs skip straight to it. The one term that can
+    never be cached this way is whichever is LAST in `term_starts` — see `discover_meetings`.
 
     `term_starts` is the committee's term list (e.g. `zoo_board.ZB_TERM_STARTS`); the Bid
     Award Panel is abolished, so no in-repo default remains. Forwarded to
@@ -308,6 +360,11 @@ def scrape_agendas(agenda_dir, *, virtual_display: bool = False, log=lambda _m: 
     """
     root = pathlib.Path(agenda_dir)
     root.mkdir(parents=True, exist_ok=True)
+    closed_terms = _load_closed_terms(agenda_dir)
+
+    def _persist_closed(key: str, last_n: int) -> None:
+        closed_terms[key] = last_n
+        _closed_terms_path(root).write_text(json.dumps(closed_terms))
 
     with agenda_fetcher(virtual_display=virtual_display) as fetch_live:
         def fetch(meeting: str) -> str:
@@ -321,7 +378,8 @@ def scrape_agendas(agenda_dir, *, virtual_display: bool = False, log=lambda _m: 
                 cached.write_text(match.group(1) if match else html)
             return html
 
-        return discover_meetings(fetch, log=log, term_starts=term_starts)
+        return discover_meetings(fetch, log=log, term_starts=term_starts,
+                                 closed_terms=closed_terms, on_term_closed=_persist_closed)
 
 
 def parse_agenda_pdfs(html: str, meeting: str) -> list[dict]:

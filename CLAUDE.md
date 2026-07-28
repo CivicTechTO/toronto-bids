@@ -127,6 +127,7 @@ The bidders did not stop. `tb enrich-awards --download` archives the Toronto Bid
 - **The form is a ruled table end to end, so it is read as CELLS, via pdfplumber (#116)** — `form_rows` does the I/O, `parse_award_summary(rows)` is pure over them, and the fixtures are JSON rows so the tests need neither pdfplumber nor a PDF. **`background_pdf.text` is archival here and nothing parses it**; `layout=True` is kept only because it renders a columnar form more faithfully and the bytes are already on disk under it. Measured over the 229 archived forms: **pdftotext parsed 144 and yielded 632 bids; pdfplumber parses 205 and yields 1,058.** All 229 carry ruled tables and **none are image-only** — which is exactly what separates this corpus from the staff reports #83 measured (ruled tables in only 13-20 of 229). The rule is not "pdfplumber is better", it is **"read cells where the PDF has cells"**.
 - **The count check is one-sided on purpose.** `Number of Bids Received` catches an under-parse (the agenda corpus never offered that check), but parsing *more* is kept: the count sometimes covers only the **compliant** bids while the table lists everyone (doc `5247418372` declares 2, tabulates 3, third marked `*` at $0.00). The table is the record. **Exactly 1 form is now refused** (doc `5346602194` declares 5 and tabulates 4, leaving row `5.` blank — the City's omission, not a parse failure), and the count is printed, never silent.
 - **The price cell's line count says how many bids a row holds.** A newline inside a *name* cell is otherwise ambiguous and guessing costs real bids: pdfplumber wraps a long name within its own cell, so `['2489960 Ontario Inc.\no/a Kore Infrastructure Group', '$3,198,000.00']` is **one** bidder. Reading those two lines as two names against one price made the pair unequal, which the multi-package rule then refused — silently dropping a bidder from each of 4 forms. One price, one bid. Where the price cell *does* hold several lines the row is a multi-package column and #94's rule applies verbatim: zip positionally and **refuse an unequal pair** rather than guess.
+- **`store_award_summary_bids` skips a form whose document already has `source='award_summary'` bid rows, without opening the PDF (#177).** The form on disk cannot change, so a form that already succeeded can only ever re-derive the same rows — pdfplumber's per-file table extraction over all 229 archived forms cost ~41s of pure repetition every night for +0 new bids, and the return value read as fresh growth (`1102 bids stored`) in the nightly Slack summary when it was the corpus total, not the night's delta. The one form that's REFUSED (below) has no bid rows to key the skip on, so it is retried every run unchanged — correct, since a parser fix should pick it up on the very next run rather than needing a manual reset.
 - **Four traps this parser hit, all previously documented elsewhere:** an RFP lists proponents with **no price at all** (`NOTE: Not applicable for RFP`) so the price must be optional (#84 stores these as NULL); `2489960 Ontario Inc.` is a **real firm**, so a "long digit run means a leaked price" guard eats it (#87 pins the same lesson — reading cells removes the reason that guard existed, since a name cell cannot contain a price that leaked out of the price cell); `\s` matches newlines, so `\d{1,2}[.)]\s*` walked off an empty `4.` row and captured `Page 2 of 2` as a bidder; and **the numbering is not always there** — requiring it cost 57 of 229 forms their entire bid table, so it is stripped where present and never required.
 - **Coverage is bounded and will stay bounded**: the form exists only **over $500,000** — the panel had no floor — so the bid record thins permanently for small awards. The City also says "a portion of work ... will be manual"; 223 of 244 post-cutover awards carry one (91%).
 
@@ -190,6 +191,22 @@ portal: TRCA's eSCRIBE (plain HTTP; the results TABLE is fused pdftotext and nev
 mined — bidders come from the bullet list, winners+amounts from the RECOMMENDATION
 clause) and the Zoo's ZB committee on TMMIS (same prober as BA/BD; 2025-era reports
 route values to a CONFIDENTIAL ATTACHMENT → `value_confidential=1`, not fake NULLs).
+**Every `term_starts` entry but the LAST is a closed council term, and `discover_meetings`/
+`scrape_agendas` (bid_award_panel.py) now know it (#177).** A newer entry only exists in the
+list once the term it precedes has ended and can never produce another meeting — that's true
+by construction, no wall-clock date needed. Before this, every nightly re-probed EVERY
+closed term's dead miss boundary on live network requests, forever: for Zoo (2 closed terms)
+and EP (1), that was most of a nightly's agency-capture minutes for zero possible gain.
+`.closed_terms.json` in each body's agenda dir (`{"EP2018-2022": 26}`-shaped) records a
+closed term's confirmed last meeting the first time it's found; only the LAST entry — the one
+still accepting new meetings — is ever probed live, every run, forever. **`got["awards"]`/
+`got["bids"]` from `store_*_reports` count REPORTS PROCESSED, not resulting rows** — a report
+upserts on `native_ref` with `overwrite=True`, so an amendment and its original can each
+increment the loop count while collapsing into one row (live-measured: EP processes 107
+reports into 88 actual rows). Any "what's new" reporting must diff two real
+`SELECT COUNT(*) ... WHERE source=?` queries, never `got["awards"] - before` — that arithmetic
+briefly shipped in this fix's own draft and reported a fictitious +19 before being caught
+against the real store.
 **The bids&tenders portal is fetched only under recorded permission**: `sources/bids_tenders.py`
 is a gate that raises `PermissionError` until a body's written grant lands in
 `docs/permissions/` and flips its `config.BIDS_TENDERS_PORTALS` entry (the PMMD/Ariba

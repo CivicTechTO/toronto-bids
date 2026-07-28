@@ -222,6 +222,58 @@ def test_a_priceless_rfp_bid_does_not_duplicate_on_every_run(conn, monkeypatch):
     assert conn.execute("SELECT COUNT(*) FROM bid").fetchone()[0] == first
 
 
+# --- skipping already-stored forms (#177) ------------------------------------------------
+
+def test_a_form_already_stored_is_skipped_without_opening_the_pdf(conn, monkeypatch):
+    """229 archived forms parsed via pdfplumber every night for +0 new bids cost ~41s of pure
+    repetition (#177): a form on disk cannot change, so a form that already succeeded can
+    only ever re-derive the same rows. The skip must happen BEFORE form_rows is called —
+    proven here by making a second call to form_rows raise."""
+    _seed(conn, FORM, monkeypatch)
+    assert store_award_summary_bids(conn) == 5
+
+    def boom(_p):
+        raise AssertionError("form_rows must not be called for an already-stored form")
+    monkeypatch.setattr(award_summary, "form_rows", boom)
+    assert store_award_summary_bids(conn) == 0
+    assert conn.execute("SELECT COUNT(*) FROM bid").fetchone()[0] == 5
+
+
+def test_a_new_form_is_still_stored_while_an_old_one_is_skipped(conn, monkeypatch):
+    """The skip is per-document, not global — adding a new form must not need reprocessing
+    everything that came before it."""
+    _seed(conn, FORM, monkeypatch, doc="5616191850")
+    assert store_award_summary_bids(conn) == 5
+
+    _seed(conn, RFP, monkeypatch, doc="5386487782")
+    assert store_award_summary_bids(conn) > 0
+    docs = {r[0] for r in conn.execute(
+        "SELECT DISTINCT document_number FROM bid").fetchall()}
+    assert docs == {"5616191850", "5386487782"}
+
+
+def test_a_refused_form_is_retried_every_run_not_frozen(conn, monkeypatch):
+    """A REFUSED form stores no bid rows, so it has nothing to key a skip on — it is retried
+    every run, unchanged from before #177. That is correct: a parser fix should pick it up
+    on the very next run rather than needing a manual reset."""
+    rows = [r for r in copy.deepcopy(FORM)
+            if not r[0].startswith(("2. CRCE", "3. GIO CRETE"))]
+    _seed(conn, rows, monkeypatch)
+    assert store_award_summary_bids(conn) == 0
+    called = []
+    monkeypatch.setattr(award_summary, "form_rows", lambda p: (called.append(p), rows)[1])
+    assert store_award_summary_bids(conn) == 0
+    assert called                                    # re-opened, not skipped
+
+
+def test_reports_how_many_forms_were_skipped(conn, monkeypatch):
+    _seed(conn, FORM, monkeypatch)
+    store_award_summary_bids(conn)
+    said = []
+    store_award_summary_bids(conn, log=said.append)
+    assert any("skipped: 1" in m for m in said)
+
+
 def test_an_unreadable_form_is_reported_and_skipped(conn, monkeypatch):
     """16 of the composite reports are image-only (#96) and this corpus may yet grow one. A
     form pdfplumber cannot open must not take the whole pass down with it."""

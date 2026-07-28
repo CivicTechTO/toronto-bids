@@ -265,7 +265,7 @@ def parse_award_summary(rows) -> dict | None:
 
 
 def store_award_summary_bids(conn, log=lambda _m: None) -> int:
-    """Parse every archived Award Summary Form into `bid` rows. Idempotent, offline.
+    """Parse every archived Award Summary Form not yet reflected in `bid`. Idempotent, offline.
 
     Reads the PDFs already on disk, not `background_pdf.text` — the form is a ruled table and
     its cells are the record (#116).
@@ -275,10 +275,26 @@ def store_award_summary_bids(conn, log=lambda _m: None) -> int:
     corpus never offered that check — #94 had to infer its own ceiling from declared counts
     and could only guess at what it was dropping. Here the form states the answer, so a silent
     partial parse is a choice rather than an accident.
+
+    A form whose `document_number` already carries `source='award_summary'` bid rows is
+    skipped without opening the PDF (#177): the form on disk cannot change, so a form that
+    already succeeded can only ever re-derive the same rows, and pdfplumber's per-file table
+    extraction over all 229 archived forms was costing ~41s of pure repetition every night for
+    +0 new bids. This is why the return value is now "bids stored THIS run", not the corpus
+    total — the old total read as new growth in the nightly Slack summary when it never was.
+    A form that was REFUSED (declared count mismatch) has no bid rows to key the skip on, so
+    it keeps being retried every run — exactly the old behaviour, unchanged, and correct: a
+    fixed parser should pick it up on the very next run rather than needing a manual reset.
     """
-    stored = refused = 0
+    already = {r["document_number"] for r in conn.execute(
+        "SELECT DISTINCT document_number FROM bid "
+        "WHERE source='award_summary' AND document_number IS NOT NULL")}
+    stored = refused = skipped = 0
     for row in conn.execute("SELECT document_number, local_path FROM background_pdf "
                             "WHERE kind='award_summary' AND local_path IS NOT NULL"):
+        if row["document_number"] is not None and row["document_number"] in already:
+            skipped += 1
+            continue
         try:
             # `local_path` is an ABSOLUTE path baked in at download time on whatever machine
             # fetched the form (download_pdf returns str(dest_dir / name)). This archive is
@@ -322,4 +338,6 @@ def store_award_summary_bids(conn, log=lambda _m: None) -> int:
     if refused:
         # Never silent: a refused form is a known gap, and one nobody prints reads as coverage.
         log(f"  award summary forms refused on a bid-count mismatch: {refused}")
+    if skipped:
+        log(f"  award summary forms already stored, skipped: {skipped}")
     return stored
