@@ -66,3 +66,36 @@ def choose_tables(pages):
                 j += 1
             out.append(rows)
     return out
+
+
+def zip_columns(name_cell, price_cell):
+    """Pair one row's bidder lines against its price lines.
+
+    Usually a row is one bidder. A multi-package tender instead puts a whole column in a single
+    cell, exactly as the BD agendas did (#94). Same rule, same reason: pairing is positional, so
+    one stray line misattributes every bid after it. Zip the columns and REFUSE an unequal pair
+    rather than guess. A package heading is dropped first — it ends in ':' and has no price.
+
+    **THE PRICE CELL'S LINE COUNT SAYS HOW MANY BIDS THE ROW HOLDS.** A newline inside a name
+    cell is otherwise ambiguous, and guessing costs real bids: pdfplumber wraps a long name
+    within its own cell, so
+
+        ['2489960 Ontario Inc.\\no/a Kore Infrastructure Group', '$3,198,000.00']
+
+    is ONE bidder, and reading its two lines as two names refused the pair and silently dropped
+    a bidder from each of 4 forms (#116). One price, one bid — join the name.
+    """
+    prices = [ln.strip() for ln in (price_cell or "").split("\n") if ln.strip()]
+    names = [ln.strip() for ln in (name_cell or "").split("\n") if ln.strip()]
+    names = [n for n in names if not n.endswith(":")]
+    if len(prices) <= 1:
+        name = " ".join(names)
+        if not name:
+            return []
+        # An RFP publishes its proponents with NO price at all ("NOTE: Not applicable for
+        # RFP"). #84 already stores those as bid_price NULL — requiring a price here dropped
+        # every proponent on every scored RFP.
+        return [(name, prices[0] if prices else None)]
+    if len(names) != len(prices):
+        return []
+    return list(zip(names, prices))

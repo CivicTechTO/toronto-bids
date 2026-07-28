@@ -1,4 +1,5 @@
-from toronto_bids.sources.pdf_tables import choose_tables, is_continuation, is_price
+from toronto_bids.sources.pdf_tables import (choose_tables, is_continuation, is_price,
+                                             zip_columns)
 
 HDR = ["Bidder", "Bid Price Received", "Recommended\nContract Price"]
 R1 = ["Powell Fence Limited", "$1,484,065.00", "$1,484,065.00"]
@@ -62,3 +63,31 @@ def test_is_continuation_needs_a_price_in_the_second_column():
     assert is_continuation([["Crawford Roofing Corporation", "$1,660,000.00", ""]])
     assert not is_continuation([HDR])
     assert not is_continuation([])
+
+
+def test_one_price_line_is_one_bid_even_when_the_name_wraps():
+    # #116: reading a wrapped name's two lines as two names dropped a bidder from 4 forms.
+    assert zip_columns("2489960 Ontario Inc.\no/a Kore Infrastructure Group",
+                       "$3,198,000.00") == [
+        ("2489960 Ontario Inc. o/a Kore Infrastructure Group", "$3,198,000.00")]
+
+
+def test_a_multi_package_column_zips_positionally():
+    assert zip_columns("26TW-CPI-17CWD (Package A):\nClean Water Works Inc.*\nAqua Tech Inc.",
+                       "$3,551,718.88\n$3,978,656.19") == [
+        ("Clean Water Works Inc.*", "$3,551,718.88"),
+        ("Aqua Tech Inc.", "$3,978,656.19")]
+
+
+def test_unequal_columns_are_refused_rather_than_guessed():
+    # #94: pairing is positional, so one stray line misattributes every bid after it.
+    assert zip_columns("A Ltd.\nB Ltd.\nC Ltd.", "$1.00\n$2.00") == []
+
+
+def test_a_proponent_with_no_price_at_all_is_still_a_bid():
+    # An RFP publishes proponents with "NOTE: Not applicable for RFP" (#84 stores price NULL).
+    assert zip_columns("Some Consulting Inc.", "") == [("Some Consulting Inc.", None)]
+
+
+def test_an_empty_name_yields_nothing():
+    assert zip_columns("", "$1.00") == []
