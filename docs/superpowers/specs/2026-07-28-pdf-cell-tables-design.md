@@ -20,10 +20,15 @@ tender". Two rounds of measurement inverted that premise:
 
 The third round answered the fork: **EP board reports carry ruled tables in 47/47**, the Award
 Summary Form profile (#116: 229/229 → cells) rather than the staff-report profile (#83: 13–20/229
-→ prose, regex correctly kept). Corpus-wide, the regex produces 143 rows and the first ruled
-table produces 126; the 17-row difference is exactly the contamination already identified. On the
-44 reports where the regex finds bids, its first bidder appears in the cell-derived table in
-**44/44**.
+→ prose, regex correctly kept).
+
+A fourth round, run while writing this spec, completed the rule set and measured it against the
+corpus's **own** ground truth rather than against the regex. Four rules — caption anchor,
+page-break walk, row = name + price-or-outcome, normalize — give 47/47 tables found, 0 junk
+rows, 0 duplicates, 32/35 exact agreement with declared bid counts, and **0 real bidders lost**.
+It also corrected the earlier framing: the switch is not a net removal of 17 contaminated rows
+but a removal of 19 alongside a **recovery of 14+ real bidders the regex was silently dropping**.
+Details in §2.
 
 `#203` observes that this conclusion has now been reached twice by identical methodology, and
 asks whether other regex-over-flattened-text parsers in this codebase are sitting on the same
@@ -44,8 +49,12 @@ win — as an **audit**, explicitly not a mandate to rewrite.
   candidate is decided on its own measurement.
 - **Council staff reports (`bgrd`).** #83 already measured them as prose. That is a complete
   answer for a candidate, not a gap.
-- **Capturing bid compliance markers.** Cells put `*Non-compliant` in its own column for the
-  first time, but adding a column to `AgencyBid` is out of scope here; noted as follow-up.
+- **A compliance FIELD on `AgencyBid`.** A non-compliant bidder is stored as a bid with
+  `bid_price` NULL (§2), which is #94's existing treatment; recording *why* the price is NULL
+  would need a new column and is a separate issue.
+- **Chasing edge cases.** Governed by CLAUDE.md's "Parsing discipline" section: the question is
+  whether a small stated rule set extracts a corpus cleanly, and if it cannot, the answer is to
+  stop and report — not to add rules. See §4's stop-and-ask gate.
 
 ## Governing principle
 
@@ -92,8 +101,23 @@ zip_columns(name_cell, price_cell) -> list[(name, price|None)] # PURE
   | caption `Table 2: Tender Separate Price Submission` | 386.5 |
   | its table | 411.1 |
 
-  A caption with no table below it on its page yields nothing rather than reaching onto the next
-  table — a missing table must read as absent, never as some other table's rows.
+  Within a page, a caption with no table below it yields nothing rather than reaching sideways to
+  some other table — a missing table must read as absent, never as another table's rows.
+
+  **A bid table breaks across pages in two shapes, and they are one event.** Measured on the
+  corpus:
+
+  - the caption sits at the foot of its page and the whole table is overleaf
+    (`backgroundfile-131331`: caption at y=705.8 on page 1, table at y=54.2 on page 2);
+  - the caption's table starts on its page and its remaining rows land at the top of the next
+    page as a **separate table object with no header row**
+    (`backgroundfile-244929`: 2 rows on page 1, then 7 more on page 2; `backgroundfile-167548`
+    likewise).
+
+  Both are handled by one walk: take the caption's table, then keep absorbing the next page's
+  first table for as long as that page has **no caption of its own** competing for it and its
+  first row is a **headerless continuation** (its price column already holds a price). Without
+  this, `131331` loses its only bidder and `244929` loses seven of nine.
 - **`zip_columns`** is #94's rule verbatim, for the reason #94 and #116 both give: pairing is
   positional, so one stray line misattributes every bid after it.
   - One price line → **one bid**, joining the name's wrapped lines. `#116` measured that reading
@@ -129,9 +153,25 @@ cells. A new `ep_bid_tables(path)` does the I/O via `caption_tables`.
   what makes "Table 1" identifiable without hardcoding the digit `1`. Where several captions
   match, the **first** is taken.
 - Column 0 is the bidder, column 1 the base bid price — the current "take the FIRST `$`"
-  semantics, now structural rather than positional-within-flattened-text. The header row
-  (`Bidder`, `Bid Price Received`, `Recommended\nContract Price`) is skipped by its own cells,
-  not by a denylist of header strings.
+  semantics, now structural rather than positional-within-flattened-text.
+- **The header row is rejected structurally, never by a denylist of header strings.** Column 0
+  is variously `Bidder` and `Tenderer`, and column 1 variously `Bid Price Received`,
+  `Base Bid Price\nReceived`, `Tender Price\nReceived` and `Initial Base Bid\nPrice Received`.
+  A row qualifies because its price column *holds a price*, not because its name column avoids a
+  known word.
+- **A price cell that holds an OUTCOME instead of a number is still a bid**, stored with
+  `bid_price` NULL. The City writes `*Non-compliant` / `** Non-Compliant` in the price column —
+  the same practice #94 documented on the BD agendas, where the raw string is kept and
+  `bid_price_numeric` is NULL for exactly those. This is not a new rule; it is an existing one
+  carried over. **It is worth 16 rows and it is what makes the corpus agree with its own declared
+  counts** — without it, `238906` yields 6 against a declared 8 and `285781` yields 7 against 9,
+  in both cases because the missing bidders are the non-compliant ones.
+- **Prices come with and without cents, and with markers on either side.** `$4,365,534` and
+  `$2,619,221` are real prices (`139154`, `229405` — the old regex required `\.\d{2}` and so
+  found neither, reporting those reports as bid-free). The compliance marker attaches before the
+  `$` (`*$792,900.00`) or after the amount (`$470,700.00*`); it is stripped from the stored
+  price. It is **not** captured as its own field — that would need a column on `AgencyBid` and is
+  a separate issue.
 - Wrapped names arrive whole inside one cell
   (`Enercare Home and\nCommercial Services Limited Partnership`), so the intra-cell newline is
   collapsed rather than treated as a row boundary.
@@ -148,16 +188,36 @@ cells. A new `ep_bid_tables(path)` does the I/O via `caption_tables`.
 - A PDF pdfplumber cannot read is **logged and skipped**, never silent — the award report itself
   still stores, only its bids are absent.
 
-Expected outcome, from the measurement: 143 rows → 126, the difference being 6 `Table 2`
-duplicates and ~11 prose phantoms. **Those are rows *parsed*, not rows *stored*:** `agency_bid`
-upserts on its key, so the store currently holds 115 EP rows against 143 parsed. Verification
-must compare like with like — parsed against parsed, or stored against stored — or the switch
-will read as a larger loss than it is. The 2 reports whose ruled table holds no bid-shaped rows
-(`backgroundfile-139154`, `backgroundfile-229405`) produce 0 bids under the current regex too —
-no regression.
+**Measured outcome of the completed rule set**, over all 1,200 held EP reports:
 
-Unrelated and deliberately not "fixed": `backgroundfile-254543` yields 0 bids because the City's
-own PDF carries a malformed price (`$1,479,386,.57`, stray comma before the decimal).
+| | |
+|---|---|
+| reports carrying a `Table 1` caption | 47 |
+| of those, reports where the anchor found the table | **47/47** |
+| rows extracted | **153** (regex: 143) |
+| rows failing a name sanity check | **0** |
+| duplicate rows within a report | **0** |
+| agreement with the reports' own declared bid counts | **32/35 exact** |
+| real bidders lost against the regex | **0** |
+
+The row count *rises* rather than falls, which inverts the earlier reading of this switch as
+pure removal. Both things happen at once: 13 prose phantoms and 6 `Table 2` duplicates go, and
+**14+ real bidders the regex silently dropped are recovered** — firms whose name begins with a
+digit (`1214592 Ontario Limited o/a Colonial Building Restoration`, `965046 Ontario Inc. o/a
+Quality Allied Elevator` — the #87/#116 lesson that a numeric-leading name is a real firm),
+firms whose price carries a leading marker (`*$792,900.00`, which cost `244900` its *winning*
+bidder), and prices without cents.
+
+**Those are rows *parsed*, not rows *stored*:** `agency_bid` upserts on its key, so the store
+currently holds 115 EP rows against 143 parsed. Verification must compare like with like — or
+the change will read as a loss where it is a gain.
+
+**The 3 residual count disagreements are the documents, not the parser, and no rule will be
+added for them** (the parsing discipline in CLAUDE.md: a disagreement with ground truth is often
+the document's own defect). `238908` and `244923` say outright that they tabulate only the
+compliant subset — *"four (4) submissions were received, three (3) of which were compliant"* —
+and `254543` carries a malformed price in the City's own PDF (`$1,479,386,.57`, stray comma
+before the decimal), which rule 3 refuses rather than guessing at. Each is logged, never silent.
 
 ### 3. `agency_bid` becomes derived-every-run, per source
 
@@ -195,20 +255,37 @@ trustworthy rather than suggestive:
 
 1. Ruled-table coverage on the **specific table type the parser targets** — not "any table on
    the page".
-2. Corpus-wide comparison of cell-derived rows against the current parser's output: count
-   agreements, and look hard at every disagreement to establish which side is contamination and
-   which is real loss.
-3. Validate that cells land on the **right** table (#151's 44/44 check), since a
-   first-table-with-money heuristic could in principle pick up something unrelated.
-4. Decide per-source.
+2. Find the corpus's own **ground truth** (a declared bid or item count in the report text) and
+   measure the candidate rules against *that*. The incumbent parser is not a baseline; it is the
+   thing under suspicion. EP's ground truth is "N submissions were received", present on 35 of
+   47; each corpus needs its own equivalent located before the comparison means anything.
+3. Scan the output for **junk and duplicates** — rows that are not (bidder, price) at all.
+4. Compare against the current parser only to classify *disagreements*: which side is
+   contamination, which is real loss, which is the document's own defect.
+5. Decide per-source.
 
 **The switch criterion is fixed here, in advance, so the numbers decide rather than preference:**
 
-> Switch iff (a) ruled-table coverage holds on the specific target table across the reports the
-> current parser finds rows in, (b) the right-table check reproduces the current parser's first
-> bidder with no unexplained mismatch, and (c) every disagreement resolves as
-> contamination-removed or data-added rather than real loss. Otherwise: document the corpus as
-> prose, keep the regex, and record the measurement so it is not re-litigated.
+> Switch iff (a) the target table is found on effectively every report that has one, (b) the
+> output carries no junk and no duplicates, (c) it agrees with the corpus's own declared counts
+> except where the disagreement is traceable to the document, and (d) **no real rows are lost**
+> against the incumbent. Otherwise: document the corpus as prose, keep the regex, and record the
+> measurement so it is not re-litigated.
+
+**The stop-and-ask gate (CLAUDE.md, "Parsing discipline").** This audit is explicitly *not* a
+licence to chase edge cases across three more corpora. Each candidate gets a measurement pass
+and **one** pass of rule refinement, with the **rule count** as the governing signal:
+
+- **Convergent** — each new wrinkle collapses into a rule already written, and the count holds
+  flat. That is what EP did: four rules in, four rules out, with the two page-break shapes
+  becoming one walk and the `Non-compliant` case turning out to be #94's existing rule. Proceed.
+- **Divergent** — the count climbs and each fix reveals a wrinkle elsewhere. **Stop. Do not
+  write rule five. Report back to the user**, with the measurement, and default to keeping the
+  regex.
+
+"This corpus cannot be cleanly extracted" is a complete and acceptable answer for any candidate
+— #83 reached exactly that for staff reports and it stands. A corpus abandoned on measurement is
+a success of this audit, not a failure of it.
 
 Candidates:
 
@@ -275,7 +352,7 @@ live systemd timers.
 
 | risk | mitigation |
 |---|---|
-| Caption anchoring picks the wrong table on an unmeasured report | `choose_tables` is pure and unit-tested; step 3 of the audit re-runs #151's right-table check corpus-wide after the switch, not just before |
+| Caption anchoring picks the wrong table on an unmeasured report | `choose_tables` is pure and unit-tested; the junk/duplicate scan and the declared-count check (§4 steps 2–3) are re-run corpus-wide after the switch, not just before. Already exercised: the anchor is what keeps `139154`'s unrelated page-4 cost-breakdown table (`Item`/`Amount`/`Comments`) out of the bids, which a "first table containing money" heuristic would have taken |
 | The rebuild deletes rows it cannot re-derive | Derive-first, delete-only-on-success, in one transaction, scoped to one source |
-| pdfplumber is slower than regex over cached text, and §3 re-derives every run | Real tension, resolved deliberately. #177 measured ~41s per night re-parsing 229 forms and fixed it with a "already stored, skip without opening the PDF" guard — **that guard is incompatible with the rebuild contract** and must not be copied here, since skipping is what lets stale rows persist. EP opens ~107 PDFs per run (the reports that parse as awards), which is to be timed during implementation. If the cost is material — and it is far likelier to be for TRCA's 3,411 than EP's — the answer is a cache keyed on the PDF's **`sha256` *and* a parser-version stamp** — the hash alone is not enough, since it does not change when the parser is fixed, which is exactly when re-derivation matters. Bumping the stamp invalidates the whole corpus, preserving the contract. What must *not* be copied is a skip keyed on "rows already exist", which breaks it |
+| pdfplumber is slower than regex over cached text, and §3 re-derives every run | Real tension, resolved deliberately. #177 measured ~41s per night re-parsing 229 forms and fixed it with a "already stored, skip without opening the PDF" guard — **that guard is incompatible with the rebuild contract** and must not be copied here, since skipping is what lets stale rows persist. Measured during the audit: 6.5s to open and extract all 47 caption-bearing EP reports, so the ~107 that parse as awards land around 15s per run — acceptable, and to be confirmed on the real store pass. If the cost is material — and it is far likelier to be for TRCA's 3,411 than EP's — the answer is a cache keyed on the PDF's **`sha256` *and* a parser-version stamp** — the hash alone is not enough, since it does not change when the parser is fixed, which is exactly when re-derivation matters. Bumping the stamp invalidates the whole corpus, preserving the contract. What must *not* be copied is a skip keyed on "rows already exist", which breaks it |
 | The audit finds a corpus that is *partly* ruled | The criterion admits this: a union outcome is legitimate (see TRCA), but it must be measured and stated, not assumed |
