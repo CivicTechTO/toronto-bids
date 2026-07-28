@@ -59,8 +59,9 @@ def build_parser() -> argparse.ArgumentParser:
     p_ariba.add_argument(
         "--capture", action="store_true",
         help="Drive a headed, logged-in Chromium (needs `playwright install chromium` + "
-             "scrapers/.env creds) through Respond -> Download Content -> Download Attachments "
-             "for each open solicitation")
+             "scrapers/.env creds) through Respond, then download each open solicitation's "
+             "documents individually from the event's content tree (Download Content -> "
+             "Download Attachments is only used to read the picker's file count)")
     p_ariba.add_argument(
         "--ingest", metavar="DIR",
         help="Index Doc*.zip bundles already sitting in DIR (e.g. a browser's download folder) "
