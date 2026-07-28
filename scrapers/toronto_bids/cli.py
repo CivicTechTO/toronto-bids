@@ -325,7 +325,15 @@ def _cmd_export(args) -> int:
         write_csv_zip(conn, out_path.parent / "bids-csv.zip")
         print(f"Wrote Parquet + CSV bulk exports to {out_path.parent}")
         counts = db.counts(conn)
-        print(f"Exported {counts['solicitation']} solicitations to {written}")
+        # `counts['solicitation']` is the CITY SPINE alone -- on an agency-only DB (agency
+        # enrichment has run, `tb sync` never has) it reads 0 even though the export's `buyers`
+        # section wrote real data, making a successful export look like it did nothing (#143).
+        # `buyer` is only ever non-zero once agency enrichment has seeded it, so a plain
+        # City-spine export (the overwhelming majority) is unaffected.
+        buyers = counts.get("buyer", 0)
+        detail = (f"{counts['solicitation']} solicitations + {buyers} agency buyer(s)"
+                 if buyers else f"{counts['solicitation']} solicitations")
+        print(f"Exported {detail} to {written}")
         print(f"Wrote schema dictionary to {schema_path}")
     finally:
         conn.close()
