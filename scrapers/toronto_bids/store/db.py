@@ -300,3 +300,35 @@ def sync_runs_since(conn, after_id: int) -> list[dict]:
         "FROM sync_run WHERE id > ? ORDER BY id", (after_id,))
     cols = [c[0] for c in cur.description]
     return [dict(zip(cols, row)) for row in cur.fetchall()]
+
+
+def rebuild_agency_bids(conn, source: str, rows) -> int:
+    """Replace every `agency_bid` row for one source with a freshly derived set.
+
+    `agency_bid` is DERIVED from held PDFs, so it is rebuilt from the bytes rather than
+    diff-upserted — the sanctioned exception to "rows are never deleted" that
+    `build_supplier_dimension` and `enrich-ariba-attachments --reindex` already take, and for
+    the same reason.
+
+    This is a permanent contract, not a migration. A table whose contents must be corrected once
+    by hand is a table whose derivation should simply be re-run: a migration would encode today's
+    list of known-bad rows and need a successor after the next parser fix. Rebuilding means every
+    parser fix self-heals, with no list written down anywhere.
+
+    **Derive first, delete only on success.** `rows` is already materialised by the caller, and
+    an empty set deletes NOTHING — a machine that does not hold the PDFs re-derives nothing and
+    must not thereby erase the archive. Scoped to one `source`, so rebuilding EP cannot touch
+    TRCA's or the Zoo's rows.
+    """
+    rows = list(rows)
+    if not rows:
+        return 0
+    try:
+        conn.execute("DELETE FROM agency_bid WHERE source=?", (source,))
+        for row in rows:
+            upsert_row(conn, row, overwrite=True)
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    return len(rows)

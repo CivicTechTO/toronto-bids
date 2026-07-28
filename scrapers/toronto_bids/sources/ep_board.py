@@ -6,6 +6,7 @@ the bid_award_panel prober; the EP reference format is YYYY.EP<meeting>.<item> (
 live). Most EP board reports are NOT procurement awards, so the parsers (added next) refuse
 non-awards.
 """
+import pathlib
 import re
 
 from toronto_bids import config
@@ -193,14 +194,25 @@ def parse_ep_bid_table(tables) -> list[tuple[str, str | None]]:
 
 
 
-def store_ep_reports(conn, buyer_id: int) -> dict:
+def store_ep_reports(conn, buyer_id: int, tables_for=None, log=lambda _m: None) -> dict:
     """Parse held EP reports into agency rows. One AgencySolicitation + AgencyAward per award
     report (confidential ones keep the winner, NULL amount), and one AgencyBid per Table 1 row.
-    Non-award reports are refused by parse_ep_report and contribute nothing."""
+    Non-award reports are refused by parse_ep_report and contribute nothing.
+
+    Bids are read from the PDF's own CELLS (#151), so `tables_for` is injected: it defaults to
+    `ep_bid_tables` and is overridden in tests, which must not need a 113 KB PDF on disk.
+
+    `agency_bid` for this source is REBUILT, not upserted (see db.rebuild_agency_bids): the
+    whole set is derived first and only then replaces what is stored, so a parser fix self-heals
+    and a missing corpus deletes nothing.
+    """
+    tables_for = tables_for if tables_for is not None else ep_bid_tables
     counts = {"solicitations": 0, "awards": 0, "bids": 0}
+    bids: list[AgencyBid] = []
     for row in conn.execute(
-            "SELECT reference, url, text FROM background_pdf WHERE kind='agency_board' "
-            "AND url LIKE '%/ep/%' AND text IS NOT NULL ORDER BY url").fetchall():
+            "SELECT reference, url, text, local_path FROM background_pdf "
+            "WHERE kind='agency_board' AND url LIKE '%/ep/%' AND text IS NOT NULL "
+            "ORDER BY url").fetchall():
         got = parse_ep_report(row["text"], fallback_ref=row["reference"] or row["url"],
                               report_url=row["url"])
         if got is None:
@@ -215,10 +227,23 @@ def store_ep_reports(conn, buyer_id: int) -> dict:
             award_amount=got["amount"], value_confidential=got["confidential"], award_date=None,
             report_url=got["report_url"], source="ep_board"), overwrite=True)
         counts["awards"] += 1
-        for bidder, price in parse_ep_bid_table(row["text"]):
-            db.upsert_row(conn, AgencyBid(
+        if not row["local_path"]:
+            continue
+        # `local_path` is an ABSOLUTE path baked in on whichever machine fetched the report, and
+        # this archive is designed to migrate. The file's identity is its content-addressed
+        # <sha256>.pdf name; its location is deterministic under the CURRENT data dir.
+        path = config.EP_REPORTS_DIR / pathlib.Path(row["local_path"]).name
+        try:
+            tables = tables_for(path)
+        except Exception as exc:              # noqa: BLE001 — one unreadable PDF must never
+            # abort the pass, but it must never be silent either: a skip nobody can see is a
+            # skip nobody fixes (#175).
+            log(f"    ep unreadable {row['url'].rsplit('/', 1)[-1]}: {exc}")
+            continue
+        for bidder, price in parse_ep_bid_table(tables):
+            bids.append(AgencyBid(
                 buyer_id=buyer_id, native_ref=got["native_ref"], bidder_name_raw=bidder,
-                bid_price=price, report_url=row["url"], source="ep_board"), overwrite=True)
-            counts["bids"] += 1
+                bid_price=price, report_url=row["url"], source="ep_board"))
     conn.commit()
+    counts["bids"] = db.rebuild_agency_bids(conn, "ep_board", bids)
     return counts

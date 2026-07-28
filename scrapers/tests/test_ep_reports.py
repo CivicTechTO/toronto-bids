@@ -166,16 +166,39 @@ def test_store_ep_reports_lands_award_and_bids(conn):
     from toronto_bids.buyers import seed_buyers
     from toronto_bids.sources.ep_board import store_ep_reports
     ids = seed_buyers(conn)
-    conn.execute("INSERT INTO background_pdf (url, kind, sha256, text) VALUES "
+    conn.execute("INSERT INTO background_pdf (url, kind, sha256, local_path, text) VALUES "
                  "('https://www.toronto.ca/legdocs/mmis/2023/ep/bgrd/backgroundfile-240943.pdf',"
-                 " 'agency_board', 'x', ?)", (_read("ep_award_with_table_2023.txt"),))
+                 " 'agency_board', 'x', '/nowhere/x.pdf', ?)",
+                 (_read("ep_award_with_table_2023.txt"),))
     conn.commit()
-    got = store_ep_reports(conn, ids["exhibition-place"])
+    # The bid table now comes from the PDF's cells, so the reader is injected: a real EP report
+    # is ~113 KB, too heavy to commit as a fixture, and the seam is the same fetch/normalize
+    # boundary sources/base.py draws.
+    got = store_ep_reports(conn, ids["exhibition-place"],
+                           tables_for=lambda _p: _rows("ep_bid_table_2023_three_bidders.json"))
     assert got["solicitations"] == 1 and got["awards"] == 1 and got["bids"] == 3
     aw = conn.execute("SELECT supplier_name_raw, award_amount_numeric FROM agency_award "
                       "WHERE native_ref='EP110-2023'").fetchone()
     assert aw["supplier_name_raw"] == "Powell Fence Limited"
     assert aw["award_amount_numeric"] == 1484065.00
-    bids = conn.execute("SELECT COUNT(*) FROM agency_bid WHERE bid_price_numeric IS NOT NULL "
-                        "AND native_ref='EP110-2023'").fetchone()[0]
-    assert bids == 3
+    assert conn.execute("SELECT COUNT(*) FROM agency_bid WHERE bid_price_numeric IS NOT NULL "
+                        "AND native_ref='EP110-2023'").fetchone()[0] == 3
+
+
+def test_store_ep_reports_survives_an_unreadable_pdf(conn):
+    from toronto_bids.buyers import seed_buyers
+    from toronto_bids.sources.ep_board import store_ep_reports
+    ids = seed_buyers(conn)
+    conn.execute("INSERT INTO background_pdf (url, kind, sha256, local_path, text) VALUES "
+                 "('https://www.toronto.ca/legdocs/mmis/2023/ep/bgrd/backgroundfile-240943.pdf',"
+                 " 'agency_board', 'x', '/nowhere/x.pdf', ?)",
+                 (_read("ep_award_with_table_2023.txt"),))
+    conn.commit()
+
+    def boom(_path):
+        raise OSError("no such file")
+
+    logged = []
+    got = store_ep_reports(conn, ids["exhibition-place"], tables_for=boom, log=logged.append)
+    assert got["awards"] == 1 and got["bids"] == 0     # the award still lands
+    assert any("240943" in m for m in logged)          # and the gap is never silent
