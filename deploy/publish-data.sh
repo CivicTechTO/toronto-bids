@@ -59,7 +59,31 @@ slack_notify() {
     "$TB_SLACK_WEBHOOK" || echo "publish-data: WARNING — slack post failed" >&2
 }
 
-fail() { slack_notify "❌ toronto-bids publish — $*"; echo "publish-data: $*" >&2; exit 1; }
+# Write one sync_run row via `tb record-step` (#176). publish-data.sh is bash, downstream of
+# `tb nightly` in its own systemd unit, so it can't call `_run_step` directly — before this it
+# reported its own outcome only to the journal and Slack, and `tb status` read 14/14 ok while
+# this very script's R2 mirror had been dead for 8 nights (#173). Best-effort and silent on its
+# own failure: a monitoring convenience call must never be why the actual publish looks broken.
+# Skipped in dry-run — nothing real happened, so nothing real should be recorded.
+record_step() {
+  local name="$1" status="$2" err="${3:-}"
+  if [ "$DRY_RUN" = 1 ]; then
+    echo "DRY-RUN record-step $name $status${err:+ ($err)}"
+    return 0
+  fi
+  if [ -n "$err" ]; then
+    "$UV" run --project "$SCRAPERS" tb record-step "$name" "$status" --error "$err" >/dev/null 2>&1
+  else
+    "$UV" run --project "$SCRAPERS" tb record-step "$name" "$status" >/dev/null 2>&1
+  fi || echo "publish-data: WARNING — could not record step '$name' to sync_run" >&2
+}
+
+fail() {
+  record_step publish failed "$*"
+  slack_notify "❌ toronto-bids publish — $*"
+  echo "publish-data: $*" >&2
+  exit 1
+}
 
 gh_run() {
   if [ "$DRY_RUN" = 1 ]; then
@@ -147,17 +171,23 @@ fi
 #     when R2 is not configured (dev/CI, or before the account is set up).
 R2_BUCKET="${TB_R2_BUCKET:-toronto-bids-data}"
 if [ -z "${CLOUDFLARE_API_TOKEN:-}" ]; then
+  # Not configured (dev/CI, or before the account is set up) — a deliberate absence, not a
+  # failure, so it gets no sync_run row at all: same "skip means nothing to record" rule as
+  # the nightly's own `council: skip (not the 1st)` (#176).
   echo "publish-data: R2 not configured (no CLOUDFLARE_API_TOKEN) — skipping the bucket mirror"
 elif [ "$DRY_RUN" = 1 ]; then
   echo "DRY-RUN wrangler r2 object put $R2_BUCKET/bids.sqlite --file $SQLITE --remote"
 elif ! . "$HERE/resolve-node.sh" || ! tb_resolve_node; then
   # systemd's PATH is minimal AND carries Ubuntu's Node 20 npx, which satisfies a presence
   # check but not wrangler (>= 22). Gating on presence is what silently killed this mirror for
-  # eight nights — see deploy/resolve-node.sh (#173).
+  # eight nights — see deploy/resolve-node.sh (#173). Recorded as a REAL failure (#176), not
+  # skipped: unlike the missing-token case above, this box IS configured for R2 and the mirror
+  # is simply broken — exactly the gap `tb status` showing 14/14 ok used to hide.
   # :-22 matters: if the source itself failed the var is unbound, and `set -u` would abort
   # the whole publish over a best-effort mirror.
   echo "publish-data: WARNING — no Node >= ${TB_NODE_MIN_MAJOR:-22} for wrangler;" \
        "R2 mirror skipped (release is published)" >&2
+  record_step r2_mirror failed "no Node >= ${TB_NODE_MIN_MAJOR:-22} for wrangler"
 else
   # Pinned version so a warm npx cache is reused (no nightly re-resolve of "latest").
   # wrangler's stderr is CAPTURED, never discarded: sending it to /dev/null is precisely why
@@ -165,9 +195,11 @@ else
   if _r2_err="$(npx -y wrangler@4.112.0 r2 object put "$R2_BUCKET/bids.sqlite" \
         --file "$SQLITE" --remote --content-type application/x-sqlite3 2>&1 >/dev/null)"; then
     echo "publish-data: mirrored bids.sqlite to R2 bucket $R2_BUCKET"
+    record_step r2_mirror ok
   else
     echo "publish-data: WARNING — R2 upload of bids.sqlite failed (release is published)" >&2
     printf 'publish-data: wrangler said: %s\n' "$_r2_err" >&2
+    record_step r2_mirror failed "$_r2_err"
   fi
 fi
 
@@ -192,6 +224,7 @@ if ! gh_run workflow run deploy.yml -R "$FRONTEND_REPO"; then
   echo "publish-data: WARNING — could not trigger the frontend deploy on $FRONTEND_REPO (data is published)" >&2
 fi
 
+record_step publish ok
 slack_notify "✅ toronto-bids publish — latest release updated · ${GENERATED_AT} · https://github.com/${DATA_REPO}/releases/tag/latest"
 
 echo "publish-data: done"

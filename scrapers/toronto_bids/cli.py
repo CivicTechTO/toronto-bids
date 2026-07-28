@@ -27,6 +27,15 @@ def build_parser() -> argparse.ArgumentParser:
     p_manifest.add_argument("files", nargs="+", help="Artifact files to size")
     p_manifest.add_argument("--out", required=True, help="Output path for manifest.json")
 
+    p_record = sub.add_parser(
+        "record-step",
+        help="Write one sync_run row for a step that isn't Python (#176) — "
+             "deploy/publish-data.sh calls this so 'publish' and its R2 mirror sub-step show "
+             "up in `tb status` instead of being visible only in the journal.")
+    p_record.add_argument("name", help="Step name, e.g. 'publish' or 'r2_mirror'")
+    p_record.add_argument("status", choices=["ok", "failed"])
+    p_record.add_argument("--error", help="Error detail, required for status=failed")
+
     p_enrich = sub.add_parser("enrich-council",
                               help="OPT-IN: fetch council decisions + staff-report PDFs for suspended firms (headed browser)")
     p_enrich.add_argument("--virtual-display", action="store_true",
@@ -136,21 +145,57 @@ def _is_first_of_month() -> bool:
     return date.today().day == 1
 
 
-def _run_step(steps: list, failures: list, name: str, fn) -> None:
+def _run_step(steps: list, failures: list, name: str, fn, conn=None):
     """Run one nightly step, timing it and recording a step record. On failure the error is
     ALSO appended to `failures` — the authoritative list the exit code and the report's Failures
     section read — so the exit-code contract is untouched while the Steps section gains status +
-    timing. `fn` returns a short detail string (or None)."""
+    timing. `fn` returns a short detail string (or None). Returns the `sync_run` id when `conn`
+    is given, so a caller whose step swallows its OWN sub-failures (below) can correct the row
+    after the fact — `fn` returning normally is not proof nothing failed.
+
+    Pass `conn` to ALSO write a `sync_run` row for this step (#176): before this, everything
+    past the 14 `tb sync` sources — award summaries, portal, Ariba attachments, agencies,
+    export — wrote nothing durable, so a step failing every night for a week was invisible to
+    `tb status` and findable only by grepping a journal subject to rotation. `conn` is optional
+    and deliberately omitted for the "sync" step itself: it already writes 14 rows of its own
+    via `pipeline.sync`, and giving it a 15th wrapping row here would insert between
+    `sync_cutoff` and `_sync_detail`'s own count of "what this run wrote", corrupting the #178
+    fix — the same mistake that fix exists to prevent, one level up.
+    """
     import time
     t = time.monotonic()
+    run_id = db.start_sync_run(conn, name) if conn is not None else None
     try:
         detail = fn()
         steps.append({"name": name, "status": "ok", "detail": detail or "",
                       "seconds": time.monotonic() - t, "error": None})
+        if run_id is not None:
+            db.finish_sync_run(conn, run_id, status="ok")
     except Exception as exc:  # isolation: never propagates
         steps.append({"name": name, "status": "fail", "detail": "",
                       "seconds": time.monotonic() - t, "error": str(exc)})
         failures.append((name, str(exc)))
+        if run_id is not None:
+            db.finish_sync_run(conn, run_id, status="failed", error=str(exc))
+    return run_id
+
+
+def _mark_if_swallowed_failures(steps, failures, conn, run_id, before: int) -> None:
+    """A step whose OWN sub-units (portal slugs, agency bodies) record their failures into the
+    shared `failures` list rather than raising reads as ✅ to `_run_step`, which only sees
+    whether `fn()` raised — exactly the bug #178 found for `pipeline.sync` and fixed one level
+    up. Call this right after `_run_step` with the `failures` length from before the call: if it
+    grew, the step is corrected in both places `_run_step` already wrote to — the Steps entry
+    just appended, and, since the row was already committed as 'ok' before the caller could
+    know better, the `sync_run` row itself (#176).
+    """
+    new = failures[before:]
+    if not new:
+        return
+    steps[-1]["status"] = "fail"
+    if run_id is not None:
+        db.finish_sync_run(conn, run_id, status="failed",
+                           error="; ".join(f"{n}: {e}" for n, e in new))
 
 
 def _report_sources(conn, after_id: int) -> list:
@@ -206,6 +251,25 @@ def _open_db():
     conn = db.connect(config.DB_PATH)
     db.init_db(conn)
     return conn
+
+
+def _cmd_record_step(args) -> int:
+    """Write one `sync_run` row for a step that runs outside this process (#176).
+
+    `deploy/publish-data.sh` is bash, downstream of `tb nightly` in a separate systemd unit —
+    it can't call `_run_step` directly. Before this it reported its own outcome only to the
+    journal and Slack; the R2 mirror in particular is best-effort by design (a failed upload
+    only warns, the script still exits 0), so `tb status` read 14/14 ok while the mirror had
+    been dead for 8 nights (#173). This gives that script — or any future non-Python step —
+    the same durable record every Python step now gets via `_run_step`.
+    """
+    conn = _open_db()
+    try:
+        run_id = db.start_sync_run(conn, args.name)
+        db.finish_sync_run(conn, run_id, status=args.status, error=args.error)
+    finally:
+        conn.close()
+    return 0
 
 
 def _cmd_sync(args) -> int:
@@ -577,7 +641,7 @@ def _cmd_nightly(args) -> int:
                 def _awards():
                     download_award_summaries(conn, http, log=out)
                     return f"{store_award_summary_bids(conn, log=out)} bids stored"
-                _run_step(steps, failures, "award summaries", _awards)
+                _run_step(steps, failures, "award summaries", _awards, conn=conn)
 
                 def _portal():
                     from toronto_bids.sources.bids_tenders import run_portal_capture
@@ -587,13 +651,15 @@ def _cmd_nightly(args) -> int:
                             failures.append((f"portal:{slug}", v))
                     total = sum(v for v in res.values() if isinstance(v, int))
                     return f"{total} listings" if total else "no open bids"
-                _run_step(steps, failures, "portal", _portal)
+                before_len = len(failures)
+                run_id = _run_step(steps, failures, "portal", _portal, conn=conn)
+                _mark_if_swallowed_failures(steps, failures, conn, run_id, before_len)
 
                 def _ariba():
                     from toronto_bids.sources import ariba_attachments as aa
                     n = aa.capture_attachments(conn, log=out, virtual_display=True)
                     return f"+{n} bundles"
-                _run_step(steps, failures, "ariba attachments", _ariba)
+                _run_step(steps, failures, "ariba attachments", _ariba, conn=conn)
 
                 def _agencies():
                     from toronto_bids.buyers import seed_buyers
@@ -606,7 +672,9 @@ def _cmd_nightly(args) -> int:
                     da = a1["agency_award"] - a0["agency_award"]
                     db_ = a1["agency_bid"] - a0["agency_bid"]
                     return f"+{da} awards, +{db_} bids"
-                _run_step(steps, failures, "agencies", _agencies)
+                before_len = len(failures)
+                run_id = _run_step(steps, failures, "agencies", _agencies, conn=conn)
+                _mark_if_swallowed_failures(steps, failures, conn, run_id, before_len)
 
                 if _is_first_of_month():
                     def _council():
@@ -616,7 +684,7 @@ def _cmd_nightly(args) -> int:
                         fetch = partial(fetch_agenda_item, virtual_display=True)
                         n = enrich_council(conn, http, fetch=fetch)
                         return f"{n} items"
-                    _run_step(steps, failures, "council", _council)
+                    _run_step(steps, failures, "council", _council, conn=conn)
                 else:
                     steps.append({"name": "council", "status": "skip",
                                   "detail": "not the 1st", "seconds": 0.0, "error": None})
@@ -629,7 +697,7 @@ def _cmd_nightly(args) -> int:
         def _supplier():
             from toronto_bids.linking.supplier import build_supplier_dimension
             return f"{build_supplier_dimension(conn)} suppliers"
-        _run_step(steps, failures, "supplier rebuild", _supplier)
+        _run_step(steps, failures, "supplier rebuild", _supplier, conn=conn)
 
         def _export():
             nonlocal export_bytes
@@ -645,7 +713,7 @@ def _cmd_nightly(args) -> int:
             write_csv_zip(conn, export_dir / "bids-csv.zip")
             export_bytes = written.stat().st_size
             return f"{export_bytes / 1_048_576:.1f} MiB"
-        _run_step(steps, failures, "export", _export)
+        _run_step(steps, failures, "export", _export, conn=conn)
 
         try:
             after = db.counts(conn)
@@ -901,6 +969,8 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_export(args)
     if args.command == "manifest":
         return _cmd_manifest(args)
+    if args.command == "record-step":
+        return _cmd_record_step(args)
     if args.command == "nightly":
         return _cmd_nightly(args)
     if args.command == "enrich-council":

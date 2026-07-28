@@ -223,6 +223,16 @@ wr r2 bucket cors set toronto-bids-data --file /tmp/r2-cors.json
 
 `TB_R2_BUCKET` overrides the bucket name (default `toronto-bids-data`).
 
+**A "best-effort" step that only warns is invisible to `tb status` unless it says so itself
+(#176).** The 8-night R2 outage above was findable only by grepping the journal: `publish-data.sh`
+kept exiting 0 (the GitHub release is the deliverable) and `tb status` showed 14/14 ok, because
+neither `publish` nor the R2 mirror wrote anything to `sync_run`. The script now calls
+`tb record-step NAME {ok,failed} [--error TEXT]` — `publish` overall (from `fail()` on every
+early-exit guard, and once at the end on success) and `r2_mirror` as its own row, recorded only
+on a real attempt (success, a wrangler failure, or no suitable Node) — the deliberate
+not-configured skip (no `CLOUDFLARE_API_TOKEN`) gets no row, same as the nightly's own
+`council: skip (not the 1st)`. `TB_PUBLISH_DRY_RUN=1` skips recording entirely.
+
 ## What does NOT run here
 
 `enrich-council` needs a **headed** Chromium (TMMIS is Akamai-gated and blocks headless), but
