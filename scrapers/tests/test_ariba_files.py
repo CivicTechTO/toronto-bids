@@ -807,6 +807,77 @@ class TestAnchorKey:
         b = ariba_files.anchor_key({"row": "3.1 Part A", "name": "a.pdf", "ordinal": 0})
         assert a == b
 
+    def test_the_key_does_NOT_survive_the_menu_reparenting_which_is_why_it_is_not_clicked_on(
+            self):
+        """Pins the measured #174 failure so the two halves are never re-merged.
+
+        The key is durable ACROSS runs -- every run traverses before it downloads, and the tree
+        is pristine then. It is not durable WITHIN one: downloading a single file re-parents the
+        menu containers, `closest('tr')` starts resolving to the real row, and the ordinal shifts
+        as that row's own link joins the count. 36 of 39 keys changed at once. So re-finding an
+        element to click must go through the DOM id and `pick_unclaimed`, never through this.
+        """
+        blob = ("Reference Documents Attachment 1 Field Services Manual Appendix E.zip "
+                "Attachment 2 Arborist Report.zip Attachment 3 Tree")
+        before = ariba_files.anchor_key(
+            {"row": blob, "name": "Attachment 2 Arborist Report.zip", "ordinal": 0})
+        after = ariba_files.anchor_key(
+            {"row": "3.1 Specifications", "name": "Attachment 2 Arborist Report.zip",
+             "ordinal": 1})
+        assert before != after
+
+
+class TestHandleAndUnclaimed:
+    """Mid-run resolution: the DOM id first, a name among unclaimed anchors as the last resort.
+    Neither may reach `make_fingerprint` -- AribaWeb re-mints ids per session."""
+
+    def test_the_dom_id_rides_along_as_a_handle(self):
+        files = ariba_files.listing_from_anchors(
+            [{"name": "a.pdf", "row": "1.1 x", "ordinal": 0, "id": "_obgqjc"}])["files"]
+        assert files[0]["handle"] == "_obgqjc"
+
+    def test_a_respawned_id_does_not_change_the_fingerprint(self):
+        """A fingerprint carrying a per-session id would differ on every run and discard the
+        partials every time -- resume would never once work."""
+        first = ariba_files.listing_from_anchors(
+            [{"name": "a.pdf", "row": "1.1 x", "ordinal": 0, "id": "_obgqjc"}])["files"]
+        second = ariba_files.listing_from_anchors(
+            [{"name": "a.pdf", "row": "1.1 x", "ordinal": 0, "id": "_TOTALLY_DIFFERENT"}])["files"]
+        assert ariba_files.make_fingerprint(second, 1) == ariba_files.make_fingerprint(first, 1)
+
+    def test_an_anchor_with_no_id_is_still_listed(self):
+        files = ariba_files.listing_from_anchors(
+            [{"name": "a.pdf", "row": "1.1 x", "ordinal": 0}])["files"]
+        assert files[0]["handle"] == ""
+
+    def test_it_finds_the_only_link_of_that_name(self):
+        anchors = [{"name": "a.pdf", "id": "_1"}, {"name": "b.pdf", "id": "_2"}]
+        assert ariba_files.pick_unclaimed(anchors, "b.pdf", set())["id"] == "_2"
+
+    def test_a_claimed_anchor_is_skipped_so_a_duplicate_name_cannot_refetch_the_first(self):
+        """Without this, two same-named documents both resolve to the first link: the same bytes
+        land twice under two names, the second document is never fetched, counts match and no
+        gap is recorded -- on a single clean run."""
+        anchors = [{"name": "report.pdf", "id": "_1"}, {"name": "report.pdf", "id": "_2"}]
+        assert ariba_files.pick_unclaimed(anchors, "report.pdf", {"_1"})["id"] == "_2"
+
+    def test_it_returns_none_when_every_link_of_that_name_is_claimed(self):
+        anchors = [{"name": "report.pdf", "id": "_1"}]
+        assert ariba_files.pick_unclaimed(anchors, "report.pdf", {"_1"}) is None
+
+    def test_it_returns_none_when_the_name_is_absent(self):
+        assert ariba_files.pick_unclaimed([{"name": "a.pdf", "id": "_1"}], "z.pdf", set()) is None
+
+    def test_nbsp_and_run_together_whitespace_still_match(self):
+        anchors = [{"name": "Attachment\xa01  Report.zip", "id": "_1"}]
+        assert ariba_files.pick_unclaimed(anchors, "Attachment 1 Report.zip", set())["id"] == "_1"
+
+    def test_an_id_less_anchor_is_matchable_but_never_counts_as_claimed(self):
+        """`claimed` holds ids; an anchor with no id cannot be excluded by one, and must not be
+        excluded by the empty string either or every id-less document would be unreachable."""
+        anchors = [{"name": "a.pdf", "id": ""}]
+        assert ariba_files.pick_unclaimed(anchors, "a.pdf", {""}) is not None
+
 
 class TestListingFromAnchors:
     """One DOM read -> the listing. Rejects and collapses are RETURNED, never swallowed."""

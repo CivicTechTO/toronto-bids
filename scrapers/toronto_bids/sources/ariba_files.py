@@ -119,7 +119,7 @@ def is_outline_row(row_text) -> bool:
 
 
 def anchor_key(anchor) -> str:
-    """A listed file's IDENTITY: row identity + within-row ordinal + filename. PURE.
+    """A listed file's DURABLE identity: row identity + within-row ordinal + filename. PURE.
 
     **The one thing this must not be is positional.** The key the adapter used to build was
     `outline#name` plus an occurrence counter that incremented in TRAVERSAL ORDER, so two files
@@ -139,6 +139,26 @@ def anchor_key(anchor) -> str:
     The ordinal fixes it because a row's DOM order is a property of the row, not of the sweep
     that read it -- the anchor is the 2nd link in row 3.1 no matter which pass sees it, which
     is precisely what a listing index can never say.
+
+    **DURABLE, and deliberately not used to re-find an element mid-run (#174).** This key is
+    stable where it is asked to be stable -- across runs -- because every run traverses before
+    it downloads anything, and at traversal time the tree is pristine. It is NOT stable within
+    a run: measured live, downloading a single file invalidated 36 of 39 of these keys at once,
+    on a tree that was otherwise intact (same 39 documents, same 138 anchors, same names).
+    Opening an attachment's menu re-parents the menu containers, so `closest('tr')` stops
+    resolving to the fused `Reference Documents Attachment 1 ... Attachment 3 Tree` blob and
+    starts resolving to the real `3.1` row, while the ordinal shifts by one as that row's own
+    link joins the count:
+
+        before:  'Reference Documents Attachment 1 ... Tree#0#Attachment 1 ... Appendix E.zip'
+        after:   '3.1#1#Attachment 1 ... Appendix E.zip'
+
+    The key was therefore invalidated *by the act of downloading*, and every download after the
+    first was certain to fail. The error was asking one string to do two jobs with different
+    requirements. Re-finding an element to click is the other job, and it belongs to the
+    anchor's own DOM id (`handle`, carried beside this) with `pick_unclaimed` behind it --
+    neither of which may ever reach `make_fingerprint`, since AribaWeb re-mints its ids per
+    session and a fingerprint carrying one would discard the partials on every run.
     """
     ordinal = anchor.get("ordinal")
     try:
@@ -147,6 +167,39 @@ def anchor_key(anchor) -> str:
         ordinal = 0
     name = " ".join((anchor.get("name") or "").replace("\xa0", " ").split())
     return f"{row_identity(anchor.get('row'))}#{ordinal}#{name}"
+
+
+def pick_unclaimed(anchors, name, claimed):
+    """The anchor to click for `name`, ignoring ones already used this run. PURE.
+
+    The LAST-RESORT half of mid-run resolution, behind the DOM id. It exists because the
+    durable `anchor_key` provably cannot do this job: the menu re-parenting above rewrites it
+    for most of the tree the moment the first file downloads, so a fallback keyed on it would
+    fail on exactly the runs the fallback is for.
+
+    Matching on a bare name is what `_resolve_anchor`'s docstring warns against -- two
+    same-named documents both resolve to the first link, so the same bytes land twice and the
+    second document is never fetched, counts matching, no gap recorded. `claimed` is what makes
+    it safe: it holds the ids already clicked in this run, so a second `report.pdf` cannot
+    resolve back onto the first one's anchor. For the overwhelmingly common unique-name case
+    this is exact.
+
+    The residual ambiguity is honest and narrow: two documents sharing a filename, whose ids
+    have ALSO gone stale, are told apart only by remaining DOM order. Both are still captured
+    (`unique_names` gives them distinct disk names); only which bytes land under which of the
+    two names could transpose. That is strictly better than the alternative on offer, which is
+    failing every remaining download.
+    """
+    wanted = " ".join((name or "").replace("\xa0", " ").split())
+    for anchor in anchors:
+        text = " ".join((anchor.get("name") or "").replace("\xa0", " ").split())
+        if text != wanted:
+            continue
+        handle = anchor.get("id") or ""
+        if handle and handle in claimed:
+            continue
+        return anchor
+    return None
 
 
 def listing_from_anchors(anchors) -> dict:
@@ -189,8 +242,15 @@ def listing_from_anchors(anchors) -> dict:
             collided.append({"key": key, "name": name})
             continue
         seen.add(key)
+        # `handle` is the anchor's own DOM id -- the LIVE half of the identity split described
+        # in `document_key`. Unique across every document anchor on this page (measured: 39 of
+        # 39 distinct; the single id-less anchor was an external http link, which
+        # `is_document_name` rejects anyway). It is what the adapter clicks, and it must never
+        # reach `make_fingerprint`: AribaWeb mints these per session, so a fingerprint carrying
+        # one would differ on every run and discard the partials every time.
         files.append({"key": key, "name": name, "row": anchor.get("row") or "",
-                      "ordinal": anchor.get("ordinal") or 0})
+                      "ordinal": anchor.get("ordinal") or 0,
+                      "handle": anchor.get("id") or ""})
     return {"files": files, "rejected": rejected, "collided": collided}
 
 

@@ -1588,6 +1588,9 @@ _ANCHORS_JS = """
             (a) => isDocLabel((a.innerText || a.textContent) || ''));
         return {
             index: i,
+            // The anchor's own DOM id -- the LIVE half of the identity split (ariba_files
+            // `document_key`). Measured unique across every document anchor on this event.
+            id: e.id || '',
             name: ((e.innerText || e.textContent) || '').replace(/\\s+/g, ' ').trim(),
             row: ((row ? (row.innerText || row.textContent) : '') || '')
                     .replace(/\\s+/g, ' ').trim().slice(0, 120),
@@ -1741,6 +1744,15 @@ class AribaFileSource:
         # so `ariba_files.capture_files` can fold it into the durable `.omitted.json` record
         # rather than it living only in this class's log (#174 Low).
         self._collided_count = 0
+        # Which of `_resolve_anchor`'s two routes carried each download (#174). Counters, not a
+        # boolean, because the interesting outcome is a MIX: ids holding for the tree's own rows
+        # and going stale for the menu-item attachments would say the re-parenting re-mints only
+        # those, which no single live run has yet shown either way.
+        self._resolved_by_handle = 0
+        self._resolved_by_key = 0
+        # DOM ids already clicked this run. What keeps the name-based last resort from
+        # resolving a second `report.pdf` back onto the first one's anchor (`pick_unclaimed`).
+        self._claimed: set = set()
         # The same container-aware, scrollTop-verified primitive the picker uses -- not a bare
         # `mouse.wheel`, which is every mistake `AribaPicker` spent six live runs unlearning:
         # wheeling without hovering the scroll container, never verifying scrollTop moved, no
@@ -2183,7 +2195,8 @@ class AribaFileSource:
 
     # --- download ------------------------------------------------------------------------
     def _match_anchor(self, key: str):
-        """The one anchor in the current DOM whose KEY is `key`, or None. Never `.first`."""
+        """The one anchor in the current DOM whose durable KEY is `key`, or None. Never
+        `.first`. Used to re-find a document the traversal has not yet disturbed."""
         matches = [a for a in self._read_anchors()
                    if ariba_files.is_document_name(a["name"])
                    and ariba_files.anchor_key(a) == key]
@@ -2193,6 +2206,36 @@ class AribaFileSource:
                 f"refusing to guess which document to download")
         return matches[0] if matches else None
 
+    def _find_unclaimed(self, file: dict):
+        """The last-resort match: a link labelled with this document's name whose id has not
+        already been clicked this run (`ariba_files.pick_unclaimed`)."""
+        anchors = [a for a in self._read_anchors()
+                   if ariba_files.is_document_name(a["name"])]
+        return ariba_files.pick_unclaimed(anchors, file["name"], self._claimed)
+
+    def _locate_by_handle(self, file: dict):
+        """The anchor carrying this document's DOM id, if it is still there and still labelled
+        the same. The LIVE half of the identity split (`ariba_files.document_key`).
+
+        Preferred over the durable key because it addresses the element the traversal actually
+        saw, rather than re-deriving which element that was. Best-effort by design: an id is a
+        per-session artifact and may be reassigned by a re-render, so a miss here is ordinary
+        and falls through to `_match_anchor`. The LABEL is re-checked before the handle is
+        trusted -- an id that now belongs to a different document must not be clicked, which is
+        the same reason `_TAG_ANCHOR_JS` re-verifies the label before it tags an index.
+        """
+        handle = (file.get("handle") or "").strip()
+        if not handle:
+            return None
+        try:
+            loc = self.page.locator(f'[id="{handle}"]')
+            if loc.count() != 1:
+                return None
+            text = " ".join((loc.first.inner_text() or "").replace("\xa0", " ").split())
+            return loc.first if text == file["name"] else None
+        except Exception:                             # noqa: BLE001 — a miss, never fatal
+            return None
+
     def _resolve_anchor(self, file: dict):
         """Tag and return the anchor for THIS document, scrolling to find it if need be.
 
@@ -2200,21 +2243,41 @@ class AribaFileSource:
         same-named documents to the same link, so the same bytes land twice under two names
         and the second document is never fetched -- both "successful", counts matching, no gap
         record, on a single clean run. `.first` also risks a hidden or collapsed match.
+
+        **Two routes, in order, because they fail in different conditions** (the identity split
+        in `ariba_files.document_key`). The DOM id addresses the element the traversal saw and
+        needs no re-derivation, so it is tried first; it goes stale if the widget re-renders and
+        re-mints its ids. The durable key survives that but is re-derived from the current read,
+        so it needs the document to still be present and countable. Which route carried a run is
+        logged once per document: it is the only way to learn empirically whether these ids
+        survive the menu re-parenting that broke the old key, and guessing at that is what cost
+        #174 four live runs.
         """
-        match = self._match_anchor(file["key"])
+        by_handle = self._locate_by_handle(file)
+        if by_handle is not None:
+            self._resolved_by_handle += 1
+            self._claimed.add(file["handle"])
+            return by_handle
+        # Logged every time, because it is rare-or-never if the ids hold and constant if they
+        # do not -- and that is precisely the fact this run exists to establish.
+        self._resolved_by_key += 1
+        self.log(f"    {file['name']}: DOM id {file.get('handle') or '(none)'!r} no longer "
+                 f"resolves — falling back to name-among-unclaimed")
+        match = self._find_unclaimed(file)
         if match is None:
             for delta in (-3000, 3000):
                 for _ in range(self.MAX_SCROLL_PASSES):
                     step = self._scroller.step(delta)
-                    match = self._match_anchor(file["key"])
+                    match = self._find_unclaimed(file)
                     if match is not None or step["at_edge"] or not step["moved"]:
                         break
                 if match is not None:
                     break
         if match is None:
             raise RuntimeError(
-                f"{file['name']}: no link in the content tree carries the identity "
-                f"{file['key']!r} — refusing to download whatever else shares its label")
+                f"{file['name']}: neither its DOM id nor any unclaimed link of that name is in "
+                f"the content tree — refusing to download whatever else shares its label")
+        self._claimed.add(match.get("id") or "")
         if not self.page.evaluate(
                 _TAG_ANCHOR_JS, {"index": match["index"], "name": match["name"]}):
             raise RuntimeError(
