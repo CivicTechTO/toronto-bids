@@ -1650,6 +1650,37 @@ _REFERENCE_TOGGLES_JS = """
 }
 """
 
+# A bulk expander, if the widget offers one -- the rejected labels seen live carry
+# 'Collapse All'/'Collapse All Detail Rows', which strongly implies an 'Expand All' (or
+# similarly worded) counterpart, but the exact label was never confirmed against the live
+# site (it cannot exist to click until 'All Content' has already been opened -- see
+# `_open_all_content` -- so the earlier probes never reached it). Matched generically
+# (`^expand\s*all\b`) rather than one hardcoded phrase, and the innermost match only, the
+# same shape as `_REFERENCE_TOGGLES_JS`, so an outer wrapper that merely contains the words
+# is not mistaken for the control itself.
+_EXPAND_ALL_JS = """
+() => {
+    for (const e of document.querySelectorAll('[data-tb-bulk-expand]')) {
+        e.removeAttribute('data-tb-bulk-expand');
+    }
+    const rx = /^expand\\s*all\\b/i;
+    const els = Array.from(document.querySelectorAll('a,button,span,div'));
+    const matches = els.filter(el => {
+        const txt = ((el.innerText || el.textContent) || '').replace(/\\s+/g, ' ').trim();
+        return rx.test(txt);
+    });
+    const inner = matches.filter(el => !matches.some(o => o !== el && el.contains(o)));
+    if (!inner.length) return null;
+    const el = inner[0];
+    const rect = el.getBoundingClientRect();
+    el.setAttribute('data-tb-bulk-expand', '1');
+    return {
+        text: ((el.innerText || el.textContent) || '').replace(/\\s+/g, ' ').trim(),
+        visible: !!(rect.width || rect.height),
+    };
+}
+"""
+
 _DOWNLOAD_MENU_ITEM = "Download this attachment"
 
 _UNREAD = object()                 # "expected_count has not been read yet" -- None is an answer
@@ -1889,6 +1920,113 @@ class AribaFileSource:
         self.log(f"    References toggle {cand['text']!r} revealed nothing")
         return False
 
+    def _open_all_content(self) -> bool:
+        """Click the 'All Content' control if present, so every Part's row renders.
+
+        **The event view renders only the first Part's row until this is clicked (#174).**
+        A live probe of this same page found 5 filenames after clicking it against 3 before
+        -- Part 2's and Part 3's rows, and the `References` toggles behind them, do not exist
+        in the DOM at all until then. `_on_event_view` already treats this same 'All Content'
+        text as one positive marker of this page; reused here for the identical text, never
+        hardcoded twice.
+
+        **Detected, never assumed.** Absent is logged and traversal continues rather than
+        failing -- a future layout may already render everything, and this control existing
+        at all is inferred from one probe, not guaranteed permanent.
+
+        **Verified by evidence, not a fixed pause.** Reuses `_await_anchor_count_change`, the
+        same growth signal a `References` toggle is verified by -- a click that lands on a
+        view already fully rendered legitimately grows nothing, and a click that silently
+        missed its target looks identical to a fixed wait ending early.
+        """
+        control = self.page.get_by_text("All Content", exact=False)
+        try:
+            found = bool(control.count())
+        except Exception as exc:                      # noqa: BLE001 — best effort, never fatal
+            self.log(f"    content tree: could not check for an 'All Content' control ({exc})")
+            return False
+        if not found:
+            self.log("    content tree: no 'All Content' control found — assuming every "
+                     "Part's row already renders")
+            return False
+        target = control.first
+        try:
+            if not target.is_visible():
+                self.log("    content tree: 'All Content' control present but not visible — "
+                         "skipping")
+                return False
+            before = self._anchor_count()
+            target.scroll_into_view_if_needed(timeout=5000)
+            target.click(timeout=5000)
+        except Exception as exc:                      # noqa: BLE001 — one control, not the run
+            self.log(f"    content tree: 'All Content' did not click ({exc})")
+            return False
+        after = self._await_anchor_count_change(before, timeout_ms=10000)
+        if after > before:
+            self.log(f"    content tree: 'All Content' opened — {before} -> {after} links")
+            return True
+        self.log(f"    content tree: 'All Content' clicked but the link count did not grow "
+                 f"({before} -> {after}) — continuing regardless (a future layout may already "
+                 f"render everything)")
+        return False
+
+    def _bulk_expand_references(self) -> bool:
+        """Click a bulk 'Expand All' control for the References sections, if the widget
+        offers one, rather than iterating N individual toggles.
+
+        **Detected, never assumed** (`_EXPAND_ALL_JS`) -- the exact label was never confirmed
+        live, only inferred from the 'Collapse All'/'Collapse All Detail Rows' rejected
+        labels a probe already saw. `_expand_references` still runs immediately after this
+        regardless of the outcome here: it is idempotent (a section already open is skipped),
+        so it costs nothing when the bulk control got everything, and it is what actually
+        expands things when this finds nothing or the click does not visibly help.
+        """
+        try:
+            cand = self.page.evaluate(_EXPAND_ALL_JS)
+        except Exception as exc:                      # noqa: BLE001 — best effort, never fatal
+            self.log(f"    content tree: could not check for a bulk expand control ({exc})")
+            return False
+        if not cand:
+            self.log("    content tree: no bulk 'Expand All' control found — expanding "
+                     "References sections one at a time")
+            return False
+        if not cand["visible"]:
+            self.log(f"    content tree: bulk control {cand['text']!r} found but not visible "
+                     "— expanding References sections one at a time")
+            return False
+        before = self._anchor_count()
+        try:
+            loc = self.page.locator('[data-tb-bulk-expand="1"]').first
+            loc.scroll_into_view_if_needed(timeout=5000)
+            loc.click(timeout=5000)
+        except Exception as exc:                      # noqa: BLE001 — one control, not the run
+            self.log(f"    content tree: {cand['text']!r} did not click ({exc})")
+            return False
+        after = self._await_anchor_count_change(before, timeout_ms=10000)
+        if after > before:
+            self.log(f"    content tree: {cand['text']!r} expanded everything — {before} -> "
+                     f"{after} links")
+            return True
+        self.log(f"    content tree: {cand['text']!r} clicked but the link count did not grow "
+                 f"({before} -> {after}) — falling back to per-section expansion")
+        return False
+
+    def _outline_row_count(self) -> int:
+        """Distinct outline-numbered top-level rows ('3.1 ...') currently in the DOM.
+
+        Logged alongside the file count so a near-empty traversal states its own cause
+        instead of only its symptom (#174): staying at 1 here — only Part 1's row — says the
+        tree never opened; a high count next to a still-short file total says the tree opened
+        and the files themselves are the gap. Best-effort like `_has_outline_row` — an
+        unreadable DOM here must never be what stops a capture.
+        """
+        try:
+            anchors = self._read_anchors()
+        except Exception:                             # noqa: BLE001 — mid-render churn
+            return 0
+        return len({ariba_files.row_identity(a.get("row")) for a in anchors
+                    if ariba_files.is_outline_row(a.get("row"))})
+
     def _expand_references(self, max_rounds: int = 6) -> int:
         """Open every `References` section exactly once; the bulk of the files live behind them.
 
@@ -1993,16 +2131,35 @@ class AribaFileSource:
         six-live-run debugging streak in its first line. Logged AFTER `_require_event_view`
         confirms the content tree, not the picker or the export page, is actually in front of
         the geometry read.
+
+        **The event view renders only the first Part's row until 'All Content' is clicked,
+        and the `References` toggles behind Part 2+ do not exist until then either (#174).**
+        So the required sequence, in order, is: open the full tree (`_open_all_content`) ->
+        prefer a bulk expander if the widget offers one (`_bulk_expand_references`) -> run
+        the existing per-toggle `_expand_references` regardless, since it is idempotent and
+        catches anything the bulk step missed or if it never fired. Only once that sequence
+        has run does the sweep below see the rows that carry the bulk of the documents.
         """
         expected = self.expected_count()
         self._require_event_view("the content-tree traversal")
         self._scroller.log_geometry()
+
+        self._open_all_content()
+        self._bulk_expand_references()
         opened = self._expand_references()
+        toggles_found = len(self._toggled)
+        outline_rows = self._outline_row_count()
+
         files, rejected, collided = self._sweep()
         files = ariba_files.order_listing(files)
 
-        self.log(f"    content tree: {len(files)} file(s), {opened} References section(s) "
-                 f"expanded, picker count {expected if expected is not None else 'unknown'}")
+        # Named explicitly (#174) so a near-empty result states its own cause rather than
+        # only its symptom: `outline_rows` stuck at 1 says the tree never opened past Part 1;
+        # a healthy `outline_rows`/`toggles_found` beside a still-short `files` count says the
+        # tree opened fine and the files themselves are the gap.
+        self.log(f"    content tree: {len(files)} file(s), {outline_rows} outline row(s) "
+                 f"seen, {toggles_found} References toggle(s) found ({opened} expanded), "
+                 f"picker count {expected if expected is not None else 'unknown'}")
         if rejected:
             # Named, because the alternative is a document silently absent from an archive
             # nobody can re-fetch. The predicate this replaced was `$`-anchored (so it skipped
