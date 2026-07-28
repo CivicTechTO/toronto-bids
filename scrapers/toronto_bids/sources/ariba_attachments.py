@@ -680,6 +680,17 @@ def _on_picker(page, timeout_ms: int = 5000) -> bool:
 # though it technically has one too) and keep the ancestor with the LARGEST scroll range
 # (scrollHeight - clientHeight) among those holding more than one row checkbox. On the live
 # page that is unambiguous: the row list at ~3129 px versus the page/wrapper at ~221 px.
+#
+# **`allowDocument` makes the document a CANDIDATE, not a fallback (#174 M5).** The first shape
+# of this only reached for `document.scrollingElement` when NO inner element qualified at all --
+# and live evidence on the content tree showed that is wrong: a 54 px element with 6 px of
+# scroll range and only 25 of the page's 72 `a` markers inside it satisfied `count > 1 && range
+# > EDGE` and was picked, while the genuine scroller was the page itself (range 465 px, all 72
+# markers). A 6 px range is not a scroller in any meaningful sense -- it is scrollbar/rounding
+# noise, not a real content list -- so it must not be allowed to out-rank the document merely by
+# existing. Now, when `allowDocument` is set, the inner best-so-far only wins if it BOTH clears a
+# minimum meaningful scroll range and holds every one of the markers being traversed; otherwise
+# the document is the answer. See `tbFindContainer`'s body for the exact rule.
 # Inlined into the body of each arrow function below (rather than declared at top level and
 # concatenated in front of them) so each of _CONTAINER_STATE_JS / _PROGRAMMATIC_SCROLL_JS
 # stays a single, self-contained function literal -- two top-level statements (a `function`
@@ -691,7 +702,7 @@ _FIND_CONTAINER_BODY_JS = """
         const EDGE = 1;
         const markers = Array.from(document.querySelectorAll(marker));
         const seen = new Set();
-        let best = null, bestRange = -1;
+        let best = null, bestRange = -1, bestCount = 0;
         for (const cb of markers) {
             let el = cb.parentElement;
             while (el && el !== document.documentElement && el !== document.body) {
@@ -701,19 +712,34 @@ _FIND_CONTAINER_BODY_JS = """
                     const count = el.querySelectorAll(marker).length;
                     if (count > 1 && range > EDGE && range > bestRange) {
                         bestRange = range;
+                        bestCount = count;
                         best = el;
                     }
                 }
                 el = el.parentElement;
             }
         }
-        // The picker's row list is an inner strip and <html>/<body> must never stand in for it
-        // (the page's own 221 px scroller is what five earlier fixes kept hitting instead). The
-        // event's content tree is the opposite: it scrolls the PAGE. So the document scroller is
-        // a candidate only where the caller says this list can be page-scrolled, and only when
-        // nothing inner qualifies -- a real inner container still wins.
-        if (!best && allowDocument) best = document.scrollingElement || document.documentElement;
-        return best;
+        // The picker (`allowDocument === false`) never reaches past here -- `best`, found only
+        // among inner ancestors exactly as before, is the whole answer. Do not touch this
+        // return for that caller; everything below is new and scoped to `allowDocument`.
+        if (!allowDocument) return best;
+        // The event's content tree scrolls the PAGE, not an inner strip -- so here the document
+        // is a genuine competitor, scored on the same two questions as any inner element: does
+        // it actually scroll, and does it hold the markers being traversed. MIN_MEANINGFUL_RANGE
+        // excludes noise like the measured 6 px element (every real scroller measured live
+        // clears it by 10x or more: this page's own 465 px, the picker's inner list at 3129 px).
+        // An inner element only outranks the document when it clears that bar AND contains
+        // EVERY marker being traversed -- a partial container (25 of 72, measured) must lose
+        // even though it technically scrolls, because a traversal that silently walks 25 of 72
+        // anchors is exactly the failure this exists to prevent. Requiring full containment
+        // rather than "most of them" errs toward the document whenever it is in doubt, which is
+        // the safe direction: the document can never miss a marker that is on the page at all.
+        const MIN_MEANINGFUL_RANGE = 20;
+        const docCount = document.querySelectorAll(marker).length;
+        if (best && bestRange >= MIN_MEANINGFUL_RANGE && bestCount === docCount) {
+            return best;
+        }
+        return document.scrollingElement || document.documentElement;
     }
     function tbIsDocument(el) {
         return el === document.scrollingElement || el === document.documentElement
