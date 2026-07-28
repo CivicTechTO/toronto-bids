@@ -60,6 +60,51 @@ Order in `default_sources()` matters: `schema_check` first (drift detection), th
 
 Normalizers read feed fields with `raw.get(...)`, so a field the City renames silently NULLs a column forever. `schema_check.py` declares exactly the fields the OData and CKAN normalizers read and samples those five feeds on each sync, failing loudly on missing keys. When a normalizer starts reading a new field, add it to the declared sets in the same change. Ariba and suspended-firms are outside its coverage (suspended-firms parsing raises on header drift itself; Ariba field drift is unguarded).
 
+### Parsing discipline: prove clean extraction, or come back — never chase edge cases
+
+Scraped PDFs are messy enough to invite an endless patch-the-next-case loop, and this repo has
+run that loop more than once. The rule:
+
+**When an extractor is wrong, do not fix the failing case. Ask whether the corpus can be
+extracted cleanly AT ALL by a small set of statable rules — and if the answer looks like no,
+STOP AND COME BACK TO THE HUMAN rather than grinding.** "No clean extraction exists here" is a
+legitimate and complete finding: #83 reached it for council staff reports, and it stands. A
+parser held together by per-document exceptions is not a finding, it is a liability.
+
+How the question gets answered — the method is what makes the answer trustworthy:
+
+- **Measure against ground truth the documents themselves carry, never against the parser being
+  replaced.** The incumbent's output is not a baseline; it is the thing under suspicion. Award
+  Summary Forms state `Number of Bids Received` (#116); EP board reports state "four (4)
+  submissions were received, three (3) of which were compliant" (#151). Compare to *that*.
+- **Count the rules, and watch whether the count moves.** *Convergent* means each new wrinkle
+  collapses into a rule already written: #151's two page-break shapes — a caption stranded at a
+  page foot, and rows continuing overleaf as a separate headerless table object — are one event
+  and one walk, and its `Non-compliant`-in-the-price-column case turned out to be #94's existing
+  rule rather than a new one. *Divergent* means every fix reveals a wrinkle somewhere else and
+  the rule count climbs — #151's four rejected regex attempts, which is the named signature of
+  an architectural problem rather than a patchable one. **Divergence is the signal to stop and
+  re-ask the question, not to write rule five.**
+- **Refuse and log; never guess.** A refused row is a known gap someone can act on; a guessed row
+  is silent corruption that reads as data. #94 refuses an unequal column pair, #96 prints its 22
+  unkeyed appendices, #116 refuses a form that under-parses its own declared count.
+- **A disagreement with ground truth is often the DOCUMENT's defect, and that is a finding, not
+  something to parse around.** Of the three EP reports whose extracted count still disagrees,
+  two tabulate only the compliant subset of the bids they declare and one carries a malformed
+  price in the City's own PDF (`$1,479,386,.57`). Adding rules to absorb those would be inventing
+  data; the archive records what the City published.
+
+Worked example, #151 (measurement only — the EP parser switch has not landed): four rules
+(caption anchor / page-break walk / row = name + price-or-outcome / normalize) over the 47 EP
+reports carrying a bid table gave 47/47 tables found, 153 rows, **0 junk rows, 0 duplicates**,
+and **32/35** exact agreement with the reports' own declared counts, with all three residuals
+traced to the documents. The rule count started at four and finished at four.
+
+And the outcome is genuinely per-corpus, so it is measured each time: the rule is **"read cells
+where the PDF HAS cells"** (#116), never "pdfplumber is better". Ruled tables in 229/229 Award
+Summary Forms and 47/47 EP board reports — but only 13–20/229 council staff reports, where cells
+measured *worse* and regex is correct and stays.
+
 ### Linking
 
 - Everything competitive is keyed on the normalized 10-digit `document_number` (`linking/document_number.py`: strip non-digits, require exactly 10, reject a placeholder denylist). Non-competitive contracts live in a separate keyspace (`workspace_number`) — there is no join between them. **A third keyspace** is `composite_award.call_number` (`linking/call_number.py`, #96): 2009-2012 awards predate Ariba and identify themselves by Call Number, so they join to neither of the other two. Two shapes cover all 1,229 in the corpus — `3905-10-0097` (RFQ/RFP) and `317-2010` (Tender Call) — and the prefix vocabulary ("Request for Quotation", "RFQ", "Tender Call No.") carries no information. Match on the shape, never on the prefix, and beware the trailing `, Contract No. 10TE-17WS`, which is a *different* identifier.
