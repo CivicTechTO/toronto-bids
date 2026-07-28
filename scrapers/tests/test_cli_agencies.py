@@ -1,56 +1,86 @@
 from toronto_bids import cli
 from toronto_bids.buyers import seed_buyers
-from toronto_bids.models import AgencyAward
+from toronto_bids.models import AgencyAward, AgencySolicitation
 from toronto_bids.store import db
 
 
-# --- reporting new-vs-total distinctly (#177) ---------------------------------------------
+# --- reporting new-vs-total distinctly (#177), over DISTINCT ROWS (#142) -------------------
 
-def test_stored_line_reports_the_delta_beside_the_total():
-    """A quiet night's `107 solicitations, 107 awards, 115 bids` used to be indistinguishable
-    from a real one without cross-referencing the aggregate delta three lines down (#177)."""
-    line = cli._stored_line("trca", {"solicitations": 107, "awards": 107, "bids": 115},
-                            before=(88, 115), after=(88, 115))
-    assert "107 awards (+0)" in line
+# The live EP measurement this whole line exists to report honestly: 107 upserts issued,
+# against 74 solicitation rows and 88 award rows once the tables deduped.
+_EP_GOT = {"solicitations": 107, "awards": 107, "bids": 115}
+_EP_ROWS = (74, 88, 115)
+
+
+def test_stored_line_reports_distinct_rows_not_the_upsert_count():
+    """The #142 complaint: `107 solicitations` sent a reader looking for 107 rows and finding
+    74. The leading numbers must be what the tables actually hold."""
+    line = cli._stored_line("ep", _EP_GOT, before=_EP_ROWS, after=_EP_ROWS)
+    assert "74 solicitations (+0)" in line
+    assert "88 awards (+0)" in line
     assert "115 bids (+0)" in line
+    assert "107 solicitations" not in line
+    assert "107 awards" not in line
+
+
+def test_stored_line_still_surfaces_the_upsert_totals_but_labelled():
+    """"0 upserts" and "107 upserts that all deduped" are very different runs and otherwise
+    look identical from a flat (+0) — so the upsert count stays, named for what it is."""
+    line = cli._stored_line("ep", _EP_GOT, before=_EP_ROWS, after=_EP_ROWS)
+    assert "[upserts 107/107/115]" in line
 
 
 def test_stored_line_shows_growth_when_there_is_any():
     line = cli._stored_line("trca", {"solicitations": 108, "awards": 108, "bids": 118},
-                            before=(88, 115), after=(89, 118))
-    assert "108 awards (+1)" in line
+                            before=(70, 88, 115), after=(71, 89, 118))
+    assert "71 solicitations (+1)" in line
+    assert "89 awards (+1)" in line
     assert "118 bids (+3)" in line
 
 
 def test_stored_line_delta_is_the_real_row_count_not_the_loop_count():
-    """`got["awards"]` counts REPORTS PROCESSED this call, not resulting rows — a report is
-    upserted keyed on native_ref, so an amendment and its original can both increment the
-    loop count while collapsing into the same row. Live-measured: a full EP reparse processed
-    107 reports against a table holding 88 rows; `got["awards"] - before[0]` would have
-    reported a fictitious +19. The delta must come from two real row-count queries, not from
-    `got` at all (#177)."""
-    line = cli._stored_line("ep", {"solicitations": 107, "awards": 107, "bids": 115},
-                            before=(88, 115), after=(88, 115))
+    """The delta must come from two real row-count queries, not from `got` at all — using the
+    loop count would have reported a fictitious +19 on the EP reparse (#177)."""
+    line = cli._stored_line("ep", _EP_GOT, before=_EP_ROWS, after=_EP_ROWS)
     assert "awards (+0)" in line
+    assert "+19" not in line
 
 
 def test_stored_line_omits_bids_for_a_body_with_no_bid_table():
-    """Zoo's store_zoo_reports returns no 'bids' key — the line must not fabricate one."""
-    line = cli._stored_line("zoo", {"solicitations": 5, "awards": 5}, before=(5, 0), after=(5, 0))
+    """Zoo's store_zoo_reports returns no 'bids' key — the line must not fabricate one, and
+    the upsert bracket must not invent a third figure either."""
+    line = cli._stored_line("zoo", {"solicitations": 5, "awards": 5},
+                            before=(4, 4, 0), after=(4, 4, 0))
     assert "bids" not in line
+    assert "[upserts 5/5]" in line
 
 
 def test_source_row_counts_are_scoped_to_one_board(conn):
     ids = seed_buyers(conn)
+    db.upsert_row(conn, AgencySolicitation(
+        buyer_id=ids["trca"], native_ref="1", title=None, status=None, posted_date=None,
+        closing_date=None, portal_url=None, source="trca_board"), overwrite=True)
     db.upsert_row(conn, AgencyAward(
         buyer_id=ids["trca"], native_ref="1", supplier_name_raw="X", award_amount=None,
         value_confidential=0, award_date=None, source="trca_board"), overwrite=True)
     db.upsert_row(conn, AgencyAward(
         buyer_id=ids["toronto-zoo"], native_ref="1", supplier_name_raw="Y", award_amount=None,
         value_confidential=0, award_date=None, source="zoo_board"), overwrite=True)
-    assert cli._source_row_counts(conn, "trca_board") == (1, 0)
-    assert cli._source_row_counts(conn, "zoo_board") == (1, 0)
-    assert cli._source_row_counts(conn, "ep_board") == (0, 0)
+    assert cli._source_row_counts(conn, "trca_board") == (1, 1, 0)
+    assert cli._source_row_counts(conn, "zoo_board") == (0, 1, 0)
+    assert cli._source_row_counts(conn, "ep_board") == (0, 0, 0)
+
+
+def test_source_row_counts_dedup_the_way_the_tables_do(conn):
+    """The whole reason #142 exists: two upserts sharing a `native_ref` are ONE row. This is
+    what makes the printed number differ from the upsert count, so pin it directly."""
+    ids = seed_buyers(conn)
+    for title in ("first report", "its amendment"):
+        db.upsert_row(conn, AgencySolicitation(
+            buyer_id=ids["trca"], native_ref="10039751", title=title, status=None,
+            posted_date=None, closing_date=None, portal_url=None,
+            source="trca_board"), overwrite=True)
+    assert cli._source_row_counts(conn, "trca_board")[0] == 1     # 2 upserts -> 1 row
 
 
 # --- --only ep --portal must skip cleanly, not KeyError (#152) ---------------------------

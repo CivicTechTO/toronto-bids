@@ -751,32 +751,47 @@ def _cmd_nightly(args) -> int:
     return 1 if failures else 0
 
 
-def _source_row_counts(conn, source: str) -> tuple[int, int]:
-    """(agency_award, agency_bid) rows currently attributed to one board's `source` value."""
-    a = conn.execute("SELECT COUNT(*) FROM agency_award WHERE source=?", (source,)).fetchone()[0]
-    b = conn.execute("SELECT COUNT(*) FROM agency_bid WHERE source=?", (source,)).fetchone()[0]
-    return a, b
+def _source_row_counts(conn, source: str) -> tuple[int, int, int]:
+    """(agency_solicitation, agency_award, agency_bid) rows attributed to one board's `source`.
 
-
-def _stored_line(label: str, got: dict, before: tuple[int, int], after: tuple[int, int]) -> str:
-    """'  trca stored : 446 solicitations, 693 awards (+0), 527 bids (+0)' (#177).
-
-    `got["awards"]`/`got["bids"]` count REPORTS PROCESSED this call, not resulting rows — a
-    report is upserted with `overwrite=True` keyed on `native_ref`, so an amendment report
-    and its original can both increment the loop count while collapsing into the same row.
-    Live-measured: a full EP reparse processed 107 reports against a table holding 88 rows,
-    which is exactly the gap `got["awards"] - before` would have reported as fictitious growth
-    (+19) had the delta been computed from the loop count instead of a second real query. The
-    delta here is `after - before` over `_source_row_counts` on BOTH sides — an actual row
-    count, immune to how many reports happened to write it. `got` is still what carries the
-    "reports processed" totals shown beside the delta. No "bids" key for a body with no bid
-    table (Zoo).
+    Distinct ROWS, which is what the tables actually hold — not the number of upserts issued to
+    write them. The two differ by design and by a lot: the tables dedup on
+    `(buyer_id, native_ref)` and the award line key, so a report and its amendment collapse into
+    one row (#142).
     """
-    line = (f"  {label} stored : {got['solicitations']} solicitations, "
-           f"{got['awards']} awards ({after[0] - before[0]:+d})")
+    def n(table):
+        return conn.execute(
+            f"SELECT COUNT(*) FROM {table} WHERE source=?", (source,)).fetchone()[0]
+    return n("agency_solicitation"), n("agency_award"), n("agency_bid")
+
+
+def _stored_line(label: str, got: dict, before: tuple[int, int, int],
+                 after: tuple[int, int, int]) -> str:
+    """'  ep stored : 74 solicitations (+0), 88 awards (+0), 115 bids (+0)  [upserts 107/107/115]'
+
+    **The leading numbers are DISTINCT ROWS, never the upsert count (#142).** `got[...]` counts
+    upserts ISSUED this call, and the tables dedup on `(buyer_id, native_ref)` and the award
+    line key — so a report and its amendment, or two items sharing a fallback ref, collapse
+    into one row. Live-measured on EP: **107 upserts against 74 solicitation rows and 88 award
+    rows**. Printing the upsert count as though it were the table's contents is what sent a
+    reader looking for 107 rows and finding 74. The dedup is correct and intended; only the
+    messaging was wrong.
+
+    The upsert totals are still shown, in a trailing bracket that names them, because they are
+    a real diagnostic the row counts cannot give: "0 upserts" and "107 upserts that all
+    deduped" are very different runs and otherwise look identical from a flat `(+0)`.
+
+    The delta remains `after - before` over `_source_row_counts` (#177) — two real row-count
+    queries, immune to how many upserts happened to write them. No "bids" key for a body with
+    no bid table (Zoo).
+    """
+    line = (f"  {label} stored : {after[0]} solicitations ({after[0] - before[0]:+d}), "
+           f"{after[1]} awards ({after[1] - before[1]:+d})")
+    upserts = [str(got["solicitations"]), str(got["awards"])]
     if "bids" in got:
-        line += f", {got['bids']} bids ({after[1] - before[1]:+d})"
-    return line
+        line += f", {after[2]} bids ({after[2] - before[2]:+d})"
+        upserts.append(str(got["bids"]))
+    return line + f"  [upserts {'/'.join(upserts)}]"
 
 
 def _capture_agency_bodies(conn, ids, *, bodies, fetch, scrape, virtual_display, out):
