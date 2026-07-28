@@ -400,22 +400,6 @@ def capture_event(page, event: dict, dest_dir, log=lambda _m: None) -> Path | No
     # is hard-stopped at 500 MB, which cannot reach an event whose row 3.1 is atomic at
     # 787.71 MB. Every individual file is <= 88.7 MB, so this path has no ceiling at all.
     source = AribaFileSource(page, rfx_id=rfx_id, log=log)
-    # Count first, but not because it's cheap or safe -- it is the most expensive non-download
-    # step per event (Download Content -> Download Attachments -> _select_all_attachments, a
-    # 90s ceiling -> picker read -> Done), and Done does NOT return to the content-tree view: it
-    # lands on the export page and discards every References section opened before it (see
-    # expected_count's and _restore_event_view's docstrings). That is why _restore_event_view
-    # exists below the picker read -- it re-navigates via _open_authed_preview + Respond rather
-    # than assuming Done left us anywhere useful. The count read itself can't "fail early" either:
-    # it swallows every exception and returns None (see _read_expected_count); only the restore
-    # can raise. It still has to run first, though -- the picker is only reachable from the fresh
-    # event view Respond just opened, and reading it later would cost a second full
-    # re-navigation instead of reusing this one. `expected_count()` is memoised on `source` (see
-    # its docstring), so this read and `capture_files`'s own call to it after `list_files()`
-    # share one result -- the picker is driven exactly once, not once per call site.
-    expected = source.expected_count()
-    if expected is not None:
-        log(f"  Doc{document_number}: picker reports {expected} attachment(s)")
     # Reaching this line means the posting is OPEN -- the Respond-disabled branch above already
     # routed a closed posting to salvage and returned. That is what makes it safe for
     # `capture_files` to discard partials on a fingerprint mismatch or an unreadable manifest
@@ -498,6 +482,10 @@ def _wait_post_respond(page, download_content, timeout_ms: int = 60000) -> str:
 
 def _select_all_attachments(page, log=lambda _m: None, timeout_ms: int = 90000) -> None:
     """Tick the picker's header checkbox to select every file, and wait for the cascade to land.
+
+    **Currently unused by the live capture path** — its only caller, `_read_expected_count`, was
+    removed with the picker-count comparison it fed (#185; see `AribaPicker`'s docstring). Kept
+    on disk, tested (`tests/test_ariba_select_all.py`), for the same reason.
 
     The widget is `<div class="w-chk-container"><input class="w-chk-native"><label
     class="w-chk"></label></div>`. The real <input> is hidden and empty of size; the visible box
@@ -1035,6 +1023,17 @@ class _ListScroller:
 
 class AribaPicker:
     """Playwright adapter satisfying ariba_batch's Picker protocol (#174).
+
+    **Currently unused by the live capture path (#185).** Its last caller was
+    `AribaFileSource._read_expected_count`, removed when the picker-count comparison it fed was
+    proven to compare incommensurable quantities (54 picker vs. 39 traversal vs. 178 true leaves
+    on the one validated event). Kept on disk rather than deleted, the same way `ariba_batch.py`
+    was after its own retirement: it is tested, its scroll/selection logic solves real,
+    hard-won hazards (below) that a future picker-driven feature would otherwise re-learn from
+    scratch, and deleting working code as a side effect of an unrelated fix is not this issue's
+    call to make. A docstring or two below still describes call sites that no longer exist
+    (`capture_event`, `.omitted.json`'s `expected_files`) — left as-is as history of what this
+    class was built for, not a claim about current behaviour.
 
     Three hazards this class exists to contain, all measured live:
 
@@ -1692,8 +1691,6 @@ _EXPAND_ALL_JS = """
 
 _DOWNLOAD_MENU_ITEM = "Download this attachment"
 
-_UNREAD = object()                 # "expected_count has not been read yet" -- None is an answer
-
 
 class AribaFileSource:
     """Playwright adapter satisfying ariba_files' FileSource protocol (#174).
@@ -1743,7 +1740,6 @@ class AribaFileSource:
         self.page = page
         self.rfx_id = rfx_id
         self.log = log
-        self._expected = _UNREAD
         self._toggled: set = set()
         # Set by `list_files()` from `_sweep()`'s own count -- how many links the traversal
         # found INDISTINGUISHABLE from one another and collapsed. Exposed via `collided_count()`
@@ -1791,14 +1787,14 @@ class AribaFileSource:
 
         **A NEGATIVE check alone is not enough (#174 M4).** "No picker heading, and a visible
         Download Content button" also describes the export page reached right after the
-        picker's `Done` -- `capture_event`'s own comment notes the chain is Download Content ->
-        export page -> Download Attachments, and if that page renders its own Download Content
-        button, the old check is satisfied there too and `_restore_event_view` short-circuits
-        onto the wrong page, silently traversing or downloading against whatever is actually in
-        front of it. So a POSITIVE marker of the content tree itself is required as well:
-        either the "All Content" label the tree renders (and the export page does not), or at
-        least one outline-numbered row -- the tree's own row addressing, and nothing the export
-        page has anything like.
+        picker's `Done` -- the chain used to be Download Content -> export page -> Download
+        Attachments (the picker-count round trip that drove it was removed in #185, but this
+        page shape is still reachable any time something clicks through to it), and if that page
+        renders its own Download Content button, a negative-only check is satisfied there too
+        and would traverse or download against whatever is actually in front of it. So a
+        POSITIVE marker of the content tree itself is required as well: either the "All Content"
+        label the tree renders (and the export page does not), or at least one outline-numbered
+        row -- the tree's own row addressing, and nothing the export page has anything like.
         """
         try:
             if self.page.query_selector(f"text={PICKER_HEADING}") is not None:
@@ -1842,42 +1838,8 @@ class AribaFileSource:
             f"{self.page.url}). Traversing or clicking here would silently address whatever "
             f"else is rendered — refusing (#174).")
 
-    def _restore_event_view(self) -> None:
-        """Put the event's All Content view back after the picker read navigated away.
-
-        Nothing else does: the picker's `Done` returns to the export page, and every
-        `References` section opened before it is gone. Re-entry is the same door `capture_event`
-        uses -- `_open_authed_preview` then Respond, which is idempotent (re-responding just
-        re-opens the event) -- and it is confirmed by evidence before returning.
-        """
-        if self._wait_event_view(timeout_ms=8000):
-            return
-        if not self.rfx_id:
-            raise RuntimeError(
-                "the picker read left the event's All Content view and this source was built "
-                "without an rfx_id, so it cannot navigate back — refusing to traverse the "
-                "wrong page (#174).")
-        for _ in range(2):
-            if not _open_authed_preview(self.page, self.rfx_id):
-                continue
-            try:
-                self.page.get_by_role("button", name="Respond", exact=True).click(timeout=15000)
-            except Exception as exc:                  # noqa: BLE001 — one attempt, not the run
-                self.log(f"    could not re-enter the event via Respond ({exc})")
-                continue
-            outcome = _wait_post_respond(
-                self.page, self.page.get_by_role("button", name="Download Content"))
-            _dismiss_cookie_banner(self.page)
-            if outcome == "event" and self._wait_event_view(timeout_ms=15000):
-                self.log("    event content view restored after the picker read")
-                # Anything opened before the picker read is closed again -- so is the record of
-                # having opened it, or `_expand_references` would skip every section.
-                self._toggled.clear()
-                return
-        raise RuntimeError(
-            f"the event's All Content view could not be restored after reading the picker's "
-            f"file count (rfx {self.rfx_id}) — refusing to traverse or download against "
-            f"whatever page is in front of us instead (#174).")
+    # `_restore_event_view` was removed with the picker-count round trip it existed solely to
+    # undo (#185) — nothing else ever navigated away from the event's All Content view.
 
     # --- traversal -----------------------------------------------------------------------
     def _reference_toggles(self) -> list:
@@ -2130,17 +2092,12 @@ class AribaFileSource:
 
         A traversal that quietly sees 6 files instead of 60 is the failure that matters here,
         and #174 spent six live runs learning that a silent short read looks exactly like
-        success. So the picker's count is read FIRST (it is an independent ground truth -- a
-        file behind a section that never expanded is invisible to this traversal and to nothing
-        else) and logged alongside the traversal's own count below.
-
-        **A shortfall against that count is NOT raised here.** It used to be, but the check is
-        PROVISIONAL -- it is not established that "Total Number" on the picker and "files found
-        in the tree" count the same thing, and an unverified check must not be able to block the
-        only path that gets these bytes before a posting closes (#174). `ariba_files.capture_files`
-        is the pure layer that owns this comparison: it logs the shortfall loudly and folds it
-        into the durable `Doc<n>.omitted.json`, but always proceeds with what was found. Only a
-        traversal that finds ZERO files is fatal, and that check lives there too, not here.
+        success. The tree's own geometry (outline rows seen, References toggles found/expanded)
+        is logged below as the diagnostic for that — cheaper and, per #185, more trustworthy
+        than the picker's `Total Number` this used to also read and log alongside it: the first
+        live comparison found the picker reporting 54 against a traversal of 39 and a true leaf
+        count of 178, three numbers with no derivable relationship. Only a traversal that finds
+        ZERO files is fatal, and that check lives in `ariba_files.capture_files`, not here.
 
         **The tree's geometry is logged once here, on a live run of the brand-new
         `allow_document=True` scroll path (#174 M2).** `AribaPicker` states its row list's
@@ -2158,7 +2115,6 @@ class AribaFileSource:
         catches anything the bulk step missed or if it never fired. Only once that sequence
         has run does the sweep below see the rows that carry the bulk of the documents.
         """
-        expected = self.expected_count()
         self._require_event_view("the content-tree traversal")
         self._scroller.log_geometry()
 
@@ -2176,8 +2132,7 @@ class AribaFileSource:
         # a healthy `outline_rows`/`toggles_found` beside a still-short `files` count says the
         # tree opened fine and the files themselves are the gap.
         self.log(f"    content tree: {len(files)} file(s), {outline_rows} outline row(s) "
-                 f"seen, {toggles_found} References toggle(s) found ({opened} expanded), "
-                 f"picker count {expected if expected is not None else 'unknown'}")
+                 f"seen, {toggles_found} References toggle(s) found ({opened} expanded)")
         if rejected:
             # Named, because the alternative is a document silently absent from an archive
             # nobody can re-fetch. The predicate this replaced was `$`-anchored (so it skipped
@@ -2451,56 +2406,14 @@ class AribaFileSource:
             f"References sections did not reveal it — refusing to click something that is not "
             f"on screen (#174)")
 
-    # --- the picker's count, and nothing else --------------------------------------------
-    def expected_count(self) -> int | None:
-        """The picker's authoritative `Total Number`, read WITHOUT downloading anything.
-
-        An independent ground truth: the content tree could hide a file behind a References
-        section that never expanded, and the traversal would never know.
-
-        **Read once, before the traversal, and the event view restored afterwards.** This
-        drives Download Content -> Download Attachments -> picker -> Done, which leaves the
-        event's All Content view and discards every expansion made under it; running it BETWEEN
-        `list_files()` and the downloads (which is the order `capture_files` calls the protocol
-        in) left every later click hunting on the wrong page. Memoised, so `capture_files`'s own
-        call after `list_files()` costs nothing and navigates nowhere.
-
-        PROVISIONAL in one respect only: it is not yet established live that the picker's
-        `Total Number` and the tree's file count are commensurable (see the spec; Task 5
-        validates against the known 54) -- a nested archive counted as many attachments but one
-        tree file would make either direction of mismatch a permanent phantom. So `capture_files`
-        RECORDS a disagreement in either direction (short or over) in the durable `.omitted.json`
-        and logs it loudly, but never refuses on it: the portal disables downloading the instant
-        a posting closes, so bytes beat strictness, and an unverified check must not be able to
-        block the only path that gets them. Do not tighten this back into a raise without first
-        confirming live that the two counts are commensurable. The one comparison that IS still
-        fatal -- zero files found -- is a different condition (content withheld, not miscounted)
-        and lives in `capture_files` too.
-        """
-        if self._expected is _UNREAD:
-            self._expected = self._read_expected_count()
-            self._restore_event_view()
-        return self._expected
-
-    def _read_expected_count(self) -> int | None:
-        try:
-            dc = self.page.get_by_role("button", name="Download Content")
-            da = self.page.get_by_role("button", name="Download Attachments")
-            dc.click()
-            try:
-                da.first.wait_for(state="visible", timeout=30000)
-            except Exception:
-                dc.click()                            # no-op first click — try once more
-                da.first.wait_for(state="visible", timeout=30000)
-            da.first.click()
-            self.page.wait_for_selector(f"text={PICKER_HEADING}", timeout=45000)
-            _select_all_attachments(self.page, log=self.log)
-            count = AribaPicker(self.page, log=self.log).file_count()
-            self.page.get_by_role("button", name="Done").first.click()
-            return count
-        except Exception as exc:                      # noqa: BLE001 — advisory, never blocks
-            self.log(f"    could not read the picker's file count ({exc}) — recording unknown")
-            return None
+    # The picker's `Total Number` round trip (`expected_count`/`_read_expected_count`,
+    # Download Content -> Download Attachments -> picker -> Done -> `_restore_event_view`) was
+    # removed here (#185). It never established what it set out to: the first live comparison
+    # found the picker reporting 54 against a traversal of 39 and a true leaf count of 178 after
+    # nested expansion — three different quantities, none of which the other two could be
+    # derived from. The comparison only ever recorded, never refused, so removing it changes no
+    # capture outcome; it only stops writing a `Doc<n>.omitted.json` claiming documents are
+    # missing when none are. See CLAUDE.md's Ariba attachments section for the measurement.
 
 
 def capture_attachments(conn, dest_dir=None, log=lambda _m: None, headless=False,
