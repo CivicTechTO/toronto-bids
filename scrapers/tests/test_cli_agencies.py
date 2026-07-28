@@ -53,6 +53,82 @@ def test_source_row_counts_are_scoped_to_one_board(conn):
     assert cli._source_row_counts(conn, "ep_board") == (0, 0)
 
 
+# --- --only ep --portal must skip cleanly, not KeyError (#152) ---------------------------
+
+def _agencies_env(monkeypatch, conn, tmp_path):
+    """Offline `tb enrich-agencies`: no fetch/scrape, no real board parsing, no supplier
+    rebuild work — isolates the --portal dispatch this test is actually about."""
+    from toronto_bids import config
+    monkeypatch.setattr(cli, "_open_db", lambda: conn)
+    monkeypatch.setattr(config, "DATA_DIR", tmp_path)
+    monkeypatch.setattr(cli, "_capture_agency_bodies", lambda *a, **k: [])
+    from toronto_bids.linking import supplier
+    monkeypatch.setattr(supplier, "build_supplier_dimension", lambda *a, **k: 0)
+
+
+def test_only_ep_portal_completes_without_a_keyerror_or_a_portal_failure(
+        conn, monkeypatch, tmp_path, capsys):
+    """EP procures via Bonfire, not a bids&tenders portal (#134) — `{"trca":.., "zoo":..}[args.only]`
+    raised an uncaught KeyError for `--only ep --portal`, caught by the surrounding try/except
+    and recorded as a portal FAILURE for a body that was never supposed to have one."""
+    _agencies_env(monkeypatch, conn, tmp_path)
+    from toronto_bids.sources import bids_tenders
+    called = []
+    monkeypatch.setattr(bids_tenders, "run_portal_capture",
+                        lambda *a, **k: called.append(k) or {})
+
+    assert cli.main(["enrich-agencies", "--only", "ep", "--portal"]) == 0
+
+    assert not called, "run_portal_capture must not run at all for a body with no portal"
+    assert "no bids&tenders portal" in capsys.readouterr().out
+
+
+def test_only_trca_portal_behaves_exactly_as_before(conn, monkeypatch, tmp_path):
+    _agencies_env(monkeypatch, conn, tmp_path)
+    from toronto_bids.sources import bids_tenders
+    seen = {}
+    def _fake(*_a, only=None, **_k):
+        seen["only"] = only
+        return {}
+    monkeypatch.setattr(bids_tenders, "run_portal_capture", _fake)
+
+    assert cli.main(["enrich-agencies", "--only", "trca", "--portal"]) == 0
+
+    assert seen["only"] == {"trca"}
+
+
+def test_only_zoo_portal_maps_to_the_toronto_zoo_slug(conn, monkeypatch, tmp_path):
+    """The body name ('zoo') and the portal's own slug ('toronto-zoo') differ — this mapping
+    is the reason the lookup existed at all, and must survive the #152 fix unchanged."""
+    _agencies_env(monkeypatch, conn, tmp_path)
+    from toronto_bids.sources import bids_tenders
+    seen = {}
+    def _fake(*_a, only=None, **_k):
+        seen["only"] = only
+        return {}
+    monkeypatch.setattr(bids_tenders, "run_portal_capture", _fake)
+
+    assert cli.main(["enrich-agencies", "--only", "zoo", "--portal"]) == 0
+
+    assert seen["only"] == {"toronto-zoo"}
+
+
+def test_no_only_portal_still_runs_every_enabled_body(conn, monkeypatch, tmp_path):
+    """`--portal` without `--only` must keep capturing every enabled+permitted body — the
+    #152 fix must only change the EP-specific dead end, not the default fan-out."""
+    _agencies_env(monkeypatch, conn, tmp_path)
+    from toronto_bids.sources import bids_tenders
+    seen = {}
+    def _fake(*_a, only=None, **_k):
+        seen["only"] = only
+        return {}
+    monkeypatch.setattr(bids_tenders, "run_portal_capture", _fake)
+
+    assert cli.main(["enrich-agencies", "--portal"]) == 0
+
+    assert seen["only"] is None
+
+
 def test_capture_agency_bodies_isolates_a_failing_body(conn, monkeypatch):
     # TRCA raises; Zoo and EP still run and the failure is reported, not raised.
     ids = seed_buyers(conn)
