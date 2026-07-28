@@ -198,6 +198,26 @@ and attribution conditions in its permission file. Bid documents stay out of sco
 regardless — they sit behind the Vendor clickwrap. Bill 97 amalgamates TRCA away on
 2027-02-01; its capture is deadline-bound.
 
+**On eSCRIBE, a document is what the page LINKS TO, never what it LOADS (#175).** TRCA's
+meeting pages serve their own print stylesheet (`<link rel=stylesheet href>`) and header
+logo (`<img src>`) through the *same* `FileStream.ashx?DocumentId=` handler as their PDFs,
+so matching `href|src` on any element indexed two page assets per meeting page — **460
+against 3,422 real documents**. They can never satisfy the `%PDF` check, so they sat
+queued (`sha256 IS NULL`) and were re-fetched **every night forever**, and the `continue`
+that dropped them **logged nothing**, which is why an 11-line 404 list read as the whole
+problem. `escribe_document_urls` is anchor-scoped (measured live: drops exactly those 460,
+adds none — `href` is not always the first attribute, `<a class='Link' tabindex='15'
+href=...>`), and `escribe_asset_urls` NAMES the complement so `_prune_page_assets` can
+unqueue the rows already written. That prune is a **deliberate, narrow exception** to "rows
+are never deleted": a row must be unheld AND still shown as an asset by a page just loaded,
+so a document that merely stopped appearing — a meeting dropped from the calendar, a page
+that 404'd mid-walk — is untouched, and held bytes are unreachable by it.
+**The ~11 remaining 404s are not losses and should not be suppressed:** every one is a
+*minutes* link (the outlier, `20288`, is a closed-session `RES.#` on a Bill 97 negotiating
+position), no board report is among them, and all 11 are **still linked from TRCA's own
+pages** — a broken link at source, not an id rotation, so they stay queued in case TRCA
+repairs one.
+
 The bids&tenders **portal listings** (`sources/bids_tenders.py`, #135) are captured over plain
 HTTP — the grid loads from `POST /Module/Tenders/en/Tender/Search/<NodeId>` (session cookie +
 the FIRST antiforgery token; **never send `sort=` — it errors**), no browser. `fetch_listings`

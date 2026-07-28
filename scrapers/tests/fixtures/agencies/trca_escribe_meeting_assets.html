@@ -1,0 +1,25 @@
+<!--
+REAL CAPTURE, TRIMMED (#175). Verbatim fragments of
+https://pub-trca.escribemeetings.com/Meeting.aspx?Id=61119747-5c38-4080-a3f8-0d45952a03b7&Agenda=Agenda&lang=English
+(Board of Directors, fetched 2026-07-28; the live page is 131,700 bytes). Every
+FileStream.ashx line below is byte-for-byte as eSCRIBE serves it — only the
+surrounding page has been cut away.
+
+The point of the fixture: eSCRIBE serves the meeting page's OWN print stylesheet
+and header logo through the same FileStream.ashx?DocumentId= handler as its
+documents. Fetched live on 2026-07-28, DocumentId=3253 returns text/css and
+DocumentId=3251 returns image/jpeg (the TRCA logo, the same 22,692 bytes on all
+230 meeting pages). Only an <a href> is a document.
+-->
+<html>
+<head>
+<link href="/Content/css?v=3HBqEpp8bqFx1jEAWPqC5aHyIoSdKmwCBMczyQOKLr41" rel="stylesheet"/>
+<link rel='stylesheet' type='text/css' href='/FileStream.ashx?DocumentId=3253'>
+</head>
+<body>
+<DIV class='AgendaHeaderLogo' ><img  src='filestream.ashx?DocumentId=3251' alt=''  /></DIV>
+<a href="https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=3216">Link</a>
+<DIV class='AgendaItemAttachment AgendaItemAttachment15' ><SPAN class='Sequence' >1.</SPAN><a class='Link' tabindex='15' href='filestream.ashx?DocumentId=3235' data-toggle='tooltip' data-html='true' data-container='body' data-original-title='1815 Altona Road Pickering - Spiers Eco-Gift Donation.pdf' target='_blank' ><SPAN class='Link' >1815 Altona Road Pickering - Spiers Eco-Gift Donation.pdf</SPAN></a></DIV>
+<DIV class='AgendaItemAttachment AgendaItemAttachment15' ><SPAN class='Sequence' >2.</SPAN><a class='Link' tabindex='15' href='filestream.ashx?DocumentId=3236' data-toggle='tooltip' data-html='true' data-container='body' data-original-title='1815 Altona Rd.pdf' target='_blank' ><SPAN class='Link' >1815 Altona Rd.pdf</SPAN></a></DIV>
+</body>
+</html>

@@ -133,8 +133,20 @@ def parse_trca_report(text: str, report_url: str | None = None) -> list[dict]:
             for ref in refs if winners_by_ref[ref]]
 
 
-_FILESTREAM = re.compile(r"""(?:href|src)=["']([^"']*[Ff]ile[Ss]tream\.ashx\?DocumentId=\d+[^"']*)""")
-_MEETING = re.compile(r"""href=["']([^"']*Meeting\.aspx\?[^"']+)""")
+# A document is something the page LINKS TO, never something it LOADS (#175). eSCRIBE
+# serves the meeting page's own print stylesheet (<link rel=stylesheet href>) and header
+# logo (<img src>) through the same FileStream.ashx?DocumentId= handler as its PDFs, so
+# matching href|src on any element indexed two page assets per meeting page — 460 across
+# the 230-page corpus, against 3,422 real documents. They can never be PDFs, so the fetch
+# loop dropped them at the %PDF check and left them queued, re-fetching all 460 every
+# night forever while logging nothing at all. Anchor-scoping is measured against the live
+# corpus: it drops exactly those 460 and adds none. `[^>]*?` because href is not always
+# the first attribute (`<a class='Link' tabindex='15' href=...>`).
+_ANCHOR_FILESTREAM = re.compile(
+    r"""<a\b[^>]*?href=["']([^"']*[Ff]ile[Ss]tream\.ashx\?DocumentId=\d+[^"']*)""", re.I)
+_ANY_FILESTREAM = re.compile(
+    r"""(?:href|src)=["']([^"']*[Ff]ile[Ss]tream\.ashx\?DocumentId=\d+[^"']*)""")
+_MEETING = re.compile(r"""<a\b[^>]*?href=["']([^"']*Meeting\.aspx\?[^"']+)""", re.I)
 
 
 def _absolute(url: str) -> str:
@@ -143,20 +155,40 @@ def _absolute(url: str) -> str:
     return config.TRCA_ESCRIBE_BASE.rstrip("/") + "/" + url.lstrip("/")
 
 
-def escribe_document_urls(html: str) -> list[str]:
-    """Every FileStream + Meeting link on a page, absolute, order-preserving, deduped.
-
-    HTML-decode each href before use: some detail pages encode the colon as `&#58;`
-    (and `&` as `&amp;`), so a plain `.replace('&amp;', '&')` leaves `https&#58;//…` — a
-    malformed scheme that crashes the fetch. `unescape` handles every entity (#137).
-    """
+def _absolute_unique(matches) -> list[str]:
     seen, out = set(), []
-    for m in (_FILESTREAM.findall(html) + _MEETING.findall(html)):
+    for m in matches:
+        # HTML-decode each href before use: some detail pages encode the colon as `&#58;`
+        # (and `&` as `&amp;`), so a plain `.replace('&amp;', '&')` leaves `https&#58;//…` —
+        # a malformed scheme that crashes the fetch. `unescape` handles every entity (#137).
         u = _absolute(unescape(m))
         if u not in seen:
             seen.add(u)
             out.append(u)
     return out
+
+
+def escribe_document_urls(html: str) -> list[str]:
+    """Every linked FileStream + Meeting URL on a page, absolute, order-preserving, deduped.
+
+    Anchors only — a stylesheet or logo served through FileStream.ashx is page furniture,
+    not a document (#175). See `escribe_asset_urls` for the other side of that split.
+    """
+    return _absolute_unique(_ANCHOR_FILESTREAM.findall(html) + _MEETING.findall(html))
+
+
+def escribe_asset_urls(html: str) -> list[str]:
+    """The FileStream URLs this page LOADS rather than links to — its stylesheet and logo.
+
+    The complement of `escribe_document_urls` over the same handler, and the reason it is
+    computed rather than inferred: these are the rows #175 mis-indexed as documents, and
+    naming them from the page itself is what lets `download_reports` unqueue them. A row is
+    pruned only because the page it came from still shows it as an asset — never because
+    it merely stopped appearing, which would drop a real document the moment a meeting fell
+    out of the calendar.
+    """
+    linked = set(_absolute_unique(_ANCHOR_FILESTREAM.findall(html)))
+    return [u for u in _absolute_unique(_ANY_FILESTREAM.findall(html)) if u not in linked]
 
 
 def meeting_detail_urls(calendar_json: dict) -> list[str]:
@@ -186,6 +218,7 @@ def download_reports(conn, http, log=lambda _m: None) -> int:
     """
     config.TRCA_REPORTS_DIR.mkdir(parents=True, exist_ok=True)
     # 1. Index: discover FileStream URLs and upsert a background_pdf row per document.
+    assets: set[str] = set()
     for year in config.TRCA_ESCRIBE_YEARS:
         try:
             calendar = http.post_json(config.TRCA_CALENDAR_URL,
@@ -206,10 +239,40 @@ def download_reports(conn, http, log=lambda _m: None) -> int:
                 if "ashx" in durl.lower():
                     db.upsert_row(conn, BackgroundPdf(url=durl, kind="agency_board"),
                                   overwrite=False)
+            assets.update(escribe_asset_urls(mhtml))
         conn.commit()
+    _prune_page_assets(conn, assets, log)
     # 2. Fetch: everything indexed but not yet held.
     return _store_pending_pdfs(conn, http, config.TRCA_REPORTS_DIR,
                                "%escribemeetings%", log, "trca")
+
+
+def _prune_page_assets(conn, assets: set[str], log) -> int:
+    """Unqueue rows a meeting page shows as an ASSET rather than a document (#175).
+
+    Deleting from `background_pdf` is a deliberate exception to this archive's "rows are
+    never deleted" rule, and a narrow one: these rows index a stylesheet and a logo, not a
+    record, and nothing was ever held for them. The alternative — leaving them — is not
+    inert, because `_store_pending_pdfs` queues on `sha256 IS NULL`, so all 460 were
+    re-fetched every night and would go on being re-fetched forever.
+
+    Scoped so it can only ever hit that mistake: a row must be unheld AND still named as an
+    asset by a page we just loaded. A document that merely stopped appearing — a meeting
+    dropped from the calendar, a page that 404'd mid-walk — is untouched, so no completeness
+    guard on the walk is needed. Nothing here can delete bytes we hold.
+    """
+    if not assets:
+        return 0
+    ids = [r["id"] for r in conn.execute(
+        "SELECT id, url FROM background_pdf WHERE kind='agency_board' "
+        "AND url LIKE '%escribemeetings%' AND sha256 IS NULL").fetchall()
+        if r["url"] in assets]
+    if not ids:
+        return 0
+    conn.executemany("DELETE FROM background_pdf WHERE id=?", [(i,) for i in ids])
+    conn.commit()
+    log(f"  trca: unqueued {len(ids)} page asset(s) mis-indexed as documents (#175)")
+    return len(ids)
 
 
 def _store_pending_pdfs(conn, http, reports_dir, url_like: str, log, prefix: str) -> int:
@@ -235,7 +298,13 @@ def _store_pending_pdfs(conn, http, reports_dir, url_like: str, log, prefix: str
             log(f"  {prefix} skip {row['url']}: {exc}")
             continue
         if not blob.startswith(b"%PDF"):
-            continue                        # HTML error page; leave queued
+            # Left queued — an interstitial or a transient error page may serve the real
+            # PDF next run. But SAY SO: this branch was silent, and #175 hid 460 wasted
+            # fetches a night behind it, making an 11-line 404 list look like the whole
+            # problem. A skip nobody can see is a skip nobody fixes.
+            log(f"  {prefix} not a PDF ({blob[:4]!r}, {len(blob)} bytes), left queued: "
+                f"{row['url']}")
+            continue
         sha = hashlib.sha256(blob).hexdigest()
         path = reports_dir / f"{sha}.pdf"
         path.write_bytes(blob)
