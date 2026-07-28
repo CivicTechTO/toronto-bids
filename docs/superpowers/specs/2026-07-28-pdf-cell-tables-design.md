@@ -46,8 +46,23 @@ win — as an **audit**, explicitly not a mandate to rewrite.
   answer for a candidate, not a gap.
 - **Capturing bid compliance markers.** Cells put `*Non-compliant` in its own column for the
   first time, but adding a column to `AgencyBid` is out of scope here; noted as follow-up.
-- **Refactoring `award_summary.py`.** It is working, tested, heavily documented code carrying
-  form-specific behaviour. It is not touched.
+
+## Governing principle
+
+**Future maintainability, not past compatibility.** Backwards compatibility is not merely
+unneeded here — it is actively undesirable. Concretely, in this change:
+
+- No shim, no deprecated alias, no old-signature wrapper. `parse_ep_bid_table` changes shape and
+  every caller changes with it.
+- **No regex fallback when the cell path finds nothing.** A "try cells, fall back to the old
+  parser" arrangement would quietly reimport the exact contamination this change removes, and
+  would make the contaminated path permanent by making it unreachable to testing.
+- Dead code goes, rather than being left inert: `_EP_BID_ROW` and the 1,500-char window are
+  deleted, not retained behind a flag.
+- Where a rule now has two implementations, they are **collapsed to one** rather than allowed to
+  drift — see §1.
+- No one-off migration script. State that has to be corrected once is a sign the derivation
+  should be re-run every time; see §3.
 
 ## Design
 
@@ -57,8 +72,9 @@ Three corpus-independent primitives. The split exists so the anchoring rule — 
 risk here — is testable without pdfplumber and without a PDF.
 
 ```
-caption_tables(path, caption_re) -> list[list[list[str]]]     # I/O only
-choose_tables(caption_tops, tables) -> list[rows]             # PURE
+all_tables(path) -> list[list[list[str]]]                      # I/O only
+caption_tables(path, caption_re) -> list[list[list[str]]]      # I/O only
+choose_tables(caption_tops, tables) -> list[rows]              # PURE
 zip_columns(name_cell, price_cell) -> list[(name, price|None)] # PURE
 ```
 
@@ -85,10 +101,22 @@ zip_columns(name_cell, price_cell) -> list[(name, price|None)] # PURE
   - Many price lines → the row is a multi-package column: zip positionally and **refuse an
     unequal pair** rather than guess.
 
-  This duplicates `award_summary._zip_cell`'s core deliberately. The alternative — rewiring
-  `award_summary.py` onto the shared copy — modifies correct #116/#177 code as a side effect of
-  an issue that did not ask for it. If a third caller confirms the rule is identical everywhere,
-  collapsing them later is mechanical and by then covered by tests on both sides.
+  It also drops a multi-package heading line (a name line ending in `:`, with no price beside
+  it), which is part of the rule as #116 measured it rather than a form-specific quirk.
+
+**`award_summary.py` is rewired onto these primitives.** Its `_zip_cell` is deleted and it
+imports `zip_columns`; its `form_rows` becomes a thin call to the shared reader's
+all-tables variant. Only what is genuinely specific to that form stays behind in
+`award_summary.py` — the section-5 state machine, the `Range:`/`NOTE` skips, the numbering
+strip, the declared-count check.
+
+This reverses the initial instinct to leave that file alone on the grounds that it is working,
+tested, hard-won code. That instinct optimises for not disturbing the past. The cost it accepts
+is two copies of #94's positional-zip rule that are correct today and will diverge the first time
+one of them is fixed — and the rule has already been re-derived independently three times
+(#94's BD tables, #116's forms, now EP), which is the signal that it is one rule, not three
+similar ones. One canonical implementation, with both corpora's cases in one test file, is the
+maintainable shape.
 
 ### 2. #151 — EP reads cells
 
@@ -107,8 +135,11 @@ cells. A new `ep_bid_tables(path)` does the I/O via `caption_tables`.
 - Wrapped names arrive whole inside one cell
   (`Enercare Home and\nCommercial Services Limited Partnership`), so the intra-cell newline is
   collapsed rather than treated as a row boundary.
-- **The 1,500-char window disappears entirely.** There is no window to size, because there is no
-  window — which is what makes #151's original framing moot rather than merely fixed.
+- **The 1,500-char window disappears entirely, along with `_EP_BID_ROW`.** There is no window to
+  size, because there is no window — which is what makes #151's original framing moot rather
+  than merely fixed. Both are deleted outright: no flag, no fallback, no inert copy. A report
+  whose ruled table yields nothing yields **no bids**, and says so in the log; it does not fall
+  back to the regex, which would reimport precisely the prose contamination this removes.
 - `store_ep_reports` resolves the PDF by **basename under `config.EP_REPORTS_DIR`**, not by the
   stored `local_path`. `_store_pending_pdfs` bakes in an absolute path on whichever machine
   fetched the report, and this archive is designed to migrate (server becomes primary); the file's
@@ -128,16 +159,27 @@ no regression.
 Unrelated and deliberately not "fixed": `backgroundfile-254543` yields 0 bids because the City's
 own PDF carries a malformed price (`$1,479,386,.57`, stray comma before the decimal).
 
-### 3. Rebuilding `agency_bid` for a switched source
+### 3. `agency_bid` becomes derived-every-run, per source
 
 Switching the parser stops *new* contamination. The 13 phantom
 `The recommended construction price of` rows and the truncated fragments
 (`Triumph Roofing & Sheet`, `Vanguard Mechanical` beside `Vanguard Mechanical Inc.`) are already
 in the store, and this archive never deletes rows.
 
-`rebuild_agency_bids(conn, source)` is a **narrow, sanctioned exception**, in the shape of
-`build_supplier_dimension` and `enrich-ariba-attachments --reindex`: `agency_bid` is *derived
-from held PDFs*, so it is rebuilt from the bytes rather than diff-upserted.
+The tempting fix is a one-off migration that removes those known-bad rows. **That is the wrong
+shape**, and the principle above says why: a table whose contents have to be corrected once by
+hand is a table whose derivation should simply be re-run. A migration also encodes today's list
+of known contamination, so the next parser improvement needs another one.
+
+So `rebuild_agency_bids(conn, source)` is not a migration but the **permanent contract**:
+`agency_bid` for a given source is rebuilt from the held PDFs on every store pass, exactly as
+`build_supplier_dimension` rebuilds the supplier dimension from scratch every sync and
+`enrich-ariba-attachments --reindex` rebuilds `ariba_attachment` from the on-disk zips. It is a
+sanctioned exception to "rows are never deleted" for the same reason those are: the table is
+*derived*, and the bytes it derives from are what the archive actually holds.
+
+The existing contamination then disappears as an ordinary consequence of the first run, with no
+list of bad rows written down anywhere — and every future parser fix self-heals the same way.
 
 **Derive first, delete only on success.** The full new row set is collected in memory; only if
 derivation completed without exception *and* produced rows does the delete + insert run, inside
@@ -185,6 +227,13 @@ measurement's call. If the numbers land ambiguously — coverage good but the tw
 disagreeing about *who bid* rather than merely about price — the choice returns to the user
 rather than being settled by the implementer.
 
+**A union is justified only by reports cells cannot reach, never as a safety net.** Keeping the
+bullet-list path "just in case" would be the same past-facing instinct the governing principle
+rules out: two extraction paths for one corpus, one of them unmeasured and permanent. If a union
+is what the measurement supports, it ships as a **single code path with a documented
+precedence** — cells where the results table is ruled, bullets where it is not, stated as a rule
+someone can read — rather than two parsers whose interaction has to be reconstructed later.
+
 The committee corpus is 8 reports, of which #164 measured that 6 of 8 yield nothing because
 **RFTs/RFQs tabulate bids while RFPs narrate them**. A ruled-table finding there is likely to be
 bounded by the same ceiling; the audit records that rather than treating 8 reports as a
@@ -199,10 +248,20 @@ statistical result.
   silent mis-anchor could hide.
 - **`zip_columns` gets the #94/#116 cases**: wrapped name with one price (one bid), multi-package
   column (positional zip), unequal columns (refused).
-- **An integration test over a held EP report**, skipped when the corpus is absent — the existing
+- **The EP bid-table tests are rewritten, not adapted.** They currently feed `.txt` pdftotext
+  fixtures to `parse_ep_bid_table(text)`; the new pure parser takes rows, so they get new
+  JSON-rows fixtures extracted from the real PDFs. Their assertions are re-derived from the
+  cells rather than carried over — some encode regex-era artifacts (a price capture "stopping
+  before the `*`" describes a flattened-text hazard that does not exist when the marker has its
+  own cell). The `.txt` fixtures stay, because `parse_ep_report` still reads prose and is
+  correctly regex.
+- **`store_ep_reports` takes its table reader as a parameter**, defaulting to `ep_bid_tables`.
+  A real EP report is ~113 KB, too heavy to commit as a fixture, and the alternative — a test
+  that inserts `background_pdf.text` and expects bids — would be asserting against a path that
+  no longer exists. The parameter is an explicit I/O seam of the kind `Source.fetch`/`normalize`
+  already draws, not a test shim: it is what lets the store pass be exercised without a PDF.
+- **An integration test over the held EP corpus**, skipped when it is absent — the existing
   pattern for council tests without `pdftotext`.
-- Existing EP bid-table tests are updated to the new `(rows)` signature; their *assertions* about
-  what should be extracted stay, since the point is that cells extract at least as much.
 
 ### 6. Sequencing
 
@@ -218,5 +277,5 @@ live systemd timers.
 |---|---|
 | Caption anchoring picks the wrong table on an unmeasured report | `choose_tables` is pure and unit-tested; step 3 of the audit re-runs #151's right-table check corpus-wide after the switch, not just before |
 | The rebuild deletes rows it cannot re-derive | Derive-first, delete-only-on-success, in one transaction, scoped to one source |
-| pdfplumber is slower than regex over cached text | Measured concern from #177 (~41s over 229 forms). EP is 47 reports with a table; if the nightly cost is material, the same "already stored, skip without opening the PDF" guard #177 added applies — recorded as a follow-up if measurement shows it matters |
+| pdfplumber is slower than regex over cached text, and §3 re-derives every run | Real tension, resolved deliberately. #177 measured ~41s per night re-parsing 229 forms and fixed it with a "already stored, skip without opening the PDF" guard — **that guard is incompatible with the rebuild contract** and must not be copied here, since skipping is what lets stale rows persist. EP opens ~107 PDFs per run (the reports that parse as awards), which is to be timed during implementation. If the cost is material — and it is far likelier to be for TRCA's 3,411 than EP's — the answer is a cache keyed on the PDF's **`sha256` *and* a parser-version stamp** — the hash alone is not enough, since it does not change when the parser is fixed, which is exactly when re-derivation matters. Bumping the stamp invalidates the whole corpus, preserving the contract. What must *not* be copied is a skip keyed on "rows already exist", which breaks it |
 | The audit finds a corpus that is *partly* ruled | The criterion admits this: a union outcome is legitimate (see TRCA), but it must be measured and stated, not assumed |
