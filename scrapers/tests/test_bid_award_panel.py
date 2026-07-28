@@ -6,6 +6,7 @@ Fixtures are real pages fetched from TMMIS, trimmed to <main>:
   2018.BA10  — a reference that does not exist (probing is how references are found)
 """
 import pathlib
+from contextlib import contextmanager
 
 import pytest
 
@@ -131,6 +132,115 @@ def test_discovery_handles_two_meetings_on_one_date():
         _fake_site({"2017.BA1": "2017-01-04", "2017.BA2": "2017-01-04"}),
         max_per_term=2, stop_after_misses=1, term_starts=[("BA", 2017, "2014-2018", 1)])
     assert set(found) == {"2017.BA1", "2017.BA2"}
+
+
+# --- closed-term caching (#177) ----------------------------------------------------------
+
+def test_a_closed_historical_term_skips_probing_past_its_known_end():
+    """Every term but the LAST is historical by construction (a newer one already follows
+    it), so once its miss boundary is known, re-probing it is pure waste — this was most of
+    a nightly's cost for EP/Zoo (#177). Passing the boundary must not touch the network past
+    it."""
+    calls = []
+
+    def fetch(ref):
+        calls.append(ref)
+        return _fake_site({"2019.EP1": "2019-01-09", "2019.EP2": "2019-02-06"})(ref)
+
+    terms = [("EP", 2019, "2018-2022", 1), ("EP", 2023, "2022-2026", 1)]
+    found = discover_meetings(fetch, max_per_term=200, stop_after_misses=4,
+                              term_starts=terms, closed_terms={"EP2018-2022": 2})
+    assert set(found) == {"2019.EP1", "2019.EP2"}
+    # Only the 2 known-real meetings of the closed term (session years 2019/2020) were
+    # probed — never the dead miss range past EP2's boundary. The open term (2023/2024)
+    # walking into ITS OWN misses is separate and expected.
+    closed_term_calls = [c for c in calls if c.startswith(("2019.", "2020."))]
+    assert closed_term_calls == ["2019.EP1", "2019.EP2"]
+
+
+def test_a_historical_terms_boundary_is_reported_exactly_once():
+    """`on_term_closed` is the hook a caller persists from — it must fire once, with the
+    confirmed last real meeting, and never for the still-open final term."""
+    closures = []
+
+    def fetch(ref):
+        return _fake_site({"2019.EP1": "2019-01-09"})(ref)
+
+    terms = [("EP", 2019, "2018-2022", 1), ("EP", 2023, "2022-2026", 1)]
+    discover_meetings(fetch, max_per_term=10, stop_after_misses=2,
+                      term_starts=terms, on_term_closed=lambda k, n: closures.append((k, n)))
+    assert closures == [("EP2018-2022", 1)]
+
+
+def test_the_open_final_term_is_never_reported_as_closed():
+    """A term that legitimately runs dry this run (e.g. no meetings posted yet) is not
+    historical — it is the LAST entry, so it must go on being probed live every run."""
+    closures = []
+    discover_meetings(_fake_site({}), max_per_term=5, stop_after_misses=2,
+                      term_starts=[("EP", 2023, "2022-2026", 1)],
+                      on_term_closed=lambda k, n: closures.append((k, n)))
+    assert closures == []
+
+
+def test_a_mistaken_closed_entry_for_the_open_term_is_ignored():
+    """closed_terms is a caller-provided cache; a bug that wrote an entry for the currently
+    open term must never freeze it — the open term is always probed live."""
+    calls = []
+
+    def fetch(ref):
+        calls.append(ref)
+        return _fake_site({"2019.EP1": "2019-01-09", "2019.EP2": "2019-02-06",
+                           "2019.EP3": "2019-03-06"})(ref)
+
+    found = discover_meetings(fetch, max_per_term=10, stop_after_misses=2,
+                              term_starts=[("EP", 2019, "2018-2022", 1)],
+                              closed_terms={"EP2018-2022": 1})   # would wrongly stop at EP1
+    assert set(found) == {"2019.EP1", "2019.EP2", "2019.EP3"}
+
+
+def test_passing_neither_hook_reproduces_the_old_always_probe_behaviour():
+    """closed_terms/on_term_closed are additive — a caller that passes neither (like the
+    existing BA/BD tests) must see exactly the pre-#177 discovery."""
+    found = discover_meetings(
+        _fake_site({"2017.BA1": "2017-01-04", "2017.BA2": "2017-01-04"}),
+        max_per_term=2, stop_after_misses=1, term_starts=[("BA", 2017, "2014-2018", 1)])
+    assert set(found) == {"2017.BA1", "2017.BA2"}
+
+
+@contextmanager
+def _fake_agenda_fetcher(pages, calls):
+    def fetch(meeting: str) -> str:
+        calls.append(meeting)
+        return _fake_site(pages)(meeting)
+    yield fetch
+
+
+def test_scrape_agendas_persists_a_closed_terms_boundary_to_disk(tmp_path, monkeypatch):
+    """The first run confirms EP2018-2022 ends at meeting 2 and must write that down; a
+    second run must read it back and never re-probe the dead range (#177)."""
+    from toronto_bids.sources import bid_award_panel as bap
+    terms = [("EP", 2019, "2018-2022", 1), ("EP", 2023, "2022-2026", 1)]
+    pages = {"2019.EP1": "2019-01-09", "2019.EP2": "2019-02-06"}
+
+    calls1 = []
+    monkeypatch.setattr(bap, "agenda_fetcher",
+                        lambda **_kw: _fake_agenda_fetcher(pages, calls1))
+    found1 = bap.scrape_agendas(tmp_path, term_starts=terms)
+    assert set(found1) == {"2019.EP1", "2019.EP2"}
+    assert (tmp_path / ".closed_terms.json").exists()
+    assert bap._load_closed_terms(tmp_path) == {"EP2018-2022": 2}
+
+    # Second run: EP1/EP2 are cached on disk (served without a live call at all), and the
+    # persisted boundary means nothing past them is probed either — the closed term costs
+    # ZERO live calls this run. The still-open 2022-2026 term is unaffected and keeps
+    # probing its own miss range live, which is correct: only a closed term can be cached.
+    calls2 = []
+    monkeypatch.setattr(bap, "agenda_fetcher",
+                        lambda **_kw: _fake_agenda_fetcher(pages, calls2))
+    found2 = bap.scrape_agendas(tmp_path, term_starts=terms)
+    assert set(found2) == {"2019.EP1", "2019.EP2"}
+    assert not any(c.endswith(("EP1", "EP2", "EP3", "EP4")) and c.startswith("201")
+                  for c in calls2), calls2
 
 
 # --- staff-report PDF index (#68) --------------------------------------------------------

@@ -675,6 +675,34 @@ def _cmd_nightly(args) -> int:
     return 1 if failures else 0
 
 
+def _source_row_counts(conn, source: str) -> tuple[int, int]:
+    """(agency_award, agency_bid) rows currently attributed to one board's `source` value."""
+    a = conn.execute("SELECT COUNT(*) FROM agency_award WHERE source=?", (source,)).fetchone()[0]
+    b = conn.execute("SELECT COUNT(*) FROM agency_bid WHERE source=?", (source,)).fetchone()[0]
+    return a, b
+
+
+def _stored_line(label: str, got: dict, before: tuple[int, int], after: tuple[int, int]) -> str:
+    """'  trca stored : 446 solicitations, 693 awards (+0), 527 bids (+0)' (#177).
+
+    `got["awards"]`/`got["bids"]` count REPORTS PROCESSED this call, not resulting rows — a
+    report is upserted with `overwrite=True` keyed on `native_ref`, so an amendment report
+    and its original can both increment the loop count while collapsing into the same row.
+    Live-measured: a full EP reparse processed 107 reports against a table holding 88 rows,
+    which is exactly the gap `got["awards"] - before` would have reported as fictitious growth
+    (+19) had the delta been computed from the loop count instead of a second real query. The
+    delta here is `after - before` over `_source_row_counts` on BOTH sides — an actual row
+    count, immune to how many reports happened to write it. `got` is still what carries the
+    "reports processed" totals shown beside the delta. No "bids" key for a body with no bid
+    table (Zoo).
+    """
+    line = (f"  {label} stored : {got['solicitations']} solicitations, "
+           f"{got['awards']} awards ({after[0] - before[0]:+d})")
+    if "bids" in got:
+        line += f", {got['bids']} bids ({after[1] - before[1]:+d})"
+    return line
+
+
 def _capture_agency_bodies(conn, ids, *, bodies, fetch, scrape, virtual_display, out):
     """Capture TRCA/Zoo/EP board-report awards+bids, each body isolated. Returns failures.
 
@@ -693,9 +721,9 @@ def _capture_agency_bodies(conn, ids, *, bodies, fetch, scrape, virtual_display,
                     print(f"  trca reports fetched : {download_reports(conn, http, log=out)}")
                 finally:
                     http.close()
+            before = _source_row_counts(conn, "trca_board")
             got = store_trca_reports(conn, ids["trca"])
-            print(f"  trca stored          : {got['solicitations']} solicitations, "
-                  f"{got['awards']} awards, {got['bids']} bids")
+            print(_stored_line("trca", got, before, _source_row_counts(conn, "trca_board")))
         except Exception as exc:
             failures.append(("trca", str(exc)))
 
@@ -714,9 +742,9 @@ def _capture_agency_bodies(conn, ids, *, bodies, fetch, scrape, virtual_display,
                           f"{download_zoo_reports(conn, http, agendas, log=out)}")
                 finally:
                     http.close()
+            before = _source_row_counts(conn, "zoo_board")
             got = store_zoo_reports(conn, ids["toronto-zoo"])
-            print(f"  zoo stored           : {got['solicitations']} solicitations, "
-                  f"{got['awards']} awards")
+            print(_stored_line("zoo", got, before, _source_row_counts(conn, "zoo_board")))
         except Exception as exc:
             failures.append(("zoo", str(exc)))
 
@@ -735,9 +763,9 @@ def _capture_agency_bodies(conn, ids, *, bodies, fetch, scrape, virtual_display,
                           f"{download_ep_reports(conn, http, agendas, log=out)}")
                 finally:
                     http.close()
+            before = _source_row_counts(conn, "ep_board")
             got = store_ep_reports(conn, ids["exhibition-place"])
-            print(f"  ep stored            : {got['solicitations']} solicitations, "
-                  f"{got['awards']} awards, {got['bids']} bids")
+            print(_stored_line("ep", got, before, _source_row_counts(conn, "ep_board")))
         except Exception as exc:
             failures.append(("ep", str(exc)))
 
