@@ -309,7 +309,32 @@ procurement awards** (WSIB safety, status updates, governance), so the parser an
 between the winner and the amount ("to WINNER **for the <project>** in the amount of $X"), so
 the winner regex is EP-specific, not the shared Zoo pattern. Amount/confidential primitives are
 shared via `sources/agency_report.py`. EP is the first agency source with a structured bidder
-price table (Table 1 → `agency_bid` with prices). On-demand (`--only ep --scrape`), never on
+price table (Table 1 → `agency_bid` with prices), and **that table is read as CELLS, not regex
+over `pdftotext` (#151/#203)** — ruled tables in **47/47** of the reports that carry one, the
+#116 Award Summary profile rather than the #83 staff-report profile. `ep_bid_tables` does the
+I/O via `sources/pdf_tables.py`; `parse_ep_bid_table(tables)` is pure over the cells, so its
+fixtures are JSON rows and the tests need neither pdfplumber nor a PDF. Four rules, and the
+count held at four through the measurement — **two wrinkles that looked new both collapsed into
+rules already written**: a bid table breaks across pages in two shapes (caption stranded at a
+page foot, `131331`; rows continuing overleaf as a separate headerless table object, `244929`,
+7 of 9 rows) which are one event and one walk, and an OUTCOME in the price column
+(`*Non-compliant`) is still a bid with a NULL price, which is #94's BD-agenda rule verbatim.
+The header row is rejected **structurally** — column 1 holds a price — never by a denylist,
+because column 0 is variously `Bidder`/`Tenderer` and column 1 variously `Bid Price Received`/
+`Base Bid Price`/`Initial Base Bid Price Received`. The switch removed 19 contaminated rows (13
+prose phantoms, 6 `Table 2` duplicates) and **recovered 14+ real bidders the regex silently
+dropped**: numeric-leading firm names (the #87/#116 lesson), prices carrying a leading marker
+(`*$792,900.00`, which cost `244900` its *winning* bidder) and prices published without cents.
+**`agency_bid` is now DERIVED, rebuilt per source from the held PDFs on every store pass**
+(`db.rebuild_agency_bids`) — the same sanctioned exception to "rows are never deleted" that
+`build_supplier_dimension` takes, and a permanent contract rather than a migration, so every
+future parser fix self-heals. It derives first and deletes only on success, so a machine without
+the PDFs deletes nothing. **The other three #203 candidates were measured and NOT switched** —
+TRCA (its documents are whole meeting packages: 30 of 55 bid tables cannot be attributed to a
+solicitation, and cells yield 356 rows against the incumbent's 527), the Zoo (6 ruled bid tables
+in 859 documents) and committee reports (whose money-bearing tables are budget cash-flow tables,
+where a "first table with money" rule would read years and contract terms as bidders). Do not
+re-litigate those without new evidence. On-demand (`--only ep --scrape`), never on
 the browser-free nightly path. The pre-2019 City-spine EP slice (Client_Division "Exhibition
 Place") and these post-2019 Board-of-Governors awards are separate coexisting keyspaces (#130).
 **A confidential report is kept only when its stated MFIPPA reason is commercial/financial
