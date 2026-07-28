@@ -400,14 +400,29 @@ def capture_event(page, event: dict, dest_dir, log=lambda _m: None) -> Path | No
     # is hard-stopped at 500 MB, which cannot reach an event whose row 3.1 is atomic at
     # 787.71 MB. Every individual file is <= 88.7 MB, so this path has no ceiling at all.
     source = AribaFileSource(page, rfx_id=rfx_id, log=log)
-    # Count first: it is cheap, it fails early, and it returns to the event's content-tree view
-    # via Done -- which is where the traversal `capture_files` is about to run needs to land.
-    # `expected_count()` is memoised on `source` (see its docstring), so this read and
-    # `capture_files`'s own call to it after `list_files()` share one result -- the picker is
-    # driven exactly once, not once per call site.
+    # Count first, but not because it's cheap or safe -- it is the most expensive non-download
+    # step per event (Download Content -> Download Attachments -> _select_all_attachments, a
+    # 90s ceiling -> picker read -> Done), and Done does NOT return to the content-tree view: it
+    # lands on the export page and discards every References section opened before it (see
+    # expected_count's and _restore_event_view's docstrings). That is why _restore_event_view
+    # exists below the picker read -- it re-navigates via _open_authed_preview + Respond rather
+    # than assuming Done left us anywhere useful. The count read itself can't "fail early" either:
+    # it swallows every exception and returns None (see _read_expected_count); only the restore
+    # can raise. It still has to run first, though -- the picker is only reachable from the fresh
+    # event view Respond just opened, and reading it later would cost a second full
+    # re-navigation instead of reusing this one. `expected_count()` is memoised on `source` (see
+    # its docstring), so this read and `capture_files`'s own call to it after `list_files()`
+    # share one result -- the picker is driven exactly once, not once per call site.
     expected = source.expected_count()
     if expected is not None:
         log(f"  Doc{document_number}: picker reports {expected} attachment(s)")
+    # Reaching this line means the posting is OPEN -- the Respond-disabled branch above already
+    # routed a closed posting to salvage and returned. That is what makes it safe for
+    # `capture_files` to discard partials on a fingerprint mismatch or an unreadable manifest
+    # (see its docstring): those bytes are always re-fetchable from here. The salvage side of
+    # this same invariant is checked by IDENTITY (`finalise_partial(..., posting_open=False)`,
+    # asserted a few lines up); this side has no such flag and is guarded only structurally, by
+    # every path that reaches this call having already failed to prove the posting is closed.
     return ariba_files.capture_files(source, document_number, dest_dir, log=log)
 
 
