@@ -68,3 +68,31 @@ Backlog is 6,150 documents, one-time, resumable.
   229/229).
 
 Testing that needs GGUF + llama.cpp; the transformers path will not run a 14B at usable speed.
+
+## Addendum: the same experiment at 14B (2026-07-29)
+
+Identical harness, identical 15 docs / 51 rows, so directly comparable. Qwen3-14B-Q4_K_M via
+llama.cpp, 4 threads, schema-constrained. ~31 s/doc, 2,792 s total.
+
+| condition | regex | 14B | vs baseline |
+|---|---|---|---|
+| baseline | 100% | **100%** (51/51) | — |
+| `rename_header` | 100% | **100%** | +0% |
+| `reorder_columns` | **0%** | 96% | −4% |
+| `currency_suffix` | **12%** | **100%** | +0% |
+| `extra_column` | **0%** | **100%** | +0% |
+
+**Both hypotheses pass at 14B.** Accuracy is archive-grade on this corpus (51/51 exact, 52
+emitted against 51 truth — precision essentially clean), and worst-case drift degradation is
+−4% against regex's −88% to −100%.
+
+This confirms the 1.7B reading: the 84% ceiling was model size, not the approach. It also
+confirms the volume arithmetic — 31 s/doc against under a dozen documents a day is roughly
+**5 minutes a night**.
+
+**What this does NOT establish.** The scope is one corpus (EP), 15 documents, 51 rows — ruled
+tables, one document per award. The two structurally harder cases are untested at 14B:
+`award_summary` (212 docs / 1,120 rows) and above all TRCA, where a document is a *meeting
+package* holding many awards and the incumbent's bidders live in prose. H1 (generality across
+corpora) was planned alongside H2 and has not been run. An architecture decision on the strength
+of EP alone would be generalising from the easiest case.
