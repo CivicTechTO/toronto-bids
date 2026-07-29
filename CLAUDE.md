@@ -60,6 +60,51 @@ Order in `default_sources()` matters: `schema_check` first (drift detection), th
 
 Normalizers read feed fields with `raw.get(...)`, so a field the City renames silently NULLs a column forever. `schema_check.py` declares exactly the fields the OData and CKAN normalizers read and samples those five feeds on each sync, failing loudly on missing keys. When a normalizer starts reading a new field, add it to the declared sets in the same change. Ariba and suspended-firms are outside its coverage (suspended-firms parsing raises on header drift itself; Ariba field drift is unguarded).
 
+### Parsing discipline: prove clean extraction, or come back — never chase edge cases
+
+Scraped PDFs are messy enough to invite an endless patch-the-next-case loop, and this repo has
+run that loop more than once. The rule:
+
+**When an extractor is wrong, do not fix the failing case. Ask whether the corpus can be
+extracted cleanly AT ALL by a small set of statable rules — and if the answer looks like no,
+STOP AND COME BACK TO THE HUMAN rather than grinding.** "No clean extraction exists here" is a
+legitimate and complete finding: #83 reached it for council staff reports, and it stands. A
+parser held together by per-document exceptions is not a finding, it is a liability.
+
+How the question gets answered — the method is what makes the answer trustworthy:
+
+- **Measure against ground truth the documents themselves carry, never against the parser being
+  replaced.** The incumbent's output is not a baseline; it is the thing under suspicion. Award
+  Summary Forms state `Number of Bids Received` (#116); EP board reports state "four (4)
+  submissions were received, three (3) of which were compliant" (#151). Compare to *that*.
+- **Count the rules, and watch whether the count moves.** *Convergent* means each new wrinkle
+  collapses into a rule already written: #151's two page-break shapes — a caption stranded at a
+  page foot, and rows continuing overleaf as a separate headerless table object — are one event
+  and one walk, and its `Non-compliant`-in-the-price-column case turned out to be #94's existing
+  rule rather than a new one. *Divergent* means every fix reveals a wrinkle somewhere else and
+  the rule count climbs — #151's four rejected regex attempts, which is the named signature of
+  an architectural problem rather than a patchable one. **Divergence is the signal to stop and
+  re-ask the question, not to write rule five.**
+- **Refuse and log; never guess.** A refused row is a known gap someone can act on; a guessed row
+  is silent corruption that reads as data. #94 refuses an unequal column pair, #96 prints its 22
+  unkeyed appendices, #116 refuses a form that under-parses its own declared count.
+- **A disagreement with ground truth is often the DOCUMENT's defect, and that is a finding, not
+  something to parse around.** Of the three EP reports whose extracted count still disagrees,
+  two tabulate only the compliant subset of the bids they declare and one carries a malformed
+  price in the City's own PDF (`$1,479,386,.57`). Adding rules to absorb those would be inventing
+  data; the archive records what the City published.
+
+Worked example, #151 (measurement only — the EP parser switch has not landed): four rules
+(caption anchor / page-break walk / row = name + price-or-outcome / normalize) over the 47 EP
+reports carrying a bid table gave 47/47 tables found, 153 rows, **0 junk rows, 0 duplicates**,
+and **32/35** exact agreement with the reports' own declared counts, with all three residuals
+traced to the documents. The rule count started at four and finished at four.
+
+And the outcome is genuinely per-corpus, so it is measured each time: the rule is **"read cells
+where the PDF HAS cells"** (#116), never "pdfplumber is better". Ruled tables in 229/229 Award
+Summary Forms and 47/47 EP board reports — but only 13–20/229 council staff reports, where cells
+measured *worse* and regex is correct and stays.
+
 ### Linking
 
 - Everything competitive is keyed on the normalized 10-digit `document_number` (`linking/document_number.py`: strip non-digits, require exactly 10, reject a placeholder denylist). Non-competitive contracts live in a separate keyspace (`workspace_number`) — there is no join between them. **A third keyspace** is `composite_award.call_number` (`linking/call_number.py`, #96): 2009-2012 awards predate Ariba and identify themselves by Call Number, so they join to neither of the other two. Two shapes cover all 1,229 in the corpus — `3905-10-0097` (RFQ/RFP) and `317-2010` (Tender Call) — and the prefix vocabulary ("Request for Quotation", "RFQ", "Tender Call No.") carries no information. Match on the shape, never on the prefix, and beware the trailing `, Contract No. 10TE-17WS`, which is a *different* identifier.
@@ -264,7 +309,32 @@ procurement awards** (WSIB safety, status updates, governance), so the parser an
 between the winner and the amount ("to WINNER **for the <project>** in the amount of $X"), so
 the winner regex is EP-specific, not the shared Zoo pattern. Amount/confidential primitives are
 shared via `sources/agency_report.py`. EP is the first agency source with a structured bidder
-price table (Table 1 → `agency_bid` with prices). On-demand (`--only ep --scrape`), never on
+price table (Table 1 → `agency_bid` with prices), and **that table is read as CELLS, not regex
+over `pdftotext` (#151/#203)** — ruled tables in **47/47** of the reports that carry one, the
+#116 Award Summary profile rather than the #83 staff-report profile. `ep_bid_tables` does the
+I/O via `sources/pdf_tables.py`; `parse_ep_bid_table(tables)` is pure over the cells, so its
+fixtures are JSON rows and the tests need neither pdfplumber nor a PDF. Four rules, and the
+count held at four through the measurement — **two wrinkles that looked new both collapsed into
+rules already written**: a bid table breaks across pages in two shapes (caption stranded at a
+page foot, `131331`; rows continuing overleaf as a separate headerless table object, `244929`,
+7 of 9 rows) which are one event and one walk, and an OUTCOME in the price column
+(`*Non-compliant`) is still a bid with a NULL price, which is #94's BD-agenda rule verbatim.
+The header row is rejected **structurally** — column 1 holds a price — never by a denylist,
+because column 0 is variously `Bidder`/`Tenderer` and column 1 variously `Bid Price Received`/
+`Base Bid Price`/`Initial Base Bid Price Received`. The switch removed 19 contaminated rows (13
+prose phantoms, 6 `Table 2` duplicates) and **recovered 14+ real bidders the regex silently
+dropped**: numeric-leading firm names (the #87/#116 lesson), prices carrying a leading marker
+(`*$792,900.00`, which cost `244900` its *winning* bidder) and prices published without cents.
+**`agency_bid` is now DERIVED, rebuilt per source from the held PDFs on every store pass**
+(`db.rebuild_agency_bids`) — the same sanctioned exception to "rows are never deleted" that
+`build_supplier_dimension` takes, and a permanent contract rather than a migration, so every
+future parser fix self-heals. It derives first and deletes only on success, so a machine without
+the PDFs deletes nothing. **The other three #203 candidates were measured and NOT switched** —
+TRCA (its documents are whole meeting packages: 30 of 55 bid tables cannot be attributed to a
+solicitation, and cells yield 356 rows against the incumbent's 527), the Zoo (6 ruled bid tables
+in 859 documents) and committee reports (whose money-bearing tables are budget cash-flow tables,
+where a "first table with money" rule would read years and contract terms as bidders). Do not
+re-litigate those without new evidence. On-demand (`--only ep --scrape`), never on
 the browser-free nightly path. The pre-2019 City-spine EP slice (Client_Division "Exhibition
 Place") and these post-2019 Board-of-Governors awards are separate coexisting keyspaces (#130).
 **A confidential report is kept only when its stated MFIPPA reason is commercial/financial

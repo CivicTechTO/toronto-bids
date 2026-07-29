@@ -34,6 +34,7 @@ def test_ep_buyer_seeded():
     conn.close()
 
 
+import json
 import pathlib
 
 from toronto_bids.sources.ep_board import parse_ep_bid_table, parse_ep_report
@@ -105,47 +106,99 @@ def test_confidential_non_procurement_matter_is_refused():
                            fallback_ref="2024.EP3.5") is None
 
 
+def _rows(name):
+    return json.loads((FIXTURES / name).read_text())
+
+
 def test_bid_table_extracts_all_three_bidders_with_prices():
-    rows = parse_ep_bid_table(_read("ep_award_with_table_2023.txt"))
-    assert rows == [
+    assert parse_ep_bid_table(_rows("ep_bid_table_2023_three_bidders.json")) == [
         ("Powell Fence Limited", "$1,484,065.00"),
         ("M.J.K. Construction Incorporated", "$1,619,001.00"),
         ("Clearway Construction Incorporated", "$1,851,100.00"),
     ]
 
 
-def test_bid_table_2019_five_bidders_with_footnote_marker():
-    # 2019 "Table 1: Tender Price Submissions" (plural), 5 bidders, a `*` revised-price marker on
-    # one row — the price capture must stop before the `*`.
-    rows = parse_ep_bid_table(_read("ep_award_2019_multi_bidder.txt"))
-    assert rows == [
+def test_bid_table_2019_five_bidders_strips_a_marker_inside_the_price_cell():
+    # The header here says "Tenderer", not "Bidder" — the header row is rejected because its
+    # price column holds no price, never by a denylist of header words.
+    assert parse_ep_bid_table(_rows("ep_bid_table_2019_five_bidders.json")) == [
         ("Sutherland-Schultz Ltd.", "$418,854.47"),
         ("Ontario Electrical Construction Co. Ltd.", "$461,522.00"),
-        ("Modern Niagara Toronto Inc.", "$470,700.00"),      # the trailing * is dropped
+        ("Modern Niagara Toronto Inc.", "$470,700.00"),      # trailing * stripped
         ("Stevens & Black Electrical Contractors Ltd.", "$518,000.00"),
         ("Rogol Electric Company Limited", "$546,350.00"),
     ]
 
 
+def test_bid_table_keeps_a_non_compliant_bidder_with_a_null_price():
+    # #94's rule: the City writes OUTCOMES in the price column. The bidder is still a bid.
+    # backgroundfile-238906 declares 8 bids and only reaches 8 because these two count.
+    got = parse_ep_bid_table(_rows("ep_bid_table_noncompliant.json"))
+    assert len(got) == 8
+    assert got[-2:] == [("Plaza Electric Ltd.", None),      # leading marker stripped from name
+                        ("Trade Electrical Contractors Inc.", None)]
+
+
+def test_bid_table_accepts_a_price_with_no_cents():
+    # The old regex required \.\d{2} and read this report as having no bids at all.
+    assert parse_ep_bid_table(_rows("ep_bid_table_no_cents.json")) == [
+        ("Black & McDonald Limited", "$2,619,221")]
+
+
+def test_bid_table_wrapped_name_arrives_whole():
+    rows = [[["Bidder", "Bid Price Received", "Recommended\nContract Price"],
+             ["Enercare Home and\nCommercial Services Limited Partnership", "$653,323.00", ""]]]
+    assert parse_ep_bid_table(rows) == [
+        ("Enercare Home and Commercial Services Limited Partnership", "$653,323.00")]
+
+
 def test_bid_table_absent_returns_empty():
-    rows = parse_ep_bid_table(_read("ep_non_award_wsib_report.txt"))
-    assert rows == []                                    # no Table 1 -> no bids
+    assert parse_ep_bid_table([]) == []
+
+
+def test_bid_table_refuses_a_row_whose_price_column_is_neither_price_nor_outcome():
+    # Refuse, never guess — a row we cannot read is a gap, not an invented bid.
+    rows = [[["Bidder", "Bid Price Received"], ["Some Firm Ltd.", "see Appendix B"]]]
+    assert parse_ep_bid_table(rows) == []
 
 
 def test_store_ep_reports_lands_award_and_bids(conn):
     from toronto_bids.buyers import seed_buyers
     from toronto_bids.sources.ep_board import store_ep_reports
     ids = seed_buyers(conn)
-    conn.execute("INSERT INTO background_pdf (url, kind, sha256, text) VALUES "
+    conn.execute("INSERT INTO background_pdf (url, kind, sha256, local_path, text) VALUES "
                  "('https://www.toronto.ca/legdocs/mmis/2023/ep/bgrd/backgroundfile-240943.pdf',"
-                 " 'agency_board', 'x', ?)", (_read("ep_award_with_table_2023.txt"),))
+                 " 'agency_board', 'x', '/nowhere/x.pdf', ?)",
+                 (_read("ep_award_with_table_2023.txt"),))
     conn.commit()
-    got = store_ep_reports(conn, ids["exhibition-place"])
+    # The bid table now comes from the PDF's cells, so the reader is injected: a real EP report
+    # is ~113 KB, too heavy to commit as a fixture, and the seam is the same fetch/normalize
+    # boundary sources/base.py draws.
+    got = store_ep_reports(conn, ids["exhibition-place"],
+                           tables_for=lambda _p: _rows("ep_bid_table_2023_three_bidders.json"))
     assert got["solicitations"] == 1 and got["awards"] == 1 and got["bids"] == 3
     aw = conn.execute("SELECT supplier_name_raw, award_amount_numeric FROM agency_award "
                       "WHERE native_ref='EP110-2023'").fetchone()
     assert aw["supplier_name_raw"] == "Powell Fence Limited"
     assert aw["award_amount_numeric"] == 1484065.00
-    bids = conn.execute("SELECT COUNT(*) FROM agency_bid WHERE bid_price_numeric IS NOT NULL "
-                        "AND native_ref='EP110-2023'").fetchone()[0]
-    assert bids == 3
+    assert conn.execute("SELECT COUNT(*) FROM agency_bid WHERE bid_price_numeric IS NOT NULL "
+                        "AND native_ref='EP110-2023'").fetchone()[0] == 3
+
+
+def test_store_ep_reports_survives_an_unreadable_pdf(conn):
+    from toronto_bids.buyers import seed_buyers
+    from toronto_bids.sources.ep_board import store_ep_reports
+    ids = seed_buyers(conn)
+    conn.execute("INSERT INTO background_pdf (url, kind, sha256, local_path, text) VALUES "
+                 "('https://www.toronto.ca/legdocs/mmis/2023/ep/bgrd/backgroundfile-240943.pdf',"
+                 " 'agency_board', 'x', '/nowhere/x.pdf', ?)",
+                 (_read("ep_award_with_table_2023.txt"),))
+    conn.commit()
+
+    def boom(_path):
+        raise OSError("no such file")
+
+    logged = []
+    got = store_ep_reports(conn, ids["exhibition-place"], tables_for=boom, log=logged.append)
+    assert got["awards"] == 1 and got["bids"] == 0     # the award still lands
+    assert any("240943" in m for m in logged)          # and the gap is never silent

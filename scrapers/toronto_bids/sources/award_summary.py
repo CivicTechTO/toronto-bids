@@ -34,6 +34,7 @@ from urllib.parse import quote
 from toronto_bids import config
 from toronto_bids.linking.document_number import normalize_document_number
 from toronto_bids.models import BackgroundPdf, Bid
+from toronto_bids.sources.pdf_tables import zip_columns
 from toronto_bids.store import db
 
 _DATA = ("https://secure.toronto.ca/c3api_data/v2/DataAccess.svc/pmmd_solicitations/"
@@ -164,55 +165,9 @@ _WS = re.compile(r"\s+")
 
 def form_rows(path) -> list[list[str]]:
     """Every non-empty row of every ruled table in the form, as stripped cells. Does I/O."""
-    import pdfplumber
+    from toronto_bids.sources.pdf_tables import all_tables
 
-    rows = []
-    with pdfplumber.open(path) as pdf:
-        for page in pdf.pages:
-            for table in page.extract_tables() or []:
-                for row in table:
-                    cells = [(c or "").strip() for c in row]
-                    if any(cells):
-                        rows.append([c for c in cells if c])
-    return rows
-
-
-def _zip_cell(name_cell: str, price_cell: str) -> list[tuple[str, str | None]]:
-    """Pair one row's bidder lines against its price lines.
-
-    Usually a row is one bidder. A multi-package tender instead puts a whole column in a single
-    cell, exactly as the BD agendas did (#94):
-
-        ['26TW-CPI-17CWD (Package A):\nClean Water Works Inc.*\nAqua Tech...',
-         '$3,551,718.88\n$3,978,656.19\n$5,381,389.24\n$5,668,197.16']
-
-    Same rule as #94, and for the same reason: pairing is positional, so one stray line
-    misattributes every bid after it. Zip the columns and REFUSE an unequal pair rather than
-    guess. The package heading is dropped first — it ends in ':' and has no price beside it.
-
-    **THE PRICE CELL'S LINE COUNT SAYS HOW MANY BIDS THE ROW HOLDS.** A newline inside a name
-    cell is otherwise ambiguous, and guessing costs real bids: pdfplumber wraps a long name
-    within its own cell, so
-
-        ['2489960 Ontario Inc.\no/a Kore Infrastructure Group', '$3,198,000.00']
-
-    is ONE bidder, and reading its two lines as two names against one price refused the pair
-    and silently dropped a bidder from each of 4 forms. One price, one bid — join the name.
-    """
-    prices = [ln.strip() for ln in price_cell.split("\n") if ln.strip()]
-    names = [ln.strip() for ln in name_cell.split("\n") if ln.strip()]
-    names = [n for n in names if not n.endswith(":")]
-    if len(prices) <= 1:
-        name = " ".join(names)
-        if not name:
-            return []
-        # An RFP publishes its proponents with NO price at all ("NOTE: Not applicable for
-        # RFP"). #84 already stores those as bid_price NULL — requiring a price here dropped
-        # every proponent on every scored RFP.
-        return [(name, prices[0] if prices else None)]
-    if len(names) != len(prices):
-        return []
-    return list(zip(names, prices))
+    return all_tables(path)
 
 
 def parse_award_summary(rows) -> dict | None:
@@ -247,7 +202,7 @@ def parse_award_summary(rows) -> dict | None:
             continue
         if label.lower().startswith(("range:", "note")):
             continue
-        for name, price in _zip_cell(label, value):
+        for name, price in zip_columns(label, value):
             name = _NAME_MARKERS.sub("", _WS.sub(" ", _NUMBERING.sub("", name)).strip())
             if not name:
                 continue          # an empty numbered row: the City leaves '5.' blank

@@ -6,10 +6,12 @@ the bid_award_panel prober; the EP reference format is YYYY.EP<meeting>.<item> (
 live). Most EP board reports are NOT procurement awards, so the parsers (added next) refuse
 non-awards.
 """
+import pathlib
 import re
 
 from toronto_bids import config
 from toronto_bids.models import AgencyAward, AgencyBid, AgencySolicitation, BackgroundPdf
+from toronto_bids.sources import pdf_tables
 from toronto_bids.sources.agency_report import AMOUNT_RE, CONFIDENTIAL_RE, amount_or_none
 from toronto_bids.sources.bid_award_panel import (cached_agendas, parse_agenda_pdfs,
                                                   scrape_agendas)
@@ -138,43 +140,79 @@ def parse_ep_report(text: str, fallback_ref: str, report_url: str | None = None)
     }
 
 
-# A Table 1 row: a bidder name (letters/&/./,/spaces) followed by its first $ price. The winner
-# row carries a second $ (recommended contract price); take the FIRST. Column-header lines
-# ("Base Bid Price", "Received", "Recommended Contract Price") have no leading firm name + price
-# on the same run and are skipped by requiring a name that ends in a company word OR a name-then-$
-# on one line. Refuse a line that isn't a clean name+price (the #94 rule).
-_EP_BID_ROW = re.compile(
-    r"^\s*([A-Z][A-Za-z0-9&.,'’ \-]{3,60}?)\s+(\$\s?\d{1,3}(?:,\d{3})*\.\d{2})", re.M)
+# The Table 1 caption. UNCHANGED from the regex era, and it already excludes
+# "Table 2: Tender Separate Price Submission" — after "Table 2" that text reads "Tender
+# Separate Price Submission", so there is no "Tender Price Submission" to match. That is what
+# identifies Table 1 without hardcoding the digit.
 _EP_TABLE_HEAD = re.compile(r"Table\s+\d[^\n]*Tender\s+Price\s+Submission", re.I)
+# The City writes OUTCOMES in the price column instead of a number — the same practice #94
+# documented on the BD agendas, where the raw string is kept and bid_price_numeric is NULL for
+# exactly those. Such a row is still a bid; its price is simply not a number.
+_EP_OUTCOME = re.compile(r"^[*\s]*(?:non[-\s]?compliant|no\s+bid|not\s+applicable|withdrawn|"
+                         r"disqualified|incomplete)\b", re.I)
+# Compliance markers leading or trailing a name ("* Plaza Electric Ltd."), stripped so the firm
+# keys consistently in the supplier dimension.
+_MARKERS = re.compile(r"^[\s*^+\u2020\u2021\u00a7]+|[\s*^+\u2020\u2021\u00a7]+$")
 
 
-def parse_ep_bid_table(text: str) -> list[tuple[str, str]]:
-    """Every (bidder, base-bid-price) in an EP 'Table 1: Tender Price Submission'. Empty if the
-    report has no such table."""
-    head = _EP_TABLE_HEAD.search(text)
-    if not head:
+def ep_bid_tables(path):
+    """The report's 'Table 1: Tender Price Submission' as cells. Does I/O."""
+    return pdf_tables.caption_tables(path, _EP_TABLE_HEAD)
+
+
+def parse_ep_bid_table(tables) -> list[tuple[str, str | None]]:
+    """Every (bidder, price) in an EP Table 1. Pure over the cells ep_bid_tables() read.
+
+    Four rules, and they were measured to converge rather than proliferate (#151): the caption
+    anchor and the page-break walk live in pdf_tables.choose_tables; this function is the row
+    rule and the normalisation.
+
+    A row is a bid when column 0 names something and column 1 holds either a price or an
+    outcome. The header row is rejected structurally by that same test, never by a denylist of
+    header words — column 0 is variously "Bidder" and "Tenderer", and column 1 variously
+    "Bid Price Received", "Base Bid Price\\nReceived" and "Initial Base Bid\\nPrice Received".
+
+    Anything else is REFUSED rather than guessed at: backgroundfile-254543 carries a malformed
+    price in the City's own PDF ($1,479,386,.57) and yields one bid instead of two, which is
+    the document's own defect and is not something to add a rule for.
+    """
+    if not tables:
         return []
-    # Scope to the region after the header up to a blank-line gap / the next section.
-    tail = text[head.end():head.end() + 1500]
-    rows = []
-    for m in _EP_BID_ROW.finditer(tail):
-        name = re.sub(r"\s+", " ", m.group(1)).strip()
-        price = m.group(2).replace(" ", "")
-        # Skip a column-header fragment that slipped through (no company suffix and generic words).
-        if name.lower() in {"base bid price", "recommended contract price", "received"}:
+    out = []
+    for row in tables[0]:
+        cells = [(c or "").strip() for c in row]
+        if len(cells) < 2 or not cells[0]:
             continue
-        rows.append((name, price))
-    return rows
+        name = _MARKERS.sub("", _WS.sub(" ", cells[0]).strip())
+        if not name:
+            continue
+        if pdf_tables.is_price(cells[1]):
+            out.append((name, cells[1].strip("* ").replace(" ", "")))
+        elif _EP_OUTCOME.match(cells[1]):
+            out.append((name, None))
+    return out
 
 
-def store_ep_reports(conn, buyer_id: int) -> dict:
+
+def store_ep_reports(conn, buyer_id: int, tables_for=None, log=lambda _m: None) -> dict:
     """Parse held EP reports into agency rows. One AgencySolicitation + AgencyAward per award
     report (confidential ones keep the winner, NULL amount), and one AgencyBid per Table 1 row.
-    Non-award reports are refused by parse_ep_report and contribute nothing."""
+    Non-award reports are refused by parse_ep_report and contribute nothing.
+
+    Bids are read from the PDF's own CELLS (#151), so `tables_for` is injected: it defaults to
+    `ep_bid_tables` and is overridden in tests, which must not need a 113 KB PDF on disk.
+
+    `agency_bid` for this source is REBUILT, not upserted (see db.rebuild_agency_bids): the
+    whole set is derived first and only then replaces what is stored, so a parser fix self-heals
+    and a missing corpus deletes nothing.
+    """
+    tables_for = tables_for if tables_for is not None else ep_bid_tables
     counts = {"solicitations": 0, "awards": 0, "bids": 0}
+    bids: list[AgencyBid] = []
     for row in conn.execute(
-            "SELECT reference, url, text FROM background_pdf WHERE kind='agency_board' "
-            "AND url LIKE '%/ep/%' AND text IS NOT NULL ORDER BY url").fetchall():
+            "SELECT reference, url, text, local_path FROM background_pdf "
+            "WHERE kind='agency_board' AND url LIKE '%/ep/%' AND text IS NOT NULL "
+            "ORDER BY url").fetchall():
         got = parse_ep_report(row["text"], fallback_ref=row["reference"] or row["url"],
                               report_url=row["url"])
         if got is None:
@@ -189,10 +227,23 @@ def store_ep_reports(conn, buyer_id: int) -> dict:
             award_amount=got["amount"], value_confidential=got["confidential"], award_date=None,
             report_url=got["report_url"], source="ep_board"), overwrite=True)
         counts["awards"] += 1
-        for bidder, price in parse_ep_bid_table(row["text"]):
-            db.upsert_row(conn, AgencyBid(
+        if not row["local_path"]:
+            continue
+        # `local_path` is an ABSOLUTE path baked in on whichever machine fetched the report, and
+        # this archive is designed to migrate. The file's identity is its content-addressed
+        # <sha256>.pdf name; its location is deterministic under the CURRENT data dir.
+        path = config.EP_REPORTS_DIR / pathlib.Path(row["local_path"]).name
+        try:
+            tables = tables_for(path)
+        except Exception as exc:              # noqa: BLE001 — one unreadable PDF must never
+            # abort the pass, but it must never be silent either: a skip nobody can see is a
+            # skip nobody fixes (#175).
+            log(f"    ep unreadable {row['url'].rsplit('/', 1)[-1]}: {exc}")
+            continue
+        for bidder, price in parse_ep_bid_table(tables):
+            bids.append(AgencyBid(
                 buyer_id=buyer_id, native_ref=got["native_ref"], bidder_name_raw=bidder,
-                bid_price=price, report_url=row["url"], source="ep_board"), overwrite=True)
-            counts["bids"] += 1
+                bid_price=price, report_url=row["url"], source="ep_board"))
     conn.commit()
+    counts["bids"] = db.rebuild_agency_bids(conn, "ep_board", bids)
     return counts

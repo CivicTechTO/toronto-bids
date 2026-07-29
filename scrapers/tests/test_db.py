@@ -216,3 +216,29 @@ def test_solicitation_link_table_exists_and_is_counted(conn):
                  "VALUES ('2016.BD106.3', '5672751291', 'council_pre_ariba')")
     conn.commit()
     assert db.counts(conn)["solicitation_link"] == 1
+
+
+def test_rebuild_agency_bids_replaces_only_its_own_source(conn):
+    from toronto_bids.models import AgencyBid
+    from toronto_bids.store import db
+    keep = AgencyBid(buyer_id=1, native_ref="T-1", bidder_name_raw="Keep Ltd.",
+                     bid_price="$1.00", source="trca_board")
+    stale = AgencyBid(buyer_id=1, native_ref="E-1", bidder_name_raw="Phantom",
+                      bid_price="$2.00", source="ep_board")
+    db.upsert_row(conn, keep, overwrite=True)
+    db.upsert_row(conn, stale, overwrite=True)
+    fresh = [AgencyBid(buyer_id=1, native_ref="E-1", bidder_name_raw="Real Ltd.",
+                       bid_price="$3.00", source="ep_board")]
+    assert db.rebuild_agency_bids(conn, "ep_board", fresh) == 1
+    names = {r["bidder_name_raw"] for r in conn.execute("SELECT bidder_name_raw FROM agency_bid")}
+    assert names == {"Keep Ltd.", "Real Ltd."}          # phantom gone, TRCA untouched
+
+
+def test_rebuild_agency_bids_deletes_nothing_when_it_derived_nothing(conn):
+    from toronto_bids.models import AgencyBid
+    from toronto_bids.store import db
+    db.upsert_row(conn, AgencyBid(buyer_id=1, native_ref="E-1", bidder_name_raw="Held Ltd.",
+                                  bid_price="$1.00", source="ep_board"), overwrite=True)
+    # A machine that holds no PDFs derives no rows, and must therefore delete none.
+    assert db.rebuild_agency_bids(conn, "ep_board", []) == 0
+    assert conn.execute("SELECT COUNT(*) FROM agency_bid").fetchone()[0] == 1
