@@ -1,0 +1,682 @@
+{
+ "labeller": "A",
+ "labeller_name": "Alex",
+ "exported_at": "2026-07-29T18:14:29.359Z",
+ "documents": [
+  {
+   "id": "D01",
+   "url": "https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=18300",
+   "none_present": false,
+   "completed": true,
+   "entries": [
+    {
+     "company": "Dynex Construction Inc.",
+     "amount": "$2,947,485.00",
+     "outcome": "won"
+    },
+    {
+     "company": "560789 Ontario Limited o/a R&M Construction",
+     "amount": "$3,611,536.80",
+     "outcome": "lost"
+    },
+    {
+     "company": "2220742 Ontario Ltd o/a Bronte Construction",
+     "amount": "$4,417,565.60",
+     "outcome": "lost"
+    }
+   ]
+  },
+  {
+   "id": "D02",
+   "url": "https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=4421",
+   "none_present": false,
+   "completed": true,
+   "entries": [
+    {
+     "company": "CDR Young’s Aggregates Inc.",
+     "contract": "10009905",
+     "amount": "$527,000.00",
+     "outcome": "won"
+    },
+    {
+     "company": "Atlantis Marine Construction",
+     "contract": "10009905",
+     "amount": "$590,750.00",
+     "outcome": "lost"
+    },
+    {
+     "company": "Glenn Windrem Trucking",
+     "contract": "10009905",
+     "amount": "$592,875.00",
+     "outcome": "lost"
+    },
+    {
+     "company": "TACC Construction",
+     "contract": "10009905",
+     "amount": "$646,000.00",
+     "outcome": "lost"
+    },
+    {
+     "company": "Glenn Windrem Trucking",
+     "contract": "10009906",
+     "amount": "$470,000.00",
+     "outcome": "won"
+    },
+    {
+     "company": "CDR Young’s Aggregates Inc.",
+     "contract": "10009906",
+     "amount": "$512,000.00",
+     "outcome": "lost"
+    },
+    {
+     "company": "Atlantis Marine Construction",
+     "contract": "10009906",
+     "amount": "$532,000.00",
+     "outcome": "lost"
+    },
+    {
+     "company": "TACC Construction",
+     "contract": "10009906",
+     "amount": "$608,000.00",
+     "outcome": ""
+    }
+   ]
+  },
+  {
+   "id": "D03",
+   "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=4831",
+   "none_present": false,
+   "completed": true,
+   "entries": [
+    {
+     "company": "Wood Environmental & Infrastructure Solutions",
+     "contract": "10009033",
+     "amount": "$498,126",
+     "outcome": "won"
+    },
+    {
+     "company": "Matrix Solutions Incorporated",
+     "contract": "10009033",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "Valdor Engineering Incorporated",
+     "contract": "10009033",
+     "amount": "",
+     "outcome": "lost"
+    }
+   ]
+  },
+  {
+   "id": "D04",
+   "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=6095",
+   "none_present": false,
+   "completed": true,
+   "entries": [
+    {
+     "company": "Aastra Telecom Inc",
+     "contract": "2104-09-3006",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "Alcatel-Lucent Canada Inc",
+     "contract": "2104-09-3006",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "Bell Canada",
+     "contract": "2104-09-3006",
+     "amount": "$235,000",
+     "outcome": "won"
+    },
+    {
+     "company": "Cogeco",
+     "contract": "2104-09-3006",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "FlexITy Solutions Inc",
+     "contract": "2104-09-3006",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "MTS Allstream Inc",
+     "contract": "2104-09-3006",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "Quartet Services Inc",
+     "contract": "2104-09-3006",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "Rogers Communications Inc",
+     "contract": "2104-09-3006",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "Ainsworth Inc.",
+     "contract": "10032967",
+     "amount": "",
+     "outcome": "won"
+    },
+    {
+     "company": "Black Creek Mechanical Ltd.",
+     "contract": "10032967",
+     "amount": "",
+     "outcome": "won"
+    },
+    {
+     "company": "R.A Graham Electrical Contractors",
+     "contract": "10032967",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "Nortek Mechanical Services",
+     "contract": "10032967",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "Electric Group Ltd.",
+     "contract": "10032967",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "Ocean Mechanical Ltd.",
+     "contract": "10032967",
+     "amount": "",
+     "outcome": "won"
+    },
+    {
+     "company": "Beckett Electrical Inc.",
+     "contract": "10032967",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "Pipe-All Plumbing and Heating Ltd.",
+     "contract": "10032967",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "Bolton Electric Company Inc",
+     "contract": "10032967",
+     "amount": "",
+     "outcome": "won"
+    },
+    {
+     "company": "Nor-Line Mechanical Ltd",
+     "contract": "10032967",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "Everbrite Industries",
+     "contract": "10032967",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "MSB Mechanical Ltd.",
+     "contract": "10032967",
+     "amount": "",
+     "outcome": "won"
+    },
+    {
+     "company": "RPM Industrial Inc",
+     "contract": "10032967",
+     "amount": "",
+     "outcome": "won"
+    },
+    {
+     "company": "Litek Mechnical Services Inc.",
+     "contract": "10032967",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "Glen The Plumber",
+     "contract": "10032967",
+     "amount": "",
+     "outcome": "won"
+    }
+   ]
+  },
+  {
+   "id": "D05",
+   "url": "https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=4376",
+   "none_present": false,
+   "completed": true,
+   "entries": [
+    {
+     "company": "TELUS Communications Inc.",
+     "contract": "10009831",
+     "amount": "$125,975",
+     "outcome": "won"
+    },
+    {
+     "company": "DXC Technology",
+     "contract": "10009831",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "Long View Systems Corporation",
+     "contract": "10009831",
+     "amount": "",
+     "outcome": "lost"
+    }
+   ]
+  },
+  {
+   "id": "D06",
+   "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=4833",
+   "none_present": false,
+   "completed": true,
+   "entries": [
+    {
+     "company": "1035477 Ontario Limited-Glenn Windrem Trucking",
+     "contract": "10021054",
+     "amount": "",
+     "outcome": "won"
+    },
+    {
+     "company": "Atlantis Marine Construction Canada Inc.",
+     "contract": "10021054",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "Brock Aggregates Inc.",
+     "contract": "10021054",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "CDR Young’s Aggregates Inc.",
+     "contract": "10021054",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "Draglam Salt Inc.",
+     "contract": "10021054",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "Dufferin Aggregates (CRH Canada Group)",
+     "contract": "10021054",
+     "amount": "",
+     "outcome": "won"
+    },
+    {
+     "company": "Earthco Soils Inc.",
+     "contract": "10021054",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "Elite Stones Quarries",
+     "contract": "10021054",
+     "amount": "",
+     "outcome": "won"
+    },
+    {
+     "company": "James Dick Construction Ltd.",
+     "contract": "10021054",
+     "amount": "",
+     "outcome": "won"
+    },
+    {
+     "company": "J.C. Rock Ltd.",
+     "contract": "10021054",
+     "amount": "",
+     "outcome": "won"
+    },
+    {
+     "company": "Miller Paving Limited",
+     "contract": "10021054",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "Natural Stone Source Ontario Ltd.",
+     "contract": "10021054",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "Morrison Hershfield Limited",
+     "contract": "10009966",
+     "amount": "$299,007.50",
+     "outcome": "won"
+    },
+    {
+     "company": "Matrix Solutions Inc.",
+     "contract": "10009966",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "Morrison Hershfield",
+     "contract": "10009966",
+     "amount": "$299,007.50",
+     "outcome": "won"
+    },
+    {
+     "company": "Platinum Electrical Contractors",
+     "contract": "10009657",
+     "amount": "$299,095.00",
+     "outcome": "won"
+    },
+    {
+     "company": "AECON Utilities",
+     "contract": "10009657",
+     "amount": "$344,377.08",
+     "outcome": "lost"
+    },
+    {
+     "company": "PBW High Voltage",
+     "contract": "10009657",
+     "amount": "$347,497.00",
+     "outcome": "lost"
+    },
+    {
+     "company": "Dilisado Enterprises",
+     "contract": "10009657",
+     "amount": "$345,000.00",
+     "outcome": "lost"
+    },
+    {
+     "company": "Black & McDonald Ltd.",
+     "contract": "10009657",
+     "amount": "$427,300.00",
+     "outcome": "lost"
+    }
+   ]
+  },
+  {
+   "id": "D07",
+   "url": "https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=4648",
+   "none_present": false,
+   "completed": true,
+   "entries": [
+    {
+     "company": "Wood Environmental & Infrastructure Solutions",
+     "contract": "10009033",
+     "amount": "$498,126",
+     "outcome": "won"
+    },
+    {
+     "company": "Matrix Solutions Incorporated",
+     "contract": "10009033",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "Valdor Engineering Incorporated",
+     "contract": "10009033",
+     "amount": "",
+     "outcome": "lost"
+    }
+   ]
+  },
+  {
+   "id": "D08",
+   "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=14300",
+   "none_present": false,
+   "completed": true,
+   "entries": [
+    {
+     "company": "Airborne Imaging Inc.",
+     "contract": "10038972",
+     "amount": "$800,130",
+     "outcome": "won"
+    },
+    {
+     "company": "Aeroquest Mapcon Inc.",
+     "contract": "10038972",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "Eagle Mapping Ltd.",
+     "contract": "10038972",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "Kisik Aerial Survey Inc.",
+     "contract": "10038972",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "LiDAR Services International Inc.",
+     "contract": "10038972",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "Quantum Spatial Canada Inc.",
+     "contract": "10038972",
+     "amount": "",
+     "outcome": "lost"
+    }
+   ]
+  },
+  {
+   "id": "D09",
+   "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=6721",
+   "none_present": false,
+   "completed": true,
+   "entries": [
+    {
+     "company": "Action Buildworks",
+     "contract": "10033027",
+     "amount": "",
+     "outcome": "won"
+    },
+    {
+     "company": "Adem’s Restoration",
+     "contract": "10033027",
+     "amount": "",
+     "outcome": "won"
+    },
+    {
+     "company": "B.A. Construction and Restoration Inc.",
+     "contract": "10033027",
+     "amount": "",
+     "outcome": "won"
+    },
+    {
+     "company": "Brook Restoration Ltd.",
+     "contract": "10033027",
+     "amount": "",
+     "outcome": "won"
+    },
+    {
+     "company": "DJ McRae Contractors Ltd.",
+     "contract": "10033027",
+     "amount": "",
+     "outcome": "won"
+    },
+    {
+     "company": "JD Strachan Construction Ltd.",
+     "contract": "10033027",
+     "amount": "",
+     "outcome": "won"
+    },
+    {
+     "company": "818185 Ontario Inc.",
+     "contract": "10033027",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "AAA Roofmasters Ltd.",
+     "contract": "10033027",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "Clifford Restoration Ltd.",
+     "contract": "10033027",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "COSGAR GC.PM",
+     "contract": "10033027",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "G.V.Miller Custom Contracting",
+     "contract": "10033027",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "Limen Group Const. Ltd.",
+     "contract": "10033027",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "MASI Group Inc.",
+     "contract": "10033027",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "Northeast Roofing Inc.",
+     "contract": "10033027",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "RAINFORCES LTD.",
+     "contract": "10033027",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "Bot Construction Limited",
+     "contract": "10035223",
+     "amount": "$1,059,066",
+     "outcome": "won"
+    },
+    {
+     "company": "Dufferin Aggregates",
+     "contract": "10035223",
+     "amount": "$1,071,612",
+     "outcome": "lost"
+    },
+    {
+     "company": "Glenn Windrem Trucking",
+     "contract": "10035223",
+     "amount": "$1,243,890",
+     "outcome": "lost"
+    },
+    {
+     "company": "Miller Paving Limited",
+     "contract": "10035223",
+     "amount": "$1,131,588",
+     "outcome": "lost"
+    },
+    {
+     "company": "CDR Young’s Aggregates",
+     "contract": "10035225",
+     "amount": "$2,995,205",
+     "outcome": "won"
+    },
+    {
+     "company": "Glenn Windrem Trucking",
+     "contract": "10035226",
+     "amount": "$780,620",
+     "outcome": "won"
+    }
+   ]
+  },
+  {
+   "id": "D10",
+   "url": "https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=15702",
+   "none_present": false,
+   "completed": true,
+   "entries": [
+    {
+     "company": "AVERTEX Utility Solutions Inc.",
+     "contract": "10039863",
+     "amount": "$375,672.00",
+     "outcome": "won"
+    },
+    {
+     "company": "RPM Industrial Inc.",
+     "contract": "10039863",
+     "amount": "$467,530.32",
+     "outcome": "lost"
+    },
+    {
+     "company": "MultiTech.",
+     "contract": "10039863",
+     "amount": "$534,934.47",
+     "outcome": "lost"
+    },
+    {
+     "company": "Vitell Inc.",
+     "contract": "10039863",
+     "amount": "$598,000.00",
+     "outcome": "lost"
+    },
+    {
+     "company": "R.A. Graham Contractors Ltd.",
+     "contract": "10039863",
+     "amount": "$699,371.06",
+     "outcome": "lost"
+    }
+   ]
+  }
+ ],
+ "corrections": {
+  "by": "Claude, with Alex's permission, 2026-07-29",
+  "rule": "only changes the source text unambiguously decides; judgement calls left to the labeller",
+  "changes": [
+   {
+    "doc": "D01",
+    "kind": "name",
+    "from": "2220742 Ontario Limited o/a Bronte Construction",
+    "to": "2220742 Ontario Ltd o/a Bronte Construction"
+   },
+   {
+    "doc": "D07",
+    "kind": "name",
+    "from": "Wood Environment & Infrastructure Solutions",
+    "to": "Wood Environmental & Infrastructure Solutions"
+   },
+   {
+    "doc": "D03",
+    "kind": "added",
+    "from": "none_present=true, 0 entries",
+    "to": "3 entries for RFP 10009033"
+   }
+  ],
+  "deliberately_not_changed": [
+   "D08 Airborne Imaging / D09 Action Buildworks / D10 MultiTech — BOTH forms appear verbatim in those documents, so the labeller's choice is defensible",
+   "D01/D10 pre-qualification submitters with no tabulated price — a definitional question about what counts as a bid, which is the labeller's to decide, not a transcription error"
+  ]
+ }
+}
