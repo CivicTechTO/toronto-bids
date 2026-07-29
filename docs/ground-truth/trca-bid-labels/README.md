@@ -38,10 +38,10 @@ Incumbent `trca_board` parser, scored against these labels (legal-suffix-insensi
 
 | | |
 |---|---|
-| recall | **57%** (51 of 89) |
-| precision | **88%** — and all 7 unmatched rows were adjudicated as non-errors |
-| single-contract documents | **96%** |
-| **multi-contract documents** | **44%** |
+| recall | **59%** (54 of 92) |
+| precision | **93%** (3 real errors + 1 name-variant matching failure of mine) |
+| single-contract documents | **96%** (25/26) |
+| **multi-contract documents** | **44%** (29/66) |
 
 **The parser's failure is structural, not transcriptional.** It reads a bid list correctly
 whenever there is one to read, and loses more than half the record whenever a document holds
@@ -67,10 +67,28 @@ text unambiguously decides.** Recorded in the `corrections` block of `labels-ale
 - `D08` `Airborne Imaging` / `D09` `Action Buildworks` / `D10` `MultiTech.` — **both** forms
   appear verbatim in those documents, so the labeller's choice is defensible. An earlier
   analysis wrongly called these transcription errors.
-- `D01`/`D10` pre-qualification submitters with no tabulated price — a **definitional** question
-  (does "who bid" mean everyone who submitted, or only those whose priced bid was tabulated?),
-  which belongs to the labeller, not to whoever is scoring. It accounts for 6 of the 7 remaining
-  disagreements and is **still open**.
+- A `D01` name change to `Ltd` was **reverted**: the results table (the bid record) says
+  `Limited`, and only the pre-qualification bullet list says `Ltd`. The labeller's original was
+  verbatim from the right place.
+## The bid definition, resolved by the documents
+
+Both D01 and D10 had three companies the labeller excluded, and it looked like one definitional
+question. Reading the reports showed they are **opposite cases**:
+
+- **D01 is a two-stage procurement.** Six firms made *pre-qualification* submissions; the report
+  then says tender documents "were issued to the following three (3) Proponent(s)". Buildscapes,
+  Pine Valley and Shoreline never received tender documents and never bid. **Excluding them is
+  correct; the parser counting them is an error.**
+- **D10 had eight tenders submitted**, three of which "were disqualified because of the
+  incomplete submission package". Those three *did* bid. **They belong in the record with no
+  valid price**, matching the archive's existing `Non-Compliant` convention (#94).
+
+**Rule: a company is a bidder if it SUBMITTED A BID for that contract.** Pre-qualified then
+eliminated = no. Submitted then disqualified = yes. Both are stated explicitly by the documents,
+so this is not a matter of taste.
+
+The parser's 3 confirmed precision errors are all the same class: taking a pre-qualification
+bullet list as the bid list.
 
 ## Caveats
 

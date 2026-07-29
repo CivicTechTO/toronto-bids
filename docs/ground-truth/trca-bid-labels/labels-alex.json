@@ -12,17 +12,20 @@
     {
      "company": "Dynex Construction Inc.",
      "amount": "$2,947,485.00",
-     "outcome": "won"
+     "outcome": "won",
+     "contract": "10040951"
     },
     {
      "company": "560789 Ontario Limited o/a R&M Construction",
      "amount": "$3,611,536.80",
-     "outcome": "lost"
+     "outcome": "lost",
+     "contract": "10040951"
     },
     {
-     "company": "2220742 Ontario Ltd o/a Bronte Construction",
+     "company": "2220742 Ontario Limited o/a Bronte Construction",
      "amount": "$4,417,565.60",
-     "outcome": "lost"
+     "outcome": "lost",
+     "contract": "10040951"
     }
    ]
   },
@@ -647,6 +650,24 @@
      "contract": "10039863",
      "amount": "$699,371.06",
      "outcome": "lost"
+    },
+    {
+     "company": "Bingham Controls Ltd.",
+     "contract": "10039863",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "Dilisado Enterprises.",
+     "contract": "10039863",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "On-Tek Electrical Services Ltd.",
+     "contract": "10039863",
+     "amount": "",
+     "outcome": "lost"
     }
    ]
   }
@@ -672,11 +693,29 @@
     "kind": "added",
     "from": "none_present=true, 0 entries",
     "to": "3 entries for RFP 10009033"
+   },
+   {
+    "doc": "D01",
+    "kind": "revert",
+    "from": "I changed it to \"Ltd\" in error",
+    "to": "\"Limited\" — verbatim from the results table"
+   },
+   {
+    "doc": "D01",
+    "kind": "contract",
+    "from": "(blank)",
+    "to": "10040951 — stated in the award clause"
+   },
+   {
+    "doc": "D10",
+    "kind": "added",
+    "from": "3 disqualified tenderers were omitted",
+    "to": "they submitted tenders, disqualified for an incomplete package"
    }
   ],
   "deliberately_not_changed": [
-   "D08 Airborne Imaging / D09 Action Buildworks / D10 MultiTech — BOTH forms appear verbatim in those documents, so the labeller's choice is defensible",
-   "D01/D10 pre-qualification submitters with no tabulated price — a definitional question about what counts as a bid, which is the labeller's to decide, not a transcription error"
-  ]
+   "D08 Airborne Imaging / D09 Action Buildworks / D10 MultiTech. — both forms appear verbatim in those documents; the labeller's choice stands."
+  ],
+  "bid_definition_resolved": "A company counts as a bidder if it SUBMITTED A BID for that contract. Pre-qualified then eliminated before tender documents were issued = NOT a bid (D01: Buildscapes, Pine Valley, Shoreline). Submitted a tender then disqualified = IS a bid with no valid price (D10: Bingham, Dilisado, On-Tek), matching the archive's existing Non-Compliant convention (#94). Both cases are stated explicitly by the documents themselves."
  }
 }
