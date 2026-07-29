@@ -12,7 +12,7 @@ circularity.
 | file | what it is |
 |---|---|
 | `documents.json` | the 15 excerpts as shown to labellers, with `meta` (page count, whether excerpted) |
-| `labels-alex.json` | Alex's labels, 10 documents, 95 bid rows, plus a `corrections` block |
+| `labels-alex.json` | Alex's labels, 10 documents, 98 bid rows, plus a `corrections` block |
 | `machine-proposals.json` | which names the incumbent parser vs the LLM proposed — **withheld from labellers** |
 | `labelling-tool.template.html` | the labelling UI (`__DATA__` is replaced with `documents.json`) |
 
@@ -57,10 +57,11 @@ because the regex *was* the ground truth.
 Applied by Claude with Alex's explicit permission, under one rule: **only changes the source
 text unambiguously decides.** Recorded in the `corrections` block of `labels-alex.json`.
 
-- `D01` — `2220742 Ontario Limited` → `Ltd` (only that form appears in the document)
 - `D07` — `Wood Environment &` → `Wood Environmental &` (likewise)
 - `D03` — added 3 bids for RFP 10009033 that were marked absent. This is the 402-page package,
   and it embeds the *same report* that appears standalone as `D07`, which was labelled correctly.
+- `D01` — filled in contract `10040951`, stated in the report's award clause.
+- `D10` — added the 3 disqualified tenderers (see the bid definition below).
 
 **Deliberately not changed:**
 
@@ -70,6 +71,7 @@ text unambiguously decides.** Recorded in the `corrections` block of `labels-ale
 - A `D01` name change to `Ltd` was **reverted**: the results table (the bid record) says
   `Limited`, and only the pre-qualification bullet list says `Ltd`. The labeller's original was
   verbatim from the right place.
+
 ## The bid definition, resolved by the documents
 
 Both D01 and D10 had three companies the labeller excluded, and it looked like one definitional
@@ -92,7 +94,7 @@ bullet list as the bid list.
 
 ## Caveats
 
-- One labeller, 10 documents, 89 companies. Small, and single-rater until Gabe's set lands.
+- One labeller, 10 documents, 92 companies. Small, and single-rater until Gabe's set lands.
 - Precision against these labels is a weak measure for the 8 excerpted documents: a parser row
   drawn from a section not shown to the labeller counts as unmatched but may be perfectly real.
   Recall is the sound number here, since the parser had access to the full document and the
