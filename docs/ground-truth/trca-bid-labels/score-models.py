@@ -27,6 +27,7 @@ from dotenv import load_dotenv
 HERE = pathlib.Path(__file__).parent
 load_dotenv("/home/alex/toronto-bids/scrapers/.env")
 KEY = os.environ["OPENROUTER_API_KEY"]
+# override with:  --models a,b,c   (flex only applies to OpenAI ids)
 MODELS = [("openai/gpt-5.6-luna", True), ("openai/gpt-5.6-terra", True),
           ("openai/gpt-5.6-sol", True), ("anthropic/claude-opus-5", False)]
 CONC = 6
@@ -54,6 +55,10 @@ List every company that SUBMITTED A BID for a contract described here.
 - For each bid, give the contract or tender number it was for (or the project name if none is
   shown), so bids on different contracts stay apart.
 
+Reply with JSON only, of the form {{"bids":[{{"company":..., "contract":..., "amount":...}}]}}.
+(Some providers require the literal word "json" in the prompt before they will emit JSON, and
+some ignore a response schema entirely — so the format is stated here as well as requested.)
+
 Text:
 {block}
 """
@@ -75,34 +80,66 @@ CLIENT = httpx.Client(timeout=240, limits=httpx.Limits(max_connections=CONC + 8)
 spend = {"$": 0.0}
 
 
+def _parse(txt):
+    """Lenient JSON extraction: some providers fence the block or prepend prose."""
+    if not txt:
+        return []
+    s = txt.strip()
+    if s.startswith("```"):
+        s = re.sub(r"^```[a-z]*\n?|```$", "", s, flags=re.M).strip()
+    i, j = s.find("{"), s.rfind("}")
+    if i == -1 or j == -1:
+        return []
+    try:
+        return json.loads(s[i:j + 1]).get("bids", [])
+    except Exception:
+        return []
+
+
 def ask(model, flex, block):
-    body = {"model": model, "max_tokens": 2500, "reasoning": {"effort": "low"},
+    """Structured output, degrading gracefully across providers.
+
+    Not every provider accepts `json_schema` — DeepSeek answers 400 "This response_format type
+    is unavailable now" but handles `json_object` fine. Falling back matters: without it the
+    model scores 0% and looks incapable when it was never actually asked.
+    """
+    base = {"model": model, "max_tokens": 4000, "reasoning": {"effort": "low"},
             "messages": [{"role": "user", "content": PROMPT.format(block=block[:60000])}],
-            "response_format": {"type": "json_schema",
-                                "json_schema": {"name": "bids", "strict": True,
-                                                "schema": SCHEMA}},
             "usage": {"include": True}}
     if flex:
-        body["service_tier"] = "flex"
-    for attempt in range(5):
-        try:
-            r = CLIENT.post("https://openrouter.ai/api/v1/chat/completions",
-                            headers={"Authorization": f"Bearer {KEY}"}, json=body)
-            if r.status_code != 200:
-                time.sleep(2 ** attempt)          # rate limits need backoff, not instant retries
-                continue
-            j = r.json()
-            spend["$"] += float((j.get("usage") or {}).get("cost") or 0)
-            return json.loads(j["choices"][0]["message"]["content"]).get("bids", [])
-        except Exception:
-            time.sleep(2 ** attempt)
+        base["service_tier"] = "flex"
+    formats = [{"type": "json_schema",
+                "json_schema": {"name": "bids", "strict": True, "schema": SCHEMA}},
+               {"type": "json_object"}]
+    for fmt in formats:
+        body = dict(base, response_format=fmt)
+        for attempt in range(4):
+            try:
+                r = CLIENT.post("https://openrouter.ai/api/v1/chat/completions",
+                                headers={"Authorization": f"Bearer {KEY}"}, json=body)
+                if r.status_code == 400:
+                    break                       # this format is unsupported; try the next one
+                if r.status_code != 200:
+                    time.sleep(2 ** attempt)    # rate limit: back off, never retry instantly
+                    continue
+                j = r.json()
+                spend["$"] += float((j.get("usage") or {}).get("cost") or 0)
+                return _parse(j["choices"][0]["message"].get("content"))
+            except Exception:
+                time.sleep(2 ** attempt)
     print(f"    !! gave up on a call to {model} — this run is INVALID for it", flush=True)
     return []
 
 
 def main():
-    who = sys.argv[1] if len(sys.argv) > 1 else "alex"
-    only = sys.argv[2] if len(sys.argv) > 2 else None
+    global MODELS
+    argv = list(sys.argv[1:])
+    if "--models" in argv:
+        i = argv.index("--models")
+        MODELS = [(m, m.startswith("openai/")) for m in argv[i + 1].split(",")]
+        del argv[i:i + 2]
+    who = argv[0] if argv else "alex"
+    only = argv[1] if len(argv) > 1 else None
     docs = {d["id"]: d for d in json.load(open(HERE / "documents.json"))}
     lab = [d for d in json.load(open(HERE / f"labels-{who}.json"))["documents"]
            if [e for e in d["entries"] if e["company"].strip()]]
