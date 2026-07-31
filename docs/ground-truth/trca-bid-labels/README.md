@@ -186,3 +186,43 @@ labelling, not from any model.
 - The first run of the harness reported `gpt-5.6-sol` at **22%**. That was a missing backoff in
   the retry loop — four instant retries under rate limiting, silently returning empty. Sol is
   100%. Treat every figure here as fragile until reproduced.
+
+## Holdout: models on Gabe's 5 solo documents (D11–D15)
+
+25 companies Alex never saw, so nothing here was tuned against. `score-models.py gabe D11-D15`.
+
+| | recall | precision |
+|---|---|---|
+| incumbent parser | 68% | 81% |
+| all four hosted models | **100%** | 52–56% |
+
+**The low precision is the labels, not the models.** All 23 "false positives" are verbatim in the
+source, and every one carries a **contract number Gabe never reached**. Two were traced to the
+source text and are exact bid lists:
+
+- D14 / RFP 10041763 — *"four (4) proposals were received from the following vendor(s): Ecoman
+  Corporation, Northern Wildflowers Inc., Quality Seeds Ltd., St. Williams Nursery & Ecology
+  Centre Inc."* — precisely the four the model returned.
+- D15 / RFP 10020367 — a three-stage procurement: 8 pre-qualification submissions, 7 issued RFP
+  documents, then *"Five (5) proposals were received"*. The model returned exactly those five and
+  **excluded** Bronte and Dynex, who pre-qualified and received documents but never proposed.
+  That is the pre-qualified-vs-submitted rule applied correctly to a case it had never seen.
+
+D14 is the sharpest illustration: Gabe labelled one contract; the document holds four.
+
+### This answers a question the earlier round could not
+
+Against Alex's set the models scored 100% precision, meaning they matched his coverage without
+exceeding it — so nothing could be concluded about bids *both* humans missed. Here the models
+recovered **23 real bids that no human recorded**. On multi-contract packages they outperform
+both the incumbent parser and the human labellers.
+
+### And it further weakens the labels as a gold standard
+
+On D12 Gabe recorded `Airborne Imagine Inc.` and `Airborne Imaging Inc.` as two separate
+companies — the City's own typo, listed twice — and omitted `Aeroquest Mapcon Inc.` entirely. He
+labelled the same report correctly as D08. An intra-rater inconsistency on identical text.
+
+**Practical consequence:** precision measured against these labels is not a measure of extractor
+correctness. Only recall is sound, and only adjudication against the source settles a
+disagreement.
