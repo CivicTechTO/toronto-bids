@@ -1,0 +1,500 @@
+{
+ "nvidia/nemotron-3-ultra-550b-a55b:free|None": {
+  "C001": {
+   "kind": "status_update",
+   "flag": false
+  },
+  "C002": {
+   "kind": "agreement_or_mou",
+   "flag": false
+  },
+  "C003": {
+   "kind": "correspondence",
+   "flag": false
+  },
+  "C004": {
+   "kind": "minutes",
+   "flag": false
+  },
+  "C005": {
+   "kind": "correspondence",
+   "flag": false
+  },
+  "C006": {
+   "kind": "governance_finance",
+   "flag": false
+  },
+  "C007": {
+   "kind": "status_update",
+   "flag": false
+  },
+  "C008": {
+   "kind": "attachment_or_map",
+   "flag": false
+  },
+  "C009": {
+   "kind": "procurement_award",
+   "flag": true
+  },
+  "C010": {
+   "kind": "procurement_award",
+   "flag": true
+  },
+  "C011": {
+   "kind": "land_property",
+   "flag": false
+  },
+  "C012": {
+   "kind": "procurement_award",
+   "flag": true
+  },
+  "C013": {
+   "kind": "status_update",
+   "flag": false
+  },
+  "C014": {
+   "kind": "status_update",
+   "flag": false
+  },
+  "C015": {
+   "kind": "attachment_or_map",
+   "flag": false
+  },
+  "C016": {
+   "kind": "correspondence",
+   "flag": false
+  },
+  "C017": {
+   "kind": "governance_finance",
+   "flag": false
+  },
+  "C018": {
+   "kind": "status_update",
+   "flag": false
+  },
+  "C019": {
+   "kind": "attachment_or_map",
+   "flag": false
+  },
+  "C020": {
+   "kind": "status_update",
+   "flag": false
+  },
+  "C021": {
+   "kind": "attachment_or_map",
+   "flag": false
+  },
+  "C022": {
+   "kind": "procurement_award",
+   "flag": true
+  },
+  "C023": {
+   "kind": "procurement_award",
+   "flag": true
+  },
+  "C024": {
+   "kind": "procurement_other",
+   "flag": true
+  },
+  "C025": {
+   "kind": "correspondence",
+   "flag": false
+  },
+  "C026": {
+   "kind": "procurement_award",
+   "flag": true
+  },
+  "C027": {
+   "kind": "attachment_or_map",
+   "flag": false
+  },
+  "C028": {
+   "kind": "attachment_or_map",
+   "flag": false
+  },
+  "C029": {
+   "kind": "attachment_or_map",
+   "flag": false
+  },
+  "C030": {
+   "kind": "governance_finance",
+   "flag": false
+  },
+  "C031": {
+   "kind": "procurement_award",
+   "flag": true
+  },
+  "C032": {
+   "kind": "procurement_award",
+   "flag": true
+  },
+  "C033": {
+   "kind": "status_update",
+   "flag": false
+  },
+  "C034": {
+   "kind": "procurement_award",
+   "flag": true
+  },
+  "C035": {
+   "kind": "minutes",
+   "flag": false
+  },
+  "C036": {
+   "kind": "land_property",
+   "flag": false
+  },
+  "C037": {
+   "kind": "governance_finance",
+   "flag": false
+  },
+  "C038": {
+   "kind": "attachment_or_map",
+   "flag": false
+  },
+  "C039": {
+   "kind": "governance_finance",
+   "flag": false
+  },
+  "C040": {
+   "kind": "correspondence",
+   "flag": false
+  },
+  "C041": {
+   "kind": "status_update",
+   "flag": false
+  },
+  "C042": {
+   "kind": "governance_finance",
+   "flag": false
+  },
+  "C043": {
+   "kind": "procurement_award",
+   "flag": true
+  },
+  "C044": {
+   "kind": "agreement_or_mou",
+   "flag": true
+  },
+  "C045": {
+   "kind": "governance_finance",
+   "flag": false
+  },
+  "C046": {
+   "kind": "permit_regulatory",
+   "flag": false
+  },
+  "C047": {
+   "kind": "status_update",
+   "flag": false
+  },
+  "C048": {
+   "kind": "governance_finance",
+   "flag": false
+  },
+  "C049": {
+   "kind": "governance_finance",
+   "flag": false
+  },
+  "C050": {
+   "kind": "procurement_award",
+   "flag": true
+  },
+  "C051": {
+   "kind": "status_update",
+   "flag": false
+  },
+  "C052": {
+   "kind": "procurement_award",
+   "flag": true
+  },
+  "C053": {
+   "kind": "permit_regulatory",
+   "flag": false
+  },
+  "C054": {
+   "kind": "minutes",
+   "flag": false
+  },
+  "C055": {
+   "kind": "governance_finance",
+   "flag": false
+  },
+  "C056": {
+   "kind": "correspondence",
+   "flag": false
+  },
+  "C057": {
+   "kind": "procurement_award",
+   "flag": true
+  },
+  "C058": {
+   "kind": "governance_finance",
+   "flag": false
+  },
+  "C059": {
+   "kind": "procurement_other",
+   "flag": true
+  },
+  "C060": {
+   "kind": "status_update",
+   "flag": false
+  },
+  "C061": {
+   "kind": "procurement_award",
+   "flag": true
+  },
+  "C062": {
+   "kind": "governance_finance",
+   "flag": false
+  },
+  "C063": {
+   "kind": "agenda",
+   "flag": false
+  },
+  "C064": {
+   "kind": "status_update",
+   "flag": false
+  },
+  "C065": {
+   "kind": "minutes",
+   "flag": false
+  },
+  "C066": {
+   "kind": "status_update",
+   "flag": false
+  },
+  "C067": {
+   "kind": "procurement_award",
+   "flag": true
+  },
+  "C068": {
+   "kind": "status_update",
+   "flag": false
+  },
+  "C069": {
+   "kind": "status_update",
+   "flag": false
+  },
+  "C070": {
+   "kind": "status_update",
+   "flag": false
+  },
+  "C071": {
+   "kind": "governance_finance",
+   "flag": false
+  },
+  "C072": {
+   "kind": "status_update",
+   "flag": false
+  },
+  "C073": {
+   "kind": "governance_finance",
+   "flag": false
+  },
+  "C074": {
+   "kind": "status_update",
+   "flag": false
+  },
+  "C075": {
+   "kind": "governance_finance",
+   "flag": false
+  },
+  "C076": {
+   "kind": "governance_finance",
+   "flag": false
+  },
+  "C077": {
+   "kind": "correspondence",
+   "flag": false
+  },
+  "C078": {
+   "kind": "governance_finance",
+   "flag": false
+  },
+  "C079": {
+   "kind": "land_property",
+   "flag": false
+  },
+  "C080": {
+   "kind": "correspondence",
+   "flag": false
+  },
+  "C081": {
+   "kind": "governance_finance",
+   "flag": false
+  },
+  "C082": {
+   "kind": "procurement_other",
+   "flag": true
+  },
+  "C083": {
+   "kind": "attachment_or_map",
+   "flag": false
+  },
+  "C084": {
+   "kind": "agreement_or_mou",
+   "flag": false
+  },
+  "C085": {
+   "kind": "agreement_or_mou",
+   "flag": false
+  },
+  "C086": {
+   "kind": "agenda",
+   "flag": false
+  },
+  "C087": {
+   "kind": "status_update",
+   "flag": false
+  },
+  "C088": {
+   "kind": "procurement_other",
+   "flag": true
+  },
+  "C089": {
+   "kind": "procurement_award",
+   "flag": true
+  },
+  "C090": {
+   "kind": "status_update",
+   "flag": false
+  },
+  "C091": {
+   "kind": "permit_regulatory",
+   "flag": false
+  },
+  "C092": {
+   "kind": "agenda",
+   "flag": false
+  },
+  "C093": {
+   "kind": "status_update",
+   "flag": false
+  },
+  "C094": {
+   "kind": "minutes",
+   "flag": false
+  },
+  "C095": {
+   "kind": "procurement_award",
+   "flag": true
+  },
+  "C096": {
+   "kind": "status_update",
+   "flag": false
+  },
+  "C097": {
+   "kind": "governance_finance",
+   "flag": false
+  },
+  "C098": {
+   "kind": "attachment_or_map",
+   "flag": true
+  },
+  "C099": {
+   "kind": "land_property",
+   "flag": true
+  },
+  "C100": {
+   "kind": "governance_finance",
+   "flag": false
+  },
+  "C101": {
+   "kind": "attachment_or_map",
+   "flag": false
+  },
+  "C102": {
+   "kind": "procurement_award",
+   "flag": true
+  },
+  "C103": {
+   "kind": "governance_finance",
+   "flag": false
+  },
+  "C104": {
+   "kind": "attachment_or_map",
+   "flag": false
+  },
+  "C105": {
+   "kind": "procurement_award",
+   "flag": true
+  },
+  "C106": {
+   "kind": "status_update",
+   "flag": false
+  },
+  "C107": {
+   "kind": "attachment_or_map",
+   "flag": false
+  },
+  "C108": {
+   "kind": "attachment_or_map",
+   "flag": false
+  },
+  "C109": {
+   "kind": "status_update",
+   "flag": false
+  },
+  "C110": {
+   "kind": "status_update",
+   "flag": false
+  },
+  "C111": {
+   "kind": "governance_finance",
+   "flag": true
+  },
+  "C112": {
+   "kind": "governance_finance",
+   "flag": false
+  },
+  "C113": {
+   "kind": "attachment_or_map",
+   "flag": false
+  },
+  "C114": {
+   "kind": "attachment_or_map",
+   "flag": true
+  },
+  "C115": {
+   "kind": "attachment_or_map",
+   "flag": false
+  },
+  "C116": {
+   "kind": "land_property",
+   "flag": false
+  },
+  "C117": {
+   "kind": "governance_finance",
+   "flag": false
+  },
+  "C118": {
+   "kind": "attachment_or_map",
+   "flag": false
+  },
+  "C119": {
+   "kind": "correspondence",
+   "flag": false
+  },
+  "C120": {
+   "kind": "agreement_or_mou",
+   "flag": false
+  },
+  "C121": {
+   "kind": "correspondence",
+   "flag": false
+  },
+  "C122": {
+   "kind": "procurement_award",
+   "flag": true
+  },
+  "C123": {
+   "kind": "minutes",
+   "flag": false
+  },
+  "C124": {
+   "kind": "governance_finance",
+   "flag": false
+  }
+ }
+}
