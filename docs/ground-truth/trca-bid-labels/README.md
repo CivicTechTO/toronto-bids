@@ -12,7 +12,8 @@ circularity.
 | file | what it is |
 |---|---|
 | `documents.json` | the 15 excerpts as shown to labellers, with `meta` (page count, whether excerpted) |
-| `labels-alex.json` | Alex's labels, 10 documents, 98 bid rows, plus a `corrections` block |
+| `labels-alex.json` | Alex's labels — 10 documents (D01–D10), 98 bid rows, plus a `corrections` block |
+| `labels-gabe.json` | Gabe's labels — 10 documents (D06–D15), 69 bid rows |
 | `machine-proposals.json` | which names the incumbent parser vs the LLM proposed — **withheld from labellers** |
 | `labelling-tool.template.html` | the labelling UI (`__DATA__` is replaced with `documents.json`) |
 
@@ -147,3 +148,41 @@ and cannot be measured from these labels alone.
 `labels-gabe.json` was recovered as a raw localStorage dump via devtools: the export UI failed in
 his browser even after a hard reload, for reasons still unknown (it worked for the other
 labeller on the same published page).
+
+## Models scored against these labels (2026-07-29)
+
+The first non-circular comparison in this evaluation: each model was given **exactly the text
+the labeller saw** (`documents.json`), so neither side had access the other lacked. Scored
+against Alex's set, legal-suffix-insensitive name matching.
+
+| | recall | precision | single-contract | **multi-contract** | est. full backlog |
+|---|---|---|---|---|---|
+| incumbent parser | 59% | 93% | 96% | **44%** | free |
+| `openai/gpt-5.6-luna` | 100% | 100% | 100% | **100%** | **~$4** |
+| `openai/gpt-5.6-terra` | 99% | 99% | 96% | 100% | ~$10 |
+| `openai/gpt-5.6-sol` | 100% | 100% | 100% | **100%** | ~$56 |
+| `anthropic/claude-opus-5` | 100% | 100% | 100% | **100%** | ~$290 |
+
+Whole exercise cost **$2.67**. The cheapest model on the published price/intelligence frontier is
+as good as the most expensive one here; everything above Luna buys nothing this task uses.
+
+**Method** (the script was not preserved; it is a short harness, ~150 lines): for each document,
+POST the full shown text to OpenRouter with a JSON-schema-constrained response of
+`{company, contract, amount}` records, `service_tier: "flex"` for OpenAI models, reasoning effort
+low. Score company names against the labeller's with legal suffixes stripped and a 0.88
+difflib ratio as the match threshold. Bucket documents by whether the labels contain one contract
+or several.
+
+The prompt carried the **pre-qualified-vs-disqualified rule** (below), which came from human
+labelling, not from any model.
+
+### Read these numbers carefully
+
+- **100% precision means the models proposed nothing Alex did not have** — they matched his
+  *coverage*, they did not exceed it. Given that two independent human readers both
+  under-covered the multi-contract packages, this is not evidence that the models found
+  everything in the documents.
+- Nine documents, 92 companies, one labeller's set. Small.
+- The first run of the harness reported `gpt-5.6-sol` at **22%**. That was a missing backoff in
+  the retry loop — four instant retries under rate limiting, silently returning empty. Sol is
+  100%. Treat every figure here as fragile until reproduced.
