@@ -1,0 +1,501 @@
+{
+ "labeller": "B",
+ "labeller_name": "Gabe",
+ "source": "raw localStorage dump via devtools (export UI was blocked in his browser)",
+ "documents": [
+  {
+   "id": "D06",
+   "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=4833",
+   "none_present": false,
+   "completed": true,
+   "entries": [
+    {
+     "company": "1035477 Ontario Limited-Glenn Windrem Trucking",
+     "contract": "Request for Proposal (RFP) No. 10021054",
+     "amount": "",
+     "outcome": "won"
+    },
+    {
+     "company": "Dufferin Aggregates (CRH Canada Group)",
+     "contract": "Request for Proposal (RFP) No. 10021054",
+     "amount": "",
+     "outcome": "won"
+    },
+    {
+     "company": "Elite Stones Quarries",
+     "contract": "Request for Proposal (RFP) No. 10021054",
+     "amount": "",
+     "outcome": "won"
+    },
+    {
+     "company": "James Dick Construction Ltd.",
+     "contract": "Request for Proposal (RFP) No. 10021054",
+     "amount": "",
+     "outcome": "won"
+    },
+    {
+     "company": "J.C. Rock Ltd.",
+     "contract": "Request for Proposal (RFP) No. 10021054",
+     "amount": "",
+     "outcome": "won"
+    },
+    {
+     "company": "Atlantis Marine Construction Canada Inc.",
+     "contract": "Request for Proposal (RFP) No. 10021054",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "Brock Aggregates Inc.",
+     "contract": "Request for Proposal (RFP) No. 10021054",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "CDR Young’s Aggregates Inc.",
+     "contract": "Request for Proposal (RFP) No. 10021054",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "Draglam Salt Inc.",
+     "contract": "Request for Proposal (RFP) No. 10021054",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "Earthco Soils Inc.",
+     "contract": "Request for Proposal (RFP) No. 10021054",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "Miller Paving Limited",
+     "contract": "Request for Proposal (RFP) No. 10021054",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "Natural Stone Source Ontario Ltd.",
+     "contract": "Request for Proposal (RFP) No. 10021054",
+     "amount": "",
+     "outcome": "lost"
+    }
+   ]
+  },
+  {
+   "id": "D07",
+   "url": "https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=4648",
+   "none_present": false,
+   "completed": true,
+   "entries": [
+    {
+     "company": "Wood Environment & Infrastructure Solutions",
+     "contract": "RFP No. 10009033",
+     "amount": "$498,126 plus applicable taxes",
+     "outcome": "won"
+    },
+    {
+     "company": "Matrix Solutions Incorporated",
+     "contract": "RFP No. 10009033",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "Valdor Engineering Incorporated",
+     "contract": "RFP No. 10009033",
+     "amount": "",
+     "outcome": "lost"
+    }
+   ]
+  },
+  {
+   "id": "D08",
+   "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=14300",
+   "none_present": false,
+   "completed": true,
+   "entries": [
+    {
+     "company": "Airborne Imaging Inc.",
+     "contract": "RFP No. 10038972",
+     "amount": "$800,130, plus applicable taxes",
+     "outcome": "won"
+    },
+    {
+     "company": "Aeroquest Mapcon Inc.",
+     "contract": "RFP No. 10038972",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "Eagle Mapping Ltd.",
+     "contract": "RFP No. 10038972",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "Kisik Aerial Survey Inc.",
+     "contract": "RFP No. 10038972",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "LiDAR Services International Inc.",
+     "contract": "RFP No. 10038972",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "Quantum Spatial Canada Inc.",
+     "contract": "RFP No. 10038972",
+     "amount": "",
+     "outcome": "lost"
+    }
+   ]
+  },
+  {
+   "id": "D09",
+   "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=6721",
+   "none_present": false,
+   "completed": true,
+   "entries": [
+    {
+     "company": "Action Buildworks",
+     "contract": "contract No.10033027",
+     "amount": "",
+     "outcome": "won"
+    },
+    {
+     "company": "Adem’s Restoration",
+     "contract": "contract No.10033027",
+     "amount": "",
+     "outcome": "won"
+    },
+    {
+     "company": "B. A. Construction",
+     "contract": "contract No.10033027",
+     "amount": "",
+     "outcome": "won"
+    },
+    {
+     "company": "Brooks Restoration",
+     "contract": "contract No.10033027",
+     "amount": "",
+     "outcome": "won"
+    },
+    {
+     "company": "DJ McRae",
+     "contract": "VOR No.10033027",
+     "amount": "",
+     "outcome": "won"
+    },
+    {
+     "company": "J.D. Strachan",
+     "contract": "VOR No.10033027",
+     "amount": "",
+     "outcome": "won"
+    },
+    {
+     "company": "818185 Ontario Inc.",
+     "contract": "VOR No.10033027",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "AAA Roofmasters Ltd.",
+     "contract": "VOR No.10033027",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "Clifford Restoration Ltd.",
+     "contract": "VOR No.10033027",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "COSGAR GC.PM",
+     "contract": "VOR No.10033027",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "G.V.Miller Custom Contracting",
+     "contract": "VOR No.10033027",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "Limen Group Const. Ltd.",
+     "contract": "VOR No.10033027",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "MASI Group Inc.",
+     "contract": "VOR No.10033027",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "Northeast Roofing Inc.",
+     "contract": "VOR No.10033027",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "RAINFORCES LTD.",
+     "contract": "VOR No.10033027",
+     "amount": "",
+     "outcome": "lost"
+    }
+   ]
+  },
+  {
+   "id": "D10",
+   "url": "https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=15702",
+   "none_present": false,
+   "completed": true,
+   "entries": [
+    {
+     "company": "AVERTEX Utility Solutions Inc.",
+     "contract": "RFT 10039863",
+     "amount": "$375,672.00 plus applicable taxes",
+     "outcome": "won"
+    },
+    {
+     "company": "Bingham Controls Ltd.",
+     "contract": "RFT 10039863",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "Dilisado Enterprises.",
+     "contract": "RFT 10039863",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "MultiTech Trades Corporation.",
+     "contract": "RFT 10039863",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "On-Tek Electrical Services Ltd.",
+     "contract": "RFT 10039863",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "R.A. Graham Contractors Ltd.",
+     "contract": "RFT 10039863",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "RPM Industrial Inc.",
+     "contract": "RFT 10039863",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "Vitell Inc.",
+     "contract": "RFT 10039863",
+     "amount": "",
+     "outcome": "lost"
+    }
+   ]
+  },
+  {
+   "id": "D11",
+   "url": "https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=15441",
+   "none_present": false,
+   "completed": true,
+   "entries": [
+    {
+     "company": "Dynex Construction Inc.",
+     "contract": "RFP No. 10039817",
+     "amount": "$7,521,506, plus applicable taxes",
+     "outcome": "won"
+    },
+    {
+     "company": "Metric Group Limited",
+     "contract": "RFP No. 10039817",
+     "amount": "",
+     "outcome": "lost"
+    }
+   ]
+  },
+  {
+   "id": "D12",
+   "url": "https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=14347",
+   "none_present": false,
+   "completed": true,
+   "entries": [
+    {
+     "company": "Airborne Imaging Inc.",
+     "contract": "RFP No. 10038972",
+     "amount": "$800,130, plus applicable taxes",
+     "outcome": "won"
+    },
+    {
+     "company": "Airborne Imagine Inc.",
+     "contract": "RFP No. 10038972",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "Eagle Mapping Ltd.",
+     "contract": "RFP No. 10038972",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "Kisik Aerial Survey Inc.",
+     "contract": "RFP No. 10038972",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "LiDAR Services International Inc.",
+     "contract": "RFP No. 10038972",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "Quantum Spatial Canada Inc.",
+     "contract": "RFP No. 10038972",
+     "amount": "",
+     "outcome": "lost"
+    }
+   ]
+  },
+  {
+   "id": "D13",
+   "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=5924",
+   "none_present": false,
+   "completed": true,
+   "entries": [
+    {
+     "company": "Aqua-tech Dewatering Company Inc.",
+     "contract": "VOR No. 10033257",
+     "amount": "",
+     "outcome": "won"
+    },
+    {
+     "company": "Atlas Dewatering Corporation",
+     "contract": "VOR No. 10033257",
+     "amount": "",
+     "outcome": "won"
+    },
+    {
+     "company": "CONEQ Rentals",
+     "contract": "VOR No. 10033257",
+     "amount": "",
+     "outcome": "won"
+    },
+    {
+     "company": "Cooper Equipment Rentals",
+     "contract": "VOR No. 10033257",
+     "amount": "",
+     "outcome": "won"
+    },
+    {
+     "company": "Herc Rentals",
+     "contract": "VOR No. 10033257",
+     "amount": "",
+     "outcome": "won"
+    },
+    {
+     "company": "Rapid Equipment Rental Limited",
+     "contract": "VOR No. 10033257",
+     "amount": "",
+     "outcome": "won"
+    },
+    {
+     "company": "Sunbelt Rentals of Canada",
+     "contract": "VOR No. 10033257",
+     "amount": "",
+     "outcome": "won"
+    },
+    {
+     "company": "United Rentals of Canada, Inc.",
+     "contract": "VOR No. 10033257",
+     "amount": "",
+     "outcome": "won"
+    },
+    {
+     "company": "Rain for Rent Canada ULC",
+     "contract": "",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "Battlefield Equipment Rentals – Div. of Toromont Industries Ltd.",
+     "contract": "",
+     "amount": "",
+     "outcome": "lost"
+    }
+   ]
+  },
+  {
+   "id": "D14",
+   "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=18386",
+   "none_present": false,
+   "completed": true,
+   "entries": [
+    {
+     "company": "Dynex Construction Inc.",
+     "contract": "RFT No. 10040951",
+     "amount": "$2,947,485.00 plus applicable taxes",
+     "outcome": "won"
+    },
+    {
+     "company": "560789 Ontario Limited o/a R&M Construction",
+     "contract": "RFT No. 10040951",
+     "amount": "$3,611,536.80",
+     "outcome": "lost"
+    },
+    {
+     "company": "2220742 Ontario Limited o/a Bronte Construction",
+     "contract": "RFT No. 10040951",
+     "amount": "$4,417,565.60",
+     "outcome": "lost"
+    }
+   ]
+  },
+  {
+   "id": "D15",
+   "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=5240",
+   "none_present": false,
+   "completed": true,
+   "entries": [
+    {
+     "company": "Long View Systems Corporation",
+     "contract": "RFP No. 10021875",
+     "amount": "$594,472, plus applicable taxes",
+     "outcome": "won"
+    },
+    {
+     "company": "CDW Canada Corp.",
+     "contract": "RFP No. 10021875",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "Dell Technologies",
+     "contract": "RFP No. 10021875",
+     "amount": "",
+     "outcome": "lost"
+    },
+    {
+     "company": "SoftwareOne Canada Inc.",
+     "contract": "RFP No. 10021875",
+     "amount": "",
+     "outcome": "lost"
+    }
+   ]
+  }
+ ]
+}

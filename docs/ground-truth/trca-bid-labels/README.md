@@ -101,3 +101,49 @@ bullet list as the bid list.
   labeller only to part of it.
 - `D09` is a Vendor of Record arrangement with multiple winners per service category
   (Roofing / Painting / Stucco), which is why it carries six `won` rows. That is correct.
+
+## Inter-rater agreement (both labellers complete, 2026-07-30)
+
+Gabe's set arrived (10 documents, 69 rows). Five documents — D06–D10 — were labelled
+independently by both, which is what bounds how much confidence these labels deserve.
+
+Raw company-set agreement across the five is 69% (Jaccard), which looks poor until it is broken
+down **per contract**:
+
+| | |
+|---|---|
+| contracts **both labellers read** | **42 of 44 companies agreed — 95%** |
+| companies in contracts **only one labeller reached** | **13** |
+
+The two remaining disagreements are name variants (`MultiTech.` vs `MultiTech Trades
+Corporation.`, `DJ McRae` vs `DJ McRae Contractors Ltd.`) — both forms appear verbatim in the
+documents, so neither is wrong.
+
+**Every substantive disagreement is contract COVERAGE, not reading.** On D06 Gabe found 1 of the
+3 contracts; on D09, 1 of 4. Both are the large meeting packages.
+
+### What this means
+
+1. **The labels are trustworthy where they overlap.** Two people reading the same bid list agree
+   ~95–100%. Extraction from a bid list is not the ambiguous part of this task.
+2. **Finding all the contracts is the hard part — for humans as well as software.** Gabe stopped
+   at the first bid list in exactly the documents where the incumbent parser stops at the first
+   bid list. The failure is a property of the documents, not of regex.
+3. **Ground truth on multi-contract packages should be assumed INCOMPLETE, including Alex's.**
+   Two independent readers both under-covered; there is no basis for assuming a third would not.
+   Recall figures measured against these labels are therefore an **upper bound on the labels**,
+   not on the documents.
+4. An independent corroboration of one correction: Alex's D10 originally omitted the three
+   disqualified tenderers, which were added by adjudication from the report's own wording. Gabe
+   included all three unprompted.
+
+### Consequence for the model scores above
+
+The models were scored against Alex's labels and reached 100% precision, meaning they proposed
+nothing Alex did not have — so on these documents they matched Alex's *coverage* rather than
+exceeding it. Whether any extractor finds contracts that BOTH humans missed is not yet measured,
+and cannot be measured from these labels alone.
+
+`labels-gabe.json` was recovered as a raw localStorage dump via devtools: the export UI failed in
+his browser even after a hard reload, for reasons still unknown (it worked for the other
+labeller on the same published page).
