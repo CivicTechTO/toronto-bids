@@ -31,6 +31,7 @@ KEY = os.environ["OPENROUTER_API_KEY"]
 MODELS = [("openai/gpt-5.6-luna", True), ("openai/gpt-5.6-terra", True),
           ("openai/gpt-5.6-sol", True), ("anthropic/claude-opus-5", False)]
 CONC = 6
+EFFORT = "low"   # override with --effort high|max ; benchmarks often report at max
 
 SCHEMA = {"type": "object", "additionalProperties": False, "required": ["bids"],
           "properties": {"bids": {"type": "array", "items": {
@@ -103,7 +104,7 @@ def ask(model, flex, block):
     is unavailable now" but handles `json_object` fine. Falling back matters: without it the
     model scores 0% and looks incapable when it was never actually asked.
     """
-    base = {"model": model, "max_tokens": 4000, "reasoning": {"effort": "low"},
+    base = {"model": model, "max_tokens": 4000, "reasoning": {"effort": EFFORT},
             "messages": [{"role": "user", "content": PROMPT.format(block=block[:60000])}],
             "usage": {"include": True}}
     if flex:
@@ -132,8 +133,12 @@ def ask(model, flex, block):
 
 
 def main():
-    global MODELS
+    global MODELS, EFFORT
     argv = list(sys.argv[1:])
+    if "--effort" in argv:
+        i = argv.index("--effort")
+        EFFORT = argv[i + 1]
+        del argv[i:i + 2]
     if "--models" in argv:
         i = argv.index("--models")
         MODELS = [(m, m.startswith("openai/")) for m in argv[i + 1].split(",")]
@@ -148,7 +153,7 @@ def main():
         lab = [d for d in lab if lo <= d["id"] <= hi]
     truth_n = sum(len({key(e["company"]) for e in d["entries"]}) for d in lab)
     print(f"scoring against {who}: {len(lab)} documents, {truth_n} companies"
-          + (f" ({only})" if only else ""))
+          + (f" ({only})" if only else "") + f"  [reasoning effort: {EFFORT}]")
     print(f"\n{'model':26s} {'recall':>7s} {'prec':>6s} {'single':>8s} {'MULTI':>8s} {'$':>8s}")
 
     try:

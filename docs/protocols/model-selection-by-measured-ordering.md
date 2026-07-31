@@ -143,7 +143,15 @@ one contract or several: every model scored ~96% on single-contract documents. M
 where the spread appeared — 100% for most, **65%** for DeepSeek, **44%** for the incumbent parser.
 The competence is *"find all N instances in a long document"*, not "reason well".
 
-**Step 3 — where this example stops.** The index's own weighting already explains the failure:
+**Step 3 — a bug in the frontier nearly inverted the answer.** The first AA-LCR front scored each
+model's best *variant* (often "max effort") while pricing it at base per-token rates. On that
+front DeepSeek (0.657) outranked Nemotron, contradicting the measurement. Once reasoning-token
+cost was priced in, Nemotron rose to **0.67** — above DeepSeek — matching the measured ordering,
+and DeepSeek fell off the frontier entirely. **The methodological bug was specifically flattering
+the one model that fails the task.** Check that a benchmark's score and its price describe the
+same configuration before trusting either.
+
+**Step 3 — where this example still stops.** The index's own weighting already explains the failure:
 long-context reasoning (AA-LCR) is **6.25%** of the total and instruction-following (IFBench)
 another 6.25%. This task is essentially only those two — **12.5% of the index**, with the other
 87.5% measuring agents, coding and scientific reasoning that the task never touches.

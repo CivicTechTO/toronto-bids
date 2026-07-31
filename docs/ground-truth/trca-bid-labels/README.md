@@ -226,3 +226,81 @@ labelled the same report correctly as D08. An intra-rater inconsistency on ident
 **Practical consequence:** precision measured against these labels is not a measure of extractor
 correctness. Only recall is sound, and only adjudication against the source settles a
 disagreement.
+
+## Model selection (2026-07-31)
+
+**Best free: `nvidia/nemotron-3-ultra-550b-a55b:free`.
+Best paid: `openai/gpt-5.6-luna`.**
+
+Full ladder, scored against Alex's set (10 documents, 92 companies), `reasoning: effort=low`:
+
+| model | AA-LCR | recall | precision | single-contract | **multi-contract** | backlog cost |
+|---|---|---|---|---|---|---|
+| incumbent regex parser | — | 59% | 93% | 96% | **44%** | free |
+| **`nemotron-3-ultra:free`** | 0.67 | **99%** | 99% | 96% | **100%** | **$0** |
+| `tencent/hy3-preview` | ? | 99% | 99% | 96% | 100% | ~$2 |
+| `deepseek-v4-flash` | 0.657 | **74%** | 99% | 96% | **65%** | ~$4 |
+| **`openai/gpt-5.6-luna`** | 0.69 | **100%** | 100% | 100% | **100%** | **~$4** |
+| `openai/gpt-5.6-terra` | — | 99% | 99% | 96% | 100% | ~$10 |
+| `openai/gpt-5.6-sol` | — | 100% | 100% | 100% | 100% | ~$56 |
+| `moonshotai/kimi-k3` | — | 100% | 100% | 100% | 100% | ~$86 |
+| `anthropic/claude-opus-5` | — | 100% | 100% | 100% | 100% | ~$290 |
+
+Every model beats the incumbent parser, and the entire spread from free to $290 is 99–100%
+except DeepSeek. **Price buys nothing on this task above the free tier.**
+
+### Why these two
+
+**`nemotron-3-ultra:free` — the free choice.** 99%/99%, $0, 1M context. Its limits are
+operational, not qualitative:
+
+- **No structured-output support at all** (`structured_outputs: false`, `response_format: false`).
+  It produces JSON by following instructions, not by constrained decoding — the exact failure
+  mode that made Qwen3-1.7B unusable. A 550B model complies far more reliably, but nothing
+  enforces it, so output must be validated and a document refused rather than partially stored.
+- **20 requests/minute (fixed) and 1,000/day.** Fine for the nightly (2–10 documents). The TRCA
+  backlog of 3,411 documents takes ~4 days and consumes the whole daily free allowance.
+- **Free endpoints rotate out without notice.** Building the only extraction path on one invites
+  a silent outage.
+
+**`openai/gpt-5.6-luna` — the paid choice.** 100%/100%, enforced JSON schema, `service_tier:
+flex` verified applying (50% off, confirmed by arithmetic on the returned per-token cost), and
+**~$4 for the entire 6,163-document backlog** with ~$1/month steady state.
+
+**Recommended shape: Nemotron as default, Luna as automatic fallback** on rate-limit or
+unavailability. They are within 1 point of each other, so the fallback costs pennies and removes
+a single point of failure.
+
+### What the intelligence index and AA-LCR each got right
+
+The Artificial Analysis **Intelligence Index does not predict this task**. It spans 37.8→60.7
+across the models above and yields a flat 99–100% line with one outlier — and the outlier is not
+the cheapest model. The arithmetic reason: long-context reasoning is **6.25%** of that index and
+instruction-following another 6.25%; this task is essentially only those two.
+
+**AA-LCR does order our one discriminating pair correctly** — but only after a bug in the
+frontier computation was fixed. The original front scored each model's best *variant* (often
+"max effort") while pricing it at base rates; correcting for reasoning-token cost moved
+Nemotron to 0.67, above DeepSeek's 0.657, matching the measured ordering. Before the fix it
+appeared inverted.
+
+**This is not yet a validated proxy.** One discriminating pair is not an ordering; `tencent/
+hy3-preview` scored 99% and its AA-LCR is unknown, which would falsify the correlation if it is
+below 0.657. Confirming it would require deliberately testing models AA-LCR predicts will fail.
+See `docs/protocols/model-selection-by-measured-ordering.md`.
+
+### Caveats on the table
+
+- The prompt gained an explicit "reply with JSON" line partway through, to satisfy DeepSeek's
+  `json_object` requirement and Tencent's disregard for response schemas. The earlier four models
+  (Luna, Terra, Sol, Opus 5) were measured before that line existed; they used constrained
+  decoding, which forced JSON regardless, so it should not move them — but the table is not
+  perfectly like-for-like.
+- Run-to-run variance is real: Nemotron scored 100%/100% once and 99%/99% on a repeat, same
+  prompt and documents. Differences of 1–2 points are not meaningful.
+- Benchmark scores are reported at `(high)` / `(Reasoning)` variants; we measured at
+  `effort: low`.
+- Three models needed provider-specific handling to work at all — DeepSeek requires the literal
+  word "json", Tencent ignores response schemas and returns markdown, and both looked like 0%
+  capability until diagnosed. Any production path needs that fallback logic or it will score a
+  capable model as useless.
