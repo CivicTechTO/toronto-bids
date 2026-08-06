@@ -33,8 +33,58 @@ def load_classification_labels(path) -> dict[str, bool]:
     }
 
 
+_DEFAULT_MAX_CHARS = 400_000
+
+
+def split_document(text: str, max_chars: int = _DEFAULT_MAX_CHARS) -> list[str]:
+    """Split a large document into chunks on double-newline boundaries."""
+    if len(text) <= max_chars:
+        return [text]
+    sections = text.split("\n\n")
+    chunks = []
+    current = []
+    current_len = 0
+    for section in sections:
+        section_len = len(section) + (2 if current else 0)
+        if current and current_len + section_len > max_chars:
+            chunks.append("\n\n".join(current))
+            current = [section]
+            current_len = len(section)
+        else:
+            current.append(section)
+            current_len += section_len
+    if current:
+        chunks.append("\n\n".join(current))
+    return chunks
+
+
+def dedup_contracts(contracts: list[dict]) -> list[dict]:
+    """Deduplicate contracts by reference, keeping the one with more bids."""
+    by_ref: dict[str, dict] = {}
+    no_ref = []
+    for contract in contracts:
+        ref = contract.get("reference")
+        if not ref:
+            no_ref.append(contract)
+            continue
+        existing = by_ref.get(ref)
+        if existing is None or len(contract.get("bids", [])) > len(
+            existing.get("bids", [])
+        ):
+            by_ref[ref] = contract
+    return list(by_ref.values()) + no_ref
+
+
 def extract_corpus(
-    conn, corpus, *, client, labels, where=None, limit=None, log=lambda _m: None
+    conn,
+    corpus,
+    *,
+    client,
+    labels,
+    where=None,
+    limit=None,
+    max_chars=_DEFAULT_MAX_CHARS,
+    log=lambda _m: None,
 ):
     """Extract bids from all qualifying documents in a corpus.
 
@@ -60,6 +110,8 @@ def extract_corpus(
         "extracted": 0,
         "errors": 0,
         "count_flags": 0,
+        "split": 0,
+        "chunks": 0,
     }
 
     extracted_count = 0
@@ -82,7 +134,18 @@ def extract_corpus(
             continue
 
         try:
-            result = client.extract(text)
+            chunks = split_document(text, max_chars=max_chars)
+            if len(chunks) > 1:
+                stats["split"] += 1
+                stats["chunks"] += len(chunks)
+                log(f"  splitting {url} into {len(chunks)} chunks")
+                all_contracts = []
+                for chunk in chunks:
+                    chunk_result = client.extract(chunk)
+                    all_contracts.extend(chunk_result.get("contracts", []))
+                result = {"contracts": dedup_contracts(all_contracts)}
+            else:
+                result = client.extract(text)
             flags = check_declared_counts(result)
             if flags:
                 result["_flags"] = flags

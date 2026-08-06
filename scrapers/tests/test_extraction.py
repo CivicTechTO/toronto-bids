@@ -476,3 +476,105 @@ def test_extract_corpus_stores_flags_on_shortfall(conn):
     assert len(cached["_flags"]) == 1
     assert cached["_flags"][0]["declared"] == 5
     assert cached["_flags"][0]["actual"] == 2
+
+
+# ── document splitting ──
+
+
+def test_split_document_small_passes_through():
+    from toronto_bids.extraction import split_document
+
+    chunks = split_document("short text", max_chars=1000)
+    assert chunks == ["short text"]
+
+
+def test_split_document_splits_on_double_newline():
+    from toronto_bids.extraction import split_document
+
+    sections = ["Section " + str(i) + "\n" + "x" * 200 for i in range(10)]
+    text = "\n\n".join(sections)
+    chunks = split_document(text, max_chars=500)
+    assert len(chunks) > 1
+    for chunk in chunks:
+        assert len(chunk) <= 500
+
+
+def test_extract_corpus_splits_large_doc_and_merges(conn):
+    from toronto_bids.extract import EXTRACTOR_VERSION
+    from toronto_bids.store.db import get_extraction
+
+    sections = ["x" * 200 for _ in range(10)]
+    big_text = "\n\n".join(sections)
+
+    conn.execute(
+        "INSERT INTO background_pdf (url, kind, sha256, text) "
+        "VALUES ('https://example.com/big.pdf', 'agency_board', 'hhh', ?)",
+        (big_text,),
+    )
+    conn.commit()
+
+    call_count = [0]
+    results_per_call = [
+        {
+            "contracts": [
+                {
+                    "reference": "RFT A",
+                    "bids": [{"supplier_name": "X", "amount_raw": "$1"}],
+                    "awards": [],
+                }
+            ]
+        },
+        {
+            "contracts": [
+                {
+                    "reference": "RFT B",
+                    "bids": [{"supplier_name": "Y", "amount_raw": "$2"}],
+                    "awards": [],
+                }
+            ]
+        },
+        {"contracts": []},
+    ]
+
+    class ChunkedClient:
+        def extract(self, text):
+            idx = min(call_count[0], len(results_per_call) - 1)
+            call_count[0] += 1
+            return results_per_call[idx]
+
+    stats = extract_corpus(
+        conn,
+        "trca",
+        client=ChunkedClient(),
+        labels={},
+        where="kind='agency_board'",
+        max_chars=500,
+    )
+    assert stats["split"] >= 1
+    assert call_count[0] > 1
+
+    cached = json.loads(get_extraction(conn, "hhh", EXTRACTOR_VERSION))
+    refs = [c["reference"] for c in cached["contracts"]]
+    assert "RFT A" in refs
+    assert "RFT B" in refs
+
+
+# ── contract dedup ──
+
+
+def test_dedup_contracts_merges_on_reference():
+    from toronto_bids.extraction import dedup_contracts
+
+    contracts = [
+        {"reference": "RFT 1", "bids": [{"supplier_name": "A"}], "awards": []},
+        {
+            "reference": "RFT 1",
+            "bids": [{"supplier_name": "A"}, {"supplier_name": "B"}],
+            "awards": [],
+        },
+        {"reference": "RFT 2", "bids": [{"supplier_name": "C"}], "awards": []},
+    ]
+    result = dedup_contracts(contracts)
+    assert len(result) == 2
+    rft1 = next(c for c in result if c["reference"] == "RFT 1")
+    assert len(rft1["bids"]) == 2
