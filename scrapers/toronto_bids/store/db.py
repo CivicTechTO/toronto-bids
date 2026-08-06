@@ -2,11 +2,24 @@ import sqlite3
 from dataclasses import fields
 from importlib import resources
 
-from toronto_bids.models import (Award, Bid, Buyer, AgencyAward, AgencyBid,
-                                 AgencySolicitation, CapitalProject, CompositeAward,
-                                 NonCompetitive, Solicitation, AribaPosting,
-                                 AribaAttachment, SuspendedFirm, Supplier, CouncilItem,
-                                 BackgroundPdf)
+from toronto_bids.models import (
+    AgencyAward,
+    AgencyBid,
+    AgencySolicitation,
+    AribaAttachment,
+    AribaPosting,
+    Award,
+    BackgroundPdf,
+    Bid,
+    Buyer,
+    CapitalProject,
+    CompositeAward,
+    CouncilItem,
+    NonCompetitive,
+    Solicitation,
+    Supplier,
+    SuspendedFirm,
+)
 
 # model -> (table, conflict-key columns). A model's fields ARE the table's writable
 # columns, in INSERT order; auto/default columns (id, first_seen, last_seen, supplier_id)
@@ -14,8 +27,16 @@ from toronto_bids.models import (Award, Bid, Buyer, AgencyAward, AgencyBid,
 _TABLES = {
     Solicitation: ("solicitation", ["document_number"]),
     NonCompetitive: ("noncompetitive", ["workspace_number"]),
-    Award: ("award", ["document_number", "supplier_name_raw", "award_amount",
-                      "award_date", "source"]),
+    Award: (
+        "award",
+        [
+            "document_number",
+            "supplier_name_raw",
+            "award_amount",
+            "award_date",
+            "source",
+        ],
+    ),
     AribaPosting: ("ariba_posting", ["rfx_id"]),
     AribaAttachment: ("ariba_attachment", ["document_number", "path"]),
     SuspendedFirm: ("suspended_firm", ["supplier_name_raw", "council_authority"]),
@@ -23,13 +44,20 @@ _TABLES = {
     CouncilItem: ("council_item", ["reference"]),
     BackgroundPdf: ("background_pdf", ["url"]),
     CapitalProject: ("capital_project", ["name"]),
-    Bid: ("bid", ["reference", "document_number", "bidder_name_raw", "bid_price", "source"]),
-    CompositeAward: ("composite_award", ["call_number", "supplier_name_raw",
-                                         "award_value", "source"]),
+    Bid: (
+        "bid",
+        ["reference", "document_number", "bidder_name_raw", "bid_price", "source"],
+    ),
+    CompositeAward: (
+        "composite_award",
+        ["call_number", "supplier_name_raw", "award_value", "source"],
+    ),
     Buyer: ("buyer", ["slug"]),
     AgencySolicitation: ("agency_solicitation", ["buyer_id", "native_ref"]),
-    AgencyAward: ("agency_award", ["buyer_id", "native_ref", "supplier_name_raw",
-                                   "award_amount", "source"]),
+    AgencyAward: (
+        "agency_award",
+        ["buyer_id", "native_ref", "supplier_name_raw", "award_amount", "source"],
+    ),
     AgencyBid: ("agency_bid", ["buyer_id", "native_ref", "bidder_name_raw", "source"]),
 }
 
@@ -38,22 +66,35 @@ _TABLES = {
 # because SQLite treats NULLs as distinct — see the award_line_key comment in schema.sql.
 _CONFLICT_TARGETS = {
     "award": "document_number, supplier_name_raw, "
-             "COALESCE(award_amount, ''), COALESCE(award_date, ''), source",
+    "COALESCE(award_amount, ''), COALESCE(award_date, ''), source",
     "bid": "COALESCE(reference, ''), COALESCE(document_number, ''), bidder_name_raw, "
-           "COALESCE(bid_price, ''), source",
+    "COALESCE(bid_price, ''), source",
     "composite_award": "call_number, COALESCE(supplier_name_raw, ''), "
-                       "COALESCE(award_value, ''), source",
+    "COALESCE(award_value, ''), source",
     "agency_award": "buyer_id, native_ref, COALESCE(supplier_name_raw, ''), "
-                    "COALESCE(award_amount, ''), source",
+    "COALESCE(award_amount, ''), source",
 }
 
 # The published table set — the export dictionary (#168) and counts() share this so they
 # cannot drift. Ordered for a deterministic schema document.
 EXPORT_TABLES = [
-    "solicitation", "award", "noncompetitive", "ariba_posting",
-    "suspended_firm", "supplier", "capital_project", "bid", "council_item",
-    "background_pdf", "composite_award", "sync_run", "buyer",
-    "agency_solicitation", "agency_award", "agency_bid", "ariba_attachment",
+    "solicitation",
+    "award",
+    "noncompetitive",
+    "ariba_posting",
+    "suspended_firm",
+    "supplier",
+    "capital_project",
+    "bid",
+    "council_item",
+    "background_pdf",
+    "composite_award",
+    "sync_run",
+    "buyer",
+    "agency_solicitation",
+    "agency_award",
+    "agency_bid",
+    "ariba_attachment",
     "solicitation_link",
 ]
 
@@ -95,9 +136,13 @@ def _rebuild_bid_for_nullable_reference(conn, schema: str) -> bool:
     Returns True if a rebuild happened. Idempotent: a no-op once reference is nullable.
     """
     row = conn.execute(
-        "SELECT sql FROM sqlite_master WHERE type='table' AND name='bid'").fetchone()
-    if row is None or "NOT NULL" not in (row["sql"] or "").split("reference")[-1][:24].upper():
-        return False                        # fresh DB, or already rebuilt
+        "SELECT sql FROM sqlite_master WHERE type='table' AND name='bid'"
+    ).fetchone()
+    if (
+        row is None
+        or "NOT NULL" not in (row["sql"] or "").split("reference")[-1][:24].upper()
+    ):
+        return False  # fresh DB, or already rebuilt
 
     cols = [r[1] for r in conn.execute("PRAGMA table_info(bid)")]
     quoted = ", ".join(cols)
@@ -131,9 +176,10 @@ def _rebuild_award_for_line_key(conn, schema: str) -> bool:
     Returns True if a rebuild happened. Idempotent: a no-op once the old UNIQUE is gone.
     """
     row = conn.execute(
-        "SELECT sql FROM sqlite_master WHERE type='table' AND name='award'").fetchone()
+        "SELECT sql FROM sqlite_master WHERE type='table' AND name='award'"
+    ).fetchone()
     if row is None or "UNIQUE" not in (row["sql"] or "").upper():
-        return False                        # fresh DB, or already rebuilt
+        return False  # fresh DB, or already rebuilt
 
     cols = [r[1] for r in conn.execute("PRAGMA table_info(award)")]
     quoted = ", ".join(cols)
@@ -168,9 +214,10 @@ def _rebuild_ariba_attachment_for_path(conn, schema: str) -> bool:
     Returns True if a rebuild happened. Idempotent: a no-op once the key is on path.
     """
     row = conn.execute(
-        "SELECT sql FROM sqlite_master WHERE type='table' AND name='ariba_attachment'").fetchone()
+        "SELECT sql FROM sqlite_master WHERE type='table' AND name='ariba_attachment'"
+    ).fetchone()
     if row is None or "document_number, filename)" not in (row["sql"] or ""):
-        return False                        # fresh DB, or already rebuilt
+        return False  # fresh DB, or already rebuilt
 
     cols = [r[1] for r in conn.execute("PRAGMA table_info(ariba_attachment)")]
     quoted = ", ".join(cols)
@@ -178,8 +225,10 @@ def _rebuild_ariba_attachment_for_path(conn, schema: str) -> bool:
     try:
         conn.execute("ALTER TABLE ariba_attachment RENAME TO _ariba_attachment_pre123")
         conn.executescript(schema)
-        conn.execute(f"INSERT INTO ariba_attachment ({quoted}) "
-                     f"SELECT {quoted} FROM _ariba_attachment_pre123")
+        conn.execute(
+            f"INSERT INTO ariba_attachment ({quoted}) "
+            f"SELECT {quoted} FROM _ariba_attachment_pre123"
+        )
         conn.execute("DROP TABLE _ariba_attachment_pre123")
     finally:
         conn.executescript("PRAGMA foreign_keys = ON;")
@@ -199,14 +248,17 @@ def _add_missing_columns(conn, schema: str) -> None:
     ref = sqlite3.connect(":memory:")
     try:
         ref.executescript(schema)
-        ref_tables = [r[0] for r in ref.execute(
-            "SELECT name FROM sqlite_master WHERE type='table'")]
+        ref_tables = [
+            r[0]
+            for r in ref.execute("SELECT name FROM sqlite_master WHERE type='table'")
+        ]
         for table in ref_tables:
             actual = {r[1] for r in conn.execute(f"PRAGMA table_info({table})")}
             if not actual:
                 continue  # table didn't exist — the CREATE above already made it current
             for _cid, name, coltype, notnull, default, _pk in ref.execute(
-                    f"PRAGMA table_info({table})"):
+                f"PRAGMA table_info({table})"
+            ):
                 if name in actual:
                     continue
                 if notnull and default is None:
@@ -260,7 +312,10 @@ def upsert_row(conn, row, *, overwrite: bool) -> None:
 
 
 def counts(conn) -> dict:
-    return {t: conn.execute(f"SELECT COUNT(*) FROM {t}").fetchone()[0] for t in EXPORT_TABLES}
+    return {
+        t: conn.execute(f"SELECT COUNT(*) FROM {t}").fetchone()[0]
+        for t in EXPORT_TABLES
+    }
 
 
 def last_runs(conn) -> list:
@@ -280,7 +335,9 @@ def start_sync_run(conn, source: str) -> int:
     return cur.lastrowid
 
 
-def finish_sync_run(conn, run_id, *, status, rows_fetched=0, rows_upserted=0, error=None) -> None:
+def finish_sync_run(
+    conn, run_id, *, status, rows_fetched=0, rows_upserted=0, error=None
+) -> None:
     conn.execute(
         "UPDATE sync_run SET finished_at = datetime('now'), status = ?, "
         "rows_fetched = ?, rows_upserted = ?, error = ? WHERE id = ?",
@@ -297,7 +354,9 @@ def sync_runs_since(conn, after_id: int) -> list[dict]:
     """
     cur = conn.execute(
         "SELECT source, status, rows_fetched, rows_upserted, error "
-        "FROM sync_run WHERE id > ? ORDER BY id", (after_id,))
+        "FROM sync_run WHERE id > ? ORDER BY id",
+        (after_id,),
+    )
     cols = [c[0] for c in cur.description]
     return [dict(zip(cols, row)) for row in cur.fetchall()]
 
@@ -332,3 +391,27 @@ def rebuild_agency_bids(conn, source: str, rows) -> int:
         conn.rollback()
         raise
     return len(rows)
+
+
+def is_extracted(conn, sha256: str, extractor_version: str) -> bool:
+    row = conn.execute(
+        "SELECT 1 FROM extraction_cache WHERE sha256=? AND extractor_version=?",
+        (sha256, extractor_version),
+    ).fetchone()
+    return row is not None
+
+
+def mark_extracted(conn, sha256: str, extractor_version: str) -> None:
+    conn.execute(
+        "INSERT OR IGNORE INTO extraction_cache (sha256, extractor_version) VALUES (?, ?)",
+        (sha256, extractor_version),
+    )
+    conn.commit()
+
+
+def clear_extraction_cache(conn, extractor_version: str) -> int:
+    cur = conn.execute(
+        "DELETE FROM extraction_cache WHERE extractor_version=?", (extractor_version,)
+    )
+    conn.commit()
+    return cur.rowcount

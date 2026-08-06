@@ -1,0 +1,18 @@
+{
+  "id": "gen-test-001",
+  "model": "nvidia/nemotron-3-ultra-253b-v1:free",
+  "choices": [
+    {
+      "message": {
+        "role": "assistant",
+        "content": "{\"contracts\": [{\"reference\": \"RFT 10041234\", \"solicitation_type\": \"RFT\", \"title\": \"Roof Replacement at Facilities\", \"buyer\": \"TRCA\", \"declared_submissions\": 3, \"bids\": [{\"supplier_name\": \"Acme Roofing Ltd.\", \"amount_raw\": \"$548,415.00\", \"amount_basis\": \"net_of_taxes\", \"status\": \"compliant\"}, {\"supplier_name\": \"Better Roofs Inc.\", \"amount_raw\": \"$612,000.00\", \"amount_basis\": \"net_of_taxes\", \"status\": \"compliant\"}, {\"supplier_name\": \"Cooper Contracting\", \"amount_raw\": null, \"amount_basis\": null, \"status\": \"non_compliant\"}], \"awards\": [{\"supplier_name\": \"Acme Roofing Ltd.\", \"amount_raw\": \"$548,415.00\", \"amount_basis\": \"net_of_taxes\"}]}]}"
+      },
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 1200,
+    "completion_tokens": 250,
+    "total_tokens": 1450
+  }
+}

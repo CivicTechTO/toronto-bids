@@ -1,5 +1,6 @@
 import argparse
 import sys
+from datetime import UTC
 
 from toronto_bids import __version__, config, pipeline
 from toronto_bids.export.json_export import export_json, export_schema
@@ -18,130 +19,199 @@ def build_parser() -> argparse.ArgumentParser:
 
     sub.add_parser("status", help="Show row counts in the local store")
 
-    p_export = sub.add_parser("export", help="Write the store to a nested JSON artifact")
-    p_export.add_argument("--out", help="Output path (default: <DATA_DIR>/export/bids.json)")
+    p_export = sub.add_parser(
+        "export", help="Write the store to a nested JSON artifact"
+    )
+    p_export.add_argument(
+        "--out", help="Output path (default: <DATA_DIR>/export/bids.json)"
+    )
 
     p_manifest = sub.add_parser(
         "manifest",
-        help="Write manifest.json (published-artifact file sizes) for the given files (#168)")
+        help="Write manifest.json (published-artifact file sizes) for the given files (#168)",
+    )
     p_manifest.add_argument("files", nargs="+", help="Artifact files to size")
-    p_manifest.add_argument("--out", required=True, help="Output path for manifest.json")
+    p_manifest.add_argument(
+        "--out", required=True, help="Output path for manifest.json"
+    )
 
     p_record = sub.add_parser(
         "record-step",
         help="Write one sync_run row for a step that isn't Python (#176) — "
-             "deploy/publish-data.sh calls this so 'publish' and its R2 mirror sub-step show "
-             "up in `tb status` instead of being visible only in the journal.")
+        "deploy/publish-data.sh calls this so 'publish' and its R2 mirror sub-step show "
+        "up in `tb status` instead of being visible only in the journal.",
+    )
     p_record.add_argument("name", help="Step name, e.g. 'publish' or 'r2_mirror'")
     p_record.add_argument("status", choices=["ok", "failed"])
     p_record.add_argument("--error", help="Error detail, required for status=failed")
 
-    p_enrich = sub.add_parser("enrich-council",
-                              help="OPT-IN: fetch council decisions + staff-report PDFs for suspended firms (headed browser)")
-    p_enrich.add_argument("--virtual-display", action="store_true",
-                          help="Run the headed browser under Xvfb (headless servers; needs Xvfb installed)")
+    p_enrich = sub.add_parser(
+        "enrich-council",
+        help="OPT-IN: fetch council decisions + staff-report PDFs for suspended firms (headed browser)",
+    )
+    p_enrich.add_argument(
+        "--virtual-display",
+        action="store_true",
+        help="Run the headed browser under Xvfb (headless servers; needs Xvfb installed)",
+    )
 
     p_titles = sub.add_parser(
         "enrich-titles",
         help="Recover titles the City never published, from the cached Bid Award Panel "
-             "agendas and the legacy archive (offline; the Panel was abolished 2025-10-01 so "
-             "the cached corpus is final)")
+        "agendas and the legacy archive (offline; the Panel was abolished 2025-10-01 so "
+        "the cached corpus is final)",
+    )
     p_awards = sub.add_parser(
         "enrich-awards",
         help="Archive the Toronto Bids Portal's Award Summary Forms — the losing bidders, "
-             "after the Bid Award Panel was abolished 2025-10-01 (#114). Offline unless "
-             "--download")
+        "after the Bid Award Panel was abolished 2025-10-01 (#114). Offline unless "
+        "--download",
+    )
     p_awards.add_argument(
-        "--download", action="store_true",
-        help="Fetch the forms first (plain HTTP, no browser; ~262 PDFs / ~64MB, resumable)")
+        "--download",
+        action="store_true",
+        help="Fetch the forms first (plain HTTP, no browser; ~262 PDFs / ~64MB, resumable)",
+    )
 
     p_amounts = sub.add_parser(
-        "amounts", help="Inspect the amount strings the parser refuses (#74)")
+        "amounts", help="Inspect the amount strings the parser refuses (#74)"
+    )
     p_amounts.add_argument(
-        "action", choices=["unlabelled"],
-        help="unlabelled: raw strings with no parse and no verdict in amount_labels.toml")
+        "action",
+        choices=["unlabelled"],
+        help="unlabelled: raw strings with no parse and no verdict in amount_labels.toml",
+    )
 
     p_ariba = sub.add_parser(
         "enrich-ariba-attachments",
         help="Archive the solicitation documents behind Ariba's Respond gate (#117). Only "
-             "reaches currently-open postings — a recurring job, not a backfill.")
+        "reaches currently-open postings — a recurring job, not a backfill.",
+    )
     p_ariba.add_argument(
-        "--capture", action="store_true",
+        "--capture",
+        action="store_true",
         help="Drive a headed, logged-in Chromium (needs `playwright install chromium` + "
-             "scrapers/.env creds) through Respond, then download each open solicitation's "
-             "documents individually from the event's content tree (Download Content -> "
-             "Download Attachments is only used to read the picker's file count)")
+        "scrapers/.env creds) through Respond, then download each open solicitation's "
+        "documents individually from the event's content tree (Download Content -> "
+        "Download Attachments is only used to read the picker's file count)",
+    )
     p_ariba.add_argument(
-        "--ingest", metavar="DIR",
+        "--ingest",
+        metavar="DIR",
         help="Index Doc*.zip bundles already sitting in DIR (e.g. a browser's download folder) "
-             "into <DATA_DIR>/ariba/attachments/ and the manifest. No browser.")
+        "into <DATA_DIR>/ariba/attachments/ and the manifest. No browser.",
+    )
     p_ariba.add_argument(
-        "--headless", action="store_true",
+        "--headless",
+        action="store_true",
         help="Run capture headless (Ariba's supplier UI is not Akamai-gated, unlike TMMIS; may "
-             "still trip bot-detection — headed is the default)")
+        "still trip bot-detection — headed is the default)",
+    )
     p_ariba.add_argument(
-        "--reindex", action="store_true",
+        "--reindex",
+        action="store_true",
         help="Rebuild the index from the bundles already on disk under <DATA_DIR>/ariba/"
-             "attachments/ (offline, no browser). Needed once after the recursion change (#123).")
+        "attachments/ (offline, no browser). Needed once after the recursion change (#123).",
+    )
     p_ariba.add_argument(
-        "--virtual-display", action="store_true",
+        "--virtual-display",
+        action="store_true",
         help="Run --capture's headed Chromium under Xvfb (headless servers; needs Xvfb "
-             "installed). Ignored by the offline --ingest/--reindex modes.")
+        "installed). Ignored by the offline --ingest/--reindex modes.",
+    )
 
     p_titles.add_argument(
-        "--reports", action="store_true",
+        "--reports",
+        action="store_true",
         help="Download the 2009-2012 composite staff-report PDFs first, whose appendices carry "
-             "awards the agendas of those years do not describe (#93). Plain HTTP and no "
-             "browser, unlike --scrape; needs pdftotext. ~221 files / ~80MB, resumable")
+        "awards the agendas of those years do not describe (#93). Plain HTTP and no "
+        "browser, unlike --scrape; needs pdftotext. ~221 files / ~80MB, resumable",
+    )
 
     sub.add_parser(
         "nightly",
         help="Sync, archive new Award Summary Forms, export, and post a summary to Slack. "
-             "What the systemd timer runs — see docs/superpowers/specs/"
-             "2026-07-17-deployment-design.md")
+        "What the systemd timer runs — see docs/superpowers/specs/"
+        "2026-07-17-deployment-design.md",
+    )
 
     p_ag = sub.add_parser(
         "enrich-agencies",
         help="Capture agency/corporation procurement from board records (#135): TRCA "
-             "(eSCRIBE, plain HTTP) and Toronto Zoo (ZB agendas on TMMIS). Offline by "
-             "default — parses reports already on disk. NEVER touches the bids&tenders "
-             "portal (gated on written permission, see docs/permissions/).")
-    p_ag.add_argument("--only", choices=["zoo", "trca", "ep"],
-                      help="Run one body instead of all")
-    p_ag.add_argument("--fetch", action="store_true",
-                      help="Plain-HTTP fetching first: TRCA eSCRIBE listings + report PDFs, "
-                           "and legdocs PDFs for Zoo agendas already cached")
-    p_ag.add_argument("--scrape", action="store_true",
-                      help="Discover Zoo ZB agendas on TMMIS first (headed browser, needs "
-                           "`playwright install chromium`; implies --fetch for the Zoo's PDFs)")
-    p_ag.add_argument("--virtual-display", action="store_true",
-                      help="Run --scrape's headed browser under Xvfb")
-    p_ag.add_argument("--portal", action="store_true",
-                      help="Capture bids&tenders portal listings for enabled+permitted bodies "
-                           "(plain HTTP, rate-limited). Currently a no-op while portals are empty.")
-    p_ag.add_argument("--record", action="store_true",
-                      help="With --portal: also dump each raw JSON record under "
-                           "<DATA_DIR>/agencies/portal_recordings/ to seed parser fixtures.")
+        "(eSCRIBE, plain HTTP) and Toronto Zoo (ZB agendas on TMMIS). Offline by "
+        "default — parses reports already on disk. NEVER touches the bids&tenders "
+        "portal (gated on written permission, see docs/permissions/).",
+    )
+    p_ag.add_argument(
+        "--only", choices=["zoo", "trca", "ep"], help="Run one body instead of all"
+    )
+    p_ag.add_argument(
+        "--fetch",
+        action="store_true",
+        help="Plain-HTTP fetching first: TRCA eSCRIBE listings + report PDFs, "
+        "and legdocs PDFs for Zoo agendas already cached",
+    )
+    p_ag.add_argument(
+        "--scrape",
+        action="store_true",
+        help="Discover Zoo ZB agendas on TMMIS first (headed browser, needs "
+        "`playwright install chromium`; implies --fetch for the Zoo's PDFs)",
+    )
+    p_ag.add_argument(
+        "--virtual-display",
+        action="store_true",
+        help="Run --scrape's headed browser under Xvfb",
+    )
+    p_ag.add_argument(
+        "--portal",
+        action="store_true",
+        help="Capture bids&tenders portal listings for enabled+permitted bodies "
+        "(plain HTTP, rate-limited). Currently a no-op while portals are empty.",
+    )
+    p_ag.add_argument(
+        "--record",
+        action="store_true",
+        help="With --portal: also dump each raw JSON record under "
+        "<DATA_DIR>/agencies/portal_recordings/ to seed parser fixtures.",
+    )
+
+    p_extract = sub.add_parser(
+        "extract",
+        help="Run LLM-based bid extraction on a document (#205). Dry-run only for now.",
+    )
+    p_extract.add_argument(
+        "--dry-run",
+        action="store_true",
+        required=True,
+        help="Extract and print the result without storing anything",
+    )
+    p_extract.add_argument("sha256", help="sha256 of a background_pdf to extract from")
 
     p_committee = sub.add_parser(
         "enrich-committee-awards",
         help="Archive the bid record for committee/Council awards since the Bid Award "
-             "Panel's abolition on 2025-10-01 (#164): voting-record award items -> staff "
-             "report -> bid table. Offline by default -- parses reports already on disk.")
+        "Panel's abolition on 2025-10-01 (#164): voting-record award items -> staff "
+        "report -> bid table. Offline by default -- parses reports already on disk.",
+    )
     p_committee.add_argument(
-        "--scrape", action="store_true",
+        "--scrape",
+        action="store_true",
         help="Refresh the voting-record index, browser-discover each item's report URL "
-             "(headed Chromium, council extra), and download the reports first")
+        "(headed Chromium, council extra), and download the reports first",
+    )
     p_committee.add_argument(
-        "--virtual-display", action="store_true",
+        "--virtual-display",
+        action="store_true",
         help="Run --scrape's headed browser under Xvfb (headless servers; needs Xvfb "
-             "installed)")
+        "installed)",
+    )
     return parser
 
 
 def _is_first_of_month() -> bool:
     """The monthly-council gate for the nightly (a test seam)."""
     from datetime import date
+
     return date.today().day == 1
 
 
@@ -163,17 +233,32 @@ def _run_step(steps: list, failures: list, name: str, fn, conn=None):
     fix — the same mistake that fix exists to prevent, one level up.
     """
     import time
+
     t = time.monotonic()
     run_id = db.start_sync_run(conn, name) if conn is not None else None
     try:
         detail = fn()
-        steps.append({"name": name, "status": "ok", "detail": detail or "",
-                      "seconds": time.monotonic() - t, "error": None})
+        steps.append(
+            {
+                "name": name,
+                "status": "ok",
+                "detail": detail or "",
+                "seconds": time.monotonic() - t,
+                "error": None,
+            }
+        )
         if run_id is not None:
             db.finish_sync_run(conn, run_id, status="ok")
     except Exception as exc:  # isolation: never propagates
-        steps.append({"name": name, "status": "fail", "detail": "",
-                      "seconds": time.monotonic() - t, "error": str(exc)})
+        steps.append(
+            {
+                "name": name,
+                "status": "fail",
+                "detail": "",
+                "seconds": time.monotonic() - t,
+                "error": str(exc),
+            }
+        )
         failures.append((name, str(exc)))
         if run_id is not None:
             db.finish_sync_run(conn, run_id, status="failed", error=str(exc))
@@ -194,8 +279,9 @@ def _mark_if_swallowed_failures(steps, failures, conn, run_id, before: int) -> N
         return
     steps[-1]["status"] = "fail"
     if run_id is not None:
-        db.finish_sync_run(conn, run_id, status="failed",
-                           error="; ".join(f"{n}: {e}" for n, e in new))
+        db.finish_sync_run(
+            conn, run_id, status="failed", error="; ".join(f"{n}: {e}" for n, e in new)
+        )
 
 
 def _report_sources(conn, after_id: int) -> list:
@@ -232,13 +318,17 @@ def _sync_detail(conn, after_id: int) -> str:
     checks = sum(1 for r in rows if r["source"] == "schema_check")
     passes = sum(1 for r in rows if r["source"] in pass_names)
     failed = sum(1 for r in rows if r["status"] != "ok")
+
     def n(count, singular, plural):
         return f"{count} {singular if count == 1 else plural}"
 
     parts = []
     if checks:
-        parts.append("schema check" if checks == 1
-                     else n(checks, "schema check", "schema checks"))
+        parts.append(
+            "schema check"
+            if checks == 1
+            else n(checks, "schema check", "schema checks")
+        )
     parts.append(n(len(rows) - checks - passes, "source", "sources"))
     parts.append(n(passes, "pass", "passes"))
     if failed:
@@ -287,8 +377,11 @@ def _cmd_sync(args) -> int:
         print("Row counts:", ", ".join(f"{k}={v}" for k, v in counts.items()))
         for name, error in failures:
             print(f"FAILED  {name}: {error}", file=sys.stderr)
-        print("Sync complete" if not failures
-              else f"Sync finished with {len(failures)} failed source(s)")
+        print(
+            "Sync complete"
+            if not failures
+            else f"Sync finished with {len(failures)} failed source(s)"
+        )
     finally:
         http.close()
         conn.close()
@@ -311,13 +404,15 @@ def _cmd_status(args) -> int:
 
 
 def _cmd_export(args) -> int:
+    from datetime import datetime
     from pathlib import Path
-    from datetime import datetime, timezone
 
     conn = _open_db()
     try:
-        out_path = Path(args.out) if args.out else config.DATA_DIR / "export" / "bids.json"
-        generated_at = datetime.now(timezone.utc).isoformat()
+        out_path = (
+            Path(args.out) if args.out else config.DATA_DIR / "export" / "bids.json"
+        )
+        generated_at = datetime.now(UTC).isoformat()
         written = export_json(conn, out_path, generated_at)
         schema_path = out_path.parent / "schema.json"
         export_schema(conn, schema_path, generated_at)
@@ -331,8 +426,11 @@ def _cmd_export(args) -> int:
         # `buyer` is only ever non-zero once agency enrichment has seeded it, so a plain
         # City-spine export (the overwhelming majority) is unaffected.
         buyers = counts.get("buyer", 0)
-        detail = (f"{counts['solicitation']} solicitations + {buyers} agency buyer(s)"
-                 if buyers else f"{counts['solicitation']} solicitations")
+        detail = (
+            f"{counts['solicitation']} solicitations + {buyers} agency buyer(s)"
+            if buyers
+            else f"{counts['solicitation']} solicitations"
+        )
         print(f"Exported {detail} to {written}")
         print(f"Wrote schema dictionary to {schema_path}")
     finally:
@@ -382,22 +480,34 @@ def _cmd_enrich_titles(args) -> int:
     depend on which runs first.
     """
     from toronto_bids.sources.bid_award_panel import (
-        _BA_REPORTS_WITHOUT_BIDS, _COMPOSITE_REPORTS, cached_agendas,
-        download_reports, fill_titles_from_council,
-        match_composite_titles, match_pre_ariba_solicitations, match_pre_ariba_titles,
-        store_background_pdfs, store_bids, store_composite_awards, store_items)
+        _BA_REPORTS_WITHOUT_BIDS,
+        _COMPOSITE_REPORTS,
+        cached_agendas,
+        download_reports,
+        fill_titles_from_council,
+        match_composite_titles,
+        match_pre_ariba_solicitations,
+        match_pre_ariba_titles,
+        store_background_pdfs,
+        store_bids,
+        store_composite_awards,
+        store_items,
+    )
     from toronto_bids.sources.legacy_titles import fill_titles_from_legacy
 
     conn = _open_db()
     try:
         before = conn.execute(
-            "SELECT COUNT(*) FROM solicitation WHERE title IS NULL").fetchone()[0]
+            "SELECT COUNT(*) FROM solicitation WHERE title IS NULL"
+        ).fetchone()[0]
 
         agendas = cached_agendas(config.COUNCIL_AGENDAS_DIR)
         if not agendas:
-            print(f"No cached agendas in {config.COUNCIL_AGENDAS_DIR} — download the "
-                  f"council-agendas archive from the data release and unpack it there "
-                  f"(deploy/README.md).")
+            print(
+                f"No cached agendas in {config.COUNCIL_AGENDAS_DIR} — download the "
+                f"council-agendas archive from the data release and unpack it there "
+                f"(deploy/README.md)."
+            )
 
         if agendas:
             print(f"Bid Award Panel agendas: {len(agendas)} (cached)")
@@ -412,7 +522,9 @@ def _cmd_enrich_titles(args) -> int:
             # Pre-Ariba items name no document number, so they are matched on
             # (supplier, award value) instead (#77).
             print(f"  titles pre-Ariba    : {match_pre_ariba_titles(conn, agendas)}")
-            print(f"  bids linked pre-Ariba: {match_pre_ariba_solicitations(conn, agendas)}")
+            print(
+                f"  bids linked pre-Ariba: {match_pre_ariba_solicitations(conn, agendas)}"
+            )
 
         # 2009-2012 agendas describe nothing ("Composite Report"); their staff-report
         # appendices carry the awards, and feed them to the same join (#93).
@@ -420,13 +532,19 @@ def _cmd_enrich_titles(args) -> int:
             http = HttpClient()
             try:
                 out = lambda m: print(m, flush=True)
-                n = download_reports(conn, http, _COMPOSITE_REPORTS,
-                                     "composite reports", log=out)
+                n = download_reports(
+                    conn, http, _COMPOSITE_REPORTS, "composite reports", log=out
+                )
                 print(f"  composite reports downloaded: {n}")
                 # The only thing the PDFs can still add: BA items whose agenda tabulates no
                 # bids (#83). Everything else the panel handled has its bids from the agenda.
-                n = download_reports(conn, http, _BA_REPORTS_WITHOUT_BIDS,
-                                     "BA reports without a bid table", log=out)
+                n = download_reports(
+                    conn,
+                    http,
+                    _BA_REPORTS_WITHOUT_BIDS,
+                    "BA reports without a bid table",
+                    log=out,
+                )
                 print(f"  BA reports downloaded       : {n}")
             finally:
                 http.close()
@@ -436,16 +554,22 @@ def _cmd_enrich_titles(args) -> int:
         print(f"  composite awards    : {store_composite_awards(conn)}")
 
         n_legacy = fill_titles_from_legacy(conn, config.LEGACY_ARIBA_DIR)
-        print(f"  titles from legacy  : {n_legacy}"
-              if n_legacy or config.LEGACY_ARIBA_DIR.is_dir()
-              else f"  legacy archive absent ({config.LEGACY_ARIBA_DIR}) — skipped")
+        print(
+            f"  titles from legacy  : {n_legacy}"
+            if n_legacy or config.LEGACY_ARIBA_DIR.is_dir()
+            else f"  legacy archive absent ({config.LEGACY_ARIBA_DIR}) — skipped"
+        )
 
         after = conn.execute(
-            "SELECT COUNT(*) FROM solicitation WHERE title IS NULL").fetchone()[0]
-        print(f"\nTitle-less solicitations: {before} -> {after}  ({before - after} named)")
+            "SELECT COUNT(*) FROM solicitation WHERE title IS NULL"
+        ).fetchone()[0]
+        print(
+            f"\nTitle-less solicitations: {before} -> {after}  ({before - after} named)"
+        )
         for source, n in conn.execute(
-                "SELECT COALESCE(title_source, 'odata (City feed)'), COUNT(*) "
-                "FROM solicitation WHERE title IS NOT NULL GROUP BY 1 ORDER BY 2 DESC"):
+            "SELECT COALESCE(title_source, 'odata (City feed)'), COUNT(*) "
+            "FROM solicitation WHERE title IS NOT NULL GROUP BY 1 ORDER BY 2 DESC"
+        ):
             print(f"  {source:<20} {n:>5}")
     finally:
         conn.close()
@@ -460,7 +584,9 @@ def _cmd_enrich_awards(args) -> int:
     now. Offline by default — it parses forms already on disk, exactly as enrich-titles does.
     """
     from toronto_bids.sources.award_summary import (
-        download_award_summaries, store_award_summary_bids)
+        download_award_summaries,
+        store_award_summary_bids,
+    )
 
     conn = _open_db()
     try:
@@ -469,21 +595,31 @@ def _cmd_enrich_awards(args) -> int:
             http = HttpClient()
             try:
                 out = lambda m: print(m, flush=True)
-                print(f"  award summary forms archived: "
-                      f"{download_award_summaries(conn, http, log=out)}")
+                print(
+                    f"  award summary forms archived: "
+                    f"{download_award_summaries(conn, http, log=out)}"
+                )
             finally:
                 http.close()
         else:
-            n = conn.execute("SELECT COUNT(*) FROM background_pdf "
-                             "WHERE kind='award_summary' AND text IS NOT NULL").fetchone()[0]
+            n = conn.execute(
+                "SELECT COUNT(*) FROM background_pdf "
+                "WHERE kind='award_summary' AND text IS NOT NULL"
+            ).fetchone()[0]
             if not n:
-                print("No Award Summary Forms on disk — run with --download to fetch them "
-                      "(plain HTTP, no browser).")
-        print(f"  bids from award summaries   : "
-              f"{store_award_summary_bids(conn, log=lambda m: print(m, flush=True))}")
+                print(
+                    "No Award Summary Forms on disk — run with --download to fetch them "
+                    "(plain HTTP, no browser)."
+                )
+        print(
+            f"  bids from award summaries   : "
+            f"{store_award_summary_bids(conn, log=lambda m: print(m, flush=True))}"
+        )
         after = conn.execute("SELECT COUNT(*) FROM bid").fetchone()[0]
         print(f"\nBids: {before} -> {after}  ({after - before} new)")
-        for r in conn.execute("SELECT source, COUNT(*) n FROM bid GROUP BY 1 ORDER BY 2 DESC"):
+        for r in conn.execute(
+            "SELECT source, COUNT(*) n FROM bid GROUP BY 1 ORDER BY 2 DESC"
+        ):
             print(f"  {r['source']:<22} {r['n']:>6}")
     finally:
         conn.close()
@@ -509,26 +645,38 @@ def _cmd_enrich_ariba_attachments(args) -> int:
             print(f"  bundles reindexed: {aa.reindex_bundles(conn, log=out)}")
         elif args.ingest:
             print(f"Indexing bundles in {args.ingest}:")
-            print(f"  bundles ingested: {aa.ingest_downloads(conn, args.ingest, log=out)}")
+            print(
+                f"  bundles ingested: {aa.ingest_downloads(conn, args.ingest, log=out)}"
+            )
         elif args.capture:
             print("Capturing open-solicitation attachment bundles (headed browser):")
-            n = aa.capture_attachments(conn, log=out, headless=args.headless,
-                                       virtual_display=args.virtual_display)
+            n = aa.capture_attachments(
+                conn,
+                log=out,
+                headless=args.headless,
+                virtual_display=args.virtual_display,
+            )
             print(f"  bundles captured: {n}")
         else:
             open_n = len(aa.open_solicitation_events(conn))
             docs = conn.execute(
-                "SELECT COUNT(DISTINCT document_number) FROM ariba_attachment").fetchone()[0]
+                "SELECT COUNT(DISTINCT document_number) FROM ariba_attachment"
+            ).fetchone()[0]
             print(f"Open solicitations with a modern Ariba link: {open_n}")
             print(f"Solicitations archived so far             : {docs}")
-            print("\nRun with --capture to drive the browser, or --ingest DIR to index bundles "
-                  "already downloaded.")
+            print(
+                "\nRun with --capture to drive the browser, or --ingest DIR to index bundles "
+                "already downloaded."
+            )
             return 0
         after = conn.execute("SELECT COUNT(*) FROM ariba_attachment").fetchone()[0]
         docs = conn.execute(
-            "SELECT COUNT(DISTINCT document_number) FROM ariba_attachment").fetchone()[0]
-        print(f"\nIndexed files: {before} -> {after}  ({after - before} new)  "
-              f"across {docs} solicitation(s)")
+            "SELECT COUNT(DISTINCT document_number) FROM ariba_attachment"
+        ).fetchone()[0]
+        print(
+            f"\nIndexed files: {before} -> {after}  ({after - before} new)  "
+            f"across {docs} solicitation(s)"
+        )
     finally:
         conn.close()
     return 0
@@ -546,16 +694,20 @@ def _cmd_amounts(args) -> int:
     try:
         pending = unlabelled_amounts(conn)
         if not pending:
-            print(f"No unlabelled amounts. ({len(load_labels())} labels in "
-                  f"toronto_bids/data/amount_labels.toml cover every string the parser "
-                  f"refuses.)")
+            print(
+                f"No unlabelled amounts. ({len(load_labels())} labels in "
+                f"toronto_bids/data/amount_labels.toml cover every string the parser "
+                f"refuses.)"
+            )
             return 0
         print(f"{len(pending)} amount string(s) with no parse and no label:\n")
         print(f"  {'table':16s} {'rows':>5s}  raw")
         for row in pending:
             print(f"  {row['table']:16s} {row['rows']:5d}  {row['raw']!r}")
-        print("\nAdd a verdict for each to toronto_bids/data/amount_labels.toml "
-              "(amount / not_an_amount / corrupt / unknown / not_an_award).")
+        print(
+            "\nAdd a verdict for each to toronto_bids/data/amount_labels.toml "
+            "(amount / not_an_amount / corrupt / unknown / not_an_award)."
+        )
     finally:
         conn.close()
     # Non-zero so a human or CI notices the queue is non-empty, as `tb sync` does for
@@ -586,7 +738,9 @@ def _cmd_nightly(args) -> int:
 
     from toronto_bids import notify
     from toronto_bids.sources.award_summary import (
-        download_award_summaries, store_award_summary_bids)
+        download_award_summaries,
+        store_award_summary_bids,
+    )
 
     started = time.monotonic()
     out = lambda m: print(m, flush=True)
@@ -623,7 +777,8 @@ def _cmd_nightly(args) -> int:
             try:
                 try:
                     sync_cutoff = conn.execute(
-                        "SELECT COALESCE(MAX(id), 0) FROM sync_run").fetchone()[0]
+                        "SELECT COALESCE(MAX(id), 0) FROM sync_run"
+                    ).fetchone()[0]
                 except Exception:
                     sync_cutoff = 0
 
@@ -633,6 +788,7 @@ def _cmd_nightly(args) -> int:
                     sync_failures.extend(pipeline.sync(conn, http))
                     failures.extend(sync_failures)
                     return _sync_detail(conn, sync_cutoff)
+
                 _run_step(steps, failures, "sync", _sync)
                 # `pipeline.sync` RETURNS its failures rather than raising — that is what
                 # per-source isolation means — so `_run_step` only ever saw the ok branch and
@@ -649,53 +805,81 @@ def _cmd_nightly(args) -> int:
                 def _awards():
                     download_award_summaries(conn, http, log=out)
                     return f"{store_award_summary_bids(conn, log=out)} bids stored"
+
                 _run_step(steps, failures, "award summaries", _awards, conn=conn)
 
                 def _portal():
                     from toronto_bids.sources.bids_tenders import run_portal_capture
+
                     res = run_portal_capture(conn, log=out)
                     for slug, v in res.items():
                         if isinstance(v, str) and v.startswith("FAILED"):
                             failures.append((f"portal:{slug}", v))
                     total = sum(v for v in res.values() if isinstance(v, int))
                     return f"{total} listings" if total else "no open bids"
+
                 before_len = len(failures)
                 run_id = _run_step(steps, failures, "portal", _portal, conn=conn)
                 _mark_if_swallowed_failures(steps, failures, conn, run_id, before_len)
 
                 def _ariba():
                     from toronto_bids.sources import ariba_attachments as aa
+
                     n = aa.capture_attachments(conn, log=out, virtual_display=True)
                     return f"+{n} bundles"
+
                 _run_step(steps, failures, "ariba attachments", _ariba, conn=conn)
 
                 def _agencies():
                     from toronto_bids.buyers import seed_buyers
+
                     a0 = db.counts(conn)
                     ids = seed_buyers(conn)
-                    failures.extend(_capture_agency_bodies(
-                        conn, ids, bodies=["trca", "zoo", "ep"],
-                        fetch=True, scrape=True, virtual_display=True, out=out))
+                    failures.extend(
+                        _capture_agency_bodies(
+                            conn,
+                            ids,
+                            bodies=["trca", "zoo", "ep"],
+                            fetch=True,
+                            scrape=True,
+                            virtual_display=True,
+                            out=out,
+                        )
+                    )
                     a1 = db.counts(conn)
                     da = a1["agency_award"] - a0["agency_award"]
                     db_ = a1["agency_bid"] - a0["agency_bid"]
                     return f"+{da} awards, +{db_} bids"
+
                 before_len = len(failures)
                 run_id = _run_step(steps, failures, "agencies", _agencies, conn=conn)
                 _mark_if_swallowed_failures(steps, failures, conn, run_id, before_len)
 
                 if _is_first_of_month():
+
                     def _council():
                         from functools import partial
+
                         from toronto_bids.sources.council import (
-                            enrich_council, fetch_agenda_item)
+                            enrich_council,
+                            fetch_agenda_item,
+                        )
+
                         fetch = partial(fetch_agenda_item, virtual_display=True)
                         n = enrich_council(conn, http, fetch=fetch)
                         return f"{n} items"
+
                     _run_step(steps, failures, "council", _council, conn=conn)
                 else:
-                    steps.append({"name": "council", "status": "skip",
-                                  "detail": "not the 1st", "seconds": 0.0, "error": None})
+                    steps.append(
+                        {
+                            "name": "council",
+                            "status": "skip",
+                            "detail": "not the 1st",
+                            "seconds": 0.0,
+                            "error": None,
+                        }
+                    )
             finally:
                 try:
                     http.close()
@@ -704,14 +888,17 @@ def _cmd_nightly(args) -> int:
 
         def _supplier():
             from toronto_bids.linking.supplier import build_supplier_dimension
+
             return f"{build_supplier_dimension(conn)} suppliers"
+
         _run_step(steps, failures, "supplier rebuild", _supplier, conn=conn)
 
         def _export():
             nonlocal export_bytes
-            from datetime import datetime, timezone
+            from datetime import datetime
+
             export_dir = Path(config.DATA_DIR) / "export"
-            generated_at = datetime.now(timezone.utc).isoformat()
+            generated_at = datetime.now(UTC).isoformat()
             written = export_json(conn, export_dir / "bids.json", generated_at)
             # schema.json rides the same export step with a shared timestamp — publish-data.sh
             # requires it beside bids.json (#168), so the production path must emit it here (the
@@ -721,6 +908,7 @@ def _cmd_nightly(args) -> int:
             write_csv_zip(conn, export_dir / "bids-csv.zip")
             export_bytes = written.stat().st_size
             return f"{export_bytes / 1_048_576:.1f} MiB"
+
         _run_step(steps, failures, "export", _export, conn=conn)
 
         try:
@@ -759,14 +947,18 @@ def _source_row_counts(conn, source: str) -> tuple[int, int, int]:
     `(buyer_id, native_ref)` and the award line key, so a report and its amendment collapse into
     one row (#142).
     """
+
     def n(table):
         return conn.execute(
-            f"SELECT COUNT(*) FROM {table} WHERE source=?", (source,)).fetchone()[0]
+            f"SELECT COUNT(*) FROM {table} WHERE source=?", (source,)
+        ).fetchone()[0]
+
     return n("agency_solicitation"), n("agency_award"), n("agency_bid")
 
 
-def _stored_line(label: str, got: dict, before: tuple[int, int, int],
-                 after: tuple[int, int, int]) -> str:
+def _stored_line(
+    label: str, got: dict, before: tuple[int, int, int], after: tuple[int, int, int]
+) -> str:
     """'  ep stored : 74 solicitations (+0), 88 awards (+0), 115 bids (+0)  [upserts 107/107/115]'
 
     **The leading numbers are DISTINCT ROWS, never the upsert count (#142).** `got[...]` counts
@@ -785,8 +977,10 @@ def _stored_line(label: str, got: dict, before: tuple[int, int, int],
     queries, immune to how many upserts happened to write them. No "bids" key for a body with
     no bid table (Zoo).
     """
-    line = (f"  {label} stored : {after[0]} solicitations ({after[0] - before[0]:+d}), "
-           f"{after[1]} awards ({after[1] - before[1]:+d})")
+    line = (
+        f"  {label} stored : {after[0]} solicitations ({after[0] - before[0]:+d}), "
+        f"{after[1]} awards ({after[1] - before[1]:+d})"
+    )
     upserts = [str(got["solicitations"]), str(got["awards"])]
     if "bids" in got:
         line += f", {after[2]} bids ({after[2] - before[2]:+d})"
@@ -805,53 +999,89 @@ def _capture_agency_bodies(conn, ids, *, bodies, fetch, scrape, virtual_display,
 
     if "trca" in bodies:
         try:
-            from toronto_bids.sources.trca_board import download_reports, store_trca_reports
+            from toronto_bids.sources.trca_board import (
+                download_reports,
+                store_trca_reports,
+            )
+
             if fetch:
                 http = HttpClient()
                 try:
-                    print(f"  trca reports fetched : {download_reports(conn, http, log=out)}")
+                    print(
+                        f"  trca reports fetched : {download_reports(conn, http, log=out)}"
+                    )
                 finally:
                     http.close()
             before = _source_row_counts(conn, "trca_board")
             got = store_trca_reports(conn, ids["trca"])
-            print(_stored_line("trca", got, before, _source_row_counts(conn, "trca_board")))
+            print(
+                _stored_line(
+                    "trca", got, before, _source_row_counts(conn, "trca_board")
+                )
+            )
         except Exception as exc:
             failures.append(("trca", str(exc)))
 
     if "zoo" in bodies:
         try:
             from toronto_bids.sources.zoo_board import (
-                cached_zb_agendas, download_zoo_reports, scrape_zb_agendas, store_zoo_reports)
-            agendas = (scrape_zb_agendas(virtual_display=virtual_display, log=out)
-                       if scrape else cached_zb_agendas())
-            print(f"  zoo ZB agendas       : {len(agendas)}"
-                  f" ({'scraped' if scrape else 'cached'})")
+                cached_zb_agendas,
+                download_zoo_reports,
+                scrape_zb_agendas,
+                store_zoo_reports,
+            )
+
+            agendas = (
+                scrape_zb_agendas(virtual_display=virtual_display, log=out)
+                if scrape
+                else cached_zb_agendas()
+            )
+            print(
+                f"  zoo ZB agendas       : {len(agendas)}"
+                f" ({'scraped' if scrape else 'cached'})"
+            )
             if agendas and (fetch or scrape):
                 http = HttpClient()
                 try:
-                    print(f"  zoo reports fetched  : "
-                          f"{download_zoo_reports(conn, http, agendas, log=out)}")
+                    print(
+                        f"  zoo reports fetched  : "
+                        f"{download_zoo_reports(conn, http, agendas, log=out)}"
+                    )
                 finally:
                     http.close()
             before = _source_row_counts(conn, "zoo_board")
             got = store_zoo_reports(conn, ids["toronto-zoo"])
-            print(_stored_line("zoo", got, before, _source_row_counts(conn, "zoo_board")))
+            print(
+                _stored_line("zoo", got, before, _source_row_counts(conn, "zoo_board"))
+            )
         except Exception as exc:
             failures.append(("zoo", str(exc)))
 
     if "ep" in bodies:
         try:
             from toronto_bids.sources.ep_board import (
-                cached_ep_agendas, download_ep_reports, scrape_ep_agendas, store_ep_reports)
-            agendas = (scrape_ep_agendas(virtual_display=virtual_display, log=out)
-                       if scrape else cached_ep_agendas())
-            print(f"  ep EP agendas        : {len(agendas)}"
-                  f" ({'scraped' if scrape else 'cached'})")
+                cached_ep_agendas,
+                download_ep_reports,
+                scrape_ep_agendas,
+                store_ep_reports,
+            )
+
+            agendas = (
+                scrape_ep_agendas(virtual_display=virtual_display, log=out)
+                if scrape
+                else cached_ep_agendas()
+            )
+            print(
+                f"  ep EP agendas        : {len(agendas)}"
+                f" ({'scraped' if scrape else 'cached'})"
+            )
             if agendas and (fetch or scrape):
                 http = HttpClient()
                 try:
-                    print(f"  ep reports fetched   : "
-                          f"{download_ep_reports(conn, http, agendas, log=out)}")
+                    print(
+                        f"  ep reports fetched   : "
+                        f"{download_ep_reports(conn, http, agendas, log=out)}"
+                    )
                 finally:
                     http.close()
             before = _source_row_counts(conn, "ep_board")
@@ -874,13 +1104,22 @@ def _cmd_enrich_agencies(args) -> int:
         ids = seed_buyers(conn)
         bodies = [args.only] if args.only else ["trca", "zoo", "ep"]
 
-        failures.extend(_capture_agency_bodies(
-            conn, ids, bodies=bodies, fetch=args.fetch, scrape=args.scrape,
-            virtual_display=args.virtual_display, out=out))
+        failures.extend(
+            _capture_agency_bodies(
+                conn,
+                ids,
+                bodies=bodies,
+                fetch=args.fetch,
+                scrape=args.scrape,
+                virtual_display=args.virtual_display,
+                out=out,
+            )
+        )
 
         if args.portal:
             try:
                 from toronto_bids.sources.bids_tenders import run_portal_capture
+
                 # `args.only` names a BODY ("trca"/"zoo"/"ep"), but the portal is keyed by its
                 # own SLUG ("toronto-zoo" for the zoo) — and EP has no bids&tenders portal at
                 # all (#134, Bonfire instead). `--only ep --portal` is a reachable combination
@@ -889,11 +1128,17 @@ def _cmd_enrich_agencies(args) -> int:
                 # that was never supposed to have one (#152). `.get` + a clean skip instead.
                 portal_slug = {"trca": "trca", "zoo": "toronto-zoo"}.get(args.only)
                 if args.only and portal_slug is None:
-                    print(f"  portal listings      : {args.only} has no bids&tenders portal "
-                          f"— skipping")
+                    print(
+                        f"  portal listings      : {args.only} has no bids&tenders portal "
+                        f"— skipping"
+                    )
                 else:
-                    res = run_portal_capture(conn, record=args.record,
-                                             only={portal_slug} if portal_slug else None, log=out)
+                    res = run_portal_capture(
+                        conn,
+                        record=args.record,
+                        only={portal_slug} if portal_slug else None,
+                        log=out,
+                    )
                     print(f"  portal listings      : {res}")
                     for slug, v in res.items():
                         if isinstance(v, str) and v.startswith("FAILED"):
@@ -920,8 +1165,12 @@ def _cmd_enrich_committee_awards(args) -> int:
     """
     from toronto_bids.linking.supplier import build_supplier_dimension
     from toronto_bids.sources.committee_awards import (
-        award_items_from_voting_record, discover_report_urls, download_committee_reports,
-        fetch_voting_records, store_committee_bids)
+        award_items_from_voting_record,
+        discover_report_urls,
+        download_committee_reports,
+        fetch_voting_records,
+        store_committee_bids,
+    )
 
     conn = _open_db()
     out = lambda m: print(m, flush=True)
@@ -945,25 +1194,45 @@ def _cmd_enrich_committee_awards(args) -> int:
                     # Only chase items that name a spine solicitation with no captured
                     # bid yet -- an item whose bids are already stored (or that doesn't
                     # match any award we track) is not worth a browser round-trip.
-                    have_bids = {r[0] for r in conn.execute(
-                        "SELECT DISTINCT document_number FROM bid "
-                        "WHERE document_number IS NOT NULL")}
-                    spine = {r[0] for r in conn.execute(
-                        "SELECT document_number FROM solicitation")}
-                    items = [i for i in items if i["document_number"] in spine
-                            and i["document_number"] not in have_bids]
+                    have_bids = {
+                        r[0]
+                        for r in conn.execute(
+                            "SELECT DISTINCT document_number FROM bid "
+                            "WHERE document_number IS NOT NULL"
+                        )
+                    }
+                    spine = {
+                        r[0]
+                        for r in conn.execute(
+                            "SELECT document_number FROM solicitation"
+                        )
+                    }
+                    items = [
+                        i
+                        for i in items
+                        if i["document_number"] in spine
+                        and i["document_number"] not in have_bids
+                    ]
                     print(f"  items needing bids          : {len(items)}")
 
                     url_map = discover_report_urls(
-                        items, config.COMMITTEE_ITEMS_DIR,
-                        virtual_display=args.virtual_display, log=out)
+                        items,
+                        config.COMMITTEE_ITEMS_DIR,
+                        virtual_display=args.virtual_display,
+                        log=out,
+                    )
                     print(f"  report urls discovered     : {len(url_map)}")
 
                     by_doc = {i["reference"]: i["document_number"] for i in items}
-                    url_to_doc = {url: by_doc[ref] for ref, url in url_map.items()
-                                 if ref in by_doc}
-                    print(f"  reports downloaded         : "
-                          f"{download_committee_reports(conn, http, url_to_doc, log=out)}")
+                    url_to_doc = {
+                        url: by_doc[ref]
+                        for ref, url in url_map.items()
+                        if ref in by_doc
+                    }
+                    print(
+                        f"  reports downloaded         : "
+                        f"{download_committee_reports(conn, http, url_to_doc, log=out)}"
+                    )
                 finally:
                     if http is not None:
                         http.close()
@@ -972,10 +1241,14 @@ def _cmd_enrich_committee_awards(args) -> int:
 
         try:
             before = conn.execute(
-                "SELECT COUNT(*) FROM bid WHERE source='committee_award'").fetchone()[0]
-            print(f"  bids from committee reports : {store_committee_bids(conn, log=out)}")
+                "SELECT COUNT(*) FROM bid WHERE source='committee_award'"
+            ).fetchone()[0]
+            print(
+                f"  bids from committee reports : {store_committee_bids(conn, log=out)}"
+            )
             after = conn.execute(
-                "SELECT COUNT(*) FROM bid WHERE source='committee_award'").fetchone()[0]
+                "SELECT COUNT(*) FROM bid WHERE source='committee_award'"
+            ).fetchone()[0]
             print(f"\nCommittee award bids: {before} -> {after} ({after - before} new)")
         except Exception as exc:
             failures.append(("store_committee_bids", str(exc)))
@@ -989,6 +1262,34 @@ def _cmd_enrich_committee_awards(args) -> int:
     for name, error in failures:
         print(f"FAILED  {name}: {error}", file=sys.stderr)
     return 1 if failures else 0
+
+
+def _cmd_extract(args) -> int:
+    """Run LLM extraction on a single document, printing the result (#205)."""
+    import json
+
+    from toronto_bids.extract import EXTRACTOR_VERSION, ExtractionClient
+
+    conn = _open_db()
+    try:
+        row = conn.execute(
+            "SELECT sha256, text FROM background_pdf WHERE sha256=?",
+            (args.sha256,),
+        ).fetchone()
+        if row is None:
+            print(f"No background_pdf with sha256={args.sha256}", file=sys.stderr)
+            return 1
+        if not row["text"]:
+            print(f"Document {args.sha256} has no extracted text", file=sys.stderr)
+            return 1
+        print(f"Extractor version: {EXTRACTOR_VERSION}")
+        print(f"Document text: {len(row['text'])} chars")
+        client = ExtractionClient()
+        result = client.extract(row["text"])
+        print(json.dumps(result, indent=2))
+        return 0
+    finally:
+        conn.close()
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -1020,6 +1321,8 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_enrich_agencies(args)
     if args.command == "enrich-committee-awards":
         return _cmd_enrich_committee_awards(args)
+    if args.command == "extract":
+        return _cmd_extract(args)
     parser.print_help()
     return 0
 
