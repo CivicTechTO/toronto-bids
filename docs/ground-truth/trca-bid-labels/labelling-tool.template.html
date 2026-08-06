@@ -1,0 +1,456 @@
+<title>Bid record labelling — Toronto procurement archive</title>
+
+<style>
+  :root{
+    --paper:#FBFAF7; --pane:#F3F2EC; --ink:#12171F; --ink-2:#4A5560; --ink-3:#78838C;
+    --rule:#D8DBD5; --rule-2:#E7E9E2;
+    --accent:#1F5F5B; --accent-soft:#DCE9E6;
+    --won:#2E6B4F; --lost:#7A4A3F; --unsure:#8A7B4A;
+    --sel:#F6E6A8;
+    --shadow:0 1px 0 rgba(18,23,31,.05), 0 6px 18px -12px rgba(18,23,31,.35);
+    --serif:ui-serif,Georgia,"Iowan Old Style","Times New Roman",serif;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --paper:#101519; --pane:#161D22; --ink:#E4EAE7; --ink-2:#A3AFB4; --ink-3:#7A868C;
+      --rule:#28323A; --rule-2:#1F282E; --accent:#6FBDB2; --accent-soft:#172B2A;
+      --won:#68B98C; --lost:#C98878; --unsure:#C6B27A; --sel:#4A3F19;
+      --shadow:0 1px 0 rgba(0,0,0,.4), 0 10px 24px -14px rgba(0,0,0,.8);
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#101519; --pane:#161D22; --ink:#E4EAE7; --ink-2:#A3AFB4; --ink-3:#7A868C;
+    --rule:#28323A; --rule-2:#1F282E; --accent:#6FBDB2; --accent-soft:#172B2A;
+    --won:#68B98C; --lost:#C98878; --unsure:#C6B27A; --sel:#4A3F19;
+  }
+  :root[data-theme="light"]{
+    --paper:#FBFAF7; --pane:#F3F2EC; --ink:#12171F; --ink-2:#4A5560; --ink-3:#78838C;
+    --rule:#D8DBD5; --rule-2:#E7E9E2; --accent:#1F5F5B; --accent-soft:#DCE9E6;
+    --won:#2E6B4F; --lost:#7A4A3F; --unsure:#8A7B4A; --sel:#F6E6A8;
+  }
+
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
+       font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  button,input,select{font:inherit;color:inherit}
+  ::selection{background:var(--sel);color:var(--ink)}
+
+  /* ---------- gate ---------- */
+  #gate{max-width:46rem;margin:0 auto;padding:4rem 1.5rem}
+  #gate h1{font-family:var(--serif);font-weight:600;font-size:2rem;line-height:1.15;
+           margin:0 0 .5rem;text-wrap:balance}
+  .eyebrow{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);
+           font-weight:600;margin:0 0 1rem}
+  #gate p{color:var(--ink-2);max-width:62ch}
+  .task{border:1px solid var(--rule);border-radius:2px;background:var(--pane);
+        padding:1.1rem 1.25rem;margin:1.5rem 0}
+  .task ol{margin:.4rem 0 0;padding-left:1.1rem}
+  .task li{margin:.3rem 0;color:var(--ink-2)}
+  .who{display:flex;gap:.75rem;flex-wrap:wrap;margin-top:1.5rem}
+  .who button{flex:1 1 12rem;padding:.9rem 1rem;background:var(--paper);
+              border:1px solid var(--rule);border-radius:2px;cursor:pointer;text-align:left}
+  .who button:hover{border-color:var(--accent);background:var(--accent-soft)}
+  .who b{display:block;font-family:var(--serif);font-size:1.05rem}
+  .who span{color:var(--ink-3);font-size:.82rem}
+
+  /* ---------- chrome ---------- */
+  header{position:sticky;top:0;z-index:20;background:var(--paper);
+         border-bottom:1px solid var(--rule);display:flex;align-items:center;
+         gap:1rem;padding:.6rem 1rem;flex-wrap:wrap}
+  .brand{font-family:var(--serif);font-weight:600;white-space:nowrap}
+  .brand small{font-family:var(--sans);font-weight:400;color:var(--ink-3);
+               font-size:.75rem;margin-left:.5rem}
+  .bar{flex:1;min-width:8rem;height:6px;background:var(--rule-2);border-radius:99px;overflow:hidden}
+  .bar i{display:block;height:100%;background:var(--accent);transition:width .25s ease}
+  .count{font-variant-numeric:tabular-nums;color:var(--ink-2);font-size:.82rem;white-space:nowrap}
+  .btn{padding:.45rem .8rem;border:1px solid var(--rule);background:var(--paper);
+       border-radius:2px;cursor:pointer;white-space:nowrap}
+  .btn:hover{border-color:var(--accent);color:var(--accent)}
+  .btn.primary{background:var(--accent);color:var(--paper);border-color:var(--accent)}
+  .btn.primary:hover{opacity:.9;color:var(--paper)}
+  .btn:focus-visible,.who button:focus-visible,.v:focus-visible,input:focus-visible
+    {outline:2px solid var(--accent);outline-offset:2px}
+
+  /* ---------- workspace ---------- */
+  main{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);
+       gap:0;height:calc(100vh - 53px)}
+  @media (max-width:900px){main{grid-template-columns:1fr;height:auto}}
+
+  .doc{overflow-y:auto;padding:1.25rem 1.5rem;border-right:1px solid var(--rule);
+       background:var(--pane)}
+  .doc h2{font-family:var(--serif);font-size:1rem;margin:0 0 .15rem;font-weight:600}
+  .scope{font-size:.78rem;color:var(--ink-2);background:var(--paper);
+         border:1px solid var(--rule);border-left:3px solid var(--accent);
+         border-radius:2px;padding:.5rem .7rem;margin-bottom:1rem}
+  .doc .src{font-size:.72rem;color:var(--ink-3);word-break:break-all;margin-bottom:1rem}
+  pre.excerpt{font-family:var(--mono);font-size:12.5px;line-height:1.62;white-space:pre-wrap;
+              word-wrap:break-word;margin:0;color:var(--ink)}
+
+  .work{overflow-y:auto;padding:1.25rem 1.5rem}
+  .hint{background:var(--accent-soft);border:1px solid var(--rule);border-radius:2px;
+        padding:.6rem .8rem;font-size:.82rem;color:var(--ink-2);margin-bottom:1rem}
+  .hint kbd{font-family:var(--mono);font-size:.75rem;background:var(--paper);
+            border:1px solid var(--rule);border-radius:2px;padding:.05rem .3rem}
+
+  table{width:100%;border-collapse:collapse}
+  thead th{text-align:left;font-size:.68rem;letter-spacing:.11em;text-transform:uppercase;
+           color:var(--ink-3);font-weight:600;padding:0 .4rem .35rem;border-bottom:1px solid var(--rule)}
+  tbody td{padding:.3rem .25rem;vertical-align:top;border-bottom:1px solid var(--rule-2)}
+  tbody tr:hover{background:var(--pane)}
+  td input{width:100%;padding:.4rem .45rem;background:var(--paper);border:1px solid var(--rule);
+           border-radius:2px;font-family:var(--mono);font-size:12.5px}
+  td input.amt{text-align:right;font-variant-numeric:tabular-nums}
+  .verdicts{display:flex;gap:.2rem}
+  .v{padding:.35rem .5rem;border:1px solid var(--rule);background:var(--paper);
+     border-radius:2px;cursor:pointer;font-size:.76rem;line-height:1;white-space:nowrap}
+  .v[aria-pressed="true"][data-v="won"]{background:var(--won);border-color:var(--won);color:#fff}
+  .v[aria-pressed="true"][data-v="lost"]{background:var(--lost);border-color:var(--lost);color:#fff}
+  .v[aria-pressed="true"][data-v="unsure"]{background:var(--unsure);border-color:var(--unsure);color:#fff}
+  .del{border:none;background:none;color:var(--ink-3);cursor:pointer;padding:.35rem}
+  .del:hover{color:var(--lost)}
+
+  .rowtools{display:flex;gap:.5rem;align-items:center;margin-top:.9rem;flex-wrap:wrap}
+  .none{display:flex;align-items:center;gap:.5rem;margin-top:1.25rem;padding-top:1rem;
+        border-top:1px solid var(--rule);color:var(--ink-2);font-size:.88rem}
+  nav.pager{display:flex;gap:.5rem;align-items:center;margin-top:1.5rem;padding-top:1rem;
+            border-top:1px solid var(--rule)}
+  nav.pager .spacer{flex:1}
+  .done{color:var(--won);font-size:.82rem;font-weight:600}
+  /* [hidden] is a UA rule, so ANY author display here would override it and pin the
+     overlay open — which is exactly what happened. Keep the explicit opt-out first. */
+  #exportPanel[hidden]{display:none}
+  #exportPanel{position:fixed;inset:0;z-index:50;background:rgba(18,23,31,.55);
+               display:flex;align-items:center;justify-content:center;padding:1.5rem}
+  .sheet{background:var(--paper);border:1px solid var(--rule);border-radius:3px;
+         box-shadow:var(--shadow);max-width:60rem;width:100%;max-height:88vh;
+         display:flex;flex-direction:column;padding:1.25rem 1.4rem}
+  .sheet h3{font-family:var(--serif);margin:0 0 .25rem;font-size:1.15rem}
+  .sheet p{margin:0 0 .8rem;color:var(--ink-2);font-size:.88rem}
+  .sheetTools{display:flex;gap:.5rem;align-items:center;margin-bottom:.7rem;flex-wrap:wrap}
+  #expText{flex:1;min-height:16rem;width:100%;font-family:var(--mono);font-size:11.5px;
+           line-height:1.45;padding:.7rem;background:var(--pane);color:var(--ink);
+           border:1px solid var(--rule);border-radius:2px;resize:vertical}
+  .tiny{font-size:.76rem;color:var(--ink-3);margin:.6rem 0 0!important}
+  .banner{background:var(--accent-soft);border:1px solid var(--accent);border-radius:2px;
+          padding:.6rem .8rem;margin-top:1rem;font-size:.88rem;color:var(--ink)}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div id="gate">
+  <p class="eyebrow">Toronto procurement archive · ground-truth labelling</p>
+  <h1>Which companies actually bid, and what did they bid?</h1>
+  <p>These are excerpts from real Conservation Authority board reports. We are building a
+     trustworthy answer key so we can measure how well our automated extraction is doing —
+     so please read only what is on the page and record what it actually says. Don't infer,
+     don't tidy up names, and don't guess.</p>
+
+  <div class="task">
+    <strong>For each excerpt, list every company that submitted a bid.</strong>
+    <ol>
+      <li><b>Company</b> — copy the name exactly as written, including <i>Inc.</i>, <i>Ltd.</i>,
+          numbered names like <i>2220742 Ontario Ltd.</i>, and any <i>o/a</i> trading name.</li>
+      <li><b>Contract / project</b> — which tender or project this bid was for. Many of these
+          documents cover several contracts, so this is what keeps the bids apart. A reference
+          like <i>RFT 10037330</i> is ideal; the project name is fine otherwise.</li>
+      <li><b>Bid amount</b> — exactly as printed, or leave blank if no amount is shown for them.</li>
+      <li><b>Outcome</b> — did they win the contract, not win it, or does the text not say?</li>
+    </ol>
+  </div>
+
+  <p><b>Tip that saves most of the typing:</b> highlight a name or amount in the document on the
+     left, then press <kbd>V</kbd> for company, <kbd>C</kbd> for contract, or <kbd>A</kbd> for amount
+     and it fills the row you're on.</p>
+
+  <p>Ten excerpts each; it should take about twenty minutes. Your work saves as you go, so you
+     can close the tab and come back. Press <b>Export my labels</b> at the end and send the file
+     back.</p>
+
+  <div class="who">
+    <button data-who="A"><b>I'm Alex</b><span>Set A — 10 excerpts</span></button>
+    <button data-who="B"><b>I'm Gabe</b><span>Set B — 10 excerpts</span></button>
+  </div>
+</div>
+
+<div id="app" hidden>
+  <header>
+    <div class="brand">Bid labelling <small id="whoLbl"></small></div>
+    <div class="bar"><i id="barFill" style="width:0%"></i></div>
+    <div class="count" id="counter">—</div>
+    <button class="btn" id="exportBtn">Export my labels</button>
+  </header>
+  <main>
+    <section class="doc">
+      <h2 id="docTitle">—</h2>
+      <div class="src" id="docSrc"></div>
+      <div class="scope" id="docScope"></div>
+      <pre class="excerpt" id="excerpt"></pre>
+    </section>
+    <section class="work">
+      <div class="hint">
+        Select text on the left, then <kbd>V</kbd> fills <b>Company</b>, <kbd>C</kbd> fills
+        <b>Contract</b>, <kbd>A</kbd> fills <b>Bid amount</b>. <kbd>Enter</kbd> adds a row.
+        Some documents cover several contracts — use <kbd>Ctrl</kbd>+<kbd>F</kbd> to search the text.
+      </div>
+      <table>
+        <thead><tr>
+          <th style="width:30%">Company</th>
+          <th style="width:22%">Contract / project</th>
+          <th style="width:16%">Bid amount</th>
+          <th style="width:26%">Outcome</th>
+          <th></th>
+        </tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+      <div class="rowtools">
+        <button class="btn" id="addRow">+ Add company</button>
+        <span class="done" id="savedLbl"></span>
+      </div>
+      <label class="none">
+        <input type="checkbox" id="noneBox" style="width:auto">
+        This excerpt does not list any companies that submitted bids
+      </label>
+      <nav class="pager">
+        <button class="btn" id="prev">← Previous</button>
+        <span class="spacer"></span>
+        <button class="btn primary" id="next">Next excerpt →</button>
+      </nav>
+    </section>
+  </main>
+
+  <div id="exportPanel" hidden>
+    <div class="sheet">
+      <h3>Your labels</h3>
+      <p id="expNote"></p>
+      <div class="sheetTools">
+        <button class="btn primary" id="selectBtn">Select all</button>
+        <button class="btn" id="copyBtn">Try clipboard</button>
+        <button class="btn" id="closeExp">Close</button>
+        <span class="done" id="copiedLbl"></span>
+      </div>
+      <textarea id="expText" readonly spellcheck="false"></textarea>
+      <p class="tiny">The text below is already selected — just press
+         <b>Ctrl</b>+<b>C</b> (<b>⌘</b>+<b>C</b> on Mac) and paste it back.
+         Downloads and the clipboard button are blocked inside this frame, so Ctrl+C is the
+         reliable route. Your work stays saved in this browser until you clear site data.</p>
+    </div>
+  </div>
+</div>
+
+<script id="payload" type="application/json">__DATA__</script>
+<script>
+(function(){
+  "use strict";
+  const ALL = JSON.parse(document.getElementById("payload").textContent);
+  const KEY = "tb-labels-v1";
+  const NAMES = { A: "Alex", B: "Gabe" };
+  let who = null, docs = [], idx = 0, store = {}, activeRow = null;
+
+  try { store = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch(e){ store = {}; }
+  const save = () => { try{ localStorage.setItem(KEY, JSON.stringify(store)); }catch(e){} };
+
+  const $ = id => document.getElementById(id);
+
+  document.querySelectorAll(".who button").forEach(b =>
+    b.addEventListener("click", () => start(b.dataset.who)));
+
+  function start(w){
+    who = w;
+    docs = ALL.filter(d => d.who === w || d.who === "both");
+    if (!store[who]) store[who] = {};
+    idx = Math.max(0, docs.findIndex(d => !store[who][d.id]));
+    if (idx === -1) idx = 0;
+    $("gate").hidden = true; $("app").hidden = false;
+    $("whoLbl").textContent = "· " + NAMES[w];
+    render();
+  }
+
+  function rec(){
+    const id = docs[idx].id;
+    if (!store[who][id]) store[who][id] = { entries: [], none: false, touched: false };
+    return store[who][id];
+  }
+
+  function render(){
+    const d = docs[idx], r = rec();
+    $("docTitle").textContent = "Excerpt " + (idx+1) + " of " + docs.length;
+    $("docSrc").textContent = d.url;
+    const m = d.meta || {};
+    $("docScope").textContent = m.truncated
+      ? `This is a ${m.pages}-page meeting package covering many items. Showing the ${m.anchors} `
+        + `section${m.anchors===1?"":"s"} that list bids — omitted stretches are marked in the text. `
+        + `It may still contain more than one contract, so fill in Contract / project for each row.`
+      : `Full text of this ${m.pages}-page report (nothing omitted). It may cover more than one `
+        + `contract — fill in Contract / project for each row.`;
+    $("excerpt").textContent = d.context;
+    $("noneBox").checked = !!r.none;
+    $("rows").innerHTML = "";
+    if (!r.entries.length) r.entries.push({ company:"", contract:"", amount:"", outcome:"" });
+    r.entries.forEach((e,i) => addRowEl(e,i));
+    const done = docs.filter(x => (store[who][x.id]||{}).touched).length;
+    $("counter").textContent = done + " / " + docs.length + " done";
+    $("barFill").style.width = (100*done/docs.length) + "%";
+    $("prev").disabled = idx === 0;
+    $("next").textContent = idx === docs.length-1 ? "Finish →" : "Next excerpt →";
+  }
+
+  function addRowEl(entry, i){
+    const tr = document.createElement("tr");
+
+    const tdC = document.createElement("td");
+    const inC = document.createElement("input");
+    inC.value = entry.company; inC.placeholder = "e.g. Bronte Construction Ltd.";
+    inC.addEventListener("focus", () => activeRow = { entry, inC, inK, inA });
+    inC.addEventListener("input", () => { entry.company = inC.value; touch(); });
+    inC.addEventListener("keydown", ev => { if (ev.key === "Enter"){ ev.preventDefault(); addRow(); } });
+    tdC.appendChild(inC);
+
+    const tdK = document.createElement("td");
+    const inK = document.createElement("input");
+    inK.value = entry.contract || ""; inK.placeholder = "RFT 10037330 / project name";
+    inK.addEventListener("focus", () => activeRow = { entry, inC, inK, inA });
+    inK.addEventListener("input", () => { entry.contract = inK.value; touch(); });
+    inK.addEventListener("keydown", ev => { if (ev.key === "Enter"){ ev.preventDefault(); addRow(); } });
+    tdK.appendChild(inK);
+
+    const tdA = document.createElement("td");
+    const inA = document.createElement("input");
+    inA.className = "amt"; inA.value = entry.amount; inA.placeholder = "$0,000.00";
+    inA.addEventListener("focus", () => activeRow = { entry, inC, inK, inA });
+    inA.addEventListener("input", () => { entry.amount = inA.value; touch(); });
+    inA.addEventListener("keydown", ev => { if (ev.key === "Enter"){ ev.preventDefault(); addRow(); } });
+    tdA.appendChild(inA);
+
+    const tdV = document.createElement("td");
+    const wrap = document.createElement("div"); wrap.className = "verdicts";
+    [["won","Won"],["lost","Didn't win"],["unsure","Not stated"]].forEach(([v,lbl]) => {
+      const b = document.createElement("button");
+      b.className = "v"; b.dataset.v = v; b.textContent = lbl; b.type = "button";
+      b.setAttribute("aria-pressed", entry.outcome === v ? "true" : "false");
+      b.addEventListener("click", () => {
+        entry.outcome = entry.outcome === v ? "" : v;
+        wrap.querySelectorAll(".v").forEach(x =>
+          x.setAttribute("aria-pressed", x.dataset.v === entry.outcome ? "true":"false"));
+        touch();
+      });
+      wrap.appendChild(b);
+    });
+    tdV.appendChild(wrap);
+
+    const tdX = document.createElement("td");
+    const del = document.createElement("button");
+    del.className = "del"; del.type = "button"; del.textContent = "✕";
+    del.title = "Remove this row";
+    del.addEventListener("click", () => {
+      const r = rec(); r.entries.splice(r.entries.indexOf(entry), 1);
+      if (!r.entries.length) r.entries.push({company:"",contract:"",amount:"",outcome:""});
+      touch(); render();
+    });
+    tdX.appendChild(del);
+
+    tr.append(tdC, tdK, tdA, tdV, tdX);
+    $("rows").appendChild(tr);
+    if (i === 0 && !entry.company) setTimeout(() => activeRow = { entry, inC, inK, inA }, 0);
+  }
+
+  function addRow(){
+    const r = rec();
+    r.entries.push({ company:"", contract:"", amount:"", outcome:"" });
+    touch(); render();
+    const inputs = $("rows").querySelectorAll("input");
+    if (inputs.length) inputs[inputs.length-2].focus();
+  }
+
+  function touch(){ rec().touched = true; save(); flash(); }
+  let flashT;
+  function flash(){
+    $("savedLbl").textContent = "saved";
+    clearTimeout(flashT);
+    flashT = setTimeout(() => $("savedLbl").textContent = "", 1200);
+  }
+
+  $("addRow").addEventListener("click", addRow);
+  $("noneBox").addEventListener("change", () => { rec().none = $("noneBox").checked; touch(); });
+  $("prev").addEventListener("click", () => { if (idx>0){ idx--; render(); } });
+  $("next").addEventListener("click", () => {
+    rec().touched = true; save();
+    if (idx < docs.length-1){ idx++; render(); }
+    else {
+      render();
+      let b = document.getElementById("finBanner");
+      if (!b){
+        b = document.createElement("div");
+        b.id = "finBanner"; b.className = "banner";
+        document.querySelector(".work").appendChild(b);
+      }
+      b.textContent = "That's all of them — press “Export my labels”, copy the text, and send it back.";
+      b.scrollIntoView({ block: "nearest" });
+    }
+  });
+
+  // Selection → field. The whole point: almost no typing, and names stay verbatim.
+  document.addEventListener("keydown", ev => {
+    const k = ev.key.toLowerCase();
+    if (k !== "v" && k !== "a" && k !== "c") return;
+    const sel = String(window.getSelection());
+    if (!sel.trim() || !activeRow) return;
+    const tag = (document.activeElement.tagName || "").toLowerCase();
+    if (tag === "input") return;            // don't hijack typing
+    ev.preventDefault();
+    const clean = sel.replace(/\s+/g, " ").trim();
+    if (k === "v"){ activeRow.entry.company = clean; activeRow.inC.value = clean; }
+    else if (k === "c"){ activeRow.entry.contract = clean; activeRow.inK.value = clean; }
+    else { activeRow.entry.amount = clean; activeRow.inA.value = clean; }
+    touch();
+  });
+
+  function buildExport(){
+    const out = { labeller: who, labeller_name: NAMES[who],
+                  exported_at: new Date().toISOString(), documents: [] };
+    docs.forEach(d => {
+      const r = (store[who]||{})[d.id] || { entries:[], none:false, touched:false };
+      out.documents.push({
+        id: d.id, url: d.url, none_present: !!r.none, completed: !!r.touched,
+        entries: (r.entries||[]).filter(e => (e.company||"").trim() || (e.amount||"").trim())
+      });
+    });
+    return out;
+  }
+
+  $("exportBtn").addEventListener("click", () => {
+    const out = buildExport();
+    const rows = out.documents.reduce((n,d) => n + d.entries.length, 0);
+    const done = out.documents.filter(d => d.completed).length;
+    $("expNote").textContent = `${NAMES[who]} — ${done} of ${out.documents.length} excerpts, `
+      + `${rows} bid rows. Press Ctrl+C (the text is already selected) and paste it back.`;
+    $("expText").value = JSON.stringify(out, null, 1);
+    $("exportPanel").hidden = false;
+    $("expText").focus(); $("expText").select();
+  });
+
+  $("copyBtn").addEventListener("click", async () => {
+    const txt = $("expText").value;
+    let ok = false;
+    try { await navigator.clipboard.writeText(txt); ok = true; }
+    catch(e){
+      $("expText").focus(); $("expText").select();
+      try { ok = document.execCommand("copy"); } catch(e2){ ok = false; }
+    }
+    $("copiedLbl").textContent = ok ? "copied" : "blocked in this frame — press Ctrl+C instead";
+    setTimeout(() => $("copiedLbl").textContent = "", 2500);
+  });
+
+  $("selectBtn").addEventListener("click", () => {
+    $("expText").focus(); $("expText").select();
+    $("copiedLbl").textContent = "selected — now press Ctrl+C";
+    setTimeout(() => $("copiedLbl").textContent = "", 3000);
+  });
+
+  $("closeExp").addEventListener("click", () => $("exportPanel").hidden = true);
+  document.addEventListener("keydown", ev => {
+    if (ev.key === "Escape") $("exportPanel").hidden = true;
+  });
+
+})();
+</script>

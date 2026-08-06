@@ -1,0 +1,304 @@
+<title>What is this document? — Toronto procurement archive</title>
+
+<style>
+  :root{
+    --paper:#FBFAF7; --pane:#F2F1EB; --ink:#12171F; --ink-2:#4A5560; --ink-3:#79848D;
+    --rule:#D7DAD4; --rule-2:#E6E8E1;
+    --accent:#1F5F5B; --accent-soft:#DCE9E6; --hot:#8A4A2F; --sel:#F6E6A8;
+    --serif:ui-serif,Georgia,"Iowan Old Style","Times New Roman",serif;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --paper:#0F1418; --pane:#151C21; --ink:#E4EAE7; --ink-2:#A3AFB4; --ink-3:#7A868C;
+    --rule:#27313A; --rule-2:#1E272D; --accent:#6FBDB2; --accent-soft:#162A29;
+    --hot:#D08C6A; --sel:#4A3F19;}}
+  :root[data-theme="dark"]{--paper:#0F1418; --pane:#151C21; --ink:#E4EAE7; --ink-2:#A3AFB4;
+    --ink-3:#7A868C; --rule:#27313A; --rule-2:#1E272D; --accent:#6FBDB2; --accent-soft:#162A29;
+    --hot:#D08C6A; --sel:#4A3F19;}
+  :root[data-theme="light"]{--paper:#FBFAF7; --pane:#F2F1EB; --ink:#12171F; --ink-2:#4A5560;
+    --ink-3:#79848D; --rule:#D7DAD4; --rule-2:#E6E8E1; --accent:#1F5F5B; --accent-soft:#DCE9E6;
+    --hot:#8A4A2F; --sel:#F6E6A8;}
+
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
+       font-size:15px;line-height:1.5}
+  button,input{font:inherit;color:inherit}
+  ::selection{background:var(--sel);color:var(--ink)}
+
+  #gate{max-width:44rem;margin:0 auto;padding:3.5rem 1.5rem}
+  .eyebrow{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);
+           font-weight:600;margin:0 0 .8rem}
+  #gate h1{font-family:var(--serif);font-size:1.9rem;line-height:1.15;margin:0 0 .6rem;
+           font-weight:600;text-wrap:balance}
+  #gate p{color:var(--ink-2);max-width:62ch}
+  .note{border:1px solid var(--rule);border-left:3px solid var(--accent);background:var(--pane);
+        border-radius:2px;padding:.9rem 1.1rem;margin:1.4rem 0}
+  .start{margin-top:1.6rem;padding:.85rem 1.4rem;background:var(--accent);color:var(--paper);
+         border:1px solid var(--accent);border-radius:2px;cursor:pointer;font-weight:600}
+
+  header{position:sticky;top:0;z-index:20;background:var(--paper);border-bottom:1px solid var(--rule);
+         display:flex;align-items:center;gap:1rem;padding:.55rem 1rem;flex-wrap:wrap}
+  .brand{font-family:var(--serif);font-weight:600;white-space:nowrap}
+  .bar{flex:1;min-width:7rem;height:6px;background:var(--rule-2);border-radius:99px;overflow:hidden}
+  .bar i{display:block;height:100%;background:var(--accent);transition:width .2s}
+  .count{font-variant-numeric:tabular-nums;color:var(--ink-2);font-size:.82rem;white-space:nowrap}
+  .btn{padding:.4rem .75rem;border:1px solid var(--rule);background:var(--paper);border-radius:2px;
+       cursor:pointer;white-space:nowrap}
+  .btn:hover{border-color:var(--accent);color:var(--accent)}
+  .btn.primary{background:var(--accent);color:var(--paper);border-color:var(--accent)}
+  .btn:focus-visible,.k:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+  main{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);height:calc(100vh - 49px)}
+  @media (max-width:960px){main{grid-template-columns:1fr;height:auto}}
+  .doc{overflow-y:auto;padding:1.1rem 1.35rem;border-right:1px solid var(--rule);background:var(--pane)}
+  .meta{font-size:.75rem;color:var(--ink-3);margin-bottom:.7rem}
+  pre.txt{font-family:var(--mono);font-size:12.5px;line-height:1.6;white-space:pre-wrap;
+          word-wrap:break-word;margin:0}
+  .work{overflow-y:auto;padding:1.1rem 1.35rem}
+  .q{font-family:var(--serif);font-size:1.05rem;margin:0 0 .2rem}
+  .hint{color:var(--ink-3);font-size:.8rem;margin:0 0 .9rem}
+  .kinds{display:flex;flex-direction:column;gap:.3rem}
+  .k{display:flex;gap:.6rem;align-items:baseline;text-align:left;padding:.45rem .6rem;
+     border:1px solid var(--rule);background:var(--paper);border-radius:2px;cursor:pointer}
+  .k:hover{border-color:var(--accent);background:var(--accent-soft)}
+  .k[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--paper)}
+  .k b{font-family:var(--mono);font-size:.72rem;opacity:.75;min-width:1.1rem}
+  .k span{font-size:.9rem}
+  .k i{font-style:normal;color:var(--ink-3);font-size:.78rem}
+  .k[aria-pressed="true"] i{color:var(--paper);opacity:.8}
+  .other{margin-top:.55rem}
+  .other input{width:100%;padding:.5rem .6rem;border:1px solid var(--rule);border-radius:2px;
+               background:var(--paper)}
+  .flag{display:flex;align-items:flex-start;gap:.5rem;margin-top:1.1rem;padding-top:.9rem;
+        border-top:1px solid var(--rule);font-size:.9rem;color:var(--ink-2)}
+  .flag.first{margin-top:0;padding:.6rem .7rem;border:1px solid var(--rule);
+              border-left:3px solid var(--hot);border-radius:2px;background:var(--pane);
+              margin-bottom:.9rem}
+  .flag input{margin-top:.25rem}
+  .flag b{color:var(--hot)}
+  nav{display:flex;gap:.5rem;align-items:center;margin-top:1.2rem;padding-top:.9rem;
+      border-top:1px solid var(--rule)}
+  nav .sp{flex:1}
+  .saved{color:var(--accent);font-size:.8rem;font-weight:600}
+
+  #panel[hidden]{display:none}
+  #panel{position:fixed;inset:0;z-index:50;background:rgba(15,20,24,.55);display:flex;
+         align-items:center;justify-content:center;padding:1.4rem}
+  .sheet{background:var(--paper);border:1px solid var(--rule);border-radius:3px;max-width:58rem;
+         width:100%;max-height:88vh;display:flex;flex-direction:column;padding:1.2rem 1.35rem}
+  .sheet h3{font-family:var(--serif);margin:0 0 .3rem}
+  .sheet p{margin:0 0 .7rem;color:var(--ink-2);font-size:.88rem}
+  .tools{display:flex;gap:.5rem;margin-bottom:.6rem;flex-wrap:wrap}
+  #out{flex:1;min-height:15rem;width:100%;font-family:var(--mono);font-size:11.5px;padding:.65rem;
+       background:var(--pane);color:var(--ink);border:1px solid var(--rule);border-radius:2px;
+       resize:vertical}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div id="gate">
+  <p class="eyebrow">Toronto procurement archive · document classification</p>
+  <h1>What kind of document is this?</h1>
+  <p>125 documents drawn from every source the archive collects — Conservation Authority board
+     reports, Exhibition Place, the Toronto Zoo, City council reports, Award Summary Forms and
+     committee reports — shuffled together. The source isn't shown, because knowing it gives away
+     the likely answer.</p>
+
+  <div class="note">
+    <strong>The archive only wants procurement: bids, awards, suppliers.</strong> Everything else
+    gets classified and then deliberately ignored — so the point of this exercise is to find out
+    what's actually in the pile, including the categories nobody has thought of yet.
+  </div>
+
+  <p>Pick a category with a <b>number key</b> or a click. If nothing fits, use
+     <b>Other</b> and type what it actually is — a category we're missing is the most useful
+     thing you can give us here.</p>
+  <p>There's also a checkbox for <b>"this contains bid or award information"</b>. That one matters
+     independently: it tells us whether a document we'd otherwise skip is hiding real procurement
+     data.</p>
+  <p>About ten seconds each. Progress saves automatically; you can stop whenever and come back.</p>
+  <button class="start" id="go">Start</button>
+</div>
+
+<div id="app" hidden>
+  <header>
+    <div class="brand">Document classification</div>
+    <div class="bar"><i id="fill" style="width:0"></i></div>
+    <div class="count" id="count">—</div>
+    <button class="btn" id="export">Export labels</button>
+  </header>
+  <main>
+    <section class="doc">
+      <div class="meta" id="meta"></div>
+      <pre class="txt" id="txt"></pre>
+      <button class="btn" id="more" style="margin-top:.9rem">Show full document</button>
+    </section>
+    <section class="work">
+      <p class="q" id="q">What kind of document is this?</p>
+      <p class="hint">Press a number or click a category — it saves and moves on automatically.</p>
+      <label class="flag first">
+        <input type="checkbox" id="hasBids">
+        <span>First, if it applies: this document <b>contains bid or award information</b> —
+          who bid, an amount awarded, or a named winning supplier. Tick it (or press
+          <b>B</b>) even if the category below isn't procurement.</span>
+      </label>
+      <div class="kinds" id="kinds"></div>
+      <div class="other">
+        <input id="otherTxt" placeholder="Other — describe what it actually is">
+      </div>
+      <nav>
+        <button class="btn" id="prev">← Back</button>
+        <span class="sp"></span>
+        <span class="saved" id="saved"></span>
+        <button class="btn primary" id="next">Next →</button>
+      </nav>
+    </section>
+  </main>
+
+  <div id="panel" hidden>
+    <div class="sheet">
+      <h3>Your labels</h3>
+      <p id="note"></p>
+      <div class="tools">
+        <button class="btn primary" id="sel">Select all</button>
+        <button class="btn" id="close">Close</button>
+        <span class="saved" id="copied"></span>
+      </div>
+      <textarea id="out" readonly spellcheck="false"></textarea>
+      <p class="hint">Already selected — press <b>Ctrl</b>+<b>C</b> (<b>⌘</b>+<b>C</b>) and paste
+         it back. Downloads and the clipboard button are blocked inside this frame.</p>
+    </div>
+  </div>
+</div>
+
+<script id="payload" type="application/json">__DATA__</script>
+<script>
+(function(){
+  "use strict";
+  const DOCS = JSON.parse(document.getElementById("payload").textContent);
+  const KEY = "tb-classify-v1";
+  const KINDS = [
+    ["procurement_award","Procurement award / contract award","a tender, RFP, RFQ or vendor-of-record being awarded"],
+    ["procurement_other","Other procurement",           "about buying something, but not an award report"],
+    ["minutes","Meeting minutes",                        "record of a meeting and its resolutions"],
+    ["agenda","Agenda",                                  "list of items for a meeting"],
+    ["meeting_package","Meeting package",                "many items bound into one big document"],
+    ["agreement_or_mou","Agreement / MOU / lease / licence","a contract with another party — including one where THEY pay US"],
+    ["land_property","Land or property",                 "acquisition, disposal, easement, site plan"],
+    ["permit_regulatory","Permit / regulatory",          "permits, regulation applications, approvals"],
+    ["governance_finance","Governance / finance",        "budget, audit, policy, appointments, insurance"],
+    ["status_update","Status / progress report",         "an update on a project or programme"],
+    ["attachment_or_map","Attachment / map / drawing",   "supporting exhibit, not a report itself"],
+    ["correspondence","Letter / correspondence",         "a letter from a councillor or outside party"],
+    ["empty_or_unreadable","Empty or unreadable",        "blank, a fragment, or garbled text"]
+  ];
+  let i = 0, store = {};
+  try { store = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch(e){ store = {}; }
+  const save = () => { try{ localStorage.setItem(KEY, JSON.stringify(store)); }catch(e){} };
+  const $ = id => document.getElementById(id);
+  const rec = () => (store[DOCS[i].id] = store[DOCS[i].id] || {kind:"", other:"", bids:false});
+
+  $("go").addEventListener("click", () => {
+    $("gate").hidden = true; $("app").hidden = false;
+    i = Math.max(0, DOCS.findIndex(d => !store[d.id]));
+    if (i < 0) i = 0;
+    build(); render();
+  });
+
+  function build(){
+    const box = $("kinds");
+    KINDS.forEach(([id,label,help], n) => {
+      const b = document.createElement("button");
+      b.className = "k"; b.type = "button"; b.dataset.kind = id;
+      b.innerHTML = `<b>${(n+1)%10 === 0 ? 0 : n+1}</b><span>${label} <i>— ${help}</i></span>`;
+      b.addEventListener("click", () => pick(id));
+      box.appendChild(b);
+    });
+  }
+
+  function pick(id){
+    const r = rec();
+    const chose = r.kind !== id;          // clicking the same one again de-selects
+    r.kind = chose ? id : "";
+    if (r.kind) { r.other = ""; $("otherTxt").value = ""; }
+    save(); paint(); flash();
+    // Advance only on a positive choice, after a beat so the selection is visibly registered.
+    if (chose && i < DOCS.length - 1) setTimeout(() => go(1), 160);
+  }
+
+  function paint(){
+    const r = rec();
+    document.querySelectorAll(".k").forEach(b =>
+      b.setAttribute("aria-pressed", b.dataset.kind === r.kind ? "true" : "false"));
+    const done = DOCS.filter(d => { const s = store[d.id]; return s && (s.kind || s.other); }).length;
+    $("count").textContent = `${done} / ${DOCS.length} done`;
+    $("fill").style.width = (100*done/DOCS.length) + "%";
+  }
+
+  let full = false;
+  function render(){
+    const d = DOCS[i]; const r = rec(); full = false;
+    $("meta").textContent = `document ${i+1} of ${DOCS.length}  ·  ${d.chars.toLocaleString()} characters`;
+    $("txt").textContent = d.head;
+    $("more").textContent = "Show full document";
+    $("more").hidden = d.full.length <= d.head.length;
+    $("otherTxt").value = r.other || "";
+    $("hasBids").checked = !!r.bids;
+    $("next").textContent = i === DOCS.length-1 ? "Finish" : "Next →";
+    $("prev").disabled = i === 0;
+    paint();
+    document.querySelector(".doc").scrollTop = 0;
+  }
+
+  $("more").addEventListener("click", () => {
+    const d = DOCS[i]; full = !full;
+    $("txt").textContent = full ? d.full + (d.truncated ? "\n\n[ document continues — truncated ]" : "")
+                                : d.head;
+    $("more").textContent = full ? "Show less" : "Show full document";
+  });
+  $("otherTxt").addEventListener("input", e => {
+    const r = rec(); r.other = e.target.value;
+    if (r.other) { r.kind = ""; paint(); }
+    save(); flash();
+  });
+  $("hasBids").addEventListener("change", e => { rec().bids = e.target.checked; save(); flash(); });
+
+  let t; function flash(){ $("saved").textContent = "saved"; clearTimeout(t);
+    t = setTimeout(() => $("saved").textContent = "", 1000); }
+
+  function go(n){ i = Math.min(DOCS.length-1, Math.max(0, i+n)); render(); }
+  $("next").addEventListener("click", () => go(1));
+  $("prev").addEventListener("click", () => go(-1));
+
+  document.addEventListener("keydown", ev => {
+    if ($("app").hidden || !$("panel").hidden) {
+      if (ev.key === "Escape") $("panel").hidden = true;
+      return;
+    }
+    if (document.activeElement === $("otherTxt")) { if (ev.key === "Enter") go(1); return; }
+    if (ev.key === "Enter") { ev.preventDefault(); go(1); return; }
+    if (ev.key === "ArrowLeft") return go(-1);
+    if (ev.key === "ArrowRight") return go(1);
+    if (ev.key === "b" || ev.key === "B") { $("hasBids").checked = !$("hasBids").checked;
+      rec().bids = $("hasBids").checked; save(); flash(); return; }
+    const n = ev.key === "0" ? 10 : parseInt(ev.key, 10);
+    if (n >= 1 && n <= KINDS.length) { ev.preventDefault(); pick(KINDS[n-1][0]); }
+  });
+
+  $("export").addEventListener("click", () => {
+    const out = {tool:"document-classification", exported_at:new Date().toISOString(),
+                 documents: DOCS.map(d => {
+                   const s = store[d.id] || {};
+                   return {id:d.id, url:d.url, kind:s.kind || "", other:s.other || "",
+                           contains_bid_or_award: !!s.bids};
+                 }).filter(x => x.kind || x.other || x.contains_bid_or_award)};
+    $("note").textContent = `${out.documents.length} of ${DOCS.length} labelled. `
+      + `Press Ctrl+C — the text is already selected — and paste it back.`;
+    $("out").value = JSON.stringify(out);
+    $("panel").hidden = false; $("out").focus(); $("out").select();
+  });
+  $("sel").addEventListener("click", () => { $("out").focus(); $("out").select();
+    $("copied").textContent = "selected — press Ctrl+C"; setTimeout(()=>$("copied").textContent="",2500); });
+  $("close").addEventListener("click", () => $("panel").hidden = true);
+})();
+</script>

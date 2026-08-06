@@ -1,0 +1,627 @@
+{
+ "C001": {
+  "rule_guess": "meeting_package",
+  "source": "Toronto Zoo",
+  "url": "https://www.toronto.ca/legdocs/mmis/2015/zb/bgrd/backgroundfile-83357.pdf"
+ },
+ "C002": {
+  "rule_guess": "agreement_or_mou",
+  "source": "Exhibition Place",
+  "url": "https://www.toronto.ca/legdocs/mmis/2026/ep/bgrd/backgroundfile-287715.pdf"
+ },
+ "C003": {
+  "rule_guess": "agenda",
+  "source": "TRCA board",
+  "url": "https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=5369"
+ },
+ "C004": {
+  "rule_guess": "meeting_package",
+  "source": "TRCA board",
+  "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=12186"
+ },
+ "C005": {
+  "rule_guess": "minutes",
+  "source": "Toronto Zoo",
+  "url": "https://www.toronto.ca/legdocs/mmis/2019/zb/bgrd/backgroundfile-133807.pdf"
+ },
+ "C006": {
+  "rule_guess": "governance_finance",
+  "source": "Toronto Zoo",
+  "url": "https://www.toronto.ca/legdocs/mmis/2023/zb/bgrd/backgroundfile-239803.pdf"
+ },
+ "C007": {
+  "rule_guess": "agenda",
+  "source": "Exhibition Place",
+  "url": "https://www.toronto.ca/legdocs/mmis/2022/ep/bgrd/backgroundfile-229348.pdf"
+ },
+ "C008": {
+  "rule_guess": "attachment_or_map",
+  "source": "TRCA board",
+  "url": "https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=19207"
+ },
+ "C009": {
+  "rule_guess": "procurement_award",
+  "source": "Committee award report",
+  "url": "https://www.toronto.ca/legdocs/mmis/2023/gg/bgrd/backgroundfile-234562.pdf"
+ },
+ "C010": {
+  "rule_guess": "procurement_award",
+  "source": "Toronto Zoo",
+  "url": "https://www.toronto.ca/legdocs/mmis/2018/zb/bgrd/backgroundfile-122143.pdf"
+ },
+ "C011": {
+  "rule_guess": "other_titled",
+  "source": "TRCA board",
+  "url": "https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=8628"
+ },
+ "C012": {
+  "rule_guess": "procurement_award",
+  "source": "Committee award report",
+  "url": "https://www.toronto.ca/legdocs/mmis/2023/gg/bgrd/backgroundfile-236822.pdf"
+ },
+ "C013": {
+  "rule_guess": "agenda",
+  "source": "Exhibition Place",
+  "url": "https://www.toronto.ca/legdocs/mmis/2026/ep/bgrd/backgroundfile-285795.pdf"
+ },
+ "C014": {
+  "rule_guess": "UNCLASSIFIED",
+  "source": "Exhibition Place",
+  "url": "https://www.toronto.ca/legdocs/mmis/2026/ep/bgrd/backgroundfile-287708.pdf"
+ },
+ "C015": {
+  "rule_guess": "meeting_package",
+  "source": "Toronto Zoo",
+  "url": "https://www.toronto.ca/legdocs/mmis/2020/zb/bgrd/backgroundfile-145788.pdf"
+ },
+ "C016": {
+  "rule_guess": "councillor_letter",
+  "source": "Exhibition Place",
+  "url": "https://www.toronto.ca/legdocs/mmis/2021/ep/bgrd/backgroundfile-163431.pdf"
+ },
+ "C017": {
+  "rule_guess": "agreement_or_mou",
+  "source": "Toronto Zoo",
+  "url": "https://www.toronto.ca/legdocs/mmis/2019/zb/bgrd/backgroundfile-138936.pdf"
+ },
+ "C018": {
+  "rule_guess": "status_update",
+  "source": "TRCA board",
+  "url": "https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=16846"
+ },
+ "C019": {
+  "rule_guess": "empty_or_fragment",
+  "source": "Toronto Zoo",
+  "url": "https://www.toronto.ca/legdocs/mmis/2017/zb/bgrd/backgroundfile-109379.pdf"
+ },
+ "C020": {
+  "rule_guess": "governance_finance",
+  "source": "TRCA board",
+  "url": "https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=19776"
+ },
+ "C021": {
+  "rule_guess": "other_titled",
+  "source": "Toronto Zoo",
+  "url": "https://www.toronto.ca/legdocs/mmis/2017/zb/bgrd/backgroundfile-101532.pdf"
+ },
+ "C022": {
+  "rule_guess": "UNCLASSIFIED",
+  "source": "Award Summary Form",
+  "url": "https://secure.toronto.ca/c3api_upload/retrieve/pmmd_solicitations/V2jA3fIlCsipEDbKlVbFkw"
+ },
+ "C023": {
+  "rule_guess": "other_titled",
+  "source": "City council report",
+  "url": "https://www.toronto.ca/legdocs/mmis/2021/ba/bgrd/backgroundfile-166268.pdf"
+ },
+ "C024": {
+  "rule_guess": "other_titled",
+  "source": "Toronto Zoo",
+  "url": "https://www.toronto.ca/legdocs/mmis/2024/zb/bgrd/backgroundfile-246019.pdf"
+ },
+ "C025": {
+  "rule_guess": "councillor_letter",
+  "source": "Exhibition Place",
+  "url": "https://www.toronto.ca/legdocs/mmis/2019/ep/bgrd/backgroundfile-124347.pdf"
+ },
+ "C026": {
+  "rule_guess": "procurement_award",
+  "source": "Committee award report",
+  "url": "https://www.toronto.ca/legdocs/mmis/2021/ie/bgrd/backgroundfile-171734.pdf"
+ },
+ "C027": {
+  "rule_guess": "empty_or_fragment",
+  "source": "City council report",
+  "url": "https://www.toronto.ca/legdocs/mmis/2018/ba/bgrd/backgroundfile-115848.pdf"
+ },
+ "C028": {
+  "rule_guess": "empty_or_fragment",
+  "source": "TRCA board",
+  "url": "https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=18320"
+ },
+ "C029": {
+  "rule_guess": "UNCLASSIFIED",
+  "source": "TRCA board",
+  "url": "https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=14232"
+ },
+ "C030": {
+  "rule_guess": "attachment_or_map",
+  "source": "Toronto Zoo",
+  "url": "https://www.toronto.ca/legdocs/mmis/2025/zb/bgrd/backgroundfile-253266.pdf"
+ },
+ "C031": {
+  "rule_guess": "procurement_award",
+  "source": "Toronto Zoo",
+  "url": "https://www.toronto.ca/legdocs/mmis/2019/zb/bgrd/backgroundfile-124313.pdf"
+ },
+ "C032": {
+  "rule_guess": "other_titled",
+  "source": "Exhibition Place",
+  "url": "https://www.toronto.ca/legdocs/mmis/2023/ep/bgrd/backgroundfile-240943.pdf"
+ },
+ "C033": {
+  "rule_guess": "other_titled",
+  "source": "Toronto Zoo",
+  "url": "https://www.toronto.ca/legdocs/mmis/2022/zb/bgrd/backgroundfile-198949.pdf"
+ },
+ "C034": {
+  "rule_guess": "procurement_award",
+  "source": "Toronto Zoo",
+  "url": "https://www.toronto.ca/legdocs/mmis/2019/zb/bgrd/backgroundfile-124312.pdf"
+ },
+ "C035": {
+  "rule_guess": "minutes",
+  "source": "Toronto Zoo",
+  "url": "https://www.toronto.ca/legdocs/mmis/2020/zb/bgrd/backgroundfile-145379.pdf"
+ },
+ "C036": {
+  "rule_guess": "land_property",
+  "source": "TRCA board",
+  "url": "https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=10699"
+ },
+ "C037": {
+  "rule_guess": "agreement_or_mou",
+  "source": "Exhibition Place",
+  "url": "https://www.toronto.ca/legdocs/mmis/2025/ep/bgrd/backgroundfile-252596.pdf"
+ },
+ "C038": {
+  "rule_guess": "meeting_package",
+  "source": "TRCA board",
+  "url": "https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=20670"
+ },
+ "C039": {
+  "rule_guess": "governance_finance",
+  "source": "Exhibition Place",
+  "url": "https://www.toronto.ca/legdocs/mmis/2025/ep/bgrd/backgroundfile-252582.pdf"
+ },
+ "C040": {
+  "rule_guess": "status_update",
+  "source": "Exhibition Place",
+  "url": "https://www.toronto.ca/legdocs/mmis/2024/ep/bgrd/backgroundfile-248333.pdf"
+ },
+ "C041": {
+  "rule_guess": "UNCLASSIFIED",
+  "source": "Toronto Zoo",
+  "url": "https://www.toronto.ca/legdocs/mmis/2019/zb/bgrd/backgroundfile-136331.pdf"
+ },
+ "C042": {
+  "rule_guess": "UNCLASSIFIED",
+  "source": "Exhibition Place",
+  "url": "https://www.toronto.ca/legdocs/mmis/2020/ep/bgrd/backgroundfile-147923.pdf"
+ },
+ "C043": {
+  "rule_guess": "other_titled",
+  "source": "City council report",
+  "url": "https://www.toronto.ca/legdocs/mmis/2010/bd/bgrd/backgroundfile-31940.pdf"
+ },
+ "C044": {
+  "rule_guess": "procurement_award",
+  "source": "TRCA board",
+  "url": "https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=19585"
+ },
+ "C045": {
+  "rule_guess": "meeting_package",
+  "source": "Toronto Zoo",
+  "url": "https://www.toronto.ca/legdocs/mmis/2015/zb/bgrd/backgroundfile-80364.pdf"
+ },
+ "C046": {
+  "rule_guess": "permit_regulatory",
+  "source": "TRCA board",
+  "url": "https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=12348"
+ },
+ "C047": {
+  "rule_guess": "UNCLASSIFIED",
+  "source": "Exhibition Place",
+  "url": "https://www.toronto.ca/legdocs/mmis/2019/ep/bgrd/backgroundfile-131283.pdf"
+ },
+ "C048": {
+  "rule_guess": "other_titled",
+  "source": "TRCA board",
+  "url": "https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=5117"
+ },
+ "C049": {
+  "rule_guess": "UNCLASSIFIED",
+  "source": "Toronto Zoo",
+  "url": "https://www.toronto.ca/legdocs/mmis/2016/zb/bgrd/backgroundfile-93440.pdf"
+ },
+ "C050": {
+  "rule_guess": "UNCLASSIFIED",
+  "source": "Award Summary Form",
+  "url": "https://secure.toronto.ca/c3api_upload/retrieve/pmmd_solicitations/_luxUl0OdhtQOV6ifDRf9Q"
+ },
+ "C051": {
+  "rule_guess": "agenda",
+  "source": "Toronto Zoo",
+  "url": "https://www.toronto.ca/legdocs/mmis/2024/zb/bgrd/backgroundfile-248836.pdf"
+ },
+ "C052": {
+  "rule_guess": "agreement_or_mou",
+  "source": "TRCA board",
+  "url": "https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=19564"
+ },
+ "C053": {
+  "rule_guess": "permit_regulatory",
+  "source": "TRCA board",
+  "url": "https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=5435"
+ },
+ "C054": {
+  "rule_guess": "minutes",
+  "source": "TRCA board",
+  "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=17910"
+ },
+ "C055": {
+  "rule_guess": "meeting_package",
+  "source": "Exhibition Place",
+  "url": "https://www.toronto.ca/legdocs/mmis/2020/ep/bgrd/backgroundfile-158893.pdf"
+ },
+ "C056": {
+  "rule_guess": "empty_or_fragment",
+  "source": "Exhibition Place",
+  "url": "https://www.toronto.ca/legdocs/mmis/2023/ep/bgrd/backgroundfile-240947.pdf"
+ },
+ "C057": {
+  "rule_guess": "UNCLASSIFIED",
+  "source": "City council report",
+  "url": "https://www.toronto.ca/legdocs/mmis/2009/bd/bgrd/backgroundfile-25877.pdf"
+ },
+ "C058": {
+  "rule_guess": "agenda",
+  "source": "Toronto Zoo",
+  "url": "https://www.toronto.ca/legdocs/mmis/2022/zb/bgrd/backgroundfile-223776.pdf"
+ },
+ "C059": {
+  "rule_guess": "governance_finance",
+  "source": "City council report",
+  "url": "https://www.toronto.ca/legdocs/mmis/2022/ba/bgrd/backgroundfile-229144.pdf"
+ },
+ "C060": {
+  "rule_guess": "governance_finance",
+  "source": "Toronto Zoo",
+  "url": "https://www.toronto.ca/legdocs/mmis/2016/zb/bgrd/backgroundfile-90661.pdf"
+ },
+ "C061": {
+  "rule_guess": "other_titled",
+  "source": "Exhibition Place",
+  "url": "https://www.toronto.ca/legdocs/mmis/2024/ep/bgrd/backgroundfile-245978.pdf"
+ },
+ "C062": {
+  "rule_guess": "governance_finance",
+  "source": "Exhibition Place",
+  "url": "https://www.toronto.ca/legdocs/mmis/2021/ep/bgrd/backgroundfile-167562.pdf"
+ },
+ "C063": {
+  "rule_guess": "agenda",
+  "source": "Toronto Zoo",
+  "url": "https://www.toronto.ca/legdocs/mmis/2015/zb/bgrd/backgroundfile-86281.pdf"
+ },
+ "C064": {
+  "rule_guess": "governance_finance",
+  "source": "Exhibition Place",
+  "url": "https://www.toronto.ca/legdocs/mmis/2020/ep/bgrd/backgroundfile-147871.pdf"
+ },
+ "C065": {
+  "rule_guess": "minutes",
+  "source": "TRCA board",
+  "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=8125"
+ },
+ "C066": {
+  "rule_guess": "land_property",
+  "source": "Toronto Zoo",
+  "url": "https://www.toronto.ca/legdocs/mmis/2016/zb/bgrd/backgroundfile-91738.pdf"
+ },
+ "C067": {
+  "rule_guess": "UNCLASSIFIED",
+  "source": "City council report",
+  "url": "https://www.toronto.ca/legdocs/mmis/2012/bd/bgrd/backgroundfile-49077.pdf"
+ },
+ "C068": {
+  "rule_guess": "status_update",
+  "source": "TRCA board",
+  "url": "https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=20505"
+ },
+ "C069": {
+  "rule_guess": "land_property",
+  "source": "Toronto Zoo",
+  "url": "https://www.toronto.ca/legdocs/mmis/2020/zb/bgrd/backgroundfile-151235.pdf"
+ },
+ "C070": {
+  "rule_guess": "status_update",
+  "source": "Exhibition Place",
+  "url": "https://www.toronto.ca/legdocs/mmis/2024/ep/bgrd/backgroundfile-242275.pdf"
+ },
+ "C071": {
+  "rule_guess": "minutes",
+  "source": "Toronto Zoo",
+  "url": "https://www.toronto.ca/legdocs/mmis/2015/zb/bgrd/backgroundfile-81235.pdf"
+ },
+ "C072": {
+  "rule_guess": "status_update",
+  "source": "Toronto Zoo",
+  "url": "https://www.toronto.ca/legdocs/mmis/2024/zb/bgrd/backgroundfile-244256.pdf"
+ },
+ "C073": {
+  "rule_guess": "governance_finance",
+  "source": "TRCA board",
+  "url": "https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=16021"
+ },
+ "C074": {
+  "rule_guess": "minutes",
+  "source": "Exhibition Place",
+  "url": "https://www.toronto.ca/legdocs/mmis/2019/ep/bgrd/backgroundfile-137248.pdf"
+ },
+ "C075": {
+  "rule_guess": "attachment_or_map",
+  "source": "TRCA board",
+  "url": "https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=8037"
+ },
+ "C076": {
+  "rule_guess": "agenda",
+  "source": "Exhibition Place",
+  "url": "https://www.toronto.ca/legdocs/mmis/2024/ep/bgrd/backgroundfile-251181.pdf"
+ },
+ "C077": {
+  "rule_guess": "empty_or_fragment",
+  "source": "Exhibition Place",
+  "url": "https://www.toronto.ca/legdocs/mmis/2022/ep/bgrd/backgroundfile-226470.pdf"
+ },
+ "C078": {
+  "rule_guess": "governance_finance",
+  "source": "Toronto Zoo",
+  "url": "https://www.toronto.ca/legdocs/mmis/2016/zb/bgrd/backgroundfile-96509.pdf"
+ },
+ "C079": {
+  "rule_guess": "land_property",
+  "source": "TRCA board",
+  "url": "https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=20581"
+ },
+ "C080": {
+  "rule_guess": "councillor_letter",
+  "source": "Exhibition Place",
+  "url": "https://www.toronto.ca/legdocs/mmis/2019/ep/bgrd/backgroundfile-131403.pdf"
+ },
+ "C081": {
+  "rule_guess": "agenda",
+  "source": "TRCA board",
+  "url": "https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=16847"
+ },
+ "C082": {
+  "rule_guess": "procurement_award",
+  "source": "TRCA board",
+  "url": "https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=12866"
+ },
+ "C083": {
+  "rule_guess": "empty_or_fragment",
+  "source": "TRCA board",
+  "url": "https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=7132"
+ },
+ "C084": {
+  "rule_guess": "agreement_or_mou",
+  "source": "Exhibition Place",
+  "url": "https://www.toronto.ca/legdocs/mmis/2022/ep/bgrd/backgroundfile-223383.pdf"
+ },
+ "C085": {
+  "rule_guess": "agreement_or_mou",
+  "source": "Toronto Zoo",
+  "url": "https://www.toronto.ca/legdocs/mmis/2020/zb/bgrd/backgroundfile-145786.pdf"
+ },
+ "C086": {
+  "rule_guess": "agreement_or_mou",
+  "source": "TRCA board",
+  "url": "https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=7282"
+ },
+ "C087": {
+  "rule_guess": "land_property",
+  "source": "Toronto Zoo",
+  "url": "https://www.toronto.ca/legdocs/mmis/2017/zb/bgrd/backgroundfile-103393.pdf"
+ },
+ "C088": {
+  "rule_guess": "procurement_award",
+  "source": "TRCA board",
+  "url": "https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=8105"
+ },
+ "C089": {
+  "rule_guess": "procurement_award",
+  "source": "City council report",
+  "url": "https://www.toronto.ca/legdocs/mmis/2022/ba/bgrd/backgroundfile-229060.pdf"
+ },
+ "C090": {
+  "rule_guess": "agenda",
+  "source": "TRCA board",
+  "url": "https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=20064"
+ },
+ "C091": {
+  "rule_guess": "permit_regulatory",
+  "source": "TRCA board",
+  "url": "https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=20044"
+ },
+ "C092": {
+  "rule_guess": "other_titled",
+  "source": "TRCA board",
+  "url": "https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=10874"
+ },
+ "C093": {
+  "rule_guess": "agreement_or_mou",
+  "source": "TRCA board",
+  "url": "https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=6461"
+ },
+ "C094": {
+  "rule_guess": "minutes",
+  "source": "TRCA board",
+  "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=16775"
+ },
+ "C095": {
+  "rule_guess": "procurement_award",
+  "source": "City council report",
+  "url": "https://www.toronto.ca/legdocs/mmis/2021/ba/bgrd/backgroundfile-173820.pdf"
+ },
+ "C096": {
+  "rule_guess": "status_update",
+  "source": "TRCA board",
+  "url": "https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=7684"
+ },
+ "C097": {
+  "rule_guess": "attachment_or_map",
+  "source": "Toronto Zoo",
+  "url": "https://www.toronto.ca/legdocs/mmis/2023/zb/bgrd/backgroundfile-239782.pdf"
+ },
+ "C098": {
+  "rule_guess": "attachment_or_map",
+  "source": "City council report",
+  "url": "https://www.toronto.ca/legdocs/mmis/2017/ba/bgrd/backgroundfile-105210.pdf"
+ },
+ "C099": {
+  "rule_guess": "land_property",
+  "source": "TRCA board",
+  "url": "https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=5157"
+ },
+ "C100": {
+  "rule_guess": "meeting_package",
+  "source": "Exhibition Place",
+  "url": "https://www.toronto.ca/legdocs/mmis/2020/ep/bgrd/backgroundfile-157458.pdf"
+ },
+ "C101": {
+  "rule_guess": "permit_regulatory",
+  "source": "Toronto Zoo",
+  "url": "https://www.toronto.ca/legdocs/mmis/2020/zb/bgrd/backgroundfile-158817.pdf"
+ },
+ "C102": {
+  "rule_guess": "UNCLASSIFIED",
+  "source": "City council report",
+  "url": "https://www.toronto.ca/legdocs/mmis/2011/bd/bgrd/backgroundfile-37605.pdf"
+ },
+ "C103": {
+  "rule_guess": "UNCLASSIFIED",
+  "source": "Toronto Zoo",
+  "url": "https://www.toronto.ca/legdocs/mmis/2022/zb/bgrd/backgroundfile-223792.pdf"
+ },
+ "C104": {
+  "rule_guess": "empty_or_fragment",
+  "source": "City council report",
+  "url": "https://www.toronto.ca/legdocs/mmis/2019/ba/bgrd/backgroundfile-136415.pdf"
+ },
+ "C105": {
+  "rule_guess": "status_update",
+  "source": "Exhibition Place",
+  "url": "https://www.toronto.ca/legdocs/mmis/2021/ep/bgrd/backgroundfile-165307.pdf"
+ },
+ "C106": {
+  "rule_guess": "status_update",
+  "source": "Toronto Zoo",
+  "url": "https://www.toronto.ca/legdocs/mmis/2021/zb/bgrd/backgroundfile-165224.pdf"
+ },
+ "C107": {
+  "rule_guess": "attachment_or_map",
+  "source": "TRCA board",
+  "url": "https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=6729"
+ },
+ "C108": {
+  "rule_guess": "UNCLASSIFIED",
+  "source": "TRCA board",
+  "url": "https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=14591"
+ },
+ "C109": {
+  "rule_guess": "other_titled",
+  "source": "Exhibition Place",
+  "url": "https://www.toronto.ca/legdocs/mmis/2024/ep/bgrd/backgroundfile-248276.pdf"
+ },
+ "C110": {
+  "rule_guess": "status_update",
+  "source": "Toronto Zoo",
+  "url": "https://www.toronto.ca/legdocs/mmis/2020/zb/bgrd/backgroundfile-145381.pdf"
+ },
+ "C111": {
+  "rule_guess": "agreement_or_mou",
+  "source": "Toronto Zoo",
+  "url": "https://www.toronto.ca/legdocs/mmis/2015/zb/bgrd/backgroundfile-83363.pdf"
+ },
+ "C112": {
+  "rule_guess": "governance_finance",
+  "source": "TRCA board",
+  "url": "https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=4573"
+ },
+ "C113": {
+  "rule_guess": "minutes",
+  "source": "Exhibition Place",
+  "url": "https://www.toronto.ca/legdocs/mmis/2024/ep/bgrd/backgroundfile-251251.pdf"
+ },
+ "C114": {
+  "rule_guess": "empty_or_fragment",
+  "source": "Toronto Zoo",
+  "url": "https://www.toronto.ca/legdocs/mmis/2018/zb/bgrd/backgroundfile-115555.pdf"
+ },
+ "C115": {
+  "rule_guess": "empty_or_fragment",
+  "source": "Exhibition Place",
+  "url": "https://www.toronto.ca/legdocs/mmis/2022/ep/bgrd/backgroundfile-229367.pdf"
+ },
+ "C116": {
+  "rule_guess": "land_property",
+  "source": "Exhibition Place",
+  "url": "https://www.toronto.ca/legdocs/mmis/2020/ep/bgrd/backgroundfile-148212.pdf"
+ },
+ "C117": {
+  "rule_guess": "minutes",
+  "source": "Exhibition Place",
+  "url": "https://www.toronto.ca/legdocs/mmis/2023/ep/bgrd/backgroundfile-236870.pdf"
+ },
+ "C118": {
+  "rule_guess": "empty_or_fragment",
+  "source": "TRCA board",
+  "url": "https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=7275"
+ },
+ "C119": {
+  "rule_guess": "UNCLASSIFIED",
+  "source": "TRCA board",
+  "url": "https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=5616"
+ },
+ "C120": {
+  "rule_guess": "attachment_or_map",
+  "source": "Toronto Zoo",
+  "url": "https://www.toronto.ca/legdocs/mmis/2022/zb/bgrd/backgroundfile-223796.pdf"
+ },
+ "C121": {
+  "rule_guess": "empty_or_fragment",
+  "source": "Toronto Zoo",
+  "url": "https://www.toronto.ca/legdocs/mmis/2023/zb/bgrd/backgroundfile-235802.pdf"
+ },
+ "C122": {
+  "rule_guess": "procurement_award",
+  "source": "City council report",
+  "url": "https://www.toronto.ca/legdocs/mmis/2020/ba/bgrd/backgroundfile-156560.pdf"
+ },
+ "C123": {
+  "rule_guess": "meeting_package",
+  "source": "TRCA board",
+  "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=6095"
+ },
+ "C124": {
+  "rule_guess": "meeting_package",
+  "source": "Exhibition Place",
+  "url": "https://www.toronto.ca/legdocs/mmis/2026/ep/bgrd/backgroundfile-287699.pdf"
+ },
+ "C125": {
+  "rule_guess": "UNCLASSIFIED",
+  "source": "Award Summary Form",
+  "url": "https://secure.toronto.ca/c3api_upload/retrieve/pmmd_solicitations/H-Yzcj5WyvwXjKOcfhNj9Q"
+ }
+}
