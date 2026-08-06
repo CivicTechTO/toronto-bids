@@ -4,7 +4,12 @@ import json
 
 import pytest
 
-from toronto_bids.extraction import CORPORA, extract_corpus, load_classification_labels
+from toronto_bids.extraction import (
+    CORPORA,
+    check_declared_counts,
+    extract_corpus,
+    load_classification_labels,
+)
 
 
 @pytest.fixture
@@ -372,3 +377,102 @@ def test_validate_not_extracted_is_reported(conn, tmp_path):
 
     result = validate_against_ground_truth(conn, gt_path)
     assert result["documents"][0]["status"] == "not_extracted"
+
+
+# ── declared-count invariant ──
+
+
+def test_check_declared_counts_shortfall():
+    extraction = {
+        "contracts": [
+            {
+                "reference": "RFT 123",
+                "declared_submissions": 5,
+                "bids": [
+                    {"supplier_name": "A", "amount_raw": "$1"},
+                    {"supplier_name": "B", "amount_raw": "$2"},
+                    {"supplier_name": "C", "amount_raw": "$3"},
+                ],
+                "awards": [],
+            }
+        ]
+    }
+    flags = check_declared_counts(extraction)
+    assert len(flags) == 1
+    assert flags[0]["declared"] == 5
+    assert flags[0]["actual"] == 3
+    assert flags[0]["delta"] == -2
+
+
+def test_check_declared_counts_overshoot_is_kept():
+    extraction = {
+        "contracts": [
+            {
+                "reference": "RFT 456",
+                "declared_submissions": 2,
+                "declared_compliant": 2,
+                "bids": [
+                    {"supplier_name": "A", "amount_raw": "$1", "status": "compliant"},
+                    {"supplier_name": "B", "amount_raw": "$2", "status": "compliant"},
+                    {
+                        "supplier_name": "C",
+                        "amount_raw": "$0",
+                        "status": "non_compliant",
+                    },
+                ],
+                "awards": [],
+            }
+        ]
+    }
+    flags = check_declared_counts(extraction)
+    assert len(flags) == 0
+
+
+def test_check_declared_counts_no_declared_count():
+    extraction = {
+        "contracts": [
+            {
+                "reference": "RFT 789",
+                "declared_submissions": None,
+                "bids": [{"supplier_name": "A", "amount_raw": "$1"}],
+                "awards": [],
+            }
+        ]
+    }
+    flags = check_declared_counts(extraction)
+    assert len(flags) == 0
+
+
+def test_extract_corpus_stores_flags_on_shortfall(conn):
+    from toronto_bids.extract import EXTRACTOR_VERSION
+    from toronto_bids.store.db import get_extraction
+
+    conn.execute(
+        "INSERT INTO background_pdf (url, kind, sha256, text) "
+        "VALUES ('https://example.com/flagged.pdf', 'agency_board', 'ggg', 'text')"
+    )
+    conn.commit()
+
+    result = {
+        "contracts": [
+            {
+                "reference": "RFT 999",
+                "declared_submissions": 5,
+                "bids": [
+                    {"supplier_name": "A", "amount_raw": "$1"},
+                    {"supplier_name": "B", "amount_raw": "$2"},
+                ],
+                "awards": [],
+            }
+        ]
+    }
+    client = FakeClient(result)
+    stats = extract_corpus(
+        conn, "trca", client=client, labels={}, where="kind='agency_board'"
+    )
+    assert stats["count_flags"] == 1
+
+    cached = json.loads(get_extraction(conn, "ggg", EXTRACTOR_VERSION))
+    assert len(cached["_flags"]) == 1
+    assert cached["_flags"][0]["declared"] == 5
+    assert cached["_flags"][0]["actual"] == 2

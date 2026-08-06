@@ -59,6 +59,7 @@ def extract_corpus(
         "cached": 0,
         "extracted": 0,
         "errors": 0,
+        "count_flags": 0,
     }
 
     extracted_count = 0
@@ -82,6 +83,15 @@ def extract_corpus(
 
         try:
             result = client.extract(text)
+            flags = check_declared_counts(result)
+            if flags:
+                result["_flags"] = flags
+                stats["count_flags"] += len(flags)
+                for f in flags:
+                    log(
+                        f"  FLAG {url}: {f['reference']} declared {f['declared']}, "
+                        f"got {f['actual']}"
+                    )
             mark_extracted(
                 conn, sha256, EXTRACTOR_VERSION, result_json=json.dumps(result)
             )
@@ -93,6 +103,31 @@ def extract_corpus(
             log(f"  FAILED {url}: {exc}")
 
     return stats
+
+
+def check_declared_counts(extraction: dict) -> list[dict]:
+    """Compare declared_submissions against actual bid count per contract.
+
+    Returns a list of flags for contracts where the bid count falls SHORT
+    of the declared count. Overshoots are kept — the declaration sometimes
+    covers only compliant bids while the table lists everyone.
+    """
+    flags = []
+    for contract in extraction.get("contracts", []):
+        declared = contract.get("declared_submissions")
+        if declared is None:
+            continue
+        actual = len(contract.get("bids", []))
+        if actual < declared:
+            flags.append(
+                {
+                    "reference": contract.get("reference", ""),
+                    "declared": declared,
+                    "actual": actual,
+                    "delta": actual - declared,
+                }
+            )
+    return flags
 
 
 def _normalize_name(name: str) -> str:
@@ -154,23 +189,25 @@ def validate_against_ground_truth(conn, ground_truth_path) -> dict:
         recall = tp / len(gt_set) if gt_set else 1.0
         precision = tp / (tp + fp) if (tp + fp) else 1.0
 
-        results.append(
-            {
-                "id": doc["id"],
-                "url": url,
-                "status": "compared",
-                "gt_count": len(gt_set),
-                "extracted_count": len(extracted_set),
-                "tp": tp,
-                "fn": fn,
-                "fp": fp,
-                "recall": recall,
-                "precision": precision,
-                "missed": [
-                    {"supplier": s, "contract": c} for s, c in (gt_set - extracted_set)
-                ],
-            }
-        )
+        doc_result = {
+            "id": doc["id"],
+            "url": url,
+            "status": "compared",
+            "gt_count": len(gt_set),
+            "extracted_count": len(extracted_set),
+            "tp": tp,
+            "fn": fn,
+            "fp": fp,
+            "recall": recall,
+            "precision": precision,
+            "missed": [
+                {"supplier": s, "contract": c} for s, c in (gt_set - extracted_set)
+            ],
+        }
+        flags = extraction.get("_flags", [])
+        if flags:
+            doc_result["count_flags"] = flags
+        results.append(doc_result)
 
     compared = [r for r in results if r["status"] == "compared"]
     total_tp = sum(r["tp"] for r in compared)

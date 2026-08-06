@@ -1382,10 +1382,15 @@ def _cmd_extract_validate(args) -> int:
                 print(f"\n  {doc['url']}: not in database")
             elif doc["status"] == "not_extracted":
                 print(f"\n  {doc['url']}: not extracted yet")
-            elif doc.get("missed"):
+            elif doc.get("missed") or doc.get("count_flags"):
                 print(f"\n  {doc['url']}: recall {doc['recall']:.0%}")
-                for m in doc["missed"]:
+                for m in doc.get("missed", []):
                     print(f"    MISSED: {m['supplier']}")
+                for f in doc.get("count_flags", []):
+                    print(
+                        f"    FLAG: {f['reference']} declared {f['declared']}, "
+                        f"got {f['actual']}"
+                    )
         return 0
     finally:
         conn.close()
