@@ -372,3 +372,17 @@ free-form class swallowed the sentence past the counterparty's name up to the ne
 - Ariba detail calls return HTTP 500 ~40% of the time; runs are idempotent and later runs fill the gaps. Expected, not a bug.
 - CKAN resource UUIDs rotate on refresh — they are resolved at runtime via `package_show`, never hardcoded.
 - The design spec (`docs/superpowers/specs/2026-07-14-toronto-bids-scraper-rewrite-design.md`) records dead-end data sources (retired CKAN datasets, Ariba HTML shell, Ariba public attachment API) — don't rebuild against them.
+
+## Agent skills
+
+### Issue tracker
+
+GitHub issues on `CivicTechTO/toronto-bids`. **`gh issue create` is blocked here — create issues via `gh api repos/CivicTechTO/toronto-bids/issues`, and confirm before any outward write on this public repo.** See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+The five canonical roles, label string equal to role name (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`); only `wontfix` exists on the repo so far. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context — root `CONTEXT.md` + `docs/adr/`, both created lazily; until then this file, `docs/superpowers/specs/`, and the numbered issues carry the decisions. See `docs/agents/domain.md`.
