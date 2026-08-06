@@ -460,6 +460,7 @@ CREATE INDEX IF NOT EXISTS idx_agency_bid_buyer ON agency_bid (buyer_id, native_
 CREATE TABLE IF NOT EXISTS extraction_cache (
     sha256            TEXT NOT NULL,
     extractor_version TEXT NOT NULL,
+    result_json       TEXT,
     extracted_at      TEXT NOT NULL DEFAULT (datetime('now')),
     PRIMARY KEY (sha256, extractor_version)
 );

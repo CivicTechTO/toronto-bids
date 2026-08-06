@@ -401,12 +401,25 @@ def is_extracted(conn, sha256: str, extractor_version: str) -> bool:
     return row is not None
 
 
-def mark_extracted(conn, sha256: str, extractor_version: str) -> None:
+def mark_extracted(
+    conn, sha256: str, extractor_version: str, result_json: str | None = None
+) -> None:
     conn.execute(
-        "INSERT OR IGNORE INTO extraction_cache (sha256, extractor_version) VALUES (?, ?)",
-        (sha256, extractor_version),
+        "INSERT INTO extraction_cache (sha256, extractor_version, result_json) "
+        "VALUES (?, ?, ?) ON CONFLICT(sha256, extractor_version) DO UPDATE "
+        "SET result_json=excluded.result_json, extracted_at=datetime('now')",
+        (sha256, extractor_version, result_json),
     )
     conn.commit()
+
+
+def get_extraction(conn, sha256: str, extractor_version: str) -> str | None:
+    row = conn.execute(
+        "SELECT result_json FROM extraction_cache "
+        "WHERE sha256=? AND extractor_version=?",
+        (sha256, extractor_version),
+    ).fetchone()
+    return row["result_json"] if row else None
 
 
 def clear_extraction_cache(conn, extractor_version: str) -> int:

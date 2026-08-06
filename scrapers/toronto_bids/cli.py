@@ -177,15 +177,36 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_extract = sub.add_parser(
         "extract",
-        help="Run LLM-based bid extraction on a document (#205). Dry-run only for now.",
+        help="Run LLM-based bid extraction (#205). Single-doc or batch by corpus.",
     )
     p_extract.add_argument(
         "--dry-run",
         action="store_true",
-        required=True,
         help="Extract and print the result without storing anything",
     )
-    p_extract.add_argument("sha256", help="sha256 of a background_pdf to extract from")
+    p_extract.add_argument(
+        "--corpus",
+        choices=["trca", "ep", "zoo", "award_summary", "committee", "composite"],
+        help="Extract all qualifying documents in a corpus",
+    )
+    p_extract.add_argument(
+        "--limit",
+        type=int,
+        help="Max documents to extract (for testing)",
+    )
+    p_extract.add_argument(
+        "--labels",
+        help="Path to machine-labels JSON for classification gate",
+    )
+    p_extract.add_argument(
+        "--validate",
+        help="Path to ground-truth JSON; compare cached extractions against it",
+    )
+    p_extract.add_argument(
+        "sha256",
+        nargs="?",
+        help="sha256 of a single background_pdf to extract (requires --dry-run)",
+    )
 
     p_committee = sub.add_parser(
         "enrich-committee-awards",
@@ -1265,10 +1286,23 @@ def _cmd_enrich_committee_awards(args) -> int:
 
 
 def _cmd_extract(args) -> int:
-    """Run LLM extraction on a single document, printing the result (#205)."""
+    """Run LLM extraction — single document or batch by corpus (#205)."""
     import json
 
     from toronto_bids.extract import EXTRACTOR_VERSION, ExtractionClient
+
+    if args.validate:
+        return _cmd_extract_validate(args)
+
+    if args.corpus:
+        return _cmd_extract_corpus(args)
+
+    if not args.sha256:
+        print("Provide either --corpus or a sha256 argument", file=sys.stderr)
+        return 1
+    if not args.dry_run:
+        print("Single-document extraction requires --dry-run", file=sys.stderr)
+        return 1
 
     conn = _open_db()
     try:
@@ -1287,6 +1321,71 @@ def _cmd_extract(args) -> int:
         client = ExtractionClient()
         result = client.extract(row["text"])
         print(json.dumps(result, indent=2))
+        return 0
+    finally:
+        conn.close()
+
+
+def _cmd_extract_corpus(args) -> int:
+    """Batch extraction across a corpus (#209)."""
+    from toronto_bids.config import CLASSIFICATION_LABELS_PATH
+    from toronto_bids.extract import EXTRACTOR_VERSION, ExtractionClient
+    from toronto_bids.extraction import extract_corpus, load_classification_labels
+
+    labels = {}
+    if args.labels:
+        labels = load_classification_labels(args.labels)
+        print(f"Classification labels: {len(labels)} documents")
+    elif CLASSIFICATION_LABELS_PATH.exists():
+        labels = load_classification_labels(CLASSIFICATION_LABELS_PATH)
+        print(
+            f"Classification labels: {len(labels)} documents (from {CLASSIFICATION_LABELS_PATH})"
+        )
+
+    print(f"Extractor version: {EXTRACTOR_VERSION}")
+    print(f"Corpus: {args.corpus}")
+
+    conn = _open_db()
+    try:
+        client = ExtractionClient()
+        stats = extract_corpus(
+            conn,
+            args.corpus,
+            client=client,
+            labels=labels,
+            limit=args.limit,
+            log=print,
+        )
+        print("\nResults:")
+        for key, val in stats.items():
+            print(f"  {key}: {val}")
+        return 0
+    finally:
+        conn.close()
+
+
+def _cmd_extract_validate(args) -> int:
+    """Validate cached extractions against ground-truth labels (#209)."""
+    from toronto_bids.extraction import validate_against_ground_truth
+
+    conn = _open_db()
+    try:
+        result = validate_against_ground_truth(conn, args.validate)
+        agg = result["aggregate"]
+        print(f"Compared: {agg['compared']} documents")
+        print(f"Ground-truth entries: {agg['total_gt']}")
+        print(f"  TP: {agg['tp']}  FN: {agg['fn']}  FP: {agg['fp']}")
+        print(f"  Recall:    {agg['recall']:.1%}")
+        print(f"  Precision: {agg['precision']:.1%}")
+        for doc in result["documents"]:
+            if doc["status"] == "not_in_db":
+                print(f"\n  {doc['url']}: not in database")
+            elif doc["status"] == "not_extracted":
+                print(f"\n  {doc['url']}: not extracted yet")
+            elif doc.get("missed"):
+                print(f"\n  {doc['url']}: recall {doc['recall']:.0%}")
+                for m in doc["missed"]:
+                    print(f"    MISSED: {m['supplier']}")
         return 0
     finally:
         conn.close()

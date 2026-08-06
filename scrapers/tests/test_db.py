@@ -444,6 +444,23 @@ def test_mark_extracted_is_idempotent(conn):
     assert rows == 1
 
 
+def test_mark_extracted_stores_result_json(conn):
+    db.mark_extracted(conn, "abc123", "v1", result_json='{"contracts": []}')
+    assert db.get_extraction(conn, "abc123", "v1") == '{"contracts": []}'
+
+
+def test_get_extraction_returns_none_when_not_cached(conn):
+    assert db.get_extraction(conn, "abc123", "v1") is None
+
+
+def test_mark_extracted_updates_result_on_re_mark(conn):
+    db.mark_extracted(conn, "abc123", "v1", result_json='{"contracts": []}')
+    db.mark_extracted(conn, "abc123", "v1", result_json='{"contracts": [{"ref": "X"}]}')
+    assert db.get_extraction(conn, "abc123", "v1") == '{"contracts": [{"ref": "X"}]}'
+    rows = conn.execute("SELECT COUNT(*) FROM extraction_cache").fetchone()[0]
+    assert rows == 1
+
+
 def test_clear_extraction_cache(conn):
     db.mark_extracted(conn, "abc123", "v1")
     db.mark_extracted(conn, "def456", "v1")
