@@ -1,0 +1,164 @@
+{
+  "extractor_version": "v1-b63aa8c835ae",
+  "model": "openai/gpt-5.6-luna",
+  "api_cost_usd": 1.26,
+  "corpora": {
+    "award_summary": {
+      "corpus": "award_summary",
+      "extracted_docs": 259,
+      "docs_with_content": 259,
+      "count_flags": 2,
+      "llm": {
+        "contracts": 270,
+        "bids": 1216,
+        "awards": 308,
+        "unique_names": 1236
+      },
+      "incumbent": {
+        "total_names": 1176,
+        "docs_joinable": 240
+      },
+      "comparison": {
+        "shared_docs": 240,
+        "tp": 1045,
+        "fn": 131,
+        "fp": 112,
+        "recall": 0.8886054421768708,
+        "precision": 0.9031979256698358
+      }
+    },
+    "committee": {
+      "corpus": "committee",
+      "extracted_docs": 8,
+      "docs_with_content": 8,
+      "count_flags": 0,
+      "llm": {
+        "contracts": 9,
+        "bids": 36,
+        "awards": 15,
+        "unique_names": 40
+      },
+      "incumbent": {
+        "total_names": 3,
+        "docs_joinable": 2
+      },
+      "comparison": {
+        "shared_docs": 2,
+        "tp": 3,
+        "fn": 0,
+        "fp": 3,
+        "recall": 1.0,
+        "precision": 0.5
+      }
+    },
+    "composite": {
+      "corpus": "composite",
+      "extracted_docs": 438,
+      "docs_with_content": 429,
+      "count_flags": 1216,
+      "llm": {
+        "contracts": 1495,
+        "bids": 2300,
+        "awards": 1905,
+        "unique_names": 2465
+      },
+      "incumbent": {
+        "total_names": 0,
+        "docs_joinable": 0
+      },
+      "comparison": {
+        "shared_docs": 0,
+        "tp": 0,
+        "fn": 0,
+        "fp": 0,
+        "recall": null,
+        "precision": null
+      }
+    },
+    "ep": {
+      "corpus": "ep",
+      "extracted_docs": 178,
+      "docs_with_content": 110,
+      "count_flags": 7,
+      "llm": {
+        "contracts": 118,
+        "bids": 256,
+        "awards": 122,
+        "unique_names": 304
+      },
+      "incumbent": {
+        "total_names": 148,
+        "docs_joinable": 57
+      },
+      "comparison": {
+        "shared_docs": 52,
+        "tp": 141,
+        "fn": 2,
+        "fp": 15,
+        "recall": 0.986013986013986,
+        "precision": 0.9038461538461539
+      }
+    },
+    "trca": {
+      "corpus": "trca",
+      "extracted_docs": 694,
+      "docs_with_content": 387,
+      "count_flags": 231,
+      "llm": {
+        "contracts": 2057,
+        "bids": 1809,
+        "awards": 2941,
+        "unique_names": 3604
+      },
+      "incumbent": {
+        "total_names": 613,
+        "docs_joinable": 208
+      },
+      "comparison": {
+        "shared_docs": 206,
+        "tp": 449,
+        "fn": 155,
+        "fp": 984,
+        "recall": 0.7433774834437086,
+        "precision": 0.31332868108862527
+      }
+    },
+    "zoo": {
+      "corpus": "zoo",
+      "extracted_docs": 145,
+      "docs_with_content": 83,
+      "count_flags": 16,
+      "llm": {
+        "contracts": 127,
+        "bids": 172,
+        "awards": 94,
+        "unique_names": 230
+      },
+      "incumbent": {
+        "total_names": 29,
+        "docs_joinable": 29
+      },
+      "comparison": {
+        "shared_docs": 27,
+        "tp": 26,
+        "fn": 1,
+        "fp": 40,
+        "recall": 0.9629629629629629,
+        "precision": 0.3939393939393939
+      }
+    }
+  },
+  "aggregate": {
+    "total_extracted": 1722,
+    "total_with_content": 1276,
+    "total_count_flags": 1472,
+    "total_llm_bids": 5789,
+    "total_llm_awards": 5385,
+    "total_llm_contracts": 4076,
+    "comparison_tp": 1664,
+    "comparison_fn": 289,
+    "comparison_fp": 1154,
+    "aggregate_recall": 0.8520225294418843,
+    "aggregate_precision": 0.5904897090134847
+  }
+}

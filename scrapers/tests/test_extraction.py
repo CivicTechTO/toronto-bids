@@ -1,0 +1,710 @@
+"""Tests for the extraction orchestrator — offline, fixture-based, no network."""
+
+import json
+
+import pytest
+
+from toronto_bids.extraction import (
+    CORPORA,
+    check_declared_counts,
+    extract_corpus,
+    load_classification_labels,
+)
+
+
+@pytest.fixture
+def labels_file(tmp_path):
+    data = {
+        "labels": [
+            {
+                "url": "https://example.com/procurement.pdf",
+                "contains_bid_or_award": True,
+            },
+            {
+                "url": "https://example.com/governance.pdf",
+                "contains_bid_or_award": False,
+            },
+        ]
+    }
+    path = tmp_path / "labels.json"
+    path.write_text(json.dumps(data))
+    return path
+
+
+class FakeClient:
+    def __init__(self, result=None):
+        self.calls = []
+        self.result = result or {"contracts": []}
+
+    def extract(self, text):
+        self.calls.append(text)
+        return self.result
+
+
+# ── classification gate ──
+
+
+def test_load_labels_builds_url_to_flag_dict(labels_file):
+    labels = load_classification_labels(labels_file)
+    assert labels["https://example.com/procurement.pdf"] is True
+    assert labels["https://example.com/governance.pdf"] is False
+
+
+def test_load_labels_returns_empty_dict_when_file_missing(tmp_path):
+    labels = load_classification_labels(tmp_path / "nonexistent.json")
+    assert labels == {}
+
+
+# ── corpus definitions ──
+
+
+def test_all_six_corpora_are_defined():
+    assert set(CORPORA.keys()) == {
+        "trca",
+        "ep",
+        "zoo",
+        "award_summary",
+        "committee",
+        "composite",
+    }
+
+
+def test_unknown_corpus_raises(conn):
+    client = FakeClient()
+    with pytest.raises(ValueError, match="Unknown corpus 'bogus'"):
+        extract_corpus(conn, "bogus", client=client, labels={})
+
+
+# ── orchestrator ──
+
+
+def test_extract_corpus_skips_false_classification(conn):
+    conn.execute(
+        "INSERT INTO background_pdf (url, kind, sha256, text) "
+        "VALUES ('https://example.com/governance.pdf', 'agency_board', 'aaa', 'some text')"
+    )
+    conn.commit()
+
+    labels = {"https://example.com/governance.pdf": False}
+    client = FakeClient()
+    stats = extract_corpus(
+        conn,
+        "trca",
+        client=client,
+        labels=labels,
+        where="kind='agency_board'",
+    )
+    assert client.calls == []
+    assert stats["skipped_classification"] == 1
+
+
+def test_extract_corpus_extracts_true_classification(conn):
+    conn.execute(
+        "INSERT INTO background_pdf (url, kind, sha256, text) "
+        "VALUES ('https://example.com/procurement.pdf', 'agency_board', 'bbb', 'contract text')"
+    )
+    conn.commit()
+
+    labels = {"https://example.com/procurement.pdf": True}
+    client = FakeClient(
+        {"contracts": [{"reference": "RFT 123", "bids": [], "awards": []}]}
+    )
+    stats = extract_corpus(
+        conn,
+        "trca",
+        client=client,
+        labels=labels,
+        where="kind='agency_board'",
+    )
+    assert len(client.calls) == 1
+    assert stats["extracted"] == 1
+
+
+def test_extract_corpus_extracts_unlabeled_docs(conn):
+    conn.execute(
+        "INSERT INTO background_pdf (url, kind, sha256, text) "
+        "VALUES ('https://example.com/unknown.pdf', 'agency_board', 'ccc', 'mystery text')"
+    )
+    conn.commit()
+
+    client = FakeClient()
+    extract_corpus(
+        conn,
+        "trca",
+        client=client,
+        labels={},
+        where="kind='agency_board'",
+    )
+    assert len(client.calls) == 1
+
+
+def test_extract_corpus_skips_cached_documents(conn):
+    from toronto_bids.extract import EXTRACTOR_VERSION
+    from toronto_bids.store.db import mark_extracted
+
+    conn.execute(
+        "INSERT INTO background_pdf (url, kind, sha256, text) "
+        "VALUES ('https://example.com/done.pdf', 'agency_board', 'ddd', 'already done')"
+    )
+    conn.commit()
+    mark_extracted(conn, "ddd", EXTRACTOR_VERSION, result_json='{"contracts": []}')
+
+    client = FakeClient()
+    stats = extract_corpus(
+        conn,
+        "trca",
+        client=client,
+        labels={},
+        where="kind='agency_board'",
+    )
+    assert client.calls == []
+    assert stats["cached"] == 1
+
+
+def test_extract_corpus_skips_documents_without_text(conn):
+    conn.execute(
+        "INSERT INTO background_pdf (url, kind, sha256, text) "
+        "VALUES ('https://example.com/empty.pdf', 'agency_board', 'eee', NULL)"
+    )
+    conn.commit()
+
+    client = FakeClient()
+    stats = extract_corpus(
+        conn,
+        "trca",
+        client=client,
+        labels={},
+        where="kind='agency_board'",
+    )
+    assert client.calls == []
+    assert stats["no_text"] == 1
+
+
+def test_extract_corpus_respects_limit(conn):
+    for i in range(5):
+        conn.execute(
+            "INSERT INTO background_pdf (url, kind, sha256, text) "
+            f"VALUES ('https://example.com/{i}.pdf', 'agency_board', 'sha{i}', 'text {i}')"
+        )
+    conn.commit()
+
+    client = FakeClient()
+    stats = extract_corpus(
+        conn,
+        "trca",
+        client=client,
+        labels={},
+        where="kind='agency_board'",
+        limit=2,
+    )
+    assert len(client.calls) == 2
+    assert stats["extracted"] == 2
+
+
+def test_extract_corpus_stores_result_in_cache(conn):
+    from toronto_bids.extract import EXTRACTOR_VERSION
+    from toronto_bids.store.db import get_extraction
+
+    conn.execute(
+        "INSERT INTO background_pdf (url, kind, sha256, text) "
+        "VALUES ('https://example.com/new.pdf', 'agency_board', 'fff', 'new doc')"
+    )
+    conn.commit()
+
+    result = {"contracts": [{"reference": "RFT 999", "bids": [], "awards": []}]}
+    client = FakeClient(result)
+    extract_corpus(
+        conn,
+        "trca",
+        client=client,
+        labels={},
+        where="kind='agency_board'",
+    )
+
+    cached = get_extraction(conn, "fff", EXTRACTOR_VERSION)
+    assert cached is not None
+    assert json.loads(cached)["contracts"][0]["reference"] == "RFT 999"
+
+
+# ── ground-truth validation ──
+
+
+def _seed_gt_doc(conn, url, sha256, extraction_result):
+    """Insert a background_pdf row and cache an extraction result for it."""
+    from toronto_bids.extract import EXTRACTOR_VERSION
+    from toronto_bids.store.db import mark_extracted
+
+    conn.execute(
+        "INSERT INTO background_pdf (url, kind, sha256, text) "
+        "VALUES (?, 'agency_board', ?, 'text')",
+        (url, sha256),
+    )
+    conn.commit()
+    mark_extracted(
+        conn, sha256, EXTRACTOR_VERSION, result_json=json.dumps(extraction_result)
+    )
+
+
+def test_validate_perfect_recall(conn, tmp_path):
+    from toronto_bids.extraction import validate_against_ground_truth
+
+    gt = {
+        "labeller": "test",
+        "documents": [
+            {
+                "id": "D01",
+                "url": "https://example.com/d01.pdf",
+                "none_present": False,
+                "completed": True,
+                "entries": [
+                    {
+                        "company": "Acme Ltd.",
+                        "amount": "$100",
+                        "outcome": "won",
+                        "contract": "RFT 123",
+                    },
+                    {
+                        "company": "Beta Inc.",
+                        "amount": "$200",
+                        "outcome": "lost",
+                        "contract": "RFT 123",
+                    },
+                ],
+            }
+        ],
+    }
+    gt_path = tmp_path / "gt.json"
+    gt_path.write_text(json.dumps(gt))
+
+    extraction = {
+        "contracts": [
+            {
+                "reference": "RFT 123",
+                "bids": [
+                    {
+                        "supplier_name": "Beta Inc.",
+                        "amount_raw": "$200",
+                        "status": "compliant",
+                    },
+                ],
+                "awards": [
+                    {"supplier_name": "Acme Ltd.", "amount_raw": "$100"},
+                ],
+            }
+        ]
+    }
+    _seed_gt_doc(conn, "https://example.com/d01.pdf", "sha_d01", extraction)
+
+    result = validate_against_ground_truth(conn, gt_path)
+    assert result["aggregate"]["recall"] == 1.0
+    assert result["aggregate"]["precision"] == 1.0
+    assert result["aggregate"]["fn"] == 0
+
+
+def test_validate_missed_bid_lowers_recall(conn, tmp_path):
+    from toronto_bids.extraction import validate_against_ground_truth
+
+    gt = {
+        "labeller": "test",
+        "documents": [
+            {
+                "id": "D01",
+                "url": "https://example.com/d01.pdf",
+                "none_present": False,
+                "completed": True,
+                "entries": [
+                    {
+                        "company": "Acme Ltd.",
+                        "amount": "$100",
+                        "outcome": "won",
+                        "contract": "RFT 123",
+                    },
+                    {
+                        "company": "Beta Inc.",
+                        "amount": "$200",
+                        "outcome": "lost",
+                        "contract": "RFT 123",
+                    },
+                ],
+            }
+        ],
+    }
+    gt_path = tmp_path / "gt.json"
+    gt_path.write_text(json.dumps(gt))
+
+    extraction = {
+        "contracts": [
+            {
+                "reference": "RFT 123",
+                "awards": [{"supplier_name": "Acme Ltd.", "amount_raw": "$100"}],
+                "bids": [],
+            }
+        ]
+    }
+    _seed_gt_doc(conn, "https://example.com/d01.pdf", "sha_d01", extraction)
+
+    result = validate_against_ground_truth(conn, gt_path)
+    assert result["aggregate"]["recall"] == 0.5
+    assert result["aggregate"]["fn"] == 1
+    assert result["documents"][0]["missed"][0]["supplier"] == "beta inc."
+
+
+def test_validate_not_extracted_is_reported(conn, tmp_path):
+    from toronto_bids.extraction import validate_against_ground_truth
+
+    gt = {
+        "labeller": "test",
+        "documents": [
+            {
+                "id": "D01",
+                "url": "https://example.com/d01.pdf",
+                "none_present": False,
+                "completed": True,
+                "entries": [
+                    {"company": "X", "amount": "$1", "outcome": "won", "contract": "C1"}
+                ],
+            }
+        ],
+    }
+    gt_path = tmp_path / "gt.json"
+    gt_path.write_text(json.dumps(gt))
+
+    conn.execute(
+        "INSERT INTO background_pdf (url, kind, sha256, text) "
+        "VALUES ('https://example.com/d01.pdf', 'agency_board', 'sha_d01', 'text')"
+    )
+    conn.commit()
+
+    result = validate_against_ground_truth(conn, gt_path)
+    assert result["documents"][0]["status"] == "not_extracted"
+
+
+# ── declared-count invariant ──
+
+
+def test_check_declared_counts_shortfall():
+    extraction = {
+        "contracts": [
+            {
+                "reference": "RFT 123",
+                "declared_submissions": 5,
+                "bids": [
+                    {"supplier_name": "A", "amount_raw": "$1"},
+                    {"supplier_name": "B", "amount_raw": "$2"},
+                    {"supplier_name": "C", "amount_raw": "$3"},
+                ],
+                "awards": [],
+            }
+        ]
+    }
+    flags = check_declared_counts(extraction)
+    assert len(flags) == 1
+    assert flags[0]["declared"] == 5
+    assert flags[0]["actual"] == 3
+    assert flags[0]["delta"] == -2
+
+
+def test_check_declared_counts_overshoot_is_kept():
+    extraction = {
+        "contracts": [
+            {
+                "reference": "RFT 456",
+                "declared_submissions": 2,
+                "declared_compliant": 2,
+                "bids": [
+                    {"supplier_name": "A", "amount_raw": "$1", "status": "compliant"},
+                    {"supplier_name": "B", "amount_raw": "$2", "status": "compliant"},
+                    {
+                        "supplier_name": "C",
+                        "amount_raw": "$0",
+                        "status": "non_compliant",
+                    },
+                ],
+                "awards": [],
+            }
+        ]
+    }
+    flags = check_declared_counts(extraction)
+    assert len(flags) == 0
+
+
+def test_check_declared_counts_no_declared_count():
+    extraction = {
+        "contracts": [
+            {
+                "reference": "RFT 789",
+                "declared_submissions": None,
+                "bids": [{"supplier_name": "A", "amount_raw": "$1"}],
+                "awards": [],
+            }
+        ]
+    }
+    flags = check_declared_counts(extraction)
+    assert len(flags) == 0
+
+
+def test_extract_corpus_stores_flags_on_shortfall(conn):
+    from toronto_bids.extract import EXTRACTOR_VERSION
+    from toronto_bids.store.db import get_extraction
+
+    conn.execute(
+        "INSERT INTO background_pdf (url, kind, sha256, text) "
+        "VALUES ('https://example.com/flagged.pdf', 'agency_board', 'ggg', 'text')"
+    )
+    conn.commit()
+
+    result = {
+        "contracts": [
+            {
+                "reference": "RFT 999",
+                "declared_submissions": 5,
+                "bids": [
+                    {"supplier_name": "A", "amount_raw": "$1"},
+                    {"supplier_name": "B", "amount_raw": "$2"},
+                ],
+                "awards": [],
+            }
+        ]
+    }
+    client = FakeClient(result)
+    stats = extract_corpus(
+        conn, "trca", client=client, labels={}, where="kind='agency_board'"
+    )
+    assert stats["count_flags"] == 1
+
+    cached = json.loads(get_extraction(conn, "ggg", EXTRACTOR_VERSION))
+    assert len(cached["_flags"]) == 1
+    assert cached["_flags"][0]["declared"] == 5
+    assert cached["_flags"][0]["actual"] == 2
+
+
+# ── document splitting ──
+
+
+def test_split_document_small_passes_through():
+    from toronto_bids.extraction import split_document
+
+    chunks = split_document("short text", max_chars=1000)
+    assert chunks == ["short text"]
+
+
+def test_split_document_splits_on_double_newline():
+    from toronto_bids.extraction import split_document
+
+    sections = ["Section " + str(i) + "\n" + "x" * 200 for i in range(10)]
+    text = "\n\n".join(sections)
+    chunks = split_document(text, max_chars=500)
+    assert len(chunks) > 1
+    for chunk in chunks:
+        assert len(chunk) <= 500
+
+
+def test_extract_corpus_splits_large_doc_and_merges(conn):
+    from toronto_bids.extract import EXTRACTOR_VERSION
+    from toronto_bids.store.db import get_extraction
+
+    sections = ["x" * 200 for _ in range(10)]
+    big_text = "\n\n".join(sections)
+
+    conn.execute(
+        "INSERT INTO background_pdf (url, kind, sha256, text) "
+        "VALUES ('https://example.com/big.pdf', 'agency_board', 'hhh', ?)",
+        (big_text,),
+    )
+    conn.commit()
+
+    call_count = [0]
+    results_per_call = [
+        {
+            "contracts": [
+                {
+                    "reference": "RFT A",
+                    "bids": [{"supplier_name": "X", "amount_raw": "$1"}],
+                    "awards": [],
+                }
+            ]
+        },
+        {
+            "contracts": [
+                {
+                    "reference": "RFT B",
+                    "bids": [{"supplier_name": "Y", "amount_raw": "$2"}],
+                    "awards": [],
+                }
+            ]
+        },
+        {"contracts": []},
+    ]
+
+    class ChunkedClient:
+        def extract(self, text):
+            idx = min(call_count[0], len(results_per_call) - 1)
+            call_count[0] += 1
+            return results_per_call[idx]
+
+    stats = extract_corpus(
+        conn,
+        "trca",
+        client=ChunkedClient(),
+        labels={},
+        where="kind='agency_board'",
+        max_chars=500,
+    )
+    assert stats["split"] >= 1
+    assert call_count[0] > 1
+
+    cached = json.loads(get_extraction(conn, "hhh", EXTRACTOR_VERSION))
+    refs = [c["reference"] for c in cached["contracts"]]
+    assert "RFT A" in refs
+    assert "RFT B" in refs
+
+
+# ── contract dedup ──
+
+
+def test_dedup_contracts_merges_on_reference():
+    from toronto_bids.extraction import dedup_contracts
+
+    contracts = [
+        {"reference": "RFT 1", "bids": [{"supplier_name": "A"}], "awards": []},
+        {
+            "reference": "RFT 1",
+            "bids": [{"supplier_name": "A"}, {"supplier_name": "B"}],
+            "awards": [],
+        },
+        {"reference": "RFT 2", "bids": [{"supplier_name": "C"}], "awards": []},
+    ]
+    result = dedup_contracts(contracts)
+    assert len(result) == 2
+    rft1 = next(c for c in result if c["reference"] == "RFT 1")
+    assert len(rft1["bids"]) == 2
+
+
+# ── backfill from extraction cache ──
+
+
+def test_backfill_agency_bids_from_extraction(conn):
+    """Backfill maps LLM extraction → agency_bid/agency_award rows."""
+    from toronto_bids.extraction import backfill_from_extraction
+
+    # Set up a buyer
+    conn.execute("INSERT INTO buyer (id, slug, name) VALUES (2, 'trca', 'TRCA')")
+    # Set up a background_pdf with a cached extraction
+    conn.execute(
+        "INSERT INTO background_pdf (url, kind, sha256, text) "
+        "VALUES ('https://pub-trca.escribemeetings.com/report.pdf', 'agency_board', 'aaa', 'text')"
+    )
+    conn.commit()
+
+    extraction = {
+        "contracts": [
+            {
+                "reference": "10037330",
+                "bids": [
+                    {"supplier_name": "Acme Ltd.", "amount_raw": "$100.00"},
+                    {"supplier_name": "Beta Inc.", "amount_raw": "$200.00"},
+                ],
+                "awards": [
+                    {"supplier_name": "Acme Ltd.", "amount_raw": "$100.00"},
+                ],
+            }
+        ]
+    }
+    from toronto_bids.extract import EXTRACTOR_VERSION
+    from toronto_bids.store.db import mark_extracted
+
+    mark_extracted(conn, "aaa", EXTRACTOR_VERSION, result_json=json.dumps(extraction))
+
+    result = backfill_from_extraction(conn, "trca")
+    assert result["bids_written"] == 2
+    assert result["awards_written"] == 1
+
+    bids = conn.execute(
+        "SELECT bidder_name_raw, bid_price FROM agency_bid WHERE source='trca_board'"
+    ).fetchall()
+    assert len(bids) == 2
+    names = {b["bidder_name_raw"] for b in bids}
+    assert names == {"Acme Ltd.", "Beta Inc."}
+
+    awards = conn.execute(
+        "SELECT supplier_name_raw, award_amount FROM agency_award WHERE source='trca_board'"
+    ).fetchall()
+    assert len(awards) == 1
+    assert awards[0]["supplier_name_raw"] == "Acme Ltd."
+
+
+def test_backfill_bid_table_from_extraction(conn):
+    """Backfill maps LLM extraction → bid rows for award_summary corpus."""
+    from toronto_bids.extraction import backfill_from_extraction
+
+    conn.execute(
+        "INSERT INTO background_pdf (url, kind, sha256, text, document_number) "
+        "VALUES ('https://example.com/form.pdf', 'award_summary', 'bbb', 'text', '5247418372')"
+    )
+    conn.commit()
+
+    extraction = {
+        "contracts": [
+            {
+                "reference": "RFT 999",
+                "bids": [
+                    {"supplier_name": "Alpha Co.", "amount_raw": "$500.00"},
+                    {"supplier_name": "Gamma Inc.", "amount_raw": "$600.00"},
+                ],
+                "awards": [],
+            }
+        ]
+    }
+    from toronto_bids.extract import EXTRACTOR_VERSION
+    from toronto_bids.store.db import mark_extracted
+
+    mark_extracted(conn, "bbb", EXTRACTOR_VERSION, result_json=json.dumps(extraction))
+
+    result = backfill_from_extraction(conn, "award_summary")
+    assert result["bids_written"] == 2
+
+    bids = conn.execute(
+        "SELECT bidder_name_raw, bid_price, document_number FROM bid "
+        "WHERE source='award_summary'"
+    ).fetchall()
+    assert len(bids) == 2
+    assert bids[0]["document_number"] == "5247418372"
+
+
+def test_backfill_composite_awards_from_extraction(conn):
+    """Backfill maps LLM extraction → composite_award rows."""
+    from toronto_bids.extraction import backfill_from_extraction
+
+    conn.execute(
+        "INSERT INTO background_pdf (url, kind, sha256, text, reference) "
+        "VALUES ('https://example.com/bgrd.pdf', 'bgrd', 'ccc', 'text', '2011.BD5.1')"
+    )
+    conn.commit()
+
+    extraction = {
+        "contracts": [
+            {
+                "reference": "3905-10-0097",
+                "awards": [
+                    {"supplier_name": "Builder Co.", "amount_raw": "$1,000,000.00"},
+                ],
+                "bids": [],
+            }
+        ]
+    }
+    from toronto_bids.extract import EXTRACTOR_VERSION
+    from toronto_bids.store.db import mark_extracted
+
+    mark_extracted(conn, "ccc", EXTRACTOR_VERSION, result_json=json.dumps(extraction))
+
+    result = backfill_from_extraction(conn, "composite")
+    assert result["awards_written"] == 1
+
+    awards = conn.execute(
+        "SELECT call_number, supplier_name_raw, award_value, reference "
+        "FROM composite_award"
+    ).fetchall()
+    assert len(awards) == 1
+    assert awards[0]["call_number"] == "3905-10-0097"
+    assert awards[0]["supplier_name_raw"] == "Builder Co."
+    assert awards[0]["reference"] == "2011.BD5.1"

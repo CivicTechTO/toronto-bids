@@ -6,16 +6,21 @@ from pathlib import Path
 # environment. Keyed to the package's own parent so it works regardless of the caller's cwd.
 try:
     from dotenv import load_dotenv
+
     load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 except ImportError:
     pass
 
 # Data directory: scrapers/files/ by default, overridable for tests / deployment.
-DATA_DIR = Path(os.environ.get("TB_DATA_DIR", Path(__file__).resolve().parent.parent / "files"))
+DATA_DIR = Path(
+    os.environ.get("TB_DATA_DIR", Path(__file__).resolve().parent.parent / "files")
+)
 DB_PATH = DATA_DIR / "bids.sqlite"
 
 CKAN_BASE = "https://ckan0.cf.opendata.inter.prod-toronto.ca/api/3/action/"
-ODATA_BASE = "https://secure.toronto.ca/c3api_data/v2/DataAccess.svc/pmmd_solicitations/"
+ODATA_BASE = (
+    "https://secure.toronto.ca/c3api_data/v2/DataAccess.svc/pmmd_solicitations/"
+)
 
 # CKAN dataset slugs (resource UUIDs are resolved at runtime, never hardcoded).
 CKAN_AWARDED_SLUG = "tobids-awarded-contracts"
@@ -36,8 +41,12 @@ HTTP_TIMEOUT = 60.0
 HTTP_RETRIES = 4
 
 # SAP Ariba Discovery public JSON APIs (no auth).
-ARIBA_SEARCH_URL = "https://service.ariba.com/Network/discoveryweb/search/public/v1/doIndexedSearch"
-ARIBA_DETAIL_URL = "https://service.ariba.com/Network/discoveryweb/api/public/v1/rfx/{rfx_id}"
+ARIBA_SEARCH_URL = (
+    "https://service.ariba.com/Network/discoveryweb/search/public/v1/doIndexedSearch"
+)
+ARIBA_DETAIL_URL = (
+    "https://service.ariba.com/Network/discoveryweb/api/public/v1/rfx/{rfx_id}"
+)
 ARIBA_SEARCH_PARAMS = {"siteName": "Quote"}
 ARIBA_SEARCH_BODY = {
     "pageSize": 1000,
@@ -90,8 +99,10 @@ ARIBA_LOGIN_URL = "https://service.ariba.com/Supplier.aw/109590048/aw?awh=r&awss
 # proceeded and died 30s later inside Playwright with no hint why the fill failed (#184). A
 # placeholder reads as unset here instead — the one place both `capture_attachments` and any
 # future caller check.
-_ARIBA_PLACEHOLDER = {"ARIBA_USERNAME": "your-ariba-supplier-username",
-                      "ARIBA_PASSWORD": "your-ariba-supplier-password"}
+_ARIBA_PLACEHOLDER = {
+    "ARIBA_USERNAME": "your-ariba-supplier-username",
+    "ARIBA_PASSWORD": "your-ariba-supplier-password",
+}
 
 
 def _real_env(name: str) -> str | None:
@@ -124,10 +135,18 @@ ZOO_REPORTS_DIR = DATA_DIR / "agencies" / "zoo"
 # precedent (#117). The Vendor ToS is clickwrap we have not accepted, and its copyright
 # notice is blanket; "settled" means the body said yes, not our reading of their terms.
 BIDS_TENDERS_PORTALS = [
-    {"slug": "toronto-zoo", "portal_url": "https://torontozoo.bidsandtenders.ca/",
-     "enabled": True, "permission": "docs/permissions/2026-07-18-toronto-zoo.md"},
-    {"slug": "trca", "portal_url": "https://trca.bidsandtenders.ca/",
-     "enabled": True, "permission": "docs/permissions/2026-07-18-trca.md"},
+    {
+        "slug": "toronto-zoo",
+        "portal_url": "https://torontozoo.bidsandtenders.ca/",
+        "enabled": True,
+        "permission": "docs/permissions/2026-07-18-toronto-zoo.md",
+    },
+    {
+        "slug": "trca",
+        "portal_url": "https://trca.bidsandtenders.ca/",
+        "enabled": True,
+        "permission": "docs/permissions/2026-07-18-trca.md",
+    },
 ]
 
 # Raw bids&tenders listing JSON captured by `--record`, one file per record — the seed for
@@ -138,3 +157,13 @@ PORTAL_RECORDINGS_DIR = DATA_DIR / "agencies" / "portal_recordings"
 # as the Zoo's ZB series — headed-browser discovery, plain-HTTP legdocs report PDFs.
 EP_AGENDAS_DIR = DATA_DIR / "agencies" / "ep" / "agendas"
 EP_REPORTS_DIR = DATA_DIR / "agencies" / "ep"
+
+# Machine-classification labels for the extraction gate (#209).
+_REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+CLASSIFICATION_LABELS_PATH = (
+    _REPO_ROOT
+    / "docs"
+    / "machine-labels"
+    / "document-classification"
+    / "labels-machine.json"
+)

@@ -1,12 +1,27 @@
-from toronto_bids.models import Award, NonCompetitive, Solicitation, AribaPosting, SuspendedFirm, Supplier, CouncilItem, BackgroundPdf
+from toronto_bids.models import (
+    AribaPosting,
+    Award,
+    BackgroundPdf,
+    CouncilItem,
+    NonCompetitive,
+    Solicitation,
+    Supplier,
+    SuspendedFirm,
+)
 from toronto_bids.store import db
 
 
 def test_init_creates_tables(conn):
-    names = {r[0] for r in conn.execute(
-        "SELECT name FROM sqlite_master WHERE type='table'"
-    )}
-    assert {"solicitation", "award", "noncompetitive", "ariba_posting", "sync_run"} <= names
+    names = {
+        r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")
+    }
+    assert {
+        "solicitation",
+        "award",
+        "noncompetitive",
+        "ariba_posting",
+        "sync_run",
+    } <= names
 
 
 def test_upsert_solicitation_is_idempotent(conn):
@@ -17,35 +32,68 @@ def test_upsert_solicitation_is_idempotent(conn):
 
 
 def test_overwrite_true_lets_new_nonnull_win(conn):
-    db.upsert_row(conn, Solicitation("3303123110", title=None, source="ckan"), overwrite=False)
-    db.upsert_row(conn, Solicitation("3303123110", title="Toner Cartridges", source="odata"), overwrite=True)
-    row = conn.execute("SELECT title FROM solicitation WHERE document_number='3303123110'").fetchone()
+    db.upsert_row(
+        conn, Solicitation("3303123110", title=None, source="ckan"), overwrite=False
+    )
+    db.upsert_row(
+        conn,
+        Solicitation("3303123110", title="Toner Cartridges", source="odata"),
+        overwrite=True,
+    )
+    row = conn.execute(
+        "SELECT title FROM solicitation WHERE document_number='3303123110'"
+    ).fetchone()
     assert row["title"] == "Toner Cartridges"
 
 
 def test_overwrite_false_only_fills_nulls(conn):
-    db.upsert_row(conn, Solicitation("3303123110", division="Purchasing", source="odata"), overwrite=True)
-    db.upsert_row(conn, Solicitation("3303123110", division="SOMETHING ELSE", source="ckan"), overwrite=False)
-    row = conn.execute("SELECT division FROM solicitation WHERE document_number='3303123110'").fetchone()
+    db.upsert_row(
+        conn,
+        Solicitation("3303123110", division="Purchasing", source="odata"),
+        overwrite=True,
+    )
+    db.upsert_row(
+        conn,
+        Solicitation("3303123110", division="SOMETHING ELSE", source="ckan"),
+        overwrite=False,
+    )
+    row = conn.execute(
+        "SELECT division FROM solicitation WHERE document_number='3303123110'"
+    ).fetchone()
     assert row["division"] == "Purchasing"  # backfill must not clobber existing value
 
 
 def test_overwrite_false_backfills_a_null(conn):
-    db.upsert_row(conn, Solicitation("3303123110", division=None, source="odata"), overwrite=True)
-    db.upsert_row(conn, Solicitation("3303123110", division="Toronto Water", source="ckan"), overwrite=False)
-    row = conn.execute("SELECT division FROM solicitation WHERE document_number='3303123110'").fetchone()
+    db.upsert_row(
+        conn, Solicitation("3303123110", division=None, source="odata"), overwrite=True
+    )
+    db.upsert_row(
+        conn,
+        Solicitation("3303123110", division="Toronto Water", source="ckan"),
+        overwrite=False,
+    )
+    row = conn.execute(
+        "SELECT division FROM solicitation WHERE document_number='3303123110'"
+    ).fetchone()
     assert row["division"] == "Toronto Water"
 
 
 def test_upsert_award_dedupes_on_docnum_supplier_source(conn):
-    a = Award("3303123110", supplier_name_raw="Computer Media Group", award_amount="26773.58", source="odata")
+    a = Award(
+        "3303123110",
+        supplier_name_raw="Computer Media Group",
+        award_amount="26773.58",
+        source="odata",
+    )
     db.upsert_row(conn, a, overwrite=True)
     db.upsert_row(conn, a, overwrite=True)
     assert db.counts(conn)["award"] == 1
 
 
 def test_upsert_noncompetitive_is_idempotent(conn):
-    nc = NonCompetitive("8614", supplier_name_raw="Accuworx Inc", reason="Emergency", source="odata")
+    nc = NonCompetitive(
+        "8614", supplier_name_raw="Accuworx Inc", reason="Emergency", source="odata"
+    )
     db.upsert_row(conn, nc, overwrite=True)
     db.upsert_row(conn, nc, overwrite=True)
     assert db.counts(conn)["noncompetitive"] == 1
@@ -54,13 +102,20 @@ def test_upsert_noncompetitive_is_idempotent(conn):
 def test_sync_run_lifecycle(conn):
     run_id = db.start_sync_run(conn, "odata")
     db.finish_sync_run(conn, run_id, status="ok", rows_fetched=10, rows_upserted=10)
-    row = conn.execute("SELECT status, rows_fetched FROM sync_run WHERE id=?", (run_id,)).fetchone()
+    row = conn.execute(
+        "SELECT status, rows_fetched FROM sync_run WHERE id=?", (run_id,)
+    ).fetchone()
     assert row["status"] == "ok" and row["rows_fetched"] == 10
 
 
 def test_upsert_ariba_posting_is_idempotent(conn):
-    p = AribaPosting(rfx_id="1110015885", document_number="5672751291",
-                     title="RFT Watermain", raw_json="{}", source="ariba_discovery")
+    p = AribaPosting(
+        rfx_id="1110015885",
+        document_number="5672751291",
+        title="RFT Watermain",
+        raw_json="{}",
+        source="ariba_discovery",
+    )
     db.upsert_row(conn, p, overwrite=True)
     db.upsert_row(conn, p, overwrite=True)
     assert db.counts(conn)["ariba_posting"] == 1
@@ -68,16 +123,32 @@ def test_upsert_ariba_posting_is_idempotent(conn):
 
 def test_ariba_posting_later_500_does_not_wipe_snapshot(conn):
     # Run 1: detail succeeded -> raw_json + document_number captured.
-    db.upsert_row(conn, AribaPosting(rfx_id="1110015885", document_number="5672751291",
-                                     raw_json="{\"x\":1}", source="ariba_discovery"), overwrite=True)
+    db.upsert_row(
+        conn,
+        AribaPosting(
+            rfx_id="1110015885",
+            document_number="5672751291",
+            raw_json='{"x":1}',
+            source="ariba_discovery",
+        ),
+        overwrite=True,
+    )
     # Run 2: detail 500'd -> those fields arrive as None. overwrite=True must NOT clobber them.
-    db.upsert_row(conn, AribaPosting(rfx_id="1110015885", document_number=None,
-                                     raw_json=None, source="ariba_discovery"), overwrite=True)
+    db.upsert_row(
+        conn,
+        AribaPosting(
+            rfx_id="1110015885",
+            document_number=None,
+            raw_json=None,
+            source="ariba_discovery",
+        ),
+        overwrite=True,
+    )
     row = conn.execute(
         "SELECT document_number, raw_json FROM ariba_posting WHERE rfx_id='1110015885'"
     ).fetchone()
     assert row["document_number"] == "5672751291"
-    assert row["raw_json"] == "{\"x\":1}"
+    assert row["raw_json"] == '{"x":1}'
 
 
 def test_counts_includes_ariba_posting(conn):
@@ -85,30 +156,60 @@ def test_counts_includes_ariba_posting(conn):
 
 
 def test_upsert_suspended_firm_is_idempotent(conn):
-    firm = SuspendedFirm(supplier_name_raw="Duron Ontario Ltd.", status="Suspended",
-                         start_date="March 27, 2025", council_authority="2025.GG19.17",
-                         source="suspended_firms")
+    firm = SuspendedFirm(
+        supplier_name_raw="Duron Ontario Ltd.",
+        status="Suspended",
+        start_date="March 27, 2025",
+        council_authority="2025.GG19.17",
+        source="suspended_firms",
+    )
     db.upsert_row(conn, firm, overwrite=True)
     db.upsert_row(conn, firm, overwrite=True)
     assert db.counts(conn)["suspended_firm"] == 1
 
 
 def test_upsert_suspended_firm_distinct_authority_is_new_row(conn):
-    db.upsert_row(conn, SuspendedFirm(supplier_name_raw="Acme", council_authority="A1",
-                                      source="suspended_firms"), overwrite=True)
-    db.upsert_row(conn, SuspendedFirm(supplier_name_raw="Acme", council_authority="A2",
-                                      source="suspended_firms"), overwrite=True)
+    db.upsert_row(
+        conn,
+        SuspendedFirm(
+            supplier_name_raw="Acme", council_authority="A1", source="suspended_firms"
+        ),
+        overwrite=True,
+    )
+    db.upsert_row(
+        conn,
+        SuspendedFirm(
+            supplier_name_raw="Acme", council_authority="A2", source="suspended_firms"
+        ),
+        overwrite=True,
+    )
     assert db.counts(conn)["suspended_firm"] == 2
 
 
 def test_suspended_firm_overwrite_updates_status(conn):
-    db.upsert_row(conn, SuspendedFirm(supplier_name_raw="Duron Ontario Ltd.", status="Suspended",
-                                      council_authority="2025.GG19.17", source="suspended_firms"),
-                  overwrite=True)
-    db.upsert_row(conn, SuspendedFirm(supplier_name_raw="Duron Ontario Ltd.", status="Reinstated",
-                                      council_authority="2025.GG19.17", source="suspended_firms"),
-                  overwrite=True)
-    row = conn.execute("SELECT status FROM suspended_firm WHERE supplier_name_raw='Duron Ontario Ltd.'").fetchone()
+    db.upsert_row(
+        conn,
+        SuspendedFirm(
+            supplier_name_raw="Duron Ontario Ltd.",
+            status="Suspended",
+            council_authority="2025.GG19.17",
+            source="suspended_firms",
+        ),
+        overwrite=True,
+    )
+    db.upsert_row(
+        conn,
+        SuspendedFirm(
+            supplier_name_raw="Duron Ontario Ltd.",
+            status="Reinstated",
+            council_authority="2025.GG19.17",
+            source="suspended_firms",
+        ),
+        overwrite=True,
+    )
+    row = conn.execute(
+        "SELECT status FROM suspended_firm WHERE supplier_name_raw='Duron Ontario Ltd.'"
+    ).fetchone()
     assert row["status"] == "Reinstated"
 
 
@@ -117,29 +218,54 @@ def test_counts_includes_suspended_firm(conn):
 
 
 def test_suspended_firm_null_authority_is_idempotent(conn):
-    firm = SuspendedFirm(supplier_name_raw="No Authority Co", council_authority=None,
-                         source="suspended_firms")
+    firm = SuspendedFirm(
+        supplier_name_raw="No Authority Co",
+        council_authority=None,
+        source="suspended_firms",
+    )
     db.upsert_row(conn, firm, overwrite=True)
     db.upsert_row(conn, firm, overwrite=True)
     assert db.counts(conn)["suspended_firm"] == 1
     # stored as '' (not NULL) so the UNIQUE key dedupes
-    row = conn.execute("SELECT council_authority FROM suspended_firm WHERE supplier_name_raw='No Authority Co'").fetchone()
+    row = conn.execute(
+        "SELECT council_authority FROM suspended_firm WHERE supplier_name_raw='No Authority Co'"
+    ).fetchone()
     assert row["council_authority"] == ""
 
 
 def test_upsert_supplier_is_idempotent(conn):
-    s = Supplier(supplier_key="compugen inc", display_name="Compugen Inc.", variants='["Compugen Inc."]')
+    s = Supplier(
+        supplier_key="compugen inc",
+        display_name="Compugen Inc.",
+        variants='["Compugen Inc."]',
+    )
     db.upsert_row(conn, s, overwrite=True)
     db.upsert_row(conn, s, overwrite=True)
     assert db.counts(conn)["supplier"] == 1
 
 
 def test_upsert_supplier_updates_variants(conn):
-    db.upsert_row(conn, Supplier(supplier_key="compugen inc", display_name="Compugen Inc",
-                                 variants='["Compugen Inc"]'), overwrite=True)
-    db.upsert_row(conn, Supplier(supplier_key="compugen inc", display_name="Compugen Inc.",
-                                 variants='["Compugen Inc", "Compugen Inc."]'), overwrite=True)
-    row = conn.execute("SELECT variants FROM supplier WHERE supplier_key='compugen inc'").fetchone()
+    db.upsert_row(
+        conn,
+        Supplier(
+            supplier_key="compugen inc",
+            display_name="Compugen Inc",
+            variants='["Compugen Inc"]',
+        ),
+        overwrite=True,
+    )
+    db.upsert_row(
+        conn,
+        Supplier(
+            supplier_key="compugen inc",
+            display_name="Compugen Inc.",
+            variants='["Compugen Inc", "Compugen Inc."]',
+        ),
+        overwrite=True,
+    )
+    row = conn.execute(
+        "SELECT variants FROM supplier WHERE supplier_key='compugen inc'"
+    ).fetchone()
     assert row["variants"] == '["Compugen Inc", "Compugen Inc."]'
 
 
@@ -148,15 +274,22 @@ def test_counts_includes_supplier(conn):
 
 
 def test_upsert_council_item_is_idempotent(conn):
-    it = CouncilItem(reference="2025.GG26.3", title="Suspension of X", decision_text="Adopted.")
+    it = CouncilItem(
+        reference="2025.GG26.3", title="Suspension of X", decision_text="Adopted."
+    )
     db.upsert_row(conn, it, overwrite=True)
     db.upsert_row(conn, it, overwrite=True)
     assert db.counts(conn)["council_item"] == 1
 
 
 def test_upsert_background_pdf_is_idempotent(conn):
-    p = BackgroundPdf(url="https://www.toronto.ca/legdocs/mmis/2025/gg/bgrd/backgroundfile-260581.pdf",
-                      reference="2025.GG26.3", kind="bgrd", sha256="abc", text="REPORT FOR ACTION")
+    p = BackgroundPdf(
+        url="https://www.toronto.ca/legdocs/mmis/2025/gg/bgrd/backgroundfile-260581.pdf",
+        reference="2025.GG26.3",
+        kind="bgrd",
+        sha256="abc",
+        text="REPORT FOR ACTION",
+    )
     db.upsert_row(conn, p, overwrite=True)
     db.upsert_row(conn, p, overwrite=True)
     assert db.counts(conn)["background_pdf"] == 1
@@ -187,10 +320,16 @@ def test_init_db_adds_missing_column_to_pre_p5a_table():
     cols = {r[1] for r in c.execute("PRAGMA table_info(suspended_firm)")}
     assert "supplier_id" in cols
     # The healed column must be writable — the supplier dimension backfills it.
-    c.execute("INSERT INTO suspended_firm (supplier_name_raw, council_authority, source)"
-              " VALUES ('Acme', 'A1', 'x')")
-    c.execute("UPDATE suspended_firm SET supplier_id = 7 WHERE supplier_name_raw = 'Acme'")
-    row = c.execute("SELECT supplier_id FROM suspended_firm WHERE supplier_name_raw = 'Acme'").fetchone()
+    c.execute(
+        "INSERT INTO suspended_firm (supplier_name_raw, council_authority, source)"
+        " VALUES ('Acme', 'A1', 'x')"
+    )
+    c.execute(
+        "UPDATE suspended_firm SET supplier_id = 7 WHERE supplier_name_raw = 'Acme'"
+    )
+    row = c.execute(
+        "SELECT supplier_id FROM suspended_firm WHERE supplier_name_raw = 'Acme'"
+    ).fetchone()
     assert row["supplier_id"] == 7
     c.close()
 
@@ -202,7 +341,9 @@ def test_sync_runs_since_returns_only_newer_rows(conn):
     r2 = db.start_sync_run(conn, "ariba_discovery")
     db.finish_sync_run(conn, r2, status="ok", rows_fetched=1670, rows_upserted=0)
     r3 = db.start_sync_run(conn, "ckan_awarded")
-    db.finish_sync_run(conn, r3, status="failed", rows_fetched=0, rows_upserted=0, error="boom")
+    db.finish_sync_run(
+        conn, r3, status="failed", rows_fetched=0, rows_upserted=0, error="boom"
+    )
 
     rows = db.sync_runs_since(conn, cutoff)
     assert [r["source"] for r in rows] == ["ariba_discovery", "ckan_awarded"]
@@ -212,8 +353,11 @@ def test_sync_runs_since_returns_only_newer_rows(conn):
 
 def test_solicitation_link_table_exists_and_is_counted(conn):
     from toronto_bids.store import db
-    conn.execute("INSERT INTO solicitation_link (reference, document_number, method) "
-                 "VALUES ('2016.BD106.3', '5672751291', 'council_pre_ariba')")
+
+    conn.execute(
+        "INSERT INTO solicitation_link (reference, document_number, method) "
+        "VALUES ('2016.BD106.3', '5672751291', 'council_pre_ariba')"
+    )
     conn.commit()
     assert db.counts(conn)["solicitation_link"] == 1
 
@@ -221,24 +365,105 @@ def test_solicitation_link_table_exists_and_is_counted(conn):
 def test_rebuild_agency_bids_replaces_only_its_own_source(conn):
     from toronto_bids.models import AgencyBid
     from toronto_bids.store import db
-    keep = AgencyBid(buyer_id=1, native_ref="T-1", bidder_name_raw="Keep Ltd.",
-                     bid_price="$1.00", source="trca_board")
-    stale = AgencyBid(buyer_id=1, native_ref="E-1", bidder_name_raw="Phantom",
-                      bid_price="$2.00", source="ep_board")
+
+    keep = AgencyBid(
+        buyer_id=1,
+        native_ref="T-1",
+        bidder_name_raw="Keep Ltd.",
+        bid_price="$1.00",
+        source="trca_board",
+    )
+    stale = AgencyBid(
+        buyer_id=1,
+        native_ref="E-1",
+        bidder_name_raw="Phantom",
+        bid_price="$2.00",
+        source="ep_board",
+    )
     db.upsert_row(conn, keep, overwrite=True)
     db.upsert_row(conn, stale, overwrite=True)
-    fresh = [AgencyBid(buyer_id=1, native_ref="E-1", bidder_name_raw="Real Ltd.",
-                       bid_price="$3.00", source="ep_board")]
+    fresh = [
+        AgencyBid(
+            buyer_id=1,
+            native_ref="E-1",
+            bidder_name_raw="Real Ltd.",
+            bid_price="$3.00",
+            source="ep_board",
+        )
+    ]
     assert db.rebuild_agency_bids(conn, "ep_board", fresh) == 1
-    names = {r["bidder_name_raw"] for r in conn.execute("SELECT bidder_name_raw FROM agency_bid")}
-    assert names == {"Keep Ltd.", "Real Ltd."}          # phantom gone, TRCA untouched
+    names = {
+        r["bidder_name_raw"]
+        for r in conn.execute("SELECT bidder_name_raw FROM agency_bid")
+    }
+    assert names == {"Keep Ltd.", "Real Ltd."}  # phantom gone, TRCA untouched
 
 
 def test_rebuild_agency_bids_deletes_nothing_when_it_derived_nothing(conn):
     from toronto_bids.models import AgencyBid
     from toronto_bids.store import db
-    db.upsert_row(conn, AgencyBid(buyer_id=1, native_ref="E-1", bidder_name_raw="Held Ltd.",
-                                  bid_price="$1.00", source="ep_board"), overwrite=True)
+
+    db.upsert_row(
+        conn,
+        AgencyBid(
+            buyer_id=1,
+            native_ref="E-1",
+            bidder_name_raw="Held Ltd.",
+            bid_price="$1.00",
+            source="ep_board",
+        ),
+        overwrite=True,
+    )
     # A machine that holds no PDFs derives no rows, and must therefore delete none.
     assert db.rebuild_agency_bids(conn, "ep_board", []) == 0
     assert conn.execute("SELECT COUNT(*) FROM agency_bid").fetchone()[0] == 1
+
+
+# ── extraction cache ──
+
+
+def test_is_extracted_false_when_never_cached(conn):
+    assert not db.is_extracted(conn, "abc123", "v1")
+
+
+def test_mark_extracted_then_is_extracted(conn):
+    db.mark_extracted(conn, "abc123", "v1")
+    assert db.is_extracted(conn, "abc123", "v1")
+
+
+def test_different_version_is_not_cached(conn):
+    db.mark_extracted(conn, "abc123", "v1")
+    assert not db.is_extracted(conn, "abc123", "v2")
+
+
+def test_mark_extracted_is_idempotent(conn):
+    db.mark_extracted(conn, "abc123", "v1")
+    db.mark_extracted(conn, "abc123", "v1")
+    assert db.is_extracted(conn, "abc123", "v1")
+    rows = conn.execute("SELECT COUNT(*) FROM extraction_cache").fetchone()[0]
+    assert rows == 1
+
+
+def test_mark_extracted_stores_result_json(conn):
+    db.mark_extracted(conn, "abc123", "v1", result_json='{"contracts": []}')
+    assert db.get_extraction(conn, "abc123", "v1") == '{"contracts": []}'
+
+
+def test_get_extraction_returns_none_when_not_cached(conn):
+    assert db.get_extraction(conn, "abc123", "v1") is None
+
+
+def test_mark_extracted_updates_result_on_re_mark(conn):
+    db.mark_extracted(conn, "abc123", "v1", result_json='{"contracts": []}')
+    db.mark_extracted(conn, "abc123", "v1", result_json='{"contracts": [{"ref": "X"}]}')
+    assert db.get_extraction(conn, "abc123", "v1") == '{"contracts": [{"ref": "X"}]}'
+    rows = conn.execute("SELECT COUNT(*) FROM extraction_cache").fetchone()[0]
+    assert rows == 1
+
+
+def test_clear_extraction_cache(conn):
+    db.mark_extracted(conn, "abc123", "v1")
+    db.mark_extracted(conn, "def456", "v1")
+    db.clear_extraction_cache(conn, "v1")
+    assert not db.is_extracted(conn, "abc123", "v1")
+    assert not db.is_extracted(conn, "def456", "v1")

@@ -452,3 +452,15 @@ CREATE TABLE IF NOT EXISTS agency_bid (
 
 CREATE INDEX IF NOT EXISTS idx_agency_award_buyer ON agency_award (buyer_id, native_ref);
 CREATE INDEX IF NOT EXISTS idx_agency_bid_buyer ON agency_bid (buyer_id, native_ref);
+
+-- Extraction cache: records which (document, extractor version) pairs have already been
+-- processed, so a re-run skips documents whose content and extractor have not changed.
+-- Keyed on sha256 (document identity) + extractor_version (prompt/model stamp), so a
+-- prompt change invalidates the cache for every document without needing a manual reset.
+CREATE TABLE IF NOT EXISTS extraction_cache (
+    sha256            TEXT NOT NULL,
+    extractor_version TEXT NOT NULL,
+    result_json       TEXT,
+    extracted_at      TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (sha256, extractor_version)
+);

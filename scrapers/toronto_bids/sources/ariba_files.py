@@ -60,6 +60,7 @@ were confirmed to live independently here.
 
 Design: docs/superpowers/specs/2026-07-27-ariba-per-file-capture-design.md
 """
+
 import json
 import os
 import re
@@ -79,7 +80,9 @@ from pathlib import Path
 # non-document that slips through fails loudly at download, which is the recoverable direction.
 _DOCUMENT_EXTENSION = re.compile(
     r"\.(7z|bmp|csv|dgn|docx?|dwf|dwg|dxf|eml|gif|gz|jpe?g|kmz|msg|odt|pdf|png|pptx?|rar|rtf|"
-    r"tar|tiff?|txt|xlsm|xlsx?|xml|zip)(?![A-Za-z0-9])", re.I)
+    r"tar|tiff?|txt|xlsm|xlsx?|xml|zip)(?![A-Za-z0-9])",
+    re.IGNORECASE,
+)
 
 # A row that LEADS with an outline number ("3.1 Drawings Package ...") -- the content tree's own
 # address for that row, and the most stable identity a row can offer. Sub-rows behind a
@@ -291,10 +294,16 @@ def listing_from_anchors(anchors) -> dict:
         # `is_document_name` rejects anyway). It is what the adapter clicks, and it must never
         # reach `make_fingerprint`: AribaWeb mints these per session, so a fingerprint carrying
         # one would differ on every run and discard the partials every time.
-        files.append({"key": key, "name": name, "row": anchor.get("row") or "",
-                      "ordinal": anchor.get("ordinal") or 0,
-                      "handle": anchor.get("id") or "",
-                      "kind": anchor_kind(anchor)})
+        files.append(
+            {
+                "key": key,
+                "name": name,
+                "row": anchor.get("row") or "",
+                "ordinal": anchor.get("ordinal") or 0,
+                "handle": anchor.get("id") or "",
+                "kind": anchor_kind(anchor),
+            }
+        )
     return {"files": files, "rejected": rejected, "collided": collided}
 
 
@@ -362,7 +371,9 @@ def build_bundle(files, target) -> Path:
         with zipfile.ZipFile(tmp, "w", zipfile.ZIP_DEFLATED, allowZip64=True) as out:
             for src, zip_name in files:
                 with open(src, "rb") as fsrc, out.open(zip_name, "w") as fdst:
-                    shutil.copyfileobj(fsrc, fdst, 1 << 20)   # 88 MB files: stream, never slurp
+                    shutil.copyfileobj(
+                        fsrc, fdst, 1 << 20
+                    )  # 88 MB files: stream, never slurp
         os.replace(tmp, target)
     except BaseException:
         tmp.unlink(missing_ok=True)
@@ -421,7 +432,7 @@ def read_manifest(pdir):
     try:
         return json.loads(path.read_text())
     except (OSError, json.JSONDecodeError):
-        return None            # missing OR corrupt: callers discard partials and re-traverse
+        return None  # missing OR corrupt: callers discard partials and re-traverse
 
 
 def write_manifest(pdir, fingerprint: dict) -> Path:
@@ -501,7 +512,8 @@ def capture_files(source, document_number: str, dest_dir, log=lambda _m: None):
     if not files:
         raise RuntimeError(
             f"Doc{document_number}: the content tree listed no files — refusing to write an "
-            f"empty bundle, which would mark this event archived permanently")
+            f"empty bundle, which would mark this event archived permanently"
+        )
 
     # The picker's `Total Number` comparison that used to run here was removed (#185): the
     # first live comparison found the picker reporting 54 against a traversal of 39 and a true
@@ -524,11 +536,15 @@ def capture_files(source, document_number: str, dest_dir, log=lambda _m: None):
         # here independently before that module was removed). Discarding an empty or
         # nonexistent directory costs nothing.
         if pdir.exists():
-            log(f"  Doc{document_number}: missing/unreadable manifest — discarding partials "
-                f"and restarting")
+            log(
+                f"  Doc{document_number}: missing/unreadable manifest — discarding partials "
+                f"and restarting"
+            )
         shutil.rmtree(pdir, ignore_errors=True)
     elif manifest.get("fingerprint") != fingerprint:
-        log(f"  Doc{document_number}: event changed since the last run — discarding partials")
+        log(
+            f"  Doc{document_number}: event changed since the last run — discarding partials"
+        )
         shutil.rmtree(pdir, ignore_errors=True)
     fdir = pdir / "files"
     fdir.mkdir(parents=True, exist_ok=True)
@@ -557,8 +573,8 @@ def capture_files(source, document_number: str, dest_dir, log=lambda _m: None):
                 # a document should be; recorded as an omission it is at least greppable.
                 raise RuntimeError("downloaded 0 bytes")
             os.replace(part, dest)
-        except BaseException as exc:            # noqa: BLE001 — one dead file, not the batch
-            part.unlink(missing_ok=True)        # an incomplete download is never useful
+        except BaseException as exc:
+            part.unlink(missing_ok=True)  # an incomplete download is never useful
             if not isinstance(exc, Exception):
                 # Ctrl-C / SystemExit: clean up the `.part` like build_bundle cleans up its
                 # `.tmp`, then let it through. Recording an interrupt as "this file is missing
@@ -599,9 +615,11 @@ def capture_files(source, document_number: str, dest_dir, log=lambda _m: None):
     # failure is caught. Half is a round number comfortably below any plausible partial capture
     # and far above the 2% the live runs produced.
     if len(captured) < _MIN_CAPTURE_RATIO * len(files):
-        log(f"  Doc{document_number}: only {len(captured)} of {len(files)} listed document(s) "
+        log(
+            f"  Doc{document_number}: only {len(captured)} of {len(files)} listed document(s) "
             f"downloaded — too few to archive (a bundle would mark this event captured "
-            f"permanently); keeping the partials and leaving the event pending")
+            f"permanently); keeping the partials and leaving the event pending"
+        )
         return None
 
     # The gap record goes down BEFORE the bundle, the same way ariba_batch.py (retired #186)
@@ -617,6 +635,18 @@ def capture_files(source, document_number: str, dest_dir, log=lambda _m: None):
     # an incomplete or absent `Doc<n>.zip` standing beside a just-erased gap record would make
     # "absence means nothing is missing" false.
     target = dest_dir / f"Doc{document_number}.zip"
+
+    if target.exists():
+        with zipfile.ZipFile(target) as zf:
+            existing_count = len(zf.namelist())
+        if len(captured) < existing_count:
+            log(
+                f"  Doc{document_number}: re-capture has {len(captured)} file(s) but "
+                f"existing bundle has {existing_count} — refusing to shrink; "
+                f"keeping existing bundle"
+            )
+            return None
+
     write_omitted(target, omitted, collided=collided_count)
     build_bundle(captured, target)
     clear_omitted_when_complete(target, omitted, collided=collided_count)
@@ -625,8 +655,9 @@ def capture_files(source, document_number: str, dest_dir, log=lambda _m: None):
     return target
 
 
-def finalise_partial(document_number: str, dest_dir, *, posting_open: bool,
-                     log=lambda _m: None):
+def finalise_partial(
+    document_number: str, dest_dir, *, posting_open: bool, log=lambda _m: None
+):
     """Bundle whatever files are already on disk, for a posting that closed mid-capture.
 
     **`posting_open` must be False and is validated, not assumed.** Respond is disabled the
@@ -653,7 +684,8 @@ def finalise_partial(document_number: str, dest_dir, *, posting_open: bool,
         raise ValueError(
             f"finalise_partial is for a CLOSED posting (posting_open=False), got "
             f"{posting_open!r} — canonicalising a capture that could still complete would mark "
-            f"it archived and stop it ever being retried. Use capture_files instead.")
+            f"it archived and stop it ever being retried. Use capture_files instead."
+        )
 
     dest_dir = Path(dest_dir)
     pdir = partial_dir(dest_dir, document_number)
@@ -694,10 +726,14 @@ def finalise_partial(document_number: str, dest_dir, *, posting_open: bool,
     build_bundle(captured, target)
     clear_omitted_when_complete(target, omitted)
     if leftover:
-        log(f"  Doc{document_number}: {len(leftover)} interrupted transfer(s) kept in {pdir} — "
-            f"bytes that can never be re-fetched are not deleted")
+        log(
+            f"  Doc{document_number}: {len(leftover)} interrupted transfer(s) kept in {pdir} — "
+            f"bytes that can never be re-fetched are not deleted"
+        )
     else:
         shutil.rmtree(pdir, ignore_errors=True)
-    log(f"  Doc{document_number}: closed mid-capture — salvaged {len(captured)} file(s) -> "
-        f"{target.name}")
+    log(
+        f"  Doc{document_number}: closed mid-capture — salvaged {len(captured)} file(s) -> "
+        f"{target.name}"
+    )
     return target
