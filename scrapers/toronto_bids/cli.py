@@ -212,6 +212,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="After extraction, generate a validation report comparing LLM vs incumbent",
     )
     p_extract.add_argument(
+        "--backfill",
+        action="store_true",
+        help="Populate store tables from cached extractions (rebuild pattern)",
+    )
+    p_extract.add_argument(
         "sha256",
         nargs="?",
         help="sha256 of a single background_pdf to extract (requires --dry-run)",
@@ -1303,6 +1308,10 @@ def _cmd_extract(args) -> int:
     if args.validate:
         return _cmd_extract_validate(args)
 
+    if args.backfill and not args.corpus:
+        print("--backfill requires --corpus", file=sys.stderr)
+        return 1
+
     if args.corpus:
         return _cmd_extract_corpus(args)
 
@@ -1379,6 +1388,14 @@ def _cmd_extract_corpus(args) -> int:
             report_json = json.dumps(report, indent=2)
             print(f"\n--- Validation Report ({args.corpus}) ---")
             print(report_json)
+
+        if args.backfill:
+            from toronto_bids.extraction import backfill_from_extraction
+
+            result = backfill_from_extraction(conn, args.corpus)
+            print(f"\nBackfill ({args.corpus}):")
+            for key, val in result.items():
+                print(f"  {key}: {val}")
 
         return 0
     finally:

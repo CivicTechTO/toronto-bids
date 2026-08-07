@@ -353,6 +353,161 @@ def _normalize_name(name: str | None) -> str:
     return " ".join(name.lower().split())
 
 
+_CORPUS_SOURCE = {
+    "trca": "trca_board",
+    "ep": "ep_board",
+    "zoo": "zoo_board",
+    "award_summary": "award_summary",
+    "committee": "committee_award",
+    "composite": "bid_committee_composite",
+}
+
+_CORPUS_BUYER_SLUG = {
+    "trca": "trca",
+    "ep": "exhibition-place",
+    "zoo": "toronto-zoo",
+}
+
+
+def backfill_from_extraction(conn, corpus) -> dict:
+    """Populate store tables from cached LLM extractions.
+
+    Uses the rebuild pattern: deletes old source rows, inserts new ones
+    from extraction_cache. Returns counts of what was written.
+    """
+    from toronto_bids.models import AgencyAward, AgencyBid, Bid, CompositeAward
+    from toronto_bids.store.db import upsert_row
+
+    sql_where = CORPORA.get(corpus)
+    if sql_where is None:
+        raise ValueError(f"Unknown corpus {corpus!r}")
+
+    source = _CORPUS_SOURCE[corpus]
+
+    rows = conn.execute(
+        f"SELECT bp.sha256, bp.url, bp.document_number, bp.reference, ec.result_json "
+        f"FROM background_pdf bp "
+        f"JOIN extraction_cache ec ON ec.sha256 = bp.sha256 "
+        f"WHERE {sql_where} AND bp.sha256 IS NOT NULL "
+        f"AND ec.extractor_version = ?",
+        (EXTRACTOR_VERSION,),
+    ).fetchall()
+
+    buyer_id = None
+    if corpus in _CORPUS_BUYER_SLUG:
+        buyer_row = conn.execute(
+            "SELECT id FROM buyer WHERE slug = ?",
+            (_CORPUS_BUYER_SLUG[corpus],),
+        ).fetchone()
+        if buyer_row:
+            buyer_id = buyer_row["id"]
+
+    bids_written = 0
+    awards_written = 0
+
+    if corpus in ("trca", "ep", "zoo"):
+        conn.execute("DELETE FROM agency_bid WHERE source = ?", (source,))
+        conn.execute("DELETE FROM agency_award WHERE source = ?", (source,))
+
+        for row in rows:
+            result = json.loads(row["result_json"])
+            for contract in result.get("contracts", []):
+                ref = contract.get("reference", "")
+                if not ref:
+                    continue
+                for bid in contract.get("bids", []):
+                    name = bid.get("supplier_name")
+                    if not name:
+                        continue
+                    upsert_row(
+                        conn,
+                        AgencyBid(
+                            buyer_id=buyer_id,
+                            native_ref=ref,
+                            bidder_name_raw=name,
+                            bid_price=bid.get("amount_raw"),
+                            report_url=row["url"],
+                            source=source,
+                        ),
+                        overwrite=True,
+                    )
+                    bids_written += 1
+                for award in contract.get("awards", []):
+                    name = award.get("supplier_name")
+                    if not name:
+                        continue
+                    upsert_row(
+                        conn,
+                        AgencyAward(
+                            buyer_id=buyer_id,
+                            native_ref=ref,
+                            supplier_name_raw=name,
+                            award_amount=award.get("amount_raw"),
+                            report_url=row["url"],
+                            source=source,
+                        ),
+                        overwrite=True,
+                    )
+                    awards_written += 1
+
+    elif corpus in ("award_summary", "committee"):
+        conn.execute("DELETE FROM bid WHERE source = ?", (source,))
+
+        for row in rows:
+            doc_num = row["document_number"]
+            result = json.loads(row["result_json"])
+            for contract in result.get("contracts", []):
+                for bid in contract.get("bids", []):
+                    name = bid.get("supplier_name")
+                    if not name:
+                        continue
+                    upsert_row(
+                        conn,
+                        Bid(
+                            bidder_name_raw=name,
+                            document_number=doc_num,
+                            bid_price=bid.get("amount_raw"),
+                            source=source,
+                        ),
+                        overwrite=True,
+                    )
+                    bids_written += 1
+
+    elif corpus == "composite":
+        conn.execute("DELETE FROM composite_award WHERE source = ?", (source,))
+
+        for row in rows:
+            result = json.loads(row["result_json"])
+            for contract in result.get("contracts", []):
+                call_number = contract.get("reference", "")
+                if not call_number:
+                    continue
+                for award in contract.get("awards", []):
+                    name = award.get("supplier_name")
+                    if not name:
+                        continue
+                    upsert_row(
+                        conn,
+                        CompositeAward(
+                            call_number=call_number,
+                            reference=row["reference"],
+                            supplier_name_raw=name,
+                            award_value=award.get("amount_raw"),
+                            source=source,
+                        ),
+                        overwrite=True,
+                    )
+                    awards_written += 1
+
+    conn.commit()
+    return {
+        "corpus": corpus,
+        "docs_processed": len(rows),
+        "bids_written": bids_written,
+        "awards_written": awards_written,
+    }
+
+
 def validate_against_ground_truth(conn, ground_truth_path) -> dict:
     """Compare cached extractions against human-labelled ground truth.
 

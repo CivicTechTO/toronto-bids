@@ -578,3 +578,133 @@ def test_dedup_contracts_merges_on_reference():
     assert len(result) == 2
     rft1 = next(c for c in result if c["reference"] == "RFT 1")
     assert len(rft1["bids"]) == 2
+
+
+# ── backfill from extraction cache ──
+
+
+def test_backfill_agency_bids_from_extraction(conn):
+    """Backfill maps LLM extraction → agency_bid/agency_award rows."""
+    from toronto_bids.extraction import backfill_from_extraction
+
+    # Set up a buyer
+    conn.execute("INSERT INTO buyer (id, slug, name) VALUES (2, 'trca', 'TRCA')")
+    # Set up a background_pdf with a cached extraction
+    conn.execute(
+        "INSERT INTO background_pdf (url, kind, sha256, text) "
+        "VALUES ('https://pub-trca.escribemeetings.com/report.pdf', 'agency_board', 'aaa', 'text')"
+    )
+    conn.commit()
+
+    extraction = {
+        "contracts": [
+            {
+                "reference": "10037330",
+                "bids": [
+                    {"supplier_name": "Acme Ltd.", "amount_raw": "$100.00"},
+                    {"supplier_name": "Beta Inc.", "amount_raw": "$200.00"},
+                ],
+                "awards": [
+                    {"supplier_name": "Acme Ltd.", "amount_raw": "$100.00"},
+                ],
+            }
+        ]
+    }
+    from toronto_bids.extract import EXTRACTOR_VERSION
+    from toronto_bids.store.db import mark_extracted
+
+    mark_extracted(conn, "aaa", EXTRACTOR_VERSION, result_json=json.dumps(extraction))
+
+    result = backfill_from_extraction(conn, "trca")
+    assert result["bids_written"] == 2
+    assert result["awards_written"] == 1
+
+    bids = conn.execute(
+        "SELECT bidder_name_raw, bid_price FROM agency_bid WHERE source='trca_board'"
+    ).fetchall()
+    assert len(bids) == 2
+    names = {b["bidder_name_raw"] for b in bids}
+    assert names == {"Acme Ltd.", "Beta Inc."}
+
+    awards = conn.execute(
+        "SELECT supplier_name_raw, award_amount FROM agency_award WHERE source='trca_board'"
+    ).fetchall()
+    assert len(awards) == 1
+    assert awards[0]["supplier_name_raw"] == "Acme Ltd."
+
+
+def test_backfill_bid_table_from_extraction(conn):
+    """Backfill maps LLM extraction → bid rows for award_summary corpus."""
+    from toronto_bids.extraction import backfill_from_extraction
+
+    conn.execute(
+        "INSERT INTO background_pdf (url, kind, sha256, text, document_number) "
+        "VALUES ('https://example.com/form.pdf', 'award_summary', 'bbb', 'text', '5247418372')"
+    )
+    conn.commit()
+
+    extraction = {
+        "contracts": [
+            {
+                "reference": "RFT 999",
+                "bids": [
+                    {"supplier_name": "Alpha Co.", "amount_raw": "$500.00"},
+                    {"supplier_name": "Gamma Inc.", "amount_raw": "$600.00"},
+                ],
+                "awards": [],
+            }
+        ]
+    }
+    from toronto_bids.extract import EXTRACTOR_VERSION
+    from toronto_bids.store.db import mark_extracted
+
+    mark_extracted(conn, "bbb", EXTRACTOR_VERSION, result_json=json.dumps(extraction))
+
+    result = backfill_from_extraction(conn, "award_summary")
+    assert result["bids_written"] == 2
+
+    bids = conn.execute(
+        "SELECT bidder_name_raw, bid_price, document_number FROM bid "
+        "WHERE source='award_summary'"
+    ).fetchall()
+    assert len(bids) == 2
+    assert bids[0]["document_number"] == "5247418372"
+
+
+def test_backfill_composite_awards_from_extraction(conn):
+    """Backfill maps LLM extraction → composite_award rows."""
+    from toronto_bids.extraction import backfill_from_extraction
+
+    conn.execute(
+        "INSERT INTO background_pdf (url, kind, sha256, text, reference) "
+        "VALUES ('https://example.com/bgrd.pdf', 'bgrd', 'ccc', 'text', '2011.BD5.1')"
+    )
+    conn.commit()
+
+    extraction = {
+        "contracts": [
+            {
+                "reference": "3905-10-0097",
+                "awards": [
+                    {"supplier_name": "Builder Co.", "amount_raw": "$1,000,000.00"},
+                ],
+                "bids": [],
+            }
+        ]
+    }
+    from toronto_bids.extract import EXTRACTOR_VERSION
+    from toronto_bids.store.db import mark_extracted
+
+    mark_extracted(conn, "ccc", EXTRACTOR_VERSION, result_json=json.dumps(extraction))
+
+    result = backfill_from_extraction(conn, "composite")
+    assert result["awards_written"] == 1
+
+    awards = conn.execute(
+        "SELECT call_number, supplier_name_raw, award_value, reference "
+        "FROM composite_award"
+    ).fetchall()
+    assert len(awards) == 1
+    assert awards[0]["call_number"] == "3905-10-0097"
+    assert awards[0]["supplier_name_raw"] == "Builder Co."
+    assert awards[0]["reference"] == "2011.BD5.1"
