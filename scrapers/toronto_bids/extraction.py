@@ -193,7 +193,163 @@ def check_declared_counts(extraction: dict) -> list[dict]:
     return flags
 
 
-def _normalize_name(name: str) -> str:
+_INCUMBENT_QUERIES = {
+    "trca": {
+        "bids": (
+            "SELECT bp.url, ab.bidder_name_raw FROM agency_bid ab "
+            "JOIN background_pdf bp ON LOWER(bp.url) = LOWER(ab.report_url) "
+            "WHERE ab.source='trca_board'"
+        ),
+        "awards": (
+            "SELECT bp.url, aa.supplier_name_raw FROM agency_award aa "
+            "JOIN background_pdf bp ON LOWER(bp.url) = LOWER(aa.report_url) "
+            "WHERE aa.source='trca_board'"
+        ),
+    },
+    "ep": {
+        "bids": (
+            "SELECT bp.url, ab.bidder_name_raw FROM agency_bid ab "
+            "JOIN background_pdf bp ON LOWER(bp.url) = LOWER(ab.report_url) "
+            "WHERE ab.source='ep_board'"
+        ),
+        "awards": (
+            "SELECT bp.url, aa.supplier_name_raw FROM agency_award aa "
+            "JOIN background_pdf bp ON LOWER(bp.url) = LOWER(aa.report_url) "
+            "WHERE aa.source='ep_board'"
+        ),
+    },
+    "zoo": {
+        "bids": (
+            "SELECT bp.url, ab.bidder_name_raw FROM agency_bid ab "
+            "JOIN background_pdf bp ON LOWER(bp.url) = LOWER(ab.report_url) "
+            "WHERE ab.source='zoo_board'"
+        ),
+        "awards": (
+            "SELECT bp.url, aa.supplier_name_raw FROM agency_award aa "
+            "JOIN background_pdf bp ON LOWER(bp.url) = LOWER(aa.report_url) "
+            "WHERE aa.source='zoo_board'"
+        ),
+    },
+    "award_summary": {
+        "bids": (
+            "SELECT bp.url, b.bidder_name_raw FROM bid b "
+            "JOIN background_pdf bp ON bp.document_number = b.document_number "
+            "WHERE b.source='award_summary' AND bp.kind='award_summary'"
+        ),
+    },
+    "committee": {
+        "bids": (
+            "SELECT bp.url, b.bidder_name_raw FROM bid b "
+            "JOIN background_pdf bp ON bp.document_number = b.document_number "
+            "WHERE b.source='committee_award' AND bp.kind='committee_award'"
+        ),
+    },
+}
+
+
+def _incumbent_by_doc(conn, corpus):
+    """Return {url: set(normalized_name)} for the incumbent parser's output."""
+    queries = _INCUMBENT_QUERIES.get(corpus, {})
+    by_url = {}
+    for query in queries.values():
+        for row in conn.execute(query):
+            url = row[0]
+            name = _normalize_name(row[1])
+            if name:
+                by_url.setdefault(url, set()).add(name)
+    return by_url
+
+
+def _llm_names_from_result(result):
+    """Extract normalized supplier names from an LLM extraction result."""
+    names = set()
+    for contract in result.get("contracts", []):
+        for bid in contract.get("bids", []):
+            if bid.get("supplier_name"):
+                names.add(_normalize_name(bid["supplier_name"]))
+        for award in contract.get("awards", []):
+            if award.get("supplier_name"):
+                names.add(_normalize_name(award["supplier_name"]))
+    return names
+
+
+def corpus_validation_report(conn, corpus) -> dict:
+    """Compare cached LLM extractions against incumbent parser output for a corpus."""
+    sql_where = CORPORA.get(corpus)
+    if sql_where is None:
+        raise ValueError(f"Unknown corpus {corpus!r}")
+
+    rows = conn.execute(
+        f"SELECT bp.sha256, bp.url, ec.result_json "
+        f"FROM background_pdf bp "
+        f"JOIN extraction_cache ec ON ec.sha256 = bp.sha256 "
+        f"WHERE {sql_where} AND bp.sha256 IS NOT NULL "
+        f"AND ec.extractor_version = ?",
+        (EXTRACTOR_VERSION,),
+    ).fetchall()
+
+    llm_bids = 0
+    llm_awards = 0
+    llm_contracts = 0
+    count_flags = 0
+    docs_with_content = 0
+    llm_by_url = {}
+
+    for row in rows:
+        result = json.loads(row["result_json"])
+        contracts = result.get("contracts", [])
+        llm_contracts += len(contracts)
+        db = sum(len(c.get("bids", [])) for c in contracts)
+        da = sum(len(c.get("awards", [])) for c in contracts)
+        llm_bids += db
+        llm_awards += da
+        if db > 0 or da > 0:
+            docs_with_content += 1
+        count_flags += len(result.get("_flags", []))
+        llm_by_url[row["url"]] = _llm_names_from_result(result)
+
+    incumbent = _incumbent_by_doc(conn, corpus)
+    shared_urls = set(llm_by_url) & set(incumbent)
+
+    tp = fn = fp = 0
+    for url in shared_urls:
+        llm_set = llm_by_url[url]
+        inc_set = incumbent[url]
+        tp += len(llm_set & inc_set)
+        fn += len(inc_set - llm_set)
+        fp += len(llm_set - inc_set)
+
+    incumbent_total = sum(len(v) for v in incumbent.values())
+
+    return {
+        "corpus": corpus,
+        "extracted_docs": len(rows),
+        "docs_with_content": docs_with_content,
+        "count_flags": count_flags,
+        "llm": {
+            "contracts": llm_contracts,
+            "bids": llm_bids,
+            "awards": llm_awards,
+            "unique_names": sum(len(v) for v in llm_by_url.values()),
+        },
+        "incumbent": {
+            "total_names": incumbent_total,
+            "docs_joinable": len(incumbent),
+        },
+        "comparison": {
+            "shared_docs": len(shared_urls),
+            "tp": tp,
+            "fn": fn,
+            "fp": fp,
+            "recall": tp / (tp + fn) if (tp + fn) else None,
+            "precision": tp / (tp + fp) if (tp + fp) else None,
+        },
+    }
+
+
+def _normalize_name(name: str | None) -> str:
+    if not name:
+        return ""
     return " ".join(name.lower().split())
 
 

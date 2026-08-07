@@ -203,6 +203,15 @@ def build_parser() -> argparse.ArgumentParser:
         help="Path to ground-truth JSON; compare cached extractions against it",
     )
     p_extract.add_argument(
+        "--model",
+        help="Force a specific OpenRouter model (e.g. openai/gpt-5.6-luna)",
+    )
+    p_extract.add_argument(
+        "--report",
+        action="store_true",
+        help="After extraction, generate a validation report comparing LLM vs incumbent",
+    )
+    p_extract.add_argument(
         "sha256",
         nargs="?",
         help="sha256 of a single background_pdf to extract (requires --dry-run)",
@@ -1328,6 +1337,8 @@ def _cmd_extract(args) -> int:
 
 def _cmd_extract_corpus(args) -> int:
     """Batch extraction across a corpus (#209)."""
+    import json
+
     from toronto_bids.config import CLASSIFICATION_LABELS_PATH
     from toronto_bids.extract import EXTRACTOR_VERSION, ExtractionClient
     from toronto_bids.extraction import extract_corpus, load_classification_labels
@@ -1347,7 +1358,8 @@ def _cmd_extract_corpus(args) -> int:
 
     conn = _open_db()
     try:
-        client = ExtractionClient()
+        models = [args.model] if args.model else None
+        client = ExtractionClient(models=models)
         stats = extract_corpus(
             conn,
             args.corpus,
@@ -1359,6 +1371,15 @@ def _cmd_extract_corpus(args) -> int:
         print("\nResults:")
         for key, val in stats.items():
             print(f"  {key}: {val}")
+
+        if args.report:
+            from toronto_bids.extraction import corpus_validation_report
+
+            report = corpus_validation_report(conn, args.corpus)
+            report_json = json.dumps(report, indent=2)
+            print(f"\n--- Validation Report ({args.corpus}) ---")
+            print(report_json)
+
         return 0
     finally:
         conn.close()
