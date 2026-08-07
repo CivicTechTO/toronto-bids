@@ -6,48 +6,31 @@ only published record of who *lost*. `sources/bid_award_panel.py` therefore stop
 and final corpus.
 
 The bidders did not stop. Every awarded contract over $500,000 now carries an **Award Summary
-Form** PDF on the Toronto Bids Portal, and it publishes more than the panel ever did:
-
-    4. Solicitation Summary
-       Number of Bids Received             Five (5)
-    5. Bid Summary
-       Supplier Name                                    Bid Price (Excluding HST)
-       * indicates non-compliant Supplier
-       1. 2489960 ONTARIO INC., O/A Kore Infrastructure  $7,710,000.00
-       2. CRCE Construction Ltd.                         $8,624,203.50
-       ...
+Form** PDF on the Toronto Bids Portal, and it publishes more than the panel ever did.
 
 No browser. The portal's table is driven by `feis_solicitation_published` — the same OData
 spine sources/odata.py already reads — and `secure.toronto.ca` is not Akamai-gated the way
 TMMIS is. The PDF hangs off the record itself in `uploadedFilesStaff`, so the whole path is
-plain HTTP.
-
-Two limits worth knowing before reading any number out of this table. The form only exists
-**over $500,000** — the panel had no such floor, so the bid record thins permanently for small
-awards. And the City says "a portion of work to create the notice of award records will be
-manual", which shows: 223 of the 244 awards since the cutover carry one (91%), not all.
+plain HTTP. Parsing is handled by LLM extraction (#205).
 """
-import re
-from pathlib import Path
+
 from urllib.parse import quote
 
 from toronto_bids import config
 from toronto_bids.linking.document_number import normalize_document_number
-from toronto_bids.models import BackgroundPdf, Bid
-from toronto_bids.sources.pdf_tables import zip_columns
+from toronto_bids.models import BackgroundPdf
 from toronto_bids.store import db
 
-_DATA = ("https://secure.toronto.ca/c3api_data/v2/DataAccess.svc/pmmd_solicitations/"
-         "feis_solicitation_published")
+_DATA = (
+    "https://secure.toronto.ca/c3api_data/v2/DataAccess.svc/pmmd_solicitations/"
+    "feis_solicitation_published"
+)
 _UPLOAD = "https://secure.toronto.ca/c3api_upload/retrieve/pmmd_solicitations/"
 
-# The portal's own filter, minus its date cut. The UI appends `Latest_Date_Awarded gt
-# <today-18mo>` to honour "contracts are available to the public for 18 months" — that is
-# enforced in the client, not the server. Without it the same endpoint serves 6,504 awarded
-# records back to 2010-04-15. We omit it deliberately: the City could start enforcing it
-# server-side at any time, and this archive exists for exactly that eventuality.
-_AWARDED_FILTER = ("Ready_For_Posting eq 'Yes' and Solicitation_Form_Type eq 'Awarded "
-                   "Contracts' and Awarded_Cancelled eq 'No'")
+_AWARDED_FILTER = (
+    "Ready_For_Posting eq 'Yes' and Solicitation_Form_Type eq 'Awarded "
+    "Contracts' and Awarded_Cancelled eq 'No'"
+)
 _PAGE = 500
 
 
@@ -58,7 +41,8 @@ def fetch_awarded_records(http, log=lambda _m: None) -> list:
         page = http.get_json(
             f"{_DATA}?$format=application/json;odata.metadata=none&$count=true"
             f"&$skip={skip}&$top={_PAGE}&$filter={quote(_AWARDED_FILTER)}"
-            f"&$orderby=Latest_Date_Awarded desc")
+            f"&$orderby=Latest_Date_Awarded desc"
+        )
         rows = page.get("value") or []
         out.extend(rows)
         total = page.get("@odata.count", len(out))
@@ -69,13 +53,7 @@ def fetch_awarded_records(http, log=lambda _m: None) -> list:
 
 
 def award_summary_files(record: dict) -> list:
-    """(url, name) for each Award Summary Form on a record. Empty for awards under $500,000.
-
-    The attachment rides on the record itself:
-
-        "uploadedFilesStaff": [{"bin_id": "kSj1PnNq2nX0FApSenhvCA",
-                                "name": "Doc5616191850 Award Summary Form.pdf", ...}]
-    """
+    """(url, name) for each Award Summary Form on a record."""
     out = []
     for f in record.get("uploadedFilesStaff") or []:
         bin_id = f.get("bin_id")
@@ -85,43 +63,45 @@ def award_summary_files(record: dict) -> list:
 
 
 def download_award_summaries(conn, http, dest_dir=None, log=lambda _m: None) -> int:
-    """Archive every Award Summary Form. Idempotent and resumable.
-
-    Queues on `sha256 IS NULL`, not `text IS NULL` — the #83 lesson: a PDF pdftotext cannot
-    read keeps a NULL text forever and would re-download on every run, in perpetuity. The hash
-    records that we hold the bytes; the text records whether anything could read them.
-
-    `text` is ARCHIVAL here and nothing parses it (#116): the bids are read from the PDF's own
-    cells by store_award_summary_bids. `layout=True` is kept because it is the more faithful
-    rendering of a columnar form and the bytes are already on disk under it — not because
-    anything depends on it.
-    """
+    """Archive every Award Summary Form. Idempotent and resumable."""
     from toronto_bids.sources.council import download_pdf
 
     dest_dir = dest_dir if dest_dir is not None else config.AWARD_SUMMARY_DIR
-    have = {r["url"] for r in conn.execute(
-        "SELECT url FROM background_pdf WHERE sha256 IS NOT NULL")}
+    have = {
+        r["url"]
+        for r in conn.execute("SELECT url FROM background_pdf WHERE sha256 IS NOT NULL")
+    }
     log("  award summary forms: querying the portal")
     records = fetch_awarded_records(http, log=log)
-    wanted = [(url, name, rec) for rec in records
-              for url, name in award_summary_files(rec) if url not in have]
+    wanted = [
+        (url, name, rec)
+        for rec in records
+        for url, name in award_summary_files(rec)
+        if url not in have
+    ]
     log(f"  award summary forms to fetch: {len(wanted)}")
     stored = 0
     for i, (url, _name, rec) in enumerate(wanted, 1):
         try:
             info = download_pdf(http, url, dest_dir, layout=True)
-            db.upsert_row(conn, BackgroundPdf(
-                url=url, kind="award_summary",
-                # The council reference stays NULL: no council item exists for these. The
-                # document number is the join, and it is the spine's own primary key.
-                reference=None,
-                document_number=normalize_document_number(
-                    rec.get("Solicitation_Document_Number")),
-                local_path=info["local_path"], sha256=info["sha256"], text=info["text"],
-            ), overwrite=True)
+            db.upsert_row(
+                conn,
+                BackgroundPdf(
+                    url=url,
+                    kind="award_summary",
+                    reference=None,
+                    document_number=normalize_document_number(
+                        rec.get("Solicitation_Document_Number")
+                    ),
+                    local_path=info["local_path"],
+                    sha256=info["sha256"],
+                    text=info["text"],
+                ),
+                overwrite=True,
+            )
             conn.commit()
             stored += 1
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001
             conn.rollback()
             log(f"    skipped {url.rsplit('/', 1)[-1]}: {exc}")
         if i % 25 == 0:
@@ -129,170 +109,9 @@ def download_award_summaries(conn, http, dest_dir=None, log=lambda _m: None) -> 
     return stored
 
 
-# --- parsing ------------------------------------------------------------------------------
-#
-# The form is a ruled table end to end — every field is a real (label, value) cell pair, and
-# section 5 is a real bid table. So it is read as CELLS, via pdfplumber, not reconstructed
-# from whitespace (#116). Measured over the 229 archived forms:
-#
-#     forms parsed:  pdftotext 144/229   pdfplumber 205/229
-#     bids stored:   pdftotext 632       pdfplumber 1033
-#
-# 229 of 229 carry ruled tables and none are image-only, which is what separates this corpus
-# from the staff reports #83 measured (ruled tables in only 13-20 of 229 — prose, not tables,
-# so no extractor can invent the structure). The rule is not "pdfplumber is better"; it is
-# "read cells where the PDF HAS cells".
-#
-# The three shapes that beat the whitespace parser, all of them structure pdftotext destroyed:
-#
-#     ['5. Bid Summary']
-#     ['Supplier Name\n* indicates non-compliant Supplier', 'Bid Price (Excluding HST)\n...']
-#     ['Range:']
-#     ['1. 2489960 ONTARIO INC., O/A Kore Infrastructure', '$7,710,000.00']
-#     ['3. The Stevens Company LTD*', '$ -']          # a non-price; the name cell is still a name
-#     ['Dependable Truck and Tank Limited', '$652,700.00']            # no leading number at all
-#
-_DOC_NUMBER = re.compile(r"\bDoc\s*(\d{10})\b", re.I)
-_COUNT = re.compile(r"(\d{1,3})")
-# The City numbers most bidders and not all of them, so the numbering is stripped where present
-# and never required. Requiring it cost 57 forms their entire bid table.
-_NUMBERING = re.compile(r"^\s*\d{1,2}\s*[.)]\s*")
-# Trailing compliance markers, plus the replacement char pdftotext and pdfplumber both emit for
-# the form's non-Latin glyphs.
-_NAME_MARKERS = re.compile(r"^[\s*^+†‡§�]+|[\s*^+†‡§�]+$")
-_WS = re.compile(r"\s+")
-
-
-def form_rows(path) -> list[list[str]]:
-    """Every non-empty row of every ruled table in the form, as stripped cells. Does I/O."""
-    from toronto_bids.sources.pdf_tables import all_tables
-
-    return all_tables(path)
-
-
-def parse_award_summary(rows) -> dict | None:
-    """{document_number, price_header, hst_basis, declared_bids, bids: [...]} or None.
-
-    Pure: `rows` is what form_rows() read off the PDF, so this is testable against a JSON
-    fixture without pdfplumber or a file — the same fetch/normalize split sources/base.py's
-    Source protocol draws.
-    """
-    from toronto_bids.sources.bid_award_panel import _hst_basis
-
-    doc = declared = price_header = None
-    bids, in_section_5 = [], False
-    for cells in rows:
-        label = cells[0]
-        value = cells[1] if len(cells) > 1 else ""
-        if not in_section_5:
-            # Section 5 is found by its own cell, not by a line anchor. `^\s*5\. Bid Summary$`
-            # failed on 16 forms whose heading cell carries more than the heading.
-            if label.startswith("5.") and "Bid Summary" in label:
-                in_section_5 = True
-            elif "Ariba Document No" in label and _DOC_NUMBER.search(value):
-                doc = _DOC_NUMBER.search(value).group(1)
-            elif "Number of Bids Received" in label and _COUNT.search(value):
-                declared = int(_COUNT.search(value).group(1))
-            continue
-        if label.startswith("Supplier Name"):
-            # The header cell carries the HST basis, load-bearing exactly as on the agendas
-            # (#94): a price whose basis is unknown cannot be compared with one whose is known.
-            # Its own cell also carries the footnote legend below it — take the first line.
-            price_header = _WS.sub(" ", value.split("\n")[0]).strip() or None
-            continue
-        if label.lower().startswith(("range:", "note")):
-            continue
-        for name, price in zip_columns(label, value):
-            name = _NAME_MARKERS.sub("", _WS.sub(" ", _NUMBERING.sub("", name)).strip())
-            if not name:
-                continue          # an empty numbered row: the City leaves '5.' blank
-            bids.append({"bidder_name_raw": name,
-                         "bid_price": _WS.sub(" ", price).strip() if price else None})
-    if not (doc and in_section_5):
-        return None
-    return {
-        "document_number": normalize_document_number(doc),
-        "price_header": price_header,
-        "hst_basis": _hst_basis(price_header) if price_header else None,
-        "declared_bids": declared,
-        "bids": bids,
-    }
-
-
 def store_award_summary_bids(conn, log=lambda _m: None) -> int:
-    """Parse every archived Award Summary Form not yet reflected in `bid`. Idempotent, offline.
+    """Extract and backfill bid rows from cached LLM extractions (#205)."""
+    from toronto_bids.extraction import extract_and_backfill
 
-    Reads the PDFs already on disk, not `background_pdf.text` — the form is a ruled table and
-    its cells are the record (#116).
-
-    `Number of Bids Received` is checked against what section 5 actually yields, and a
-    mismatch REFUSES the form rather than storing a partial bid table. The Bid Award Panel
-    corpus never offered that check — #94 had to infer its own ceiling from declared counts
-    and could only guess at what it was dropping. Here the form states the answer, so a silent
-    partial parse is a choice rather than an accident.
-
-    A form whose `document_number` already carries `source='award_summary'` bid rows is
-    skipped without opening the PDF (#177): the form on disk cannot change, so a form that
-    already succeeded can only ever re-derive the same rows, and pdfplumber's per-file table
-    extraction over all 229 archived forms was costing ~41s of pure repetition every night for
-    +0 new bids. This is why the return value is now "bids stored THIS run", not the corpus
-    total — the old total read as new growth in the nightly Slack summary when it never was.
-    A form that was REFUSED (declared count mismatch) has no bid rows to key the skip on, so
-    it keeps being retried every run — exactly the old behaviour, unchanged, and correct: a
-    fixed parser should pick it up on the very next run rather than needing a manual reset.
-    """
-    already = {r["document_number"] for r in conn.execute(
-        "SELECT DISTINCT document_number FROM bid "
-        "WHERE source='award_summary' AND document_number IS NOT NULL")}
-    stored = refused = skipped = 0
-    for row in conn.execute("SELECT document_number, local_path FROM background_pdf "
-                            "WHERE kind='award_summary' AND local_path IS NOT NULL"):
-        if row["document_number"] is not None and row["document_number"] in already:
-            skipped += 1
-            continue
-        try:
-            # `local_path` is an ABSOLUTE path baked in at download time on whatever machine
-            # fetched the form (download_pdf returns str(dest_dir / name)). This archive is
-            # designed to migrate — server becomes primary — so a path from the laptop that
-            # downloaded it does not exist on the server it was rsync'd to. The file's identity
-            # is its basename (the portal bin_id, which is also its filename); its location is
-            # deterministic under the CURRENT data dir. Resolve there instead of trusting the
-            # stored path.
-            path = config.AWARD_SUMMARY_DIR / Path(row["local_path"]).name
-            parsed = parse_award_summary(form_rows(path))
-        except Exception as exc:
-            log(f"    unreadable {row['document_number']}: {exc}")
-            continue
-        if not parsed or not parsed["bids"]:
-            continue
-        declared = parsed["declared_bids"]
-        # Refuse only when we parsed FEWER rows than the form declares — that means the parse
-        # lost bidders, and a partial bid table is worse than none.
-        #
-        # Parsing MORE is not a failure and must not be refused: "Number of Bids Received"
-        # sometimes counts only the COMPLIANT bids while the table lists everyone. Doc
-        # 5247418372 declares 2 and tabulates 3, the third marked '*' non-compliant at $0.00.
-        # The table is the record; the count is a summary of part of it.
-        if declared is not None and len(parsed["bids"]) < declared:
-            log(f"    refused {parsed['document_number']}: form declares {declared} bids, "
-                f"parsed {len(parsed['bids'])}")
-            refused += 1
-            continue
-        for bid in parsed["bids"]:
-            db.upsert_row(conn, Bid(
-                reference=None,                       # no council item exists for these
-                document_number=parsed["document_number"] or row["document_number"],
-                bidder_name_raw=bid["bidder_name_raw"],
-                bid_price=bid["bid_price"],
-                hst_basis=parsed["hst_basis"],
-                price_header=parsed["price_header"],
-                source="award_summary",
-            ), overwrite=True)
-            stored += 1
-    conn.commit()
-    if refused:
-        # Never silent: a refused form is a known gap, and one nobody prints reads as coverage.
-        log(f"  award summary forms refused on a bid-count mismatch: {refused}")
-    if skipped:
-        log(f"  award summary forms already stored, skipped: {skipped}")
-    return stored
+    result = extract_and_backfill(conn, "award_summary", log=log)
+    return result["bids_written"]

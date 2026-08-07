@@ -375,7 +375,13 @@ def backfill_from_extraction(conn, corpus) -> dict:
     Uses the rebuild pattern: deletes old source rows, inserts new ones
     from extraction_cache. Returns counts of what was written.
     """
-    from toronto_bids.models import AgencyAward, AgencyBid, Bid, CompositeAward
+    from toronto_bids.models import (
+        AgencyAward,
+        AgencyBid,
+        AgencySolicitation,
+        Bid,
+        CompositeAward,
+    )
     from toronto_bids.store.db import upsert_row
 
     sql_where = CORPORA.get(corpus)
@@ -402,6 +408,7 @@ def backfill_from_extraction(conn, corpus) -> dict:
         if buyer_row:
             buyer_id = buyer_row["id"]
 
+    solicitations_written = 0
     bids_written = 0
     awards_written = 0
 
@@ -415,6 +422,22 @@ def backfill_from_extraction(conn, corpus) -> dict:
                 ref = contract.get("reference", "")
                 if not ref:
                     continue
+                has_awards = bool(contract.get("awards"))
+                upsert_row(
+                    conn,
+                    AgencySolicitation(
+                        buyer_id=buyer_id,
+                        native_ref=ref,
+                        title=contract.get("title"),
+                        status="awarded" if has_awards else None,
+                        posted_date=None,
+                        closing_date=None,
+                        portal_url=None,
+                        source=source,
+                    ),
+                    overwrite=False,
+                )
+                solicitations_written += 1
                 for bid in contract.get("bids", []):
                     name = bid.get("supplier_name")
                     if not name:
@@ -443,6 +466,10 @@ def backfill_from_extraction(conn, corpus) -> dict:
                             native_ref=ref,
                             supplier_name_raw=name,
                             award_amount=award.get("amount_raw"),
+                            value_confidential=1
+                            if award.get("value_confidential")
+                            else 0,
+                            award_date=None,
                             report_url=row["url"],
                             source=source,
                         ),
@@ -503,9 +530,55 @@ def backfill_from_extraction(conn, corpus) -> dict:
     return {
         "corpus": corpus,
         "docs_processed": len(rows),
+        "solicitations_written": solicitations_written,
         "bids_written": bids_written,
         "awards_written": awards_written,
     }
+
+
+def extract_and_backfill(conn, corpus, *, log=lambda _m: None) -> dict:
+    """Extract any uncached documents via LLM, then backfill store tables.
+
+    If OPENROUTER_API_KEY is unset and all documents are already cached,
+    the extraction step is skipped and only backfill runs.
+    """
+    from toronto_bids.config import CLASSIFICATION_LABELS_PATH
+    from toronto_bids.extract import ExtractionClient
+
+    labels = {}
+    if CLASSIFICATION_LABELS_PATH.exists():
+        labels = load_classification_labels(CLASSIFICATION_LABELS_PATH)
+
+    try:
+        client = ExtractionClient()
+        stats = extract_corpus(conn, corpus, client=client, labels=labels, log=log)
+        log(
+            f"  extraction: {stats['extracted']} new, "
+            f"{stats['cached']} cached, {stats['errors']} errors"
+        )
+    except ValueError:
+        uncached = _count_uncached(conn, corpus, labels)
+        if uncached > 0:
+            raise
+        log("  extraction: all documents cached, skipping API call")
+
+    return backfill_from_extraction(conn, corpus)
+
+
+def _count_uncached(conn, corpus, labels) -> int:
+    """Count documents in a corpus that are not yet in the extraction cache."""
+    sql_where = CORPORA[corpus]
+    rows = conn.execute(
+        f"SELECT sha256, url FROM background_pdf "
+        f"WHERE {sql_where} AND sha256 IS NOT NULL",
+    ).fetchall()
+    count = 0
+    for row in rows:
+        if row["url"] in labels and not labels[row["url"]]:
+            continue
+        if not is_extracted(conn, row["sha256"], EXTRACTOR_VERSION):
+            count += 1
+    return count
 
 
 def validate_against_ground_truth(conn, ground_truth_path) -> dict:

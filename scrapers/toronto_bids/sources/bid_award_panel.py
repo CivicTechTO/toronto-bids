@@ -22,6 +22,7 @@ TMMIS is Akamai-gated: plain HTTP gets 403 (verified), as does anything without 
 browser. So fetching needs the headed Chromium behind the `council` extra, exactly as
 sources/council.py already does. Parsing is pure and testable against saved HTML.
 """
+
 import json
 import pathlib
 import re
@@ -33,12 +34,11 @@ from lxml import html as _html
 from lxml.html import HtmlComment
 
 from toronto_bids import config
-from toronto_bids.linking.call_number import normalize_call_number
+from toronto_bids.amount import parse_amount
 from toronto_bids.linking.document_number import normalize_document_number
 from toronto_bids.linking.supplier import supplier_key
-from toronto_bids.amount import parse_amount
+from toronto_bids.models import BackgroundPdf, Bid, CouncilItem
 from toronto_bids.sources.council import pdf_kind
-from toronto_bids.models import BackgroundPdf, Bid, CompositeAward, CouncilItem
 from toronto_bids.store import db
 
 AGENDA_URL = "https://secure.toronto.ca/council/report.do"
@@ -49,14 +49,18 @@ AGENDA_URL = "https://secure.toronto.ca/council/report.do"
 # structure throughout: same "Award of <id> to <supplier> for <subject>" heading, same
 # "Contract Award Value ... net of all applicable taxes" block, same bid tables, same
 # background-file PDFs. One series succeeded the other; nothing else changed.
-_ITEM_HEADING = re.compile(r"^\s*(?P<ref>B[AD]\d+\.\d+)\s*-\s*(?P<title>.+?)\s*$", re.S)
+_ITEM_HEADING = re.compile(
+    r"^\s*(?P<ref>B[AD]\d+\.\d+)\s*-\s*(?P<title>.+?)\s*$", re.DOTALL
+)
 _TEN_DIGIT = re.compile(r"\d{10}")
 _WS = re.compile(r"\s+")
 # Collapse spaces/tabs but keep newlines: item headings are found by line.
 _WS_LINES = re.compile(r"[ \t]+")
 
 # Item titles that are panel housekeeping, never an award.
-_NOT_AN_AWARD = re.compile(r"^(election of|confirmation of minutes|declarations? of)", re.I)
+_NOT_AN_AWARD = re.compile(
+    r"^(election of|confirmation of minutes|declarations? of)", re.IGNORECASE
+)
 
 
 def _clean(text):
@@ -84,19 +88,21 @@ def parse_agenda(html: str, meeting: str) -> list[dict]:
             doc = normalize_document_number(hit)
             if doc and doc not in docs:
                 docs.append(doc)
-        items.append({
-            "reference": f"{meeting}.{m.group('ref').split('.', 1)[1]}",
-            "meeting": meeting,
-            "title": title,
-            "document_numbers": docs,
-        })
+        items.append(
+            {
+                "reference": f"{meeting}.{m.group('ref').split('.', 1)[1]}",
+                "meeting": meeting,
+                "title": title,
+                "document_numbers": docs,
+            }
+        )
     return items
 
 
 # TMMIS answers 200 with an error page for a reference that is not real, and it has more than
 # one way of saying so. Missing either one records an error page as an agenda.
 _MISSING_MARKERS = (
-    "this meeting is not available",       # e.g. 2018.BA10
+    "this meeting is not available",  # e.g. 2018.BA10
     "the published report was not found",  # e.g. 2007.BD1
 )
 
@@ -125,6 +131,7 @@ def agenda_fetcher(virtual_display: bool = False):
     display = None
     if virtual_display:
         from pyvirtualdisplay import Display
+
         display = Display(visible=False, size=(1440, 900))
         display.start()
     try:
@@ -136,8 +143,11 @@ def agenda_fetcher(virtual_display: bool = False):
                 page = browser.new_context().new_page()
 
                 def fetch(meeting: str) -> str:
-                    page.goto(f"{AGENDA_URL}?meeting={meeting}&type=agenda",
-                              wait_until="domcontentloaded", timeout=45000)
+                    page.goto(
+                        f"{AGENDA_URL}?meeting={meeting}&type=agenda",
+                        wait_until="domcontentloaded",
+                        timeout=45000,
+                    )
                     page.wait_for_timeout(700)
                     return page.content()
 
@@ -155,15 +165,31 @@ def agenda_date(html: str) -> str | None:
     This is how a probe confirms it landed on the meeting it meant to: references cannot be
     derived reliably (see meeting_date_index), so we guess a reference and check the date.
     """
-    m = re.search(r"Meeting Date:\s*</?[^>]*>?\s*\w+day,\s*(\w+)\s+(\d{1,2}),\s*(\d{4})",
-                  _clean(_html.fromstring(html).text_content()) if "<" in html else html)
+    m = re.search(
+        r"Meeting Date:\s*</?[^>]*>?\s*\w+day,\s*(\w+)\s+(\d{1,2}),\s*(\d{4})",
+        _clean(_html.fromstring(html).text_content()) if "<" in html else html,
+    )
     if not m:
-        m = re.search(r"\w+day,\s*(\w+)\s+(\d{1,2}),\s*(\d{4})",
-                      _clean(_html.fromstring(html).text_content()))
+        m = re.search(
+            r"\w+day,\s*(\w+)\s+(\d{1,2}),\s*(\d{4})",
+            _clean(_html.fromstring(html).text_content()),
+        )
     if not m:
         return None
-    month = ("january february march april may june july august september october "
-             "november december").split().index(m.group(1).lower()) + 1
+    month = [
+        "january",
+        "february",
+        "march",
+        "april",
+        "may",
+        "june",
+        "july",
+        "august",
+        "september",
+        "october",
+        "november",
+        "december",
+    ].index(m.group(1).lower()) + 1
     return f"{m.group(3)}-{month:02d}-{int(m.group(2)):02d}"
 
 
@@ -187,9 +213,16 @@ def agenda_date(html: str) -> str | None:
 # losing every 2009-2010 meeting — which is exactly what happened on the first run.
 
 
-def discover_meetings(fetch, log=lambda _m: None, max_per_term=260, stop_after_misses=4,
-                      *, term_starts, closed_terms: dict | None = None,
-                      on_term_closed=lambda key, last_n: None):
+def discover_meetings(
+    fetch,
+    log=lambda _m: None,
+    max_per_term=260,
+    stop_after_misses=4,
+    *,
+    term_starts,
+    closed_terms: dict | None = None,
+    on_term_closed=lambda key, last_n: None,
+):
     """Walk each term's meetings, returning {reference: html} for every agenda that exists.
 
     References cannot be derived from the City's published schedule: it lists dates but omits
@@ -242,7 +275,9 @@ def discover_meetings(fetch, log=lambda _m: None, max_per_term=260, stop_after_m
                     break
             if html is None:
                 misses += 1
-                log(f"  {series} {term}: no meeting {n} (miss {misses}/{stop_after_misses})")
+                log(
+                    f"  {series} {term}: no meeting {n} (miss {misses}/{stop_after_misses})"
+                )
                 if misses >= stop_after_misses:
                     last_n = n - misses
                     log(f"  {series} {term}: stopping after {last_n} meetings")
@@ -274,8 +309,11 @@ def store_items(conn, agendas: dict) -> int:
     n = 0
     for meeting, html in agendas.items():
         for item in parse_agenda(html, meeting):
-            db.upsert_row(conn, CouncilItem(reference=item["reference"],
-                                            title=item["title"]), overwrite=True)
+            db.upsert_row(
+                conn,
+                CouncilItem(reference=item["reference"], title=item["title"]),
+                overwrite=True,
+            )
             n += 1
     conn.commit()
     return n
@@ -290,12 +328,18 @@ def fill_titles_from_council(conn) -> int:
 
     Returns the number of solicitations named. Idempotent.
     """
-    missing = {r["document_number"] for r in
-               conn.execute("SELECT document_number FROM solicitation WHERE title IS NULL")}
+    missing = {
+        r["document_number"]
+        for r in conn.execute(
+            "SELECT document_number FROM solicitation WHERE title IS NULL"
+        )
+    }
     if not missing:
         return 0
     filled = {}
-    for row in conn.execute("SELECT reference, title FROM council_item WHERE title IS NOT NULL"):
+    for row in conn.execute(
+        "SELECT reference, title FROM council_item WHERE title IS NOT NULL"
+    ):
         for hit in _TEN_DIGIT.findall(row["title"]):
             doc = normalize_document_number(hit)
             # First council item wins: agendas are walked oldest-first, so the original
@@ -305,7 +349,8 @@ def fill_titles_from_council(conn) -> int:
     conn.executemany(
         "UPDATE solicitation SET title = ?, title_source = 'bid_award_panel' "
         "WHERE document_number = ? AND title IS NULL",
-        [(t, d) for d, t in filled.items()])
+        [(t, d) for d, t in filled.items()],
+    )
     conn.commit()
     return len(filled)
 
@@ -338,8 +383,9 @@ def _load_closed_terms(agenda_dir) -> dict:
         return {}
 
 
-def scrape_agendas(agenda_dir, *, virtual_display: bool = False, log=lambda _m: None,
-                   term_starts) -> dict:
+def scrape_agendas(
+    agenda_dir, *, virtual_display: bool = False, log=lambda _m: None, term_starts
+) -> dict:
     """Discover and cache every agenda, returning {reference: html}.
 
     Resumable and safe to re-run: an agenda already on disk is never refetched, so a second
@@ -367,6 +413,7 @@ def scrape_agendas(agenda_dir, *, virtual_display: bool = False, log=lambda _m: 
         _closed_terms_path(root).write_text(json.dumps(closed_terms))
 
     with agenda_fetcher(virtual_display=virtual_display) as fetch_live:
+
         def fetch(meeting: str) -> str:
             cached = root / f"{meeting}.html"
             if cached.exists():
@@ -374,12 +421,17 @@ def scrape_agendas(agenda_dir, *, virtual_display: bool = False, log=lambda _m: 
             html = fetch_live(meeting)
             if not agenda_is_missing(html):
                 # Store <main> only: the rest is nav, sharing widgets and a language picker.
-                match = re.search(r"(<main.*</main>)", html, re.S)
+                match = re.search(r"(<main.*</main>)", html, re.DOTALL)
                 cached.write_text(match.group(1) if match else html)
             return html
 
-        return discover_meetings(fetch, log=log, term_starts=term_starts,
-                                 closed_terms=closed_terms, on_term_closed=_persist_closed)
+        return discover_meetings(
+            fetch,
+            log=log,
+            term_starts=term_starts,
+            closed_terms=closed_terms,
+            on_term_closed=_persist_closed,
+        )
 
 
 def parse_agenda_pdfs(html: str, meeting: str) -> list[dict]:
@@ -409,7 +461,11 @@ def parse_agenda_pdfs(html: str, meeting: str) -> list[dict]:
         if el.tag != "a":
             continue
         url = el.get("href") or ""
-        if "/legdocs/mmis/" not in url or not url.lower().endswith(".pdf") or url in seen:
+        if (
+            "/legdocs/mmis/" not in url
+            or not url.lower().endswith(".pdf")
+            or url in seen
+        ):
             continue
         seen.add(url)
         out.append({"url": url, "reference": reference, "kind": pdf_kind(url)})
@@ -427,8 +483,13 @@ def store_background_pdfs(conn, agendas: dict) -> int:
     n = 0
     for meeting, html in agendas.items():
         for pdf in parse_agenda_pdfs(html, meeting):
-            db.upsert_row(conn, BackgroundPdf(url=pdf["url"], reference=pdf["reference"],
-                                              kind=pdf["kind"]), overwrite=False)
+            db.upsert_row(
+                conn,
+                BackgroundPdf(
+                    url=pdf["url"], reference=pdf["reference"], kind=pdf["kind"]
+                ),
+                overwrite=False,
+            )
             n += 1
     conn.commit()
     return n
@@ -440,8 +501,10 @@ def store_background_pdfs(conn, agendas: dict) -> int:
 # agenda, because the Bid Committee parser accepted a header the Bid Award Panel one refused.
 _BIDDER_HDR = re.compile(
     r"^\s*(supplier|bidder|proponent|firm|vendor|company|respondent)s?"
-    r"[\s/]*(name|names|or proponent name)?\s*$", re.I)
-_PRICE_HDR = re.compile(r"bid price|bid amount|price|quotation", re.I)
+    r"[\s/]*(name|names|or proponent name)?\s*$",
+    re.IGNORECASE,
+)
+_PRICE_HDR = re.compile(r"bid price|bid amount|price|quotation", re.IGNORECASE)
 # "including H.S.T." vs "excluding H.S.T." is a real difference — 1,307 tables say one and
 # 1,048 the other. A bare price column would silently mix the two bases.
 # "incl\w*\.?" not "includ\w*": the Bid Committee overwhelmingly abbreviates, and
@@ -449,8 +512,12 @@ _PRICE_HDR = re.compile(r"bid price|bid amount|price|quotation", re.I)
 # full word reads those as basis-unknown, which is the one thing a bid price must not be —
 # 5,801 bids include HST and 4,097 exclude it, so an unmarked price is two incomparable
 # things in one column (#84).
-_HST_INCLUDING = re.compile(r"\bincl\w*\.?\s*(all applicable taxes|h\.?s\.?t)", re.I)
-_HST_EXCLUDING = re.compile(r"\bexcl\w*\.?\s*(all applicable taxes|h\.?s\.?t)", re.I)
+_HST_INCLUDING = re.compile(
+    r"\bincl\w*\.?\s*(all applicable taxes|h\.?s\.?t)", re.IGNORECASE
+)
+_HST_EXCLUDING = re.compile(
+    r"\bexcl\w*\.?\s*(all applicable taxes|h\.?s\.?t)", re.IGNORECASE
+)
 # Footnote markers ride on both names and prices: '$2,982,036.67*', 'Smith and Long Ltd.**'.
 # They point at a note under the table ('*includes contingency', '**found non-compliant'), so
 # the raw string keeps them and only the parse strips them.
@@ -495,8 +562,8 @@ def _hst_basis(header: str) -> str | None:
 # The same agendas also put the bidders in the FOLLOWING rows instead, offset by the rowspan
 # cell, and mix the two freely. Both reduce to the same rule: zip the bidder column's lines
 # against the price column's lines.
-_CELL_BLOCK_END = re.compile(r"</(p|div|li|tr|td)>", re.I)
-_CELL_BR = re.compile(r"<br\s*/?>", re.I)
+_CELL_BLOCK_END = re.compile(r"</(p|div|li|tr|td)>", re.IGNORECASE)
+_CELL_BR = re.compile(r"<br\s*/?>", re.IGNORECASE)
 
 
 def _cell_lines(cell) -> list[str]:
@@ -507,16 +574,21 @@ def _cell_lines(cell) -> list[str]:
     """
     markup = _CELL_BR.sub("\n", etree.tostring(cell, encoding="unicode"))
     text = _html.fromstring(_CELL_BLOCK_END.sub("\n", markup)).text_content()
-    return [line.strip() for line in text.replace("\xa0", " ").split("\n") if line.strip()]
+    return [
+        line.strip() for line in text.replace("\xa0", " ").split("\n") if line.strip()
+    ]
 
 
 # A BD heading occupies its cell alone ("Firm Name"), unlike the appendix label
 # "Recommended Bidder:" which carries its value beside it.
 _BD_BIDDER_HDR = re.compile(
     r"^(bidder|firm|proponent|company|contractor|supplier|vendor)s?[\s/]*(name|names)?\s*:?$",
-    re.I)
+    re.IGNORECASE,
+)
 # What can stand in a price column: an amount, or the outcome the City writes instead of one.
-_BD_PRICEY = re.compile(r"\$|\d[\d,]*\.\d{2}|non.?compliant|no bid|withdrawn|informal", re.I)
+_BD_PRICEY = re.compile(
+    r"\$|\d[\d,]*\.\d{2}|non.?compliant|no bid|withdrawn|informal", re.IGNORECASE
+)
 
 
 def _parse_bd_bid_table(table, reference: str, docs: list) -> list[dict]:
@@ -535,20 +607,27 @@ def _parse_bd_bid_table(table, reference: str, docs: list) -> list[dict]:
     out = []
     for index, row in enumerate(rows):
         columns = [_cell_lines(c) for c in row.xpath("./td|./th")]
-        bidder_col = next((i for i, c in enumerate(columns)
-                           if c and _BD_BIDDER_HDR.match(c[0])), None)
+        bidder_col = next(
+            (i for i, c in enumerate(columns) if c and _BD_BIDDER_HDR.match(c[0])), None
+        )
         if bidder_col is None:
             continue
-        price_col = next((i for i, c in enumerate(columns)
-                          if c and i != bidder_col and _PRICE_HDR.search(c[0])), None)
+        price_col = next(
+            (
+                i
+                for i, c in enumerate(columns)
+                if c and i != bidder_col and _PRICE_HDR.search(c[0])
+            ),
+            None,
+        )
         if price_col is None:
             continue
         price_header = columns[price_col][0]
 
         pairs = []
-        if len(columns[bidder_col]) > 1:          # the column's values share its header cell
+        if len(columns[bidder_col]) > 1:  # the column's values share its header cell
             pairs.append((columns[bidder_col][1:], columns[price_col][1:]))
-        for later in rows[index + 1:]:            # ...or sit in the rows below it
+        for later in rows[index + 1 :]:  # ...or sit in the rows below it
             cells = [_cell_lines(c) for c in later.xpath("./td|./th")]
             if not cells:
                 break
@@ -561,25 +640,28 @@ def _parse_bd_bid_table(table, reference: str, docs: list) -> list[dict]:
                 break
             names, prices = cells[bidder_col - offset], cells[price_col - offset]
             if not names or not prices or not any(_BD_PRICEY.search(p) for p in prices):
-                break                              # left the bid table
+                break  # left the bid table
             pairs.append((names, prices))
 
         for names, prices in pairs:
             if len(names) != len(prices):
-                continue                           # cannot pair positionally; refuse
+                continue  # cannot pair positionally; refuse
             for name, price in zip(names, prices):
-                name = _NAME_MARKERS.sub("", _ROW_NUMBER_PREFIX.sub(
-                    "", _NAME_MARKERS.sub("", name)))
+                name = _NAME_MARKERS.sub(
+                    "", _ROW_NUMBER_PREFIX.sub("", _NAME_MARKERS.sub("", name))
+                )
                 if not name or not _BD_PRICEY.search(price):
                     continue
-                out.append({
-                    "reference": reference,
-                    "document_number": docs[0] if docs else None,
-                    "bidder_name_raw": name,
-                    "bid_price": price or None,
-                    "hst_basis": _hst_basis(price_header),
-                    "price_header": price_header,
-                })
+                out.append(
+                    {
+                        "reference": reference,
+                        "document_number": docs[0] if docs else None,
+                        "bidder_name_raw": name,
+                        "bid_price": price or None,
+                        "hst_basis": _hst_basis(price_header),
+                        "price_header": price_header,
+                    }
+                )
     return out
 
 
@@ -604,8 +686,11 @@ def parse_bid_tables(html: str, meeting: str) -> list[dict]:
             m = _ITEM_HEADING.match(_clean(el.text_content()))
             if m:
                 reference = f"{meeting}.{m.group('ref').split('.', 1)[1]}"
-                docs = [d for hit in _TEN_DIGIT.findall(m.group("title"))
-                        if (d := normalize_document_number(hit))]
+                docs = [
+                    d
+                    for hit in _TEN_DIGIT.findall(m.group("title"))
+                    if (d := normalize_document_number(hit))
+                ]
             continue
         if el.tag != "table":
             continue
@@ -623,33 +708,44 @@ def parse_bid_tables(html: str, meeting: str) -> list[dict]:
             # hold a whole column. Testing it before the fallback skipped those outright.
             out.extend(_parse_bd_bid_table(el, reference, docs))
             continue
-        price_col = next((i for i, h in enumerate(header) if i and _PRICE_HDR.search(h)), None)
+        price_col = next(
+            (i for i, h in enumerate(header) if i and _PRICE_HDR.search(h)), None
+        )
         price_header = header[price_col] if price_col is not None else None
         for row in rows[1:]:
             cells = [_clean(c.text_content()) for c in row.xpath(".//td|.//th")]
             # An undeclared leading row-number column shifts every cell left, dropping the
             # bidder name into the price. Realign against the header before reading either.
-            while (len(cells) > len(header) and cells
-                   and _ROW_NUMBER_CELL.match(cells[0] or "")):
+            while (
+                len(cells) > len(header)
+                and cells
+                and _ROW_NUMBER_CELL.match(cells[0] or "")
+            ):
                 cells = cells[1:]
             if not cells or not cells[0]:
                 continue
-            name = _NAME_MARKERS.sub("", _ROW_NUMBER_PREFIX.sub(
-                "", _NAME_MARKERS.sub("", cells[0])))
+            name = _NAME_MARKERS.sub(
+                "", _ROW_NUMBER_PREFIX.sub("", _NAME_MARKERS.sub("", cells[0]))
+            )
             if not name:
                 continue
-            price = cells[price_col] if (price_col is not None
-                                         and len(cells) > price_col) else None
-            out.append({
-                "reference": reference,
-                # Pre-2019 items name no document number (Toronto adopted Ariba ~2019), so a
-                # bid can be real and unattributable. Kept anyway — #77 wants exactly these.
-                "document_number": docs[0] if docs else None,
-                "bidder_name_raw": name,
-                "bid_price": price or None,
-                "hst_basis": _hst_basis(price_header) if price_header else None,
-                "price_header": price_header,
-            })
+            price = (
+                cells[price_col]
+                if (price_col is not None and len(cells) > price_col)
+                else None
+            )
+            out.append(
+                {
+                    "reference": reference,
+                    # Pre-2019 items name no document number (Toronto adopted Ariba ~2019), so a
+                    # bid can be real and unattributable. Kept anyway — #77 wants exactly these.
+                    "document_number": docs[0] if docs else None,
+                    "bidder_name_raw": name,
+                    "bid_price": price or None,
+                    "hst_basis": _hst_basis(price_header) if price_header else None,
+                    "price_header": price_header,
+                }
+            )
     return out
 
 
@@ -668,12 +764,16 @@ def store_bids(conn, agendas: dict) -> int:
 
 
 # "Award of Tender Call No. 14-2017 to Ontario Excavac Inc. for Replacement of ..."
-_WINNER = re.compile(r"\bto\s+(.+?)\s+for\s+", re.I)
+_WINNER = re.compile(r"\bto\s+(.+?)\s+for\s+", re.IGNORECASE)
 # Council publishes THREE figures per award. Calibrated against 980 Ariba-era items where the
 # document number gives ground truth: award_amount is the "net of all applicable taxes" one
 # (820/980 = 84%). "including HST" matched 0; "net of HST recoveries" matched 4.
-_NET_OF_TAXES = re.compile(r"\$([\d,]+(?:\.\d+)?)\s*net of all applicable taxes", re.I)
-_ITEM_SPLIT_CAP = re.compile(r"(B[AD]\d+\.\d+) - ")   # capturing: keeps the 'BD106.3' item token
+_NET_OF_TAXES = re.compile(
+    r"\$([\d,]+(?:\.\d+)?)\s*net of all applicable taxes", re.IGNORECASE
+)
+_ITEM_SPLIT_CAP = re.compile(
+    r"(B[AD]\d+\.\d+) - "
+)  # capturing: keeps the 'BD106.3' item token
 
 
 def parse_pre_ariba_awards(html: str, meeting: str | None = None) -> list[dict]:
@@ -691,33 +791,42 @@ def parse_pre_ariba_awards(html: str, meeting: str | None = None) -> list[dict]:
     recorded against the reference (#124), not only used to fill a title.
     """
     text = _WS_LINES.sub(" ", _html.fromstring(html).text_content())
-    parts = _ITEM_SPLIT_CAP.split(text)          # [pre, reftoken1, chunk1, reftoken2, chunk2, ...]
+    parts = _ITEM_SPLIT_CAP.split(
+        text
+    )  # [pre, reftoken1, chunk1, reftoken2, chunk2, ...]
     year = (meeting or "").split(".")[0] if meeting else None
     out = []
     for i in range(1, len(parts) - 1, 2):
         reftoken, chunk = parts[i], parts[i + 1]
         head = chunk[:400]
         if _TEN_DIGIT.search(head):
-            continue                      # names a doc number — joins directly, not our case
+            continue  # names a doc number — joins directly, not our case
         winner, value = _WINNER.search(head), _NET_OF_TAXES.search(chunk)
         if not (winner and value):
             continue
         amount = parse_amount(value.group(1))
         if amount is None:
             continue
-        out.append({"reference": f"{year}.{reftoken}" if year else None,
-                    "title": _clean(head.split("\n")[0]),
-                    "winner_raw": _clean(winner.group(1)),
-                    "award_value": amount})
+        out.append(
+            {
+                "reference": f"{year}.{reftoken}" if year else None,
+                "title": _clean(head.split("\n")[0]),
+                "winner_raw": _clean(winner.group(1)),
+                "award_value": amount,
+            }
+        )
     return out
 
 
 # Legal-form noise that varies freely between how council writes a supplier and how the feed
 # does: 'Sanscon Construction Limited' vs 'Sanscon Construction Ltd.', 'Liftsafe Engineering &
 # Service Group' vs '... and Service Group', 'The Municipal Infrastructure Group,'.
-_LEGAL_NOISE = re.compile(r"\b(limited|ltd|incorporated|inc|corporation|corp|company|co|"
-                          r"lp|llp|ulc|holdings|group|canada|ontario)\b", re.I)
-_LEADING_THE = re.compile(r"^the\s+", re.I)
+_LEGAL_NOISE = re.compile(
+    r"\b(limited|ltd|incorporated|inc|corporation|corp|company|co|"
+    r"lp|llp|ulc|holdings|group|canada|ontario)\b",
+    re.IGNORECASE,
+)
+_LEADING_THE = re.compile(r"^the\s+", re.IGNORECASE)
 
 
 def supplier_tokens(name: str | None) -> set:
@@ -754,7 +863,7 @@ def match_pre_ariba_titles(conn, agendas: dict) -> int:
     items = []
     for meeting, html in agendas.items():
         if meeting.split(".")[0] >= "2019":
-            continue                      # 2019+ names a document number; no need to guess
+            continue  # 2019+ names a document number; no need to guess
         items.extend(parse_pre_ariba_awards(html, meeting))
     return match_on_supplier_and_value(conn, items, "council_pre_ariba")
 
@@ -765,9 +874,12 @@ def _awards_by_value(conn):
     a title still needs its bids linked."""
     by_value = {}
     for row in conn.execute(
-            "SELECT document_number d, supplier_name_raw s, award_amount_numeric v FROM award "
-            "WHERE source='odata' AND award_amount_numeric IS NOT NULL AND supplier_name_raw IS NOT NULL"):
-        by_value.setdefault(round(row["v"]), []).append((supplier_tokens(row["s"]), row["d"]))
+        "SELECT document_number d, supplier_name_raw s, award_amount_numeric v FROM award "
+        "WHERE source='odata' AND award_amount_numeric IS NOT NULL AND supplier_name_raw IS NOT NULL"
+    ):
+        by_value.setdefault(round(row["v"]), []).append(
+            (supplier_tokens(row["s"]), row["d"])
+        )
     return by_value
 
 
@@ -783,393 +895,54 @@ def match_pre_ariba_solicitations(conn, agendas: dict) -> int:
     links = {}
     for meeting, html in agendas.items():
         if meeting.split(".")[0] >= "2019":
-            continue                          # 2019+ names a document number directly
+            continue  # 2019+ names a document number directly
         for item in parse_pre_ariba_awards(html, meeting):
             if not item["reference"]:
                 continue
             want = supplier_tokens(item["winner_raw"])
-            docs = {doc for toks, doc in by_value.get(round(item["award_value"]), []) if want & toks}
+            docs = {
+                doc
+                for toks, doc in by_value.get(round(item["award_value"]), [])
+                if want & toks
+            }
             if len(docs) == 1:
                 links[item["reference"]] = docs.pop()
     conn.execute("DELETE FROM solicitation_link")
     conn.executemany(
         "INSERT INTO solicitation_link (reference, document_number, method) VALUES (?, ?, 'council_pre_ariba')",
-        list(links.items()))
+        list(links.items()),
+    )
     conn.commit()
     return len(links)
 
 
-# --- composite reports (#93) ------------------------------------------------------------
-#
-# 2009-2012 agendas do not describe their awards. One item carries many:
-#
-#     BD100.1 - Contract Awards - November 21 - Composite Report
-#
-# and the agenda body only says the details are "set out in the appendices of this report".
-# It names no amount, so #77's (supplier, value) join has nothing to stand on, and the feed
-# offers no identifier to fall back to: probing Posting_Title and
-# Solicitation_Document_Description for all 3,628 title-less rows returned an identifier on
-# zero of them. Matching on (supplier, award date) instead was measured against 880
-# ground-truth items and rejected — at a 30-day window it is 21% wrong.
-#
-# The appendices of the linked staff-report PDF do carry all of it, in the same shape #77
-# already reads:
-#
-#     Call No:            Request for Quotation 3917-12-7226
-#     Description:        For the non exclusive provision of ... Concrete Cutting Services
-#     Recommended Bidder: Accrue Contracting Ltd.
-#     Contract Award Value:
-#         $420,000.00 net of all applicable taxes and charges     <- the figure #77 calibrated
-#         $474,600.00 including all applicable taxes and charges
-#         $427,392.00 net of HST recoveries
-#
-# So this parses the appendices and hands them to the same join. Those PDFs are plain HTTP —
-# only TMMIS itself is Akamai-gated — and they are already indexed in background_pdf by
-# store_background_pdfs, so the download is bounded and needs no browser.
-# Lookahead so the block keeps its own "Call No:" label — a plain split would eat the
-# delimiter and the call number with it.
-_APPENDIX_BLOCK = re.compile(r"(?=Call No:)", re.I)
-
-
-# An appendix is a run of "Label:" fields, and the value may sit on the label's line or the
-# lines below it. A regex lookahead for the next label cannot read this safely: it has to
-# enumerate what a label looks like, and the real ones defeat any tidy guess —
-# "Contract Award Value*:" (84), "Contract Award Values*:" (19) and
-# "Recommended Bidder/Proponent:" (18) all carry punctuation, so a [A-Za-z ]+ lookahead runs
-# straight past them and swallows the whole value block into the supplier name. That misread
-# 201 of 1,076 bidder fields. Walking lines instead makes the terminator explicit.
-# The length bound is load-bearing and was too tight at 34: "Total Potential Contract Award
-# Value:" is 36 characters, so it was not recognized as a label at all and the supplier name
-# ran straight through it into the amount ("Pitney Bowes of Canada Ltd. Total Potential
-# Contract Award Value: $3,676,730.40").
-_LABEL_LINE = re.compile(r"^[ \t]*([A-Z][A-Za-z ./&'-]{2,44})\*?:[ \t]*(.*)$")
-# An appendix can span a page break, which drops the running header, the page number and the
-# next "APPENDIX #n" banner into the middle of a field. One such header was captured verbatim
-# as a supplier name ("Contract Awards – Bid Committee Composite Report – January 26, 2011").
-_APX_FURNITURE = re.compile(
-    r"^\s*(?:\d{1,3}|Contract Awards.*Composite Report.*|APPENDIX\s*#?\s*\d*)\s*$", re.I)
-# Council footnotes the corrected tender prices ("*Tender price corrected for mathematical
-# errors..."), which belongs to no field.
-_APX_FOOTNOTE = re.compile(r"^\s*[*^+†‡]")
-# The same section headings sometimes arrive with no colon at all, which is invisible to
-# _LABEL_LINE and so does not end the field before it. Left unhandled the supplier swallows
-# the value block behind it — 24 names ran past their firm into "... Contract Award Value
-# Date of award to December 31, 2011", one to 735 characters.
-_APX_SECTION_NO_COLON = re.compile(
-    r"^\s*(?:Contract Award Values?|Financial Impact|Number of (?:Bids|Proposals)|"
-    r"Range of Scores|Division Contacts?|Call Dates?)\b", re.I)
-
-_BIDDER_LABELS = ("recommended bidder", "recommended bidders", "recommended proponent",
-                  "recommended proponents", "recommended bidder/proponent")
-
-
-def _appendix_fields(block: str) -> dict:
-    """The block's "Label: value" fields, lowercased, with page furniture and footnotes dropped.
-
-    A blank line does not end a field — council wraps long descriptions across them — but a
-    new label does, and so does any furniture line, which is what a page break inserts.
-    """
-    out, current = {}, None
-    for line in block.split("\n"):
-        if _APX_FURNITURE.match(line) or _APX_FOOTNOTE.match(line):
-            current = None
-            continue
-        label = _LABEL_LINE.match(line)
-        if label:
-            current = label.group(1).strip().lower()
-            out.setdefault(current, [])
-            if label.group(2).strip():
-                out[current].append(label.group(2).strip())
-        elif _APX_SECTION_NO_COLON.match(line):
-            current = None                # a heading that lost its colon still ends the field
-        elif current is not None and line.strip():
-            out[current].append(line.strip())
-    return {k: _clean(" ".join(v)) for k, v in out.items() if v}
-
-
-def _appendix_bidder(fields: dict) -> str | None:
-    """The recommended supplier, whatever this appendix calls the field.
-
-    RFPs say "Proponent" where tenders say "Bidder", both pluralize when an award is split,
-    and one form hedges with "Bidder/Proponent". Accepting only the singular drops 41.
-    """
-    for label in _BIDDER_LABELS:
-        if fields.get(label):
-            return fields[label]
-    return None
-
-
-# "1. CDR Youngs Aggregates Inc. 2. Lafarge Aggregates 3. Vicdom Sand & Gravel (Ontario)
-# Limited" — one call, several winners, each with its own value section further down. Split
-# awards are real and must not be silently recorded as one firm with a fused name.
-_ENUMERATED_BIDDER = re.compile(r"(?:^|\s)\d{1,2}[.)]\s+")
-# A split award is also written by naming the segments each firm won:
-#     Area "A" – A&F DiCarlo Construction Inc. Area "B" – Pave-Tar Construction Ltd.
-#     Part "A" and Part "C" – SCI Interiors Part "B" – POI Business Interiors
-#     Project 1 - GENIVAR Inc. Project 2 – Stantec Consulting Ltd.
-_SEGMENTED_BIDDER = re.compile(r"\b(?:Area|Part|Project|Group|Schedule)\s*[\"'“]?[A-D0-9]\b", re.I)
-# Rosters name their winners without any marker at all ("Ability Learning Network Inc. Abrigo
-# Centre ACCESS Employment Adanac Truck Driver Training Ltd. ..."), leaving length as the only
-# signal. Counting legal-form tokens looks like a better idea and is not: it flags 81 rows,
-# nearly all single firms that simply carry two ("Canadian Tire Corporation, Limited",
-# "A.J. Stone Co. Ltd.", "Furfari Paving Co. Ltd.").
-#
-# The threshold stays loose on purpose. Real single firms run to 71 characters via aliases
-# ("St. Marys Cement Inc. (Canada) d.b.a. Canada Building Materials Company", "Corporate
-# Express, Canada Inc. operating as Staples Advantage Canada"), so tightening it to catch the
-# last few unmarked pairs would drop an equal number of genuine awards — a worse trade. Three
-# unmarked pairs survive as single rows; #98 is where they get separated properly.
-_MAX_SUPPLIER_NAME = 80
-
-# How council words the net figure drifts with tax history, and the drift is not cosmetic:
-# Ontario had no HST until July 2010, so 2009 publishes only "$1,020,600.00 (Net of GST)"
-# and _NET_OF_TAXES matches none of it. Measured yield per year, narrow -> this:
-#
-#     2009    0 -> 243      (all of it; "net of GST")
-#     2010  230 -> 253      (the GST/HST transition year, mixed wording)
-#     2011  256 -> 303      ("net of all taxes and charges")
-#     2012  257 -> 277      ("net of all applicable taxes")
-#
-# Still refuses "net of HST recoveries" — a third figure #77 measured as the wrong one
-# (4/980 against ground truth). Deliberately separate from _NET_OF_TAXES, which #77
-# calibrated on Ariba-era agendas: widening that would reopen a settled measurement.
-_APX_AWARD_VALUE = re.compile(
-    r"\$([\d,]+(?:\.\d+)?)\s*\(?\s*net of (?:all )?(?:applicable )?(?:taxes|gst)\b", re.I)
-
-
-# --- split awards: one call, several winners (#98) ---------------------------------------
-#
-# The value section is the authority on HOW MUCH and the bidder field on WHO won, and the two
-# are keyed to each other. Council uses several schemes for that key, all in one corpus:
-#
-#     Recommended Bidders:  1. CDR Youngs Aggregates Inc.  2. Lafarge Aggregates
-#     Contract Award Value: 1. CDR Youngs Aggregates Inc. ... $2,589,782.50 net of ...
-#
-#     Recommended Bidder:   Firm A) WM Weller Tree Service Ltd. Firm B) Ontario Line Clearing
-#     Contract Award Value: Firm A) $4,872,017.44 net of GST
-#                           Firm B) $2,787,919.68 net of GST
-#
-# so the winner's value is the FIRST net-of-taxes figure inside that winner's own run of the
-# section — which also steps past the option-year and "total potential" figures that follow
-# it, exactly as the single-winner case does.
-_VALUE_SECTION = re.compile(
-    r"Contract Award Values?\*?:?\s*\n(.*?)(?=\n\s*(?:Number of (?:Bids|Proposals)|"
-    r"Financial Impact|Division Contacts?|Range of Scores|Call No|Ward No|Call Dates)\b|\Z)",
-    re.S | re.I)
-_VALUE_ENTRY = re.compile(
-    r"^[ \t]*(?:Firm\s+\(?(?P<firm>[A-H])\)|(?P<num>\d{1,2})\s*[.)]|(?P<let>[a-h])\s*\)|"
-    r"(?P<named>[A-Z][^:$\n]{3,44}):(?=\s*\$))[ \t]*(?P<rest>.*)$", re.M)
-# The value section labels its periods the same way it labels its firms, so "Option January 1,
-# 2010 to December 31, 2010: $79,800.00" reads as a winner unless this refuses it. Inventing a
-# supplier named after a date range is the exact failure this whole pass exists to avoid.
-_NOT_A_FIRM = re.compile(r"^(option|date of|from\b|to\b|total|for the period|item|part|year|"
-                         r"january|february|march|april|may|june|july|august|september|"
-                         r"october|november|december)\b|\d{4}", re.I)
-# "Firm A)" and "Firm (A)" are the same scheme; both appear.
-_BIDDER_KEYED = re.compile(
-    r"(?:Firm\s+\(?([A-H])\)|(?:^|\s)(\d{1,2})\s*[.)]\s|(?:^|\s)([a-h])\s*\)\s)")
-# What a winner won, appended to its name: "WM Weller Tree Service Ltd. – Type I and II
-# Service", "Budget Car & Truck - Award Price Schedule A, B and C". Left on, the same firm
-# keys differently here than everywhere else and forks the supplier dimension. Only a SPACED
-# dash starts one, so hyphenated firms (Levitt-Safety, Trade-Mark Industrial) are untouched.
-_WINNER_QUALIFIER = re.compile(
-    r"\s+[-–—]\s*(?:Award|Type|Price|Part|Item|for\b|Schedule|Group|Area).*$", re.I)
-# The same thing in parentheses: "Lima's Gardens & Construction Inc. (Northwest, Northeast and
-# Southwest Quadrant)", "Flow-Kleen Technology Ltd (for services in Toronto East York ...)".
-# Anchored to the end and gated on what a qualifier opens with, so a parenthetical that is
-# part of the name survives — "Vicdom Sand & Gravel (Ontario) Limited" is one firm.
-_WINNER_PAREN_QUALIFIER = re.compile(
-    # north\w* etc: council writes "Northwest"/"Northeast", where a bare `north\b` never matches.
-    r"\s*\((?:for|price\s+schedule|award|north\w*|south\w*|east\w*|west\w*|district|region|"
-    r"quadrant|part|area|item|schedule|group)\b[^)]*\)\.?\s*$", re.I)
-
-
-def _bidder_map(bidder: str) -> dict:
-    """{key: name} from the bidder field, for the schemes that key their winners."""
-    parts, out = list(_BIDDER_KEYED.finditer(bidder)), {}
-    for i, match in enumerate(parts):
-        key = (match.group(1) or match.group(2) or match.group(3) or "").lower()
-        end = parts[i + 1].start() if i + 1 < len(parts) else len(bidder)
-        name = _clean(bidder[match.end():end])
-        if key and name:
-            out[key] = name
-    return out
-
-
-def split_award_winners(block: str, bidder: str) -> list[dict] | None:
-    """Each winner of a split award with its own value, or None if the block does not say.
-
-    Returns None rather than guessing: 21 of the 51 split appendices key their value section
-    in a way this does not read (per-Item tables, per-district prose), and a wrong supplier is
-    worse than a skipped one.
-    """
-    section = _VALUE_SECTION.search(block)
-    if not section:
-        return None
-    text = section.group(1)
-    entries = [m for m in _VALUE_ENTRY.finditer(text)
-               if not (m.group("named") and _NOT_A_FIRM.match(m.group("named").strip()))]
-    if len(entries) < 2:
-        return None
-    keyed, want = _bidder_map(bidder), supplier_tokens(bidder)
-    out = []
-    for i, match in enumerate(entries):
-        end = entries[i + 1].start() if i + 1 < len(entries) else len(text)
-        value = _APX_AWARD_VALUE.search(text[match.start():end])
-        if not value:
-            continue
-        amount = parse_amount(value.group(1))
-        if amount is None:
-            continue
-        rest = (match.group("rest") or "").lstrip()
-        name = match.group("named") or (rest if rest and not rest.startswith("$") else None)
-        if not name:
-            # The value section only labels this winner; the bidder field is where it is named.
-            name = keyed.get((match.group("firm") or match.group("num")
-                              or match.group("let") or "").lower())
-        if not name:
-            continue
-        name = _clean(_WINNER_QUALIFIER.sub("", _clean(name)))
-        # repeat: a name can carry both forms ("X (Northwest Quadrant) (Southwest Quadrant)")
-        while True:
-            stripped = _clean(_WINNER_PAREN_QUALIFIER.sub("", name))
-            if stripped == name or not stripped:
-                break
-            name = stripped
-        # The bidder field is the authority on who won. A "winner" it never names is a parsing
-        # artefact, not a firm — this is what stops a date range becoming a supplier.
-        if not name or not (supplier_tokens(name) & want):
-            continue
-        out.append({"winner_raw": name, "award_value": amount})
-    return out or None
-
-
-def parse_composite_appendices(text: str) -> list[dict]:
-    """Awards from a composite staff report's appendices.
-
-    Pure: `text` is the pdftotext output already stored in background_pdf.text. Identical
-    yield with and without pdftotext's -layout (244/280 blocks either way on the 2012 sample),
-    so this reads whatever council.py:download_pdf produced without changing that path.
-
-    `award_value` is the FIRST net-of-taxes figure in the block — the initial term, excluding
-    option years. That is measured, not assumed: on the 139 appendices whose award the City's
-    feed also published, the first figure equals the feed's award_amount 137 times (98.6%).
-    The option-year and "total potential" figures below it can be twice as large.
-
-    One item per award LINE. A call awarded to several winners yields one item each, taken
-    from the value section's own per-winner runs (#98); a call this cannot split confidently
-    yields none and is reported by `split_award`, so the caller can count what it dropped.
-    """
-    out = []
-    for block in _APPENDIX_BLOCK.split(text)[1:]:
-        fields = _appendix_fields(block)
-        description, bidder = fields.get("description"), _appendix_bidder(fields)
-        value = _APX_AWARD_VALUE.search(block)
-        if not (description and bidder and value):
-            continue                      # blocks publishing no winner or no value at all
-        call_raw = fields.get("call no") or fields.get("call no.")
-        common = {
-            "call_number_raw": call_raw,
-            "call_number": normalize_call_number(call_raw),
-            # The call number is the only identifier the appendix carries, and it is what a
-            # human would search for, so it leads the title rather than being dropped.
-            "title": f"{call_raw} - {description}" if call_raw else description,
-            "description": description,
-            "split_award": False,
-        }
-
-        winners = split_award_winners(block, bidder)
-        if winners:
-            for winner in winners:
-                out.append({**common, **winner, "award_value_raw": f"${winner['award_value']:,.2f}"})
-            continue
-
-        amount = parse_amount(value.group(1))
-        if amount is None:
-            continue
-        # Not splittable: council named several winners in a way the value section does not
-        # key, so there is nothing to apportion the money by and the row is refused.
-        #
-        # A parenthetical is NOT evidence of a single firm, tempting as it looks. Some long
-        # names are one firm plus what it won ("Lafarge Paving & Construction (for winter
-        # season – South, West and North Districts)"), but just as many are two firms EACH
-        # carrying one ("Coco Paving Limited (for the North, South and West Districts) D.
-        # Crupi & Sons Limited (for the East District)"). Admitting the qualified ones
-        # recovered ~5 real awards and let in as many invented suppliers, including a 735-
-        # character prose bleed and a roster of a dozen firms. So length alone still decides,
-        # exactly as #96 had it, and the ~15 that reach here stay out of the archive.
-        out.append({
-            **common,
-            "winner_raw": bidder,
-            "award_value": amount,
-            "split_award": bool(_ENUMERATED_BIDDER.search(bidder)
-                                or _SEGMENTED_BIDDER.search(bidder)
-                                or len(bidder) > _MAX_SUPPLIER_NAME),
-            # The amount as council wrote it, WITHOUT the trailing "net of all applicable
-            # taxes" qualifier: amount.py:parse_amount is strict and refuses any string that
-            # is not a single CAD amount, so storing the whole phrase would leave
-            # award_value_numeric NULL on every row and silently zero every SUM. Which figure
-            # this is, is a property of the column (see schema.sql), not of the string.
-            "award_value_raw": f"${value.group(1)}",
-        })
-    return out
-
-
 def store_composite_awards(conn) -> int:
-    """Ingest the composite-report appendices as awards in their own keyspace (#96). Idempotent.
+    """Extract and backfill composite awards from cached LLM extractions (#205)."""
+    from toronto_bids.extraction import extract_and_backfill
 
-    This is the archive expanding backwards, not a linking pass: the City's feed publishes 0
-    awards for 2009, 1 for 2010 and 12 for 2011, against the 799 sitting in these reports. For
-    those years this table IS the record, which is why an appendix with no `document_number`
-    is ingested rather than discarded — see the composite_award comment in schema.sql.
-
-    Offline: reads background_pdf.text, so it only sees reports download_reports already
-    fetched.
-    """
-    stored = skipped = 0
-    for row in conn.execute(
-            "SELECT reference, text FROM background_pdf WHERE text IS NOT NULL AND kind='bgrd' "
-            "AND substr(reference,1,4) BETWEEN '2009' AND '2012' ORDER BY reference"):
-        for item in parse_composite_appendices(row["text"]):
-            if not item["call_number"]:
-                continue                  # nothing to key it on; 0 of 1,229 in the corpus
-            if item["split_award"]:
-                # Several winners on one call that the value section does not key in any
-                # scheme split_award_winners reads (per-Item tables, per-district prose), so
-                # there is nothing to apportion the money by. Recording the fused name as one
-                # firm would invent a supplier and hand it the first winner's money, and the
-                # dimension would then carry it as real.
-                skipped += 1
-                continue
-            db.upsert_row(conn, CompositeAward(
-                call_number=item["call_number"],
-                call_number_raw=item["call_number_raw"],
-                reference=row["reference"],
-                title=item["description"],
-                supplier_name_raw=item["winner_raw"],
-                award_value=item["award_value_raw"],
-                source="bid_committee_composite",
-            ), overwrite=True)
-            stored += 1
-    conn.commit()
-    if skipped:
-        # Never silent: a bounded skip that nobody prints reads as full coverage later.
-        print(f"    split awards skipped (several winners on one call, #98): {skipped}")
-    return stored
+    result = extract_and_backfill(conn, "composite")
+    return result["awards_written"]
 
 
 def match_composite_titles(conn) -> int:
-    """Name title-less solicitations from composite-report appendices already downloaded.
+    """Name title-less solicitations from composite awards already stored.
 
-    Offline: reads background_pdf.text, so it only sees reports fetched by
-    download_reports. Idempotent.
+    Reads from composite_award (populated by store_composite_awards via LLM extraction)
+    rather than re-parsing PDFs. Idempotent.
     """
-    items = []
-    for row in conn.execute(
-            "SELECT text FROM background_pdf WHERE text IS NOT NULL AND kind='bgrd' "
-            "AND substr(reference,1,4) BETWEEN '2009' AND '2012'"):
-        items.extend(parse_composite_appendices(row["text"]))
+    items = [
+        {
+            "title": r["title"],
+            "winner_raw": r["supplier_name_raw"],
+            "award_value": r["award_value_numeric"],
+        }
+        for r in conn.execute(
+            "SELECT title, supplier_name_raw, award_value_numeric FROM composite_award "
+            "WHERE award_value_numeric IS NOT NULL AND supplier_name_raw IS NOT NULL"
+        )
+    ]
     return match_on_supplier_and_value(conn, items, "council_composite")
+
 
 
 # The staff reports of BA items whose agenda tabulates no bids (#83). Everything else the
@@ -1194,8 +967,9 @@ _COMPOSITE_REPORTS = """
 """
 
 
-def download_reports(conn, http, query: str, label: str = "reports",
-                     dest_dir=None, log=lambda _m: None) -> int:
+def download_reports(
+    conn, http, query: str, label: str = "reports", dest_dir=None, log=lambda _m: None
+) -> int:
     """Download staff-report PDFs and store their text. Plain HTTP, no browser.
 
     Only TMMIS itself is Akamai-gated; the legdocs PDFs are ordinary HTTP. Bounded by what
@@ -1208,7 +982,8 @@ def download_reports(conn, http, query: str, label: str = "reports",
         raise RuntimeError(
             "pdftotext (poppler) is required to read staff reports but was not found on "
             "PATH. Install poppler (e.g. `brew install poppler` / `apt-get install -y "
-            "poppler-utils`).")
+            "poppler-utils`)."
+        )
     dest_dir = dest_dir if dest_dir is not None else config.COUNCIL_DOCS_DIR
     rows = conn.execute(query).fetchall()
     log(f"  {label} to fetch: {len(rows)}")
@@ -1216,15 +991,25 @@ def download_reports(conn, http, query: str, label: str = "reports",
     for i, row in enumerate(rows, 1):
         try:
             info = download_pdf(http, row["url"], dest_dir)
-            db.upsert_row(conn, BackgroundPdf(
-                url=row["url"], reference=row["reference"], kind="bgrd",
-                local_path=info["local_path"], sha256=info["sha256"], text=info["text"],
-            ), overwrite=True)
+            db.upsert_row(
+                conn,
+                BackgroundPdf(
+                    url=row["url"],
+                    reference=row["reference"],
+                    kind="bgrd",
+                    local_path=info["local_path"],
+                    sha256=info["sha256"],
+                    text=info["text"],
+                ),
+                overwrite=True,
+            )
             conn.commit()
             stored += 1
         except Exception as exc:
             conn.rollback()
-            log(f"    skipped {row['reference']}: {exc}")   # one bad PDF must not end the run
+            log(
+                f"    skipped {row['reference']}: {exc}"
+            )  # one bad PDF must not end the run
         if i % 25 == 0:
             log(f"    {i}/{len(rows)}")
     return stored
@@ -1234,11 +1019,14 @@ def _title_less_awards_by_value(conn) -> dict:
     """Title-less awards indexed by rounded value — the left side of the (value, supplier) join."""
     by_value = {}
     for row in conn.execute(
-            "SELECT a.document_number d, a.supplier_name_raw s, a.award_amount_numeric v "
-            "FROM award a JOIN solicitation sol ON sol.document_number = a.document_number "
-            "WHERE a.source='odata' AND a.award_amount_numeric IS NOT NULL "
-            "AND a.supplier_name_raw IS NOT NULL AND sol.title IS NULL"):
-        by_value.setdefault(round(row["v"]), []).append((supplier_tokens(row["s"]), row["d"]))
+        "SELECT a.document_number d, a.supplier_name_raw s, a.award_amount_numeric v "
+        "FROM award a JOIN solicitation sol ON sol.document_number = a.document_number "
+        "WHERE a.source='odata' AND a.award_amount_numeric IS NOT NULL "
+        "AND a.supplier_name_raw IS NOT NULL AND sol.title IS NULL"
+    ):
+        by_value.setdefault(round(row["v"]), []).append(
+            (supplier_tokens(row["s"]), row["d"])
+        )
     return by_value
 
 
@@ -1254,13 +1042,17 @@ def match_on_supplier_and_value(conn, items, title_source: str) -> int:
     filled = {}
     for item in items:
         want = supplier_tokens(item["winner_raw"])
-        docs = {doc for toks, doc in by_value.get(round(item["award_value"]), [])
-                if want & toks}
+        docs = {
+            doc
+            for toks, doc in by_value.get(round(item["award_value"]), [])
+            if want & toks
+        }
         if len(docs) == 1:
             filled.setdefault(docs.pop(), item["title"])
     conn.executemany(
         "UPDATE solicitation SET title = ?, title_source = ? "
         "WHERE document_number = ? AND title IS NULL",
-        [(t, title_source, d) for d, t in filled.items()])
+        [(t, title_source, d) for d, t in filled.items()],
+    )
     conn.commit()
     return len(filled)
