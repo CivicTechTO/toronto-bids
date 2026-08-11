@@ -34,6 +34,44 @@ def test_failed_run_header_and_failures_section():
     assert "ariba_attachments: TimeoutError on Respond" in text
 
 
+def test_repeated_toronto_odata_500s_are_one_compact_upstream_outage():
+    odata = (
+        "Server error '500 Internal Server Error' for url "
+        "'https://secure.toronto.ca/c3api_data/v2/DataAccess.svc/"
+        "pmmd_solicitations/feis_solicitation_published?%24top=1000&%24skip=0'\n"
+        "For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500"
+    )
+    report = {
+        "ok": False,
+        "before": _counts(),
+        "after": _counts(),
+        "failures": [
+            ("schema_check", odata),
+            ("odata_solicitations", odata),
+            ("odata_noncompetitive", odata.replace("feis_solicitation", "feis_non_competitive")),
+            ("award summaries", odata),
+        ],
+        "steps": [
+            {"name": "sync", "status": "fail", "detail": "3 FAILED", "seconds": 173.0},
+            {"name": "award summaries", "status": "fail", "error": odata, "seconds": 8.0},
+        ],
+        "export_bytes": 1000,
+        "elapsed_s": 60.0,
+    }
+
+    text = notify.summarize(report)
+
+    assert "*Upstream outages (1)*" in text
+    assert (
+        "Toronto OData: HTTP 500 · affected: schema_check, odata_solicitations, "
+        "odata_noncompetitive, award summaries"
+    ) in text
+    assert "❌ award summaries  Toronto OData unavailable (HTTP 500) · 8s" in text
+    assert "DataAccess.svc" not in text
+    assert "developer.mozilla.org" not in text
+    assert "*Failures (4)*" not in text
+
+
 def test_steps_section_renders_status_detail_and_skip():
     report = {"ok": True, "before": _counts(), "after": _counts(), "failures": [],
               "steps": [

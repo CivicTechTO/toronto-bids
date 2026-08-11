@@ -7,6 +7,7 @@ The split is deliberate: `summarize` is pure, so the entire message is tested of
 fixture counts, and `post` is one HTTP call with nothing to get wrong.
 """
 import os
+import re
 
 import httpx
 
@@ -32,6 +33,16 @@ _LABELS = {
 }
 # Housekeeping tables whose growth is noise in a report about the archive.
 _GROWTH_SKIP = {"sync_run", "buyer"}
+
+_TORONTO_ODATA = "secure.toronto.ca/c3api_data/v2/DataAccess.svc/"
+_SERVER_STATUS = re.compile(
+    r"(?:Server error\s+['\"]?|HTTP/\S+\s+)(5\d\d)\b", re.IGNORECASE
+)
+
+
+def _odata_server_status(error: str) -> str | None:
+    match = _SERVER_STATUS.search(error)
+    return match.group(1) if _TORONTO_ODATA in error and match else None
 
 
 def _growth(before: dict, after: dict) -> list[str]:
@@ -70,6 +81,9 @@ def summarize(report: dict) -> str:
         for s in steps:
             icon = _STEP_ICON.get(s.get("status"), "•")
             detail = s.get("detail") or s.get("error") or ""
+            status = _odata_server_status(detail)
+            if status:
+                detail = f"Toronto OData unavailable (HTTP {status})"
             dur = s.get("seconds") or 0.0
             suffix = f" · {_elapsed(dur)}" if dur >= 1 else ""
             lines.append(f"{icon} {s.get('name', '?')}  {detail}{suffix}".rstrip())
@@ -97,9 +111,23 @@ def summarize(report: dict) -> str:
 
     lines += ["", f"export {'FAILED' if export_bytes is None else f'{export_bytes / 1_048_576:.1f} MiB'}"]
 
-    if failures:
-        lines += ["", f"*Failures ({len(failures)})*"]
-        lines += [f"{name}: {error}" for name, error in failures]
+    odata_outages: dict[str, list[str]] = {}
+    other_failures = []
+    for name, error in failures:
+        status = _odata_server_status(error)
+        if status:
+            odata_outages.setdefault(status, []).append(name)
+        else:
+            other_failures.append((name, error))
+
+    if odata_outages:
+        lines += ["", f"*Upstream outages ({len(odata_outages)})*"]
+        for status, affected in odata_outages.items():
+            lines.append(f"Toronto OData: HTTP {status} · affected: {', '.join(affected)}")
+
+    if other_failures:
+        lines += ["", f"*Failures ({len(other_failures)})*"]
+        lines += [f"{name}: {error}" for name, error in other_failures]
 
     return "\n".join(lines)
 
