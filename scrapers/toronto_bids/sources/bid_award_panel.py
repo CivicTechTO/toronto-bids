@@ -1037,10 +1037,17 @@ def match_on_supplier_and_value(conn, items, title_source: str) -> int:
     (#77) and composite-report appendices (#93). The value carries the match and the supplier
     only confirms it; a non-unique match is dropped rather than guessed. Idempotent — the
     UPDATE is guarded on `title IS NULL`.
+
+    An item with no title is skipped before it can match (#216): `title_source` records the
+    provenance of a REAL title, so writing it beside a NULL one is a false claim, and counting
+    it would report a fill that never happened. Skipping it here, not in the UPDATE, also stops
+    a title-less item from claiming a document ahead of a titled one (first match wins).
     """
     by_value = _title_less_awards_by_value(conn)
     filled = {}
     for item in items:
+        if not (item["title"] or "").strip():
+            continue
         want = supplier_tokens(item["winner_raw"])
         docs = {
             doc

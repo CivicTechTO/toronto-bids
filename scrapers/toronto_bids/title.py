@@ -67,6 +67,10 @@ def clear_placeholder_titles(conn) -> int:
     written before `clean_title` existed would keep their placeholder forever. Runs every
     sync rather than as a one-shot migration — it is a no-op once clean, and it re-applies
     itself for free if the rule above ever improves.
+
+    Also clears a `title_source` stamped beside no title (#216). That column records where a
+    REAL title came from; the composite matcher once wrote `title=NULL,
+    title_source='council_composite'`, and nothing else would ever clear the orphan stamp.
     """
     stale = [row["document_number"] for row in
              conn.execute("SELECT document_number, title FROM solicitation "
@@ -74,5 +78,8 @@ def clear_placeholder_titles(conn) -> int:
              if is_placeholder_title(row["title"])]
     conn.executemany("UPDATE solicitation SET title = NULL WHERE document_number = ?",
                      [(d,) for d in stale])
+    orphans = conn.execute(
+        "UPDATE solicitation SET title_source = NULL "
+        "WHERE title IS NULL AND title_source IS NOT NULL").rowcount
     conn.commit()
-    return len(stale)
+    return len(stale) + orphans

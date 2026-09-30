@@ -588,13 +588,15 @@ def _cmd_enrich_titles(args) -> int:
                 print(f"  BA reports downloaded       : {n}")
             finally:
                 http.close()
-        print(f"  titles composite    : {match_composite_titles(conn)}")
         # Not a linking pass: for 2009-2011 the City's feed publishes 13 awards against the
         # 799 in these reports, so this is the archive reaching back past the feed (#96).
         print(
             f"  composite awards    : "
             f"{store_composite_awards(conn, log=lambda m: print(m, flush=True))}"
         )
+        # After the store, not before: the matcher reads composite_award, so it must see
+        # this run's rows rather than the previous run's (#216).
+        print(f"  titles composite    : {match_composite_titles(conn)}")
 
         n_legacy = fill_titles_from_legacy(conn, config.LEGACY_ARIBA_DIR)
         print(
