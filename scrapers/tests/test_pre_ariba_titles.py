@@ -169,3 +169,61 @@ def test_a_sync_cannot_clobber_a_recovered_title_or_its_provenance(conn):
     assert "Call Number 6032-16-3114" in row["title"]      # the title survives
     assert row["source"] == "odata"                        # the spine owns `source`...
     assert row["title_source"] == "council_pre_ariba"      # ...but not the provenance
+
+
+# --- composite awards (#216): title_source records a REAL title, never a NULL one ----------
+
+def _composite(conn, title, supplier="Builder Co.", value=420000.0, call="3905-10-0097"):
+    conn.execute(
+        "INSERT INTO composite_award (call_number, title, supplier_name_raw, award_value, "
+        "award_value_numeric, source) VALUES (?, ?, ?, ?, ?, 'composite')",
+        (call, title, supplier, f"${value:,.2f}", value),
+    )
+
+
+def _titleless_award(conn, doc="1234567890", supplier="Builder Co. Ltd", amount="420000.00"):
+    db.upsert_row(conn, Solicitation(doc, title=None, source="odata"), overwrite=True)
+    db.upsert_row(conn, Award(doc, supplier_name_raw=supplier, award_amount=amount,
+                              source="odata"), overwrite=True)
+
+
+def test_a_title_less_composite_award_stamps_nothing_and_is_not_counted(conn):
+    """The LLM backfill never writes composite_award.title, so every composite row reaches the
+    matcher with title NULL. It used to write title=NULL, title_source='council_composite' and
+    count the row as filled — provenance for a title that does not exist."""
+    from toronto_bids.sources.bid_award_panel import match_composite_titles
+
+    _titleless_award(conn)
+    _composite(conn, None)
+    _composite(conn, "   ", call="3905-10-0098")   # blank is no title either
+    conn.commit()
+    assert match_composite_titles(conn) == 0
+    row = conn.execute("SELECT title, title_source FROM solicitation").fetchone()
+    assert row["title"] is None
+    assert row["title_source"] is None
+
+
+def test_a_titled_composite_award_still_fills(conn):
+    from toronto_bids.sources.bid_award_panel import match_composite_titles
+
+    _titleless_award(conn)
+    _composite(conn, "Supply and Delivery of Road Salt")
+    conn.commit()
+    assert match_composite_titles(conn) == 1
+    row = conn.execute("SELECT title, title_source FROM solicitation").fetchone()
+    assert row["title"] == "Supply and Delivery of Road Salt"
+    assert row["title_source"] == "council_composite"
+
+
+def test_a_title_less_item_cannot_shadow_a_real_one_for_the_same_document(conn):
+    """The first match per document wins, so a NULL-title item seen first must not claim it."""
+    from toronto_bids.sources.bid_award_panel import match_on_supplier_and_value
+
+    _titleless_award(conn)
+    conn.commit()
+    items = [
+        {"title": None, "winner_raw": "Builder Co.", "award_value": 420000.0},
+        {"title": "Road Salt", "winner_raw": "Builder Co.", "award_value": 420000.0},
+    ]
+    assert match_on_supplier_and_value(conn, items, "council_composite") == 1
+    assert conn.execute("SELECT title FROM solicitation").fetchone()[0] == "Road Salt"

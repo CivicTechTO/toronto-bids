@@ -211,9 +211,9 @@ def download_committee_reports(conn, http, url_map: dict, log=lambda _m: None) -
     return n
 
 
-def store_committee_bids(conn, log=lambda _m: None) -> int:
+def store_committee_bids(conn, log=lambda _m: None, failures=None) -> int:
     """Extract and backfill bid rows from cached LLM extractions (#205)."""
     from toronto_bids.extraction import extract_and_backfill
 
-    result = extract_and_backfill(conn, "committee", log=log)
+    result = extract_and_backfill(conn, "committee", log=log, failures=failures)
     return result["bids_written"]

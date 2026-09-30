@@ -50,11 +50,11 @@ def download_ep_reports(conn, http, agendas: dict, log=lambda _m: None) -> int:
     return _store_pending_pdfs(conn, http, config.EP_REPORTS_DIR, "%/ep/%", log, "ep")
 
 
-def store_ep_reports(conn, log=lambda _m: None) -> dict:
+def store_ep_reports(conn, log=lambda _m: None, failures=None) -> dict:
     """Extract and backfill agency_* rows from cached LLM extractions (#205)."""
     from toronto_bids.extraction import extract_and_backfill
 
-    result = extract_and_backfill(conn, "ep", log=log)
+    result = extract_and_backfill(conn, "ep", log=log, failures=failures)
     return {
         "solicitations": result["solicitations_written"],
         "awards": result["awards_written"],

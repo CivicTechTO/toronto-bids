@@ -201,6 +201,15 @@ def reindex_bundles(conn, dest_dir=None, log=lambda _m: None) -> int:
 
 # --- browser: log in and capture ----------------------------------------------------------
 
+# The City's feed carries two "Mock ... Training and Practice" postings with a 2099-12-31
+# deadline (#174 "Suggested work" item 3, #223). `submission_deadline >= now` keeps them in the
+# open set forever, so every nightly would try to capture them. An explicit list, not a rule:
+# a far-future deadline is not proof of a mock (a real posting may carry a long one), and the
+# spine title these rows carry could not be verified offline — `clean_title` NULLs a
+# doc-number-shaped title, so a "Mock"+"Training" title rule might silently never fire.
+TRAINING_POSTINGS = frozenset({"4044346425", "3949149442"})
+
+
 def open_solicitation_events(conn) -> list[dict]:
     """The still-open, modern-linked solicitations whose Respond is (probably) still live.
 
@@ -218,6 +227,8 @@ def open_solicitation_events(conn) -> list[dict]:
     events = []
     for row in rows:
         rfx = rfx_id_from_link(row["ariba_posting_link"])
+        if row["document_number"] in TRAINING_POSTINGS:
+            continue
         if rfx and row["document_number"]:
             events.append({"rfx_id": rfx, "document_number": row["document_number"]})
     return events

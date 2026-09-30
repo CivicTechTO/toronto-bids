@@ -671,6 +671,154 @@ def test_backfill_bid_table_from_extraction(conn):
     assert bids[0]["document_number"] == "5247418372"
 
 
+def _cache_city_doc(conn, *, kind, sha, doc_num, extraction):
+    from toronto_bids.extract import EXTRACTOR_VERSION
+    from toronto_bids.store.db import mark_extracted
+
+    conn.execute(
+        "INSERT INTO background_pdf (url, kind, sha256, text, document_number) "
+        "VALUES (?, ?, ?, 'text', ?)",
+        (f"https://example.com/{sha}.pdf", kind, sha, doc_num),
+    )
+    conn.commit()
+    mark_extracted(conn, sha, EXTRACTOR_VERSION, result_json=json.dumps(extraction))
+
+
+@pytest.mark.parametrize(
+    "amount_basis, hst_basis",
+    [
+        ("including_HST", "including"),
+        ("plus_HST", "excluding"),
+        # "Net of all applicable taxes" is neither: the old header regex returned None for it
+        # too, and rule 7 of the prompt says it must not be conflated with plus-HST.
+        ("net_of_taxes", None),
+        ("unknown", None),
+        (None, None),
+        ("something_new", None),
+    ],
+)
+def test_backfill_maps_amount_basis_onto_hst_basis(conn, amount_basis, hst_basis):
+    """#217: the model's amount_basis restores the bid's hst_basis; anything else is NULL."""
+    from toronto_bids.extraction import backfill_from_extraction
+
+    bid = {"supplier_name": "Alpha Co.", "amount_raw": "$500.00"}
+    if amount_basis is not None:
+        bid["amount_basis"] = amount_basis
+    _cache_city_doc(
+        conn, kind="award_summary", sha="hhh", doc_num="5247418372",
+        extraction={"contracts": [{"reference": "RFT 999", "bids": [bid], "awards": []}]},
+    )
+
+    backfill_from_extraction(conn, "award_summary")
+
+    row = conn.execute(
+        "SELECT hst_basis, price_header FROM bid WHERE source='award_summary'"
+    ).fetchone()
+    assert row["hst_basis"] == hst_basis
+    assert row["price_header"] is None  # the model returns no header text
+
+
+def test_backfill_committee_keys_each_contract_on_its_own_document_number(conn):
+    """#217: a two-contract committee report attaches each contract's bids to its own doc."""
+    from toronto_bids.extraction import backfill_from_extraction
+
+    _cache_city_doc(
+        conn, kind="committee_award", sha="ccc", doc_num="1111122222",
+        extraction={
+            "contracts": [
+                {
+                    "reference": "Request for Tender No. 1111122222",
+                    "bids": [{"supplier_name": "Alpha Co.", "amount_raw": "$1.00"}],
+                },
+                {
+                    "reference": "Doc3333344444",
+                    "bids": [
+                        {"supplier_name": "Beta Inc.", "amount_raw": "$2.00"},
+                        {"supplier_name": "Alpha Co.", "amount_raw": "$1.00"},
+                    ],
+                },
+            ]
+        },
+    )
+
+    result = backfill_from_extraction(conn, "committee")
+    assert result["bids_written"] == 3
+
+    got = sorted(
+        (r["document_number"], r["bidder_name_raw"])
+        for r in conn.execute(
+            "SELECT document_number, bidder_name_raw FROM bid WHERE source='committee_award'"
+        )
+    )
+    assert got == [
+        ("1111122222", "Alpha Co."),
+        ("3333344444", "Alpha Co."),
+        ("3333344444", "Beta Inc."),
+    ]
+
+
+@pytest.mark.parametrize(
+    "reference",
+    [
+        "",
+        None,
+        "RFP 999",
+        # A trailing Contract No. is a different identifier; its digits push the string past
+        # exactly 10, so the strict normalizer refuses rather than splicing the two together.
+        "Doc3333344444, Contract No. 22TE-17WS",
+        "Tender Call No. 317-2010, Contract No. 10TE-17WS",
+        # A pre-Ariba Call Number strips to exactly 10 digits — a call number, not a doc.
+        "Request for Quotation 3905-10-0097",
+        "1111111111",  # placeholder denylist
+    ],
+)
+def test_backfill_committee_unusable_reference_falls_back_to_pdf_document(conn, reference):
+    from toronto_bids.extraction import backfill_from_extraction
+
+    _cache_city_doc(
+        conn, kind="committee_award", sha="ddd", doc_num="5555566666",
+        extraction={
+            "contracts": [
+                {
+                    "reference": reference,
+                    "bids": [{"supplier_name": "Alpha Co.", "amount_raw": "$1.00"}],
+                }
+            ]
+        },
+    )
+
+    backfill_from_extraction(conn, "committee")
+
+    rows = conn.execute(
+        "SELECT document_number FROM bid WHERE source='committee_award'"
+    ).fetchall()
+    assert [r["document_number"] for r in rows] == ["5555566666"]
+
+
+def test_backfill_award_summary_ignores_contract_reference(conn):
+    """One form is one document: its bids key on the form's own document number."""
+    from toronto_bids.extraction import backfill_from_extraction
+
+    _cache_city_doc(
+        conn, kind="award_summary", sha="eee", doc_num="5247418372",
+        extraction={
+            "contracts": [
+                {
+                    "reference": "Doc3333344444",
+                    "bids": [{"supplier_name": "Alpha Co.", "amount_raw": "$1.00"}],
+                }
+            ]
+        },
+    )
+
+    backfill_from_extraction(conn, "award_summary")
+
+    rows = conn.execute(
+        "SELECT document_number FROM bid WHERE source='award_summary'"
+    ).fetchall()
+    assert [r["document_number"] for r in rows] == ["5247418372"]
+
+
 def test_backfill_composite_awards_from_extraction(conn):
     """Backfill maps LLM extraction → composite_award rows."""
     from toronto_bids.extraction import backfill_from_extraction
@@ -992,8 +1140,11 @@ def test_store_functions_forward_log_to_extraction(monkeypatch, module, fn, corp
 
     seen = {}
 
-    def fake_extract_and_backfill(conn, got_corpus, *, log=lambda _m: None):
+    def fake_extract_and_backfill(
+        conn, got_corpus, *, log=lambda _m: None, failures=None
+    ):
         seen["corpus"] = got_corpus
+        seen["failures"] = failures
         log("FAILED something")
         return {"solicitations_written": 1, "awards_written": 2, "bids_written": 3}
 
@@ -1002,6 +1153,68 @@ def test_store_functions_forward_log_to_extraction(monkeypatch, module, fn, corp
     result = getattr(importlib.import_module(module), fn)(None, log=logged.append)
 
     assert seen["corpus"] == corpus
+    assert seen["failures"] is None  # default keeps non-nightly callers unchanged
     assert logged == ["FAILED something"]
     if isinstance(result, dict):
         assert result["bids"] == 3
+
+    failures = []
+    getattr(importlib.import_module(module), fn)(None, failures=failures)
+    assert seen["failures"] is failures
+
+
+# ── extraction errors reach the caller's failures list (#219) ──
+
+
+class _FailingClient:
+    def extract(self, text):
+        raise ValueError("model retired")
+
+
+def _two_award_summary_docs(conn):
+    for i in range(2):
+        conn.execute(
+            "INSERT INTO background_pdf (url, kind, sha256, text) "
+            f"VALUES ('https://example.com/form{i}.pdf', 'award_summary', 's{i}', 'text')"
+        )
+    conn.commit()
+
+
+def test_extract_and_backfill_appends_one_entry_per_corpus_on_errors(conn, monkeypatch):
+    import toronto_bids.extract as extract_mod
+    from toronto_bids.extraction import extract_and_backfill
+
+    monkeypatch.setattr(extract_mod, "ExtractionClient", _FailingClient)
+    _two_award_summary_docs(conn)
+    failures = []
+    logged = []
+
+    extract_and_backfill(conn, "award_summary", log=logged.append, failures=failures)
+
+    assert failures == [("extract:award_summary", "2 of 2 documents failed extraction")]
+    # per-document lines are still logged; the summary line carries the flag count
+    assert sum(m.startswith("  FAILED") for m in logged) == 2
+    assert any("2 errors, 0 count flags" in m for m in logged)
+
+
+def test_extract_and_backfill_appends_nothing_without_errors(conn, monkeypatch):
+    import toronto_bids.extract as extract_mod
+    from toronto_bids.extraction import extract_and_backfill
+
+    monkeypatch.setattr(extract_mod, "ExtractionClient", lambda: FakeClient())
+    _two_award_summary_docs(conn)
+    failures = []
+
+    extract_and_backfill(conn, "award_summary", failures=failures)
+
+    assert failures == []
+
+
+def test_extract_and_backfill_without_failures_list_still_returns(conn, monkeypatch):
+    import toronto_bids.extract as extract_mod
+    from toronto_bids.extraction import extract_and_backfill
+
+    monkeypatch.setattr(extract_mod, "ExtractionClient", _FailingClient)
+    _two_award_summary_docs(conn)
+
+    assert extract_and_backfill(conn, "award_summary")["bids_written"] == 0

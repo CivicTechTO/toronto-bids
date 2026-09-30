@@ -112,3 +112,20 @@ def test_cleanup_is_idempotent(conn):
     conn.commit()
     assert clear_placeholder_titles(conn) == 1
     assert clear_placeholder_titles(conn) == 0   # nothing left to clear
+
+
+def test_cleanup_clears_a_provenance_stamp_with_no_title(conn):
+    """#216: the composite matcher once wrote title=NULL, title_source='council_composite'.
+    title_source records where a REAL title came from, so an orphan stamp is cleared — and a
+    stamp beside a real title is left alone."""
+    conn.executemany(
+        "INSERT INTO solicitation (document_number, title, title_source, source) "
+        "VALUES (?,?,?,?)",
+        [("1234567890", None, "council_composite", "odata"),
+         ("4127450139", "Urban Forestry Supplies", "council_pre_ariba", "odata")])
+    conn.commit()
+    assert clear_placeholder_titles(conn) == 1
+    rows = dict(conn.execute("SELECT document_number, title_source FROM solicitation"))
+    assert rows["1234567890"] is None
+    assert rows["4127450139"] == "council_pre_ariba"
+    assert clear_placeholder_titles(conn) == 0

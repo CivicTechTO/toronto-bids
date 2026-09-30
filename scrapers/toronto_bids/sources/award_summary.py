@@ -109,9 +109,9 @@ def download_award_summaries(conn, http, dest_dir=None, log=lambda _m: None) -> 
     return stored
 
 
-def store_award_summary_bids(conn, log=lambda _m: None) -> int:
+def store_award_summary_bids(conn, log=lambda _m: None, failures=None) -> int:
     """Extract and backfill bid rows from cached LLM extractions (#205)."""
     from toronto_bids.extraction import extract_and_backfill
 
-    result = extract_and_backfill(conn, "award_summary", log=log)
+    result = extract_and_backfill(conn, "award_summary", log=log, failures=failures)
     return result["bids_written"]

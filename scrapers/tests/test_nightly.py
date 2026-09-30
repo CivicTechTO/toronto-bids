@@ -410,6 +410,75 @@ def test_a_swallowed_ariba_event_failure_marks_the_step_and_the_sync_run_row_fai
     assert "content tree never resolved" in row["error"]
 
 
+def test_swallowed_award_summary_extraction_errors_mark_the_step_failed(
+        nightly, monkeypatch, conn):
+    """#219: extract_corpus catches each document's extraction error and extract_and_backfill
+    returns normally, so a night on which every new form failed extraction (a retired model)
+    read ✅. The store now reports one summary entry per corpus into the shared list."""
+    monkeypatch.setattr(cli, "_open_db", lambda: _KeepOpen(conn))
+    from toronto_bids.sources import award_summary
+
+    def swallowing_store(conn, log=lambda _m: None, failures=None):
+        if failures is not None:
+            failures.append(
+                ("extract:award_summary", "3 of 3 documents failed extraction"))
+        return 0
+
+    monkeypatch.setattr(award_summary, "store_award_summary_bids", swallowing_store)
+    posted = {}
+    monkeypatch.setattr(notify, "post", lambda text, **k: posted.setdefault("text", text))
+    assert nightly() == 1
+    assert "❌ award summaries" in posted["text"]
+    row = conn.execute(
+        "SELECT status, error FROM sync_run WHERE source='award summaries'").fetchone()
+    assert row["status"] == "failed"
+    assert "extract:award_summary" in row["error"]
+    assert "3 of 3 documents failed extraction" in row["error"]
+
+
+def test_award_summary_step_reads_ok_when_extraction_has_no_errors(
+        nightly, monkeypatch, conn):
+    monkeypatch.setattr(cli, "_open_db", lambda: _KeepOpen(conn))
+    from toronto_bids.sources import award_summary
+    seen = {}
+
+    def clean_store(conn, log=lambda _m: None, failures=None):
+        seen["failures"] = failures
+        return 0
+
+    monkeypatch.setattr(award_summary, "store_award_summary_bids", clean_store)
+    posted = {}
+    monkeypatch.setattr(notify, "post", lambda text, **k: posted.setdefault("text", text))
+    assert nightly() == 0
+    assert seen["failures"] is not None  # the nightly did hand the store its list
+    assert "❌ award summaries" not in posted["text"]
+    row = conn.execute(
+        "SELECT status FROM sync_run WHERE source='award summaries'").fetchone()
+    assert row["status"] == "ok"
+
+
+def test_agency_store_extraction_errors_reach_the_agencies_failures(monkeypatch, conn):
+    """#219: `_capture_agency_bodies` hands its OWN returned failures list to each store, so
+    extraction errors travel the one existing channel into the nightly's agencies step."""
+    from toronto_bids.sources import ep_board, trca_board, zoo_board
+
+    def failing_store(corpus):
+        def store(conn, log=lambda _m: None, failures=None):
+            failures.append((f"extract:{corpus}", "1 of 2 documents failed extraction"))
+            return {"solicitations": 0, "awards": 0, "bids": 0}
+        return store
+
+    monkeypatch.setattr(trca_board, "store_trca_reports", failing_store("trca"))
+    monkeypatch.setattr(zoo_board, "store_zoo_reports", failing_store("zoo"))
+    monkeypatch.setattr(ep_board, "store_ep_reports", failing_store("ep"))
+    monkeypatch.setattr(zoo_board, "cached_zb_agendas", lambda: [])
+    monkeypatch.setattr(ep_board, "cached_ep_agendas", lambda: [])
+    got = cli._capture_agency_bodies(
+        conn, bodies=["trca", "zoo", "ep"], fetch=False, scrape=False,
+        virtual_display=False, out=lambda _m: None)
+    assert [name for name, _ in got] == ["extract:trca", "extract:zoo", "extract:ep"]
+
+
 def test_a_step_that_raises_is_recorded_failed_in_sync_run_too(nightly, monkeypatch, conn):
     monkeypatch.setattr(cli, "_open_db", lambda: _KeepOpen(conn))
     from toronto_bids.sources import ariba_attachments
@@ -483,7 +552,7 @@ def test_council_runs_only_on_the_first_of_the_month(nightly, monkeypatch):
 def _rebuilding_store(corpus):
     """Stand-in for `store_award_summary_bids` post-#205: delete the source's rows, reinsert the
     whole derived set, return how many were written — the TOTAL, exactly like the real one."""
-    def store(conn, log=lambda _m: None):
+    def store(conn, log=lambda _m: None, failures=None):
         conn.execute("DELETE FROM bid WHERE source='award_summary'")
         for i, name in enumerate(corpus):
             conn.execute(

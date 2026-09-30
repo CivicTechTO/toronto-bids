@@ -404,16 +404,51 @@ _CORPUS_BUYER_SLUG = {
 # the tables; a near-total shortfall can only mean the re-extraction broke.
 _MIN_SWAP_COVERAGE = 0.5
 
+# The model's per-bid `amount_basis` (extract.py's prompt) mapped onto `bid.hst_basis`, whose
+# vocabulary is the deleted award-summary parser's (bid_award_panel._hst_basis): 'including' |
+# 'excluding' | NULL. "Plus HST" is a price stated before HST, i.e. excluding it. "Net of all
+# applicable taxes" is NEITHER — it carries the City's non-rebated HST share — and the old header
+# regex returned None for it too; prompt rule 7 forbids conflating it with plus-HST, so it stays
+# NULL rather than borrowing a bucket. Anything unlisted ('unknown', null, a new value) is NULL,
+# never a guess (#217).
+_HST_BASIS_FROM_AMOUNT_BASIS = {
+    "including_HST": "including",
+    "plus_HST": "excluding",
+}
+
+
+def _hst_basis(bid: dict) -> str | None:
+    return _HST_BASIS_FROM_AMOUNT_BASIS.get(bid.get("amount_basis"))
+
+
+def _contract_document_number(contract: dict, fallback: str | None) -> str | None:
+    """The 10-digit document number a committee contract names, else the PDF's own (#217).
+
+    A committee report can carry several contracts, each its own solicitation. The canonical
+    normalizer is strict — exactly 10 digits — so a reference with a trailing `Contract No.`
+    (a different identifier) strips to more than 10 and is refused, never spliced. A pre-Ariba
+    Call Number (`3905-10-0097`) strips to exactly 10 and is refused by shape.
+    """
+    from toronto_bids.linking.call_number import normalize_call_number
+    from toronto_bids.linking.document_number import normalize_document_number
+
+    ref = contract.get("reference")
+    if not ref or normalize_call_number(ref):
+        return fallback
+    return normalize_document_number(ref) or fallback
+
 
 def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
     """Populate store tables from cached LLM extractions.
 
     The tables are DERIVED from the cache, so each source's rows are rebuilt rather than
-    diff-upserted — the same sanctioned exception to "rows are never deleted" as
-    `db.rebuild_agency_bids`, and under the same contract: **derive first, delete only on
-    success.** Every row is built before anything is deleted; a table whose derived set is
-    empty is left untouched (a machine holding no cached extractions must not erase the
-    archive); and the delete + insert run in one transaction, rolled back on any error.
+    diff-upserted — the sanctioned exception to "rows are never deleted" that
+    `build_supplier_dimension` and `enrich-ariba-attachments --reindex` also take. This is a
+    permanent contract, not a migration: every parser or prompt fix self-heals by re-deriving.
+    **Derive first, delete only on success.** Every row is built before anything is deleted;
+    a table whose derived set is empty is left untouched (an empty set deletes nothing — a
+    machine holding no cached extractions must not erase the archive); and the delete +
+    insert run in one transaction, rolled back on any error.
 
     Raises RuntimeError, writing nothing, when fewer than `_MIN_SWAP_COVERAGE` of the
     corpus's previously extracted documents are cached at the current EXTRACTOR_VERSION —
@@ -525,9 +560,15 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
 
     elif corpus in ("award_summary", "committee"):
         for row in rows:
-            doc_num = row["document_number"]
             result = json.loads(row["result_json"])
             for contract in result.get("contracts", []):
+                # One Award Summary Form is one document, so its own number stands; a
+                # committee report can hold several contracts, each keyed on its own (#217).
+                doc_num = (
+                    _contract_document_number(contract, row["document_number"])
+                    if corpus == "committee"
+                    else row["document_number"]
+                )
                 for bid in contract.get("bids", []):
                     name = bid.get("supplier_name")
                     if not name:
@@ -537,6 +578,8 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
                             bidder_name_raw=name,
                             document_number=doc_num,
                             bid_price=bid.get("amount_raw"),
+                            hst_basis=_hst_basis(bid),
+                            # price_header stays NULL: the model returns no header text.
                             source=source,
                         )
                     )
@@ -591,11 +634,21 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
     }
 
 
-def extract_and_backfill(conn, corpus, *, log=lambda _m: None) -> dict:
+def extract_and_backfill(
+    conn, corpus, *, log=lambda _m: None, failures=None
+) -> dict:
     """Extract any uncached documents via LLM, then backfill store tables.
 
     If OPENROUTER_API_KEY is unset and all documents are already cached,
     the extraction step is skipped and only backfill runs.
+
+    Per-document extraction errors are caught and logged by `extract_corpus`, so this
+    returns normally even when every new document failed (#219) — the #176/#178 lesson.
+    Pass the nightly's shared `failures` list and ONE summary entry per corpus is appended
+    when any document failed (the per-document lines are already logged), so
+    `_mark_if_swallowed_failures` can mark the step failed. Declared-count flags are NOT
+    failures: most are composite noise (appendices publish a count, no bidder list), so
+    they ride on the summary log line only.
     """
     from toronto_bids.config import CLASSIFICATION_LABELS_PATH
     from toronto_bids.extract import ExtractionClient
@@ -609,8 +662,17 @@ def extract_and_backfill(conn, corpus, *, log=lambda _m: None) -> dict:
         stats = extract_corpus(conn, corpus, client=client, labels=labels, log=log)
         log(
             f"  extraction: {stats['extracted']} new, "
-            f"{stats['cached']} cached, {stats['errors']} errors"
+            f"{stats['cached']} cached, {stats['errors']} errors, "
+            f"{stats['count_flags']} count flags"
         )
+        if stats["errors"] and failures is not None:
+            attempted = stats["extracted"] + stats["errors"]
+            failures.append(
+                (
+                    f"extract:{corpus}",
+                    f"{stats['errors']} of {attempted} documents failed extraction",
+                )
+            )
     except ValueError:
         uncached = _count_uncached(conn, corpus, labels)
         if uncached > 0:

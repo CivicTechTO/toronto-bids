@@ -916,11 +916,11 @@ def match_pre_ariba_solicitations(conn, agendas: dict) -> int:
     return len(links)
 
 
-def store_composite_awards(conn, log=lambda _m: None) -> int:
+def store_composite_awards(conn, log=lambda _m: None, failures=None) -> int:
     """Extract and backfill composite awards from cached LLM extractions (#205)."""
     from toronto_bids.extraction import extract_and_backfill
 
-    result = extract_and_backfill(conn, "composite", log=log)
+    result = extract_and_backfill(conn, "composite", log=log, failures=failures)
     return result["awards_written"]
 
 
@@ -1037,10 +1037,17 @@ def match_on_supplier_and_value(conn, items, title_source: str) -> int:
     (#77) and composite-report appendices (#93). The value carries the match and the supplier
     only confirms it; a non-unique match is dropped rather than guessed. Idempotent — the
     UPDATE is guarded on `title IS NULL`.
+
+    An item with no title is skipped before it can match (#216): `title_source` records the
+    provenance of a REAL title, so writing it beside a NULL one is a false claim, and counting
+    it would report a fill that never happened. Skipping it here, not in the UPDATE, also stops
+    a title-less item from claiming a document ahead of a titled one (first match wins).
     """
     by_value = _title_less_awards_by_value(conn)
     filled = {}
     for item in items:
+        if not (item["title"] or "").strip():
+            continue
         want = supplier_tokens(item["winner_raw"])
         docs = {
             doc

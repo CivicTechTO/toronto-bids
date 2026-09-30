@@ -83,6 +83,26 @@ def test_index_zip_lists_files_with_size_and_crc_and_drops_directories(tmp_path)
     assert len(crc) == 8 and int(crc, 16) == zipfile.crc32(b"hello world")
 
 
+def test_open_events_skip_the_citys_2099_mock_training_postings(conn):
+    """#223: the two "Mock ... Training and Practice" postings are dated 2099-12-31, so a
+    deadline filter alone keeps them open forever. They are skipped by document number; a
+    real open posting — including one whose title merely says "mock" — still gets captured."""
+    link = "https://service.ariba.com/Discovery.aw/ad/profile?#/RfxEvent/preview/{}"
+    rows = [
+        ("4044346425", "Mock RFT Training and Practice", "2099-12-31", "1110088888"),
+        ("3949149442", "Mock RFQ Training and Practice", "2099-12-31", "1110077777"),
+        ("5660182540", "Mockingbird Park Playground Renewal", "2099-01-01", "1110066666"),
+        ("5713434353", "Road Resurfacing", "2099-06-30", "1110055555"),
+    ]
+    for doc, title, deadline, rfx in rows:
+        conn.execute(
+            "INSERT INTO solicitation (document_number, title, submission_deadline, "
+            "ariba_posting_link) VALUES (?, ?, ?, ?)", (doc, title, deadline, link.format(rfx)))
+    events = aa.open_solicitation_events(conn)
+    assert [e["document_number"] for e in events] == ["5660182540", "5713434353"]
+    assert events[0]["rfx_id"] == "1110066666"
+
+
 def test_store_bundle_copies_to_canonical_path_and_indexes_every_file(conn, tmp_path):
     src = _make_zip(tmp_path / "Doc5660182540.zip", {"A.pdf": b"a", "B.pdf": b"bb"})
     dest = tmp_path / "store"

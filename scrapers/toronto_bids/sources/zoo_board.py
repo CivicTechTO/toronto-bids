@@ -52,11 +52,11 @@ def download_zoo_reports(conn, http, agendas: dict, log=lambda _m: None) -> int:
     return _store_pending_pdfs(conn, http, config.ZOO_REPORTS_DIR, "%/zb/%", log, "zoo")
 
 
-def store_zoo_reports(conn, log=lambda _m: None) -> dict:
+def store_zoo_reports(conn, log=lambda _m: None, failures=None) -> dict:
     """Extract and backfill agency_* rows from cached LLM extractions (#205)."""
     from toronto_bids.extraction import extract_and_backfill
 
-    result = extract_and_backfill(conn, "zoo", log=log)
+    result = extract_and_backfill(conn, "zoo", log=log, failures=failures)
     return {
         "solicitations": result["solicitations_written"],
         "awards": result["awards_written"],
