@@ -1035,8 +1035,8 @@ def _stored_line(
     deduped" are very different runs and otherwise look identical from a flat `(+0)`.
 
     The delta remains `after - before` over `_source_row_counts` (#177) — two real row-count
-    queries, immune to how many upserts happened to write them. No "bids" key for a body with
-    no bid table (Zoo).
+    queries, immune to how many upserts happened to write them. A `got` with no "bids" key
+    omits the bids segment.
     """
     line = (
         f"  {label} stored : {after[0]} solicitations ({after[0] - before[0]:+d}), "
@@ -1146,7 +1146,7 @@ def _capture_agency_bodies(conn, *, bodies, fetch, scrape, virtual_display, out)
                 finally:
                     http.close()
             before = _source_row_counts(conn, "ep_board")
-            got = store_ep_reports(conn)
+            got = store_ep_reports(conn, log=out)
             print(_stored_line("ep", got, before, _source_row_counts(conn, "ep_board")))
         except Exception as exc:
             failures.append(("ep", str(exc)))
