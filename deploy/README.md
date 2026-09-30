@@ -64,9 +64,9 @@ cd ~/toronto-bids/scrapers && uv sync --locked
 uv run tb --version
 ```
 
-## 3. Credentials — the Slack webhook and the publish token
+## 3. Credentials — the Slack webhook, the publish token and the extraction key
 
-The repo is public. Both are credentials and live only here, mode `0600`:
+The repo is public. All of these are credentials and live only here, mode `0600`:
 
 ```shell
 mkdir -p ~/.config/toronto-bids
@@ -91,6 +91,36 @@ Unset the webhook and `tb nightly` still runs — it just posts nothing.
 
 Unlike the webhook, authentication is **required** for publishing — the nightly's publish step
 fails loudly if `gh auth status` fails (publishing is the deliverable, not a notification).
+
+### `OPENROUTER_API_KEY` — LLM bid extraction (#221)
+
+Every store step that reads bids or awards out of a document — award summaries, the TRCA / EP /
+Zoo board reports, committee awards and the composite reports — goes through
+`extract_and_backfill` (`scrapers/toronto_bids/extraction.py`), which sends each document's text
+to an LLM via [OpenRouter](https://openrouter.ai) (`scrapers/toronto_bids/extract.py`). Append
+the key to the same env file:
+
+```shell
+read -rs K && printf 'OPENROUTER_API_KEY=%s\n' "$K" >> ~/.config/toronto-bids/tb.env
+chmod 600 ~/.config/toronto-bids/tb.env
+```
+
+- **What happens without it.** Results are cached per document (`extraction_cache`, keyed on the
+  PDF's sha256 and `EXTRACTOR_VERSION`), so a night where every document is already cached needs
+  no key and makes no API call. But if **any** document in a corpus is uncached, the missing-key
+  error is re-raised and that step goes ❌ in the nightly report and in `tb status`. Nothing is
+  lost: the PDFs are downloaded and archived before the extraction step, and they are extracted
+  on the first run after the key is set. The placeholder in `scrapers/.env.example`
+  (`your-openrouter-api-key`) reads as unset, exactly like an absent key.
+- **Models.** `extract.MODELS`, tried in order: `nvidia/nemotron-3-ultra-253b-v1:free` first, then
+  `openai/gpt-5.6-luna` as the fallback (sent with `service_tier: flex`). Each model is retried
+  with backoff on HTTP 429, 5xx, transport errors and malformed JSON before falling through to
+  the next; any other 4xx (e.g. a rejected key) fails immediately without falling back.
+- **A prompt edit re-extracts everything.** `EXTRACTOR_VERSION` is `v1-` plus a hash of the
+  prompt template, and the cache is keyed on it — so *any* change to the prompt text in
+  `extract.py` invalidates every cached extraction, and the next nightly re-extracts the whole
+  corpus through the API. Treat a
+  prompt change as a deployment event, not a refactor.
 
 ## 4. Units
 

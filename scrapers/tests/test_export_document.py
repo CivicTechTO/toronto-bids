@@ -37,6 +37,26 @@ def seeded(conn):
     return conn
 
 
+def test_meta_carries_the_attribution_the_grants_require(conn):
+    # TRCA and the Toronto Zoo each granted portal access on condition of attribution as
+    # the data source (docs/permissions/2026-07-18-*.md, #228). Static: present even on an
+    # empty store, since the grant conditions the publication, not a night's rows.
+    import pathlib
+
+    doc = build_export_document(conn, generated_at="2026-07-15T00:00:00Z")
+    attribution = doc["meta"]["attribution"]
+    by_slug = {a["slug"]: a for a in attribution}
+    assert set(by_slug) >= {"trca", "toronto-zoo"}
+    assert "Toronto and Region Conservation Authority" in by_slug["trca"]["statement"]
+    assert "Toronto Zoo" in by_slug["toronto-zoo"]["statement"]
+    repo_root = pathlib.Path(__file__).resolve().parents[2]
+    for entry in attribution:
+        assert entry["statement"] and entry["body"] and entry["source_url"]
+        assert (repo_root / entry["permission"]).is_file()
+    assert [a["slug"] for a in attribution] == sorted(by_slug)
+    assert build_export_document(conn, generated_at="2026-07-15T00:00:00Z") == doc
+
+
 def test_meta_has_generated_at_counts_and_sources(seeded):
     db.finish_sync_run(seeded, db.start_sync_run(seeded, "odata_solicitations"),
                        status="ok", rows_fetched=5, rows_upserted=5)
@@ -417,6 +437,12 @@ def test_unbridged_staff_report_stays_out_of_documents(seeded):
         reference="2020.XX9.9", kind="bgrd"), overwrite=True)
     seeded.commit()
 
+    sols = build_export_document(seeded, generated_at="t")["solicitations"]
+    assert sols  # the fixture has real solicitations the report could wrongly attach to
+    assert not any(d["source"] == "staff_report"
+                   and d["url"] == "https://www.toronto.ca/legdocs/x/backgroundfile-1.pdf"
+                   for s in sols for d in s["documents"])
+
 
 def test_dual_key_bid_stays_under_council_item_not_solicitation(seeded):
     # An Ariba-era (#126) dual-key bid: BOTH reference and document_number are set, and the
@@ -441,6 +467,3 @@ def test_dual_key_bid_stays_under_council_item_not_solicitation(seeded):
     council = sum(len(c["bids"]) for c in doc["council_items"])
     nested = sum(len(s["bids"]) for s in doc["solicitations"])
     assert council + nested + len(doc["unlinked_bids"]) == counts["bid"]
-
-    for s in build_export_document(seeded, generated_at="t")["solicitations"]:
-        assert not any(d["source"] == "staff_report" for d in s["documents"])

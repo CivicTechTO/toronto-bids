@@ -37,6 +37,15 @@ and the opt-in council/PDF enrichment.
 
 Everything competitive is keyed on the normalized 10-digit `document_number`.
 
+## Attribution
+
+The archive also carries agency procurement records (the Toronto Zoo and the Toronto and
+Region Conservation Authority) whose public bid listings are archived under written
+permission from each body, on condition that the body is credited as the data source.
+Those statements travel with the data in the exported JSON's `meta.attribution` (each with
+a pointer to its permission record under [`docs/permissions/`](docs/permissions/)); if you
+republish the agency data, keep them with it.
+
 ## Project status
 
 The scraper (`scrapers/`) is the active, working part of this repo, and `tb export`

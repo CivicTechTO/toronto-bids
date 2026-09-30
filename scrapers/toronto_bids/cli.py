@@ -869,11 +869,10 @@ def _cmd_nightly(args) -> int:
                     from toronto_bids.buyers import seed_buyers
 
                     a0 = db.counts(conn)
-                    ids = seed_buyers(conn)
+                    seed_buyers(conn)  # the extraction backfill looks buyers up by slug
                     failures.extend(
                         _capture_agency_bodies(
                             conn,
-                            ids,
                             bodies=["trca", "zoo", "ep"],
                             fetch=True,
                             scrape=True,
@@ -1023,7 +1022,7 @@ def _stored_line(
     return line + f"  [upserts {'/'.join(upserts)}]"
 
 
-def _capture_agency_bodies(conn, ids, *, bodies, fetch, scrape, virtual_display, out):
+def _capture_agency_bodies(conn, *, bodies, fetch, scrape, virtual_display, out):
     """Capture TRCA/Zoo/EP board-report awards+bids, each body isolated. Returns failures.
 
     Shared by `tb enrich-agencies` and `tb nightly`. TRCA is plain HTTP (eSCRIBE); Zoo and EP
@@ -1048,7 +1047,7 @@ def _capture_agency_bodies(conn, ids, *, bodies, fetch, scrape, virtual_display,
                 finally:
                     http.close()
             before = _source_row_counts(conn, "trca_board")
-            got = store_trca_reports(conn, ids["trca"])
+            got = store_trca_reports(conn)
             print(
                 _stored_line(
                     "trca", got, before, _source_row_counts(conn, "trca_board")
@@ -1085,7 +1084,7 @@ def _capture_agency_bodies(conn, ids, *, bodies, fetch, scrape, virtual_display,
                 finally:
                     http.close()
             before = _source_row_counts(conn, "zoo_board")
-            got = store_zoo_reports(conn, ids["toronto-zoo"])
+            got = store_zoo_reports(conn)
             print(
                 _stored_line("zoo", got, before, _source_row_counts(conn, "zoo_board"))
             )
@@ -1120,7 +1119,7 @@ def _capture_agency_bodies(conn, ids, *, bodies, fetch, scrape, virtual_display,
                 finally:
                     http.close()
             before = _source_row_counts(conn, "ep_board")
-            got = store_ep_reports(conn, ids["exhibition-place"])
+            got = store_ep_reports(conn)
             print(_stored_line("ep", got, before, _source_row_counts(conn, "ep_board")))
         except Exception as exc:
             failures.append(("ep", str(exc)))
@@ -1136,13 +1135,12 @@ def _cmd_enrich_agencies(args) -> int:
     out = lambda m: print(m, flush=True)
     failures: list[tuple[str, str]] = []
     try:
-        ids = seed_buyers(conn)
+        seed_buyers(conn)  # the extraction backfill looks buyers up by slug
         bodies = [args.only] if args.only else ["trca", "zoo", "ep"]
 
         failures.extend(
             _capture_agency_bodies(
                 conn,
-                ids,
                 bodies=bodies,
                 fetch=args.fetch,
                 scrape=args.scrape,

@@ -6,7 +6,6 @@ requires-python = ">=3.12"
 dependencies = [
     "httpx",
     "lxml>=6.1.1",
-    "pdfplumber>=0.11.10",
     "pyarrow>=17",
     # Headed-Chromium capture is no longer optional: `tb nightly` runs the Ariba-attachment
     # capture (#117) and the TMMIS council/agency board scrapes in-line, so playwright is a

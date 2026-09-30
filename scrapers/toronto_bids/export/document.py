@@ -1,6 +1,7 @@
 import json
 from datetime import datetime, timezone
 
+from toronto_bids import config
 from toronto_bids.store import db
 
 
@@ -28,6 +29,27 @@ def _ext(name: str | None) -> str | None:
     leaf = name.rsplit("/", 1)[-1]
     dot = leaf.rfind(".")
     return leaf[dot + 1:].lower() if dot != -1 else None
+
+
+def _attribution() -> list[dict]:
+    """Attribution statements the recorded permission grants require (#228).
+
+    Derived from `config.BIDS_TENDERS_PORTALS` — the one place a grant is recorded — so a
+    new grant carrying an `attribution` appears here with no change to this module. Static
+    config, sorted by slug: deterministic, and present whether or not the body has rows yet
+    (the grant conditions the publication, not any particular night's data).
+    """
+    return [
+        {
+            "slug": p["slug"],
+            "body": p["body"],
+            "statement": p["attribution"],
+            "source_url": p["portal_url"],
+            "permission": p["permission"],
+        }
+        for p in sorted(config.BIDS_TENDERS_PORTALS, key=lambda p: p["slug"])
+        if p["enabled"] and p.get("attribution")
+    ]
 
 
 def build_export_document(conn, generated_at: str | None = None) -> dict:
@@ -211,6 +233,7 @@ def build_export_document(conn, generated_at: str | None = None) -> dict:
             "generated_at": generated_at,
             "counts": db.counts(conn),
             "sources": sources,
+            "attribution": _attribution(),
         },
         "solicitations": solicitations,
         "noncompetitive": noncompetitive,

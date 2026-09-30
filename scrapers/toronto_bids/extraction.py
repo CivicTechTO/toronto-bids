@@ -75,6 +75,19 @@ def dedup_contracts(contracts: list[dict]) -> list[dict]:
     return list(by_ref.values()) + no_ref
 
 
+def _skip_reason(text, url, labels) -> str | None:
+    """Why a held document is never sent for extraction, or None if it is eligible.
+
+    Shared by `extract_corpus` and `_count_uncached` so the two cannot drift (#220):
+    a document extraction never caches must never count as uncached.
+    """
+    if not text:
+        return "no_text"
+    if url in labels and not labels[url]:
+        return "skipped_classification"
+    return None
+
+
 def extract_corpus(
     conn,
     corpus,
@@ -121,12 +134,9 @@ def extract_corpus(
 
         sha256, text, url = row["sha256"], row["text"], row["url"]
 
-        if not text:
-            stats["no_text"] += 1
-            continue
-
-        if url in labels and not labels[url]:
-            stats["skipped_classification"] += 1
+        skip = _skip_reason(text, url, labels)
+        if skip is not None:
+            stats[skip] += 1
             continue
 
         if is_extracted(conn, sha256, EXTRACTOR_VERSION):
@@ -597,12 +607,12 @@ def _count_uncached(conn, corpus, labels) -> int:
     """Count documents in a corpus that are not yet in the extraction cache."""
     sql_where = CORPORA[corpus]
     rows = conn.execute(
-        f"SELECT sha256, url FROM background_pdf "
+        f"SELECT sha256, text, url FROM background_pdf "
         f"WHERE {sql_where} AND sha256 IS NOT NULL",
     ).fetchall()
     count = 0
     for row in rows:
-        if row["url"] in labels and not labels[row["url"]]:
+        if _skip_reason(row["text"], row["url"], labels) is not None:
             continue
         if not is_extracted(conn, row["sha256"], EXTRACTOR_VERSION):
             count += 1

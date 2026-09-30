@@ -11,8 +11,10 @@ WorkingDirectory=%h/toronto-bids/scrapers
 # live where a `git pull` cannot reach it.
 Environment=TB_DATA_DIR=%h/tb-data
 # The leading '-' makes this optional: no webhook file -> notify.post() no-ops and the run
-# still succeeds. The file holds credentials (TB_SLACK_WEBHOOK, optional GH_TOKEN) and is mode
-# 0600; it is never in git. Publishing requires gh to be authenticated (a GH_TOKEN here OR a
+# still succeeds. The file holds credentials (TB_SLACK_WEBHOOK, optional GH_TOKEN, ARIBA_USERNAME/
+# ARIBA_PASSWORD, OPENROUTER_API_KEY) and is mode 0600; it is never in git. Without
+# OPENROUTER_API_KEY every extraction-backed step fails on any uncached document (#221).
+# Publishing requires gh to be authenticated (a GH_TOKEN here OR a
 # prior `gh auth login` on the box) — the publish step fails loudly otherwise (#146).
 EnvironmentFile=-%h/.config/toronto-bids/tb.env
 # The wrapper runs `tb nightly` then publish-data.sh — publish runs even after a partial sync
