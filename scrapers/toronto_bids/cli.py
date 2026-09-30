@@ -869,11 +869,10 @@ def _cmd_nightly(args) -> int:
                     from toronto_bids.buyers import seed_buyers
 
                     a0 = db.counts(conn)
-                    ids = seed_buyers(conn)
+                    seed_buyers(conn)  # the extraction backfill looks buyers up by slug
                     failures.extend(
                         _capture_agency_bodies(
                             conn,
-                            ids,
                             bodies=["trca", "zoo", "ep"],
                             fetch=True,
                             scrape=True,
@@ -1023,7 +1022,7 @@ def _stored_line(
     return line + f"  [upserts {'/'.join(upserts)}]"
 
 
-def _capture_agency_bodies(conn, ids, *, bodies, fetch, scrape, virtual_display, out):
+def _capture_agency_bodies(conn, *, bodies, fetch, scrape, virtual_display, out):
     """Capture TRCA/Zoo/EP board-report awards+bids, each body isolated. Returns failures.
 
     Shared by `tb enrich-agencies` and `tb nightly`. TRCA is plain HTTP (eSCRIBE); Zoo and EP
@@ -1136,13 +1135,12 @@ def _cmd_enrich_agencies(args) -> int:
     out = lambda m: print(m, flush=True)
     failures: list[tuple[str, str]] = []
     try:
-        ids = seed_buyers(conn)
+        seed_buyers(conn)  # the extraction backfill looks buyers up by slug
         bodies = [args.only] if args.only else ["trca", "zoo", "ep"]
 
         failures.extend(
             _capture_agency_bodies(
                 conn,
-                ids,
                 bodies=bodies,
                 fetch=args.fetch,
                 scrape=args.scrape,

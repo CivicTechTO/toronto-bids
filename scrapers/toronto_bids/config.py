@@ -139,7 +139,7 @@ ZOO_REPORTS_DIR = DATA_DIR / "agencies" / "zoo"
 # (#228); `export/document.py` lifts every enabled portal's into the export's
 # `meta.attribution`, so a future grant that asks for attribution adds it HERE, on its own
 # entry, and nowhere else. Neither grant prescribes wording — both ask only that the body be
-# credited as the data source — so the text names the body, the portal, and the permission.
+# credited as the data source — so the statement just names the source.
 BIDS_TENDERS_PORTALS = [
     {
         "slug": "toronto-zoo",
@@ -147,12 +147,7 @@ BIDS_TENDERS_PORTALS = [
         "portal_url": "https://torontozoo.bidsandtenders.ca/",
         "enabled": True,
         "permission": "docs/permissions/2026-07-18-toronto-zoo.md",
-        "attribution": (
-            "Toronto Zoo procurement data courtesy of the Toronto Zoo (Purchasing & "
-            "Supply), the data source. Public bid listing metadata from "
-            "torontozoo.bidsandtenders.ca is archived and published with the Zoo's "
-            "permission, granted 2026-07-18."
-        ),
+        "attribution": "Source: Toronto Zoo (torontozoo.bidsandtenders.ca).",
     },
     {
         "slug": "trca",
@@ -161,10 +156,7 @@ BIDS_TENDERS_PORTALS = [
         "enabled": True,
         "permission": "docs/permissions/2026-07-18-trca.md",
         "attribution": (
-            "TRCA procurement data courtesy of the Toronto and Region Conservation "
-            "Authority (TRCA), the data source. Public bid listing metadata from "
-            "trca.bidsandtenders.ca is archived and published with TRCA's permission, "
-            "granted 2026-07-18."
+            "Source: Toronto and Region Conservation Authority (trca.bidsandtenders.ca)."
         ),
     },
 ]
