@@ -239,11 +239,11 @@ def _pdftotext(path: pathlib.Path) -> str | None:
         return None
 
 
-def store_trca_reports(conn, log=lambda _m: None) -> dict:
+def store_trca_reports(conn, log=lambda _m: None, failures=None) -> dict:
     """Extract and backfill agency_* rows from cached LLM extractions (#205)."""
     from toronto_bids.extraction import extract_and_backfill
 
-    result = extract_and_backfill(conn, "trca", log=log)
+    result = extract_and_backfill(conn, "trca", log=log, failures=failures)
     return {
         "solicitations": result["solicitations_written"],
         "awards": result["awards_written"],

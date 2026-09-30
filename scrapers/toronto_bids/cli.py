@@ -871,10 +871,16 @@ def _cmd_nightly(args) -> int:
                     # The store rebuilds the source's rows, so its return is the corpus
                     # total — Slack read ~1,100 as nightly growth (#218). Diff real counts.
                     n_before = _bid_count(conn, "award_summary")
-                    store_award_summary_bids(conn, log=out)
+                    # Extraction errors are swallowed per document; without `failures` a
+                    # night where every new form failed extraction reads ✅ (#219).
+                    store_award_summary_bids(conn, log=out, failures=failures)
                     return _bid_delta(n_before, _bid_count(conn, "award_summary"))
 
-                _run_step(steps, failures, "award summaries", _awards, conn=conn)
+                before_len = len(failures)
+                run_id = _run_step(
+                    steps, failures, "award summaries", _awards, conn=conn
+                )
+                _mark_if_swallowed_failures(steps, failures, conn, run_id, before_len)
 
                 def _portal():
                     from toronto_bids.sources.bids_tenders import run_portal_capture
@@ -1067,6 +1073,10 @@ def _capture_agency_bodies(conn, *, bodies, fetch, scrape, virtual_display, out)
     Shared by `tb enrich-agencies` and `tb nightly`. TRCA is plain HTTP (eSCRIBE); Zoo and EP
     need a headed browser for TMMIS discovery, so `scrape`/`virtual_display` apply to them.
     Does not run the portal step or the supplier rebuild — the caller owns those.
+
+    Per-document extraction errors, which the store calls swallow, land in the SAME returned
+    list as `extract:<corpus>` entries (#219) — one mechanism, so the nightly's
+    `_mark_if_swallowed_failures` sees them without a second channel.
     """
     failures: list[tuple[str, str]] = []
 
@@ -1086,7 +1096,7 @@ def _capture_agency_bodies(conn, *, bodies, fetch, scrape, virtual_display, out)
                 finally:
                     http.close()
             before = _source_row_counts(conn, "trca_board")
-            got = store_trca_reports(conn, log=out)
+            got = store_trca_reports(conn, log=out, failures=failures)
             print(
                 _stored_line(
                     "trca", got, before, _source_row_counts(conn, "trca_board")
@@ -1123,7 +1133,7 @@ def _capture_agency_bodies(conn, *, bodies, fetch, scrape, virtual_display, out)
                 finally:
                     http.close()
             before = _source_row_counts(conn, "zoo_board")
-            got = store_zoo_reports(conn, log=out)
+            got = store_zoo_reports(conn, log=out, failures=failures)
             print(
                 _stored_line("zoo", got, before, _source_row_counts(conn, "zoo_board"))
             )
@@ -1158,7 +1168,7 @@ def _capture_agency_bodies(conn, *, bodies, fetch, scrape, virtual_display, out)
                 finally:
                     http.close()
             before = _source_row_counts(conn, "ep_board")
-            got = store_ep_reports(conn, log=out)
+            got = store_ep_reports(conn, log=out, failures=failures)
             print(_stored_line("ep", got, before, _source_row_counts(conn, "ep_board")))
         except Exception as exc:
             failures.append(("ep", str(exc)))

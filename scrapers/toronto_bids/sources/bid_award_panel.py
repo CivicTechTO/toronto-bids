@@ -916,11 +916,11 @@ def match_pre_ariba_solicitations(conn, agendas: dict) -> int:
     return len(links)
 
 
-def store_composite_awards(conn, log=lambda _m: None) -> int:
+def store_composite_awards(conn, log=lambda _m: None, failures=None) -> int:
     """Extract and backfill composite awards from cached LLM extractions (#205)."""
     from toronto_bids.extraction import extract_and_backfill
 
-    result = extract_and_backfill(conn, "composite", log=log)
+    result = extract_and_backfill(conn, "composite", log=log, failures=failures)
     return result["awards_written"]
 
 

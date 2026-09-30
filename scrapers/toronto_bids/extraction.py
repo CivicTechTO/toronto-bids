@@ -634,11 +634,21 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
     }
 
 
-def extract_and_backfill(conn, corpus, *, log=lambda _m: None) -> dict:
+def extract_and_backfill(
+    conn, corpus, *, log=lambda _m: None, failures=None
+) -> dict:
     """Extract any uncached documents via LLM, then backfill store tables.
 
     If OPENROUTER_API_KEY is unset and all documents are already cached,
     the extraction step is skipped and only backfill runs.
+
+    Per-document extraction errors are caught and logged by `extract_corpus`, so this
+    returns normally even when every new document failed (#219) — the #176/#178 lesson.
+    Pass the nightly's shared `failures` list and ONE summary entry per corpus is appended
+    when any document failed (the per-document lines are already logged), so
+    `_mark_if_swallowed_failures` can mark the step failed. Declared-count flags are NOT
+    failures: most are composite noise (appendices publish a count, no bidder list), so
+    they ride on the summary log line only.
     """
     from toronto_bids.config import CLASSIFICATION_LABELS_PATH
     from toronto_bids.extract import ExtractionClient
@@ -652,8 +662,17 @@ def extract_and_backfill(conn, corpus, *, log=lambda _m: None) -> dict:
         stats = extract_corpus(conn, corpus, client=client, labels=labels, log=log)
         log(
             f"  extraction: {stats['extracted']} new, "
-            f"{stats['cached']} cached, {stats['errors']} errors"
+            f"{stats['cached']} cached, {stats['errors']} errors, "
+            f"{stats['count_flags']} count flags"
         )
+        if stats["errors"] and failures is not None:
+            attempted = stats["extracted"] + stats["errors"]
+            failures.append(
+                (
+                    f"extract:{corpus}",
+                    f"{stats['errors']} of {attempted} documents failed extraction",
+                )
+            )
     except ValueError:
         uncached = _count_uncached(conn, corpus, labels)
         if uncached > 0:

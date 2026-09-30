@@ -1140,8 +1140,11 @@ def test_store_functions_forward_log_to_extraction(monkeypatch, module, fn, corp
 
     seen = {}
 
-    def fake_extract_and_backfill(conn, got_corpus, *, log=lambda _m: None):
+    def fake_extract_and_backfill(
+        conn, got_corpus, *, log=lambda _m: None, failures=None
+    ):
         seen["corpus"] = got_corpus
+        seen["failures"] = failures
         log("FAILED something")
         return {"solicitations_written": 1, "awards_written": 2, "bids_written": 3}
 
@@ -1150,6 +1153,68 @@ def test_store_functions_forward_log_to_extraction(monkeypatch, module, fn, corp
     result = getattr(importlib.import_module(module), fn)(None, log=logged.append)
 
     assert seen["corpus"] == corpus
+    assert seen["failures"] is None  # default keeps non-nightly callers unchanged
     assert logged == ["FAILED something"]
     if isinstance(result, dict):
         assert result["bids"] == 3
+
+    failures = []
+    getattr(importlib.import_module(module), fn)(None, failures=failures)
+    assert seen["failures"] is failures
+
+
+# ── extraction errors reach the caller's failures list (#219) ──
+
+
+class _FailingClient:
+    def extract(self, text):
+        raise ValueError("model retired")
+
+
+def _two_award_summary_docs(conn):
+    for i in range(2):
+        conn.execute(
+            "INSERT INTO background_pdf (url, kind, sha256, text) "
+            f"VALUES ('https://example.com/form{i}.pdf', 'award_summary', 's{i}', 'text')"
+        )
+    conn.commit()
+
+
+def test_extract_and_backfill_appends_one_entry_per_corpus_on_errors(conn, monkeypatch):
+    import toronto_bids.extract as extract_mod
+    from toronto_bids.extraction import extract_and_backfill
+
+    monkeypatch.setattr(extract_mod, "ExtractionClient", _FailingClient)
+    _two_award_summary_docs(conn)
+    failures = []
+    logged = []
+
+    extract_and_backfill(conn, "award_summary", log=logged.append, failures=failures)
+
+    assert failures == [("extract:award_summary", "2 of 2 documents failed extraction")]
+    # per-document lines are still logged; the summary line carries the flag count
+    assert sum(m.startswith("  FAILED") for m in logged) == 2
+    assert any("2 errors, 0 count flags" in m for m in logged)
+
+
+def test_extract_and_backfill_appends_nothing_without_errors(conn, monkeypatch):
+    import toronto_bids.extract as extract_mod
+    from toronto_bids.extraction import extract_and_backfill
+
+    monkeypatch.setattr(extract_mod, "ExtractionClient", lambda: FakeClient())
+    _two_award_summary_docs(conn)
+    failures = []
+
+    extract_and_backfill(conn, "award_summary", failures=failures)
+
+    assert failures == []
+
+
+def test_extract_and_backfill_without_failures_list_still_returns(conn, monkeypatch):
+    import toronto_bids.extract as extract_mod
+    from toronto_bids.extraction import extract_and_backfill
+
+    monkeypatch.setattr(extract_mod, "ExtractionClient", _FailingClient)
+    _two_award_summary_docs(conn)
+
+    assert extract_and_backfill(conn, "award_summary")["bids_written"] == 0
