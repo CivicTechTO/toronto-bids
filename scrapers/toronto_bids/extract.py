@@ -152,7 +152,15 @@ def parse_llm_response(response: dict) -> dict:
 
 
 class ExtractionClient:
-    """Calls OpenRouter, retries with backoff, falls back across models."""
+    """Calls OpenRouter, retries with backoff, falls back across models.
+
+    Per model: 429, 5xx, transport errors and malformed output (ValueError) are
+    retried with exponential backoff, then fall through to the next model. Any
+    other 4xx (retired slug 404, payment 402, model unavailable) skips straight
+    to the next model without retrying. 401/403 raise immediately: the same API
+    key is used for every model, so falling back cannot help. If every model
+    fails, the last error is raised.
+    """
 
     def __init__(
         self,
@@ -186,12 +194,16 @@ class ExtractionClient:
                     return self._call(httpx, model, prompt)
                 except (httpx.HTTPStatusError, httpx.TransportError, ValueError) as exc:
                     last_exc = exc
-                    if (
-                        isinstance(exc, httpx.HTTPStatusError)
-                        and exc.response.status_code < 500
-                        and exc.response.status_code != 429
-                    ):
-                        raise
+                    if isinstance(exc, httpx.HTTPStatusError):
+                        status = exc.response.status_code
+                        if status in (401, 403):
+                            # Same key for every model: no fallback can help.
+                            raise
+                        if status < 500 and status != 429:
+                            # Retired slug (404), no credit (402), model
+                            # unavailable: retrying this model is futile, but
+                            # the next one may serve.
+                            break
                     if attempt < self._retries:
                         time.sleep(self._backoff * (2**attempt))
         raise last_exc  # type: ignore[misc]
