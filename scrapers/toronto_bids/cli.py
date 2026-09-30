@@ -166,7 +166,8 @@ def build_parser() -> argparse.ArgumentParser:
         "--portal",
         action="store_true",
         help="Capture bids&tenders portal listings for enabled+permitted bodies "
-        "(plain HTTP, rate-limited). Currently a no-op while portals are empty.",
+        "(plain HTTP, rate-limited). Stores 0 rows when a portal lists no bids; "
+        "a portal that fails to answer is reported FAILED.",
     )
     p_ag.add_argument(
         "--record",
@@ -309,6 +310,10 @@ def _mark_if_swallowed_failures(steps, failures, conn, run_id, before: int) -> N
     just appended, and, since the row was already committed as 'ok' before the caller could
     know better, the `sync_run` row itself (#176).
     """
+    if steps[-1]["status"] == "fail":
+        # The step RAISED: _run_step already marked both places, and its own append to
+        # `failures` would otherwise read as growth and overwrite the raised error (#223).
+        return
     new = failures[before:]
     if not new:
         return
@@ -586,7 +591,10 @@ def _cmd_enrich_titles(args) -> int:
         print(f"  titles composite    : {match_composite_titles(conn)}")
         # Not a linking pass: for 2009-2011 the City's feed publishes 13 awards against the
         # 799 in these reports, so this is the archive reaching back past the feed (#96).
-        print(f"  composite awards    : {store_composite_awards(conn)}")
+        print(
+            f"  composite awards    : "
+            f"{store_composite_awards(conn, log=lambda m: print(m, flush=True))}"
+        )
 
         n_legacy = fill_titles_from_legacy(conn, config.LEGACY_ARIBA_DIR)
         print(
@@ -609,6 +617,23 @@ def _cmd_enrich_titles(args) -> int:
     finally:
         conn.close()
     return 0
+
+
+def _bid_count(conn, source: str) -> int:
+    """Distinct `bid` rows attributed to one `source` — a real row count, never a store's return.
+
+    Since the LLM extraction switch (#205) the award-summary and committee stores REBUILD their
+    source's rows (delete + reinsert), so what they return is the corpus total, not what was new
+    (#218). Same lesson as #177/#142: "what's new" is two `SELECT COUNT(*)`s diffed, nothing else.
+    """
+    return conn.execute(
+        "SELECT COUNT(*) FROM bid WHERE source=?", (source,)
+    ).fetchone()[0]
+
+
+def _bid_delta(before: int, after: int) -> str:
+    """'+3 bids (1105 total)'. Signed, because a rebuild can REMOVE rows and that must show."""
+    return f"{after - before:+d} bids ({after} total)"
 
 
 def _cmd_enrich_awards(args) -> int:
@@ -646,12 +671,14 @@ def _cmd_enrich_awards(args) -> int:
                     "No Award Summary Forms on disk — run with --download to fetch them "
                     "(plain HTTP, no browser)."
                 )
+        src_before = _bid_count(conn, "award_summary")
+        store_award_summary_bids(conn, log=lambda m: print(m, flush=True))
         print(
             f"  bids from award summaries   : "
-            f"{store_award_summary_bids(conn, log=lambda m: print(m, flush=True))}"
+            f"{_bid_delta(src_before, _bid_count(conn, 'award_summary'))}"
         )
         after = conn.execute("SELECT COUNT(*) FROM bid").fetchone()[0]
-        print(f"\nBids: {before} -> {after}  ({after - before} new)")
+        print(f"\nBids: {before} -> {after}  ({after - before:+d})")
         for r in conn.execute(
             "SELECT source, COUNT(*) n FROM bid GROUP BY 1 ORDER BY 2 DESC"
         ):
@@ -839,7 +866,11 @@ def _cmd_nightly(args) -> int:
 
                 def _awards():
                     download_award_summaries(conn, http, log=out)
-                    return f"{store_award_summary_bids(conn, log=out)} bids stored"
+                    # The store rebuilds the source's rows, so its return is the corpus
+                    # total — Slack read ~1,100 as nightly growth (#218). Diff real counts.
+                    n_before = _bid_count(conn, "award_summary")
+                    store_award_summary_bids(conn, log=out)
+                    return _bid_delta(n_before, _bid_count(conn, "award_summary"))
 
                 _run_step(steps, failures, "award summaries", _awards, conn=conn)
 
@@ -860,10 +891,16 @@ def _cmd_nightly(args) -> int:
                 def _ariba():
                     from toronto_bids.sources import ariba_attachments as aa
 
-                    n = aa.capture_attachments(conn, log=out, virtual_display=True)
+                    # Per-event failures are caught inside capture_attachments; without handing
+                    # it `failures` a night where every event raised reads ✅ (#223).
+                    n = aa.capture_attachments(
+                        conn, log=out, virtual_display=True, failures=failures
+                    )
                     return f"+{n} bundles"
 
-                _run_step(steps, failures, "ariba attachments", _ariba, conn=conn)
+                before_len = len(failures)
+                run_id = _run_step(steps, failures, "ariba attachments", _ariba, conn=conn)
+                _mark_if_swallowed_failures(steps, failures, conn, run_id, before_len)
 
                 def _agencies():
                     from toronto_bids.buyers import seed_buyers
@@ -1008,8 +1045,8 @@ def _stored_line(
     deduped" are very different runs and otherwise look identical from a flat `(+0)`.
 
     The delta remains `after - before` over `_source_row_counts` (#177) — two real row-count
-    queries, immune to how many upserts happened to write them. No "bids" key for a body with
-    no bid table (Zoo).
+    queries, immune to how many upserts happened to write them. A `got` with no "bids" key
+    omits the bids segment.
     """
     line = (
         f"  {label} stored : {after[0]} solicitations ({after[0] - before[0]:+d}), "
@@ -1047,7 +1084,7 @@ def _capture_agency_bodies(conn, *, bodies, fetch, scrape, virtual_display, out)
                 finally:
                     http.close()
             before = _source_row_counts(conn, "trca_board")
-            got = store_trca_reports(conn)
+            got = store_trca_reports(conn, log=out)
             print(
                 _stored_line(
                     "trca", got, before, _source_row_counts(conn, "trca_board")
@@ -1084,7 +1121,7 @@ def _capture_agency_bodies(conn, *, bodies, fetch, scrape, virtual_display, out)
                 finally:
                     http.close()
             before = _source_row_counts(conn, "zoo_board")
-            got = store_zoo_reports(conn)
+            got = store_zoo_reports(conn, log=out)
             print(
                 _stored_line("zoo", got, before, _source_row_counts(conn, "zoo_board"))
             )
@@ -1119,7 +1156,7 @@ def _capture_agency_bodies(conn, *, bodies, fetch, scrape, virtual_display, out)
                 finally:
                     http.close()
             before = _source_row_counts(conn, "ep_board")
-            got = store_ep_reports(conn)
+            got = store_ep_reports(conn, log=out)
             print(_stored_line("ep", got, before, _source_row_counts(conn, "ep_board")))
         except Exception as exc:
             failures.append(("ep", str(exc)))
@@ -1273,16 +1310,10 @@ def _cmd_enrich_committee_awards(args) -> int:
                 failures.append(("scrape", str(exc)))
 
         try:
-            before = conn.execute(
-                "SELECT COUNT(*) FROM bid WHERE source='committee_award'"
-            ).fetchone()[0]
-            print(
-                f"  bids from committee reports : {store_committee_bids(conn, log=out)}"
-            )
-            after = conn.execute(
-                "SELECT COUNT(*) FROM bid WHERE source='committee_award'"
-            ).fetchone()[0]
-            print(f"\nCommittee award bids: {before} -> {after} ({after - before} new)")
+            before = _bid_count(conn, "committee_award")
+            store_committee_bids(conn, log=out)
+            after = _bid_count(conn, "committee_award")
+            print(f"  bids from committee reports : {_bid_delta(before, after)}")
         except Exception as exc:
             failures.append(("store_committee_bids", str(exc)))
 

@@ -171,11 +171,28 @@ def extract_corpus(
             stats["extracted"] += 1
             extracted_count += 1
             log(f"  extracted {url}")
-        except (ValueError, httpx.HTTPError) as exc:
+        # TypeError too (#219): a response of an unexpected shape is one document's
+        # refusal, never a crash that blocks every uncached document after it.
+        except (ValueError, TypeError, httpx.HTTPError) as exc:
             stats["errors"] += 1
             log(f"  FAILED {url}: {exc}")
 
     return stats
+
+
+def _as_count(value) -> int | None:
+    """A declared count as an int, or None when the model gave nothing usable (#219).
+
+    Models sometimes return `"8"` for `8`; that is coerced. Anything else that is not a
+    whole number (`"eight"`, `8.5`, `true`, a list) is ignored rather than guessed at.
+    """
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, int):
+        return value
+    if isinstance(value, str) and value.strip().isdigit():
+        return int(value.strip())
+    return None
 
 
 def check_declared_counts(extraction: dict) -> list[dict]:
@@ -187,7 +204,7 @@ def check_declared_counts(extraction: dict) -> list[dict]:
     """
     flags = []
     for contract in extraction.get("contracts", []):
-        declared = contract.get("declared_submissions")
+        declared = _as_count(contract.get("declared_submissions"))
         if declared is None:
             continue
         actual = len(contract.get("bids", []))

@@ -874,3 +874,134 @@ def test_extract_and_backfill_keyless_ignores_text_less_docs(conn, monkeypatch):
     result = extract_and_backfill(conn, "composite")
 
     assert result["awards_written"] == 1
+
+
+# ── malformed model responses (#219) ──
+
+
+def _one_contract(declared):
+    return {
+        "contracts": [
+            {
+                "reference": "RFT 1",
+                "declared_submissions": declared,
+                "bids": [{"supplier_name": "A", "amount_raw": "$1"}],
+                "awards": [],
+            }
+        ]
+    }
+
+
+def test_check_declared_counts_coerces_a_numeric_string():
+    """A model that returns `"8"` instead of `8` is still a shortfall of 7, not a crash."""
+    flags = check_declared_counts(_one_contract("8"))
+    assert len(flags) == 1
+    assert flags[0]["declared"] == 8
+    assert flags[0]["delta"] == -7
+
+
+@pytest.mark.parametrize("declared", ["eight", "", "8.5", True, [8], {"n": 8}])
+def test_check_declared_counts_ignores_a_non_numeric_declared_count(declared):
+    assert check_declared_counts(_one_contract(declared)) == []
+
+
+class _SequenceClient:
+    """Returns (or raises) one scripted response per call, in order."""
+
+    def __init__(self, *responses):
+        self.responses = list(responses)
+        self.calls = []
+
+    def extract(self, text):
+        self.calls.append(text)
+        r = self.responses.pop(0)
+        if isinstance(r, BaseException):
+            raise r
+        return r
+
+
+def test_one_bad_response_does_not_block_the_rest_of_the_corpus(conn):
+    """#219: a TypeError from one document's response used to escape extract_corpus, so
+    every uncached document after it (ORDER BY url) was blocked on every run."""
+    from toronto_bids.extract import EXTRACTOR_VERSION
+    from toronto_bids.store.db import is_extracted
+
+    conn.execute(
+        "INSERT INTO background_pdf (url, kind, sha256, text) "
+        "VALUES ('https://example.com/a.pdf', 'agency_board', 'a1', 'text a')"
+    )
+    conn.execute(
+        "INSERT INTO background_pdf (url, kind, sha256, text) "
+        "VALUES ('https://example.com/b.pdf', 'agency_board', 'b1', 'text b')"
+    )
+    conn.commit()
+    client = _SequenceClient(TypeError("unexpected shape"), {"contracts": []})
+    logged = []
+
+    stats = extract_corpus(
+        conn,
+        "trca",
+        client=client,
+        labels={},
+        where="kind='agency_board'",
+        log=logged.append,
+    )
+
+    assert stats["errors"] == 1
+    assert stats["extracted"] == 1
+    assert client.calls == ["text a", "text b"]
+    assert not is_extracted(conn, "a1", EXTRACTOR_VERSION)
+    assert is_extracted(conn, "b1", EXTRACTOR_VERSION)
+    assert any("FAILED https://example.com/a.pdf" in m for m in logged)
+
+
+def test_string_declared_count_in_a_response_is_extracted_not_crashed(conn):
+    conn.execute(
+        "INSERT INTO background_pdf (url, kind, sha256, text) "
+        "VALUES ('https://example.com/s.pdf', 'agency_board', 's1', 'text')"
+    )
+    conn.commit()
+    stats = extract_corpus(
+        conn,
+        "trca",
+        client=FakeClient(_one_contract("8")),
+        labels={},
+        where="kind='agency_board'",
+    )
+    assert stats["extracted"] == 1
+    assert stats["errors"] == 0
+    assert stats["count_flags"] == 1
+
+
+# ── store functions forward `log` (#219) ──
+
+
+@pytest.mark.parametrize(
+    "module, fn, corpus",
+    [
+        ("toronto_bids.sources.trca_board", "store_trca_reports", "trca"),
+        ("toronto_bids.sources.zoo_board", "store_zoo_reports", "zoo"),
+        ("toronto_bids.sources.ep_board", "store_ep_reports", "ep"),
+        ("toronto_bids.sources.bid_award_panel", "store_composite_awards", "composite"),
+    ],
+)
+def test_store_functions_forward_log_to_extraction(monkeypatch, module, fn, corpus):
+    import importlib
+
+    import toronto_bids.extraction as extraction
+
+    seen = {}
+
+    def fake_extract_and_backfill(conn, got_corpus, *, log=lambda _m: None):
+        seen["corpus"] = got_corpus
+        log("FAILED something")
+        return {"solicitations_written": 1, "awards_written": 2, "bids_written": 3}
+
+    monkeypatch.setattr(extraction, "extract_and_backfill", fake_extract_and_backfill)
+    logged = []
+    result = getattr(importlib.import_module(module), fn)(None, log=logged.append)
+
+    assert seen["corpus"] == corpus
+    assert logged == ["FAILED something"]
+    if isinstance(result, dict):
+        assert result["bids"] == 3

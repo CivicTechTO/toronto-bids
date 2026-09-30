@@ -81,8 +81,27 @@ def test_validate_extraction_rejects_bid_without_supplier():
 def test_validate_extraction_rejects_non_dict():
     from toronto_bids.extract import validate_extraction
 
-    with pytest.raises(TypeError, match="not a JSON object"):
+    with pytest.raises(ValueError, match="not a JSON object"):
         validate_extraction("just a string")
+
+
+@pytest.mark.parametrize(
+    "bad",
+    [
+        {"contracts": [{"reference": "R", "bids": None}]},
+        {"contracts": [{"reference": "R", "awards": None}]},
+        {"contracts": [{"reference": "R", "bids": ["Acme"]}]},
+        {"contracts": ["not a dict"]},
+        {"contracts": None},
+    ],
+)
+def test_validate_extraction_refuses_shape_surprises_with_value_error(bad):
+    """#219: a shape surprise is a per-document refusal (ValueError), never a TypeError
+    that escapes the corpus loop."""
+    from toronto_bids.extract import validate_extraction
+
+    with pytest.raises(ValueError):
+        validate_extraction(bad)
 
 
 # ── response parsing ──
@@ -275,6 +294,94 @@ def test_client_does_not_retry_4xx(monkeypatch):
     client = ExtractionClient(api_key="sk-or-v1-test123", backoff=0)
     with pytest.raises(httpx.HTTPStatusError):
         client.extract("Some document text")
+
+
+def _status_then_fixture(monkeypatch, statuses):
+    """Patch httpx.post: each model in `statuses` raises that status; others succeed.
+
+    Returns (calls, sleeps) lists recording model per call and every backoff sleep.
+    """
+    import time
+
+    import httpx
+
+    fixture = _load_fixture()
+    calls = []
+    sleeps = []
+
+    def mock_post(url, *, json, headers, timeout):
+        calls.append(json["model"])
+        status = statuses.get(json["model"])
+        if status is not None:
+            resp = httpx.Response(status_code=status)
+            raise httpx.HTTPStatusError(f"status {status}", request=None, response=resp)
+
+        class FakeResp:
+            status_code = 200
+
+            def raise_for_status(self):
+                pass
+
+            def json(self):
+                return fixture
+
+        return FakeResp()
+
+    monkeypatch.setattr(httpx, "post", mock_post)
+    monkeypatch.setattr(time, "sleep", lambda s: sleeps.append(s))
+    return calls, sleeps
+
+
+def test_client_falls_back_on_404_without_retrying(monkeypatch):
+    """A retired :free slug (404) moves straight to the next model (#208)."""
+    from toronto_bids.extract import MODELS, ExtractionClient
+
+    calls, sleeps = _status_then_fixture(monkeypatch, {MODELS[0]: 404})
+    client = ExtractionClient(api_key="sk-or-v1-test123", retries=3, backoff=1.0)
+    result = client.extract("Some document text")
+    assert len(result["contracts"]) == 1
+    assert calls == [MODELS[0], MODELS[1]]
+    assert sleeps == []
+
+
+def test_client_falls_back_on_402(monkeypatch):
+    from toronto_bids.extract import MODELS, ExtractionClient
+
+    calls, sleeps = _status_then_fixture(monkeypatch, {MODELS[0]: 402})
+    client = ExtractionClient(api_key="sk-or-v1-test123", retries=3, backoff=1.0)
+    assert len(client.extract("Some document text")["contracts"]) == 1
+    assert calls == [MODELS[0], MODELS[1]]
+    assert sleeps == []
+
+
+@pytest.mark.parametrize("status", [401, 403])
+def test_client_auth_error_raises_without_fallback(monkeypatch, status):
+    """A bad key is the same key for every model, so no fallback can help."""
+    import httpx
+
+    from toronto_bids.extract import MODELS, ExtractionClient
+
+    calls, sleeps = _status_then_fixture(monkeypatch, {MODELS[0]: status})
+    client = ExtractionClient(api_key="sk-or-v1-test123", retries=3, backoff=1.0)
+    with pytest.raises(httpx.HTTPStatusError) as info:
+        client.extract("Some document text")
+    assert info.value.response.status_code == status
+    assert calls == [MODELS[0]]
+    assert sleeps == []
+
+
+def test_client_every_model_4xx_raises_last_error(monkeypatch):
+    import httpx
+
+    from toronto_bids.extract import MODELS, ExtractionClient
+
+    calls, sleeps = _status_then_fixture(monkeypatch, {MODELS[0]: 404, MODELS[1]: 402})
+    client = ExtractionClient(api_key="sk-or-v1-test123", retries=3, backoff=1.0)
+    with pytest.raises(httpx.HTTPStatusError) as info:
+        client.extract("Some document text")
+    assert info.value.response.status_code == 402
+    assert calls == [MODELS[0], MODELS[1]]
+    assert sleeps == []
 
 
 def test_client_sets_flex_tier_for_openai(monkeypatch):

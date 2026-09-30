@@ -47,7 +47,7 @@ def test_stored_line_delta_is_the_real_row_count_not_the_loop_count():
 
 
 def test_stored_line_omits_bids_for_a_body_with_no_bid_table():
-    """Zoo's store_zoo_reports returns no 'bids' key — the line must not fabricate one, and
+    """A store that returns no 'bids' key must not have one fabricated in the line, and
     the upsert bracket must not invent a third figure either."""
     line = cli._stored_line("zoo", {"solicitations": 5, "awards": 5},
                             before=(4, 4, 0), after=(4, 4, 0))

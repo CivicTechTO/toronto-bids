@@ -39,13 +39,34 @@ def _search_params(status: int, start: int, limit: int = _PAGE) -> dict:
     return {"status": status, "limit": limit, "start": start, "dir": "desc", "from": "", "to": ""}
 
 
+def _search_payload(resp, slug: str, status: int, start: int) -> dict:
+    """The search reply's JSON payload — or RAISE, naming the portal, HTTP status and status
+    filter (#226). A non-2xx, a non-JSON body (e.g. the Error?aspxerrorpath page a bad request
+    redirects to) or `success: false` means the portal is BROKEN, which must never read as
+    "no open bids": run_portal_capture turns the raise into that slug's `FAILED: ...`. A
+    payload with no `success` key at all is accepted — only an explicit false fails."""
+    where = f"bids&tenders {slug}: search status={status} start={start} got HTTP {resp.status_code}"
+    if not resp.is_success:
+        raise RuntimeError(where)
+    try:
+        payload = resp.json()
+    except ValueError:
+        raise RuntimeError(f"{where} with a non-JSON body") from None
+    if not isinstance(payload, dict):
+        raise RuntimeError(f"{where} with a non-object JSON body")
+    if payload.get("success", True) is False:
+        raise RuntimeError(f"{where} with success=false")
+    return payload
+
+
 def fetch_listings(portal: dict, *, delay: float = _DELAY, log=lambda _m: None):
     """Yield every listing record for a portal, across all statuses, paged and rate-limited.
 
     Manages its own httpx.Client (the antiforgery cookie set on the landing GET must persist
     to the search POSTs — a session concern specific to this source, not the shared HttpClient).
     Yields each raw JSON record with `buyer_slug` and `status_code` attached. On an empty portal
-    (total=0, the current reality) this yields nothing — a clean no-op.
+    (total=0, the current reality) this yields nothing — a clean no-op. A broken reply
+    (non-2xx, non-JSON, `success: false`) RAISES instead (#226), so it can't pass for empty.
     """
     if not portal.get("enabled"):
         raise PermissionError(
@@ -69,11 +90,7 @@ def fetch_listings(portal: dict, *, delay: float = _DELAY, log=lambda _m: None):
                 resp = client.post(base + _SEARCH + node,
                                    params=_search_params(status, start),
                                    data={"keywords": "", "__RequestVerificationToken": token})
-                try:
-                    payload = resp.json()
-                except ValueError:
-                    log(f"  {portal['slug']} status={status} start={start}: non-JSON, skipping")
-                    break
+                payload = _search_payload(resp, portal["slug"], status, start)
                 rows = payload.get("data") or []
                 total = payload.get("total") or 0
                 for rec in rows:
