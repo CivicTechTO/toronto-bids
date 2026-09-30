@@ -708,3 +708,136 @@ def test_backfill_composite_awards_from_extraction(conn):
     assert awards[0]["call_number"] == "3905-10-0097"
     assert awards[0]["supplier_name_raw"] == "Builder Co."
     assert awards[0]["reference"] == "2011.BD5.1"
+
+
+# ── backfill: derive first, delete only on success ──
+
+
+def _award_summary_doc(conn, sha, doc_num, url):
+    conn.execute(
+        "INSERT INTO background_pdf (url, kind, sha256, text, document_number) "
+        "VALUES (?, 'award_summary', ?, 'text', ?)",
+        (url, sha, doc_num),
+    )
+    conn.commit()
+
+
+def _cache(conn, sha, version, *bidders):
+    from toronto_bids.store.db import mark_extracted
+
+    result = {
+        "contracts": [
+            {"reference": "RFT 1", "bids": [{"supplier_name": b} for b in bidders]}
+        ]
+    }
+    mark_extracted(conn, sha, version, result_json=json.dumps(result))
+
+
+def _bidders(conn):
+    return {
+        r["bidder_name_raw"]
+        for r in conn.execute("SELECT bidder_name_raw FROM bid WHERE source='award_summary'")
+    }
+
+
+def test_backfill_rebuild_drops_rows_no_longer_derived(conn):
+    """A successful rebuild replaces the source's rows — stale ones go."""
+    from toronto_bids.extract import EXTRACTOR_VERSION
+    from toronto_bids.extraction import backfill_from_extraction
+
+    _award_summary_doc(conn, "s1", "1111111111", "https://example.com/a.pdf")
+    _cache(conn, "s1", EXTRACTOR_VERSION, "Alpha Co.", "Stale Ltd.")
+    backfill_from_extraction(conn, "award_summary")
+    _cache(conn, "s1", EXTRACTOR_VERSION, "Alpha Co.")
+
+    backfill_from_extraction(conn, "award_summary")
+
+    assert _bidders(conn) == {"Alpha Co."}
+
+
+def test_backfill_empty_derived_set_deletes_nothing(conn):
+    """No current-version extractions anywhere (cold cache): existing rows survive."""
+    from toronto_bids.extraction import backfill_from_extraction
+
+    conn.execute(
+        "INSERT INTO bid (bidder_name_raw, document_number, source) "
+        "VALUES ('Kept Inc.', '1111111111', 'award_summary')"
+    )
+    conn.commit()
+
+    result = backfill_from_extraction(conn, "award_summary")
+
+    assert result["bids_written"] == 0
+    assert _bidders(conn) == {"Kept Inc."}
+
+
+def test_backfill_refuses_partial_reextraction_after_version_bump(conn):
+    """A prompt edit bumps EXTRACTOR_VERSION; until re-extraction catches up, the
+    rebuild must not replace the archive with the fraction re-extracted so far."""
+    import pytest
+
+    from toronto_bids.extract import EXTRACTOR_VERSION
+    from toronto_bids.extraction import backfill_from_extraction
+
+    for i in range(4):
+        _award_summary_doc(conn, f"s{i}", f"{i}" * 10, f"https://example.com/{i}.pdf")
+        _cache(conn, f"s{i}", "v0-old", f"Old Bidder {i}")
+    conn.execute(
+        "INSERT INTO bid (bidder_name_raw, document_number, source) VALUES "
+        "('Old Bidder 0', '0000000000', 'award_summary'), "
+        "('Old Bidder 1', '1111111111', 'award_summary'), "
+        "('Old Bidder 2', '2222222222', 'award_summary'), "
+        "('Old Bidder 3', '3333333333', 'award_summary')"
+    )
+    conn.commit()
+    _cache(conn, "s0", EXTRACTOR_VERSION, "New Bidder 0")  # 1 of 4 re-extracted
+
+    with pytest.raises(RuntimeError, match="1 of 4"):
+        backfill_from_extraction(conn, "award_summary")
+
+    assert _bidders(conn) == {f"Old Bidder {i}" for i in range(4)}
+
+
+def test_backfill_proceeds_once_coverage_reaches_floor(conn):
+    """A few documents failing re-extraction must not freeze the tables."""
+    from toronto_bids.extract import EXTRACTOR_VERSION
+    from toronto_bids.extraction import backfill_from_extraction
+
+    for i in range(4):
+        _award_summary_doc(conn, f"s{i}", f"{i}" * 10, f"https://example.com/{i}.pdf")
+        _cache(conn, f"s{i}", "v0-old", f"Old Bidder {i}")
+    for i in range(3):  # 3 of 4 re-extracted; s3 keeps failing
+        _cache(conn, f"s{i}", EXTRACTOR_VERSION, f"New Bidder {i}")
+
+    result = backfill_from_extraction(conn, "award_summary")
+
+    assert result["bids_written"] == 3
+    assert _bidders(conn) == {f"New Bidder {i}" for i in range(3)}
+
+
+def test_backfill_rolls_back_when_the_swap_fails(conn, monkeypatch):
+    """An error mid-insert must not leave the source's rows deleted."""
+    import pytest
+
+    import toronto_bids.store.db as db
+    from toronto_bids.extract import EXTRACTOR_VERSION
+    from toronto_bids.extraction import backfill_from_extraction
+
+    _award_summary_doc(conn, "s1", "1111111111", "https://example.com/a.pdf")
+    _cache(conn, "s1", EXTRACTOR_VERSION, "Alpha Co.", "Beta Inc.")
+    backfill_from_extraction(conn, "award_summary")
+
+    real = db.upsert_row
+    calls = []
+
+    def flaky(c, row, *, overwrite):
+        calls.append(row)
+        if len(calls) == 2:
+            raise RuntimeError("disk full")
+        return real(c, row, overwrite=overwrite)
+
+    monkeypatch.setattr(db, "upsert_row", flaky)
+    with pytest.raises(RuntimeError, match="disk full"):
+        backfill_from_extraction(conn, "award_summary")
+
+    assert _bidders(conn) == {"Alpha Co.", "Beta Inc."}

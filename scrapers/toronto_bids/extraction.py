@@ -369,11 +369,28 @@ _CORPUS_BUYER_SLUG = {
 }
 
 
-def backfill_from_extraction(conn, corpus) -> dict:
+# A swap needs the current extractor version to cover at least this share of the documents
+# that were ever extracted for the corpus. Below it, the cache is mid-migration (a prompt edit
+# bumped EXTRACTOR_VERSION and re-extraction has not caught up — or failed), and swapping would
+# replace the whole archive with whatever fraction was re-extracted. Deliberately low, like
+# ariba_files' _MIN_CAPTURE_RATIO (#182), so a few permanently failing documents cannot freeze
+# the tables; a near-total shortfall can only mean the re-extraction broke.
+_MIN_SWAP_COVERAGE = 0.5
+
+
+def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
     """Populate store tables from cached LLM extractions.
 
-    Uses the rebuild pattern: deletes old source rows, inserts new ones
-    from extraction_cache. Returns counts of what was written.
+    The tables are DERIVED from the cache, so each source's rows are rebuilt rather than
+    diff-upserted — the same sanctioned exception to "rows are never deleted" as
+    `db.rebuild_agency_bids`, and under the same contract: **derive first, delete only on
+    success.** Every row is built before anything is deleted; a table whose derived set is
+    empty is left untouched (a machine holding no cached extractions must not erase the
+    archive); and the delete + insert run in one transaction, rolled back on any error.
+
+    Raises RuntimeError, writing nothing, when fewer than `_MIN_SWAP_COVERAGE` of the
+    corpus's previously extracted documents are cached at the current EXTRACTOR_VERSION —
+    the state right after a prompt edit, before re-extraction has caught up.
     """
     from toronto_bids.models import (
         AgencyAward,
@@ -399,6 +416,20 @@ def backfill_from_extraction(conn, corpus) -> dict:
         (EXTRACTOR_VERSION,),
     ).fetchall()
 
+    # Same basis as `rows` (background_pdf rows, not distinct hashes), at ANY version: the
+    # documents whose extractions fed the tables at some point.
+    ever_extracted = conn.execute(
+        f"SELECT COUNT(*) FROM background_pdf bp "
+        f"WHERE {sql_where} AND bp.sha256 IS NOT NULL "
+        f"AND EXISTS (SELECT 1 FROM extraction_cache ec WHERE ec.sha256 = bp.sha256)"
+    ).fetchone()[0]
+    if ever_extracted and len(rows) < _MIN_SWAP_COVERAGE * ever_extracted:
+        raise RuntimeError(
+            f"backfill {corpus}: only {len(rows)} of {ever_extracted} extracted documents "
+            f"are cached at {EXTRACTOR_VERSION}; refusing to rebuild {source} rows from a "
+            f"partial re-extraction (existing rows kept)"
+        )
+
     buyer_id = None
     if corpus in _CORPUS_BUYER_SLUG:
         buyer_row = conn.execute(
@@ -408,14 +439,10 @@ def backfill_from_extraction(conn, corpus) -> dict:
         if buyer_row:
             buyer_id = buyer_row["id"]
 
-    solicitations_written = 0
-    bids_written = 0
-    awards_written = 0
+    # ── derive: build every row before touching any table ──
+    solicitations, bids, awards = [], [], []
 
     if corpus in ("trca", "ep", "zoo"):
-        conn.execute("DELETE FROM agency_bid WHERE source = ?", (source,))
-        conn.execute("DELETE FROM agency_award WHERE source = ?", (source,))
-
         for row in rows:
             result = json.loads(row["result_json"])
             for contract in result.get("contracts", []):
@@ -423,8 +450,7 @@ def backfill_from_extraction(conn, corpus) -> dict:
                 if not ref:
                     continue
                 has_awards = bool(contract.get("awards"))
-                upsert_row(
-                    conn,
+                solicitations.append(
                     AgencySolicitation(
                         buyer_id=buyer_id,
                         native_ref=ref,
@@ -434,16 +460,13 @@ def backfill_from_extraction(conn, corpus) -> dict:
                         closing_date=None,
                         portal_url=None,
                         source=source,
-                    ),
-                    overwrite=False,
+                    )
                 )
-                solicitations_written += 1
                 for bid in contract.get("bids", []):
                     name = bid.get("supplier_name")
                     if not name:
                         continue
-                    upsert_row(
-                        conn,
+                    bids.append(
                         AgencyBid(
                             buyer_id=buyer_id,
                             native_ref=ref,
@@ -451,16 +474,13 @@ def backfill_from_extraction(conn, corpus) -> dict:
                             bid_price=bid.get("amount_raw"),
                             report_url=row["url"],
                             source=source,
-                        ),
-                        overwrite=True,
+                        )
                     )
-                    bids_written += 1
                 for award in contract.get("awards", []):
                     name = award.get("supplier_name")
                     if not name:
                         continue
-                    upsert_row(
-                        conn,
+                    awards.append(
                         AgencyAward(
                             buyer_id=buyer_id,
                             native_ref=ref,
@@ -472,14 +492,11 @@ def backfill_from_extraction(conn, corpus) -> dict:
                             award_date=None,
                             report_url=row["url"],
                             source=source,
-                        ),
-                        overwrite=True,
+                        )
                     )
-                    awards_written += 1
+        rebuilt = [("agency_bid", bids), ("agency_award", awards)]
 
     elif corpus in ("award_summary", "committee"):
-        conn.execute("DELETE FROM bid WHERE source = ?", (source,))
-
         for row in rows:
             doc_num = row["document_number"]
             result = json.loads(row["result_json"])
@@ -488,21 +505,17 @@ def backfill_from_extraction(conn, corpus) -> dict:
                     name = bid.get("supplier_name")
                     if not name:
                         continue
-                    upsert_row(
-                        conn,
+                    bids.append(
                         Bid(
                             bidder_name_raw=name,
                             document_number=doc_num,
                             bid_price=bid.get("amount_raw"),
                             source=source,
-                        ),
-                        overwrite=True,
+                        )
                     )
-                    bids_written += 1
+        rebuilt = [("bid", bids)]
 
     elif corpus == "composite":
-        conn.execute("DELETE FROM composite_award WHERE source = ?", (source,))
-
         for row in rows:
             result = json.loads(row["result_json"])
             for contract in result.get("contracts", []):
@@ -513,26 +526,41 @@ def backfill_from_extraction(conn, corpus) -> dict:
                     name = award.get("supplier_name")
                     if not name:
                         continue
-                    upsert_row(
-                        conn,
+                    awards.append(
                         CompositeAward(
                             call_number=call_number,
                             reference=row["reference"],
                             supplier_name_raw=name,
                             award_value=award.get("amount_raw"),
                             source=source,
-                        ),
-                        overwrite=True,
+                        )
                     )
-                    awards_written += 1
+        rebuilt = [("composite_award", awards)]
 
-    conn.commit()
+    # ── swap: one transaction; an empty derived set deletes nothing ──
+    conn.commit()  # so a rollback below undoes the swap alone, never a caller's work
+    try:
+        for table, derived in rebuilt:
+            if not derived:
+                log(f"  backfill {corpus}: nothing derived for {table}, existing rows kept")
+                continue
+            conn.execute(f"DELETE FROM {table} WHERE source = ?", (source,))
+            for r in derived:
+                upsert_row(conn, r, overwrite=True)
+        # agency_solicitation is backfill-only (fills NULLs, never deleted), so no swap.
+        for r in solicitations:
+            upsert_row(conn, r, overwrite=False)
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+
     return {
         "corpus": corpus,
         "docs_processed": len(rows),
-        "solicitations_written": solicitations_written,
-        "bids_written": bids_written,
-        "awards_written": awards_written,
+        "solicitations_written": len(solicitations),
+        "bids_written": len(bids),
+        "awards_written": len(awards),
     }
 
 
@@ -562,7 +590,7 @@ def extract_and_backfill(conn, corpus, *, log=lambda _m: None) -> dict:
             raise
         log("  extraction: all documents cached, skipping API call")
 
-    return backfill_from_extraction(conn, corpus)
+    return backfill_from_extraction(conn, corpus, log=log)
 
 
 def _count_uncached(conn, corpus, labels) -> int:
