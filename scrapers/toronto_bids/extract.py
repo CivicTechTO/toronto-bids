@@ -111,27 +111,35 @@ def build_prompt(text: str) -> str:
 
 
 def validate_extraction(data) -> dict:
+    """Refuse a response that breaks the contract, always with ValueError (#219).
+
+    ValueError is what callers treat as one document's refusal; a TypeError from a shape
+    surprise (`"bids": null`, a string where a dict belongs) used to escape as a crash.
+    """
     if not isinstance(data, dict):
-        raise TypeError(
+        raise ValueError(
             f"Extraction result is not a JSON object: {type(data).__name__}"
         )
     if "contracts" not in data:
         raise ValueError("Extraction result missing 'contracts' key")
     if not isinstance(data["contracts"], list):
-        raise TypeError("'contracts' must be a list")
+        raise ValueError("'contracts' must be a list")
     for i, contract in enumerate(data["contracts"]):
         if not isinstance(contract, dict):
-            raise TypeError(f"Contract {i} is not a dict")
+            raise ValueError(f"Contract {i} is not a dict")
+        for key in ("bids", "awards"):
+            if not isinstance(contract.get(key, []), list):
+                raise ValueError(f"'{key}' in contract {i} must be a list")
         for bid in contract.get("bids", []):
             if not isinstance(bid, dict):
-                raise TypeError(f"Bid in contract {i} is not a dict")
+                raise ValueError(f"Bid in contract {i} is not a dict")
             if "supplier_name" not in bid or not bid["supplier_name"]:
                 raise ValueError(
                     f"Bid in contract {i} missing required 'supplier_name'"
                 )
         for award in contract.get("awards", []):
             if not isinstance(award, dict):
-                raise TypeError(f"Award in contract {i} is not a dict")
+                raise ValueError(f"Award in contract {i} is not a dict")
             if "supplier_name" not in award or not award["supplier_name"]:
                 raise ValueError(
                     f"Award in contract {i} missing required 'supplier_name'"

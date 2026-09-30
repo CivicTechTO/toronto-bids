@@ -587,7 +587,10 @@ def _cmd_enrich_titles(args) -> int:
         print(f"  titles composite    : {match_composite_titles(conn)}")
         # Not a linking pass: for 2009-2011 the City's feed publishes 13 awards against the
         # 799 in these reports, so this is the archive reaching back past the feed (#96).
-        print(f"  composite awards    : {store_composite_awards(conn)}")
+        print(
+            f"  composite awards    : "
+            f"{store_composite_awards(conn, log=lambda m: print(m, flush=True))}"
+        )
 
         n_legacy = fill_titles_from_legacy(conn, config.LEGACY_ARIBA_DIR)
         print(
@@ -1071,7 +1074,7 @@ def _capture_agency_bodies(conn, *, bodies, fetch, scrape, virtual_display, out)
                 finally:
                     http.close()
             before = _source_row_counts(conn, "trca_board")
-            got = store_trca_reports(conn)
+            got = store_trca_reports(conn, log=out)
             print(
                 _stored_line(
                     "trca", got, before, _source_row_counts(conn, "trca_board")
@@ -1108,7 +1111,7 @@ def _capture_agency_bodies(conn, *, bodies, fetch, scrape, virtual_display, out)
                 finally:
                     http.close()
             before = _source_row_counts(conn, "zoo_board")
-            got = store_zoo_reports(conn)
+            got = store_zoo_reports(conn, log=out)
             print(
                 _stored_line("zoo", got, before, _source_row_counts(conn, "zoo_board"))
             )

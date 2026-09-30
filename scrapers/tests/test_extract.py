@@ -81,8 +81,27 @@ def test_validate_extraction_rejects_bid_without_supplier():
 def test_validate_extraction_rejects_non_dict():
     from toronto_bids.extract import validate_extraction
 
-    with pytest.raises(TypeError, match="not a JSON object"):
+    with pytest.raises(ValueError, match="not a JSON object"):
         validate_extraction("just a string")
+
+
+@pytest.mark.parametrize(
+    "bad",
+    [
+        {"contracts": [{"reference": "R", "bids": None}]},
+        {"contracts": [{"reference": "R", "awards": None}]},
+        {"contracts": [{"reference": "R", "bids": ["Acme"]}]},
+        {"contracts": ["not a dict"]},
+        {"contracts": None},
+    ],
+)
+def test_validate_extraction_refuses_shape_surprises_with_value_error(bad):
+    """#219: a shape surprise is a per-document refusal (ValueError), never a TypeError
+    that escapes the corpus loop."""
+    from toronto_bids.extract import validate_extraction
+
+    with pytest.raises(ValueError):
+        validate_extraction(bad)
 
 
 # ── response parsing ──
