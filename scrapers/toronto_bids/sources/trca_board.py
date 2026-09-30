@@ -239,7 +239,7 @@ def _pdftotext(path: pathlib.Path) -> str | None:
         return None
 
 
-def store_trca_reports(conn, buyer_id: int) -> dict:
+def store_trca_reports(conn) -> dict:
     """Extract and backfill agency_* rows from cached LLM extractions (#205)."""
     from toronto_bids.extraction import extract_and_backfill
 

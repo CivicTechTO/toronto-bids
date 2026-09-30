@@ -1048,7 +1048,7 @@ def _capture_agency_bodies(conn, ids, *, bodies, fetch, scrape, virtual_display,
                 finally:
                     http.close()
             before = _source_row_counts(conn, "trca_board")
-            got = store_trca_reports(conn, ids["trca"])
+            got = store_trca_reports(conn)
             print(
                 _stored_line(
                     "trca", got, before, _source_row_counts(conn, "trca_board")
@@ -1085,7 +1085,7 @@ def _capture_agency_bodies(conn, ids, *, bodies, fetch, scrape, virtual_display,
                 finally:
                     http.close()
             before = _source_row_counts(conn, "zoo_board")
-            got = store_zoo_reports(conn, ids["toronto-zoo"])
+            got = store_zoo_reports(conn)
             print(
                 _stored_line("zoo", got, before, _source_row_counts(conn, "zoo_board"))
             )
@@ -1120,7 +1120,7 @@ def _capture_agency_bodies(conn, ids, *, bodies, fetch, scrape, virtual_display,
                 finally:
                     http.close()
             before = _source_row_counts(conn, "ep_board")
-            got = store_ep_reports(conn, ids["exhibition-place"])
+            got = store_ep_reports(conn)
             print(_stored_line("ep", got, before, _source_row_counts(conn, "ep_board")))
         except Exception as exc:
             failures.append(("ep", str(exc)))
