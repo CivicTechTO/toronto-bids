@@ -310,6 +310,10 @@ def _mark_if_swallowed_failures(steps, failures, conn, run_id, before: int) -> N
     just appended, and, since the row was already committed as 'ok' before the caller could
     know better, the `sync_run` row itself (#176).
     """
+    if steps[-1]["status"] == "fail":
+        # The step RAISED: _run_step already marked both places, and its own append to
+        # `failures` would otherwise read as growth and overwrite the raised error (#223).
+        return
     new = failures[before:]
     if not new:
         return
@@ -896,11 +900,7 @@ def _cmd_nightly(args) -> int:
 
                 before_len = len(failures)
                 run_id = _run_step(steps, failures, "ariba attachments", _ariba, conn=conn)
-                # Only a step that RETURNED can have swallowed failures; one that raised is
-                # already marked, and _run_step's own append would otherwise read as growth and
-                # overwrite the raised error on the sync_run row.
-                if steps[-1]["status"] == "ok":
-                    _mark_if_swallowed_failures(steps, failures, conn, run_id, before_len)
+                _mark_if_swallowed_failures(steps, failures, conn, run_id, before_len)
 
                 def _agencies():
                     from toronto_bids.buyers import seed_buyers
