@@ -417,6 +417,12 @@ def test_unbridged_staff_report_stays_out_of_documents(seeded):
         reference="2020.XX9.9", kind="bgrd"), overwrite=True)
     seeded.commit()
 
+    sols = build_export_document(seeded, generated_at="t")["solicitations"]
+    assert sols  # the fixture has real solicitations the report could wrongly attach to
+    assert not any(d["source"] == "staff_report"
+                   and d["url"] == "https://www.toronto.ca/legdocs/x/backgroundfile-1.pdf"
+                   for s in sols for d in s["documents"])
+
 
 def test_dual_key_bid_stays_under_council_item_not_solicitation(seeded):
     # An Ariba-era (#126) dual-key bid: BOTH reference and document_number are set, and the
@@ -441,6 +447,3 @@ def test_dual_key_bid_stays_under_council_item_not_solicitation(seeded):
     council = sum(len(c["bids"]) for c in doc["council_items"])
     nested = sum(len(s["bids"]) for s in doc["solicitations"])
     assert council + nested + len(doc["unlinked_bids"]) == counts["bid"]
-
-    for s in build_export_document(seeded, generated_at="t")["solicitations"]:
-        assert not any(d["source"] == "staff_report" for d in s["documents"])
