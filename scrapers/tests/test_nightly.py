@@ -450,3 +450,61 @@ def test_council_runs_only_on_the_first_of_the_month(nightly, monkeypatch):
     monkeypatch.setattr(cli, "_open_db", lambda: fresh)
     nightly()
     assert calls == [1]           # the 1st -> council runs
+
+
+# --- #218: the award-summary store REBUILDS its rows, so its return is the corpus total ------
+
+def _rebuilding_store(corpus):
+    """Stand-in for `store_award_summary_bids` post-#205: delete the source's rows, reinsert the
+    whole derived set, return how many were written — the TOTAL, exactly like the real one."""
+    def store(conn, log=lambda _m: None):
+        conn.execute("DELETE FROM bid WHERE source='award_summary'")
+        for i, name in enumerate(corpus):
+            conn.execute(
+                "INSERT INTO bid (bidder_name_raw, document_number, source) "
+                "VALUES (?, ?, 'award_summary')",
+                (name, f"{i:010d}"),
+            )
+        conn.commit()
+        return len(corpus)
+    return store
+
+
+def _award_detail(text):
+    return next(line for line in text.splitlines() if "award summaries" in line)
+
+
+def _two_nights(nightly, monkeypatch, conn, corpus, between=lambda: None):
+    from toronto_bids.sources import award_summary
+    monkeypatch.setattr(award_summary, "store_award_summary_bids", _rebuilding_store(corpus))
+    monkeypatch.setattr(cli, "_open_db", lambda: _KeepOpen(conn))
+    posted: list[str] = []
+    monkeypatch.setattr(notify, "post", lambda text, **k: posted.append(text))
+    nightly()
+    between()
+    nightly()
+    return [_award_detail(t) for t in posted]
+
+
+def test_award_summary_step_reports_the_delta_not_the_corpus_total(nightly, monkeypatch, conn):
+    """Slack read the ~1,100-bid corpus as nightly growth (#218, the #177 trap again). A second
+    run over an unchanged corpus rebuilds every row and must read +0, not the total."""
+    first, second = _two_nights(
+        nightly, monkeypatch, conn, ["Alpha Co.", "Beta Ltd.", "Gamma Inc."]
+    )
+    assert "+3 bids (3 total)" in first
+    assert "+0 bids (3 total)" in second
+    assert "bids stored" not in second
+
+
+def test_award_summary_step_renders_a_shrinking_rebuild_as_negative(nightly, monkeypatch, conn):
+    """A rebuild can REMOVE rows (a re-extraction drops a phantom bidder); that must show."""
+    corpus = ["Alpha Co.", "Beta Ltd.", "Gamma Inc."]
+    _, second = _two_nights(nightly, monkeypatch, conn, corpus, between=corpus.pop)
+    assert "-1 bids (2 total)" in second
+
+
+def test_bid_delta_is_signed():
+    assert cli._bid_delta(5, 5) == "+0 bids (5 total)"
+    assert cli._bid_delta(5, 7) == "+2 bids (7 total)"
+    assert cli._bid_delta(7, 5) == "-2 bids (5 total)"

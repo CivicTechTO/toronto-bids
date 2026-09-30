@@ -612,6 +612,23 @@ def _cmd_enrich_titles(args) -> int:
     return 0
 
 
+def _bid_count(conn, source: str) -> int:
+    """Distinct `bid` rows attributed to one `source` — a real row count, never a store's return.
+
+    Since the LLM extraction switch (#205) the award-summary and committee stores REBUILD their
+    source's rows (delete + reinsert), so what they return is the corpus total, not what was new
+    (#218). Same lesson as #177/#142: "what's new" is two `SELECT COUNT(*)`s diffed, nothing else.
+    """
+    return conn.execute(
+        "SELECT COUNT(*) FROM bid WHERE source=?", (source,)
+    ).fetchone()[0]
+
+
+def _bid_delta(before: int, after: int) -> str:
+    """'+3 bids (1105 total)'. Signed, because a rebuild can REMOVE rows and that must show."""
+    return f"{after - before:+d} bids ({after} total)"
+
+
 def _cmd_enrich_awards(args) -> int:
     """Archive and parse the Award Summary Forms (#114).
 
@@ -647,12 +664,14 @@ def _cmd_enrich_awards(args) -> int:
                     "No Award Summary Forms on disk — run with --download to fetch them "
                     "(plain HTTP, no browser)."
                 )
+        src_before = _bid_count(conn, "award_summary")
+        store_award_summary_bids(conn, log=lambda m: print(m, flush=True))
         print(
             f"  bids from award summaries   : "
-            f"{store_award_summary_bids(conn, log=lambda m: print(m, flush=True))}"
+            f"{_bid_delta(src_before, _bid_count(conn, 'award_summary'))}"
         )
         after = conn.execute("SELECT COUNT(*) FROM bid").fetchone()[0]
-        print(f"\nBids: {before} -> {after}  ({after - before} new)")
+        print(f"\nBids: {before} -> {after}  ({after - before:+d})")
         for r in conn.execute(
             "SELECT source, COUNT(*) n FROM bid GROUP BY 1 ORDER BY 2 DESC"
         ):
@@ -840,7 +859,11 @@ def _cmd_nightly(args) -> int:
 
                 def _awards():
                     download_award_summaries(conn, http, log=out)
-                    return f"{store_award_summary_bids(conn, log=out)} bids stored"
+                    # The store rebuilds the source's rows, so its return is the corpus
+                    # total — Slack read ~1,100 as nightly growth (#218). Diff real counts.
+                    n_before = _bid_count(conn, "award_summary")
+                    store_award_summary_bids(conn, log=out)
+                    return _bid_delta(n_before, _bid_count(conn, "award_summary"))
 
                 _run_step(steps, failures, "award summaries", _awards, conn=conn)
 
@@ -1274,16 +1297,10 @@ def _cmd_enrich_committee_awards(args) -> int:
                 failures.append(("scrape", str(exc)))
 
         try:
-            before = conn.execute(
-                "SELECT COUNT(*) FROM bid WHERE source='committee_award'"
-            ).fetchone()[0]
-            print(
-                f"  bids from committee reports : {store_committee_bids(conn, log=out)}"
-            )
-            after = conn.execute(
-                "SELECT COUNT(*) FROM bid WHERE source='committee_award'"
-            ).fetchone()[0]
-            print(f"\nCommittee award bids: {before} -> {after} ({after - before} new)")
+            before = _bid_count(conn, "committee_award")
+            store_committee_bids(conn, log=out)
+            after = _bid_count(conn, "committee_award")
+            print(f"  bids from committee reports : {_bid_delta(before, after)}")
         except Exception as exc:
             failures.append(("store_committee_bids", str(exc)))
 
