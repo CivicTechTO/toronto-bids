@@ -841,3 +841,36 @@ def test_backfill_rolls_back_when_the_swap_fails(conn, monkeypatch):
         backfill_from_extraction(conn, "award_summary")
 
     assert _bidders(conn) == {"Alpha Co.", "Beta Inc."}
+
+
+def test_extract_and_backfill_keyless_ignores_text_less_docs(conn, monkeypatch):
+    """#220: a held doc with no text is never extracted, so it must not count as
+    uncached — otherwise the keyless all-cached path re-raises forever."""
+    from toronto_bids.extract import EXTRACTOR_VERSION
+    from toronto_bids.extraction import extract_and_backfill
+    from toronto_bids.store.db import mark_extracted
+
+    monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
+    conn.execute(
+        "INSERT INTO background_pdf (url, kind, sha256, text, reference) "
+        "VALUES ('https://example.com/has-text.pdf', 'bgrd', 'ttt', 'text', '2011.BD5.1')"
+    )
+    conn.execute(
+        "INSERT INTO background_pdf (url, kind, sha256, text) "
+        "VALUES ('https://example.com/image-only.pdf', 'bgrd', 'iii', NULL)"
+    )
+    conn.commit()
+    extraction = {
+        "contracts": [
+            {
+                "reference": "3905-10-0097",
+                "awards": [{"supplier_name": "Builder Co.", "amount_raw": "$1,000.00"}],
+                "bids": [],
+            }
+        ]
+    }
+    mark_extracted(conn, "ttt", EXTRACTOR_VERSION, result_json=json.dumps(extraction))
+
+    result = extract_and_backfill(conn, "composite")
+
+    assert result["awards_written"] == 1
