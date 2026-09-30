@@ -37,6 +37,26 @@ def seeded(conn):
     return conn
 
 
+def test_meta_carries_the_attribution_the_grants_require(conn):
+    # TRCA and the Toronto Zoo each granted portal access on condition of attribution as
+    # the data source (docs/permissions/2026-07-18-*.md, #228). Static: present even on an
+    # empty store, since the grant conditions the publication, not a night's rows.
+    import pathlib
+
+    doc = build_export_document(conn, generated_at="2026-07-15T00:00:00Z")
+    attribution = doc["meta"]["attribution"]
+    by_slug = {a["slug"]: a for a in attribution}
+    assert set(by_slug) >= {"trca", "toronto-zoo"}
+    assert "Toronto and Region Conservation Authority" in by_slug["trca"]["statement"]
+    assert "Toronto Zoo" in by_slug["toronto-zoo"]["statement"]
+    repo_root = pathlib.Path(__file__).resolve().parents[2]
+    for entry in attribution:
+        assert entry["statement"] and entry["body"] and entry["source_url"]
+        assert (repo_root / entry["permission"]).is_file()
+    assert [a["slug"] for a in attribution] == sorted(by_slug)
+    assert build_export_document(conn, generated_at="2026-07-15T00:00:00Z") == doc
+
+
 def test_meta_has_generated_at_counts_and_sources(seeded):
     db.finish_sync_run(seeded, db.start_sync_run(seeded, "odata_solicitations"),
                        status="ok", rows_fetched=5, rows_upserted=5)

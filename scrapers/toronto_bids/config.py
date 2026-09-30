@@ -134,18 +134,38 @@ ZOO_REPORTS_DIR = DATA_DIR / "agencies" / "zoo"
 # is recorded in docs/permissions/ and the flipping commit references it — the PMMD/Ariba
 # precedent (#117). The Vendor ToS is clickwrap we have not accepted, and its copyright
 # notice is blanket; "settled" means the body said yes, not our reading of their terms.
+#
+# `attribution` is the statement the grant's conditions require in the published archive
+# (#228); `export/document.py` lifts every enabled portal's into the export's
+# `meta.attribution`, so a future grant that asks for attribution adds it HERE, on its own
+# entry, and nowhere else. Neither grant prescribes wording — both ask only that the body be
+# credited as the data source — so the text names the body, the portal, and the permission.
 BIDS_TENDERS_PORTALS = [
     {
         "slug": "toronto-zoo",
+        "body": "Toronto Zoo",
         "portal_url": "https://torontozoo.bidsandtenders.ca/",
         "enabled": True,
         "permission": "docs/permissions/2026-07-18-toronto-zoo.md",
+        "attribution": (
+            "Toronto Zoo procurement data courtesy of the Toronto Zoo (Purchasing & "
+            "Supply), the data source. Public bid listing metadata from "
+            "torontozoo.bidsandtenders.ca is archived and published with the Zoo's "
+            "permission, granted 2026-07-18."
+        ),
     },
     {
         "slug": "trca",
+        "body": "Toronto and Region Conservation Authority (TRCA)",
         "portal_url": "https://trca.bidsandtenders.ca/",
         "enabled": True,
         "permission": "docs/permissions/2026-07-18-trca.md",
+        "attribution": (
+            "TRCA procurement data courtesy of the Toronto and Region Conservation "
+            "Authority (TRCA), the data source. Public bid listing metadata from "
+            "trca.bidsandtenders.ca is archived and published with TRCA's permission, "
+            "granted 2026-07-18."
+        ),
     },
 ]
 
