@@ -409,11 +409,12 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
     """Populate store tables from cached LLM extractions.
 
     The tables are DERIVED from the cache, so each source's rows are rebuilt rather than
-    diff-upserted — the same sanctioned exception to "rows are never deleted" as
-    `db.rebuild_agency_bids`, and under the same contract: **derive first, delete only on
-    success.** Every row is built before anything is deleted; a table whose derived set is
-    empty is left untouched (a machine holding no cached extractions must not erase the
-    archive); and the delete + insert run in one transaction, rolled back on any error.
+    diff-upserted — the sanctioned exception to "rows are never deleted" that
+    `build_supplier_dimension` and `enrich-ariba-attachments --reindex` also take. This is a
+    permanent contract, not a migration: every parser or prompt fix self-heals by re-deriving.
+    **Derive first, delete only on success.** Every row is built before anything is deleted;
+    a table whose derived set is empty is left untouched (an empty set deletes nothing — a
+    machine holding no cached extractions must not erase the archive); and the delete + insert run in one transaction, rolled back on any error.
 
     Raises RuntimeError, writing nothing, when fewer than `_MIN_SWAP_COVERAGE` of the
     corpus's previously extracted documents are cached at the current EXTRACTOR_VERSION —
