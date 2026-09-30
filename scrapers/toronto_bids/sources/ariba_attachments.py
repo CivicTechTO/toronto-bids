@@ -1725,12 +1725,21 @@ class AribaFileSource:
 
 
 def capture_attachments(conn, dest_dir=None, log=lambda _m: None, headless=False,
-                        virtual_display=False) -> int:
+                        virtual_display=False, failures: list | None = None) -> int:
     """Log in, walk every open solicitation, capture and index each bundle. Resumable.
 
     A bundle already on disk is not re-downloaded — the expensive half is the download, and
     Respond is idempotent (re-responding just re-opens the event). One event's failure is
     logged and never ends the run, exactly as pipeline.run_source isolates a source.
+
+    **Continuing past a failed event is not the same as reporting it (#223, the #178 lesson).**
+    The return value counts only bundles captured, so a night on which every event raised reads
+    exactly like a night with nothing to capture. Pass `failures` (a list) and each event that
+    raised is appended as `("ariba:Doc<n>", str(exc))` — the shape the nightly's shared
+    failures list and `_mark_if_swallowed_failures` read. Events for which `capture_event`
+    returns None WITHOUT raising (closed, no permission, and the capture-floor / shrink
+    refusals in `ariba_files.capture_files`) are not reported: from here they are
+    indistinguishable from a clean skip.
     """
     from playwright.sync_api import sync_playwright
 
@@ -1770,6 +1779,8 @@ def capture_attachments(conn, dest_dir=None, log=lambda _m: None, headless=False
                             captured += 1
                     except Exception as exc:
                         log(f"  Doc{event['document_number']}: FAILED — {exc}")
+                        if failures is not None:
+                            failures.append((f"ariba:Doc{event['document_number']}", str(exc)))
                     log(f"    {i}/{len(pending)}")
             finally:
                 browser.close()

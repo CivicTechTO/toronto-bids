@@ -216,6 +216,57 @@ def test_capture_attachments_fails_fast_on_a_placeholder_credential(conn, monkey
         assert "unset" in str(exc)
 
 
+def test_capture_attachments_reports_a_failed_event_and_keeps_going(conn, monkeypatch, tmp_path):
+    """#223: one event raising is logged and the run continues (unchanged) — and it is now also
+    reported to a caller-supplied `failures` list, so the nightly can mark the step failed.
+    A browser is never launched: Playwright and the per-event capture are faked."""
+    import playwright.sync_api
+    from toronto_bids import config
+
+    class _Browser:
+        def new_context(self, **k):
+            return self
+
+        def new_page(self):
+            return object()
+
+        def close(self):
+            pass
+
+    class _PW:
+        chromium = type("C", (), {"launch": staticmethod(lambda **k: _Browser())})
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+    monkeypatch.setattr(playwright.sync_api, "sync_playwright", lambda: _PW())
+    monkeypatch.setattr(config, "ARIBA_USERNAME", "u")
+    monkeypatch.setattr(config, "ARIBA_PASSWORD", "p")
+    monkeypatch.setattr(aa, "login", lambda *a, **k: None)
+    monkeypatch.setattr(aa, "open_solicitation_events", lambda conn: [
+        {"rfx_id": "1", "document_number": "1111111111"},
+        {"rfx_id": "2", "document_number": "2222222222"},
+    ])
+    seen = []
+
+    def fake_capture_event(page, event, dest_dir, log=lambda _m: None):
+        seen.append(event["document_number"])
+        if event["document_number"] == "1111111111":
+            raise RuntimeError("content tree never resolved")
+        return None   # a clean skip — not a failure
+
+    monkeypatch.setattr(aa, "capture_event", fake_capture_event)
+    failures = []
+    assert aa.capture_attachments(conn, dest_dir=tmp_path, failures=failures) == 0
+    assert seen == ["1111111111", "2222222222"]          # the failure did not end the run
+    assert failures == [("ariba:Doc1111111111", "content tree never resolved")]
+    # Omitting `failures` keeps the old behaviour for other callers.
+    assert aa.capture_attachments(conn, dest_dir=tmp_path) == 0
+
+
 def test_cli_capture_threads_virtual_display(tmp_path, monkeypatch):
     # --virtual-display must reach capture_attachments (the flag a headless server needs).
     from toronto_bids import config, cli

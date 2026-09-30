@@ -384,6 +384,32 @@ def test_a_swallowed_portal_failure_marks_the_step_and_the_sync_run_row_failed(
     assert "403 Forbidden" in row["error"]
 
 
+def test_a_swallowed_ariba_event_failure_marks_the_step_and_the_sync_run_row_failed(
+        nightly, monkeypatch, conn):
+    """#223: capture_attachments catches each event's exception and returns a count, so a night
+    on which every event failed returned normally and read ✅. It now reports those events into
+    the shared failures list, and the step is corrected like the portal's."""
+    monkeypatch.setattr(cli, "_open_db", lambda: _KeepOpen(conn))
+    from toronto_bids.sources import ariba_attachments
+
+    def swallowing_capture(conn, log=lambda _m: None, failures=None, **k):
+        log("  Doc1234567890: FAILED — content tree never resolved")
+        if failures is not None:
+            failures.append(("ariba:Doc1234567890", "content tree never resolved"))
+        return 0
+
+    monkeypatch.setattr(ariba_attachments, "capture_attachments", swallowing_capture)
+    posted = {}
+    monkeypatch.setattr(notify, "post", lambda text, **k: posted.setdefault("text", text))
+    assert nightly() == 1
+    assert "❌ ariba attachments" in posted["text"]
+    row = conn.execute(
+        "SELECT status, error FROM sync_run WHERE source='ariba attachments'").fetchone()
+    assert row["status"] == "failed"
+    assert "ariba:Doc1234567890" in row["error"]
+    assert "content tree never resolved" in row["error"]
+
+
 def test_a_step_that_raises_is_recorded_failed_in_sync_run_too(nightly, monkeypatch, conn):
     monkeypatch.setattr(cli, "_open_db", lambda: _KeepOpen(conn))
     from toronto_bids.sources import ariba_attachments

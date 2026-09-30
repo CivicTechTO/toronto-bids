@@ -887,10 +887,20 @@ def _cmd_nightly(args) -> int:
                 def _ariba():
                     from toronto_bids.sources import ariba_attachments as aa
 
-                    n = aa.capture_attachments(conn, log=out, virtual_display=True)
+                    # Per-event failures are caught inside capture_attachments; without handing
+                    # it `failures` a night where every event raised reads ✅ (#223).
+                    n = aa.capture_attachments(
+                        conn, log=out, virtual_display=True, failures=failures
+                    )
                     return f"+{n} bundles"
 
-                _run_step(steps, failures, "ariba attachments", _ariba, conn=conn)
+                before_len = len(failures)
+                run_id = _run_step(steps, failures, "ariba attachments", _ariba, conn=conn)
+                # Only a step that RETURNED can have swallowed failures; one that raised is
+                # already marked, and _run_step's own append would otherwise read as growth and
+                # overwrite the raised error on the sync_run row.
+                if steps[-1]["status"] == "ok":
+                    _mark_if_swallowed_failures(steps, failures, conn, run_id, before_len)
 
                 def _agencies():
                     from toronto_bids.buyers import seed_buyers
