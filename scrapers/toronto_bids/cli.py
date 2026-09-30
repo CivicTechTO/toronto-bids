@@ -166,7 +166,8 @@ def build_parser() -> argparse.ArgumentParser:
         "--portal",
         action="store_true",
         help="Capture bids&tenders portal listings for enabled+permitted bodies "
-        "(plain HTTP, rate-limited). Currently a no-op while portals are empty.",
+        "(plain HTTP, rate-limited). Stores 0 rows when a portal lists no bids; "
+        "a portal that fails to answer is reported FAILED.",
     )
     p_ag.add_argument(
         "--record",

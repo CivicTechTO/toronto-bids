@@ -104,3 +104,83 @@ def test_nightly_wires_up_the_portal_step():
     src = inspect.getsource(cli._cmd_nightly)
     assert "bids_tenders import run_portal_capture" in src
     assert "run_portal_capture(conn" in src
+
+
+# --- #226: a broken reply is a FAILURE, never "no open bids" -------------------------------
+
+_LANDING_HTML = ('<input id="NodeId" type="hidden" value="node-1">'
+                 '<input name="__RequestVerificationToken" type="hidden" value="tok-1">')
+
+# The shape fetch_listings reads: a `success` flag beside the `data` page and a `total`.
+_EMPTY = {"success": True, "data": [], "total": 0}
+
+
+def _fake_portal(monkeypatch, search_reply):
+    """Route bids_tenders' own httpx.Client through a MockTransport: the landing GET serves a
+    page carrying NodeId + token, and every search POST is answered by
+    `search_reply(slug, request) -> httpx.Response`. No network, no rate-limit sleep."""
+    import types
+
+    import httpx
+
+    from toronto_bids.sources import bids_tenders as bt
+
+    real_client = httpx.Client
+
+    def handler(request):
+        slug = "toronto-zoo" if request.url.host.startswith("torontozoo") else "trca"
+        if request.method == "GET":
+            return httpx.Response(200, text=_LANDING_HTML)
+        return search_reply(slug, request)
+
+    def client_factory(**kw):
+        return real_client(transport=httpx.MockTransport(handler), **kw)
+
+    monkeypatch.setattr(bt.httpx, "Client", client_factory)
+    monkeypatch.setattr(bt, "time", types.SimpleNamespace(sleep=lambda _s: None))
+    return bt
+
+
+def test_empty_portal_reply_is_zero_rows_not_a_failure(conn, monkeypatch):
+    import httpx
+    bt = _fake_portal(monkeypatch, lambda _slug, _req: httpx.Response(200, json=_EMPTY))
+    assert bt.run_portal_capture(conn, log=lambda _m: None) == {"trca": 0, "toronto-zoo": 0}
+
+
+def test_payload_without_success_field_is_not_a_failure(conn, monkeypatch):
+    import httpx
+    bt = _fake_portal(monkeypatch, lambda _slug, _req: httpx.Response(
+        200, json={"data": [], "total": 0}))
+    assert bt.run_portal_capture(conn, log=lambda _m: None) == {"trca": 0, "toronto-zoo": 0}
+
+
+def test_non_json_reply_is_reported_failed_and_other_portal_still_runs(conn, monkeypatch):
+    import httpx
+
+    def reply(slug, _req):
+        if slug == "trca":   # e.g. the Error?aspxerrorpath HTML page a bad request lands on
+            return httpx.Response(200, text="<html>Error</html>")
+        return httpx.Response(200, json=_EMPTY)
+
+    bt = _fake_portal(monkeypatch, reply)
+    result = bt.run_portal_capture(conn, log=lambda _m: None)
+    assert result["toronto-zoo"] == 0                    # the other portal still ran
+    assert isinstance(result["trca"], str) and result["trca"].startswith("FAILED")
+    assert "trca" in result["trca"] and "non-JSON" in result["trca"]
+    assert "HTTP 200" in result["trca"] and "status=0" in result["trca"]
+
+
+def test_success_false_payload_is_reported_failed(conn, monkeypatch):
+    import httpx
+    bt = _fake_portal(monkeypatch, lambda _slug, _req: httpx.Response(
+        200, json={"success": False, "data": [], "total": 0}))
+    result = bt.run_portal_capture(conn, log=lambda _m: None)
+    for slug in ("trca", "toronto-zoo"):
+        assert result[slug].startswith("FAILED") and "success=false" in result[slug]
+
+
+def test_non_2xx_reply_is_reported_failed(conn, monkeypatch):
+    import httpx
+    bt = _fake_portal(monkeypatch, lambda _slug, _req: httpx.Response(500, json=_EMPTY))
+    result = bt.run_portal_capture(conn, log=lambda _m: None)
+    assert result["trca"].startswith("FAILED") and "HTTP 500" in result["trca"]
