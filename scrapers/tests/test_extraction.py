@@ -58,7 +58,7 @@ def test_load_labels_returns_empty_dict_when_file_missing(tmp_path):
 # ── corpus definitions ──
 
 
-def test_all_six_corpora_are_defined():
+def test_all_seven_corpora_are_defined():
     assert set(CORPORA.keys()) == {
         "trca",
         "ep",
@@ -66,6 +66,7 @@ def test_all_six_corpora_are_defined():
         "award_summary",
         "committee",
         "composite",
+        "ba_report",
     }
 
 
@@ -819,43 +820,213 @@ def test_backfill_award_summary_ignores_contract_reference(conn):
     assert [r["document_number"] for r in rows] == ["5247418372"]
 
 
-def test_backfill_composite_awards_from_extraction(conn):
-    """Backfill maps LLM extraction → composite_award rows."""
-    from toronto_bids.extraction import backfill_from_extraction
-
-    conn.execute(
-        "INSERT INTO background_pdf (url, kind, sha256, text, reference) "
-        "VALUES ('https://example.com/bgrd.pdf', 'bgrd', 'ccc', 'text', '2011.BD5.1')"
-    )
-    conn.commit()
-
-    extraction = {
-        "contracts": [
-            {
-                "reference": "3905-10-0097",
-                "awards": [
-                    {"supplier_name": "Builder Co.", "amount_raw": "$1,000,000.00"},
-                ],
-                "bids": [],
-            }
-        ]
-    }
+def _cache_bgrd(conn, *, sha, reference, extraction):
     from toronto_bids.extract import EXTRACTOR_VERSION
     from toronto_bids.store.db import mark_extracted
 
-    mark_extracted(conn, "ccc", EXTRACTOR_VERSION, result_json=json.dumps(extraction))
+    conn.execute(
+        "INSERT INTO background_pdf (url, kind, sha256, text, reference) "
+        "VALUES (?, 'bgrd', ?, 'text', ?)",
+        (f"https://example.com/{sha}.pdf", sha, reference),
+    )
+    conn.commit()
+    mark_extracted(conn, sha, EXTRACTOR_VERSION, result_json=json.dumps(extraction))
+
+
+def test_backfill_composite_awards_from_extraction(conn):
+    """#216: a composite award keys on the NORMALIZED call number, keeps the raw, and carries
+    the contract's title."""
+    from toronto_bids.extraction import backfill_from_extraction
+
+    _cache_bgrd(
+        conn, sha="ccc", reference="2011.BD5.1",
+        extraction={
+            "contracts": [
+                {
+                    # The trailing Contract No. is a different identifier (CLAUDE.md, third
+                    # keyspace) and must not survive into the key.
+                    "reference": "Request for Tender No. 3905-10-0097, Contract No. 10TE-17WS",
+                    "title": "Watermain Replacement on Main St",
+                    "awards": [
+                        {"supplier_name": "Builder Co.", "amount_raw": "$1,000,000.00"},
+                    ],
+                    "bids": [],
+                }
+            ]
+        },
+    )
 
     result = backfill_from_extraction(conn, "composite")
     assert result["awards_written"] == 1
 
     awards = conn.execute(
-        "SELECT call_number, supplier_name_raw, award_value, reference "
-        "FROM composite_award"
+        "SELECT call_number, call_number_raw, title, supplier_name_raw, award_value, "
+        "reference FROM composite_award"
     ).fetchall()
     assert len(awards) == 1
     assert awards[0]["call_number"] == "3905-10-0097"
+    assert (
+        awards[0]["call_number_raw"]
+        == "Request for Tender No. 3905-10-0097, Contract No. 10TE-17WS"
+    )
+    assert awards[0]["title"] == "Watermain Replacement on Main St"
     assert awards[0]["supplier_name_raw"] == "Builder Co."
     assert awards[0]["reference"] == "2011.BD5.1"
+
+
+@pytest.mark.parametrize("reference", ["", None, "RFP 999", "Contract No. 10TE-17WS"])
+def test_backfill_composite_refuses_a_reference_that_is_not_a_call_number(conn, reference):
+    """#216: refuse and log, never store the model's raw string as the key."""
+    from toronto_bids.extraction import backfill_from_extraction
+
+    _cache_bgrd(
+        conn, sha="ccc", reference="2010.BD3.4",
+        extraction={
+            "contracts": [
+                {
+                    "reference": reference,
+                    "title": "Something",
+                    "awards": [{"supplier_name": "Refused Co.", "amount_raw": "$5.00"}],
+                },
+                {
+                    "reference": "Tender Call No. 317-2010",
+                    "awards": [{"supplier_name": "Kept Co.", "amount_raw": "$6.00"}],
+                },
+            ]
+        },
+    )
+    logged = []
+
+    result = backfill_from_extraction(conn, "composite", log=logged.append)
+
+    assert result["awards_written"] == 1
+    rows = conn.execute("SELECT call_number, supplier_name_raw FROM composite_award").fetchall()
+    assert [(r["call_number"], r["supplier_name_raw"]) for r in rows] == [
+        ("317-2010", "Kept Co.")
+    ]
+    assert any("refused 1 award" in m for m in logged)
+
+
+@pytest.mark.parametrize(
+    "reference, in_composite, in_ba_report",
+    [
+        ("2009.BD1.1", True, False),
+        ("2011.BD5.1", True, False),
+        ("2012.BD40.2", True, False),
+        ("2017.BA3.1", False, True),
+        ("2019.BA12.3", False, True),
+        ("2025.BA190.4", False, True),
+        # Bid Committee 2013-2016 agendas tabulate their own bids; their reports are in
+        # neither corpus, exactly as before e936004.
+        ("2014.BD20.1", False, False),
+    ],
+)
+def test_composite_and_ba_report_corpora_partition_bgrd(conn, reference, in_composite, in_ba_report):
+    """#216: composite is the 2009-2012 composite reports only, not every bgrd PDF."""
+    conn.execute(
+        "INSERT INTO background_pdf (url, kind, sha256, text, reference) "
+        "VALUES ('https://example.com/r.pdf', 'bgrd', 'rrr', 'text', ?)",
+        (reference,),
+    )
+    conn.commit()
+
+    def members(corpus):
+        return conn.execute(
+            f"SELECT COUNT(*) FROM background_pdf WHERE {CORPORA[corpus]}"
+        ).fetchone()[0]
+
+    assert members("composite") == int(in_composite)
+    assert members("ba_report") == int(in_ba_report)
+
+
+def test_ba_report_bids_land_in_bid_not_composite_award(conn):
+    """#216: a 2019 Bid Award Panel staff report is not a composite report. Its bids go to
+    `bid` keyed on the council reference; its awards are already on the spine."""
+    from toronto_bids.extraction import backfill_from_extraction
+
+    _cache_bgrd(
+        conn, sha="bab", reference="2019.BA12.3",
+        extraction={
+            "contracts": [
+                {
+                    "reference": "Request for Tender Doc3333344444",
+                    "title": "Road resurfacing",
+                    "bids": [
+                        {"supplier_name": "Alpha Co.", "amount_raw": "$1.00",
+                         "amount_basis": "plus_HST"},
+                        {"supplier_name": "Beta Inc.", "amount_raw": "$2.00"},
+                    ],
+                    "awards": [{"supplier_name": "Alpha Co.", "amount_raw": "$1.00"}],
+                },
+                {
+                    # The Call Number trap: strips to exactly 10 digits, is not a doc number.
+                    "reference": "Request for Quotation 3905-10-0097",
+                    "bids": [{"supplier_name": "Gamma Ltd.", "amount_raw": "$3.00"}],
+                },
+                {
+                    "reference": None,
+                    "bids": [{"supplier_name": "Delta LLC", "amount_raw": "$4.00"}],
+                },
+            ]
+        },
+    )
+
+    assert backfill_from_extraction(conn, "composite")["awards_written"] == 0
+    result = backfill_from_extraction(conn, "ba_report")
+
+    assert result["bids_written"] == 4
+    assert result["awards_written"] == 0
+    assert conn.execute("SELECT COUNT(*) FROM composite_award").fetchone()[0] == 0
+    got = sorted(
+        tuple(r)
+        for r in conn.execute(
+            "SELECT bidder_name_raw, reference, document_number, hst_basis FROM bid "
+            "WHERE source='ba_report'"
+        )
+    )
+    assert got == [
+        ("Alpha Co.", "2019.BA12.3", "3333344444", "excluding"),
+        ("Beta Inc.", "2019.BA12.3", "3333344444", None),
+        ("Delta LLC", "2019.BA12.3", None, None),
+        ("Gamma Ltd.", "2019.BA12.3", None, None),
+    ]
+
+
+def test_ba_report_reuses_the_composite_era_cache(conn):
+    """No API cost: these reports were extracted when they sat in `composite`, and the cache
+    is keyed (sha256, extractor_version), so the new corpus has nothing to extract and the
+    swap-coverage floor is met."""
+    from toronto_bids.extraction import _count_uncached, backfill_from_extraction
+
+    for i in range(3):
+        _cache_bgrd(
+            conn, sha=f"ba{i}", reference=f"2020.BA{i}.1",
+            extraction={"contracts": [{"reference": "RFT", "bids": [{"supplier_name": f"B{i}"}]}]},
+        )
+
+    assert _count_uncached(conn, "ba_report", {}) == 0
+    assert backfill_from_extraction(conn, "ba_report")["docs_processed"] == 3
+
+
+def test_composite_rebuild_clears_ba_era_rows_from_the_pre_feed_keyspace(conn):
+    """The rows the unscoped corpus wrote for BA-era reports go on the next rebuild."""
+    from toronto_bids.extraction import backfill_from_extraction
+
+    conn.execute(
+        "INSERT INTO composite_award (call_number, reference, supplier_name_raw, source) "
+        "VALUES ('Doc3333344444', '2019.BA12.3', 'Wrong Keyspace Inc.', "
+        "'bid_committee_composite')"
+    )
+    _cache_bgrd(
+        conn, sha="old", reference="2010.BD2.2",
+        extraction={"contracts": [{"reference": "317-2010", "awards": [{"supplier_name": "X"}]}]},
+    )
+
+    backfill_from_extraction(conn, "composite")
+
+    assert [r[0] for r in conn.execute("SELECT reference FROM composite_award")] == [
+        "2010.BD2.2"
+    ]
 
 
 # ── backfill: derive first, delete only on success ──
@@ -1201,8 +1372,8 @@ def test_extract_and_backfill_keyless_ignores_text_less_docs(conn, monkeypatch):
         "VALUES ('https://example.com/has-text.pdf', 'bgrd', 'ttt', 'text', '2011.BD5.1')"
     )
     conn.execute(
-        "INSERT INTO background_pdf (url, kind, sha256, text) "
-        "VALUES ('https://example.com/image-only.pdf', 'bgrd', 'iii', NULL)"
+        "INSERT INTO background_pdf (url, kind, sha256, text, reference) "
+        "VALUES ('https://example.com/image-only.pdf', 'bgrd', 'iii', NULL, '2011.BD5.2')"
     )
     conn.commit()
     extraction = {
@@ -1328,6 +1499,7 @@ def test_string_declared_count_in_a_response_is_extracted_not_crashed(conn):
         ("toronto_bids.sources.zoo_board", "store_zoo_reports", "zoo"),
         ("toronto_bids.sources.ep_board", "store_ep_reports", "ep"),
         ("toronto_bids.sources.bid_award_panel", "store_composite_awards", "composite"),
+        ("toronto_bids.sources.bid_award_panel", "store_ba_report_bids", "ba_report"),
     ],
 )
 def test_store_functions_forward_log_to_extraction(monkeypatch, module, fn, corpus):

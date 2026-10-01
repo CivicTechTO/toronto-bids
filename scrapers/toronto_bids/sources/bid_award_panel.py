@@ -924,6 +924,19 @@ def store_composite_awards(conn, log=lambda _m: None, failures=None) -> int:
     return result["awards_written"]
 
 
+def store_ba_report_bids(conn, log=lambda _m: None, failures=None) -> int:
+    """Extract and backfill the bids in Bid Award Panel staff reports (#216).
+
+    The reports `_BA_REPORTS_WITHOUT_BIDS` fetched: BA items whose agenda tabulates no bids.
+    Bids land in `bid` keyed on the council reference, so `solicitation_link` can carry them
+    to solicitations. Their awards are not stored — the spine already holds BA-era awards.
+    """
+    from toronto_bids.extraction import extract_and_backfill
+
+    result = extract_and_backfill(conn, "ba_report", log=log, failures=failures)
+    return result["bids_written"]
+
+
 def match_composite_titles(conn) -> int:
     """Name title-less solicitations from composite awards already stored.
 

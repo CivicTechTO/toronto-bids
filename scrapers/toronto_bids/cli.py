@@ -187,7 +187,15 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p_extract.add_argument(
         "--corpus",
-        choices=["trca", "ep", "zoo", "award_summary", "committee", "composite"],
+        choices=[
+            "trca",
+            "ep",
+            "zoo",
+            "award_summary",
+            "committee",
+            "composite",
+            "ba_report",
+        ],
         help="Extract all qualifying documents in a corpus",
     )
     p_extract.add_argument(
@@ -530,6 +538,7 @@ def _cmd_enrich_titles(args) -> int:
         match_pre_ariba_titles,
         store_background_pdfs,
         store_bids,
+        store_ba_report_bids,
         store_composite_awards,
         store_items,
     )
@@ -593,6 +602,12 @@ def _cmd_enrich_titles(args) -> int:
         print(
             f"  composite awards    : "
             f"{store_composite_awards(conn, log=lambda m: print(m, flush=True))}"
+        )
+        # BA staff reports share kind='bgrd' with the composites but are a separate corpus:
+        # their bids go to `bid`, their awards are already on the spine (#216).
+        print(
+            f"  BA report bids      : "
+            f"{store_ba_report_bids(conn, log=lambda m: print(m, flush=True))}"
         )
         # After the store, not before: the matcher reads composite_award, so it must see
         # this run's rows rather than the previous run's (#216).

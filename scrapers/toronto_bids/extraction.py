@@ -1,7 +1,7 @@
 """Extraction orchestrator — classification gate, cache, and corpus iteration.
 
 Ties together the extraction client (#208), the extraction cache (#207), and the
-machine-label classification gate to extract bids from all six corpora through
+machine-label classification gate to extract bids from every corpus through
 one prompt.
 """
 
@@ -19,7 +19,14 @@ CORPORA = {
     "zoo": "kind='agency_board' AND url LIKE '%/zb/%'",
     "award_summary": "kind='award_summary'",
     "committee": "kind='committee_award'",
-    "composite": "kind='bgrd'",
+    # The 2009-2012 Bid Committee composite reports: the pre-feed award record, keyed on Call
+    # Number (#96). NOT every `bgrd` PDF — the BA reports below share the kind (#216).
+    "composite": "kind='bgrd' AND substr(reference,1,4) BETWEEN '2009' AND '2012'",
+    # Bid Award Panel (2017-2025) staff reports, fetched for the BA items whose agenda
+    # tabulates no bids (`_BA_REPORTS_WITHOUT_BIDS`). Their bids go to `bid`; their awards
+    # are already on the OData spine, so none are stored (#216). 2013-2016 Bid Committee
+    # reports are in neither corpus: those agendas tabulate their own bids.
+    "ba_report": "kind='bgrd' AND reference LIKE '%.BA%'",
 }
 
 
@@ -387,6 +394,7 @@ _CORPUS_SOURCE = {
     "award_summary": "award_summary",
     "committee": "committee_award",
     "composite": "bid_committee_composite",
+    "ba_report": "ba_report",
 }
 
 _CORPUS_BUYER_SLUG = {
@@ -560,6 +568,31 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
                     )
         rebuilt = [("agency_bid", bids), ("agency_award", awards)]
 
+    elif corpus == "ba_report":
+        for row in rows:
+            result = json.loads(row["result_json"])
+            for contract in result.get("contracts", []):
+                # The council reference always keys the bid (bid_key COALESCEs it); a document
+                # number rides along only when the contract names a real one — never a Call
+                # Number that happens to strip to 10 digits, never a guess.
+                doc_num = _contract_document_number(contract, None)
+                for bid in contract.get("bids", []):
+                    name = bid.get("supplier_name")
+                    if not name:
+                        continue
+                    bids.append(
+                        Bid(
+                            bidder_name_raw=name,
+                            reference=row["reference"],
+                            document_number=doc_num,
+                            bid_price=bid.get("amount_raw"),
+                            hst_basis=_hst_basis(bid),
+                            source=source,
+                        )
+                    )
+        # Awards deliberately not stored: BA-era awards are on the spine (#216).
+        rebuilt = [("bid", bids)]
+
     elif corpus in ("award_summary", "committee"):
         for row in rows:
             result = json.loads(row["result_json"])
@@ -588,25 +621,43 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
         rebuilt = [("bid", bids)]
 
     elif corpus == "composite":
+        from toronto_bids.linking.call_number import normalize_call_number
+
+        refused, refused_refs = 0, []
         for row in rows:
             result = json.loads(row["result_json"])
             for contract in result.get("contracts", []):
-                call_number = contract.get("reference", "")
+                raw_ref = contract.get("reference")
+                named = [a for a in contract.get("awards", []) if a.get("supplier_name")]
+                # Keyed on the shape, never the prefix, and never the model's raw string: a
+                # reference with no Call Number shape is refused and counted, not stored (#216).
+                call_number = normalize_call_number(raw_ref)
                 if not call_number:
+                    refused += len(named)
+                    if named:
+                        refused_refs.append(f"{row['reference']}: {raw_ref!r}")
                     continue
-                for award in contract.get("awards", []):
-                    name = award.get("supplier_name")
-                    if not name:
-                        continue
+                for award in named:
+                    name = award["supplier_name"]
                     awards.append(
                         CompositeAward(
                             call_number=call_number,
+                            call_number_raw=raw_ref,
+                            title=contract.get("title") or None,
                             reference=row["reference"],
                             supplier_name_raw=name,
                             award_value=award.get("amount_raw"),
                             source=source,
                         )
                     )
+        if refused:
+            # Never silent: a bounded refusal nobody prints reads as full coverage later.
+            log(
+                f"  backfill composite: refused {refused} award(s) whose reference carries "
+                f"no Call Number ({len(refused_refs)} contract(s)): "
+                + "; ".join(refused_refs[:10])
+                + (" ..." if len(refused_refs) > 10 else "")
+            )
         rebuilt = [("composite_award", awards)]
 
     # ── swap: one transaction; an empty derived set deletes nothing ──
