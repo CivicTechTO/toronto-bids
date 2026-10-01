@@ -830,6 +830,8 @@ def _cmd_nightly(args) -> int:
     conn = None
     steps: list[dict] = []
     sources: list[dict] = []
+    near_close: list[dict] = []
+    near_close_error = None
 
     try:
         conn = _open_db()
@@ -1005,6 +1007,16 @@ def _cmd_nightly(args) -> int:
 
         _run_step(steps, failures, "export", _export, conn=conn)
 
+        # Open Ariba postings about to close with no bundle (#223). A warning, not a step and
+        # not a failure: it goes into the report only. Computed after the capture step so it
+        # reflects what tonight's capture actually got.
+        try:
+            from toronto_bids.sources import ariba_attachments as aa
+
+            near_close = aa.near_close_uncaptured(conn)
+        except Exception as exc:
+            near_close_error = str(exc)
+
         try:
             after = db.counts(conn)
         except Exception as exc:
@@ -1024,6 +1036,8 @@ def _cmd_nightly(args) -> int:
         "failures": failures,
         "export_bytes": export_bytes,
         "elapsed_s": time.monotonic() - started,
+        "ariba_near_close": near_close,
+        "ariba_near_close_error": near_close_error,
     }
     text = notify.summarize(report)
     print(text)

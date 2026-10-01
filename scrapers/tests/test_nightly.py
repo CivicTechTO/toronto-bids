@@ -603,3 +603,28 @@ def test_bid_delta_is_signed():
     assert cli._bid_delta(5, 5) == "+0 bids (5 total)"
     assert cli._bid_delta(5, 7) == "+2 bids (7 total)"
     assert cli._bid_delta(7, 5) == "-2 bids (5 total)"
+
+
+def test_near_close_postings_reach_slack_without_failing_the_run(nightly, monkeypatch):
+    """#223: an open posting about to close with no bundle is a warning in the summary, never a
+    failed step — it can still be captured tomorrow."""
+    from toronto_bids.sources import ariba_attachments
+    monkeypatch.setattr(ariba_attachments, "near_close_uncaptured", lambda conn: [
+        {"document_number": "5713434353", "closes": "2026-10-03", "days_left": 2}])
+    posted = []
+    monkeypatch.setattr(notify, "post", lambda text, **k: posted.append(text) or True)
+    assert nightly() == 0
+    assert posted[0].startswith("*✅ toronto-bids nightly*")
+    assert "Doc5713434353 · closes 2026-10-03 · 2 days left" in posted[0]
+
+
+def test_a_raising_near_close_check_is_reported_but_does_not_fail_the_run(nightly, monkeypatch):
+    from toronto_bids.sources import ariba_attachments
+
+    def boom(conn):
+        raise RuntimeError("disk gone")
+    monkeypatch.setattr(ariba_attachments, "near_close_uncaptured", boom)
+    posted = []
+    monkeypatch.setattr(notify, "post", lambda text, **k: posted.append(text) or True)
+    assert nightly() == 0
+    assert "Ariba near-close check failed: disk gone" in posted[0]

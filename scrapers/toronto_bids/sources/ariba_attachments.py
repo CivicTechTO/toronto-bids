@@ -210,28 +210,119 @@ def reindex_bundles(conn, dest_dir=None, log=lambda _m: None) -> int:
 TRAINING_POSTINGS = frozenset({"4044346425", "3949149442"})
 
 
-def open_solicitation_events(conn) -> list[dict]:
-    """The still-open, modern-linked solicitations whose Respond is (probably) still live.
+# The "still uncaptured, closing soon" alert window (#174 item 4, #223): an open posting with no
+# bundle on disk that closes within this many days is listed in the nightly Slack summary.
+NEAR_CLOSE_DAYS = 3
 
-    submission_deadline in the future is the best signal the spine carries for "still open";
-    Respond being disabled on the page is the real gate, and capture_event re-checks it there.
-    Only the modern `RfxEvent/preview/<id>` links carry an rfx id we can drive.
+# A date-shaped prefix — the spine stores `YYYY-MM-DD`, Ariba `YYYY-MM-DDTHH:MM:SS-07:00`. Rows
+# whose date column is anything else are never treated as open (we cannot say when they close).
+_DATE_GLOB = "[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]*"
+
+
+def bundle_archived(dest_dir, document_number: str) -> bool:
+    """Whether an event counts as archived: its canonical `Doc<n>.zip` is on disk.
+
+    The ONE predicate for "done" — `capture_attachments` skips on it and the near-close alert
+    reports on it, so the alert can never disagree with what the capture will do tonight.
+    """
+    return (Path(dest_dir) / f"Doc{document_number}.zip").exists()
+
+
+def open_solicitation_events(conn, today: str | None = None) -> list[dict]:
+    """The still-open solicitations whose Respond is (probably) still live, soonest-closing first.
+
+    Each event is `{"rfx_id", "document_number", "closes"}`, `closes` an ISO `YYYY-MM-DD`.
+
+    Two sources, unioned and de-duplicated on document number (the spine wins):
+
+      * The OData spine: `submission_deadline` today or later, and only modern
+        `RfxEvent/preview/<id>` links, the only ones carrying an rfx id we can drive.
+      * `ariba_posting` as a BACKSTOP (#223): on a night the spine sync fails, postings added
+        since the last good sync are missing from `solicitation` and would go uncaptured — and
+        Respond is disabled once they close. A bridged posting (it has a `document_number`) whose
+        `close_date` is today or later is included when the spine has no row for it, no
+        deadline, or a deadline EARLIER than Ariba's (a stale row). Its own `rfx_id` is the
+        Discovery id, which is what the spine's link would have carried. Unbridged postings
+        are skipped: the bundle is keyed on the document number.
+
+    Dates compare at day granularity on the leading `YYYY-MM-DD` of each column (the spine
+    stores a bare date; Ariba's `close_date` carries a time and offset, and its date part is the
+    posting's own local close day). A posting closing this morning is still "open" here;
+    `capture_event` re-checks Respond on the page, which is the real gate.
+
+    `today` (ISO date) defaults to SQLite's `date('now')`; tests pass it to pin the clock.
     """
     from toronto_bids.linking.ariba import rfx_id_from_link
-    rows = conn.execute(
-        "SELECT document_number, ariba_posting_link FROM solicitation "
-        "WHERE submission_deadline >= date('now') "
+
+    today = today or conn.execute("SELECT date('now')").fetchone()[0]
+    events: list[dict] = []
+    seen: set[str] = set()
+
+    def _add(rfx, doc, closes):
+        if not (rfx and doc) or doc in TRAINING_POSTINGS or doc in seen:
+            return
+        seen.add(doc)
+        events.append({"rfx_id": rfx, "document_number": doc, "closes": closes})
+
+    spine = conn.execute(
+        "SELECT document_number, ariba_posting_link, substr(submission_deadline, 1, 10) AS closes "
+        "FROM solicitation "
+        f"WHERE submission_deadline GLOB '{_DATE_GLOB}' "
+        "AND substr(submission_deadline, 1, 10) >= ? "
         "AND ariba_posting_link LIKE '%RfxEvent/preview/%' "
-        "ORDER BY submission_deadline"
+        "ORDER BY closes, document_number",
+        (today,),
     ).fetchall()
-    events = []
-    for row in rows:
-        rfx = rfx_id_from_link(row["ariba_posting_link"])
-        if row["document_number"] in TRAINING_POSTINGS:
-            continue
-        if rfx and row["document_number"]:
-            events.append({"rfx_id": rfx, "document_number": row["document_number"]})
+    for row in spine:
+        _add(rfx_id_from_link(row["ariba_posting_link"]), row["document_number"], row["closes"])
+
+    backstop = conn.execute(
+        "SELECT p.rfx_id, p.document_number, substr(p.close_date, 1, 10) AS closes "
+        "FROM ariba_posting p LEFT JOIN solicitation s ON s.document_number = p.document_number "
+        "WHERE p.document_number IS NOT NULL "
+        f"AND p.close_date GLOB '{_DATE_GLOB}' "
+        "AND substr(p.close_date, 1, 10) >= ? "
+        "AND (s.document_number IS NULL "
+        f"     OR s.submission_deadline IS NULL OR s.submission_deadline NOT GLOB '{_DATE_GLOB}' "
+        "     OR substr(s.submission_deadline, 1, 10) < substr(p.close_date, 1, 10)) "
+        "ORDER BY closes, p.document_number, p.rfx_id",
+        (today,),
+    ).fetchall()
+    for row in backstop:
+        _add(row["rfx_id"], row["document_number"], row["closes"])
+
+    events.sort(key=lambda e: (e["closes"], e["document_number"]))
     return events
+
+
+def near_close_uncaptured(conn, dest_dir=None, days: int = NEAR_CLOSE_DAYS,
+                          today: str | None = None) -> list[dict]:
+    """Open postings closing within `days` days that have NO archived bundle yet (#223).
+
+    Respond is disabled once a posting closes, so each of these is documents about to be lost
+    for good — a capture failure with a deadline must not read like one without (#174 item 4).
+    Reads the same open set and the same `bundle_archived` predicate the capture uses, so the
+    alert lists exactly what tonight's capture would still try and has not yet got.
+
+    Returns `[{"document_number", "closes", "days_left"}]`, soonest first. Pure over the DB and
+    the directory listing: no browser, no network. A warning for the Slack summary, never a
+    failure — a posting that is still open can still be captured tomorrow.
+    """
+    from datetime import date
+
+    dest_dir = Path(dest_dir if dest_dir is not None else config.ARIBA_ATTACHMENTS_DIR)
+    today = today or conn.execute("SELECT date('now')").fetchone()[0]
+    day0 = date.fromisoformat(today)
+    out = []
+    for event in open_solicitation_events(conn, today=today):
+        try:
+            left = (date.fromisoformat(event["closes"]) - day0).days
+        except ValueError:
+            continue                      # date-shaped but not a real date (e.g. 2026-13-45)
+        if 0 <= left <= days and not bundle_archived(dest_dir, event["document_number"]):
+            out.append({"document_number": event["document_number"],
+                        "closes": event["closes"], "days_left": left})
+    return out
 
 
 def login(page, username: str, password: str, log=lambda _m: None) -> None:
@@ -1760,7 +1851,7 @@ def capture_attachments(conn, dest_dir=None, log=lambda _m: None, headless=False
 
     dest_dir = Path(dest_dir if dest_dir is not None else config.ARIBA_ATTACHMENTS_DIR)
     events = open_solicitation_events(conn)
-    pending = [e for e in events if not (dest_dir / f"Doc{e['document_number']}.zip").exists()]
+    pending = [e for e in events if not bundle_archived(dest_dir, e["document_number"])]
     log(f"  open events: {len(events)}  already archived: {len(events) - len(pending)}  "
         f"to capture: {len(pending)}")
     if not pending:
