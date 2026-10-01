@@ -1,9 +1,8 @@
 import os
 from pathlib import Path
 
-# Load scrapers/.env if python-dotenv is installed (it ships with the `council` extra). Guarded
-# so the core pipeline needs no new dependency; without it, credentials just come from the real
-# environment. Keyed to the package's own parent so it works regardless of the caller's cwd.
+# Load scrapers/.env if python-dotenv is installed (a base dependency). Guarded so a bare
+# install without it still works; credentials then just come from the real environment. Keyed to the package's own parent so it works regardless of the caller's cwd.
 try:
     from dotenv import load_dotenv
 
