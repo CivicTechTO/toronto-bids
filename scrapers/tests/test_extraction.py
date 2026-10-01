@@ -975,20 +975,217 @@ def test_backfill_rolls_back_when_the_swap_fails(conn, monkeypatch):
     _cache(conn, "s1", EXTRACTOR_VERSION, "Alpha Co.", "Beta Inc.")
     backfill_from_extraction(conn, "award_summary")
 
-    real = db.upsert_row
+    _cache(conn, "s1", EXTRACTOR_VERSION, "Alpha Co.", "Gamma Ltd.")
+    real = db._rebuild_upsert
     calls = []
 
-    def flaky(c, row, *, overwrite):
+    def flaky(c, row):
         calls.append(row)
         if len(calls) == 2:
             raise RuntimeError("disk full")
-        return real(c, row, overwrite=overwrite)
+        return real(c, row)
 
-    monkeypatch.setattr(db, "upsert_row", flaky)
+    monkeypatch.setattr(db, "_rebuild_upsert", flaky)
     with pytest.raises(RuntimeError, match="disk full"):
         backfill_from_extraction(conn, "award_summary")
 
     assert _bidders(conn) == {"Alpha Co.", "Beta Inc."}
+    assert len(calls) == 2  # the failure really landed mid-swap
+
+
+def test_backfill_rolls_back_when_the_sweep_fails(conn):
+    """An error in the sweep, after every upsert, also leaves the table as it was."""
+    import pytest
+
+    from toronto_bids.extract import EXTRACTOR_VERSION
+    from toronto_bids.extraction import backfill_from_extraction
+
+    _award_summary_doc(conn, "s1", "1111111111", "https://example.com/a.pdf")
+    _cache(conn, "s1", EXTRACTOR_VERSION, "Alpha Co.", "Beta Inc.")
+    backfill_from_extraction(conn, "award_summary")
+    _cache(conn, "s1", EXTRACTOR_VERSION, "Gamma Ltd.")
+
+    class FailingSweep:
+        """Delegates to the real connection, but the sweep's DELETE raises."""
+
+        def __init__(self, real):
+            self._real = real
+
+        def __getattr__(self, name):
+            return getattr(self._real, name)
+
+        def execute(self, sql, *args):
+            if sql.startswith("DELETE FROM bid WHERE"):
+                raise RuntimeError("disk full")
+            return self._real.execute(sql, *args)
+
+    with pytest.raises(RuntimeError, match="disk full"):
+        backfill_from_extraction(FailingSweep(conn), "award_summary")
+
+    assert _bidders(conn) == {"Alpha Co.", "Beta Inc."}
+
+
+# ── backfill: surviving rows keep their archive history (#218) ──
+
+_OLD = "2020-01-01 00:00:00"
+
+
+def _age_rows(conn, table):
+    """Backdate every row so a rebuild that re-mints first_seen cannot pass by accident."""
+    conn.execute(f"UPDATE {table} SET first_seen = ?, last_seen = ?", (_OLD, _OLD))
+    conn.commit()
+
+
+def _seen(conn, table, name_col, **where):
+    clause = " AND ".join(f"{k} = ?" for k in where) or "1"
+    return {
+        r[name_col]: (r["id"], r["first_seen"], r["last_seen"])
+        for r in conn.execute(
+            f"SELECT id, {name_col}, first_seen, last_seen FROM {table} WHERE {clause}",
+            tuple(where.values()),
+        )
+    }
+
+
+def test_backfill_rebuild_keeps_first_seen_of_surviving_rows(conn):
+    """A row derived again keeps its first_seen (and id) and gets a fresh last_seen; a
+    row no longer derived is removed; a genuinely new row is stamped now. The bid key
+    has a NULL part here (reference), which the COALESCE conflict target must match."""
+    from toronto_bids.extract import EXTRACTOR_VERSION
+    from toronto_bids.extraction import backfill_from_extraction
+
+    _award_summary_doc(conn, "s1", "1111111111", "https://example.com/a.pdf")
+    _cache(conn, "s1", EXTRACTOR_VERSION, "Alpha Co.", "Stale Ltd.")
+    backfill_from_extraction(conn, "award_summary")
+    _age_rows(conn, "bid")
+    before = _seen(conn, "bid", "bidder_name_raw", source="award_summary")
+    assert conn.execute(
+        "SELECT reference FROM bid WHERE bidder_name_raw = 'Alpha Co.'"
+    ).fetchone()[0] is None
+
+    _cache(conn, "s1", EXTRACTOR_VERSION, "Alpha Co.", "New Inc.")
+    backfill_from_extraction(conn, "award_summary")
+    after = _seen(conn, "bid", "bidder_name_raw", source="award_summary")
+
+    assert set(after) == {"Alpha Co.", "New Inc."}
+    alpha_id, alpha_first, alpha_last = after["Alpha Co."]
+    assert alpha_id == before["Alpha Co."][0]
+    assert alpha_first == _OLD
+    assert alpha_last > _OLD
+    assert after["New Inc."][1] > _OLD
+
+
+def test_backfill_rebuild_keeps_first_seen_with_null_key_parts(conn):
+    """composite_award keys on COALESCE(award_value, ''): an award with no value must
+    still be recognised as the same row on the next rebuild."""
+    from toronto_bids.extract import EXTRACTOR_VERSION
+    from toronto_bids.extraction import backfill_from_extraction
+    from toronto_bids.store.db import mark_extracted
+
+    conn.execute(
+        "INSERT INTO background_pdf (url, kind, sha256, text, reference) "
+        "VALUES ('https://example.com/bgrd.pdf', 'bgrd', 'ccc', 'text', '2011.BD5.1')"
+    )
+    conn.commit()
+    extraction = {
+        "contracts": [
+            {
+                "reference": "3905-10-0097",
+                "awards": [{"supplier_name": "Builder Co.", "amount_raw": None}],
+                "bids": [],
+            }
+        ]
+    }
+    mark_extracted(conn, "ccc", EXTRACTOR_VERSION, result_json=json.dumps(extraction))
+    backfill_from_extraction(conn, "composite")
+    _age_rows(conn, "composite_award")
+
+    backfill_from_extraction(conn, "composite")
+
+    rows = conn.execute(
+        "SELECT supplier_name_raw, award_value, first_seen, last_seen FROM composite_award"
+    ).fetchall()
+    assert len(rows) == 1
+    assert rows[0]["award_value"] is None
+    assert rows[0]["first_seen"] == _OLD
+    assert rows[0]["last_seen"] > _OLD
+
+
+def test_backfill_rebuild_keeps_first_seen_of_agency_rows(conn):
+    """agency_bid (plain UNIQUE) and agency_award (expression key) both survive."""
+    from toronto_bids.extract import EXTRACTOR_VERSION
+    from toronto_bids.extraction import backfill_from_extraction
+    from toronto_bids.store.db import mark_extracted
+
+    conn.execute("INSERT INTO buyer (id, slug, name) VALUES (2, 'trca', 'TRCA')")
+    conn.execute(
+        "INSERT INTO background_pdf (url, kind, sha256, text) VALUES "
+        "('https://pub-trca.escribemeetings.com/r.pdf', 'agency_board', 'aaa', 'text')"
+    )
+    conn.commit()
+    extraction = {
+        "contracts": [
+            {
+                "reference": "10037330",
+                "bids": [{"supplier_name": "Acme Ltd.", "amount_raw": "$100.00"}],
+                "awards": [{"supplier_name": "Acme Ltd.", "amount_raw": None}],
+            }
+        ]
+    }
+    mark_extracted(conn, "aaa", EXTRACTOR_VERSION, result_json=json.dumps(extraction))
+    backfill_from_extraction(conn, "trca")
+    _age_rows(conn, "agency_bid")
+    _age_rows(conn, "agency_award")
+
+    backfill_from_extraction(conn, "trca")
+
+    for table in ("agency_bid", "agency_award"):
+        rows = conn.execute(f"SELECT first_seen, last_seen FROM {table}").fetchall()
+        assert len(rows) == 1, table
+        assert rows[0]["first_seen"] == _OLD, table
+        assert rows[0]["last_seen"] > _OLD, table
+
+
+def test_backfill_rebuild_clears_a_column_the_derivation_no_longer_sets(conn):
+    """A surviving row takes the derivation verbatim: a value the new extraction drops
+    goes NULL, exactly as it would after a delete + reinsert."""
+    from toronto_bids.extract import EXTRACTOR_VERSION
+    from toronto_bids.extraction import backfill_from_extraction
+    from toronto_bids.store.db import mark_extracted
+
+    _award_summary_doc(conn, "s1", "1111111111", "https://example.com/a.pdf")
+
+    def cache(basis):
+        bid = {"supplier_name": "Alpha Co.", "amount_raw": "$5.00", "amount_basis": basis}
+        result = {"contracts": [{"reference": "RFT 1", "bids": [bid]}]}
+        mark_extracted(conn, "s1", EXTRACTOR_VERSION, result_json=json.dumps(result))
+
+    cache("including_HST")
+    backfill_from_extraction(conn, "award_summary")
+    cache("unknown")
+    backfill_from_extraction(conn, "award_summary")
+
+    assert conn.execute("SELECT hst_basis FROM bid").fetchone()[0] is None
+
+
+def test_backfill_rebuild_leaves_other_sources_alone(conn):
+    """The sweep is scoped to the corpus's source; another source's rows are untouched."""
+    from toronto_bids.extract import EXTRACTOR_VERSION
+    from toronto_bids.extraction import backfill_from_extraction
+
+    conn.execute(
+        "INSERT INTO bid (bidder_name_raw, reference, source) "
+        "VALUES ('Panel Bidder', '2018.BA1.1', 'bid_award_panel')"
+    )
+    conn.commit()
+    _award_summary_doc(conn, "s1", "1111111111", "https://example.com/a.pdf")
+    _cache(conn, "s1", EXTRACTOR_VERSION, "Alpha Co.")
+
+    backfill_from_extraction(conn, "award_summary")
+
+    assert conn.execute(
+        "SELECT COUNT(*) FROM bid WHERE source = 'bid_award_panel'"
+    ).fetchone()[0] == 1
 
 
 def test_extract_and_backfill_keyless_ignores_text_less_docs(conn, monkeypatch):

@@ -447,8 +447,10 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
     permanent contract, not a migration: every parser or prompt fix self-heals by re-deriving.
     **Derive first, delete only on success.** Every row is built before anything is deleted;
     a table whose derived set is empty is left untouched (an empty set deletes nothing — a
-    machine holding no cached extractions must not erase the archive); and the delete +
-    insert run in one transaction, rolled back on any error.
+    machine holding no cached extractions must not erase the archive); and the upserts +
+    sweep run in one transaction, rolled back on any error. The swap is a mark-and-sweep
+    (`db.rebuild_rows`): a row whose key is derived again keeps its `first_seen` and gets
+    a fresh `last_seen`; only rows no longer derived are deleted (#218).
 
     Raises RuntimeError, writing nothing, when fewer than `_MIN_SWAP_COVERAGE` of the
     corpus's previously extracted documents are cached at the current EXTRACTOR_VERSION —
@@ -461,7 +463,7 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
         Bid,
         CompositeAward,
     )
-    from toronto_bids.store.db import upsert_row
+    from toronto_bids.store.db import rebuild_rows, upsert_row
 
     sql_where = CORPORA.get(corpus)
     if sql_where is None:
@@ -608,15 +610,15 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
         rebuilt = [("composite_award", awards)]
 
     # ── swap: one transaction; an empty derived set deletes nothing ──
+    # Mark-and-sweep, not delete + reinsert: a row derived again keeps its id and
+    # first_seen (archive history, #218); only rows no longer derived are deleted.
     conn.commit()  # so a rollback below undoes the swap alone, never a caller's work
     try:
         for table, derived in rebuilt:
             if not derived:
                 log(f"  backfill {corpus}: nothing derived for {table}, existing rows kept")
                 continue
-            conn.execute(f"DELETE FROM {table} WHERE source = ?", (source,))
-            for r in derived:
-                upsert_row(conn, r, overwrite=True)
+            rebuild_rows(conn, derived, scope="source = ?", params=(source,))
         # agency_solicitation is backfill-only (fills NULLs, never deleted), so no swap.
         for r in solicitations:
             upsert_row(conn, r, overwrite=False)
