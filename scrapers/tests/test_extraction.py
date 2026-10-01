@@ -121,7 +121,7 @@ def test_extract_corpus_extracts_true_classification(conn):
     assert stats["extracted"] == 1
 
 
-def test_extract_corpus_extracts_unlabeled_docs(conn):
+def test_extract_corpus_extracts_unlabeled_docs_without_a_classifier(conn):
     conn.execute(
         "INSERT INTO background_pdf (url, kind, sha256, text) "
         "VALUES ('https://example.com/unknown.pdf', 'agency_board', 'ccc', 'mystery text')"
@@ -135,6 +135,7 @@ def test_extract_corpus_extracts_unlabeled_docs(conn):
         client=client,
         labels={},
         where="kind='agency_board'",
+        classifier=None,
     )
     assert len(client.calls) == 1
 
@@ -157,6 +158,7 @@ def test_extract_corpus_skips_cached_documents(conn):
         client=client,
         labels={},
         where="kind='agency_board'",
+        classifier=None,
     )
     assert client.calls == []
     assert stats["cached"] == 1
@@ -197,6 +199,7 @@ def test_extract_corpus_respects_limit(conn):
         labels={},
         where="kind='agency_board'",
         limit=2,
+        classifier=None,
     )
     assert len(client.calls) == 2
     assert stats["extracted"] == 2
@@ -220,6 +223,7 @@ def test_extract_corpus_stores_result_in_cache(conn):
         client=client,
         labels={},
         where="kind='agency_board'",
+        classifier=None,
     )
 
     cached = get_extraction(conn, "fff", EXTRACTOR_VERSION)
@@ -469,7 +473,12 @@ def test_extract_corpus_stores_flags_on_shortfall(conn):
     }
     client = FakeClient(result)
     stats = extract_corpus(
-        conn, "trca", client=client, labels={}, where="kind='agency_board'"
+        conn,
+        "trca",
+        client=client,
+        labels={},
+        where="kind='agency_board'",
+        classifier=None,
     )
     assert stats["count_flags"] == 1
 
@@ -550,6 +559,7 @@ def test_extract_corpus_splits_large_doc_and_merges(conn):
         labels={},
         where="kind='agency_board'",
         max_chars=500,
+        classifier=None,
     )
     assert stats["split"] >= 1
     assert call_count[0] > 1
@@ -1461,6 +1471,7 @@ def test_one_bad_response_does_not_block_the_rest_of_the_corpus(conn):
         labels={},
         where="kind='agency_board'",
         log=logged.append,
+        classifier=None,
     )
 
     assert stats["errors"] == 1
@@ -1483,6 +1494,7 @@ def test_string_declared_count_in_a_response_is_extracted_not_crashed(conn):
         client=FakeClient(_one_contract("8")),
         labels={},
         where="kind='agency_board'",
+        classifier=None,
     )
     assert stats["extracted"] == 1
     assert stats["errors"] == 0

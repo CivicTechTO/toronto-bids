@@ -82,16 +82,42 @@ def dedup_contracts(contracts: list[dict]) -> list[dict]:
     return list(by_ref.values()) + no_ref
 
 
-def _skip_reason(text, url, labels) -> str | None:
+# Corpora whose membership does not already imply procurement, so the runtime classifier
+# (#229) may gate documents the label snapshot never saw. An Award Summary Form exists only
+# for an award, and committee reports are chased only for award items naming a solicitation:
+# gating those could only lose bids (the ground truth sampled just 3 of each).
+_CLASSIFIER_GATED_CORPORA = frozenset({"trca", "ep", "zoo", "composite"})
+
+_DEFAULT_CLASSIFIER = object()
+
+
+def _resolve_classifier(corpus, classifier):
+    """The classifier to gate `corpus` with: the shipped model by default, None to disable."""
+    if classifier is not _DEFAULT_CLASSIFIER:
+        return classifier
+    if corpus not in _CLASSIFIER_GATED_CORPORA:
+        return None
+    from toronto_bids.classify import default_classifier
+
+    return default_classifier()
+
+
+def _skip_reason(text, url, labels, classifier=None) -> str | None:
     """Why a held document is never sent for extraction, or None if it is eligible.
 
     Shared by `extract_corpus` and `_count_uncached` so the two cannot drift (#220):
     a document extraction never caches must never count as uncached.
+
+    The label snapshot wins for any URL it holds. A URL it does not hold is judged by
+    `classifier` (#229), which skips only a CONFIDENTLY non-procurement document — the
+    gate can only reduce extraction, never add to it.
     """
     if not text:
         return "no_text"
-    if url in labels and not labels[url]:
-        return "skipped_classification"
+    if url in labels:
+        return None if labels[url] else "skipped_classification"
+    if classifier is not None and classifier.is_confidently_non_procurement(text):
+        return "skipped_classifier"
     return None
 
 
@@ -105,11 +131,16 @@ def extract_corpus(
     limit=None,
     max_chars=_DEFAULT_MAX_CHARS,
     log=lambda _m: None,
+    classifier=_DEFAULT_CLASSIFIER,
 ):
     """Extract bids from all qualifying documents in a corpus.
 
+    `classifier` gates URLs missing from `labels` (#229): by default the shipped model for
+    the corpora in `_CLASSIFIER_GATED_CORPORA`; pass None to disable it.
+
     Returns a stats dict with counts of what happened.
     """
+    classifier = _resolve_classifier(corpus, classifier)
     sql_where = where or CORPORA.get(corpus)
     if sql_where is None:
         raise ValueError(
@@ -126,6 +157,7 @@ def extract_corpus(
         "total": len(rows),
         "no_text": 0,
         "skipped_classification": 0,
+        "skipped_classifier": 0,
         "cached": 0,
         "extracted": 0,
         "errors": 0,
@@ -141,9 +173,11 @@ def extract_corpus(
 
         sha256, text, url = row["sha256"], row["text"], row["url"]
 
-        skip = _skip_reason(text, url, labels)
+        skip = _skip_reason(text, url, labels, classifier)
         if skip is not None:
             stats[skip] += 1
+            if skip == "skipped_classifier":
+                log(f"  classifier: skipped {url} (non-procurement)")
             continue
 
         if is_extracted(conn, sha256, EXTRACTOR_VERSION):
@@ -715,7 +749,8 @@ def extract_and_backfill(
         stats = extract_corpus(conn, corpus, client=client, labels=labels, log=log)
         log(
             f"  extraction: {stats['extracted']} new, "
-            f"{stats['cached']} cached, {stats['errors']} errors, "
+            f"{stats['cached']} cached, "
+            f"{stats['skipped_classifier']} skipped by classifier, {stats['errors']} errors, "
             f"{stats['count_flags']} count flags"
         )
         if stats["errors"] and failures is not None:
@@ -735,8 +770,13 @@ def extract_and_backfill(
     return backfill_from_extraction(conn, corpus, log=log)
 
 
-def _count_uncached(conn, corpus, labels) -> int:
-    """Count documents in a corpus that are not yet in the extraction cache."""
+def _count_uncached(conn, corpus, labels, classifier=_DEFAULT_CLASSIFIER) -> int:
+    """Count documents in a corpus that are not yet in the extraction cache.
+
+    Resolves the classifier exactly as `extract_corpus` does, so a document the gate
+    skips never counts as uncached (#220).
+    """
+    classifier = _resolve_classifier(corpus, classifier)
     sql_where = CORPORA[corpus]
     rows = conn.execute(
         f"SELECT sha256, text, url FROM background_pdf "
@@ -744,7 +784,7 @@ def _count_uncached(conn, corpus, labels) -> int:
     ).fetchall()
     count = 0
     for row in rows:
-        if _skip_reason(row["text"], row["url"], labels) is not None:
+        if _skip_reason(row["text"], row["url"], labels, classifier) is not None:
             continue
         if not is_extracted(conn, row["sha256"], EXTRACTOR_VERSION):
             count += 1
