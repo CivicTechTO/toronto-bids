@@ -1710,8 +1710,7 @@ class AribaFileSource:
         except Exception:                             # noqa: BLE001 — treat as "not visible yet"
             pass
         # `_expand_references` skips any section it has already opened, so the record of having
-        # opened them has to go before it will act at all -- the same reset `_restore_event_view`
-        # performs for the same reason.
+        # opened them has to go before it will act at all.
         self._toggled.clear()
         self._expand_references()
         try:
