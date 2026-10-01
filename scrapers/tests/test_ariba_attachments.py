@@ -303,3 +303,84 @@ def test_cli_capture_threads_virtual_display(tmp_path, monkeypatch):
     monkeypatch.setattr(aa, "capture_attachments", fake_capture)
     assert cli.main(["enrich-ariba-attachments", "--capture", "--virtual-display"]) == 0
     assert seen["virtual_display"] is True
+
+
+# --- open set backstop + near-close alert (#223) -------------------------------------------
+
+_TODAY = "2026-10-01"
+_LINK = "https://service.ariba.com/Discovery.aw/ad/profile?#/RfxEvent/preview/{}"
+
+
+def _spine(conn, doc, deadline, rfx):
+    conn.execute(
+        "INSERT INTO solicitation (document_number, submission_deadline, ariba_posting_link) "
+        "VALUES (?, ?, ?)", (doc, deadline, _LINK.format(rfx) if rfx else None))
+
+
+def _posting(conn, rfx, doc, close_date):
+    conn.execute("INSERT INTO ariba_posting (rfx_id, document_number, close_date) "
+                 "VALUES (?, ?, ?)", (rfx, doc, close_date))
+
+
+def test_open_events_backstop_from_ariba_posting_when_the_spine_lacks_the_row(conn):
+    """A night the spine sync fails hides postings added since the last good sync; a bridged
+    `ariba_posting` that is still open is captured anyway."""
+    _spine(conn, "1111111111", "2026-10-05", "1110000001")
+    # Ariba-only, open: the spine never saw it.
+    _posting(conn, "1110000002", "2222222222", "2026-10-03T09:00:00-07:00")
+    # Already in the spine's open set: no duplicate, the spine's row wins.
+    _posting(conn, "1110000001", "1111111111", "2026-10-05T09:00:00-07:00")
+    # Unbridged: no document number to key a bundle on.
+    _posting(conn, "1110000003", None, "2026-10-04T09:00:00-07:00")
+    # Training posting known only to Ariba: still excluded.
+    _posting(conn, "1110000004", "4044346425", "2099-12-31T09:00:00-07:00")
+    # Closed in Ariba.
+    _posting(conn, "1110000005", "5555555555", "2026-09-30T09:00:00-07:00")
+
+    events = aa.open_solicitation_events(conn, today=_TODAY)
+    assert [(e["document_number"], e["rfx_id"], e["closes"]) for e in events] == [
+        ("2222222222", "1110000002", "2026-10-03"),
+        ("1111111111", "1110000001", "2026-10-05"),
+    ]
+
+
+def test_open_events_backstop_covers_a_spine_row_with_no_or_a_stale_deadline(conn):
+    _spine(conn, "1111111111", None, "1110000001")             # no deadline in the spine
+    _spine(conn, "2222222222", "2026-09-20", "1110000002")     # stale: Ariba extended it
+    _spine(conn, "3333333333", "2026-09-20", "1110000003")     # really closed
+    _posting(conn, "1110000001", "1111111111", "2026-10-02T09:00:00-07:00")
+    _posting(conn, "1110000002", "2222222222", "2026-10-09T09:00:00-07:00")
+    _posting(conn, "1110000003", "3333333333", "2026-09-20T09:00:00-07:00")
+    docs = [e["document_number"] for e in aa.open_solicitation_events(conn, today=_TODAY)]
+    assert docs == ["1111111111", "2222222222"]
+
+
+def test_near_close_lists_open_unarchived_postings_closing_within_the_window(conn, tmp_path):
+    _spine(conn, "1111111111", "2026-10-03", "1110000001")   # 2 days, no bundle -> listed
+    _spine(conn, "2222222222", "2026-10-02", "1110000002")   # 1 day, bundle on disk -> omitted
+    _spine(conn, "3333333333", "2026-10-11", "1110000003")   # 10 days -> omitted
+    _spine(conn, "4444444444", "2026-09-30", "1110000004")   # closed -> omitted
+    _spine(conn, "6666666666", "2026-10-01", "1110000006")   # closes today -> listed
+    _posting(conn, "1110000005", "5555555555", "2026-10-04T09:00:00-07:00")  # Ariba-only, 3 days
+    _make_zip(tmp_path / "Doc2222222222.zip", {"a.pdf": b"a"})
+
+    got = aa.near_close_uncaptured(conn, dest_dir=tmp_path, today=_TODAY)
+    assert got == [
+        {"document_number": "6666666666", "closes": "2026-10-01", "days_left": 0},
+        {"document_number": "1111111111", "closes": "2026-10-03", "days_left": 2},
+        {"document_number": "5555555555", "closes": "2026-10-04", "days_left": 3},
+    ]
+    assert aa.NEAR_CLOSE_DAYS == 3
+    assert aa.near_close_uncaptured(conn, dest_dir=tmp_path, days=1, today=_TODAY) == got[:1]
+
+
+def test_near_close_is_empty_when_everything_closing_is_archived(conn, tmp_path):
+    _spine(conn, "1111111111", "2026-10-03", "1110000001")
+    _make_zip(tmp_path / "Doc1111111111.zip", {"a.pdf": b"a"})
+    assert aa.near_close_uncaptured(conn, dest_dir=tmp_path, today=_TODAY) == []
+
+
+def test_near_close_and_capture_share_the_archived_predicate(tmp_path):
+    assert not aa.bundle_archived(tmp_path, "1111111111")
+    _make_zip(tmp_path / "Doc1111111111.zip", {"a.pdf": b"a"})
+    assert aa.bundle_archived(tmp_path, "1111111111")

@@ -212,3 +212,42 @@ def test_a_malformed_webhook_exception_never_leaks_the_url_into_the_log(monkeypa
     said = []
     assert notify.post("hi", webhook="https://hooks.slack.test/SECRET-TOKEN", log=said.append) is False
     assert not any("SECRET-TOKEN" in m for m in said)
+
+
+def _near(n):
+    return [{"document_number": f"{5713434350 + i}", "closes": "2026-10-03", "days_left": 2}
+            for i in range(n)]
+
+
+def test_near_close_section_lists_postings_and_does_not_change_the_header():
+    report = {"ok": True, "failures": [], "export_bytes": 1000, "elapsed_s": 5.0,
+              "ariba_near_close": [
+                  {"document_number": "5713434353", "closes": "2026-10-01", "days_left": 0},
+                  {"document_number": "5660182540", "closes": "2026-10-02", "days_left": 1},
+                  {"document_number": "5701234567", "closes": "2026-10-04", "days_left": 3},
+              ]}
+    text = notify.summarize(report)
+    assert text.startswith("*✅ toronto-bids nightly*")       # a warning, not a failure
+    assert "*⚠ Ariba closing soon, not archived (3)*" in text
+    assert "Doc5713434353 · closes 2026-10-01 · last day" in text
+    assert "Doc5660182540 · closes 2026-10-02 · 1 day left" in text
+    assert "Doc5701234567 · closes 2026-10-04 · 3 days left" in text
+    assert "*Failures" not in text
+
+
+def test_near_close_section_is_capped_with_a_more_tail():
+    report = {"ok": True, "ariba_near_close": _near(notify.NEAR_CLOSE_MAX_LINES + 4)}
+    text = notify.summarize(report)
+    assert f"not archived ({notify.NEAR_CLOSE_MAX_LINES + 4})*" in text
+    assert text.count("· closes 2026-10-03 ·") == notify.NEAR_CLOSE_MAX_LINES
+    assert "+4 more" in text
+
+
+def test_near_close_section_is_absent_when_empty():
+    for report in ({"ok": True}, {"ok": True, "ariba_near_close": []}):
+        assert "Ariba" not in notify.summarize(report)
+
+
+def test_a_near_close_check_that_raised_says_so():
+    text = notify.summarize({"ok": True, "ariba_near_close_error": "no such table"})
+    assert "⚠ Ariba near-close check failed: no such table" in text

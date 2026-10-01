@@ -60,6 +60,36 @@ def _growth(before: dict, after: dict) -> list[str]:
     return out
 
 
+# Cap on the near-close list; the rest collapse into a "+N more" tail so one bad week cannot
+# bury the rest of the message.
+NEAR_CLOSE_MAX_LINES = 10
+
+
+def _days(n: int) -> str:
+    return "last day" if n == 0 else f"{n} day{'' if n == 1 else 's'} left"
+
+
+def _near_close(items: list[dict], error: str | None) -> list[str]:
+    """Open Ariba postings about to close with no bundle archived (#223) — a WARNING section.
+
+    Respond is disabled once a posting closes, so these are documents about to be lost for
+    good. It never changes the header icon (a still-open posting can be captured tomorrow), and
+    it is omitted entirely on a night with nothing to say. A check that itself raised says so
+    rather than vanishing — an absent section must keep meaning "nothing closing uncaptured".
+    """
+    if error:
+        return ["", f"⚠ Ariba near-close check failed: {error}"]
+    if not items:
+        return []
+    out = ["", f"*⚠ Ariba closing soon, not archived ({len(items)})*"]
+    for it in items[:NEAR_CLOSE_MAX_LINES]:
+        out.append(f"Doc{it['document_number']} · closes {it['closes']} · "
+                   f"{_days(it['days_left'])}")
+    if len(items) > NEAR_CLOSE_MAX_LINES:
+        out.append(f"+{len(items) - NEAR_CLOSE_MAX_LINES} more")
+    return out
+
+
 def summarize(report: dict) -> str:
     """The nightly message — multi-section Slack mrkdwn. Pure and total over a partial report:
     a missing/empty section is simply omitted, never a KeyError, because the report itself must
@@ -110,6 +140,9 @@ def summarize(report: dict) -> str:
         lines += ["", "*Growth*", " · ".join(growth)]
 
     lines += ["", f"export {'FAILED' if export_bytes is None else f'{export_bytes / 1_048_576:.1f} MiB'}"]
+
+    lines += _near_close(report.get("ariba_near_close") or [],
+                         report.get("ariba_near_close_error"))
 
     odata_outages: dict[str, list[str]] = {}
     other_failures = []

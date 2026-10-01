@@ -188,9 +188,10 @@ def _titleless_award(conn, doc="1234567890", supplier="Builder Co. Ltd", amount=
 
 
 def test_a_title_less_composite_award_stamps_nothing_and_is_not_counted(conn):
-    """The LLM backfill never writes composite_award.title, so every composite row reaches the
-    matcher with title NULL. It used to write title=NULL, title_source='council_composite' and
-    count the row as filled — provenance for a title that does not exist."""
+    """A composite row can reach the matcher with title NULL (the model returned none; before
+    #216 the backfill wrote none at all). It used to write title=NULL,
+    title_source='council_composite' and count the row as filled — provenance for a title that
+    does not exist."""
     from toronto_bids.sources.bid_award_panel import match_composite_titles
 
     _titleless_award(conn)
@@ -227,3 +228,33 @@ def test_a_title_less_item_cannot_shadow_a_real_one_for_the_same_document(conn):
     ]
     assert match_on_supplier_and_value(conn, items, "council_composite") == 1
     assert conn.execute("SELECT title FROM solicitation").fetchone()[0] == "Road Salt"
+
+
+def test_composite_titles_flow_from_the_backfill_to_the_matcher(conn):
+    """#216 end to end: the backfill now writes the contract's title under a normalized Call
+    Number, and the matcher (which keys on value + supplier, not the call number) uses it."""
+    import json
+
+    from toronto_bids.extract import EXTRACTOR_VERSION
+    from toronto_bids.extraction import backfill_from_extraction
+    from toronto_bids.sources.bid_award_panel import match_composite_titles
+    from toronto_bids.store.db import mark_extracted
+
+    _titleless_award(conn)
+    conn.execute(
+        "INSERT INTO background_pdf (url, kind, sha256, text, reference) "
+        "VALUES ('https://example.com/c.pdf', 'bgrd', 'cmp', 'text', '2011.BD5.1')"
+    )
+    conn.commit()
+    mark_extracted(conn, "cmp", EXTRACTOR_VERSION, result_json=json.dumps({"contracts": [{
+        "reference": "Request for Quotation No. 3905\u201310\u20130097",
+        "title": "Supply and Delivery of Road Salt",
+        "awards": [{"supplier_name": "Builder Co.", "amount_raw": "$420,000.00"}],
+    }]}))
+
+    backfill_from_extraction(conn, "composite")
+    assert conn.execute("SELECT call_number FROM composite_award").fetchone()[0] == "3905-10-0097"
+    assert match_composite_titles(conn) == 1
+    row = conn.execute("SELECT title, title_source FROM solicitation").fetchone()
+    assert row["title"] == "Supply and Delivery of Road Salt"
+    assert row["title_source"] == "council_composite"

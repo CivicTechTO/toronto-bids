@@ -1,7 +1,7 @@
 """Extraction orchestrator — classification gate, cache, and corpus iteration.
 
 Ties together the extraction client (#208), the extraction cache (#207), and the
-machine-label classification gate to extract bids from all six corpora through
+machine-label classification gate to extract bids from every corpus through
 one prompt.
 """
 
@@ -19,7 +19,14 @@ CORPORA = {
     "zoo": "kind='agency_board' AND url LIKE '%/zb/%'",
     "award_summary": "kind='award_summary'",
     "committee": "kind='committee_award'",
-    "composite": "kind='bgrd'",
+    # The 2009-2012 Bid Committee composite reports: the pre-feed award record, keyed on Call
+    # Number (#96). NOT every `bgrd` PDF — the BA reports below share the kind (#216).
+    "composite": "kind='bgrd' AND substr(reference,1,4) BETWEEN '2009' AND '2012'",
+    # Bid Award Panel (2017-2025) staff reports, fetched for the BA items whose agenda
+    # tabulates no bids (`_BA_REPORTS_WITHOUT_BIDS`). Their bids go to `bid`; their awards
+    # are already on the OData spine, so none are stored (#216). 2013-2016 Bid Committee
+    # reports are in neither corpus: those agendas tabulate their own bids.
+    "ba_report": "kind='bgrd' AND reference LIKE '%.BA%'",
 }
 
 
@@ -75,16 +82,42 @@ def dedup_contracts(contracts: list[dict]) -> list[dict]:
     return list(by_ref.values()) + no_ref
 
 
-def _skip_reason(text, url, labels) -> str | None:
+# Corpora whose membership does not already imply procurement, so the runtime classifier
+# (#229) may gate documents the label snapshot never saw. An Award Summary Form exists only
+# for an award, and committee reports are chased only for award items naming a solicitation:
+# gating those could only lose bids (the ground truth sampled just 3 of each).
+_CLASSIFIER_GATED_CORPORA = frozenset({"trca", "ep", "zoo", "composite"})
+
+_DEFAULT_CLASSIFIER = object()
+
+
+def _resolve_classifier(corpus, classifier):
+    """The classifier to gate `corpus` with: the shipped model by default, None to disable."""
+    if classifier is not _DEFAULT_CLASSIFIER:
+        return classifier
+    if corpus not in _CLASSIFIER_GATED_CORPORA:
+        return None
+    from toronto_bids.classify import default_classifier
+
+    return default_classifier()
+
+
+def _skip_reason(text, url, labels, classifier=None) -> str | None:
     """Why a held document is never sent for extraction, or None if it is eligible.
 
     Shared by `extract_corpus` and `_count_uncached` so the two cannot drift (#220):
     a document extraction never caches must never count as uncached.
+
+    The label snapshot wins for any URL it holds. A URL it does not hold is judged by
+    `classifier` (#229), which skips only a CONFIDENTLY non-procurement document — the
+    gate can only reduce extraction, never add to it.
     """
     if not text:
         return "no_text"
-    if url in labels and not labels[url]:
-        return "skipped_classification"
+    if url in labels:
+        return None if labels[url] else "skipped_classification"
+    if classifier is not None and classifier.is_confidently_non_procurement(text):
+        return "skipped_classifier"
     return None
 
 
@@ -98,11 +131,16 @@ def extract_corpus(
     limit=None,
     max_chars=_DEFAULT_MAX_CHARS,
     log=lambda _m: None,
+    classifier=_DEFAULT_CLASSIFIER,
 ):
     """Extract bids from all qualifying documents in a corpus.
 
+    `classifier` gates URLs missing from `labels` (#229): by default the shipped model for
+    the corpora in `_CLASSIFIER_GATED_CORPORA`; pass None to disable it.
+
     Returns a stats dict with counts of what happened.
     """
+    classifier = _resolve_classifier(corpus, classifier)
     sql_where = where or CORPORA.get(corpus)
     if sql_where is None:
         raise ValueError(
@@ -119,6 +157,7 @@ def extract_corpus(
         "total": len(rows),
         "no_text": 0,
         "skipped_classification": 0,
+        "skipped_classifier": 0,
         "cached": 0,
         "extracted": 0,
         "errors": 0,
@@ -134,9 +173,11 @@ def extract_corpus(
 
         sha256, text, url = row["sha256"], row["text"], row["url"]
 
-        skip = _skip_reason(text, url, labels)
+        skip = _skip_reason(text, url, labels, classifier)
         if skip is not None:
             stats[skip] += 1
+            if skip == "skipped_classifier":
+                log(f"  classifier: skipped {url} (non-procurement)")
             continue
 
         if is_extracted(conn, sha256, EXTRACTOR_VERSION):
@@ -387,6 +428,7 @@ _CORPUS_SOURCE = {
     "award_summary": "award_summary",
     "committee": "committee_award",
     "composite": "bid_committee_composite",
+    "ba_report": "ba_report",
 }
 
 _CORPUS_BUYER_SLUG = {
@@ -447,8 +489,10 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
     permanent contract, not a migration: every parser or prompt fix self-heals by re-deriving.
     **Derive first, delete only on success.** Every row is built before anything is deleted;
     a table whose derived set is empty is left untouched (an empty set deletes nothing — a
-    machine holding no cached extractions must not erase the archive); and the delete +
-    insert run in one transaction, rolled back on any error.
+    machine holding no cached extractions must not erase the archive); and the upserts +
+    sweep run in one transaction, rolled back on any error. The swap is a mark-and-sweep
+    (`db.rebuild_rows`): a row whose key is derived again keeps its `first_seen` and gets
+    a fresh `last_seen`; only rows no longer derived are deleted (#218).
 
     Raises RuntimeError, writing nothing, when fewer than `_MIN_SWAP_COVERAGE` of the
     corpus's previously extracted documents are cached at the current EXTRACTOR_VERSION —
@@ -461,7 +505,7 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
         Bid,
         CompositeAward,
     )
-    from toronto_bids.store.db import upsert_row
+    from toronto_bids.store.db import rebuild_rows, upsert_row
 
     sql_where = CORPORA.get(corpus)
     if sql_where is None:
@@ -558,6 +602,31 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
                     )
         rebuilt = [("agency_bid", bids), ("agency_award", awards)]
 
+    elif corpus == "ba_report":
+        for row in rows:
+            result = json.loads(row["result_json"])
+            for contract in result.get("contracts", []):
+                # The council reference always keys the bid (bid_key COALESCEs it); a document
+                # number rides along only when the contract names a real one — never a Call
+                # Number that happens to strip to 10 digits, never a guess.
+                doc_num = _contract_document_number(contract, None)
+                for bid in contract.get("bids", []):
+                    name = bid.get("supplier_name")
+                    if not name:
+                        continue
+                    bids.append(
+                        Bid(
+                            bidder_name_raw=name,
+                            reference=row["reference"],
+                            document_number=doc_num,
+                            bid_price=bid.get("amount_raw"),
+                            hst_basis=_hst_basis(bid),
+                            source=source,
+                        )
+                    )
+        # Awards deliberately not stored: BA-era awards are on the spine (#216).
+        rebuilt = [("bid", bids)]
+
     elif corpus in ("award_summary", "committee"):
         for row in rows:
             result = json.loads(row["result_json"])
@@ -586,37 +655,55 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
         rebuilt = [("bid", bids)]
 
     elif corpus == "composite":
+        from toronto_bids.linking.call_number import normalize_call_number
+
+        refused, refused_refs = 0, []
         for row in rows:
             result = json.loads(row["result_json"])
             for contract in result.get("contracts", []):
-                call_number = contract.get("reference", "")
+                raw_ref = contract.get("reference")
+                named = [a for a in contract.get("awards", []) if a.get("supplier_name")]
+                # Keyed on the shape, never the prefix, and never the model's raw string: a
+                # reference with no Call Number shape is refused and counted, not stored (#216).
+                call_number = normalize_call_number(raw_ref)
                 if not call_number:
+                    refused += len(named)
+                    if named:
+                        refused_refs.append(f"{row['reference']}: {raw_ref!r}")
                     continue
-                for award in contract.get("awards", []):
-                    name = award.get("supplier_name")
-                    if not name:
-                        continue
+                for award in named:
+                    name = award["supplier_name"]
                     awards.append(
                         CompositeAward(
                             call_number=call_number,
+                            call_number_raw=raw_ref,
+                            title=contract.get("title") or None,
                             reference=row["reference"],
                             supplier_name_raw=name,
                             award_value=award.get("amount_raw"),
                             source=source,
                         )
                     )
+        if refused:
+            # Never silent: a bounded refusal nobody prints reads as full coverage later.
+            log(
+                f"  backfill composite: refused {refused} award(s) whose reference carries "
+                f"no Call Number ({len(refused_refs)} contract(s)): "
+                + "; ".join(refused_refs[:10])
+                + (" ..." if len(refused_refs) > 10 else "")
+            )
         rebuilt = [("composite_award", awards)]
 
     # ── swap: one transaction; an empty derived set deletes nothing ──
+    # Mark-and-sweep, not delete + reinsert: a row derived again keeps its id and
+    # first_seen (archive history, #218); only rows no longer derived are deleted.
     conn.commit()  # so a rollback below undoes the swap alone, never a caller's work
     try:
         for table, derived in rebuilt:
             if not derived:
                 log(f"  backfill {corpus}: nothing derived for {table}, existing rows kept")
                 continue
-            conn.execute(f"DELETE FROM {table} WHERE source = ?", (source,))
-            for r in derived:
-                upsert_row(conn, r, overwrite=True)
+            rebuild_rows(conn, derived, scope="source = ?", params=(source,))
         # agency_solicitation is backfill-only (fills NULLs, never deleted), so no swap.
         for r in solicitations:
             upsert_row(conn, r, overwrite=False)
@@ -662,7 +749,8 @@ def extract_and_backfill(
         stats = extract_corpus(conn, corpus, client=client, labels=labels, log=log)
         log(
             f"  extraction: {stats['extracted']} new, "
-            f"{stats['cached']} cached, {stats['errors']} errors, "
+            f"{stats['cached']} cached, "
+            f"{stats['skipped_classifier']} skipped by classifier, {stats['errors']} errors, "
             f"{stats['count_flags']} count flags"
         )
         if stats["errors"] and failures is not None:
@@ -682,8 +770,13 @@ def extract_and_backfill(
     return backfill_from_extraction(conn, corpus, log=log)
 
 
-def _count_uncached(conn, corpus, labels) -> int:
-    """Count documents in a corpus that are not yet in the extraction cache."""
+def _count_uncached(conn, corpus, labels, classifier=_DEFAULT_CLASSIFIER) -> int:
+    """Count documents in a corpus that are not yet in the extraction cache.
+
+    Resolves the classifier exactly as `extract_corpus` does, so a document the gate
+    skips never counts as uncached (#220).
+    """
+    classifier = _resolve_classifier(corpus, classifier)
     sql_where = CORPORA[corpus]
     rows = conn.execute(
         f"SELECT sha256, text, url FROM background_pdf "
@@ -691,7 +784,7 @@ def _count_uncached(conn, corpus, labels) -> int:
     ).fetchall()
     count = 0
     for row in rows:
-        if _skip_reason(row["text"], row["url"], labels) is not None:
+        if _skip_reason(row["text"], row["url"], labels, classifier) is not None:
             continue
         if not is_extracted(conn, row["sha256"], EXTRACTOR_VERSION):
             count += 1

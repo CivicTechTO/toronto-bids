@@ -58,7 +58,7 @@ def test_load_labels_returns_empty_dict_when_file_missing(tmp_path):
 # ── corpus definitions ──
 
 
-def test_all_six_corpora_are_defined():
+def test_all_seven_corpora_are_defined():
     assert set(CORPORA.keys()) == {
         "trca",
         "ep",
@@ -66,6 +66,7 @@ def test_all_six_corpora_are_defined():
         "award_summary",
         "committee",
         "composite",
+        "ba_report",
     }
 
 
@@ -120,7 +121,7 @@ def test_extract_corpus_extracts_true_classification(conn):
     assert stats["extracted"] == 1
 
 
-def test_extract_corpus_extracts_unlabeled_docs(conn):
+def test_extract_corpus_extracts_unlabeled_docs_without_a_classifier(conn):
     conn.execute(
         "INSERT INTO background_pdf (url, kind, sha256, text) "
         "VALUES ('https://example.com/unknown.pdf', 'agency_board', 'ccc', 'mystery text')"
@@ -134,6 +135,7 @@ def test_extract_corpus_extracts_unlabeled_docs(conn):
         client=client,
         labels={},
         where="kind='agency_board'",
+        classifier=None,
     )
     assert len(client.calls) == 1
 
@@ -156,6 +158,7 @@ def test_extract_corpus_skips_cached_documents(conn):
         client=client,
         labels={},
         where="kind='agency_board'",
+        classifier=None,
     )
     assert client.calls == []
     assert stats["cached"] == 1
@@ -196,6 +199,7 @@ def test_extract_corpus_respects_limit(conn):
         labels={},
         where="kind='agency_board'",
         limit=2,
+        classifier=None,
     )
     assert len(client.calls) == 2
     assert stats["extracted"] == 2
@@ -219,6 +223,7 @@ def test_extract_corpus_stores_result_in_cache(conn):
         client=client,
         labels={},
         where="kind='agency_board'",
+        classifier=None,
     )
 
     cached = get_extraction(conn, "fff", EXTRACTOR_VERSION)
@@ -468,7 +473,12 @@ def test_extract_corpus_stores_flags_on_shortfall(conn):
     }
     client = FakeClient(result)
     stats = extract_corpus(
-        conn, "trca", client=client, labels={}, where="kind='agency_board'"
+        conn,
+        "trca",
+        client=client,
+        labels={},
+        where="kind='agency_board'",
+        classifier=None,
     )
     assert stats["count_flags"] == 1
 
@@ -549,6 +559,7 @@ def test_extract_corpus_splits_large_doc_and_merges(conn):
         labels={},
         where="kind='agency_board'",
         max_chars=500,
+        classifier=None,
     )
     assert stats["split"] >= 1
     assert call_count[0] > 1
@@ -819,43 +830,213 @@ def test_backfill_award_summary_ignores_contract_reference(conn):
     assert [r["document_number"] for r in rows] == ["5247418372"]
 
 
-def test_backfill_composite_awards_from_extraction(conn):
-    """Backfill maps LLM extraction → composite_award rows."""
-    from toronto_bids.extraction import backfill_from_extraction
-
-    conn.execute(
-        "INSERT INTO background_pdf (url, kind, sha256, text, reference) "
-        "VALUES ('https://example.com/bgrd.pdf', 'bgrd', 'ccc', 'text', '2011.BD5.1')"
-    )
-    conn.commit()
-
-    extraction = {
-        "contracts": [
-            {
-                "reference": "3905-10-0097",
-                "awards": [
-                    {"supplier_name": "Builder Co.", "amount_raw": "$1,000,000.00"},
-                ],
-                "bids": [],
-            }
-        ]
-    }
+def _cache_bgrd(conn, *, sha, reference, extraction):
     from toronto_bids.extract import EXTRACTOR_VERSION
     from toronto_bids.store.db import mark_extracted
 
-    mark_extracted(conn, "ccc", EXTRACTOR_VERSION, result_json=json.dumps(extraction))
+    conn.execute(
+        "INSERT INTO background_pdf (url, kind, sha256, text, reference) "
+        "VALUES (?, 'bgrd', ?, 'text', ?)",
+        (f"https://example.com/{sha}.pdf", sha, reference),
+    )
+    conn.commit()
+    mark_extracted(conn, sha, EXTRACTOR_VERSION, result_json=json.dumps(extraction))
+
+
+def test_backfill_composite_awards_from_extraction(conn):
+    """#216: a composite award keys on the NORMALIZED call number, keeps the raw, and carries
+    the contract's title."""
+    from toronto_bids.extraction import backfill_from_extraction
+
+    _cache_bgrd(
+        conn, sha="ccc", reference="2011.BD5.1",
+        extraction={
+            "contracts": [
+                {
+                    # The trailing Contract No. is a different identifier (CLAUDE.md, third
+                    # keyspace) and must not survive into the key.
+                    "reference": "Request for Tender No. 3905-10-0097, Contract No. 10TE-17WS",
+                    "title": "Watermain Replacement on Main St",
+                    "awards": [
+                        {"supplier_name": "Builder Co.", "amount_raw": "$1,000,000.00"},
+                    ],
+                    "bids": [],
+                }
+            ]
+        },
+    )
 
     result = backfill_from_extraction(conn, "composite")
     assert result["awards_written"] == 1
 
     awards = conn.execute(
-        "SELECT call_number, supplier_name_raw, award_value, reference "
-        "FROM composite_award"
+        "SELECT call_number, call_number_raw, title, supplier_name_raw, award_value, "
+        "reference FROM composite_award"
     ).fetchall()
     assert len(awards) == 1
     assert awards[0]["call_number"] == "3905-10-0097"
+    assert (
+        awards[0]["call_number_raw"]
+        == "Request for Tender No. 3905-10-0097, Contract No. 10TE-17WS"
+    )
+    assert awards[0]["title"] == "Watermain Replacement on Main St"
     assert awards[0]["supplier_name_raw"] == "Builder Co."
     assert awards[0]["reference"] == "2011.BD5.1"
+
+
+@pytest.mark.parametrize("reference", ["", None, "RFP 999", "Contract No. 10TE-17WS"])
+def test_backfill_composite_refuses_a_reference_that_is_not_a_call_number(conn, reference):
+    """#216: refuse and log, never store the model's raw string as the key."""
+    from toronto_bids.extraction import backfill_from_extraction
+
+    _cache_bgrd(
+        conn, sha="ccc", reference="2010.BD3.4",
+        extraction={
+            "contracts": [
+                {
+                    "reference": reference,
+                    "title": "Something",
+                    "awards": [{"supplier_name": "Refused Co.", "amount_raw": "$5.00"}],
+                },
+                {
+                    "reference": "Tender Call No. 317-2010",
+                    "awards": [{"supplier_name": "Kept Co.", "amount_raw": "$6.00"}],
+                },
+            ]
+        },
+    )
+    logged = []
+
+    result = backfill_from_extraction(conn, "composite", log=logged.append)
+
+    assert result["awards_written"] == 1
+    rows = conn.execute("SELECT call_number, supplier_name_raw FROM composite_award").fetchall()
+    assert [(r["call_number"], r["supplier_name_raw"]) for r in rows] == [
+        ("317-2010", "Kept Co.")
+    ]
+    assert any("refused 1 award" in m for m in logged)
+
+
+@pytest.mark.parametrize(
+    "reference, in_composite, in_ba_report",
+    [
+        ("2009.BD1.1", True, False),
+        ("2011.BD5.1", True, False),
+        ("2012.BD40.2", True, False),
+        ("2017.BA3.1", False, True),
+        ("2019.BA12.3", False, True),
+        ("2025.BA190.4", False, True),
+        # Bid Committee 2013-2016 agendas tabulate their own bids; their reports are in
+        # neither corpus, exactly as before e936004.
+        ("2014.BD20.1", False, False),
+    ],
+)
+def test_composite_and_ba_report_corpora_partition_bgrd(conn, reference, in_composite, in_ba_report):
+    """#216: composite is the 2009-2012 composite reports only, not every bgrd PDF."""
+    conn.execute(
+        "INSERT INTO background_pdf (url, kind, sha256, text, reference) "
+        "VALUES ('https://example.com/r.pdf', 'bgrd', 'rrr', 'text', ?)",
+        (reference,),
+    )
+    conn.commit()
+
+    def members(corpus):
+        return conn.execute(
+            f"SELECT COUNT(*) FROM background_pdf WHERE {CORPORA[corpus]}"
+        ).fetchone()[0]
+
+    assert members("composite") == int(in_composite)
+    assert members("ba_report") == int(in_ba_report)
+
+
+def test_ba_report_bids_land_in_bid_not_composite_award(conn):
+    """#216: a 2019 Bid Award Panel staff report is not a composite report. Its bids go to
+    `bid` keyed on the council reference; its awards are already on the spine."""
+    from toronto_bids.extraction import backfill_from_extraction
+
+    _cache_bgrd(
+        conn, sha="bab", reference="2019.BA12.3",
+        extraction={
+            "contracts": [
+                {
+                    "reference": "Request for Tender Doc3333344444",
+                    "title": "Road resurfacing",
+                    "bids": [
+                        {"supplier_name": "Alpha Co.", "amount_raw": "$1.00",
+                         "amount_basis": "plus_HST"},
+                        {"supplier_name": "Beta Inc.", "amount_raw": "$2.00"},
+                    ],
+                    "awards": [{"supplier_name": "Alpha Co.", "amount_raw": "$1.00"}],
+                },
+                {
+                    # The Call Number trap: strips to exactly 10 digits, is not a doc number.
+                    "reference": "Request for Quotation 3905-10-0097",
+                    "bids": [{"supplier_name": "Gamma Ltd.", "amount_raw": "$3.00"}],
+                },
+                {
+                    "reference": None,
+                    "bids": [{"supplier_name": "Delta LLC", "amount_raw": "$4.00"}],
+                },
+            ]
+        },
+    )
+
+    assert backfill_from_extraction(conn, "composite")["awards_written"] == 0
+    result = backfill_from_extraction(conn, "ba_report")
+
+    assert result["bids_written"] == 4
+    assert result["awards_written"] == 0
+    assert conn.execute("SELECT COUNT(*) FROM composite_award").fetchone()[0] == 0
+    got = sorted(
+        tuple(r)
+        for r in conn.execute(
+            "SELECT bidder_name_raw, reference, document_number, hst_basis FROM bid "
+            "WHERE source='ba_report'"
+        )
+    )
+    assert got == [
+        ("Alpha Co.", "2019.BA12.3", "3333344444", "excluding"),
+        ("Beta Inc.", "2019.BA12.3", "3333344444", None),
+        ("Delta LLC", "2019.BA12.3", None, None),
+        ("Gamma Ltd.", "2019.BA12.3", None, None),
+    ]
+
+
+def test_ba_report_reuses_the_composite_era_cache(conn):
+    """No API cost: these reports were extracted when they sat in `composite`, and the cache
+    is keyed (sha256, extractor_version), so the new corpus has nothing to extract and the
+    swap-coverage floor is met."""
+    from toronto_bids.extraction import _count_uncached, backfill_from_extraction
+
+    for i in range(3):
+        _cache_bgrd(
+            conn, sha=f"ba{i}", reference=f"2020.BA{i}.1",
+            extraction={"contracts": [{"reference": "RFT", "bids": [{"supplier_name": f"B{i}"}]}]},
+        )
+
+    assert _count_uncached(conn, "ba_report", {}) == 0
+    assert backfill_from_extraction(conn, "ba_report")["docs_processed"] == 3
+
+
+def test_composite_rebuild_clears_ba_era_rows_from_the_pre_feed_keyspace(conn):
+    """The rows the unscoped corpus wrote for BA-era reports go on the next rebuild."""
+    from toronto_bids.extraction import backfill_from_extraction
+
+    conn.execute(
+        "INSERT INTO composite_award (call_number, reference, supplier_name_raw, source) "
+        "VALUES ('Doc3333344444', '2019.BA12.3', 'Wrong Keyspace Inc.', "
+        "'bid_committee_composite')"
+    )
+    _cache_bgrd(
+        conn, sha="old", reference="2010.BD2.2",
+        extraction={"contracts": [{"reference": "317-2010", "awards": [{"supplier_name": "X"}]}]},
+    )
+
+    backfill_from_extraction(conn, "composite")
+
+    assert [r[0] for r in conn.execute("SELECT reference FROM composite_award")] == [
+        "2010.BD2.2"
+    ]
 
 
 # ── backfill: derive first, delete only on success ──
@@ -975,20 +1156,217 @@ def test_backfill_rolls_back_when_the_swap_fails(conn, monkeypatch):
     _cache(conn, "s1", EXTRACTOR_VERSION, "Alpha Co.", "Beta Inc.")
     backfill_from_extraction(conn, "award_summary")
 
-    real = db.upsert_row
+    _cache(conn, "s1", EXTRACTOR_VERSION, "Alpha Co.", "Gamma Ltd.")
+    real = db._rebuild_upsert
     calls = []
 
-    def flaky(c, row, *, overwrite):
+    def flaky(c, row):
         calls.append(row)
         if len(calls) == 2:
             raise RuntimeError("disk full")
-        return real(c, row, overwrite=overwrite)
+        return real(c, row)
 
-    monkeypatch.setattr(db, "upsert_row", flaky)
+    monkeypatch.setattr(db, "_rebuild_upsert", flaky)
     with pytest.raises(RuntimeError, match="disk full"):
         backfill_from_extraction(conn, "award_summary")
 
     assert _bidders(conn) == {"Alpha Co.", "Beta Inc."}
+    assert len(calls) == 2  # the failure really landed mid-swap
+
+
+def test_backfill_rolls_back_when_the_sweep_fails(conn):
+    """An error in the sweep, after every upsert, also leaves the table as it was."""
+    import pytest
+
+    from toronto_bids.extract import EXTRACTOR_VERSION
+    from toronto_bids.extraction import backfill_from_extraction
+
+    _award_summary_doc(conn, "s1", "1111111111", "https://example.com/a.pdf")
+    _cache(conn, "s1", EXTRACTOR_VERSION, "Alpha Co.", "Beta Inc.")
+    backfill_from_extraction(conn, "award_summary")
+    _cache(conn, "s1", EXTRACTOR_VERSION, "Gamma Ltd.")
+
+    class FailingSweep:
+        """Delegates to the real connection, but the sweep's DELETE raises."""
+
+        def __init__(self, real):
+            self._real = real
+
+        def __getattr__(self, name):
+            return getattr(self._real, name)
+
+        def execute(self, sql, *args):
+            if sql.startswith("DELETE FROM bid WHERE"):
+                raise RuntimeError("disk full")
+            return self._real.execute(sql, *args)
+
+    with pytest.raises(RuntimeError, match="disk full"):
+        backfill_from_extraction(FailingSweep(conn), "award_summary")
+
+    assert _bidders(conn) == {"Alpha Co.", "Beta Inc."}
+
+
+# ── backfill: surviving rows keep their archive history (#218) ──
+
+_OLD = "2020-01-01 00:00:00"
+
+
+def _age_rows(conn, table):
+    """Backdate every row so a rebuild that re-mints first_seen cannot pass by accident."""
+    conn.execute(f"UPDATE {table} SET first_seen = ?, last_seen = ?", (_OLD, _OLD))
+    conn.commit()
+
+
+def _seen(conn, table, name_col, **where):
+    clause = " AND ".join(f"{k} = ?" for k in where) or "1"
+    return {
+        r[name_col]: (r["id"], r["first_seen"], r["last_seen"])
+        for r in conn.execute(
+            f"SELECT id, {name_col}, first_seen, last_seen FROM {table} WHERE {clause}",
+            tuple(where.values()),
+        )
+    }
+
+
+def test_backfill_rebuild_keeps_first_seen_of_surviving_rows(conn):
+    """A row derived again keeps its first_seen (and id) and gets a fresh last_seen; a
+    row no longer derived is removed; a genuinely new row is stamped now. The bid key
+    has a NULL part here (reference), which the COALESCE conflict target must match."""
+    from toronto_bids.extract import EXTRACTOR_VERSION
+    from toronto_bids.extraction import backfill_from_extraction
+
+    _award_summary_doc(conn, "s1", "1111111111", "https://example.com/a.pdf")
+    _cache(conn, "s1", EXTRACTOR_VERSION, "Alpha Co.", "Stale Ltd.")
+    backfill_from_extraction(conn, "award_summary")
+    _age_rows(conn, "bid")
+    before = _seen(conn, "bid", "bidder_name_raw", source="award_summary")
+    assert conn.execute(
+        "SELECT reference FROM bid WHERE bidder_name_raw = 'Alpha Co.'"
+    ).fetchone()[0] is None
+
+    _cache(conn, "s1", EXTRACTOR_VERSION, "Alpha Co.", "New Inc.")
+    backfill_from_extraction(conn, "award_summary")
+    after = _seen(conn, "bid", "bidder_name_raw", source="award_summary")
+
+    assert set(after) == {"Alpha Co.", "New Inc."}
+    alpha_id, alpha_first, alpha_last = after["Alpha Co."]
+    assert alpha_id == before["Alpha Co."][0]
+    assert alpha_first == _OLD
+    assert alpha_last > _OLD
+    assert after["New Inc."][1] > _OLD
+
+
+def test_backfill_rebuild_keeps_first_seen_with_null_key_parts(conn):
+    """composite_award keys on COALESCE(award_value, ''): an award with no value must
+    still be recognised as the same row on the next rebuild."""
+    from toronto_bids.extract import EXTRACTOR_VERSION
+    from toronto_bids.extraction import backfill_from_extraction
+    from toronto_bids.store.db import mark_extracted
+
+    conn.execute(
+        "INSERT INTO background_pdf (url, kind, sha256, text, reference) "
+        "VALUES ('https://example.com/bgrd.pdf', 'bgrd', 'ccc', 'text', '2011.BD5.1')"
+    )
+    conn.commit()
+    extraction = {
+        "contracts": [
+            {
+                "reference": "3905-10-0097",
+                "awards": [{"supplier_name": "Builder Co.", "amount_raw": None}],
+                "bids": [],
+            }
+        ]
+    }
+    mark_extracted(conn, "ccc", EXTRACTOR_VERSION, result_json=json.dumps(extraction))
+    backfill_from_extraction(conn, "composite")
+    _age_rows(conn, "composite_award")
+
+    backfill_from_extraction(conn, "composite")
+
+    rows = conn.execute(
+        "SELECT supplier_name_raw, award_value, first_seen, last_seen FROM composite_award"
+    ).fetchall()
+    assert len(rows) == 1
+    assert rows[0]["award_value"] is None
+    assert rows[0]["first_seen"] == _OLD
+    assert rows[0]["last_seen"] > _OLD
+
+
+def test_backfill_rebuild_keeps_first_seen_of_agency_rows(conn):
+    """agency_bid (plain UNIQUE) and agency_award (expression key) both survive."""
+    from toronto_bids.extract import EXTRACTOR_VERSION
+    from toronto_bids.extraction import backfill_from_extraction
+    from toronto_bids.store.db import mark_extracted
+
+    conn.execute("INSERT INTO buyer (id, slug, name) VALUES (2, 'trca', 'TRCA')")
+    conn.execute(
+        "INSERT INTO background_pdf (url, kind, sha256, text) VALUES "
+        "('https://pub-trca.escribemeetings.com/r.pdf', 'agency_board', 'aaa', 'text')"
+    )
+    conn.commit()
+    extraction = {
+        "contracts": [
+            {
+                "reference": "10037330",
+                "bids": [{"supplier_name": "Acme Ltd.", "amount_raw": "$100.00"}],
+                "awards": [{"supplier_name": "Acme Ltd.", "amount_raw": None}],
+            }
+        ]
+    }
+    mark_extracted(conn, "aaa", EXTRACTOR_VERSION, result_json=json.dumps(extraction))
+    backfill_from_extraction(conn, "trca")
+    _age_rows(conn, "agency_bid")
+    _age_rows(conn, "agency_award")
+
+    backfill_from_extraction(conn, "trca")
+
+    for table in ("agency_bid", "agency_award"):
+        rows = conn.execute(f"SELECT first_seen, last_seen FROM {table}").fetchall()
+        assert len(rows) == 1, table
+        assert rows[0]["first_seen"] == _OLD, table
+        assert rows[0]["last_seen"] > _OLD, table
+
+
+def test_backfill_rebuild_clears_a_column_the_derivation_no_longer_sets(conn):
+    """A surviving row takes the derivation verbatim: a value the new extraction drops
+    goes NULL, exactly as it would after a delete + reinsert."""
+    from toronto_bids.extract import EXTRACTOR_VERSION
+    from toronto_bids.extraction import backfill_from_extraction
+    from toronto_bids.store.db import mark_extracted
+
+    _award_summary_doc(conn, "s1", "1111111111", "https://example.com/a.pdf")
+
+    def cache(basis):
+        bid = {"supplier_name": "Alpha Co.", "amount_raw": "$5.00", "amount_basis": basis}
+        result = {"contracts": [{"reference": "RFT 1", "bids": [bid]}]}
+        mark_extracted(conn, "s1", EXTRACTOR_VERSION, result_json=json.dumps(result))
+
+    cache("including_HST")
+    backfill_from_extraction(conn, "award_summary")
+    cache("unknown")
+    backfill_from_extraction(conn, "award_summary")
+
+    assert conn.execute("SELECT hst_basis FROM bid").fetchone()[0] is None
+
+
+def test_backfill_rebuild_leaves_other_sources_alone(conn):
+    """The sweep is scoped to the corpus's source; another source's rows are untouched."""
+    from toronto_bids.extract import EXTRACTOR_VERSION
+    from toronto_bids.extraction import backfill_from_extraction
+
+    conn.execute(
+        "INSERT INTO bid (bidder_name_raw, reference, source) "
+        "VALUES ('Panel Bidder', '2018.BA1.1', 'bid_award_panel')"
+    )
+    conn.commit()
+    _award_summary_doc(conn, "s1", "1111111111", "https://example.com/a.pdf")
+    _cache(conn, "s1", EXTRACTOR_VERSION, "Alpha Co.")
+
+    backfill_from_extraction(conn, "award_summary")
+
+    assert conn.execute(
+        "SELECT COUNT(*) FROM bid WHERE source = 'bid_award_panel'"
+    ).fetchone()[0] == 1
 
 
 def test_extract_and_backfill_keyless_ignores_text_less_docs(conn, monkeypatch):
@@ -1004,8 +1382,8 @@ def test_extract_and_backfill_keyless_ignores_text_less_docs(conn, monkeypatch):
         "VALUES ('https://example.com/has-text.pdf', 'bgrd', 'ttt', 'text', '2011.BD5.1')"
     )
     conn.execute(
-        "INSERT INTO background_pdf (url, kind, sha256, text) "
-        "VALUES ('https://example.com/image-only.pdf', 'bgrd', 'iii', NULL)"
+        "INSERT INTO background_pdf (url, kind, sha256, text, reference) "
+        "VALUES ('https://example.com/image-only.pdf', 'bgrd', 'iii', NULL, '2011.BD5.2')"
     )
     conn.commit()
     extraction = {
@@ -1093,6 +1471,7 @@ def test_one_bad_response_does_not_block_the_rest_of_the_corpus(conn):
         labels={},
         where="kind='agency_board'",
         log=logged.append,
+        classifier=None,
     )
 
     assert stats["errors"] == 1
@@ -1115,6 +1494,7 @@ def test_string_declared_count_in_a_response_is_extracted_not_crashed(conn):
         client=FakeClient(_one_contract("8")),
         labels={},
         where="kind='agency_board'",
+        classifier=None,
     )
     assert stats["extracted"] == 1
     assert stats["errors"] == 0
@@ -1131,6 +1511,7 @@ def test_string_declared_count_in_a_response_is_extracted_not_crashed(conn):
         ("toronto_bids.sources.zoo_board", "store_zoo_reports", "zoo"),
         ("toronto_bids.sources.ep_board", "store_ep_reports", "ep"),
         ("toronto_bids.sources.bid_award_panel", "store_composite_awards", "composite"),
+        ("toronto_bids.sources.bid_award_panel", "store_ba_report_bids", "ba_report"),
     ],
 )
 def test_store_functions_forward_log_to_extraction(monkeypatch, module, fn, corpus):

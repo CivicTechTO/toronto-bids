@@ -187,7 +187,15 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p_extract.add_argument(
         "--corpus",
-        choices=["trca", "ep", "zoo", "award_summary", "committee", "composite"],
+        choices=[
+            "trca",
+            "ep",
+            "zoo",
+            "award_summary",
+            "committee",
+            "composite",
+            "ba_report",
+        ],
         help="Extract all qualifying documents in a corpus",
     )
     p_extract.add_argument(
@@ -530,6 +538,7 @@ def _cmd_enrich_titles(args) -> int:
         match_pre_ariba_titles,
         store_background_pdfs,
         store_bids,
+        store_ba_report_bids,
         store_composite_awards,
         store_items,
     )
@@ -593,6 +602,12 @@ def _cmd_enrich_titles(args) -> int:
         print(
             f"  composite awards    : "
             f"{store_composite_awards(conn, log=lambda m: print(m, flush=True))}"
+        )
+        # BA staff reports share kind='bgrd' with the composites but are a separate corpus:
+        # their bids go to `bid`, their awards are already on the spine (#216).
+        print(
+            f"  BA report bids      : "
+            f"{store_ba_report_bids(conn, log=lambda m: print(m, flush=True))}"
         )
         # After the store, not before: the matcher reads composite_award, so it must see
         # this run's rows rather than the previous run's (#216).
@@ -815,6 +830,8 @@ def _cmd_nightly(args) -> int:
     conn = None
     steps: list[dict] = []
     sources: list[dict] = []
+    near_close: list[dict] = []
+    near_close_error = None
 
     try:
         conn = _open_db()
@@ -990,6 +1007,16 @@ def _cmd_nightly(args) -> int:
 
         _run_step(steps, failures, "export", _export, conn=conn)
 
+        # Open Ariba postings about to close with no bundle (#223). A warning, not a step and
+        # not a failure: it goes into the report only. Computed after the capture step so it
+        # reflects what tonight's capture actually got.
+        try:
+            from toronto_bids.sources import ariba_attachments as aa
+
+            near_close = aa.near_close_uncaptured(conn)
+        except Exception as exc:
+            near_close_error = str(exc)
+
         try:
             after = db.counts(conn)
         except Exception as exc:
@@ -1009,6 +1036,8 @@ def _cmd_nightly(args) -> int:
         "failures": failures,
         "export_bytes": export_bytes,
         "elapsed_s": time.monotonic() - started,
+        "ariba_near_close": near_close,
+        "ariba_near_close_error": near_close_error,
     }
     text = notify.summarize(report)
     print(text)

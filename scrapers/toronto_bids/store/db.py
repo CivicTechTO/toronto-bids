@@ -297,6 +297,12 @@ def _upsert_keyed(conn, table, cols, values, key_cols, overwrite: bool) -> None:
 
 
 def upsert_row(conn, row, *, overwrite: bool) -> None:
+    table, key_cols, cols, values = _row_values(row)
+    _upsert_keyed(conn, table, cols, values, key_cols, overwrite)
+
+
+def _row_values(row):
+    """(table, key_cols, cols, values) for a model row — shared by every upsert path."""
     try:
         table, key_cols = _TABLES[type(row)]
     except KeyError:
@@ -308,7 +314,71 @@ def upsert_row(conn, row, *, overwrite: bool) -> None:
         # parseable Authority stays idempotent (SQLite treats NULLs as distinct in UNIQUE indexes).
         ca_idx = cols.index("council_authority")
         values[ca_idx] = values[ca_idx] or ""
-    _upsert_keyed(conn, table, cols, values, key_cols, overwrite)
+    return table, key_cols, cols, values
+
+
+_TOUCHED = "temp._rebuild_touched"
+
+
+def _rebuild_upsert(conn, row) -> None:
+    """Upsert one row for `rebuild_rows`, recording its id in the touched set.
+
+    The first time a run touches a row, every non-key column takes the derived value
+    verbatim (NULL included) — exactly what a delete + reinsert would leave. A later
+    touch in the same run merges like `overwrite=True` (non-NULL wins, NULL never wipes),
+    which is what successive upserts into an emptied table did. Either way `first_seen`
+    and `id` are kept and `last_seen` is bumped.
+    """
+    table, key_cols, cols, values = _row_values(row)
+    non_key = [c for c in cols if c not in key_cols]
+    seen = f"{table}.id IN (SELECT id FROM {_TOUCHED})"
+    sets = ", ".join(
+        f"{c} = CASE WHEN {seen} THEN COALESCE(excluded.{c}, {table}.{c}) "
+        f"ELSE excluded.{c} END"
+        for c in non_key
+    )
+    conflict = _CONFLICT_TARGETS.get(table) or ", ".join(key_cols)
+    (row_id,) = conn.execute(
+        f"INSERT INTO {table} ({', '.join(cols)}) VALUES ({', '.join('?' for _ in cols)}) "
+        f"ON CONFLICT ({conflict}) DO UPDATE SET {sets}, last_seen = datetime('now') "
+        f"RETURNING id",
+        values,
+    ).fetchall()[0]
+    conn.execute(f"INSERT OR IGNORE INTO {_TOUCHED} (id) VALUES (?)", (row_id,))
+
+
+def rebuild_rows(conn, rows, *, scope: str, params=()) -> int:
+    """Make the rows of one table selected by `scope` exactly `rows`, by mark-and-sweep.
+
+    For tables DERIVED from bytes we hold, where a rebuild replaces a slice wholesale
+    (#215) but archive metadata must survive it (#218). Every row is upserted on the
+    table's own conflict target (`_CONFLICT_TARGETS`, so COALESCE'd NULL key parts match
+    as the unique index does); a row whose key is derived again keeps its `id` and
+    `first_seen`, has its other columns replaced and its `last_seen` bumped; a new key is
+    inserted with `first_seen` = now. Then every row in `scope` (a WHERE clause over the
+    table, with `params`) that no derived row touched is deleted. Returns that count.
+
+    `rows` must all be of one model type and non-empty. Does not commit: run it inside
+    the caller's transaction so the upserts and the sweep stand or fall together. A key
+    with a NULL part outside the COALESCE'd ones (e.g. agency_bid.buyer_id) never
+    conflicts, so such a row is re-inserted and the old one swept — new first_seen.
+    """
+    tables = {_row_values(r)[0] for r in rows}
+    if len(tables) != 1:
+        raise ValueError(f"rebuild_rows needs rows of exactly one table, got {tables}")
+    (table,) = tables
+    conn.execute("CREATE TEMP TABLE IF NOT EXISTS _rebuild_touched (id INTEGER PRIMARY KEY)")
+    conn.execute(f"DELETE FROM {_TOUCHED}")
+    try:
+        for r in rows:
+            _rebuild_upsert(conn, r)
+        return conn.execute(
+            f"DELETE FROM {table} WHERE ({scope}) "
+            f"AND id NOT IN (SELECT id FROM {_TOUCHED})",
+            tuple(params),
+        ).rowcount
+    finally:
+        conn.execute(f"DELETE FROM {_TOUCHED}")
 
 
 def counts(conn) -> dict:
