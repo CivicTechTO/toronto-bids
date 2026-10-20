@@ -141,6 +141,12 @@ def summarize(report: dict) -> str:
 
     lines += ["", f"export {'FAILED' if export_bytes is None else f'{export_bytes / 1_048_576:.1f} MiB'}"]
 
+    restrictions = report.get("ariba_training_restrictions") or []
+    if restrictions:
+        lines += ["", f"*Training event restrictions ({len(restrictions)})*"]
+        lines += [row.get("detail") or f"Doc{row.get('document_number', '?')}: {row.get('reason', 'unavailable')}"
+                  for row in restrictions]
+
     lines += _near_close(report.get("ariba_near_close") or [],
                          report.get("ariba_near_close_error"))
 

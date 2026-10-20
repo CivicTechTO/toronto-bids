@@ -83,10 +83,8 @@ def test_index_zip_lists_files_with_size_and_crc_and_drops_directories(tmp_path)
     assert len(crc) == 8 and int(crc, 16) == zipfile.crc32(b"hello world")
 
 
-def test_open_events_skip_the_citys_2099_mock_training_postings(conn):
-    """#223: the two "Mock ... Training and Practice" postings are dated 2099-12-31, so a
-    deadline filter alone keeps them open forever. They are skipped by document number; a
-    real open posting — including one whose title merely says "mock" — still gets captured."""
+def test_training_postings_stay_eligible_for_source_verification(conn):
+    """Training titles, future dates and known IDs do not establish unavailability (#242)."""
     link = "https://service.ariba.com/Discovery.aw/ad/profile?#/RfxEvent/preview/{}"
     rows = [
         ("4044346425", "Mock RFT Training and Practice", "2099-12-31", "1110088888"),
@@ -99,7 +97,8 @@ def test_open_events_skip_the_citys_2099_mock_training_postings(conn):
             "INSERT INTO solicitation (document_number, title, submission_deadline, "
             "ariba_posting_link) VALUES (?, ?, ?, ?)", (doc, title, deadline, link.format(rfx)))
     events = aa.open_solicitation_events(conn)
-    assert [e["document_number"] for e in events] == ["5660182540", "5713434353"]
+    assert [e["document_number"] for e in events] == [
+        "5660182540", "5713434353", "3949149442", "4044346425"]
     assert events[0]["rfx_id"] == "1110066666"
 
 
@@ -332,7 +331,7 @@ def test_open_events_backstop_from_ariba_posting_when_the_spine_lacks_the_row(co
     _posting(conn, "1110000001", "1111111111", "2026-10-05T09:00:00-07:00")
     # Unbridged: no document number to key a bundle on.
     _posting(conn, "1110000003", None, "2026-10-04T09:00:00-07:00")
-    # Training posting known only to Ariba: still excluded.
+    # Training posting known only to Ariba: remains eligible for verification.
     _posting(conn, "1110000004", "4044346425", "2099-12-31T09:00:00-07:00")
     # Closed in Ariba.
     _posting(conn, "1110000005", "5555555555", "2026-09-30T09:00:00-07:00")
@@ -341,6 +340,7 @@ def test_open_events_backstop_from_ariba_posting_when_the_spine_lacks_the_row(co
     assert [(e["document_number"], e["rfx_id"], e["closes"]) for e in events] == [
         ("2222222222", "1110000002", "2026-10-03"),
         ("1111111111", "1110000001", "2026-10-05"),
+        ("4044346425", "1110000004", "2099-12-31"),
     ]
 
 

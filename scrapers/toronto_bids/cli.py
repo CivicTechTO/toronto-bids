@@ -832,6 +832,7 @@ def _cmd_nightly(args) -> int:
     sources: list[dict] = []
     near_close: list[dict] = []
     near_close_error = None
+    training_restrictions: list[dict] = []
 
     try:
         conn = _open_db()
@@ -919,9 +920,13 @@ def _cmd_nightly(args) -> int:
                     # Per-event failures are caught inside capture_attachments; without handing
                     # it `failures` a night where every event raised reads ✅ (#223).
                     n = aa.capture_attachments(
-                        conn, log=out, virtual_display=True, failures=failures
+                        conn, log=out, virtual_display=True, failures=failures,
+                        training_restrictions=training_restrictions,
                     )
-                    return f"+{n} bundles"
+                    detail = f"+{n} bundles"
+                    if training_restrictions:
+                        detail += f" · {len(training_restrictions)} training restrictions"
+                    return detail
 
                 before_len = len(failures)
                 run_id = _run_step(steps, failures, "ariba attachments", _ariba, conn=conn)
@@ -1038,6 +1043,7 @@ def _cmd_nightly(args) -> int:
         "elapsed_s": time.monotonic() - started,
         "ariba_near_close": near_close,
         "ariba_near_close_error": near_close_error,
+        "ariba_training_restrictions": training_restrictions,
     }
     text = notify.summarize(report)
     print(text)
