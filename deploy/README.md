@@ -233,6 +233,60 @@ TB_PUBLISH_DRY_RUN=1 TB_DATA_DIR=~/tb-data deploy/publish-data.sh
 TB_PUBLISH_DRY_RUN=1 TB_PUBLISH_DAY=01 TB_DATA_DIR=~/tb-data deploy/publish-data.sh
 ```
 
+### Recovering a frontend workflow disabled for inactivity (#236)
+
+Data publication and frontend deployment are separate outcomes. A successful data release can
+coexist with a stale website when GitHub rejects the frontend dispatch. On 2026-10-20, the
+frontend's `deploy.yml` was `disabled_inactivity`, and dispatch returned HTTP 422: "Cannot
+trigger a 'workflow_dispatch' on a disabled workflow." Its last successful deployment was
+2026-09-19, and its last commit was 2026-07-21.
+
+[GitHub automatically disables scheduled workflows in public repositories after 60 days
+without repository activity](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/disable-and-enable-workflows).
+The frontend workflow has both `schedule` and `workflow_dispatch` triggers; the disabled state
+also prevents the nightly's explicit dispatch. Fresh releases in the **data repository** did
+not keep the **frontend repository's** workflow active in this incident. Re-enabling restores
+operation but does not exempt the workflow from GitHub's inactivity policy.
+
+Inspect the workflow state before changing anything:
+
+```shell
+gh api repos/CivicTechTO/toronto-bids-frontend/actions/workflows/deploy.yml \
+  --jq '{state, path, updated_at}'
+gh run list -R CivicTechTO/toronto-bids-frontend --workflow deploy.yml --limit 5
+```
+
+For `disabled_inactivity`, re-enable the existing workflow and dispatch it against `main`:
+
+```shell
+gh workflow enable deploy.yml -R CivicTechTO/toronto-bids-frontend
+gh workflow run deploy.yml -R CivicTechTO/toronto-bids-frontend --ref main
+gh run list -R CivicTechTO/toronto-bids-frontend --workflow deploy.yml \
+  --event workflow_dispatch --limit 1
+# Use the run ID returned above:
+gh run watch RUN_ID -R CivicTechTO/toronto-bids-frontend --exit-status
+```
+
+Verify `state: active`, acceptance of the dispatch, and completion of the deploy job. Its
+existing steps fetch the latest `bids.json`, compare against the deployed `counts.json` to
+reject archive shrinkage, build Astro/Pagefind, verify internal links, and deploy to Pages.
+A dispatch returning successfully is not proof that the deployment completed. If the run
+fails, inspect its failed step rather than disabling the shrink or link checks.
+
+Recovery on 2026-10-20 was verified with
+[deployment run 39427672769](https://github.com/CivicTechTO/toronto-bids-frontend/actions/runs/39427672769).
+The workflow returned to `active`; its dispatch, data fetch, shrink guard, build, internal-link
+checks, and Pages deployment succeeded. The public site's data timestamp matched the recovered
+export (`2026-10-20T13:00:07.510704+00:00`), and all seven published entity counts matched it,
+including 7,565 solicitations, 15,554 award lines, and 8,577 suppliers.
+
+Finally check the public site at
+<https://civictechto.github.io/toronto-bids-frontend/>: its exported-data timestamp should match
+the intended release, and `/counts.json` should reflect the recovered archive. Allow for
+Pages/CDN propagation. No scraper rerun or data re-upload is needed when only the frontend
+workflow was disabled. Publish-notification handling for rejected dispatches is tracked
+separately in #237.
+
 ### Provisioning a fresh box from the archives
 
 The DB itself is published (`bids.sqlite` on the `latest` release), so a new box can start from
