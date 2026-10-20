@@ -448,7 +448,7 @@ def test_the_partial_directory_is_this_modules_own_namespace(tmp_path):
 def test_a_complete_capture_clears_a_stale_gap_record(tmp_path):
     stale = tmp_path / "Doc5713434353.omitted.json"
     stale.write_text(json.dumps({"omitted": ["gone.pdf"]}))
-    source = FakeFileSource(["a.pdf"])
+    source = FakeFileSource(["a.pdf", "gone.pdf"])
 
     ariba_files.capture_files(source, "5713434353", tmp_path)
 

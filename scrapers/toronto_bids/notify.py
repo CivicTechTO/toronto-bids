@@ -70,7 +70,7 @@ def _days(n: int) -> str:
 
 
 def _near_close(items: list[dict], error: str | None) -> list[str]:
-    """Open Ariba postings about to close with no bundle archived (#223) — a WARNING section.
+    """Open Ariba postings about to close with missing or incomplete bundles (#223/#243) — a WARNING section.
 
     Respond is disabled once a posting closes, so these are documents about to be lost for
     good. It never changes the header icon (a still-open posting can be captured tomorrow), and
@@ -81,7 +81,7 @@ def _near_close(items: list[dict], error: str | None) -> list[str]:
         return ["", f"⚠ Ariba near-close check failed: {error}"]
     if not items:
         return []
-    out = ["", f"*⚠ Ariba closing soon, not archived ({len(items)})*"]
+    out = ["", f"*⚠ Ariba closing soon, not fully archived ({len(items)})*"]
     for it in items[:NEAR_CLOSE_MAX_LINES]:
         out.append(f"Doc{it['document_number']} · closes {it['closes']} · "
                    f"{_days(it['days_left'])}")
