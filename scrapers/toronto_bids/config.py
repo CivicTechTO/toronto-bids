@@ -39,21 +39,17 @@ USER_AGENT = (
 HTTP_TIMEOUT = 60.0
 HTTP_RETRIES = 4
 
-# SAP Ariba Discovery public JSON APIs (no auth).
+# Anonymous SAP Business Network Discovery APIs used by the public Explore Leads UI (#235).
 ARIBA_SEARCH_URL = (
-    "https://service.ariba.com/Network/discoveryweb/search/public/v1/doIndexedSearch"
+    "https://portal.us.bn.cloud.ariba.com/tpx/ingress/tps/discovery-core/public/rfx/v1/search"
 )
 ARIBA_DETAIL_URL = (
-    "https://service.ariba.com/Network/discoveryweb/api/public/v1/rfx/{rfx_id}"
+    "https://portal.us.bn.cloud.ariba.com/tpx/ingress/tps/discovery-core/odata/public/"
+    "discovery/v1/rfx/RfxEvent('{rfx_id}')"
 )
-ARIBA_SEARCH_PARAMS = {"siteName": "Quote"}
-ARIBA_SEARCH_BODY = {
-    "pageSize": 1000,
-    "pageNum": 0,
-    "searchType": "Quote",
-    "sortBy": "RESPONSE_DEAD_LINE",
-    "filters": [],
-}
+# City's public buyer identity, verified against RfxEvent.anid and orgUnitName.
+ARIBA_ORG_ANID = "AN01050912625"
+ARIBA_SEARCH_PAGE_SIZE = 100
 ARIBA_CUSTOMER_NAME = "City of Toronto"
 
 # Suspended & Disqualified Firms registry (public HTML, no auth).
