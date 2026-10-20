@@ -1,0 +1,195 @@
+{
+  "purpose": "Retained inputs from retired per-source extraction parsers; not gold expected records.",
+  "path_base": "scrapers/tests/fixtures",
+  "cases": [
+    {
+      "path": "agencies/ep_award_2019_multi_bidder.txt",
+      "corpus": "ep",
+      "input_format": "pdf_text",
+      "sha256": "766203113a8e808d11a48f46e03b4e0d335fc4c15faa4b30adb8c1f700f0b53b",
+      "expected_output": "not_adjudicated"
+    },
+    {
+      "path": "agencies/ep_award_2019_sole_tender.txt",
+      "corpus": "ep",
+      "input_format": "pdf_text",
+      "sha256": "96ee9cb1be29b04098f3e51a6ec58f0fed51d9f8dda46de44284fd232fadbbba",
+      "expected_output": "not_adjudicated"
+    },
+    {
+      "path": "agencies/ep_award_with_table_2023.txt",
+      "corpus": "ep",
+      "input_format": "pdf_text",
+      "sha256": "68ae0c64fb3b78e738e77ed1d8234f7b31fad279334e25a95bd866cc8fc3f3f4",
+      "expected_output": "not_adjudicated"
+    },
+    {
+      "path": "agencies/ep_bid_table_2019_five_bidders.json",
+      "corpus": "ep",
+      "input_format": "pdf_cell_rows",
+      "sha256": "83676ed78baa1ea1253422215a3ebe58d227aeb5cb6197dcae1879e6a3f5d234",
+      "expected_output": "not_adjudicated"
+    },
+    {
+      "path": "agencies/ep_bid_table_2023_three_bidders.json",
+      "corpus": "ep",
+      "input_format": "pdf_cell_rows",
+      "sha256": "2f4046d32b7e063c6878435399cebec66212f94a4b2bfcbf66f386201f21433a",
+      "expected_output": "not_adjudicated"
+    },
+    {
+      "path": "agencies/ep_bid_table_no_cents.json",
+      "corpus": "ep",
+      "input_format": "pdf_cell_rows",
+      "sha256": "2789004d31fe3c54e45c3be696ce0d8cd26560e55ab4af52bf7d95f959a2349d",
+      "expected_output": "not_adjudicated"
+    },
+    {
+      "path": "agencies/ep_bid_table_noncompliant.json",
+      "corpus": "ep",
+      "input_format": "pdf_cell_rows",
+      "sha256": "90631f174284c5b257cc3c86f1ae6feb3f4a3e59f71435dbfa8b10cf5e10bdc2",
+      "expected_output": "not_adjudicated"
+    },
+    {
+      "path": "agencies/ep_confidential_agreement.txt",
+      "corpus": "ep",
+      "input_format": "pdf_text",
+      "sha256": "b180a07c2bcff78ecc727076656c2b735a644469aecf00787237c7b6771d4901",
+      "expected_output": "not_adjudicated"
+    },
+    {
+      "path": "agencies/ep_confidential_decision_2025.txt",
+      "corpus": "ep",
+      "input_format": "pdf_text",
+      "sha256": "686a84a40637eb4e8fc5097e187834d2a326ddc516e508dde7cd8fecadb039d5",
+      "expected_output": "not_adjudicated"
+    },
+    {
+      "path": "agencies/ep_non_award_collective_agreement.txt",
+      "corpus": "ep",
+      "input_format": "pdf_text",
+      "sha256": "8f4978b4faa6635db74802135ad516253569fe112ce126973e2211f1f632beff",
+      "expected_output": "not_adjudicated"
+    },
+    {
+      "path": "agencies/ep_non_award_procurement_status.txt",
+      "corpus": "ep",
+      "input_format": "pdf_text",
+      "sha256": "74ae4c188d8d892aea93e55fd146326dc717b99dd0acb78d641f9ff93dcbc584",
+      "expected_output": "not_adjudicated"
+    },
+    {
+      "path": "agencies/ep_non_award_wsib_report.txt",
+      "corpus": "ep",
+      "input_format": "pdf_text",
+      "sha256": "28efa93da8deec87939c0c214fbad3c35b04ba78a3a12f75c94186fbe248053a",
+      "expected_output": "not_adjudicated"
+    },
+    {
+      "path": "agencies/trca_armour_stone_2023.txt",
+      "corpus": "trca",
+      "input_format": "pdf_text",
+      "sha256": "90abad1ca99d79ef378c2b31a64c5e9c36ea4cfb7d691019fdadbccfbac32c7b",
+      "expected_output": "not_adjudicated"
+    },
+    {
+      "path": "agencies/trca_contract_label_2019.txt",
+      "corpus": "trca",
+      "input_format": "pdf_text",
+      "sha256": "c45c234ca4e3f88bcdcdbc1fcb9d96c1f752ea56fd17413c4c021518d15ac163",
+      "expected_output": "not_adjudicated"
+    },
+    {
+      "path": "agencies/trca_multiline_winner_2021.txt",
+      "corpus": "trca",
+      "input_format": "pdf_text",
+      "sha256": "62fbf3895578af654408e7e96a4414be4b7064ee3a972905d74b909da36d644c",
+      "expected_output": "not_adjudicated"
+    },
+    {
+      "path": "agencies/trca_overcapture_2021.txt",
+      "corpus": "trca",
+      "input_format": "pdf_text",
+      "sha256": "f683c3cf6b9040294de81d83910a876d2fe399ac5d56371d77b8859145702bce",
+      "expected_output": "not_adjudicated"
+    },
+    {
+      "path": "agencies/trca_rfq_spelled_out_2019.txt",
+      "corpus": "trca",
+      "input_format": "pdf_text",
+      "sha256": "f0b87587dcfa3e88393cf95e828874e2fccddb357dae84f7908df5f6e2d33401",
+      "expected_output": "not_adjudicated"
+    },
+    {
+      "path": "agencies/trca_vor_appraisal_2021.txt",
+      "corpus": "trca",
+      "input_format": "pdf_text",
+      "sha256": "a25b53b093007cdc657a79abf7c195b8285f4c7ac60c5b000bb398abd0ff982b",
+      "expected_output": "not_adjudicated"
+    },
+    {
+      "path": "agencies/zoo_amount_phrase_2018.txt",
+      "corpus": "zoo",
+      "input_format": "pdf_text",
+      "sha256": "23ceb14d4bd1b2fc1c65b2be32adef7778ae19f1f45247e1104a5dfb9762a72a",
+      "expected_output": "not_adjudicated"
+    },
+    {
+      "path": "agencies/zoo_energy_retrofit_2019.txt",
+      "corpus": "zoo",
+      "input_format": "pdf_text",
+      "sha256": "191ed04ecf59214618964b13c2d46e0d759e82d99a0778af87637dc90bd3f37e",
+      "expected_output": "not_adjudicated"
+    },
+    {
+      "path": "agencies/zoo_no_suffix_2020.txt",
+      "corpus": "zoo",
+      "input_format": "pdf_text",
+      "sha256": "51274278746001f76b6f8016fdb0912f0b3e8ec6bc2321ba6462e5f5e2e2926d",
+      "expected_output": "not_adjudicated"
+    },
+    {
+      "path": "agencies/zoo_perimeter_fence_2025.txt",
+      "corpus": "zoo",
+      "input_format": "pdf_text",
+      "sha256": "ec85b8f4fadc6db957f8abafcd0ceab21995426e71561bf1b51fbb501caf8275",
+      "expected_output": "not_adjudicated"
+    },
+    {
+      "path": "agencies/zoo_red_panda_2025.txt",
+      "corpus": "zoo",
+      "input_format": "pdf_text",
+      "sha256": "e40ba06badd1db70363faff5fd726823fd06eec3589efe82772b1f394947968a",
+      "expected_output": "not_adjudicated"
+    },
+    {
+      "path": "award_summary/Doc5386487782-rfp.rows.json",
+      "corpus": "award_summary",
+      "input_format": "pdf_cell_rows",
+      "sha256": "c7f5b081b4a8b28adfb53b5428bc7fca98651a39345ebe4b514d4712ff84cedc",
+      "expected_output": "not_adjudicated"
+    },
+    {
+      "path": "award_summary/Doc5616191850.rows.json",
+      "corpus": "award_summary",
+      "input_format": "pdf_cell_rows",
+      "sha256": "06b2c27c021541b8edd63911e6947f486241734324c16c4904463d5b1e5d2713",
+      "expected_output": "not_adjudicated"
+    },
+    {
+      "path": "committee/ashbridges_tender_2010.txt",
+      "corpus": "committee",
+      "input_format": "pdf_text",
+      "sha256": "be021feffd5322eecd2ec0b16e499b2a31fb8b336fca367c168d8cda4cdcf7b7",
+      "expected_output": "not_adjudicated"
+    },
+    {
+      "path": "committee/district2_rfq_doc4553928310.txt",
+      "corpus": "committee",
+      "input_format": "pdf_text",
+      "sha256": "7b34ff0264c0a26a250f95c1495b7425f0234f66aa7498ba501d90593ff1db89",
+      "expected_output": "not_adjudicated"
+    }
+  ]
+}
