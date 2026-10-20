@@ -440,7 +440,7 @@ def capture_event(page, event: dict, dest_dir, log=lambda _m: None) -> Path | No
             f"Doc{document_number}: the authenticated event preview never loaded "
             f"(rfx {rfx_id}) — session/SSO did not settle.")
 
-    respond = page.get_by_role("button", name="Respond", exact=True)
+    respond = _preview_respond(page, rfx_id)
     if respond.is_disabled():
         # Respond dies the moment a posting closes, so any files we already hold can never be
         # completed. Salvaging 30 of 54 is permanently better than nothing -- this is the whole
@@ -528,6 +528,33 @@ def _open_authed_preview(page, rfx_id: str, attempts: int = 3) -> bool:
         if page.query_selector(f"text=ID - {rfx_id}") is not None:
             return True
     return False
+
+
+def _preview_respond(page, rfx_id: str, timeout_ms: int = 15000):
+    """Wait for the event action, revealing its responsive overflow menu if needed (#241).
+
+    The preview can move Respond into its "Additional Options" overflow menu.
+    The event ID already being visible proves identity, not readiness of those actions.
+    Open that named menu once and require Respond to become visible; an unrelated or
+    unavailable action remains a failure, never evidence that the event has closed.
+    """
+    respond = page.get_by_role("button", name="Respond", exact=True)
+    options = page.get_by_role("button", name="Additional Options", exact=True)
+    opened = False
+    waited = 0
+    while True:
+        if respond.is_visible():
+            return respond
+        if waited >= timeout_ms:
+            context = " after opening Additional Options" if opened else ""
+            raise RuntimeError(
+                f"rfx {rfx_id}: preview loaded but Respond did not become visible{context}")
+        if not opened and options.is_visible() and options.is_enabled():
+            options.click(timeout=timeout_ms - waited)
+            opened = True
+        else:
+            page.wait_for_timeout(250)
+            waited += 250
 
 
 def _respond_stably_disabled(page, respond, reads: int = 3, interval_ms: int = 1500) -> bool:
