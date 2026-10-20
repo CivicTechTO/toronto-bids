@@ -121,6 +121,7 @@ def test_overflow_action_does_not_bypass_permission_denial(capture_seam, monkeyp
     dest, _, calls = capture_seam
     monkeypatch.setattr(aa, "_wait_post_respond", lambda *a: "denied")
     page = _Page("overflow")
-    assert aa.capture_event(page, EVENT, dest) is None
+    with pytest.raises(aa.EventUnavailable, match="denied permission"):
+        aa.capture_event(page, EVENT, dest)
     assert page.clicked == ["Additional Options", "Respond"]
     assert calls == []

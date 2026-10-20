@@ -669,3 +669,43 @@ def test_trca_download_gaps_reach_nightly_status_history_and_summary(
     assert row['status'] == 'failed' and all(url in row['error'] for url in urls)
     assert (tmp_path / 'export' / 'bids.json').exists()
     assert conn.execute("SELECT count(*) FROM background_pdf WHERE sha256 IS NULL").fetchone()[0] == 3
+
+
+def test_verified_training_restrictions_are_explicit_not_false_nightly_failures(
+        nightly, monkeypatch, conn):
+    from toronto_bids.sources import ariba_attachments
+    monkeypatch.setattr(cli, '_open_db', lambda: _KeepOpen(conn))
+    def capture(conn, *, training_restrictions, **kwargs):
+        training_restrictions.append({'document_number': '3861692164', 'rfx_id': '15346406',
+                                      'reason': 'public_sector_disabled',
+                                      'detail': 'Doc3861692164: public sector sourcing is not enabled'})
+        return 0
+    monkeypatch.setattr(ariba_attachments, 'capture_attachments', capture)
+    posted = {}
+    monkeypatch.setattr(notify, 'post', lambda text, **k: posted.setdefault('text', text))
+    assert nightly() == 0
+    assert '✅ ariba attachments' in posted['text']
+    assert '1 training restrictions' in posted['text']
+    assert '*Training event restrictions (1)*' in posted['text']
+    assert 'Doc3861692164: public sector sourcing is not enabled' in posted['text']
+    assert conn.execute("SELECT status FROM sync_run WHERE source='ariba attachments'").fetchone()[0] == 'ok'
+
+
+def test_real_event_failure_is_preserved_alongside_training_restriction_notices(
+        nightly, monkeypatch, conn):
+    from toronto_bids.sources import ariba_attachments
+    monkeypatch.setattr(cli, '_open_db', lambda: _KeepOpen(conn))
+    def capture(conn, *, failures, training_restrictions, **kwargs):
+        training_restrictions.append({'document_number': '3861744322', 'rfx_id': '15346471',
+                                      'reason': 'closed', 'detail': 'Doc3861744322: event is closed'})
+        failures.append(('ariba:Doc5999999999', 'Ariba denied permission to view the event'))
+        return 0
+    monkeypatch.setattr(ariba_attachments, 'capture_attachments', capture)
+    posted = {}
+    monkeypatch.setattr(notify, 'post', lambda text, **k: posted.setdefault('text', text))
+    assert nightly() == 1
+    assert '❌ ariba attachments' in posted['text']
+    assert '*Training event restrictions (1)*' in posted['text']
+    assert 'ariba:Doc5999999999' in posted['text']
+    row = conn.execute("SELECT status,error FROM sync_run WHERE source='ariba attachments'").fetchone()
+    assert row['status'] == 'failed' and 'ariba:Doc5999999999' in row['error']
