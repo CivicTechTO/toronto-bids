@@ -8,6 +8,7 @@ import sqlite3
 import pytest
 
 from toronto_bids import cli, config, notify
+from toronto_bids.cli import _capture_agency_bodies as _real_agency_capture
 
 
 @pytest.fixture
@@ -628,3 +629,43 @@ def test_a_raising_near_close_check_is_reported_but_does_not_fail_the_run(nightl
     monkeypatch.setattr(notify, "post", lambda text, **k: posted.append(text) or True)
     assert nightly() == 0
     assert "Ariba near-close check failed: disk gone" in posted[0]
+
+
+def test_trca_download_gaps_reach_nightly_status_history_and_summary(
+        nightly, monkeypatch, conn, tmp_path):
+    """Exercise the real downloader through the nightly, including per-document isolation."""
+    import httpx
+    from toronto_bids.sources import trca_board
+
+    monkeypatch.setattr(cli, "_open_db", lambda: _KeepOpen(conn))
+    monkeypatch.setattr(config, "TRCA_ESCRIBE_YEARS", [])
+    monkeypatch.setattr(config, "TRCA_REPORTS_DIR", tmp_path / "trca")
+    urls = [f"https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId={n}"
+            for n in (5558, 7234, 6819)]
+    for url in urls:
+        conn.execute("INSERT INTO background_pdf (url, kind) VALUES (?, 'agency_board')", (url,))
+    conn.commit()
+
+    def missing(self, url):
+        request = httpx.Request("GET", url)
+        raise httpx.HTTPStatusError("404", request=request,
+                                    response=httpx.Response(404, request=request))
+
+    monkeypatch.setattr(cli.HttpClient, "get_bytes", missing)
+    monkeypatch.setattr(trca_board, "store_trca_reports", lambda *a, **k:
+                        {"solicitations": 0, "awards": 0, "bids": 0})
+    # Import the original function from the saved module-level reference, since the
+    # nightly fixture replaces cli._capture_agency_bodies to keep other tests offline.
+    monkeypatch.setattr(cli, "_capture_agency_bodies", lambda c, **k:
+                        _real_agency_capture(c, bodies=["trca"], fetch=True, scrape=False,
+                                             virtual_display=False, out=k['out']))
+    posted = {}
+    monkeypatch.setattr(notify, "post", lambda text, **k: posted.setdefault("text", text))
+
+    assert nightly() == 1
+    assert "❌ agencies" in posted['text']
+    assert all(url in posted['text'] for url in urls)
+    row = conn.execute("SELECT status, error FROM sync_run WHERE source='agencies'").fetchone()
+    assert row['status'] == 'failed' and all(url in row['error'] for url in urls)
+    assert (tmp_path / 'export' / 'bids.json').exists()
+    assert conn.execute("SELECT count(*) FROM background_pdf WHERE sha256 IS NULL").fetchone()[0] == 3

@@ -101,13 +101,20 @@ def meeting_detail_urls(calendar_json: dict) -> list[str]:
     return urls
 
 
-def download_reports(conn, http, log=lambda _m: None) -> int:
+def _download_failure(prefix, message, log, failures):
+    log(f"  {prefix} {message}")
+    if failures is not None:
+        failures.append((f"download:{prefix}", message))
+
+
+def download_reports(conn, http, log=lambda _m: None, *, failures=None) -> int:
     """POST the calendar page-method per year -> meeting pages -> FileStream PDFs. Resumable.
 
     Queue keys on sha256 IS NULL (#96): the hash records that we hold the bytes; text
     records whether pdftotext could read them. Never re-download for unreadable text. A
     year whose calendar call fails, or a single meeting page that 404s, is logged and
-    skipped rather than aborting the run.
+    skipped rather than aborting the run. Every unresolved fetch/discovery gap also enters
+    `failures`, so isolation cannot make an incomplete capture appear successful (#244).
     """
     config.TRCA_REPORTS_DIR.mkdir(parents=True, exist_ok=True)
     # 1. Index: discover FileStream URLs and upsert a background_pdf row per document.
@@ -122,7 +129,7 @@ def download_reports(conn, http, log=lambda _m: None) -> int:
                 },
             )
         except httpx.HTTPError as exc:
-            log(f"  trca {year}: calendar fetch failed: {exc}")
+            _download_failure("trca", f"{year}: calendar fetch failed: {exc}", log, failures)
             continue
         detail_urls = meeting_detail_urls(calendar)
         log(f"  trca {year}: {len(detail_urls)} meetings")
@@ -130,7 +137,7 @@ def download_reports(conn, http, log=lambda _m: None) -> int:
             try:
                 mhtml = http.get_text(murl)
             except httpx.HTTPError as exc:
-                log(f"  trca skip meeting {murl}: {exc}")
+                _download_failure("trca", f"skip meeting {murl}: {exc}", log, failures)
                 continue
             for durl in escribe_document_urls(mhtml):
                 if "ashx" in durl.lower():
@@ -144,7 +151,8 @@ def download_reports(conn, http, log=lambda _m: None) -> int:
     _prune_page_assets(conn, assets, log)
     # 2. Fetch: everything indexed but not yet held.
     return _store_pending_pdfs(
-        conn, http, config.TRCA_REPORTS_DIR, "%escribemeetings%", log, "trca"
+        conn, http, config.TRCA_REPORTS_DIR, "%escribemeetings%", log, "trca",
+        failures=failures,
     )
 
 
@@ -181,7 +189,7 @@ def _prune_page_assets(conn, assets: set[str], log) -> int:
 
 
 def _store_pending_pdfs(
-    conn, http, reports_dir, url_like: str, log, prefix: str
+    conn, http, reports_dir, url_like: str, log, prefix: str, *, failures=None
 ) -> int:
     """Fetch every queued (sha256 IS NULL) agency_board PDF matching url_like. Resumable.
 
@@ -190,7 +198,9 @@ def _store_pending_pdfs(
     SKIPPED (the row stays queued), never aborting the run: across hundreds of legdocs /
     eSCRIBE URLs a stray 404 is routine, and get_bytes re-raises 4xx — found live when one
     dead legdocs URL killed the whole Zoo body after storing 1 of 859 reports (#135).
-    Queue keys on sha256 IS NULL (#96): the hash records we hold the bytes.
+    Queue keys on sha256 IS NULL (#96): the hash records we hold the bytes. With `failures`,
+    fetch errors and non-PDF responses reach the caller's operational status (#244). A status
+    code alone never proves that a document is confidential or permanently removed.
     """
     reports_dir.mkdir(parents=True, exist_ok=True)
     n = 0
@@ -204,16 +214,19 @@ def _store_pending_pdfs(
         except Exception as exc:  # noqa: BLE001 — 404/5xx/transport OR a malformed
             # URL (an entity that slipped decoding): one bad URL among thousands must never
             # abort the batch. Scoped to the single fetch call, so real bugs still surface.
-            log(f"  {prefix} skip {row['url']}: {exc}")
+            _download_failure(
+                prefix, f"skip {row['url']}: {exc}; left queued (cause unverified)",
+                log, failures,
+            )
             continue
         if not blob.startswith(b"%PDF"):
             # Left queued — an interstitial or a transient error page may serve the real
             # PDF next run. But SAY SO: this branch was silent, and #175 hid 460 wasted
             # fetches a night behind it, making an 11-line 404 list look like the whole
             # problem. A skip nobody can see is a skip nobody fixes.
-            log(
-                f"  {prefix} not a PDF ({blob[:4]!r}, {len(blob)} bytes), left queued: "
-                f"{row['url']}"
+            _download_failure(
+                prefix, f"not a PDF ({blob[:4]!r}, {len(blob)} bytes), left queued: {row['url']}",
+                log, failures,
             )
             continue
         sha = hashlib.sha256(blob).hexdigest()

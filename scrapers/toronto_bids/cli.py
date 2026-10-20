@@ -1120,7 +1120,8 @@ def _capture_agency_bodies(conn, *, bodies, fetch, scrape, virtual_display, out)
                 http = HttpClient()
                 try:
                     print(
-                        f"  trca reports fetched : {download_reports(conn, http, log=out)}"
+                        f"  trca reports fetched : "
+                        f"{download_reports(conn, http, log=out, failures=failures)}"
                     )
                 finally:
                     http.close()
