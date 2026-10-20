@@ -135,6 +135,15 @@ def build_parser() -> argparse.ArgumentParser:
         "2026-07-17-deployment-design.md",
     )
 
+    p_history = sub.add_parser(
+        "capture-trca-history",
+        help="Archive pre-2019 public Laserfiche PDFs; no extraction or publishing (#224)",
+    )
+    p_history.add_argument("--resume", action="store_true",
+                           help="Retry the indexed sha256-NULL queue without rediscovery")
+    p_history.add_argument("--limit", type=int,
+                           help="Stop after this many successful new downloads")
+
     p_ag = sub.add_parser(
         "enrich-agencies",
         help="Capture agency/corporation procurement from board records (#135): TRCA "
@@ -1536,6 +1545,23 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_amounts(args)
     if args.command == "enrich-ariba-attachments":
         return _cmd_enrich_ariba_attachments(args)
+    if args.command == "capture-trca-history":
+        from toronto_bids.sources.trca_history import capture_history
+
+        if args.limit is not None and args.limit < 1:
+            parser.error("--limit must be positive")
+        conn = _open_db()
+        http = HttpClient()
+        try:
+            result = capture_history(conn, http, discover=not args.resume,
+                                     limit=args.limit, log=lambda m: print(m, flush=True))
+            print(f"Historical PDFs: {result['held']}/{result['total']} held; "
+                  f"{result['pending']} pending; {len(result['failures'])} failures; "
+                  f"{len(result['excluded_native_files'])} native non-PDF attachments excluded")
+            return 1 if result["failures"] or result["pending"] else 0
+        finally:
+            http.close()
+            conn.close()
     if args.command == "enrich-agencies":
         return _cmd_enrich_agencies(args)
     if args.command == "enrich-committee-awards":

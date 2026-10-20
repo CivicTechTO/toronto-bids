@@ -111,3 +111,18 @@ must allow internal whitespace, bounded, stopping at for/at/,/in-the-amount; (2)
 " of <City>, <Province>" location qualifier so the same firm keys consistently; (3) `native_ref`
 is `RFT No. EP###-YYYY` (2023) OR `Contract No. <token>` (2019); (4) both years use "in the amount
 of $X"; (5) a bid price may carry a trailing `*` footnote.
+
+### TRCA public Laserfiche history (#224)
+
+`trca_laserfiche_{series,1957,2018}.json` were fetched anonymously over HTTP on
+2026-10-20 from TRCA's own WebLink installation at
+`https://laserfiche.trca.ca/WebLink/FolderListingService.aspx/GetFolderListing2`.
+The requests used `repoName=LASERFICHE`, `folderId=1030915`, `212734`, and `1477012`,
+respectively, `getNewListing=true`, `start=0`, `end=100`, `sortColumn=Name`,
+`sortAscending=true`. Ordinary anonymous session cookies were accepted; no login.
+Payload `data` is unchanged; random response padding (`__breach`) is omitted.
+
+The series lists 1957–2022 annual minute-book folders. The 1957 folder contains scanned
+index/member/minutes documents with no native extension. The 2018 folder contains nested
+folders and a native PDF. Client entry-type values are Document=-2, Shortcut=-1,
+Folder=0, RecordSeries=1, as declared by the public `app/dist/browse/main.js`.
