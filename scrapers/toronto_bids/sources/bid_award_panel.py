@@ -213,6 +213,64 @@ def agenda_date(html: str) -> str | None:
 # losing every 2009-2010 meeting — which is exactly what happened on the first run.
 
 
+def _read_agenda_date(page):
+    from datetime import date
+
+    try:
+        when = agenda_date(page) if page.strip() else None
+        return date.fromisoformat(when).isoformat() if when else None
+    except (ValueError, etree.ParserError):
+        return None
+
+
+def _agenda_in_term(page, term):
+    if agenda_is_missing(page):
+        return None
+    when = _read_agenda_date(page)
+    if not when:
+        raise RuntimeError("unrecognized agenda response; no valid meeting date")
+    start, end = term.split("-")
+    return when if f"{start}-11-01" <= when < f"{end}-11-01" else None
+
+
+def _automatic_term_plan(fetch, term_starts, today, log):
+    """Probe first agendas; a speculative/future successor cannot close an older term."""
+    terms = list(term_starts)
+    first = {}
+
+    def confirm(entry):
+        series, year, term, first_n = entry
+        for candidate in (year, year + 1):
+            ref = f"{candidate}.{series}{first_n}"
+            when = _agenda_in_term(fetch(ref), term)
+            if when:
+                return {"successor": ref, "date": when}
+        return None
+
+    for entry in terms:
+        proof = confirm(entry)
+        if proof:
+            first[f"{entry[0]}{entry[2]}"] = proof
+    if not terms:
+        return terms, first
+    series, year, term, _ = terms[-1]
+    start, end = map(int, term.split("-"))
+    if end - start != 4:
+        raise ValueError(f"automatic council terms require a four-year seed, got {term!r}")
+    while end <= int(today[:4]):
+        year += 4
+        start, end = end, end + 4
+        entry = (series, year, f"{start}-{end}", 1)
+        proof = confirm(entry)
+        if proof:
+            terms.append(entry)
+            first[f"{series}{entry[2]}"] = proof
+            log(f"  {series} {entry[2]}: confirmed first agenda {proof['successor']}")
+        else:
+            log(f"  {series} {entry[2]}: first agenda not confirmed; no closure inferred")
+    return terms, first
+
+
 def discover_meetings(
     fetch,
     log=lambda _m: None,
@@ -222,6 +280,8 @@ def discover_meetings(
     term_starts,
     closed_terms: dict | None = None,
     on_term_closed=lambda key, last_n: None,
+    auto_terms=False,
+    today=None,
 ):
     """Walk each term's meetings, returning {reference: html} for every agenda that exists.
 
@@ -240,28 +300,52 @@ def discover_meetings(
     the Zoo Board's ZB series, #135) reuse this prober by passing their own list — same
     probe-and-confirm design, different (series, start_year, term, first_n) tuples.
 
-    Every term but the LAST in `term_starts` is, by construction, a closed council term: it is
-    followed by a newer one, which only happens once the term it precedes has already ended and
-    can never produce another meeting (#177). Once such a term's miss boundary is found, that
-    boundary is permanent — but nothing remembered it, so every run re-walked into the same
-    dead miss range on live network probes, forever, for a term that provably cannot change. Two
-    hooks, not a hardcoded rule: `closed_terms` (`{f"{series}{term}": last_real_n}`) lets a
-    closed term skip straight to its known end instead of probing past it, and
-    `on_term_closed(key, last_n)` fires the first time a non-final term's boundary is confirmed,
-    so the caller can persist it. Passing neither reproduces the old always-probe behaviour
-    exactly — this is additive, not a change to what a fresh run discovers.
+    Active committees opt into `auto_terms`: extend the latest four-year seed through the
+    current year and confirm each successor from its first dated agenda. Only a successor
+    meeting that has occurred can close an older term. Persisted boundaries carry that
+    successor's reference and date; legacy integer caps are revalidated once. A prepublished
+    future agenda is collected without freezing the previous term.
+
+    Without `auto_terms`, the historical BA/BD rule remains: every configured term except
+    the last is closed. `closed_terms` and `on_term_closed` let callers persist boundaries.
     """
+    if auto_terms:
+        from datetime import date
+        today = today or date.today().isoformat()
+        date.fromisoformat(today)
+        live_fetch = fetch
+        probes = {}
+
+        def fetch(ref):
+            if ref not in probes:
+                probes[ref] = live_fetch(ref)
+            return probes[ref]
+
+        term_starts, first_agendas = _automatic_term_plan(fetch, term_starts, today, log)
     found = {}
     closed_terms = closed_terms or {}
     last_index = len(term_starts) - 1
     for i, (series, start_year, term, first_n) in enumerate(term_starts):
         key = f"{series}{term}"
         cap = first_n + max_per_term - 1
-        # The cap only ever narrows a HISTORICAL term. The last entry is the one still
-        # accepting new meetings, so it must always be probed for real — never frozen by a
-        # stale or mistaken closed_terms entry.
-        if i != last_index and key in closed_terms:
-            cap = min(cap, closed_terms[key])
+        proof = None
+        if auto_terms:
+            proof = next((first_agendas[f"{later[0]}{later[2]}"]
+                          for later in term_starts[i + 1:]
+                          if later[0] == series and f"{later[0]}{later[2]}" in first_agendas
+                          and first_agendas[f"{later[0]}{later[2]}"]["date"] <= today), None)
+        can_close = bool(proof) if auto_terms else i != last_index
+        saved = closed_terms.get(key)
+        if auto_terms:
+            valid_boundary = (isinstance(saved, dict) and proof is not None
+                              and saved.get("successor") == proof["successor"]
+                              and saved.get("date") == proof["date"]
+                              and type(saved.get("last_n")) is int
+                              and saved["last_n"] >= first_n - 1)
+        else:
+            valid_boundary = can_close and saved is not None
+        if can_close and valid_boundary:
+            cap = min(cap, saved["last_n"] if isinstance(saved, dict) else saved)
         session = start_year
         misses = 0
         for n in range(first_n, cap + 1):
@@ -270,7 +354,7 @@ def discover_meetings(
             for candidate in (session, session + 1):
                 probe = f"{candidate}.{series}{n}"
                 page = fetch(probe)
-                if not agenda_is_missing(page):
+                if (_agenda_in_term(page, term) if auto_terms else not agenda_is_missing(page)):
                     html, ref, session = page, probe, candidate
                     break
             if html is None:
@@ -281,8 +365,8 @@ def discover_meetings(
                 if misses >= stop_after_misses:
                     last_n = n - misses
                     log(f"  {series} {term}: stopping after {last_n} meetings")
-                    if i != last_index and key not in closed_terms:
-                        on_term_closed(key, last_n)
+                    if can_close and not valid_boundary:
+                        on_term_closed(key, {"last_n": last_n, **proof} if auto_terms else last_n)
                     break
                 continue
             misses = 0
@@ -378,37 +462,53 @@ def _load_closed_terms(agenda_dir) -> dict:
     if not path.exists():
         return {}
     try:
-        return json.loads(path.read_text())
+        records = json.loads(path.read_text())
+        if not isinstance(records, dict):
+            return {}
+        return {key: value for key, value in records.items()
+                if isinstance(key, str) and (
+                    (type(value) is int and value >= 0) or
+                    (isinstance(value, dict) and type(value.get("last_n")) is int
+                     and value["last_n"] >= 0))}
     except (json.JSONDecodeError, OSError):
         return {}
 
 
 def scrape_agendas(
-    agenda_dir, *, virtual_display: bool = False, log=lambda _m: None, term_starts
+    agenda_dir, *, virtual_display: bool = False, log=lambda _m: None, term_starts,
+    auto_terms=False, today=None
 ) -> dict:
     """Discover and cache every agenda, returning {reference: html}.
 
-    Resumable and safe to re-run: an agenda already on disk is never refetched, so a second
-    run costs only the probes past the last meeting — but "the last meeting" is only ever
-    moving for the CURRENT term. Every earlier term_starts entry is a closed council term (a
-    newer one already follows it in the list, which only happens once the term it precedes has
-    ended), so its miss boundary is permanent. Before #177 nothing remembered that, and every
-    run re-probed every closed term's dead miss range on live network requests, forever —
-    for the EP body alone, most of a nightly nine-figure minute count. `.closed_terms.json`
-    in `agenda_dir` records each closed term's confirmed last meeting the first time
-    `discover_meetings` finds it, so later runs skip straight to it. The one term that can
-    never be cached this way is whichever is LAST in `term_starts` — see `discover_meetings`.
+    Reuse cached agendas and persist closed-term boundaries in `.closed_terms.json`.
+    With `auto_terms`, cached pages must have a date in the reference's council term;
+    malformed or wrong-term pages are refetched. Missing pages are never cached.
+    Closure requires a confirmed successor meeting that has occurred, rather than merely
+    a later entry in the configured list. Historical BA/BD callers retain the legacy rule.
 
-    `term_starts` is the committee's term list (e.g. `zoo_board.ZB_TERM_STARTS`); the Bid
-    Award Panel is abolished, so no in-repo default remains. Forwarded to
-    `discover_meetings` unchanged — see that function for why other TMMIS committees pass
-    their own list instead.
+    `term_starts` supplies each committee's historical seeds. Active EP/ZB callers enable
+    automatic four-year extensions; see `discover_meetings` for the closure evidence.
     """
     root = pathlib.Path(agenda_dir)
     root.mkdir(parents=True, exist_ok=True)
     closed_terms = _load_closed_terms(agenda_dir)
 
-    def _persist_closed(key: str, last_n: int) -> None:
+    def cache_is_agenda(meeting, page):
+        if not auto_terms:
+            return True
+        year, code = meeting.split(".", 1)
+        year = int(year)
+        seeds = [entry for entry in term_starts
+                 if code.startswith(entry[0]) and entry[1] <= year]
+        if not seeds:
+            return False
+        _, seed_year, term, _ = seeds[-1]
+        start, end = map(int, term.split("-"))
+        shift = max(0, (year - seed_year) // 4) * 4
+        when = _read_agenda_date(page)
+        return bool(when and f"{start + shift}-11-01" <= when < f"{end + shift}-11-01")
+
+    def _persist_closed(key: str, last_n) -> None:
         closed_terms[key] = last_n
         _closed_terms_path(root).write_text(json.dumps(closed_terms))
 
@@ -417,9 +517,12 @@ def scrape_agendas(
         def fetch(meeting: str) -> str:
             cached = root / f"{meeting}.html"
             if cached.exists():
-                return cached.read_text(errors="replace")
+                held = cached.read_text(errors="replace")
+                if cache_is_agenda(meeting, held):
+                    return held
+                log(f"  {meeting}: cached page has no valid term date; checking the source")
             html = fetch_live(meeting)
-            if not agenda_is_missing(html):
+            if not agenda_is_missing(html) and cache_is_agenda(meeting, html):
                 # Store <main> only: the rest is nav, sharing widgets and a language picker.
                 match = re.search(r"(<main.*</main>)", html, re.DOTALL)
                 cached.write_text(match.group(1) if match else html)
@@ -431,6 +534,8 @@ def scrape_agendas(
             term_starts=term_starts,
             closed_terms=closed_terms,
             on_term_closed=_persist_closed,
+            auto_terms=auto_terms,
+            today=today,
         )
 
 
