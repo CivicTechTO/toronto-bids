@@ -143,6 +143,7 @@ class Bid:
     # and 4,083 excluding it, so a bare price is two incomparable things in one column.
     hst_basis: str | None = None
     price_header: str | None = None      # the column header verbatim — provenance for hst_basis
+    status: str | None = None            # extracted compliance/outcome, independent of price
     source: str = ""
     bid_price_numeric: float | None = field(init=False, default=None)
 
@@ -260,6 +261,9 @@ class AgencyBid:
     bid_price: str | None = None
     report_url: str | None = None
     source: str = ""
+    hst_basis: str | None = None
+    price_header: str | None = None
+    status: str | None = None
     bid_price_numeric: float | None = field(init=False, default=None)
 
     def __post_init__(self):

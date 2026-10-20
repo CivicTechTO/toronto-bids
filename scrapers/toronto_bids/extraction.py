@@ -548,12 +548,26 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
     # ── derive: build every row before touching any table ──
     solicitations, bids, awards = [], [], []
 
+    contracts_refused = 0
     if corpus in ("trca", "ep", "zoo"):
+        from toronto_bids.linking.agency_reference import normalize_agency_reference, report_reference
+
+        refusal_details = []
         for row in rows:
             result = json.loads(row["result_json"])
-            for contract in result.get("contracts", []):
-                ref = contract.get("reference", "")
-                if not ref:
+            contracts = result.get("contracts", [])
+            for contract in contracts:
+                if not (contract.get("bids") or contract.get("awards")):
+                    continue
+                try:
+                    ref = normalize_agency_reference(_CORPUS_BUYER_SLUG[corpus], contract.get("reference"))
+                    if not ref:
+                        if len(contracts) != 1:
+                            raise ValueError("ambiguous reference-less multi-contract report")
+                        ref = report_reference(row["reference"], row["url"])
+                except ValueError as exc:
+                    contracts_refused += 1
+                    refusal_details.append(f"{row['url']}: {exc}")
                     continue
                 has_awards = bool(contract.get("awards"))
                 solicitations.append(
@@ -562,8 +576,8 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
                         native_ref=ref,
                         title=contract.get("title"),
                         status="awarded" if has_awards else None,
-                        posted_date=None,
-                        closing_date=None,
+                        posted_date=contract.get("posted_date"),
+                        closing_date=contract.get("closed_date"),
                         portal_url=None,
                         source=source,
                     )
@@ -578,6 +592,9 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
                             native_ref=ref,
                             bidder_name_raw=name,
                             bid_price=bid.get("amount_raw"),
+                            hst_basis=_hst_basis(bid),
+                            price_header=bid.get("price_header"),
+                            status=bid.get("status"),
                             report_url=row["url"],
                             source=source,
                         )
@@ -595,11 +612,15 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
                             value_confidential=1
                             if award.get("value_confidential")
                             else 0,
-                            award_date=None,
+                            award_date=contract.get("decision_date"),
                             report_url=row["url"],
                             source=source,
                         )
                     )
+        if refusal_details:
+            log(f"  backfill {corpus}: refused {contracts_refused} ambiguous contract(s): "
+                + "; ".join(refusal_details[:10])
+                + (" ..." if len(refusal_details) > 10 else ""))
         rebuilt = [("agency_bid", bids), ("agency_award", awards)]
 
     elif corpus == "ba_report":
@@ -621,6 +642,8 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
                             document_number=doc_num,
                             bid_price=bid.get("amount_raw"),
                             hst_basis=_hst_basis(bid),
+                            price_header=bid.get("price_header"),
+                            status=bid.get("status"),
                             source=source,
                         )
                     )
@@ -648,7 +671,9 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
                             document_number=doc_num,
                             bid_price=bid.get("amount_raw"),
                             hst_basis=_hst_basis(bid),
-                            # price_header stays NULL: the model returns no header text.
+                            price_header=bid.get("price_header"),
+                            status=bid.get("status"),
+                            # A missing verbatim header stays NULL; never fabricate one.
                             source=source,
                         )
                     )
@@ -698,7 +723,11 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
     # Mark-and-sweep, not delete + reinsert: a row derived again keeps its id and
     # first_seen (archive history, #218); only rows no longer derived are deleted.
     conn.commit()  # so a rollback below undoes the swap alone, never a caller's work
+    aliases = {"normalized": 0, "merged": 0}
     try:
+        if corpus in _CORPUS_BUYER_SLUG and buyer_id is not None:
+            from toronto_bids.linking.agency_reference import normalize_stored_references
+            aliases = normalize_stored_references(conn, _CORPUS_BUYER_SLUG[corpus], buyer_id, source)
         for table, derived in rebuilt:
             if not derived:
                 log(f"  backfill {corpus}: nothing derived for {table}, existing rows kept")
@@ -715,6 +744,9 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
     return {
         "corpus": corpus,
         "docs_processed": len(rows),
+        "contracts_refused": contracts_refused,
+        "aliases_normalized": aliases["normalized"],
+        "aliases_merged": aliases["merged"],
         "solicitations_written": len(solicitations),
         "bids_written": len(bids),
         "awards_written": len(awards),

@@ -72,3 +72,14 @@ description = "A pre-Ariba council item matched to a spine solicitation by (winn
 
 ["solicitation_link.document_number"]
 description = "The spine solicitation that solicitation_link.reference is the same procurement as."
+["bid.status"]
+description = "Extracted bid compliance/outcome when reported; independent of price and nullable for older sources."
+
+["agency_bid.status"]
+description = "Extracted bid compliance/outcome when reported; independent of the bid price."
+
+["agency_bid.hst_basis"]
+description = "Tax basis mapped from the extraction: including or excluding HST; unknown or net-of-taxes remains null."
+
+["agency_bid.price_header"]
+description = "Verbatim price column header when held in the extraction; never synthesized from the tax basis."
