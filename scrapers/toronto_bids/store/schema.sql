@@ -251,6 +251,7 @@ CREATE TABLE IF NOT EXISTS bid (
     -- 4,083 excluding it. Comparing or aggregating across the two without this is wrong.
     hst_basis          TEXT,
     price_header       TEXT,            -- the column header verbatim — provenance for hst_basis
+    status             TEXT,            -- extracted compliance/outcome, independent of price
     source             TEXT,
     first_seen         TEXT NOT NULL DEFAULT (datetime('now')),
     last_seen          TEXT NOT NULL DEFAULT (datetime('now'))
@@ -443,6 +444,9 @@ CREATE TABLE IF NOT EXISTS agency_bid (
     -- LIST is the competitive fact (#84); prices come from the award lines.
     bid_price         TEXT,
     bid_price_numeric REAL,
+    hst_basis         TEXT,
+    price_header      TEXT,
+    status            TEXT,
     report_url        TEXT,
     source            TEXT,
     first_seen        TEXT NOT NULL DEFAULT (datetime('now')),

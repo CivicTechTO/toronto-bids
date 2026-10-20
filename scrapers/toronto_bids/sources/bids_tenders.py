@@ -113,7 +113,9 @@ def _native_ref(record: dict) -> str:
     """The body's own bid identifier, normalized like the board-report path (trim/upper/
     collapse-ws) so a portal row and a board-report row for one procurement share a key."""
     raw = record.get("ReferenceNumber") or record.get("BidNumber") or record.get("Id") or ""
-    return _WS.sub(" ", str(raw)).strip().upper()
+    from toronto_bids.linking.agency_reference import normalize_agency_reference
+
+    return normalize_agency_reference(record.get("buyer_slug"), raw) or ""
 
 
 def parse_listing(record: dict, buyer_id: int) -> AgencySolicitation:
