@@ -111,3 +111,23 @@ must allow internal whitespace, bounded, stopping at for/at/,/in-the-amount; (2)
 " of <City>, <Province>" location qualifier so the same firm keys consistently; (3) `native_ref`
 is `RFT No. EP###-YYYY` (2023) OR `Contract No. <token>` (2019); (4) both years use "in the amount
 of $X"; (5) a bid price may carry a trailing `*` footnote.
+
+## bids_tenders_trca_2026-10-20.json — REAL (#226)
+
+Four unmodified records selected from the public TRCA grid search on 2026-10-20. Request:
+`POST https://trca.bidsandtenders.ca/Module/Tenders/en/Tender/Search/950af760-3894-40ef-86fd-ef17e2f5104a`
+with the landing page's cookie/token pair, empty `status` (All), `limit=50`, `start` offsets,
+blank `from`/`to`, `dir=DESC`, and `sort=DateClosing DESC,Id`. No login or documents fetched.
+The full rate-limited sweep yielded 249 unique listing IDs against total=249. Tokens/cookies
+are not fixture content; tests add `buyer_slug` locally.
+
+Public Bid Number fields on these detail pages independently confirmed the title-prefix keys:
+
+| Bid number | Public detail URL |
+| --- | --- |
+| 10044383 | https://trca.bidsandtenders.ca/Module/Tenders/en/Tender/Detail/5082161c-f80a-4cd8-aaac-8388a237e99e |
+| 10042501 | https://trca.bidsandtenders.ca/Module/Tenders/en/Tender/Detail/d58d0f1a-696d-4ee2-8f01-ac13ba93b07b |
+| 10022400_33 | https://trca.bidsandtenders.ca/Module/Tenders/en/Tender/Detail/6de5fbf3-f9d6-4698-a27d-f0b882e51469 |
+| 10044944-1 | https://trca.bidsandtenders.ca/Module/Tenders/en/Tender/Detail/3c6879d8-b712-42cb-ba23-cd1ea1ea8ad0 |
+
+The synthetic sample remains a compatibility input. It does not establish Zoo coverage.

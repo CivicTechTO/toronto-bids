@@ -230,16 +230,10 @@ def test_gate_blocks_a_portal_without_permission():
         next(fetch_listings(ungranted))  # generator: gate fires on first pull
 
 
-def test_search_params_never_include_sort():
+def test_search_params_match_the_live_ui_all_filter_and_stable_sort():
     from toronto_bids.sources.bids_tenders import _search_params
 
-    p = _search_params(status=1, start=0, limit=50)
-    assert "sort" not in p  # sort= triggers a server error (verified)
-    assert p == {
-        "status": 1,
-        "limit": 50,
-        "start": 0,
-        "dir": "desc",
-        "from": "",
-        "to": "",
+    assert _search_params(status="", start=0, limit=50) == {
+        "status": "", "limit": 50, "start": 0, "dir": "DESC",
+        "from": "", "to": "", "sort": "DateClosing DESC,Id",
     }

@@ -1,5 +1,9 @@
 # bids&tenders portal listing capture (#135) — design
 
+**Historical findings corrected by #226:** the numeric status sweep returned false empties.
+The live UI uses named statuses and an empty All filter; its stable sort works. See
+[the 2026-10-20 investigation](../../portal-positive-controls-2026-10-20.md).
+
 2026-07-18. The remaining half of #135: now that TRCA and the Zoo have granted written
 permission (recorded in `docs/permissions/2026-07-18-{trca,toronto-zoo}.md`, gates flipped
 `enabled: True` in `config.BIDS_TENDERS_PORTALS`), capture the public listing metadata from

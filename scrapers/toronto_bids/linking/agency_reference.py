@@ -17,7 +17,7 @@ def normalize_agency_reference(buyer_slug, raw):
     except ValueError:
         pass
     if buyer_slug == "trca":
-        refs = set(re.findall(r"(?<![A-Za-z0-9])\d{8}(?![A-Za-z0-9])", text))
+        refs = set(re.findall(r"(?<![A-Za-z0-9_])\d{8}(?:[_-]\d+)?(?![A-Za-z0-9_])", text))
         if len(refs) > 1:
             raise ValueError(f"ambiguous TRCA reference {text!r}")
         if refs:

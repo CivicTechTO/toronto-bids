@@ -156,8 +156,8 @@ BIDS_TENDERS_PORTALS = [
     },
 ]
 
-# Raw bids&tenders listing JSON captured by `--record`, one file per record — the seed for
-# real parser fixtures once a portal has data (#135).
+# Nonempty bids&tenders replies are recorded automatically before parsing (#226), one
+# content-addressed snapshot per record version. --record also logs explicit empty captures.
 PORTAL_RECORDINGS_DIR = DATA_DIR / "agencies" / "portal_recordings"
 
 # Exhibition Place Board of Governors (#130): the EP committee on TMMIS, same infrastructure
