@@ -96,3 +96,27 @@ While running, held/pending counts can be read directly from `background_pdf` fo
 bytes with `TB_DATA_DIR=/home/alex/tb-data tb capture-trca-history --resume`; repeat the
 full command if discovery is incomplete. Run one capture process at a time for this data
 directory. No automatic retry or publication is scheduled by this change.
+
+## Follow-up audit — 2026-10-20 22:23 UTC
+
+The capture remained active. A read-only audit independently recomputed every held file's
+SHA-256, checked its expected storage path and PDF header, and required `pdfinfo` to report
+at least one page. All **365 held PDFs** passed: **1,830,057,278 bytes / 28,160 pages**.
+The inventory and persistent queue agreed on all 831 candidates, with complete discovery.
+All 10,862 pre-existing document rows still matched the pre-capture backup verbatim.
+466 documents were pending at that audit's snapshot; this is not a completed-capture result.
+The report is `/home/alex/tb-data/operations/224/progress-verification.json`.
+
+Every policy shortcut was separately checked through the ordinary anonymous public
+Download action. IDs **1546658, 1546659, 1546662, 1546663, 1546664, 1546666** all returned
+`Access denied. [9013]`. These cover Administration Regulation, Board Terms of Reference,
+Indemnification, Purchasing, Rules of Conduct, and Use of Resources During an Election.
+The evidence is `shortcut-access-check.json` in the same operations directory. The six
+records remain queued; their inaccessible targets have not been preserved.
+
+`tb-224-trca-history-verify.service` now waits for capture termination and runs the same
+whole-archive audit automatically. It also compares the final capture manifest against
+the audited queue and held files. It writes `final-verification.json` and
+`verification.log` under the operations directory and exits nonzero for missing or
+invalid bytes. Inspect those results before considering the preservation complete;
+no extra prompt is needed to trigger this audit.
