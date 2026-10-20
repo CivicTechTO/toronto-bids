@@ -212,6 +212,13 @@ The nightly posts two Slack messages: `tb nightly` posts the rich archive report
 `publish-data.sh` posts a one-line publish result (✅ + release URL, or ❌ + reason). Both use
 `TB_SLACK_WEBHOOK` and both no-op silently when it is unset.
 
+The publish message also warns when the frontend deploy **trigger** is rejected (#237),
+including the GitHub CLI error. The attempt is recorded as `frontend_deploy_trigger` in
+`sync_run`, with `ok` meaning dispatch accepted and `failed` carrying the error. This does not
+monitor the later build or deployment. A rejected trigger leaves `publish` successful when
+the data release succeeded, and does not skip the artifact freshness checks. Dry-runs send
+no notification and write no step-history rows.
+
 **One-time prerequisites** (do these before the first publish):
 
 ```shell

@@ -225,14 +225,21 @@ if [ "$DAY" = 01 ]; then
   fi
 fi
 
-# 7. Trigger the frontend build against the new data — BEST-EFFORT. The data is already
-#    published (the acceptance curl passes); a failed downstream trigger must not report the
-#    whole publish as failed and mask that success. A warning is the right signal.
-if ! gh_run workflow run deploy.yml -R "$FRONTEND_REPO"; then
-  echo "publish-data: WARNING — could not trigger the frontend deploy on $FRONTEND_REPO (data is published)" >&2
+# 7. Record acceptance of the frontend trigger separately from data publication (#237).
+# This does not monitor the downstream build; a rejected dispatch must warn operators
+# without turning an already verified data publication into a failure.
+frontend_warning=""
+if frontend_output="$(gh_run workflow run deploy.yml -R "$FRONTEND_REPO" 2>&1)"; then
+  [ -z "$frontend_output" ] || printf '%s\n' "$frontend_output"
+  record_step frontend_deploy_trigger ok
+else
+  frontend_error="could not trigger the frontend deploy on $FRONTEND_REPO: ${frontend_output:-gh workflow run failed}"
+  echo "publish-data: WARNING — $frontend_error (data is published)" >&2
+  record_step frontend_deploy_trigger failed "$frontend_error"
+  frontend_warning=" · ⚠ frontend deploy trigger failed — ${frontend_output:-gh workflow run failed}"
 fi
 
 record_step publish ok
-slack_notify "✅ toronto-bids publish — latest release updated · ${GENERATED_AT} · https://github.com/${DATA_REPO}/releases/tag/latest"
+slack_notify "✅ toronto-bids publish — latest release updated · ${GENERATED_AT} · https://github.com/${DATA_REPO}/releases/tag/latest${frontend_warning}"
 
 echo "publish-data: done"
