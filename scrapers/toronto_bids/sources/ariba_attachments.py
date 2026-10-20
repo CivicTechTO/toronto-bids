@@ -172,8 +172,8 @@ def reindex_bundles(conn, dest_dir=None, log=lambda _m: None) -> int:
 TRAINING_POSTINGS = frozenset({"4044346425", "3949149442"})
 
 
-# The "still uncaptured, closing soon" alert window (#174 item 4, #223): an open posting with no
-# bundle on disk that closes within this many days is listed in the nightly Slack summary.
+# Open postings with missing/incomplete bundles closing within this many days appear in
+# the nightly Slack summary (#174 item 4, #223/#243).
 NEAR_CLOSE_DAYS = 3
 
 # A date-shaped prefix — the spine stores `YYYY-MM-DD`, Ariba `YYYY-MM-DDTHH:MM:SS-07:00`. Rows
@@ -182,12 +182,19 @@ _DATE_GLOB = "[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]*"
 
 
 def bundle_archived(dest_dir, document_number: str) -> bool:
-    """Whether an event counts as archived: its canonical `Doc<n>.zip` is on disk.
-
-    The ONE predicate for "done" — `capture_attachments` skips on it and the near-close alert
-    reports on it, so the alert can never disagree with what the capture will do tonight.
-    """
+    """Whether canonical bytes exist; completeness additionally requires no gap record."""
     return (Path(dest_dir) / f"Doc{document_number}.zip").exists()
+
+
+def bundle_complete(dest_dir, document_number: str) -> bool:
+    """Whether held bytes have no recorded gaps; malformed evidence stays retryable."""
+    if not bundle_archived(dest_dir, document_number):
+        return False
+    try:
+        record = ariba_files.read_omitted(Path(dest_dir) / f"Doc{document_number}.zip")
+    except RuntimeError:
+        return False
+    return not (record["omitted"] or record["collided"])
 
 
 def open_solicitation_events(conn, today: str | None = None) -> list[dict]:
@@ -259,11 +266,11 @@ def open_solicitation_events(conn, today: str | None = None) -> list[dict]:
 
 def near_close_uncaptured(conn, dest_dir=None, days: int = NEAR_CLOSE_DAYS,
                           today: str | None = None) -> list[dict]:
-    """Open postings closing within `days` days that have NO archived bundle yet (#223).
+    """Open postings closing within `days` days with missing or incomplete bundles (#223/#243).
 
     Respond is disabled once a posting closes, so each of these is documents about to be lost
     for good — a capture failure with a deadline must not read like one without (#174 item 4).
-    Reads the same open set and the same `bundle_archived` predicate the capture uses, so the
+    Reads the same open set and the same `bundle_complete` predicate the capture uses, so the
     alert lists exactly what tonight's capture would still try and has not yet got.
 
     Returns `[{"document_number", "closes", "days_left"}]`, soonest first. Pure over the DB and
@@ -281,7 +288,7 @@ def near_close_uncaptured(conn, dest_dir=None, days: int = NEAR_CLOSE_DAYS,
             left = (date.fromisoformat(event["closes"]) - day0).days
         except ValueError:
             continue                      # date-shaped but not a real date (e.g. 2026-13-45)
-        if 0 <= left <= days and not bundle_archived(dest_dir, event["document_number"]):
+        if 0 <= left <= days and not bundle_complete(dest_dir, event["document_number"]):
             out.append({"document_number": event["document_number"],
                         "closes": event["closes"], "days_left": left})
     return out
@@ -1859,7 +1866,8 @@ def capture_attachments(conn, dest_dir=None, log=lambda _m: None, headless=False
                         virtual_display=False, failures: list | None = None) -> int:
     """Log in, walk every open solicitation, capture and index each bundle. Resumable.
 
-    A bundle already on disk is not re-downloaded — the expensive half is the download, and
+    A complete bundle is skipped; recorded gaps keep an open event eligible for retry.
+    The expensive half is the download, and
     Respond is idempotent (re-responding just re-opens the event). One event's failure is
     logged and never ends the run, exactly as pipeline.run_source isolates a source.
 
@@ -1868,9 +1876,9 @@ def capture_attachments(conn, dest_dir=None, log=lambda _m: None, headless=False
     exactly like a night with nothing to capture. Pass `failures` (a list) and each event that
     raised is appended as `("ariba:Doc<n>", str(exc))` — the shape the nightly's shared
     failures list and `_mark_if_swallowed_failures` read. Events for which `capture_event`
-    returns None WITHOUT raising (closed, no permission, and the capture-floor / shrink
-    refusals in `ariba_files.capture_files`) are not reported: from here they are
-    indistinguishable from a clean skip.
+    returns None without raising are also reported when durable gaps remain, including
+    closed/access-denied or refused retries. A newly written partial bundle is indexed,
+    but its unresolved gaps still mark the step failed (#243).
     """
     from playwright.sync_api import sync_playwright
 
@@ -1881,8 +1889,8 @@ def capture_attachments(conn, dest_dir=None, log=lambda _m: None, headless=False
 
     dest_dir = Path(dest_dir if dest_dir is not None else config.ARIBA_ATTACHMENTS_DIR)
     events = open_solicitation_events(conn)
-    pending = [e for e in events if not bundle_archived(dest_dir, e["document_number"])]
-    log(f"  open events: {len(events)}  already archived: {len(events) - len(pending)}  "
+    pending = [e for e in events if not bundle_complete(dest_dir, e["document_number"])]
+    log(f"  open events: {len(events)}  complete: {len(events) - len(pending)}  "
         f"to capture: {len(pending)}")
     if not pending:
         return 0
@@ -1904,10 +1912,27 @@ def capture_attachments(conn, dest_dir=None, log=lambda _m: None, headless=False
                 login(page, config.ARIBA_USERNAME, config.ARIBA_PASSWORD, log=log)
                 for i, event in enumerate(pending, 1):
                     try:
-                        saved = capture_event(page, event, dest_dir, log=log)
+                        last_message = ""
+
+                        def event_log(message):
+                            nonlocal last_message
+                            last_message = message
+                            log(message)
+
+                        saved = capture_event(page, event, dest_dir, log=event_log)
                         if saved is not None:
                             store_bundle(conn, saved, event["document_number"], dest_dir)
                             captured += 1
+                        gap = ariba_files.read_omitted(
+                            dest_dir / f"Doc{event['document_number']}.zip")
+                        if gap["omitted"] or gap["collided"]:
+                            reason = (f"unresolved attachment gaps: {gap['omitted']!r}; "
+                                      f"{gap['collided']} collapsed link(s)")
+                            if saved is None and last_message:
+                                reason += f"; {last_message.strip()}"
+                            log(f"  Doc{event['document_number']}: FAILED — {reason}")
+                            if failures is not None:
+                                failures.append((f"ariba:Doc{event['document_number']}", reason))
                     except Exception as exc:
                         log(f"  Doc{event['document_number']}: FAILED — {exc}")
                         if failures is not None:

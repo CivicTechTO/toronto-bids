@@ -450,6 +450,23 @@ def write_manifest(pdir, fingerprint: dict) -> Path:
     return path
 
 
+def read_omitted(bundle_path):
+    """Read durable gap evidence; an unreadable record is never evidence of completeness."""
+    path = Path(bundle_path).with_suffix(".omitted.json")
+    if not path.exists():
+        return {"omitted": [], "collided": 0}
+    try:
+        record = json.loads(path.read_text())
+        omitted, collided = record["omitted"], record.get("collided", 0)
+        if (not isinstance(omitted, list) or
+                any(not isinstance(name, str) or not name for name in omitted) or
+                type(collided) is not int or collided < 0):
+            raise ValueError("invalid gap fields")
+        return {"omitted": omitted, "collided": collided}
+    except (OSError, ValueError, KeyError, TypeError) as exc:
+        raise RuntimeError(f"{path.name}: unreadable omission record ({exc})") from exc
+
+
 def write_omitted(bundle_path, omitted, collided: int = 0):
     """Durable record of what a bundle does NOT contain, beside the bundle itself.
 
@@ -513,6 +530,18 @@ def _publish_capture(captured, target, omitted, *, collided=0, log=lambda _m: No
     """Check actual candidate leaves before changing the canonical zip or gap record."""
     from toronto_bids.sources.zip_index import index_zip
 
+    previous = read_omitted(target)
+    retrying = target.exists() and bool(previous["omitted"] or previous["collided"])
+    captured_names = {name for _, name in captured}
+    unresolved = list(dict.fromkeys([
+        *omitted, *(name for name in previous["omitted"] if name not in captured_names)]))
+    # A count alone cannot identify a previously collapsed link. Keep that uncertainty until
+    # it can be audited, rather than claiming that an unrelated new listing resolved it.
+    collisions = max(collided, previous["collided"])
+    gap = target.with_suffix(".omitted.json")
+    old_gap = gap.read_bytes() if gap.exists() else None
+    had_bundle = target.exists()
+
     def validate_and_record(candidate):
         if target.exists():
             existing_count = len(index_zip(target, strict=True))
@@ -522,14 +551,34 @@ def _publish_capture(captured, target, omitted, *, collided=0, log=lambda _m: No
                     f"{target.stem}: re-capture has {candidate_count} leaf file(s) but "
                     f"existing bundle has {existing_count} — refusing to shrink; "
                     f"keeping existing bundle and partials")
-        write_omitted(target, omitted, collided=collided)
+            if retrying:
+                with zipfile.ZipFile(target) as held:
+                    held_names = {i.filename for i in held.infolist() if not i.is_dir()}
+                lost = held_names - captured_names
+                if lost:
+                    raise _BundleWouldShrink(
+                        f"{target.stem}: retry would lose previously archived files "
+                        f"{sorted(lost)!r} — keeping existing bundle and partials")
+        write_omitted(target, unresolved, collided=collisions)
 
     try:
         build_bundle(captured, target, before_replace=validate_and_record)
     except _BundleWouldShrink as exc:
         log(f"  {exc}")
         return False
-    clear_omitted_when_complete(target, omitted, collided=collided)
+    except BaseException:
+        # A failed atomic replacement must leave the gap describing the HELD archive.
+        # Restore only if the pre-publication callback changed that evidence.
+        current_gap = gap.read_bytes() if gap.exists() else None
+        if had_bundle and current_gap != old_gap:
+            if old_gap is None:
+                gap.unlink(missing_ok=True)
+            else:
+                tmp = gap.with_suffix(gap.suffix + ".tmp")
+                tmp.write_bytes(old_gap)
+                os.replace(tmp, gap)
+        raise
+    clear_omitted_when_complete(target, unresolved, collided=collisions)
     return True
 
 

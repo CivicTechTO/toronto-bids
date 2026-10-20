@@ -228,7 +228,7 @@ def test_near_close_section_lists_postings_and_does_not_change_the_header():
               ]}
     text = notify.summarize(report)
     assert text.startswith("*✅ toronto-bids nightly*")       # a warning, not a failure
-    assert "*⚠ Ariba closing soon, not archived (3)*" in text
+    assert "*⚠ Ariba closing soon, not fully archived (3)*" in text
     assert "Doc5713434353 · closes 2026-10-01 · last day" in text
     assert "Doc5660182540 · closes 2026-10-02 · 1 day left" in text
     assert "Doc5701234567 · closes 2026-10-04 · 3 days left" in text
@@ -238,7 +238,7 @@ def test_near_close_section_lists_postings_and_does_not_change_the_header():
 def test_near_close_section_is_capped_with_a_more_tail():
     report = {"ok": True, "ariba_near_close": _near(notify.NEAR_CLOSE_MAX_LINES + 4)}
     text = notify.summarize(report)
-    assert f"not archived ({notify.NEAR_CLOSE_MAX_LINES + 4})*" in text
+    assert f"not fully archived ({notify.NEAR_CLOSE_MAX_LINES + 4})*" in text
     assert text.count("· closes 2026-10-03 ·") == notify.NEAR_CLOSE_MAX_LINES
     assert "+4 more" in text
 

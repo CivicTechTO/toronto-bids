@@ -1007,7 +1007,7 @@ def _cmd_nightly(args) -> int:
 
         _run_step(steps, failures, "export", _export, conn=conn)
 
-        # Open Ariba postings about to close with no bundle (#223). A warning, not a step and
+        # Open Ariba postings about to close with missing/incomplete bundles (#223/#243). A warning, not a step and
         # not a failure: it goes into the report only. Computed after the capture step so it
         # reflects what tonight's capture actually got.
         try:
