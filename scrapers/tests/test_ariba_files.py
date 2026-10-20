@@ -416,10 +416,15 @@ def test_the_gap_record_is_written_before_the_bundle(tmp_path, monkeypatch):
     """
     source = FakeFileSource(["a.pdf", "bad.pdf"], fail_on=["bad.pdf"])
 
-    def boom(files, target):
-        raise OSError("ENOSPC: no space left on device")
+    replace = ariba_files.os.replace
 
-    monkeypatch.setattr(ariba_files, "build_bundle", boom)
+    def boom(src, dst):
+        if str(dst).endswith('Doc5713434353.zip'):
+            assert (tmp_path / 'Doc5713434353.omitted.json').exists()
+            raise OSError("ENOSPC: no space left on device")
+        return replace(src, dst)
+
+    monkeypatch.setattr(ariba_files.os, "replace", boom)
 
     with pytest.raises(OSError):
         ariba_files.capture_files(source, "5713434353", tmp_path)
@@ -643,7 +648,7 @@ def test_a_stale_gap_record_survives_if_the_bundle_write_then_fails(
     stale.write_text(json.dumps({"omitted": ["gone.pdf"]}))
     source = FakeFileSource(["a.pdf"])
 
-    def boom(files, target):
+    def boom(files, target, **kwargs):
         raise OSError("ENOSPC: no space left on device")
 
     monkeypatch.setattr(ariba_files, "build_bundle", boom)
@@ -667,7 +672,7 @@ def test_finalise_partial_keeps_a_stale_gap_record_if_the_bundle_write_then_fail
     (pdir / "files" / "a.pdf").write_bytes(b"aaa")
     ariba_files.write_manifest(pdir, ariba_files.make_fingerprint(source.list_files()))
 
-    def boom(files, target):
+    def boom(files, target, **kwargs):
         raise OSError("ENOSPC: no space left on device")
 
     monkeypatch.setattr(ariba_files, "build_bundle", boom)
@@ -1271,13 +1276,8 @@ def test_first_capture_has_no_shrink_check(tmp_path):
     assert result == tmp_path / "Doc5713434353.zip"
 
 
-def test_shrink_guard_counts_top_level_entries_not_recursive_leaves(tmp_path):
-    """A bundle holding nested zips must not inflate the count and block every re-capture.
-
-    index_zip recurses into nested zips (520 top-level → 1,111 leaves on a real event).
-    The guard compares top-level counts — what build_bundle wrote — so a re-capture with
-    the same number of top-level files proceeds even when those files contain nested zips.
-    """
+def test_shrink_guard_refuses_equal_top_level_count_with_fewer_recursive_leaves(tmp_path):
+    """Three outer entries can hide a reduction from four held leaves to three."""
     # Build a bundle with 3 top-level entries, one of which is a nested zip
     inner_zip = tmp_path / "inner.zip"
     with zipfile.ZipFile(inner_zip, "w") as zf:
@@ -1292,14 +1292,35 @@ def test_shrink_guard_counts_top_level_entries_not_recursive_leaves(tmp_path):
     target = tmp_path / "Doc5713434353.zip"
     assert target.exists()
 
-    # Re-capture with 3 top-level files (same count) — must proceed, not be blocked
-    # by index_zip seeing 4 leaves (a.pdf + b.pdf + nested_a.pdf + nested_b.pdf)
+    before = target.read_bytes()
+    gap = target.with_suffix('.omitted.json')
+    gap.write_text('{"omitted": ["missing.pdf"]}')
+    messages = []
     source_same_count = FakeFileSource(["x.pdf", "y.pdf", "z.pdf"])
-    result = ariba_files.capture_files(source_same_count, "5713434353", tmp_path)
+    result = ariba_files.capture_files(source_same_count, "5713434353", tmp_path,
+                                       log=messages.append)
 
-    assert result == target
-    with zipfile.ZipFile(target) as zf:
-        assert sorted(zf.namelist()) == ["x.pdf", "y.pdf", "z.pdf"]
+    assert result is None
+    assert target.read_bytes() == before
+    assert json.loads(gap.read_text())["omitted"] == ["missing.pdf"]
+    assert any('3' in m and '4' in m and 'leaf' in m for m in messages)
+    assert ariba_files.partial_dir(tmp_path, '5713434353').exists()
+
+
+@pytest.mark.parametrize('new_leaves', [4, 5])
+def test_recapture_with_fewer_outer_entries_but_equal_or_more_leaves_proceeds(tmp_path, new_leaves):
+    ariba_files.capture_files(FakeFileSource(['a.pdf','b.pdf','c.pdf','d.pdf']),
+                              '5713434353', tmp_path)
+    inner = tmp_path / 'drawings.zip'
+    with zipfile.ZipFile(inner, 'w') as z:
+        for i in range(new_leaves):
+            z.writestr(f'drawing-{i}.pdf', str(i))
+    result = ariba_files.capture_files(
+        FakeFileSource(['drawings.zip'], contents={'drawings.zip': inner.read_bytes()}),
+        '5713434353', tmp_path)
+    assert result == tmp_path / 'Doc5713434353.zip'
+    with zipfile.ZipFile(result) as z:
+        assert z.namelist() == ['drawings.zip']
 
 
 def test_shrink_guard_keeps_partials_on_refusal(tmp_path):
@@ -1313,3 +1334,33 @@ def test_shrink_guard_keeps_partials_on_refusal(tmp_path):
 
     pdir = ariba_files.partial_dir(tmp_path, "5713434353")
     assert pdir.exists(), "partials should be kept for resume on the next run"
+
+
+@pytest.mark.parametrize('limit', ['depth', 'entries'])
+def test_strict_leaf_count_refuses_an_incomplete_traversal(tmp_path, limit):
+    from toronto_bids.sources.zip_index import index_zip, ZipIndexLimitError
+    inner = tmp_path / 'inner.zip'
+    with zipfile.ZipFile(inner, 'w') as z:
+        z.writestr('one.pdf', b'one')
+        z.writestr('two.pdf', b'two')
+    outer = tmp_path / 'outer.zip'
+    with zipfile.ZipFile(outer, 'w') as z:
+        z.writestr('inner.zip', inner.read_bytes())
+    kwargs = {'max_depth': 0} if limit == 'depth' else {'max_entries': 1}
+    assert len(index_zip(outer, **kwargs)) == 1
+    with pytest.raises(ZipIndexLimitError):
+        index_zip(outer, strict=True, **kwargs)
+
+
+def test_closed_salvage_cannot_shrink_an_existing_archive(tmp_path):
+    doc = '5713434353'
+    target = ariba_files.capture_files(FakeFileSource(['a.pdf','b.pdf','c.pdf']),doc,tmp_path)
+    before = target.read_bytes()
+    source = FakeFileSource(['x.pdf'])
+    pdir = ariba_files.partial_dir(tmp_path,doc)
+    (pdir / 'files').mkdir(parents=True)
+    (pdir / 'files' / 'x.pdf').write_bytes(b'x')
+    ariba_files.write_manifest(pdir,ariba_files.make_fingerprint(source.list_files()))
+    assert ariba_files.finalise_partial(doc,tmp_path,posting_open=False) is None
+    assert target.read_bytes() == before
+    assert pdir.exists()

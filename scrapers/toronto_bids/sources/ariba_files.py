@@ -357,12 +357,15 @@ def unique_names(names) -> list:
     return out
 
 
-def build_bundle(files, target) -> Path:
+def build_bundle(files, target, *, before_replace=None) -> Path:
     """Zip `[(disk_path, zip_name)]` flat into `target`, atomically.
 
     Built into a sibling `.tmp` and moved into place with os.replace, so `target` either does
     not exist or is complete. A half-written Doc<n>.zip is worse than none: a sibling function
     treats that filename's existence as proof the solicitation is archived, forever.
+
+    `before_replace`, when provided, validates the completed temporary zip and records its
+    omissions before publication. Raising keeps the old target and removes the temporary zip.
     """
     target = Path(target)
     target.parent.mkdir(parents=True, exist_ok=True)
@@ -374,6 +377,8 @@ def build_bundle(files, target) -> Path:
                     shutil.copyfileobj(
                         fsrc, fdst, 1 << 20
                     )  # 88 MB files: stream, never slurp
+        if before_replace is not None:
+            before_replace(tmp)
         os.replace(tmp, target)
     except BaseException:
         tmp.unlink(missing_ok=True)
@@ -498,6 +503,34 @@ def clear_omitted_when_complete(bundle_path, omitted, collided: int = 0):
     if omitted or collided:
         return
     Path(bundle_path).with_suffix(".omitted.json").unlink(missing_ok=True)
+
+
+class _BundleWouldShrink(ValueError):
+    pass
+
+
+def _publish_capture(captured, target, omitted, *, collided=0, log=lambda _m: None):
+    """Check actual candidate leaves before changing the canonical zip or gap record."""
+    from toronto_bids.sources.zip_index import index_zip
+
+    def validate_and_record(candidate):
+        if target.exists():
+            existing_count = len(index_zip(target, strict=True))
+            candidate_count = len(index_zip(candidate, strict=True))
+            if candidate_count < existing_count:
+                raise _BundleWouldShrink(
+                    f"{target.stem}: re-capture has {candidate_count} leaf file(s) but "
+                    f"existing bundle has {existing_count} — refusing to shrink; "
+                    f"keeping existing bundle and partials")
+        write_omitted(target, omitted, collided=collided)
+
+    try:
+        build_bundle(captured, target, before_replace=validate_and_record)
+    except _BundleWouldShrink as exc:
+        log(f"  {exc}")
+        return False
+    clear_omitted_when_complete(target, omitted, collided=collided)
+    return True
 
 
 def capture_files(source, document_number: str, dest_dir, log=lambda _m: None):
@@ -636,20 +669,8 @@ def capture_files(source, document_number: str, dest_dir, log=lambda _m: None):
     # "absence means nothing is missing" false.
     target = dest_dir / f"Doc{document_number}.zip"
 
-    if target.exists():
-        with zipfile.ZipFile(target) as zf:
-            existing_count = len(zf.namelist())
-        if len(captured) < existing_count:
-            log(
-                f"  Doc{document_number}: re-capture has {len(captured)} file(s) but "
-                f"existing bundle has {existing_count} — refusing to shrink; "
-                f"keeping existing bundle"
-            )
-            return None
-
-    write_omitted(target, omitted, collided=collided_count)
-    build_bundle(captured, target)
-    clear_omitted_when_complete(target, omitted, collided=collided_count)
+    if not _publish_capture(captured, target, omitted, collided=collided_count, log=log):
+        return None
     shutil.rmtree(pdir, ignore_errors=True)
     log(f"  Doc{document_number}: captured {len(captured)} file(s) -> {target.name}")
     return target
@@ -722,9 +743,8 @@ def finalise_partial(
     target = dest_dir / f"Doc{document_number}.zip"
     # Gap record first, and the stale-clear only after `build_bundle` succeeds -- for the same
     # reasons capture_files does both: see the comments there.
-    write_omitted(target, omitted)
-    build_bundle(captured, target)
-    clear_omitted_when_complete(target, omitted)
+    if not _publish_capture(captured, target, omitted, log=log):
+        return None
     if leftover:
         log(
             f"  Doc{document_number}: {len(leftover)} interrupted transfer(s) kept in {pdir} — "

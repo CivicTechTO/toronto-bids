@@ -40,7 +40,6 @@ Two halves, split the way the rest of the package splits fetch from normalize:
 Not part of `tb sync`. Run via `tb enrich-ariba-attachments`.
 """
 import hashlib
-import io
 import json
 import re
 import shutil
@@ -79,48 +78,10 @@ _MAX_ZIP_ENTRIES = 10000
 
 
 def index_zip(zip_path) -> list[dict]:
-    """Recursive central-directory listing of a bundle: one dict per LEAF file.
+    """Index held leaves with the same traversal used by the no-shrink guard (#199)."""
+    from toronto_bids.sources.zip_index import index_zip as read_zip
 
-    Nested zips are descended to any depth (a bundle's real documents often live inside
-    "Appendix ….zip"), each leaf carrying the full nested `path`. Sizes and CRC32 come from
-    each level's central directory; a nested zip must be read (inflated) to reach its own
-    directory, so depth and a per-bundle entry budget bound zip bombs. A nested zip that is
-    empty, corrupt, encrypted, or past the depth cap degrades to a single leaf rather than
-    being lost. The entry budget (`_MAX_ZIP_ENTRIES`) is a different, harder backstop: once it
-    hits zero every remaining entry — including one that would otherwise become a nested-zip
-    leaf — is skipped outright, not indexed in any form. That is a deliberate truncation for a
-    pathological bundle, not a leaf fallback.
-    """
-    with zipfile.ZipFile(zip_path) as zf:
-        return _index_zipfile(zf, prefix="", depth=0, budget=[_MAX_ZIP_ENTRIES])
-
-
-def _index_zipfile(zf, prefix: str, depth: int, budget: list) -> list[dict]:
-    out = []
-    for zi in zf.infolist():
-        if zi.is_dir() or budget[0] <= 0:
-            continue                                   # budget exhausted: hard stop, skip outright
-        path = prefix + zi.filename
-        if zi.filename.lower().endswith(".zip") and depth < _MAX_ZIP_DEPTH:
-            try:
-                # ponytail: caps bound zip count/depth, not per-entry inflated size; add a size
-                # cap if a real bundle ever needs it
-                with zipfile.ZipFile(io.BytesIO(zf.read(zi))) as nested:
-                    children = _index_zipfile(nested, path + "/", depth + 1, budget)
-                if children:                       # expandable: contribute its leaves, not it
-                    out.extend(children)
-                    continue
-                # empty zip falls through and is kept as a leaf, so nothing is silently dropped
-            except (zipfile.BadZipFile, RuntimeError, OSError):
-                pass                               # corrupt/encrypted: keep as an opaque leaf
-        out.append({
-            "filename": zi.filename,
-            "path": path,
-            "file_size": zi.file_size,
-            "crc32": format(zi.CRC & 0xFFFFFFFF, "08x"),
-        })
-        budget[0] -= 1
-    return out
+    return read_zip(zip_path, max_depth=_MAX_ZIP_DEPTH, max_entries=_MAX_ZIP_ENTRIES)
 
 
 def sha256_of_file(path, _chunk=1 << 20) -> str:
