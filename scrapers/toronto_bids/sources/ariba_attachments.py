@@ -41,6 +41,7 @@ Not part of `tb sync`. Run via `tb enrich-ariba-attachments`.
 """
 import hashlib
 import io
+import json
 import re
 import shutil
 import zipfile
@@ -1768,6 +1769,64 @@ class AribaFileSource:
         except Exception:                             # noqa: BLE001 — best effort by nature
             pass
 
+    def _await_request_idle(self, file: dict, timeout_ms: int = 30000) -> None:
+        """Wait for Ariba's download callback, which outlives Playwright's save_as (#183).
+
+        The request gate can stay busy for several seconds after the bytes arrive. During
+        that interval Ariba suppresses subsequent menu actions, even on visible controls.
+        Read its own state; never clear it or substitute a guessed fixed delay.
+        """
+        waited = 0
+        while True:
+            busy = self.page.evaluate("""() => {
+                const request = window.ariba && window.ariba.Request;
+                if (!request || typeof request.isRequestInProgress !== 'function') {
+                    throw new Error('Ariba request state is unavailable');
+                }
+                return request.isRequestInProgress();
+            }""")
+            if busy is False:
+                return
+            if waited >= timeout_ms:
+                raise RuntimeError(
+                    f"{file['name']}: Ariba request is still in progress after "
+                    f"{timeout_ms / 1000:.0f}s — refusing to click the next document")
+            self.page.wait_for_timeout(250)
+            waited += 250
+
+    def _popup_owner(self, menu):
+        """Resolve the widget's published trigger association, never a guessed neighbour."""
+        menu_id = menu.get_attribute("id")
+        if not menu_id:
+            raise RuntimeError("attachment popup has no id — cannot resolve its owner")
+        owners = self.page.locator(f'a[bh="PML"][_mid={json.dumps(menu_id)}]')
+        if owners.count() != 1:
+            raise RuntimeError(
+                f"attachment popup {menu_id!r} has {owners.count()} owners — refusing to guess")
+        return owners
+
+    def _close_popups(self) -> None:
+        """Dismiss through the widget, then verify the previously visible menus are hidden.
+
+        A large popup covers both document links and its own trigger. Escape is unreliable
+        for anchor triggers, and Enter can select an item. Use the same dismissal operation
+        Ariba's menu handlers use, without altering its state fields or selecting a document.
+        """
+        menu_ids = self.page.locator('.awmenu:visible').evaluate_all(
+            '(menus) => menus.map(menu => menu.id)')
+        if not menu_ids:
+            return
+        self.page.evaluate("""() => {
+            const menu = window.ariba && window.ariba.Menu;
+            if (!menu || typeof menu.hideActiveMenu !== 'function') {
+                throw new Error('Ariba menu dismissal is unavailable');
+            }
+            menu.hideActiveMenu();
+        }""")
+        for menu_id in menu_ids:
+            self.page.locator(f'[id={json.dumps(menu_id)}]').wait_for(
+                state="hidden", timeout=5000)
+
     def download(self, file: dict, dest) -> Path:
         """Save ONE document to exactly `dest`, or raise.
 
@@ -1776,10 +1835,13 @@ class AribaFileSource:
         """
         dest = Path(dest)
         self._require_event_view(f"downloading {file['name']}")
+        self._await_request_idle(file)
         # Before the anchor is even clicked: refuse to proceed while a previous document's
         # menu is still open (#174 M1). See `_await_menu_clear`'s docstring for the wrong-bytes
         # hazard this closes.
         self._await_menu_clear(file)
+        if file.get("kind") != ariba_files.MENU_ITEM:
+            self._close_popups()
         link = self._resolve_anchor(file)
         self._ensure_clickable(file, link)
 
@@ -1803,44 +1865,24 @@ class AribaFileSource:
         return dest
 
     def _ensure_clickable(self, file: dict, link) -> None:
-        """Make the document's control visible, or raise saying so.
+        """Restore only this document's popup, then verify its control is visible (#183).
 
-        **The menu guard hides the documents it is protecting (#174).** Measured: right after
-        the traversal expands them, all 36 reference attachments in one container are visible;
-        a single Escape -- exactly what `_await_menu_clear`/`_dismiss_menu` press between
-        downloads to close a stale menu -- drops that to 0 visible, with all 36 still in the
-        DOM. That is the whole cause of run 5's 36 `scroll_into_view` timeouts. The guard is
-        right to exist (it closes a real wrong-bytes hazard); it simply also shuts the menus the
-        menu-item documents live in, so they have to be re-opened before each one.
-
-        **Restoration is attempted, then VERIFIED, because the mechanism is not understood.**
-        Re-running the traversal's expansion restores visibility (0 -> 36 measured) while
-        reporting that it opened ZERO sections -- so the toggles still read as expanded and
-        something about the pass re-shows the popup as a side effect. A fix resting on an
-        unexplained side effect is how this issue produced five live runs, so nothing here
-        trusts it: the post-condition is checked directly and a still-hidden control raises
-        rather than proceeding into a `scroll_into_view` timeout that says nothing about why.
+        References menus are mutually exclusive. Expanding all of them leaves only the last
+        visible; link counts do not measure visibility because the hidden items stay in DOM.
+        The containing `.awmenu` id and its trigger's `_mid` publish the exact association.
         """
-        try:
-            if link.is_visible():
-                link.scroll_into_view_if_needed(timeout=10000)
-                return
-        except Exception:                             # noqa: BLE001 — treat as "not visible yet"
-            pass
-        # `_expand_references` skips any section it has already opened, so the record of having
-        # opened them has to go before it will act at all.
-        self._toggled.clear()
-        self._expand_references()
-        try:
-            if link.is_visible():
-                link.scroll_into_view_if_needed(timeout=10000)
-                return
-        except Exception:                             # noqa: BLE001 — falls through to the raise
-            pass
-        raise RuntimeError(
-            f"{file['name']}: its control is in the DOM but not visible, and re-opening the "
-            f"References sections did not reveal it — refusing to click something that is not "
-            f"on screen (#174)")
+        if not link.is_visible():
+            menu = link.locator(
+                'xpath=ancestor::*[contains(concat(" ", normalize-space(@class), " "), '
+                '" awmenu ")][1]')
+            if menu.count() != 1:
+                raise RuntimeError(
+                    f"{file['name']}: hidden control has no unique attachment popup owner")
+            owner = self._popup_owner(menu.first)
+            self._close_popups()
+            owner.click(timeout=5000)
+            link.wait_for(state="visible", timeout=10000)
+        link.scroll_into_view_if_needed(timeout=10000)
 
     # The picker's `Total Number` round trip (`expected_count`/`_read_expected_count`,
     # Download Content -> Download Attachments -> picker -> Done -> `_restore_event_view`) was
