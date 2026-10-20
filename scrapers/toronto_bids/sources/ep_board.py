@@ -28,6 +28,7 @@ def scrape_ep_agendas(virtual_display: bool = False, log=lambda _m: None) -> dic
         virtual_display=virtual_display,
         log=log,
         term_starts=EP_TERM_STARTS,
+        auto_terms=True,
     )
 
 
