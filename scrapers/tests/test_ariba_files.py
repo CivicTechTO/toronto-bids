@@ -316,7 +316,7 @@ def test_a_resume_over_a_part_left_by_a_kill_refetches_it_cleanly(tmp_path):
     assert not (tmp_path / "Doc5713434353.omitted.json").exists()
 
 
-def test_a_changed_event_discards_the_partials(tmp_path):
+def test_a_changed_event_preserves_old_partials_without_reusing_them(tmp_path):
     """An addendum landed between runs -- partials describe a different version.
 
     The stale partial deliberately carries a name the NEW listing also has: a stale file whose
@@ -332,8 +332,8 @@ def test_a_changed_event_discards_the_partials(tmp_path):
     bundle = ariba_files.capture_files(source, "5713434353", tmp_path)
 
     with zipfile.ZipFile(bundle) as zf:
-        assert sorted(zf.namelist()) == ["a.pdf", "b.pdf"]
-        assert zf.read("a.pdf") == b"FRESH"  # the stale bytes were discarded
+        assert zf.read("a.pdf") == b"FRESH"  # stale bytes must never satisfy current coverage
+        assert any(zf.read(name)==b"STALE" for name in zf.namelist())
 
 
 def test_duplicate_names_across_the_tree_are_both_kept(tmp_path):
@@ -396,7 +396,7 @@ def test_a_reordered_listing_with_duplicate_names_does_not_reuse_the_partials(tm
     bundle = ariba_files.capture_files(run2, doc, tmp_path)
 
     with zipfile.ZipFile(bundle) as zf:
-        assert sorted(zf.namelist()) == ["report.pdf", "report_2.pdf"]
+        assert {"report.pdf", "report_2.pdf"}.issubset(zf.namelist())
         assert zf.read("report.pdf") == b"DOC-Y"  # position 1 is Y this run
         assert zf.read("report_2.pdf") == b"DOC-X"
         assert {zf.read(n) for n in zf.namelist()} == {
@@ -1227,7 +1227,7 @@ def test_capture_files_defaults_collided_to_zero_for_a_source_without_the_method
 # --- #199: refuse to shrink a bundle that already exists on disk --------
 
 
-def test_recapture_with_fewer_files_is_refused(tmp_path):
+def test_recapture_with_fewer_files_preserves_withdrawn_files(tmp_path):
     """A re-capture that would lose documents must not overwrite the existing bundle."""
     # First capture: 3 files → bundle exists on disk
     ariba_files.capture_files(
@@ -1236,7 +1236,7 @@ def test_recapture_with_fewer_files_is_refused(tmp_path):
     target = tmp_path / "Doc5713434353.zip"
     assert target.exists()
 
-    # Second capture: only 2 files — guard must refuse
+    # A shorter listing must retain withdrawn historical bytes.
     messages = []
     result = ariba_files.capture_files(
         FakeFileSource(["a.pdf", "b.pdf"]),
@@ -1245,12 +1245,10 @@ def test_recapture_with_fewer_files_is_refused(tmp_path):
         log=messages.append,
     )
 
-    assert result is None
+    assert result == target
     with zipfile.ZipFile(target) as zf:
-        assert len(zf.namelist()) == 3  # original bundle untouched
-    assert any("shrink" in m.lower() or "fewer" in m.lower() for m in messages), (
-        messages
-    )
+        assert zf.read("c.pdf") == b"c.pdf"
+        assert len(zf.namelist()) == 3
 
 
 def test_recapture_with_equal_or_more_files_proceeds(tmp_path):
@@ -1276,7 +1274,7 @@ def test_first_capture_has_no_shrink_check(tmp_path):
     assert result == tmp_path / "Doc5713434353.zip"
 
 
-def test_shrink_guard_refuses_equal_top_level_count_with_fewer_recursive_leaves(tmp_path):
+def test_version_merge_keeps_nested_historical_leaves(tmp_path):
     """Three outer entries can hide a reduction from four held leaves to three."""
     # Build a bundle with 3 top-level entries, one of which is a nested zip
     inner_zip = tmp_path / "inner.zip"
@@ -1300,11 +1298,12 @@ def test_shrink_guard_refuses_equal_top_level_count_with_fewer_recursive_leaves(
     result = ariba_files.capture_files(source_same_count, "5713434353", tmp_path,
                                        log=messages.append)
 
-    assert result is None
-    assert target.read_bytes() == before
-    assert json.loads(gap.read_text())["omitted"] == ["missing.pdf"]
-    assert any('3' in m and '4' in m and 'leaf' in m for m in messages)
-    assert ariba_files.partial_dir(tmp_path, '5713434353').exists()
+    assert result == target
+    with zipfile.ZipFile(target) as archive:
+        assert archive.read("drawings.zip") == inner_zip.read_bytes()
+    from toronto_bids.sources.zip_index import index_zip
+    assert len(index_zip(target, strict=True)) == 7
+    assert not gap.exists()
 
 
 @pytest.mark.parametrize('new_leaves', [4, 5])
@@ -1320,17 +1319,21 @@ def test_recapture_with_fewer_outer_entries_but_equal_or_more_leaves_proceeds(tm
         '5713434353', tmp_path)
     assert result == tmp_path / 'Doc5713434353.zip'
     with zipfile.ZipFile(result) as z:
-        assert z.namelist() == ['drawings.zip']
+        assert set(z.namelist()) == {'a.pdf','b.pdf','c.pdf','d.pdf','drawings.zip'}
 
 
-def test_shrink_guard_keeps_partials_on_refusal(tmp_path):
+def test_preservation_guard_keeps_partials_on_failure(tmp_path, monkeypatch):
     """On refusal, partials remain on disk for a future retry."""
     ariba_files.capture_files(
         FakeFileSource(["a.pdf", "b.pdf", "c.pdf"]), "5713434353", tmp_path
     )
 
-    # Re-capture with fewer files — refused
-    ariba_files.capture_files(FakeFileSource(["a.pdf"]), "5713434353", tmp_path)
+    from toronto_bids.sources import ariba_versions
+    def fail(*args):
+        raise ValueError("candidate failed byte preservation")
+    monkeypatch.setattr(ariba_versions, 'verify_preserved', fail)
+    with pytest.raises(ValueError, match="byte preservation"):
+        ariba_files.capture_files(FakeFileSource(["a.pdf"]), "5713434353", tmp_path)
 
     pdir = ariba_files.partial_dir(tmp_path, "5713434353")
     assert pdir.exists(), "partials should be kept for resume on the next run"

@@ -131,3 +131,18 @@ Public Bid Number fields on these detail pages independently confirmed the title
 | 10044944-1 | https://trca.bidsandtenders.ca/Module/Tenders/en/Tender/Detail/3c6879d8-b712-42cb-ba23-cd1ea1ea8ad0 |
 
 The synthetic sample remains a compatibility input. It does not establish Zoo coverage.
+
+### TRCA public Laserfiche history (#224)
+
+`trca_laserfiche_{series,1957,2018}.json` were fetched anonymously over HTTP on
+2026-10-20 from TRCA's own WebLink installation at
+`https://laserfiche.trca.ca/WebLink/FolderListingService.aspx/GetFolderListing2`.
+The requests used `repoName=LASERFICHE`, `folderId=1030915`, `212734`, and `1477012`,
+respectively, `getNewListing=true`, `start=0`, `end=100`, `sortColumn=Name`,
+`sortAscending=true`. Ordinary anonymous session cookies were accepted; no login.
+Payload `data` is unchanged; random response padding (`__breach`) is omitted.
+
+The series lists 1957–2022 annual minute-book folders. The 1957 folder contains scanned
+index/member/minutes documents with no native extension. The 2018 folder contains nested
+folders and a native PDF. Client entry-type values are Document=-2, Shortcut=-1,
+Folder=0, RecordSeries=1, as declared by the public `app/dist/browse/main.js`.

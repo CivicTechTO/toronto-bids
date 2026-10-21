@@ -163,13 +163,31 @@ def reindex_bundles(conn, dest_dir=None, log=lambda _m: None) -> int:
 
 # --- browser: log in and capture ----------------------------------------------------------
 
-# The City's feed carries two "Mock ... Training and Practice" postings with a 2099-12-31
-# deadline (#174 "Suggested work" item 3, #223). `submission_deadline >= now` keeps them in the
-# open set forever, so every nightly would try to capture them. An explicit list, not a rule:
-# a far-future deadline is not proof of a mock (a real posting may carry a long one), and the
-# spine title these rows carry could not be verified offline — `clean_title` NULLs a
-# doc-number-shaped title, so a "Mock"+"Training" title rule might silently never fire.
-TRAINING_POSTINGS = frozenset({"4044346425", "3949149442"})
+# Verified training identities (#242), not a selection blacklist. Every pending event is
+# still visited: supported events are captured and changed/unknown failures remain failures.
+# Only an explicit source rejection for a matching document + posting can become a notice.
+# Evidence for all five is in docs/ariba-training-events-2026-10-20.md.
+VERIFIED_TRAINING_EVENTS = {
+    "3861692164": "15346406",
+    "3861744322": "15346471",
+    "3949177873": "15889645",
+    "3949149442": "15889504",
+    "4044346425": "16516115",
+}
+
+_EVENT_REJECTIONS = {
+    "public_sector_disabled": "Ariba bidding rule: public sector sourcing is not enabled for this event",
+    "closed": "Ariba reports the event is closed after Respond",
+    "denied": "Ariba denied permission to view the event (or reports an invalid event link)",
+}
+
+
+class EventUnavailable(RuntimeError):
+    """An explicit source rejection; callers decide whether it is a verified training gap."""
+
+    def __init__(self, reason, message):
+        self.reason = reason
+        super().__init__(message)
 
 
 # Open postings with missing/incomplete bundles closing within this many days appear in
@@ -191,8 +209,15 @@ def bundle_complete(dest_dir, document_number: str) -> bool:
     if not bundle_archived(dest_dir, document_number):
         return False
     try:
-        record = ariba_files.read_omitted(Path(dest_dir) / f"Doc{document_number}.zip")
-    except RuntimeError:
+        target = Path(dest_dir) / f"Doc{document_number}.zip"
+        record = ariba_files.read_omitted(target)
+        from toronto_bids.sources.ariba_versions import read_provenance
+        with zipfile.ZipFile(target) as archive:
+            provenance, _ = read_provenance(archive)
+        if provenance and (provenance["document_number"] != document_number
+                           or any(item["path"] is None for item in provenance["listing"])):
+            return False
+    except (RuntimeError, ValueError, KeyError, TypeError, OSError, zipfile.BadZipFile):
         return False
     return not (record["omitted"] or record["collided"])
 
@@ -228,7 +253,7 @@ def open_solicitation_events(conn, today: str | None = None) -> list[dict]:
     seen: set[str] = set()
 
     def _add(rfx, doc, closes):
-        if not (rfx and doc) or doc in TRAINING_POSTINGS or doc in seen:
+        if not (rfx and doc) or doc in seen:
             return
         seen.add(doc)
         events.append({"rfx_id": rfx, "document_number": doc, "closes": closes})
@@ -394,7 +419,8 @@ def capture_event(page, event: dict, dest_dir, log=lambda _m: None) -> Path | No
     Returns the saved bundle path, or None if the event could not be captured this run (Respond
     disabled = already closed with nothing salvageable; a traversal that captured no file this
     run, leaving the event pending). Never raises for those expected outcomes — the caller
-    isolates real errors per event.
+    isolates real errors per event. Explicit source rejections after Respond raise
+    `EventUnavailable`; only the caller can classify a verified training restriction.
 
     Per-file capture (`ariba_files.capture_files`, #174) has no size ceiling to special-case:
     Ariba's own bundle download hard-stops above 500 MB as a single zip, but the event's content
@@ -449,15 +475,12 @@ def capture_event(page, event: dict, dest_dir, log=lambda _m: None) -> Path | No
             f"posting as open, partials kept")
     respond.click()
 
-    # Respond opens the Sourcing event, but some events refuse access even so — invite-only, or
-    # tied to a different account — and Ariba shows "You do not have the correct permission to
-    # view the event". Those are a clean skip, not a failure. Poll for the event's Download
-    # Content button, that denial, or the anonymous Register/Login modal, whichever lands first.
+    # Distinguish the source's explicit rejection from a navigation/session timeout. A
+    # training title or distant deadline cannot establish any of these outcomes (#242).
     download_content = page.get_by_role("button", name="Download Content")
     outcome = _wait_post_respond(page, download_content)
-    if outcome == "denied":
-        log(f"  Doc{document_number}: no permission to view the event — skipped")
-        return None
+    if outcome in _EVENT_REJECTIONS:
+        raise EventUnavailable(outcome, f"Doc{document_number}: {_EVENT_REJECTIONS[outcome]}")
     if outcome == "anonymous":
         raise RuntimeError(
             f"Doc{document_number}: Ariba served the anonymous view (Register/Login modal); "
@@ -472,7 +495,7 @@ def capture_event(page, event: dict, dest_dir, log=lambda _m: None) -> Path | No
     source = AribaFileSource(page, rfx_id=rfx_id, log=log)
     # Reaching this line means the posting is OPEN -- the Respond-disabled branch above already
     # routed a closed posting to salvage and returned. That is what makes it safe for
-    # `capture_files` to discard partials on a fingerprint mismatch or an unreadable manifest
+    # `capture_files` to retire partial slots on a fingerprint mismatch or an unreadable manifest
     # (see its docstring): those bytes are always re-fetchable from here. The salvage side of
     # this same invariant is checked by IDENTITY (`finalise_partial(..., posting_open=False)`,
     # asserted a few lines up); this side has no such flag and is guarded only structurally, by
@@ -553,21 +576,26 @@ _PERMISSION_DENIED = "do not have the correct permission to view the event"
 
 
 def _wait_post_respond(page, download_content, timeout_ms: int = 60000) -> str:
-    """After Respond, report which page landed: 'event', 'denied', 'anonymous', or 'timeout'.
+    """After Respond, distinguish a supported event, explicit source rejection and timeout.
 
-    The redirect chain varies and three outcomes are all normal-ish: the Sourcing event (has a
-    Download Content button), an access denial (invite-only / wrong account), or the anonymous
-    Register/Login modal. Poll for whichever appears rather than assuming the event and hanging
-    the full timeout on the two that never show a Download Content button.
+    Discovery can reject Respond before opening Sourcing. Recognize its rejection heading
+    together with a specific closed/public-sector-rule message. Sourcing permission messages
+    and anonymous Register/Login views are distinct outcomes. Unknown responses still time
+    out; neither a training title nor a future date proves a restriction.
     """
     waited = 0
     while waited < timeout_ms:
         try:
             if download_content.count() and download_content.first.is_visible():
                 return "event"
-            body = (page.inner_text("body") or "").lower()
+            body = " ".join((page.inner_text("body") or "").lower().split())
             if _PERMISSION_DENIED in body:
                 return "denied"
+            if "this event is no longer accepting responses" in body:
+                if "global bidding rule: public sector sourcing is not enabled for this event" in body:
+                    return "public_sector_disabled"
+                if "event is closed" in body:
+                    return "closed"
             if page.get_by_role("button", name="Register/Login").count():
                 return "anonymous"
         except Exception:
@@ -1863,7 +1891,8 @@ class AribaFileSource:
 
 
 def capture_attachments(conn, dest_dir=None, log=lambda _m: None, headless=False,
-                        virtual_display=False, failures: list | None = None) -> int:
+                        virtual_display=False, failures: list | None = None,
+                        training_restrictions: list | None = None) -> int:
     """Log in, walk every open solicitation, capture and index each bundle. Resumable.
 
     A complete bundle is skipped; recorded gaps keep an open event eligible for retry.
@@ -1877,8 +1906,11 @@ def capture_attachments(conn, dest_dir=None, log=lambda _m: None, headless=False
     raised is appended as `("ariba:Doc<n>", str(exc))` — the shape the nightly's shared
     failures list and `_mark_if_swallowed_failures` read. Events for which `capture_event`
     returns None without raising are also reported when durable gaps remain, including
-    closed/access-denied or refused retries. A newly written partial bundle is indexed,
-    but its unresolved gaps still mark the step failed (#243).
+    closed or refused retries. A newly written partial bundle is indexed, but its unresolved
+    gaps still mark the step failed (#243). Explicit source rejections for verified training
+    document/posting pairs are reported through `training_restrictions` (#242); real-event
+    restrictions and unexpected training errors remain failures. A training restriction never
+    hides existing attachment gaps. Restricted events stay eligible to recheck next run.
     """
     from playwright.sync_api import sync_playwright
 
@@ -1919,7 +1951,16 @@ def capture_attachments(conn, dest_dir=None, log=lambda _m: None, headless=False
                             last_message = message
                             log(message)
 
-                        saved = capture_event(page, event, dest_dir, log=event_log)
+                        restriction = None
+                        try:
+                            saved = capture_event(page, event, dest_dir, log=event_log)
+                        except EventUnavailable as exc:
+                            if (VERIFIED_TRAINING_EVENTS.get(event["document_number"]) != str(event["rfx_id"])
+                                    or exc.reason not in _EVENT_REJECTIONS):
+                                raise  # a real procurement, mismatched identity or unknown reason
+                            saved = None
+                            restriction = exc
+                            event_log(f"  {exc} — verified training restriction; remains retryable")
                         if saved is not None:
                             store_bundle(conn, saved, event["document_number"], dest_dir)
                             captured += 1
@@ -1933,6 +1974,13 @@ def capture_attachments(conn, dest_dir=None, log=lambda _m: None, headless=False
                             log(f"  Doc{event['document_number']}: FAILED — {reason}")
                             if failures is not None:
                                 failures.append((f"ariba:Doc{event['document_number']}", reason))
+                        elif restriction is not None and training_restrictions is not None:
+                            training_restrictions.append({
+                                "document_number": event["document_number"],
+                                "rfx_id": str(event["rfx_id"]),
+                                "reason": restriction.reason,
+                                "detail": str(restriction),
+                            })
                     except Exception as exc:
                         log(f"  Doc{event['document_number']}: FAILED — {exc}")
                         if failures is not None:

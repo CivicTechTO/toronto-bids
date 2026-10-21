@@ -135,6 +135,15 @@ def build_parser() -> argparse.ArgumentParser:
         "2026-07-17-deployment-design.md",
     )
 
+    p_history = sub.add_parser(
+        "capture-trca-history",
+        help="Archive pre-2019 public Laserfiche PDFs; no extraction or publishing (#224)",
+    )
+    p_history.add_argument("--resume", action="store_true",
+                           help="Retry the indexed sha256-NULL queue without rediscovery")
+    p_history.add_argument("--limit", type=int,
+                           help="Stop after this many successful new downloads")
+
     p_ag = sub.add_parser(
         "enrich-agencies",
         help="Capture agency/corporation procurement from board records (#135): TRCA "
@@ -832,6 +841,7 @@ def _cmd_nightly(args) -> int:
     sources: list[dict] = []
     near_close: list[dict] = []
     near_close_error = None
+    training_restrictions: list[dict] = []
 
     try:
         conn = _open_db()
@@ -919,9 +929,13 @@ def _cmd_nightly(args) -> int:
                     # Per-event failures are caught inside capture_attachments; without handing
                     # it `failures` a night where every event raised reads ✅ (#223).
                     n = aa.capture_attachments(
-                        conn, log=out, virtual_display=True, failures=failures
+                        conn, log=out, virtual_display=True, failures=failures,
+                        training_restrictions=training_restrictions,
                     )
-                    return f"+{n} bundles"
+                    detail = f"+{n} bundles"
+                    if training_restrictions:
+                        detail += f" · {len(training_restrictions)} training restrictions"
+                    return detail
 
                 before_len = len(failures)
                 run_id = _run_step(steps, failures, "ariba attachments", _ariba, conn=conn)
@@ -1038,6 +1052,7 @@ def _cmd_nightly(args) -> int:
         "elapsed_s": time.monotonic() - started,
         "ariba_near_close": near_close,
         "ariba_near_close_error": near_close_error,
+        "ariba_training_restrictions": training_restrictions,
     }
     text = notify.summarize(report)
     print(text)
@@ -1530,6 +1545,23 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_amounts(args)
     if args.command == "enrich-ariba-attachments":
         return _cmd_enrich_ariba_attachments(args)
+    if args.command == "capture-trca-history":
+        from toronto_bids.sources.trca_history import capture_history
+
+        if args.limit is not None and args.limit < 1:
+            parser.error("--limit must be positive")
+        conn = _open_db()
+        http = HttpClient()
+        try:
+            result = capture_history(conn, http, discover=not args.resume,
+                                     limit=args.limit, log=lambda m: print(m, flush=True))
+            print(f"Historical PDFs: {result['held']}/{result['total']} held; "
+                  f"{result['pending']} pending; {len(result['failures'])} failures; "
+                  f"{len(result['excluded_native_files'])} native non-PDF attachments excluded")
+            return 1 if result["failures"] or result["pending"] else 0
+        finally:
+            http.close()
+            conn.close()
     if args.command == "enrich-agencies":
         return _cmd_enrich_agencies(args)
     if args.command == "enrich-committee-awards":

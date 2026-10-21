@@ -1,0 +1,235 @@
+{
+  "data": {
+    "name": "1957 TRCA Minute Book",
+    "folderId": 212734,
+    "colTypes": [
+      {
+        "displayName": "Name",
+        "name": "Name",
+        "type": 0,
+        "isNumeric": false,
+        "hidden": false,
+        "multiValue": false,
+        "width": 772
+      },
+      {
+        "displayName": "ID",
+        "name": "Id",
+        "type": 0,
+        "isNumeric": false,
+        "hidden": true,
+        "multiValue": false,
+        "width": 0
+      },
+      {
+        "displayName": "Template ID",
+        "name": "TemplateId",
+        "type": 0,
+        "isNumeric": false,
+        "hidden": true,
+        "multiValue": false,
+        "width": 0
+      },
+      {
+        "displayName": "Entry type",
+        "name": "EntryType",
+        "type": 0,
+        "isNumeric": false,
+        "hidden": true,
+        "multiValue": false,
+        "width": 0
+      },
+      {
+        "displayName": "Shortcut target",
+        "name": "LinkTo",
+        "type": 0,
+        "isNumeric": false,
+        "hidden": true,
+        "multiValue": false,
+        "width": 0
+      },
+      {
+        "displayName": "Relationship type",
+        "name": "LinkType",
+        "type": 0,
+        "isNumeric": false,
+        "hidden": true,
+        "multiValue": false,
+        "width": 0
+      },
+      {
+        "displayName": "Extension",
+        "name": "Extension",
+        "type": 0,
+        "isNumeric": false,
+        "hidden": true,
+        "multiValue": false,
+        "width": 0
+      },
+      {
+        "displayName": "Flags",
+        "name": "Flags",
+        "type": 0,
+        "isNumeric": false,
+        "hidden": true,
+        "multiValue": false,
+        "width": 0
+      },
+      {
+        "displayName": "Date created",
+        "name": "CreationDate",
+        "type": 0,
+        "isNumeric": false,
+        "hidden": true,
+        "multiValue": false,
+        "width": 0
+      },
+      {
+        "displayName": "Date modified",
+        "name": "LastModified",
+        "type": 0,
+        "isNumeric": false,
+        "hidden": true,
+        "multiValue": false,
+        "width": 0
+      }
+    ],
+    "results": [
+      {
+        "name": "Index 1957",
+        "entryId": 212737,
+        "type": -2,
+        "shortcutTargetId": 0,
+        "targetType": 0,
+        "pathToImage": "~/images/template_colors/5/batch-icon.gif",
+        "iconClass": "DocumentBrowserNameImage",
+        "extension": "",
+        "multiValueFields": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "isEdoc": false,
+        "entryProperties": null,
+        "contexthits": null,
+        "metadata": null,
+        "thumbnailPageCount": 0,
+        "mediaMimeType": null,
+        "mediaHandlerUrl": null,
+        "tags": null,
+        "data": [
+          "Index 1957",
+          212737,
+          17,
+          -2,
+          null,
+          -2,
+          null,
+          1,
+          "6/20/2006 6:47:34 PM",
+          "7/24/2014 6:57:04 PM"
+        ]
+      },
+      {
+        "name": "Members List 1957",
+        "entryId": 212736,
+        "type": -2,
+        "shortcutTargetId": 0,
+        "targetType": 0,
+        "pathToImage": "~/images/template_colors/5/batch-icon.gif",
+        "iconClass": "DocumentBrowserNameImage",
+        "extension": "",
+        "multiValueFields": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "isEdoc": false,
+        "entryProperties": null,
+        "contexthits": null,
+        "metadata": null,
+        "thumbnailPageCount": 0,
+        "mediaMimeType": null,
+        "mediaHandlerUrl": null,
+        "tags": null,
+        "data": [
+          "Members List 1957",
+          212736,
+          17,
+          -2,
+          null,
+          -2,
+          null,
+          1,
+          "6/20/2006 6:47:16 PM",
+          "7/25/2014 5:33:25 PM"
+        ]
+      },
+      {
+        "name": "Minutes 1957",
+        "entryId": 212735,
+        "type": -2,
+        "shortcutTargetId": 0,
+        "targetType": 0,
+        "pathToImage": "~/images/template_colors/5/batch-icon.gif",
+        "iconClass": "DocumentBrowserNameImage",
+        "extension": "",
+        "multiValueFields": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "isEdoc": false,
+        "entryProperties": null,
+        "contexthits": null,
+        "metadata": null,
+        "thumbnailPageCount": 0,
+        "mediaMimeType": null,
+        "mediaHandlerUrl": null,
+        "tags": null,
+        "data": [
+          "Minutes 1957",
+          212735,
+          17,
+          -2,
+          null,
+          -2,
+          null,
+          1,
+          "6/20/2006 6:46:39 PM",
+          "7/25/2014 5:33:26 PM"
+        ]
+      }
+    ],
+    "failed": false,
+    "errMsg": null,
+    "entryType": 0,
+    "path": "\\0335 LIBRARY\\0335-02 Corporate\\0335-02-04 Minute Books\\1957 TRCA Minute Book",
+    "parentId": 0,
+    "showColumnPicker": true,
+    "totalEntries": 3,
+    "sortAscending": true,
+    "sortColumn": "Name"
+  }
+}

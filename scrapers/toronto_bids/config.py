@@ -108,11 +108,12 @@ def _real_env(name: str) -> str | None:
 ARIBA_USERNAME = _real_env("ARIBA_USERNAME")
 ARIBA_PASSWORD = _real_env("ARIBA_PASSWORD")
 
-# TRCA meeting records (#135): current record on eSCRIBE, back-catalogue agenda packages
+# TRCA meeting records (#135/#224): current record on eSCRIBE, historical minute books
 # on TRCA's Laserfiche. Both are TRCA's own hosting (open-data licence) — NOT the
 # bids&tenders portal, which stays gated.
 TRCA_ESCRIBE_BASE = "https://pub-trca.escribemeetings.com/"
 TRCA_REPORTS_DIR = DATA_DIR / "agencies" / "trca"
+TRCA_HISTORY_DIR = DATA_DIR / "agencies" / "trca_history"
 # The eSCRIBE calendar is client-rendered from this ASP.NET page-method (JSON); the year
 # landing page carries no static meeting links, so discovery POSTs here per year (#137).
 TRCA_CALENDAR_URL = TRCA_ESCRIBE_BASE + "MeetingsCalendarView.aspx/GetCalendarMeetings"
