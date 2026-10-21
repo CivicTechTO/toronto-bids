@@ -1,5 +1,8 @@
 # TRCA historical PDF preservation (#224)
 
+**Final capture:** 825 PDFs held and independently verified; six access-denied policy
+shortcuts remain queued. See the final outcome below.
+
 ## Public source and scope
 
 The anonymous [TRCA WebLink repository](https://laserfiche.trca.ca/WebLink/) exposes
@@ -81,9 +84,9 @@ The SQLite backup and sample verification record are under
 
 A full production walk/capture started at **2026-10-20 21:00 UTC** as the user service
 `tb-224-trca-history.service`, using frozen tested package code under that operations
-directory. It remains independent of subsequent branch checkouts. This is an ongoing
-preservation run, not evidence that all historical bytes have been held. Inspect its
-actual completion and resolve/report remaining gaps before closing #224.
+directory. It ran independently of subsequent branch checkouts. The completed result and
+remaining source-access gaps are recorded below; the earlier snapshots are not claims
+that every historical candidate was held.
 
 ```sh
 systemctl --user status tb-224-trca-history.service --no-pager
@@ -120,3 +123,22 @@ the audited queue and held files. It writes `final-verification.json` and
 `verification.log` under the operations directory and exits nonzero for missing or
 invalid bytes. Inspect those results before considering the preservation complete;
 no extra prompt is needed to trigger this audit.
+
+
+## Final outcome — 2026-10-21 00:44 UTC
+
+Capture finished at 00:44:05 UTC; the automatic audit finished at 00:44:27 UTC.
+**All 825 regular PDF/scanned candidates were held and independently verified:**
+7,856,996,897 bytes (7.86 GB), 96,154 pages. The audit found no hash, PDF-structure,
+source-coverage or final-manifest discrepancies. All 10,862 pre-existing document rows
+still matched the backup when that audit ran, before the later nightly refreshed records.
+
+The remaining six queue entries are exactly the policy shortcuts listed above, each with
+an explicit public-export access denial. Both capture and verification therefore exited
+nonzero as designed; this is not a claim that all 831 candidates were preserved. The Word
+attachment remains an explicit non-PDF exclusion. No source-access restriction was bypassed.
+
+Final evidence is in `/home/alex/tb-data/agencies/trca_history/capture.json` and
+`/home/alex/tb-data/operations/224/final-verification.json`. The code and verified regular
+PDF preservation are ready for review; keep the six source-access gaps visible when
+tracking issue completion. Neither extraction nor publication was run by this command.
