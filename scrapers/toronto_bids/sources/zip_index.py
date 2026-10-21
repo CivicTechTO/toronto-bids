@@ -29,9 +29,12 @@ def index_zip(zip_path, *, max_depth=8, max_entries=10000, strict=False) -> list
 
 
 def _index_zipfile(zf, prefix, depth, budget, *, max_depth, strict):
+    from toronto_bids.sources.ariba_versions import read_provenance
+
+    _, metadata_member = read_provenance(zf)
     out = []
     for zi in zf.infolist():
-        if zi.is_dir():
+        if zi.is_dir() or zi.filename == metadata_member:
             continue
         if budget[0] <= 0:
             if strict:
