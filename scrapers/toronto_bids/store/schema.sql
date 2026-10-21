@@ -461,6 +461,36 @@ CREATE INDEX IF NOT EXISTS idx_agency_bid_buyer ON agency_bid (buyer_id, native_
 -- processed, so a re-run skips documents whose content and extractor have not changed.
 -- Keyed on sha256 (document identity) + extractor_version (prompt/model stamp), so a
 -- prompt change invalidates the cache for every document without needing a manual reset.
+-- Internal derivation evidence, never a guessed procurement identity. Old decisions survive
+-- cache replacement and rebuilds; active marks the latest successful rebuild per corpus.
+CREATE TABLE IF NOT EXISTS agency_derivation (
+    id INTEGER PRIMARY KEY,
+    corpus TEXT NOT NULL,
+    buyer_id INTEGER NOT NULL REFERENCES buyer(id),
+    sha256 TEXT NOT NULL,
+    extractor_version TEXT NOT NULL,
+    result_sha256 TEXT NOT NULL,
+    decision_sha256 TEXT NOT NULL,
+    contract_index INTEGER NOT NULL,
+    contract_count INTEGER NOT NULL,
+    report_url TEXT NOT NULL,
+    report_reference TEXT,
+    native_ref TEXT,
+    reason TEXT,
+    contract_json TEXT NOT NULL,
+    active INTEGER NOT NULL DEFAULT 1,
+    first_seen TEXT NOT NULL DEFAULT (datetime('now')),
+    last_seen TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE(corpus, sha256, extractor_version, result_sha256, contract_index, report_url, decision_sha256)
+);
+CREATE INDEX IF NOT EXISTS agency_derivation_active ON agency_derivation(corpus, active);
+
+CREATE TABLE IF NOT EXISTS agency_coverage (
+    corpus TEXT PRIMARY KEY,
+    summary_json TEXT NOT NULL,
+    rebuilt_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 CREATE TABLE IF NOT EXISTS extraction_cache (
     sha256            TEXT NOT NULL,
     extractor_version TEXT NOT NULL,

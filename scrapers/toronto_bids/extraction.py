@@ -549,14 +549,20 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
     solicitations, bids, awards = [], [], []
 
     contracts_refused = 0
+    decisions = []
+    coverage = None
     if corpus in ("trca", "ep", "zoo"):
         from toronto_bids.linking.agency_reference import normalize_agency_reference, report_reference
+        from toronto_bids.agency_coverage import decision
+
+        if rows and buyer_id is None:
+            raise RuntimeError(f'backfill {corpus}: buyer is not seeded; existing rows kept')
 
         refusal_details = []
         for row in rows:
             result = json.loads(row["result_json"])
             contracts = result.get("contracts", [])
-            for contract in contracts:
+            for index, contract in enumerate(contracts):
                 if not (contract.get("bids") or contract.get("awards")):
                     continue
                 try:
@@ -568,7 +574,9 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
                 except ValueError as exc:
                     contracts_refused += 1
                     refusal_details.append(f"{row['url']}: {exc}")
+                    decisions.append(decision(row, corpus, buyer_id, index, contract, None, str(exc), len(contracts)))
                     continue
+                decisions.append(decision(row, corpus, buyer_id, index, contract, ref, None, len(contracts)))
                 has_awards = bool(contract.get("awards"))
                 solicitations.append(
                     AgencySolicitation(
@@ -618,7 +626,7 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
                         )
                     )
         if refusal_details:
-            log(f"  backfill {corpus}: refused {contracts_refused} ambiguous contract(s): "
+            log(f"  backfill {corpus}: refused {contracts_refused} ambiguous URL/contract observation(s): "
                 + "; ".join(refusal_details[:10])
                 + (" ..." if len(refusal_details) > 10 else ""))
         rebuilt = [("agency_bid", bids), ("agency_award", awards)]
@@ -736,20 +744,32 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
         # agency_solicitation is backfill-only (fills NULLs, never deleted), so no swap.
         for r in solicitations:
             upsert_row(conn, r, overwrite=False)
+        if corpus in _CORPUS_BUYER_SLUG:
+            from toronto_bids.agency_coverage import persist
+            coverage = persist(conn, corpus, decisions, aliases, len(rows))
         conn.commit()
     except Exception:
         conn.rollback()
         raise
 
+    if coverage is not None:
+        log(f"  identity {corpus}: {coverage['contracts_accepted']} accepted, "
+            f"{coverage['contracts_refused']} refused contracts; "
+            f"{coverage['refused_bid_facts']} bid / {coverage['refused_award_facts']} award facts affected; "
+            f"{aliases['normalized']} stored aliases normalized, {aliases['merged']} merged; "
+            f"{coverage['source_observations']} URL/contract observations "
+            "(contracts deduplicated by document hash and contract index; tb agency-coverage for evidence)")
     return {
         "corpus": corpus,
         "docs_processed": len(rows),
-        "contracts_refused": contracts_refused,
+        "contracts_refused": coverage['contracts_refused'] if coverage is not None else contracts_refused,
+        "contract_observations_refused": contracts_refused,
         "aliases_normalized": aliases["normalized"],
         "aliases_merged": aliases["merged"],
         "solicitations_written": len(solicitations),
         "bids_written": len(bids),
         "awards_written": len(awards),
+        "coverage": coverage,
     }
 
 
@@ -768,6 +788,9 @@ def extract_and_backfill(
     `_mark_if_swallowed_failures` can mark the step failed. Declared-count flags are NOT
     failures: most are composite noise (appendices publish a count, no bidder list), so
     they ride on the summary log line only.
+
+    Agency identity refusals independently append an `identity:<corpus>` summary from
+    deduplicated coverage, even when extraction and all supported contracts succeeded.
     """
     from toronto_bids.config import CLASSIFICATION_LABELS_PATH
     from toronto_bids.extract import ExtractionClient
@@ -799,7 +822,15 @@ def extract_and_backfill(
             raise
         log("  extraction: all documents cached, skipping API call")
 
-    return backfill_from_extraction(conn, corpus, log=log)
+    result = backfill_from_extraction(conn, corpus, log=log)
+    coverage = result.get('coverage')
+    if coverage and coverage['contracts_refused'] and failures is not None:
+        failures.append((f'identity:{corpus}',
+                         f"incomplete coverage: {coverage['contracts_refused']} contract(s) refused; "
+                         f"{coverage['refused_bid_facts']} bid fact(s), "
+                         f"{coverage['refused_award_facts']} award fact(s); "
+                         "evidence retained — inspect with tb agency-coverage"))
+    return result
 
 
 def _count_uncached(conn, corpus, labels, classifier=_DEFAULT_CLASSIFIER) -> int:
