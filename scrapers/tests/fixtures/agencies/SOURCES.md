@@ -146,3 +146,29 @@ The series lists 1957–2022 annual minute-book folders. The 1957 folder contain
 index/member/minutes documents with no native extension. The 2018 folder contains nested
 folders and a native PDF. Client entry-type values are Document=-2, Shortcut=-1,
 Folder=0, RecordSeries=1, as declared by the public `app/dist/browse/main.js`.
+
+### Toronto Zoo public listings — off-peak 2026-10-21 (#226)
+
+`bids_tenders_zoo_2026-10-21.json` contains all 122 recorded public listings from the
+permitted 05:10 America/Toronto capture (09:10 UTC), sorted by page ID. Each object is an
+unchanged automatically recorded response row, including the locally attached `buyer_slug`
+and `status_filter`. No session cookies, antiforgery tokens or document content are included.
+The HTTP sweep used the UI's All filter with offsets 0, 50 and 100 and completed at 122/122.
+It initially failed only after fetching, while mapping published references for storage.
+
+Every Zoo title has the shape `published identifier - description`. Nine records demonstrate
+that the identifier cannot be restricted to RFQ/RFP plus a simple integer: they include
+`127`, `13`, `108`, `Q32202208`, `NRFP-08`, dotted identifiers and spaced numeric segments.
+The numeric published prefix is retained; a different RFQ number is not inferred from the
+description. Whitespace is normalized under the existing agency reference contract.
+
+The exact dated controls are page `6fc2f901-6847-469e-b630-d09fc5e75cb9` (RFQ-50,
+Awarded, closing 2022-11-04 16:00 UTC) and `ae4980d4-38f2-44cb-b5c4-0fe9ccc634b2`
+(RFP-03, Terminated, closing 2026-02-06 17:00 UTC). Their raw display dates independently
+agree with the converted millisecond timestamps. An older RFP 03 listing is a separate
+2023 project, not the 2026 control.
+
+The 122 page IDs reduce to 114 normalized reference strings. Eight references are reused
+for distinct published listings/projects across years. This fixture preserves those separate
+page IDs and must not be read as proof that those procurements can safely be coalesced into
+one solicitation row. Wider solicitation identity work is tracked under #124.

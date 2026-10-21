@@ -1,4 +1,4 @@
-# Portal false empties (#226): TRCA verified, Zoo live check pending
+# Portal false empties (#226): both captured corpora verified; identity conflicts explicit
 
 Investigation date: 2026-10-20. The TRCA portal was not empty. The configured numeric
 status filters silently returned successful empty responses. The public UI sends names
@@ -107,7 +107,9 @@ URLs before declaring those specific controls verified. An offline smoke check p
 scheduled environment loads the frozen package and can initialize and write its isolated
 manifest; it is not evidence of a live Zoo pass.
 
-**#226 remains incomplete until the Zoo live result is inspected.** Keep the PR in draft.
+**Historical completion boundary:** the scheduled result had to be inspected before
+finishing this PR. That inspection and the resulting parser/storage safeguards are
+recorded below.
 #140 also remains open: Zoo real fixtures, awarded supplier/value availability and nightly
 status refresh still need their own acceptance checks. To inspect the scheduled run:
 
@@ -115,3 +117,65 @@ status refresh still need their own acceptance checks. To inspect the scheduled 
 systemctl --user status tb-226-zoo-verify.service --no-pager
 cat /tmp/tb-226/zoo-validation/verification.json
 ```
+
+
+## Zoo completion and guarded replay — 2026-10-21
+
+The permitted off-peak job completed its HTTP sweep: **122/122 unique page IDs** were
+recorded in three pages. It then failed while parsing a legitimate numeric published
+reference. A full replay identified nine rejected records: identifiers included `127`,
+`13`, `108`, `Q32202208`, `NRFP-08`, and dotted/spaced numbers. All 122 captured titles
+publish `identifier - description`. The parser now preserves that prefix instead of
+whitelisting only a few procurement-type spellings or inventing an RFQ prefix from the
+description. Unknown layouts, empty prefixes and opaque GUID prefixes still fail closed.
+All 122 records parse, with a full real-corpus fixture and regression tests for the nine
+previous failures. No additional daytime Zoo requests were needed or performed.
+
+The exact controls are independently located by page ID, rather than merely a matching
+reference string:
+
+| Page ID | Published reference | Status | Closing instant UTC | Source display |
+| --- | --- | --- | --- | --- |
+| 6fc2f901-6847-469e-b630-d09fc5e75cb9 | RFQ-50 | Awarded | 2022-11-04 16:00 | Nov 4, 2022 12:00 PM |
+| ae4980d4-38f2-44cb-b5c4-0fe9ccc634b2 | RFP-03 | Terminated | 2026-02-06 17:00 | Feb 6, 2026 12:00 PM |
+
+These dates agree with both the recorded display values and JSON.NET timestamps. An older
+2023 RFP 03 record is not the 2026 control. The known-control public detail URLs follow
+the preserved page IDs; no new detail-page request was made during this replay.
+
+### The existing storage key cannot safely represent all portal postings
+
+The 122 Zoo pages use 114 normalized reference strings. Eight references are reused across
+separate years/projects: `RFP-12`, `RFP-38`, `RFP-59`, `RFQ 15`, `RFQ-05`, `RFQ-11`,
+`RFQ-14`, `RFT-56`. For example, `RFP-38` names separate Red Panda (2023) and Orangutan
+(2025) projects. Coalescing them into one solicitation would hide a different procurement.
+The TRCA capture likewise has seven reference groups with distinct portal pages, including
+prequalification/tender stages, reposts and apparently different scopes. The old
+249-record → 242-key TRCA storage result above was measured before this safeguard; it is
+not evidence that all these relationships are safe to coalesce.
+
+Storage now validates the entire posting-to-reference relationship before any upserts.
+More than one distinct page for the same buyer/reference refuses the batch explicitly;
+all raw snapshots remain preserved. No synthetic native reference or automatic
+cross-year/stage merge is introduced. Resolution belongs to the broader #124 identity
+contract. Backfill-only semantics and #140's status/supplier/value decisions remain
+unchanged for unambiguous inputs.
+
+The actual `enrich-agencies --portal --record` CLI was replayed against both complete saved
+corpora in fresh isolated directories. Zoo parsed/recorded **122/122** and reported eight
+conflicting references; TRCA parsed/recorded **249/249** and reported seven. Both exited 1
+with explicit `portal:<slug>` identity failures and **zero solicitation writes**. This is
+an expected refusal, not a successful ingestion claim or another empty feed. The 106 Zoo
+records with unambiguous references also pass a separate storage test, including exact
+control status/dates; that subset was not silently substituted for the full feed.
+
+Replay artifacts: `/tmp/tb-253/zoo-replay-evidence.json`, `cli-replay-zoo/replay.json`,
+`cli-replay-trca/replay.json`, and the corresponding CLI logs. These runs made zero
+network requests and no production changes. The original successful HTTP sweeps plus
+these deterministic parser/CLI replays verify the amended code without another crawl.
+
+The PR is now focused on truthful capture and safe refusal: after merge, the nightly is
+expected to report these real identity conflicts while archiving listings, rather than
+claiming “no listings” or silently coalescing records. A fully successful portal-storage
+step still requires the #124 identity work. The source, not the network, now provides the
+remaining blocker.

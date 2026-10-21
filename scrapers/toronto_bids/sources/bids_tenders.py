@@ -7,7 +7,8 @@ docs/permissions/ (the PMMD/Ariba precedent). Listings only — bid documents si
 Vendor clickwrap and are never fetched.
 
 TRCA fields are verified against real grid records and public detail metadata (#226).
-Zoo uses the same grid protocol; its real-record validation remains tracked in #140.
+Zoo parsing is verified against its complete recorded off-peak sweep. Distinct portal
+postings sharing a native reference are refused pending identity resolution (#124).
 Nonempty replies are recorded automatically, including when later parsing fails.
 """
 import hashlib
@@ -137,10 +138,23 @@ def _native_ref(record: dict) -> str:
         title = record.get("Title") or ""
         if record.get("buyer_slug") == "trca":
             pattern = r"^\s*(?:(?:RF[PQT]|RFSQ|RFI|REPOST)\s+)?(\d{8}(?:[_-]\d+)?)\s+-\s+"
-        else:
-            pattern = r"^\s*((?:RF[PQT]|RFSQ|RFI)[ -]?\d+(?:[-_]\d+)*)\s+-\s+"
-        match = re.match(pattern, title, re.I)
-        raw = match[1] if match else None
+            match = re.match(pattern, title, re.I)
+            raw = match[1] if match else None
+        elif record.get("buyer_slug") == "toronto-zoo":
+            # The captured grid consistently publishes "identifier - description".
+            # Zoo identifiers are not restricted to RFQ/RFP: preserve numeric, NRFP,
+            # dotted and spaced values verbatim rather than inventing a prefix from
+            # the description ("127 - RFQ 127 ..." is published under "127").
+            prefix, separator, description = title.partition(" - ")
+            prefix = prefix.strip()
+            if (separator and description.strip()
+                    and re.fullmatch(r"[A-Z0-9][A-Z0-9 ._-]*", prefix, re.I)
+                    and re.search(r"\d", prefix)):
+                import uuid
+                try:
+                    uuid.UUID(prefix)
+                except ValueError:
+                    raw = prefix
     from toronto_bids.linking.agency_reference import normalize_agency_reference
 
     ref = normalize_agency_reference(record.get("buyer_slug"), raw)
@@ -185,11 +199,26 @@ def store_listings(conn, records, buyer_ids: dict) -> int:
     fills any NULL field — a portal-only solicitation gets its full record including title,
     while a board-report row keeps its title/status and only has its empty dates filled in.
     Status refresh remains deferred to #140: existing non-null fields stay authoritative.
-    Validate every row before writing, so an unknown layout cannot partially write a batch.
+    Validate every row and posting-to-reference relationship before writing. Unknown layouts
+    and references shared by distinct portal pages refuse the batch instead of merging
+    unrelated procurements or partially storing it; raw snapshots remain available (#124).
     Skips unseeded buyers. Returns the number of listing records processed; repeated native
     references can enrich the same solicitation row."""
     rows = [parse_listing(record, buyer_ids[record["buyer_slug"]]) for record in records
             if record.get("buyer_slug") in buyer_ids]
+    # A native bid number is not necessarily a unique procurement across years/stages.
+    # Keep every source posting in raw snapshots, but do not silently collapse distinct
+    # pages into a single agency row while the wider identity contract (#124) is unresolved.
+    identities = {}
+    for row in rows:
+        identities.setdefault((row.buyer_id, row.native_ref), set()).add(row.portal_url)
+    conflicts = [ref for (_,ref), pages in identities.items() if len(pages) > 1]
+    if conflicts:
+        raise ValueError(
+            f"bids&tenders: identity conflict: {len(rows)} parsed listings include "
+            f"{len(conflicts)} reference(s) shared by distinct portal postings: "
+            f"{', '.join(sorted(conflicts)[:10])}; no solicitation rows written; "
+            "raw listings retained; identity resolution is tracked in #124")
     for row in rows:
         db.upsert_row(conn, row, overwrite=False)
     conn.commit()
