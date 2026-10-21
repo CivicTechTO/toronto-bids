@@ -1,0 +1,314 @@
+{
+  "version": 1,
+  "reviewed_on": "2026-10-21",
+  "decisions": [
+    {
+      "corpus": "trca",
+      "document_sha256": "d4f9945120745fe932b5eaab80093b1300653849d50527ea4344d60c8c6074c9",
+      "extractor_version": "v1-b63aa8c835ae",
+      "contract_sha256": "d364fe0d33a27d85b49a49784a3a6e07ca79f24aab306dbaf4f6632b5f1da59a",
+      "native_ref": "10043863",
+      "identifiers": [
+        {
+          "role": "solicitation",
+          "value": "10043863",
+          "authority": "trca"
+        },
+        {
+          "role": "contract",
+          "value": "10043792",
+          "authority": "trca"
+        }
+      ],
+      "basis": "The same report explicitly identifies RFQ 10043863 as this call and separately says contract 10043792. Use the solicitation identity; the contract number is not declared an alias.",
+      "sources": [
+        {
+          "url": "https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=19635",
+          "sha256": "d4f9945120745fe932b5eaab80093b1300653849d50527ea4344d60c8c6074c9",
+          "passages": [
+            "Award of Request for Quotation (RFQ) No. 10043863 for a Vendors of Record (VOR) arrangement for rental of construction fencing. RECOMMENDATION: WHEREAS Toronto and Region Conservation Authority (TRCA) is engaged in a variety of programs/projects that require construction fence rental for site security and public safety",
+            "award of contract No. 10043792 be awarded to Sunbelt Rentals of Canada, and Super Save Group of Companies. Relationship to TRCA’s 2023-2034 Strategic Plan This report supports the following Pillars and Outcomes set forth in TRCA’s 2023-2034 Strategic Plan: Pillar 1 Environmental Protection and Hazard Management: 1.1 De"
+          ]
+        }
+      ]
+    },
+    {
+      "corpus": "trca",
+      "document_sha256": "011b8c373ec08a00b9e8de632a9f87c3c299862ae5fd10d3e9c17c3946928502",
+      "extractor_version": "v1-b63aa8c835ae",
+      "contract_sha256": "c5b227dd6f9127f59574e5072016a6d81f38cc31dcb708f83768fd1c339b444c",
+      "native_ref": "10042179",
+      "identifiers": [
+        {
+          "role": "solicitation",
+          "value": "10042179",
+          "authority": "trca"
+        },
+        {
+          "role": "contract",
+          "value": "10040929",
+          "authority": "trca"
+        }
+      ],
+      "basis": "The same report identifies the current invasive-plant RFP as 10042179 and separately refers to contract 10040929. Retain the roles rather than equating those identifiers.",
+      "sources": [
+        {
+          "url": "https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=19889",
+          "sha256": "011b8c373ec08a00b9e8de632a9f87c3c299862ae5fd10d3e9c17c3946928502",
+          "passages": [
+            "Item 9.7 Section I – Items for Board of Directors Action TO: Chair and Members of the Board of Directors Friday, January 30, 2026 Meeting FROM: Anil Wijesooriya, Director, Restoration and Infrastructure RE: VENDOR OF RECORD ARRANGEMENT FOR INVASIVE PLANT MANAGEMENT SERVICES 2026-2028 RFP No. 10042179 KEY ISSUE Award of",
+            "Award of Request for Proposal (RFP) No. 10042179 for a Vendor of Record (VOR) arrangement for invasive plant management services. RECOMMENDATION: WHEREAS Toronto and Region Conservation Authority (TRCA) is engaged in a variety of programs/projects that require invasive plant management; AND WHEREAS TRCA solicited propo",
+            "10040929 in accordance with Table 1 to the following:  Aerodrome International Maintenance Inc.  Brinkman Reforestation Ltd.  Enviro Spray Land and Aquatic  Invasive Phragmites Control Centre Inc.  R. Leuschner Spraying Ltd.  Restoration Artists  Spectrum Resource Group Inc.  Sustainable Roots Ecological Restor",
+            "for a total cost not exceeding $1,035,000 plus applicable taxes, to be expended as authorized by TRCA staff; THAT staff be authorized to extend the term of the contract with the Vendor(s) for two (2) additional one-year periods as staff deem appropri"
+          ]
+        }
+      ],
+      "withheld_awards_reason": "Unproven per-supplier award amounts: the report publishes $1,035,000 as an aggregate VOR ceiling, not as an award to each vendor; individual monetary claims remain unresolved."
+    },
+    {
+      "corpus": "trca",
+      "document_sha256": "7a7fb96ca0a6b9cc5dce499cb09118c4bc1668531bed0eb58e942fbae80c2db8",
+      "extractor_version": "v1-b63aa8c835ae",
+      "contract_sha256": "9b38073e131ccf44f46c5528518b6f88c732ab9fd6f02339c2e75b003045e2b5",
+      "native_ref": "10022400",
+      "identifiers": [
+        {
+          "role": "solicitation",
+          "value": "10022400",
+          "authority": "trca"
+        },
+        {
+          "role": "provincial_framework",
+          "value": "OSS-00634452",
+          "authority": "Ontario"
+        }
+      ],
+      "basis": "TRCA resolution B132/19 labels its adoption RFP 10022400 and separately names Ontario framework OSS-00634452. The provincial framework identifier does not become a TRCA call number.",
+      "sources": [
+        {
+          "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=5341",
+          "sha256": "7a7fb96ca0a6b9cc5dce499cb09118c4bc1668531bed0eb58e942fbae80c2db8",
+          "passages": [
+            "RES.#B132/19 - ADOPTION OF PROVINCIAL VENDOR OF RECORD ARRANGEMENT OSS-00634452 VEHICLE ACQUISITIONS AND UPFITTING RFP No. 10022400. Adoption of Province of Ontario Vendor of Record (VOR) arrangement OSS-00634452 Vehicle Acquisitions and Upfitting for the period of 2020 through 2022 vehicle acquisition cycle. Moved by:",
+            "RFP No. 10022400. Adoption of Province of Ontario Vendor of Record (VOR) arrangement OSS-00634452 Vehicle Acquisitions and Upfitting for the period of 2020 through 2022 vehicle acquisition cycle. Moved by: Gordon Highet Seconded by: Linda Jackson WHEREAS Toronto and Region Conservation Authority (TRCA) is engaged in a ",
+            "The Province of Ontario (Ontario) has undertaken a competitive procurement process with various vehicle manufacturers and vehicle outfitters as it relates to the needs of Ontario’s fleet. This procurement process (OSS-00634452 – Vehicle Acquisitions and Up-Fitting) is open to provincially funded organizations through a"
+          ]
+        }
+      ]
+    },
+    {
+      "corpus": "trca",
+      "document_sha256": "45ceef327aecfaae04d4d0e50d0a38f674273d943df2bba8426e5608d5b0c254",
+      "extractor_version": "v1-b63aa8c835ae",
+      "contract_sha256": "bd0e405beb6777c16495427545653e82bbb5fcd5384693533a54764bc56683b3",
+      "native_ref": "10022400",
+      "identifiers": [
+        {
+          "role": "solicitation",
+          "value": "10022400",
+          "authority": "trca"
+        },
+        {
+          "role": "provincial_framework",
+          "value": "OSS-00634452",
+          "authority": "Ontario"
+        }
+      ],
+      "basis": "TRCA resolution B132/19 labels its adoption RFP 10022400 and separately names Ontario framework OSS-00634452. The provincial framework identifier does not become a TRCA call number.",
+      "sources": [
+        {
+          "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=5426",
+          "sha256": "45ceef327aecfaae04d4d0e50d0a38f674273d943df2bba8426e5608d5b0c254",
+          "passages": [
+            "RES.#B132/19 - ADOPTION OF PROVINCIAL VENDOR OF RECORD ARRANGEMENT OSS-00634452 VEHICLE ACQUISITIONS AND UPFITTING RFP No. 10022400. Adoption of Province of Ontario Vendor of Record (VOR) arrangement OSS-00634452 Vehicle Acquisitions and Upfitting for the period of 2020 through 2022 vehicle acquisition cycle. Moved by:",
+            "RFP No. 10022400. Adoption of Province of Ontario Vendor of Record (VOR) arrangement OSS-00634452 Vehicle Acquisitions and Upfitting for the period of 2020 through 2022 vehicle acquisition cycle. Moved by: Gordon Highet Seconded by: Linda Jackson WHEREAS Toronto and Region Conservation Authority (TRCA) is engaged in a ",
+            "The Province of Ontario (Ontario) has undertaken a competitive procurement process with various vehicle manufacturers and vehicle outfitters as it relates to the needs of Ontario’s fleet. This procurement process (OSS-00634452 – Vehicle Acquisitions and Up-Fitting) is open to provincially funded organizations through a"
+          ]
+        }
+      ]
+    },
+    {
+      "corpus": "trca",
+      "document_sha256": "afa722738fe02481f0e95b50a322071588d32c428fb968be526d6517de52d00b",
+      "extractor_version": "v1-b63aa8c835ae",
+      "contract_sha256": "707da26c8755cd433f28a85e6649d96b076ac6cdfa8974ab0bf8d70a78327013",
+      "native_ref": "10042179",
+      "identifiers": [
+        {
+          "role": "solicitation",
+          "value": "10042179",
+          "authority": "trca"
+        },
+        {
+          "role": "contract",
+          "value": "10040929",
+          "authority": "trca"
+        }
+      ],
+      "basis": "Minutes of Board meeting 1/26, January 30 2026, item 9.7 / A9/26 adopt the same recommendation as the staff report for that date and item. That report prints RFP 10042179; no supplier/title similarity matcher is used.",
+      "sources": [
+        {
+          "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=19982",
+          "sha256": "afa722738fe02481f0e95b50a322071588d32c428fb968be526d6517de52d00b",
+          "passages": [
+            "Board of Directors Meeting #1/26 was held via videoconference, on January 30, 2026. The Chair, Paul Ainslie, called the meeting to order at 9:32 a.m. 2. ACKNOWLEDGEMENT OF INDIGENOUS TERRITORY The Chair recited the Acknowledgement of Indigenous Territory. 1 3. 2026 CITY OF TORONTO APPOINTMENT TO TORONTO AND REGION CONS",
+            "9.7 VENDOR OF RECORD ARRANGEMENT FOR INVASIVE PLANT MANAGEMENT SERVICES 2026-2028 RES.#A 9/26 Moved By: Neethan Shan Seconded By: Steve Pellegrini WHEREAS Toronto and Region Conservation Authority (TRCA) is engaged in a variety of programs/projects that require invasive plant management; AND WHEREAS TRCA solicited prop"
+          ]
+        },
+        {
+          "url": "https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=19889",
+          "sha256": "011b8c373ec08a00b9e8de632a9f87c3c299862ae5fd10d3e9c17c3946928502",
+          "passages": [
+            "Item 9.7 Section I – Items for Board of Directors Action TO: Chair and Members of the Board of Directors Friday, January 30, 2026 Meeting FROM: Anil Wijesooriya, Director, Restoration and Infrastructure RE: VENDOR OF RECORD ARRANGEMENT FOR INVASIVE PLANT MANAGEMENT SERVICES 2026-2028 RFP No. 10042179 KEY ISSUE Award of",
+            "Award of Request for Proposal (RFP) No. 10042179 for a Vendor of Record (VOR) arrangement for invasive plant management services. RECOMMENDATION: WHEREAS Toronto and Region Conservation Authority (TRCA) is engaged in a variety of programs/projects that require invasive plant management; AND WHEREAS TRCA solicited propo",
+            "10040929 in accordance with Table 1 to the following:  Aerodrome International Maintenance Inc.  Brinkman Reforestation Ltd.  Enviro Spray Land and Aquatic  Invasive Phragmites Control Centre Inc.  R. Leuschner Spraying Ltd.  Restoration Artists  Spectrum Resource Group Inc.  Sustainable Roots Ecological Restor",
+            "for a total cost not exceeding $1,035,000 plus applicable taxes, to be expended as authorized by TRCA staff; THAT staff be authorized to extend the term of the contract with the Vendor(s) for two (2) additional one-year periods as staff deem appropri"
+          ]
+        }
+      ]
+    },
+    {
+      "corpus": "trca",
+      "document_sha256": "7a1e47f23c0ea00f2efdc0387dd57e100ef7538560dd6a667f0ca36ba1f56ce5",
+      "extractor_version": "v1-b63aa8c835ae",
+      "contract_sha256": "e25434b8282a01cc4ef618f80d94104b6c80a7b6d31f2de3fdbab39e67d567e0",
+      "native_ref": "10038886",
+      "identifiers": [
+        {
+          "role": "solicitation",
+          "value": "10038886",
+          "authority": "trca"
+        }
+      ],
+      "basis": "Minutes of Board meeting 4/23, April 28 2023, item 8.4 / A65/23 adopt the plant-materials VOR recommendation. The staff report for the same date and item identifies RFP 10038886 and the same eight vendors and term.",
+      "sources": [
+        {
+          "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=14491",
+          "sha256": "7a1e47f23c0ea00f2efdc0387dd57e100ef7538560dd6a667f0ca36ba1f56ce5",
+          "passages": [
+            "Board of Directors Meeting #4/23 was held via videoconference, on Friday, April 28, 2023. The Chair Paul Ainslie, called the meeting to order at 9:41 a.m. 2. ACKNOWLEDGEMENT OF INDIGENOUS TERRITORY The Chair recited the Acknowledgement of Indigenous Territory. 3. DISCLOSURE OF PECUNIARY INTEREST AND THE GENERAL NATURE ",
+            "8.4 VENDOR OF RECORD ARRANGEMENT FOR THE SUPPLY AND DELIVERY OF VARIOUS PLANT MATERIALS 2023-2026 PLANTING SEASONS RES.#A 65/23 Moved By: Linda Jackson Seconded By: Steve Pellegrini WHEREAS Toronto and Region Conservation Authority (TRCA) is engaged in a variety of programs/projects that require native trees and shrubs"
+          ]
+        },
+        {
+          "url": "https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=14410",
+          "sha256": "3466154073b58bcc4a0c12079710ee45e6c309cbcd691670a1c85666502b5581",
+          "passages": [
+            "Item 8.4 Section I – Items for Board of Directors Action TO: Chair and Members of the Board of Directors Friday, April 28, 2023 Meeting FROM: Anil Wijesooriya, Director, Restoration and Infrastructure RE: VENDOR OF RECORD ARRANGEMENT FOR SUPPLY AND DELIVERY OF VARIOUS PLANT MATERIALS 2023-2026 PLANTING SEASONS RFP No. ",
+            "Award of Request for Proposal (RFP) No. 10038886 for a Vendor of Record (VOR) arrangement for the supply and delivery of various plant materials for 2023- 2026 planting season. RECOMMENDATION: WHEREAS Toronto and Region Conservation Authority (TRCA) is engaged in a variety of programs/projects that require native trees",
+            "Grow Wild! Native Plant Nursery, Hortico Nurseries Inc., NVK Nurseries Inc., Verbinnen’s Nursery Ltd., Hillen Nursery Ltd., Dutchmaster Nurseries Ltd., Pine Needle Farms Inc., and AVK Nursery Holdings Inc. for the supply of various plant materials for a period of three (3) years from August 1, 2023 to July 31, 2026; AN"
+          ]
+        }
+      ]
+    },
+    {
+      "corpus": "trca",
+      "document_sha256": "506d572f33c144f1d6a294b28c02bebd052f33c48763f74df3a43621f55e6795",
+      "extractor_version": "v1-b63aa8c835ae",
+      "contract_sha256": "8d3bff4831224eb12637d51a4676cc02d1bdc7a6cad1b5131fbeacfb152b802e",
+      "native_ref": "10044507",
+      "identifiers": [
+        {
+          "role": "solicitation",
+          "value": "10044507",
+          "authority": "trca"
+        }
+      ],
+      "basis": "Executive Committee minutes for June 12 2026, item 9.6 / B36/26 adopt the sediment-disposal recommendation. The staff report for the same date and item explicitly identifies RFT 10044507. The later Board minutes are not automatically matched.",
+      "sources": [
+        {
+          "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=20665",
+          "sha256": "506d572f33c144f1d6a294b28c02bebd052f33c48763f74df3a43621f55e6795",
+          "passages": [
+            "Executive Committee Meeting #5/26 was held via videoconference, on June 12, 2026 pursuant to section c.12 of the Toronto and Region Conservation Authority Board of Directors Administrative By-Law. The Chair, Dave Barton, called the meeting to order at 9:30 a.m. 2. ACKNOWLEDGEMENT OF INDIGENOUS TERRITORY The Chair recit",
+            "9.6 REQUEST FOR TENDER FOR SEDIMENT DISPOSAL FACILITY, BRAMPTON STORMWATER MANAGEMENT PONDS (SWMPS) RES.#B 36/26 Moved By: Paula Fletcher WHEREAS Toronto and Region Conservation Authority (TRCA) is currently working with the City of Brampton (“City”) for the maintenance of two (2) SWMP under a fee for service letter ag"
+          ]
+        },
+        {
+          "url": "https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=20601",
+          "sha256": "5c881aec1c8522dd1ab307875eae2a398135740ae3d5742161933da0894e93e7",
+          "passages": [
+            "Item 9.6 Section II – Items for Executive Committee Action TO: Chair and Members of the Executive Committee Friday, June 12, 2026 Meeting FROM: Anil Wijesooriya, Director, Restoration and Infrastructure RE: REQUEST FOR TENDER FOR SEDIMENT DISPOSAL FACILITY, BRAMPTON STORMWATER MANAGEMENT PONDS (SWMPS) RFT No. 10044507 ",
+            "RFT No. 10044507 KEY ISSUE Award of Request for Tender (RFT) No.# 10044507 for Sediment Disposal of two (2) Brampton Stormwater Management Ponds (“SWMP”). RECOMMENDATION: WHEREAS Toronto and Region Conservation Authority (“TRCA”) is currently working with the City of Brampton (“City”) for the maintenance of two (2) SWM",
+            "Greenspace Environmental Inc. be awarded a total cost of $340,550.00 plus applicable taxes, for the disposal of sediment from each SWMP, to be expended as authorized by TRCA staff; AND WHEREAS TRCA staff be authorized to approve additional expenditures to a maximum of $34,055.00 (approximately 10% of the project cost),"
+          ]
+        }
+      ]
+    },
+    {
+      "corpus": "trca",
+      "document_sha256": "1e425f4c95bef426f20134b685a69ec92d6c6e122d01080c6897884af68a16dc",
+      "extractor_version": "v1-b63aa8c835ae",
+      "contract_sha256": "b11ae6a993933cfbd03c0953e4518293c3e4e78e27d19adae70144dc3855627d",
+      "native_ref": "10042722-01",
+      "legacy_native_ref": "10042722",
+      "identifiers": [
+        {
+          "role": "solicitation",
+          "value": "10042722-01",
+          "authority": "trca"
+        }
+      ],
+      "basis": "The held source and exact cached contract print 10042722-01. Older normalization truncated -01. Re-key only prior bid/award facts from this same report with the same supplier and amount; preserve their IDs and history. This is a correction of our old representation, not a general alias between parent calls and suffixed lots.",
+      "sources": [
+        {
+          "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=19465",
+          "sha256": "1e425f4c95bef426f20134b685a69ec92d6c6e122d01080c6897884af68a16dc",
+          "passages": [
+            "ly advertised process; THEREFORE LET IT BE RESOLVED THAT RFQ No. 10042722-01 for Supply, Delivery, and Licensing of Class 2a Hybrid Electric Trucks be awarded to Fines Ford Lincoln Sales and Service Ltd at a total cost not to exceed $309,026.25, plus applicable taxes, to be expended as authorized by TRCA staff; THAT TRCA staff be authorized to approve additional "
+          ]
+        }
+      ]
+    },
+    {
+      "corpus": "trca",
+      "document_sha256": "3a82d805aff5a3200ed68dcf23116cee20693ca86dcd59ed16351c9ad93fe35a",
+      "extractor_version": "v1-b63aa8c835ae",
+      "contract_sha256": "56cc7c5889e5f87e5b8823ec2df9d8699928974c2e1cb74af75358bbff4e3f92",
+      "native_ref": "10042722-01",
+      "legacy_native_ref": "10042722",
+      "identifiers": [
+        {
+          "role": "solicitation",
+          "value": "10042722-01",
+          "authority": "trca"
+        }
+      ],
+      "basis": "The held source and exact cached contract print 10042722-01. Older normalization truncated -01. Re-key only prior bid/award facts from this same report with the same supplier and amount; preserve their IDs and history. This is a correction of our old representation, not a general alias between parent calls and suffixed lots.",
+      "sources": [
+        {
+          "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=19466",
+          "sha256": "3a82d805aff5a3200ed68dcf23116cee20693ca86dcd59ed16351c9ad93fe35a",
+          "passages": [
+            "ly advertised process; THEREFORE LET IT BE RESOLVED THAT RFQ No. 10042722-01 for Supply, Delivery, and Licensing of Class 2a Hybrid Electric Trucks be awarded to Fines Ford Lincoln Sales and Service Ltd at a total cost not to exceed $309,026.25, plus applicable taxes, to be expended as authorized by TRCA staff; THAT TRCA staff be authorized to approve additional "
+          ]
+        }
+      ]
+    },
+    {
+      "corpus": "trca",
+      "document_sha256": "6c861202cc37113f19beb1d897bb7cec220961a956206462eac17b1704d50e07",
+      "extractor_version": "v1-b63aa8c835ae",
+      "contract_sha256": "8dee54b7ac3ce626074fbd18b14564ad38e43cb28aaedd337d6a592102f50a78",
+      "native_ref": "10042722-01",
+      "legacy_native_ref": "10042722",
+      "identifiers": [
+        {
+          "role": "solicitation",
+          "value": "10042722-01",
+          "authority": "trca"
+        }
+      ],
+      "basis": "The held source and exact cached contract print 10042722-01. Older normalization truncated -01. Re-key only prior bid/award facts from this same report with the same supplier and amount; preserve their IDs and history. This is a correction of our old representation, not a general alias between parent calls and suffixed lots.",
+      "sources": [
+        {
+          "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=19544",
+          "sha256": "6c861202cc37113f19beb1d897bb7cec220961a956206462eac17b1704d50e07",
+          "passages": [
+            "ly advertised process; THEREFORE LET IT BE RESOLVED THAT RFQ No. 10042722-01 for Supply, Delivery, and Licensing of Class 2a Hybrid Electric Trucks be awarded to Fines Ford Lincoln Sales and Service Ltd at a total cost not to exceed $309,026.25, plus applicable taxes, to be expended as authorized by TRCA staff; THAT TRCA staff be authorized to approve additional "
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -10,22 +10,28 @@ COUNTING = (
     'Contracts and extracted facts are counted once per (corpus, document SHA-256, '
     'extraction version, result digest, contract index), across indexed URLs. '
     'source_observations counts URL/contract pairs. Accepted and refused sets may '
-    'overlap if document contexts produce different decisions. Fact counts include '
+    'overlap if document contexts produce different decisions or a reviewed contract '
+    'has accepted bids but withheld award claims. Fact counts include '
     'named suppliers only and describe extraction evidence, not distinct stored rows. '
     'Alias counts describe stored rows normalized/merged in this rebuild, across '
     'solicitations, bids and awards; they are not lost facts.'
 )
 
 
-def decision(row, corpus, buyer_id, index, contract, native_ref, reason, contract_count):
+def decision(row, corpus, buyer_id, index, contract, native_ref, reason, contract_count, identity_evidence=None):
+    fingerprint = [native_ref, reason, row['reference']]
+    if identity_evidence is not None:
+        fingerprint.append(identity_evidence)
     return dict(corpus=corpus, buyer_id=buyer_id, sha256=row['sha256'],
                 extractor_version=EXTRACTOR_VERSION,
                 result_sha256=hashlib.sha256(row['result_json'].encode()).hexdigest(),
-                decision_sha256=hashlib.sha256(json.dumps([native_ref, reason, row['reference']]).encode()).hexdigest(),
+                decision_sha256=hashlib.sha256(json.dumps(fingerprint).encode()).hexdigest(),
                 contract_index=index, contract_count=contract_count,
                 report_url=row['url'], report_reference=row['reference'],
                 native_ref=native_ref, reason=reason,
-                contract_json=json.dumps(contract, sort_keys=True, ensure_ascii=False))
+                contract_json=json.dumps(contract, sort_keys=True, ensure_ascii=False),
+                identity_evidence_json=json.dumps(identity_evidence, sort_keys=True, ensure_ascii=False)
+                if identity_evidence is not None else None)
 
 
 def persist(conn, corpus, decisions, aliases, docs_processed):
@@ -50,10 +56,20 @@ def persist(conn, corpus, decisions, aliases, docs_processed):
 
 
 def summarize(decisions):
-    groups = {'accepted': {}, 'refused': {}}
+    groups = {'accepted': {}, 'refused': {}, 'recovered': {}, 'withheld': {}}
     for item in decisions:
         key = tuple(item[k] for k in ('sha256', 'extractor_version', 'result_sha256', 'contract_index'))
-        groups['refused' if item['reason'] else 'accepted'][key] = json.loads(item['contract_json'])
+        contract = json.loads(item['contract_json'])
+        proof = json.loads(item.get('identity_evidence_json') or 'null')
+        if proof and proof.get('withheld_awards_reason'):
+            groups['refused'][key] = contract | {'bids': []}
+            groups['withheld'][key] = contract | {'bids': []}
+            groups['accepted'][key] = contract | {'awards': []}
+            groups['recovered'][key] = contract | {'awards': []}
+        else:
+            groups['refused' if item['reason'] else 'accepted'][key] = contract
+            if proof and not item['reason']:
+                groups['recovered'][key] = contract
     result = {'source_observations': len(decisions),
               'unique_documents_with_facts': len({d['sha256'] for d in decisions}), 'counting': COUNTING}
     for status, contracts in groups.items():
@@ -78,6 +94,7 @@ def report(conn, *, only=None, baseline=None):
         }
         for d in agencies[corpus]['decisions']:
             del d['contract_json']
+            d['identity_evidence'] = json.loads(d.pop('identity_evidence_json') or 'null')
     result = {'counting': COUNTING, 'agencies': agencies,
               'incomplete': any(a['summary'] is None or a['summary']['contracts_refused'] for a in agencies.values())}
     if baseline is not None:
@@ -148,7 +165,15 @@ def reconcile(conn, baseline, agencies):
             matches = [d for d in by_url.get((corpus, row['report_url']), [])
                        if any(f.get('supplier_name') == row[name] and f.get('amount_raw') == row[amount]
                               for f in d['contract'].get(kind, []))]
-            disposition = ('refused_identity' if any(d['reason'] for d in matches)
+            if any(d['native_ref'] and identity(d['native_ref']) in identities and
+                   (not d['reason'] or (kind == 'bids' and d.get('identity_evidence') and
+                                        d['identity_evidence'].get('withheld_awards_reason')))
+                   for d in matches):
+                counts['represented_by_accepted_evidence'] += 1
+                continue
+            disposition = ('refused_source_facts' if kind == 'awards' and any(
+                               d.get('identity_evidence') and d['identity_evidence'].get('withheld_awards_reason') for d in matches)
+                           else 'refused_identity' if any(d['reason'] for d in matches)
                            else 'accepted_evidence_not_stored' if matches else 'no_matching_current_evidence')
             counts[disposition] += 1
             unmatched.append({'prior_row': row, 'disposition': disposition, 'evidence': matches})

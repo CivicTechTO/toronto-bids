@@ -554,6 +554,7 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
     if corpus in ("trca", "ep", "zoo"):
         from toronto_bids.linking.agency_reference import normalize_agency_reference, report_reference
         from toronto_bids.agency_coverage import decision
+        from toronto_bids.linking.agency_identity import reviewed_identity
 
         if rows and buyer_id is None:
             raise RuntimeError(f'backfill {corpus}: buyer is not seeded; existing rows kept')
@@ -565,8 +566,10 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
             for index, contract in enumerate(contracts):
                 if not (contract.get("bids") or contract.get("awards")):
                     continue
+                identity_evidence = reviewed_identity(corpus, row['sha256'], contract)
                 try:
-                    ref = normalize_agency_reference(_CORPUS_BUYER_SLUG[corpus], contract.get("reference"))
+                    ref = (identity_evidence['native_ref'] if identity_evidence is not None else
+                           normalize_agency_reference(_CORPUS_BUYER_SLUG[corpus], contract.get("reference")))
                     if not ref:
                         if len(contracts) != 1:
                             raise ValueError("ambiguous reference-less multi-contract report")
@@ -576,7 +579,13 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
                     refusal_details.append(f"{row['url']}: {exc}")
                     decisions.append(decision(row, corpus, buyer_id, index, contract, None, str(exc), len(contracts)))
                     continue
-                decisions.append(decision(row, corpus, buyer_id, index, contract, ref, None, len(contracts)))
+                withheld_awards_reason = (identity_evidence.get('withheld_awards_reason')
+                                          if identity_evidence is not None else None)
+                if withheld_awards_reason:
+                    contracts_refused += 1
+                    refusal_details.append(f"{row['url']}: {withheld_awards_reason}")
+                decisions.append(decision(row, corpus, buyer_id, index, contract, ref, withheld_awards_reason,
+                                          len(contracts), identity_evidence))
                 has_awards = bool(contract.get("awards"))
                 solicitations.append(
                     AgencySolicitation(
@@ -607,7 +616,7 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
                             source=source,
                         )
                     )
-                for award in contract.get("awards", []):
+                for award in ([] if withheld_awards_reason else contract.get("awards", [])):
                     name = award.get("supplier_name")
                     if not name:
                         continue
@@ -626,7 +635,7 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
                         )
                     )
         if refusal_details:
-            log(f"  backfill {corpus}: refused {contracts_refused} ambiguous URL/contract observation(s): "
+            log(f"  backfill {corpus}: refused facts in {contracts_refused} URL/contract observation(s): "
                 + "; ".join(refusal_details[:10])
                 + (" ..." if len(refusal_details) > 10 else ""))
         rebuilt = [("agency_bid", bids), ("agency_award", awards)]
@@ -735,7 +744,9 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
     try:
         if corpus in _CORPUS_BUYER_SLUG and buyer_id is not None:
             from toronto_bids.linking.agency_reference import normalize_stored_references
-            aliases = normalize_stored_references(conn, _CORPUS_BUYER_SLUG[corpus], buyer_id, source)
+            from toronto_bids.linking.agency_identity import history_aliases
+            aliases = normalize_stored_references(conn, _CORPUS_BUYER_SLUG[corpus], buyer_id, source,
+                                                   proven_aliases=history_aliases(decisions))
         for table, derived in rebuilt:
             if not derived:
                 log(f"  backfill {corpus}: nothing derived for {table}, existing rows kept")
@@ -824,12 +835,19 @@ def extract_and_backfill(
 
     result = backfill_from_extraction(conn, corpus, log=log)
     coverage = result.get('coverage')
-    if coverage and coverage['contracts_refused'] and failures is not None:
-        failures.append((f'identity:{corpus}',
-                         f"incomplete coverage: {coverage['contracts_refused']} contract(s) refused; "
+    if coverage and failures is not None:
+        withheld = coverage.get('contracts_withheld', 0)
+        identity_refusals = coverage['contracts_refused'] - withheld
+        if identity_refusals:
+            failures.append((f'identity:{corpus}',
+                         f"incomplete coverage: {identity_refusals} contract(s) have refused identity; "
                          f"{coverage['refused_bid_facts']} bid fact(s), "
-                         f"{coverage['refused_award_facts']} award fact(s); "
+                         f"{coverage['refused_award_facts'] - coverage.get('withheld_award_facts', 0)} award fact(s); "
                          "evidence retained — inspect with tb agency-coverage"))
+        if withheld:
+            failures.append((f'coverage:{corpus}',
+                             f"incomplete coverage: {coverage['withheld_award_facts']} individual award claim(s) "
+                             "withheld after source review; supported bids retained; inspect tb agency-coverage"))
     return result
 
 

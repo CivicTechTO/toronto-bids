@@ -478,6 +478,7 @@ CREATE TABLE IF NOT EXISTS agency_derivation (
     native_ref TEXT,
     reason TEXT,
     contract_json TEXT NOT NULL,
+    identity_evidence_json TEXT,
     active INTEGER NOT NULL DEFAULT 1,
     first_seen TEXT NOT NULL DEFAULT (datetime('now')),
     last_seen TEXT NOT NULL DEFAULT (datetime('now')),
