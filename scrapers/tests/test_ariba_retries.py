@@ -71,7 +71,7 @@ def test_partial_retries_resolve_gaps_and_rebuild_the_index(retry,conn,tmp_path)
     assert run(lambda log:pytest.fail('resolved bundle retried'))==(0,[])
 
 
-@pytest.mark.parametrize('outcome',['error','closed','denied','poorer','swap-gap'])
+@pytest.mark.parametrize('outcome',['error','closed','denied','poorer'])
 def test_failed_or_poorer_retries_keep_archive_gap_and_index(retry,conn,tmp_path,outcome):
     run,seed,seen=retry
     path=seed();gap=path.with_suffix('.omitted.json')
@@ -91,14 +91,14 @@ def test_failed_or_poorer_retries_keep_archive_gap_and_index(retry,conn,tmp_path
     assert conn.execute('select count(*) from ariba_attachment').fetchone()[0]==2
 
 
-def test_a_changed_listing_does_not_erase_a_previous_omission(retry,tmp_path):
+def test_a_verified_changed_listing_retires_withdrawn_omissions(retry,tmp_path):
     run,seed,seen=retry
     path=seed()
     count,failures=run(lambda log:ariba_files.capture_files(
         Source(names=('a.pdf','c.pdf','new.pdf')),DOC,tmp_path,log=log))
-    assert count==1 and failures
-    assert json.loads(path.with_suffix('.omitted.json').read_text())['omitted']==['b.pdf']
-    assert run(lambda log:None)[1]  # remains eligible and visibly unresolved
+    assert count==1 and not failures
+    assert not path.with_suffix('.omitted.json').exists()
+    assert aa.bundle_complete(tmp_path,DOC)
 
 
 def test_corrupt_omission_evidence_is_not_silently_cleared(retry,tmp_path):
@@ -160,4 +160,15 @@ def test_collision_evidence_stays_visible_until_identity_is_audited(retry,tmp_pa
     path.with_suffix('.omitted.json').write_text(json.dumps({'omitted':[],'collided':1}))
     count,failures=run(lambda log:ariba_files.capture_files(Source(),DOC,tmp_path,log=log))
     assert count==1 and failures and '1 collapsed link' in failures[0][1]
+    assert not aa.bundle_complete(tmp_path,DOC)
+
+
+def test_changed_missing_file_is_reported_even_when_older_bytes_exist(retry,conn,tmp_path):
+    run,seed,seen=retry
+    path=seed()
+    count,failures=run(lambda log: ariba_files.capture_files(
+        Source(fail=('c.pdf',)),DOC,tmp_path,log=log))
+    assert count==1 and failures
+    assert json.loads(path.with_suffix('.omitted.json').read_text())['omitted']==['c.pdf']
+    assert conn.execute('select count(*) from ariba_attachment').fetchone()[0]==3
     assert not aa.bundle_complete(tmp_path,DOC)

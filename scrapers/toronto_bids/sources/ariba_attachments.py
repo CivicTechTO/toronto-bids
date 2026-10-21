@@ -209,8 +209,15 @@ def bundle_complete(dest_dir, document_number: str) -> bool:
     if not bundle_archived(dest_dir, document_number):
         return False
     try:
-        record = ariba_files.read_omitted(Path(dest_dir) / f"Doc{document_number}.zip")
-    except RuntimeError:
+        target = Path(dest_dir) / f"Doc{document_number}.zip"
+        record = ariba_files.read_omitted(target)
+        from toronto_bids.sources.ariba_versions import read_provenance
+        with zipfile.ZipFile(target) as archive:
+            provenance, _ = read_provenance(archive)
+        if provenance and (provenance["document_number"] != document_number
+                           or any(item["path"] is None for item in provenance["listing"])):
+            return False
+    except (RuntimeError, ValueError, KeyError, TypeError, OSError, zipfile.BadZipFile):
         return False
     return not (record["omitted"] or record["collided"])
 
@@ -488,7 +495,7 @@ def capture_event(page, event: dict, dest_dir, log=lambda _m: None) -> Path | No
     source = AribaFileSource(page, rfx_id=rfx_id, log=log)
     # Reaching this line means the posting is OPEN -- the Respond-disabled branch above already
     # routed a closed posting to salvage and returned. That is what makes it safe for
-    # `capture_files` to discard partials on a fingerprint mismatch or an unreadable manifest
+    # `capture_files` to retire partial slots on a fingerprint mismatch or an unreadable manifest
     # (see its docstring): those bytes are always re-fetchable from here. The salvage side of
     # this same invariant is checked by IDENTITY (`finalise_partial(..., posting_open=False)`,
     # asserted a few lines up); this side has no such flag and is guarded only structurally, by

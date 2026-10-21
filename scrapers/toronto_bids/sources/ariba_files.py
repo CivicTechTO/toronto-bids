@@ -65,6 +65,7 @@ import json
 import os
 import re
 import shutil
+import tempfile
 import zipfile
 from pathlib import Path
 
@@ -410,6 +411,17 @@ def partial_dir(dest_dir, document_number: str) -> Path:
     return Path(dest_dir) / PARTIAL_DIRNAME / f"Doc{document_number}"
 
 
+
+def _retire_partials(pdir):
+    """Never reuse stale slots, but retain their bytes and original identity evidence."""
+    if not pdir.exists():
+        return
+    history = pdir.parent / ".retired" / pdir.name
+    history.mkdir(parents=True, exist_ok=True)
+    snapshot = Path(tempfile.mkdtemp(prefix="capture-", dir=history))
+    pdir.rename(snapshot / "payload")
+
+
 def make_fingerprint(files) -> dict:
     """Identity of the event as we traversed it: the ORDERED (key, name) pairs it listed.
 
@@ -422,8 +434,8 @@ def make_fingerprint(files) -> dict:
     partial is kept as already-complete, and the bundle ends up holding X twice and Y never --
     with the counts matching, so no gap is recorded. Silently wrong, permanently.
 
-    So the pairs are compared in order and any reorder or identity substitution invalidates the
-    partials, which costs a re-download and nothing else. Lists (not tuples) because this is
+    So the pairs are compared in order and any reorder or identity substitution retires the
+    partials. Their complete bytes survive as historical versions while current slots re-download. Lists (not tuples) because this is
     compared against a manifest read back from JSON. No longer carries an `expected_count` (#185)
     -- the picker's count it used to ride along with was proven incommensurable with this list's
     own length, so it protected nothing an addendum-mid-capture wasn't already caught by: a
@@ -435,9 +447,14 @@ def make_fingerprint(files) -> dict:
 def read_manifest(pdir):
     path = Path(pdir) / MANIFEST_NAME
     try:
-        return json.loads(path.read_text())
-    except (OSError, json.JSONDecodeError):
-        return None  # missing OR corrupt: callers discard partials and re-traverse
+        record = json.loads(path.read_text())
+        pairs = record["fingerprint"]["files"]
+        if (not isinstance(pairs, list) or any(not isinstance(pair, list) or len(pair) != 2
+                or any(not isinstance(value, str) or not value for value in pair) for pair in pairs)):
+            return None
+        return record
+    except (OSError, ValueError, KeyError, TypeError):
+        return None  # missing OR corrupt: retire stale slots and re-traverse
 
 
 def write_manifest(pdir, fingerprint: dict) -> Path:
@@ -526,9 +543,12 @@ class _BundleWouldShrink(ValueError):
     pass
 
 
-def _publish_capture(captured, target, omitted, *, collided=0, log=lambda _m: None):
+def _publish_capture(captured, target, omitted, *, collided=0, listing=None, log=lambda _m: None):
     """Check actual candidate leaves before changing the canonical zip or gap record."""
     from toronto_bids.sources.zip_index import index_zip
+
+    if listing is not None:
+        return _publish_amendment(captured, target, omitted, listing, collided=collided, log=log)
 
     previous = read_omitted(target)
     retrying = target.exists() and bool(previous["omitted"] or previous["collided"])
@@ -582,6 +602,60 @@ def _publish_capture(captured, target, omitted, *, collided=0, log=lambda _m: No
     return True
 
 
+
+def _publish_amendment(captured, target, omitted, listing, *, collided=0, log=lambda _m: None):
+    from toronto_bids.sources.ariba_versions import merge_capture, verify_preserved, write_provenance
+    from toronto_bids.sources.zip_index import index_zip
+
+    previous = read_omitted(target)
+    collisions = max(collided, previous["collided"])
+    planned = [{"key":entry["key"], "name":entry["name"], "archive_name":name}
+               for entry,name in zip(listing, unique_names([e["name"] for e in listing]))]
+    captured_names = {name for _,name in captured}
+    missing = [entry["archive_name"] for entry in planned
+               if entry["archive_name"] not in captured_names]
+    if set(missing) != set(omitted):
+        raise ValueError("Current omission evidence disagrees with the verified listing")
+    gap = target.with_suffix(".omitted.json")
+    old_gap = gap.read_bytes() if gap.exists() else None
+    had_bundle = target.exists()
+    retired = []
+    retired_root = partial_dir(target.parent, target.stem.removeprefix("Doc")).parent / ".retired" / target.stem
+    for snapshot in sorted(retired_root.glob("*/payload")):
+        prior = read_manifest(snapshot)
+        try:
+            pairs = prior["fingerprint"]["files"]
+            keys = dict(zip(unique_names([p[1] for p in pairs]), [p[0] for p in pairs]))
+        except (TypeError, KeyError, IndexError):
+            keys = {}  # preserve bytes without inventing identity for unreadable evidence
+        for path in sorted((snapshot / "files").glob("*")):
+            if path.is_file() and path.stat().st_size and path.suffix != ".part":
+                retired.append((path, path.name, keys.get(path.name)))
+    with merge_capture(captured, target, planned, retired=retired) as (files, manifest, old_hashes):
+        def validate(candidate):
+            write_provenance(candidate, manifest)
+            verify_preserved(candidate, old_hashes)
+            candidate_count = len(index_zip(candidate, strict=True))
+            if target.exists() and candidate_count < len(index_zip(target, strict=True)):
+                raise _BundleWouldShrink("Version merge would reduce the recursive leaf count")
+            write_omitted(target, missing, collided=collisions)
+        try:
+            build_bundle(files, target, before_replace=validate)
+        except BaseException:
+            # The candidate and its provenance publish atomically. Until that happens the
+            # sidecar must continue describing the held archive, not the new listing.
+            if had_bundle:
+                if old_gap is None:
+                    gap.unlink(missing_ok=True)
+                else:
+                    temp = gap.with_suffix(gap.suffix + ".tmp")
+                    temp.write_bytes(old_gap)
+                    os.replace(temp, gap)
+            raise
+    clear_omitted_when_complete(target, missing, collided=collisions)
+    return True
+
+
 def capture_files(source, document_number: str, dest_dir, log=lambda _m: None):
     """Download every document individually, then build the canonical bundle.
 
@@ -612,22 +686,22 @@ def capture_files(source, document_number: str, dest_dir, log=lambda _m: None):
     manifest = read_manifest(pdir)
     if manifest is None:
         # Missing OR corrupt: `read_manifest` cannot tell "no partials yet" from "a manifest we
-        # cannot trust", so both must discard rather than fall through and adopt whatever is
+        # cannot trust", so both must retire rather than fall through and adopt whatever is
         # already in `files/` POSITIONALLY -- `ariba_batch.py`'s retired `capture_in_batches`
         # made the identical call for the identical reason (#186 confirmed this lesson lives
         # here independently before that module was removed). Discarding an empty or
         # nonexistent directory costs nothing.
         if pdir.exists():
             log(
-                f"  Doc{document_number}: missing/unreadable manifest — discarding partials "
+                f"  Doc{document_number}: missing/unreadable manifest — retiring partials "
                 f"and restarting"
             )
-        shutil.rmtree(pdir, ignore_errors=True)
+        _retire_partials(pdir)
     elif manifest.get("fingerprint") != fingerprint:
         log(
-            f"  Doc{document_number}: event changed since the last run — discarding partials"
+            f"  Doc{document_number}: event changed since the last run — retiring partials"
         )
-        shutil.rmtree(pdir, ignore_errors=True)
+        _retire_partials(pdir)
     fdir = pdir / "files"
     fdir.mkdir(parents=True, exist_ok=True)
     write_manifest(pdir, fingerprint)
@@ -718,7 +792,7 @@ def capture_files(source, document_number: str, dest_dir, log=lambda _m: None):
     # "absence means nothing is missing" false.
     target = dest_dir / f"Doc{document_number}.zip"
 
-    if not _publish_capture(captured, target, omitted, collided=collided_count, log=log):
+    if not _publish_capture(captured, target, omitted, collided=collided_count, listing=files, log=log):
         return None
     shutil.rmtree(pdir, ignore_errors=True)
     log(f"  Doc{document_number}: captured {len(captured)} file(s) -> {target.name}")
