@@ -1,5 +1,25 @@
 # Agency board-report fixtures (#135)
 
+## Agency identity recovery fixtures (#258)
+
+`identity_recovery_2026-10-21.json` retains ten complete, unchanged cached extraction
+results read offline on 2026-10-21. Source URLs and PDF SHA-256 values identify the
+original public records. The `recoveries` indices are zero-based positions in the
+complete contract arrays, including empty/unrelated contracts.
+
+Source passages and identifier roles are recorded in
+`toronto_bids/data/agency_identity_evidence.json`. Each quoted passage was checked
+against a fresh `pdftotext -layout` rendering of the held PDF after verifying its
+SHA-256. Twelve distinct PDFs support the ten relationships: compound solicitation /
+contract identifiers, Ontario-framework / TRCA-adoption identifiers, dated meeting-item
+links between minutes and staff reports, and the source-printed `10042722-01` suffix.
+The last is a correction of our earlier truncation, not a general parent/lot equivalence.
+
+DocumentId=19889's cached result assigns a shared $1,035,000 VOR ceiling to each
+supplier. Its bidder facts are supported; those individual award amounts are withheld.
+DocumentId=19982 independently supports the vendor memberships with NULL amounts.
+Original extracted claims remain unchanged in the fixture/cache and inspectable ledger.
+
 ## Agency identity refusal cache fixtures (#257)
 
 `identity_refusals_2026-10-21.json` contains three complete, unchanged held extraction

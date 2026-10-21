@@ -43,12 +43,16 @@ def report_reference(council_reference, url):
     return url
 
 
-def normalize_stored_references(conn, buyer_slug, buyer_id, source):
+def normalize_stored_references(conn, buyer_slug, buyer_id, source, *, proven_aliases=()):
     """Re-key only deterministic aliases, preserving row history inside the caller's transaction.
 
     These are identifier-format equivalences, never supplier/title/amount matching. When an
     alias collides with its canonical row, retain the canonical id and non-null values, fill
     missing fields from the alias, and retain the earliest first_seen/latest last_seen.
+    Reviewed history aliases additionally bind the old/new representation to an exact
+    held-report observation and its extracted facts. Supplier/amount constrain an already
+    proven relationship; they never establish one. Solicitation rows lack that provenance
+    and do not use these per-report aliases.
     """
     keys = {
         "agency_solicitation": ("buyer_id", "native_ref"),
@@ -68,6 +72,16 @@ def normalize_stored_references(conn, buyer_slug, buyer_id, source):
                 ref = normalize_agency_reference(buyer_slug, old["native_ref"])
             except ValueError:
                 continue  # unresolved identity stays held; never guess a merge
+            if table in ('agency_bid', 'agency_award'):
+                kind, name, amount = (('bids', 'bidder_name_raw', 'bid_price') if table == 'agency_bid'
+                                      else ('awards', 'supplier_name_raw', 'award_amount'))
+                proven = {a['native_ref'] for a in proven_aliases
+                          if a['old_native_ref'] == old['native_ref'] and a['report_url'] == old['report_url']
+                          and (old[name], old[amount]) in a[kind]}
+                if len(proven) > 1:
+                    raise ValueError('conflicting reviewed agency history aliases')
+                if proven:
+                    ref = proven.pop()
             if not ref or ref == old["native_ref"]:
                 continue
             new = old | {"native_ref": ref}
