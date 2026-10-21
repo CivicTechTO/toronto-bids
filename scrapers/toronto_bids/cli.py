@@ -917,7 +917,7 @@ def _cmd_nightly(args) -> int:
                         if isinstance(v, str) and v.startswith("FAILED"):
                             failures.append((f"portal:{slug}", v))
                     total = sum(v for v in res.values() if isinstance(v, int))
-                    return f"{total} listings" if total else "no open bids"
+                    return f"{total} listings" if total else "no listings"
 
                 before_len = len(failures)
                 run_id = _run_step(steps, failures, "portal", _portal, conn=conn)

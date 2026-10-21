@@ -112,6 +112,26 @@ must allow internal whitespace, bounded, stopping at for/at/,/in-the-amount; (2)
 is `RFT No. EP###-YYYY` (2023) OR `Contract No. <token>` (2019); (4) both years use "in the amount
 of $X"; (5) a bid price may carry a trailing `*` footnote.
 
+## bids_tenders_trca_2026-10-20.json — REAL (#226)
+
+Four unmodified records selected from the public TRCA grid search on 2026-10-20. Request:
+`POST https://trca.bidsandtenders.ca/Module/Tenders/en/Tender/Search/950af760-3894-40ef-86fd-ef17e2f5104a`
+with the landing page's cookie/token pair, empty `status` (All), `limit=50`, `start` offsets,
+blank `from`/`to`, `dir=DESC`, and `sort=DateClosing DESC,Id`. No login or documents fetched.
+The full rate-limited sweep yielded 249 unique listing IDs against total=249. Tokens/cookies
+are not fixture content; tests add `buyer_slug` locally.
+
+Public Bid Number fields on these detail pages independently confirmed the title-prefix keys:
+
+| Bid number | Public detail URL |
+| --- | --- |
+| 10044383 | https://trca.bidsandtenders.ca/Module/Tenders/en/Tender/Detail/5082161c-f80a-4cd8-aaac-8388a237e99e |
+| 10042501 | https://trca.bidsandtenders.ca/Module/Tenders/en/Tender/Detail/d58d0f1a-696d-4ee2-8f01-ac13ba93b07b |
+| 10022400_33 | https://trca.bidsandtenders.ca/Module/Tenders/en/Tender/Detail/6de5fbf3-f9d6-4698-a27d-f0b882e51469 |
+| 10044944-1 | https://trca.bidsandtenders.ca/Module/Tenders/en/Tender/Detail/3c6879d8-b712-42cb-ba23-cd1ea1ea8ad0 |
+
+The synthetic sample remains a compatibility input. It does not establish Zoo coverage.
+
 ### TRCA public Laserfiche history (#224)
 
 `trca_laserfiche_{series,1957,2018}.json` were fetched anonymously over HTTP on
@@ -126,3 +146,29 @@ The series lists 1957–2022 annual minute-book folders. The 1957 folder contain
 index/member/minutes documents with no native extension. The 2018 folder contains nested
 folders and a native PDF. Client entry-type values are Document=-2, Shortcut=-1,
 Folder=0, RecordSeries=1, as declared by the public `app/dist/browse/main.js`.
+
+### Toronto Zoo public listings — off-peak 2026-10-21 (#226)
+
+`bids_tenders_zoo_2026-10-21.json` contains all 122 recorded public listings from the
+permitted 05:10 America/Toronto capture (09:10 UTC), sorted by page ID. Each object is an
+unchanged automatically recorded response row, including the locally attached `buyer_slug`
+and `status_filter`. No session cookies, antiforgery tokens or document content are included.
+The HTTP sweep used the UI's All filter with offsets 0, 50 and 100 and completed at 122/122.
+It initially failed only after fetching, while mapping published references for storage.
+
+Every Zoo title has the shape `published identifier - description`. Nine records demonstrate
+that the identifier cannot be restricted to RFQ/RFP plus a simple integer: they include
+`127`, `13`, `108`, `Q32202208`, `NRFP-08`, dotted identifiers and spaced numeric segments.
+The numeric published prefix is retained; a different RFQ number is not inferred from the
+description. Whitespace is normalized under the existing agency reference contract.
+
+The exact dated controls are page `6fc2f901-6847-469e-b630-d09fc5e75cb9` (RFQ-50,
+Awarded, closing 2022-11-04 16:00 UTC) and `ae4980d4-38f2-44cb-b5c4-0fe9ccc634b2`
+(RFP-03, Terminated, closing 2026-02-06 17:00 UTC). Their raw display dates independently
+agree with the converted millisecond timestamps. An older RFP 03 listing is a separate
+2023 project, not the 2026 control.
+
+The 122 page IDs reduce to 114 normalized reference strings. Eight references are reused
+for distinct published listings/projects across years. This fixture preserves those separate
+page IDs and must not be read as proof that those procurements can safely be coalesced into
+one solicitation row. Wider solicitation identity work is tracked under #124.

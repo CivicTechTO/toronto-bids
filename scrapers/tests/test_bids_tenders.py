@@ -28,10 +28,6 @@ def test_parse_listing_maps_documented_fields():
     assert row.source == "bids_tenders"
 
 
-def test_parse_listing_falls_back_to_id_when_no_reference():
-    rec = _sample(); del rec["ReferenceNumber"]
-    row = parse_listing(rec, buyer_id=7)
-    assert row.native_ref == "0F9A1B2C-3D4E-5F60-7182-93A4B5C6D7E8"   # Id, uppercased
 
 
 @pytest.fixture
@@ -167,7 +163,7 @@ def test_non_json_reply_is_reported_failed_and_other_portal_still_runs(conn, mon
     assert result["toronto-zoo"] == 0                    # the other portal still ran
     assert isinstance(result["trca"], str) and result["trca"].startswith("FAILED")
     assert "trca" in result["trca"] and "non-JSON" in result["trca"]
-    assert "HTTP 200" in result["trca"] and "status=0" in result["trca"]
+    assert "HTTP 200" in result["trca"] and "status=All" in result["trca"]
 
 
 def test_success_false_payload_is_reported_failed(conn, monkeypatch):
@@ -184,3 +180,126 @@ def test_non_2xx_reply_is_reported_failed(conn, monkeypatch):
     bt = _fake_portal(monkeypatch, lambda _slug, _req: httpx.Response(500, json=_EMPTY))
     result = bt.run_portal_capture(conn, log=lambda _m: None)
     assert result["trca"].startswith("FAILED") and "HTTP 500" in result["trca"]
+
+
+@pytest.fixture(autouse=True)
+def isolated_portal_recordings(monkeypatch, tmp_path):
+    from toronto_bids import config
+    monkeypatch.setattr(config, 'PORTAL_RECORDINGS_DIR', tmp_path / 'recordings')
+
+
+def _real_trca_records():
+    return [dict(r, buyer_slug='trca') for r in json.loads(
+        (FIXTURES / 'bids_tenders_trca_2026-10-20.json').read_text())]
+
+
+def test_real_trca_search_uses_the_ui_all_filter_and_stable_sort(monkeypatch):
+    import httpx
+    from toronto_bids import config
+    records = _real_trca_records()
+    requests = []
+    def reply(slug, req):
+        requests.append(req)
+        valid = req.url.params.get('status') == ''
+        return httpx.Response(200, json={'success': True, 'data': records if valid else [],
+                                         'total': len(records) if valid else 0})
+    bt = _fake_portal(monkeypatch, reply)
+    portal = next(p for p in config.BIDS_TENDERS_PORTALS if p['slug'] == 'trca')
+    got = list(bt.fetch_listings(portal))
+    assert len(got) == len(records)
+    assert len(requests) == 1
+    assert requests[0].url.params['sort'] == 'DateClosing DESC,Id'
+    assert requests[0].url.params['from'] == requests[0].url.params['to'] == ''
+
+
+@pytest.mark.parametrize('index,reference,posted,closed', [
+    (0, '10044383', '2026-03-24T19:10:00+00:00', '2026-05-19T20:00:00+00:00'),
+    (1, '10042501', '2025-02-05T16:15:00+00:00', '2025-03-07T21:00:00+00:00'),
+    (2, '10022400_33', '2024-06-07T18:15:00+00:00', '2024-06-19T15:00:00+00:00'),
+])
+def test_real_trca_listing_identity_and_epoch_dates(index, reference, posted, closed):
+    row = parse_listing(_real_trca_records()[index], buyer_id=7)
+    assert row.native_ref == reference
+    assert row.posted_date == posted and row.closing_date == closed
+    assert row.status == _real_trca_records()[index]['Status']
+
+
+def test_real_trca_call_suffix_is_not_merged_with_the_parent_call():
+    from toronto_bids.linking.agency_reference import normalize_agency_reference
+    assert normalize_agency_reference('trca', '10022400_33') == '10022400_33'
+    assert normalize_agency_reference('trca', 'RFT 10022400_32') == '10022400_32'
+
+
+def test_a_missing_reference_is_refused_instead_of_storing_a_guid():
+    rec = _sample()
+    del rec['ReferenceNumber']
+    with pytest.raises(ValueError, match='reference'):
+        parse_listing(rec, buyer_id=7)
+
+
+def test_nonempty_capture_records_automatically_before_parsing(conn, monkeypatch, tmp_path):
+    from toronto_bids import config
+    from toronto_bids.sources import bids_tenders as bt
+    portal = next(p for p in config.BIDS_TENDERS_PORTALS if p['slug'] == 'trca')
+    monkeypatch.setattr(config, 'BIDS_TENDERS_PORTALS', [portal])
+    invalid = dict(_sample())
+    del invalid['ReferenceNumber']
+    monkeypatch.setattr(bt, 'fetch_listings', lambda *a, **k: iter([invalid]))
+    result = bt.run_portal_capture(conn)
+    assert result['trca'].startswith('FAILED')
+    recordings = list((tmp_path / 'recordings').glob('*.json'))
+    assert len(recordings) == 1 and json.loads(recordings[0].read_text()) == invalid
+    assert conn.execute('SELECT count(*) FROM agency_solicitation').fetchone()[0] == 0
+
+
+@pytest.mark.parametrize('payload', [{}, {'data': []}, {'total': 0},
+    {'data': {}, 'total': 0}, {'data': [], 'total': -1}, {'data': [], 'total': '0'},
+    {'data': [None], 'total': 1}, {'data': [], 'total': 1}])
+def test_malformed_or_incomplete_pages_cannot_look_empty(conn, monkeypatch, payload):
+    import httpx
+    bt = _fake_portal(monkeypatch, lambda *a: httpx.Response(200, json=payload))
+    assert all(str(v).startswith('FAILED') for v in bt.run_portal_capture(conn).values())
+
+
+def test_incomplete_pagination_is_a_failure(conn, monkeypatch, tmp_path):
+    import httpx
+    rows = _real_trca_records()
+    def reply(slug, req):
+        return httpx.Response(200, json={'data': rows if req.url.params['start'] == '0' else [],
+                                         'total': len(rows) + 1})
+    bt = _fake_portal(monkeypatch, reply)
+    assert all(str(v).startswith('FAILED') for v in bt.run_portal_capture(conn).values())
+    assert len(list((tmp_path / 'recordings').glob('*.json'))) == 2 * len(rows)
+
+
+def test_repeated_pages_are_refused_instead_of_inflating_recall(conn, monkeypatch):
+    import httpx
+    rows = _real_trca_records()
+    bt = _fake_portal(monkeypatch, lambda *a: httpx.Response(200, json={'data': rows, 'total': len(rows) * 2}))
+    assert all(str(v).startswith('FAILED') for v in bt.run_portal_capture(conn).values())
+
+
+def test_recording_keeps_changed_snapshots_and_deduplicates_identical_ones(tmp_path):
+    from toronto_bids.sources.bids_tenders import record_listings
+    first = _sample()
+    record_listings([first], tmp_path)
+    record_listings([first], tmp_path)
+    record_listings([dict(first, StatusText='Closed')], tmp_path)
+    assert len(list(tmp_path.glob('*.json'))) == 2
+    assert {json.loads(p.read_text())['StatusText'] for p in tmp_path.glob('*.json')} == {'Open', 'Closed'}
+
+
+def test_batch_identity_validation_happens_before_any_upsert(conn):
+    ids = seed_buyers(conn)
+    invalid = dict(_sample(), Title='Unknown layout')
+    del invalid['ReferenceNumber']
+    with pytest.raises(ValueError, match='reference'):
+        store_listings(conn, [_sample(), invalid], ids)
+    assert conn.execute('SELECT count(*) FROM agency_solicitation').fetchone()[0] == 0
+
+
+def test_real_hyphenated_trca_call_suffix_is_preserved():
+    from toronto_bids.linking.agency_reference import normalize_agency_reference
+    row = parse_listing(_real_trca_records()[3], buyer_id=7)
+    assert row.native_ref == '10044944-1'
+    assert normalize_agency_reference('trca', 'Contract 10044944-1') == '10044944-1'

@@ -6,14 +6,16 @@ config entry is enabled, which happens only when the body's written grant is rec
 docs/permissions/ (the PMMD/Ariba precedent). Listings only — bid documents sit behind the
 Vendor clickwrap and are never fetched.
 
-PROVISIONAL: as of 2026-07-18 both permitted portals (TRCA, Zoo) are empty, so parse_listing
-is mapped against the field names documented in the portal's own grid JS but has NOT been
-validated against a real record. When a bid first appears, `tb enrich-agencies --portal
---record` captures real JSON to fixtures and the parser is completed and re-validated.
+TRCA fields are verified against real grid records and public detail metadata (#226).
+Zoo parsing is verified against its complete recorded off-peak sweep. Distinct portal
+postings sharing a native reference are refused pending identity resolution (#124).
+Nonempty replies are recorded automatically, including when later parsing fails.
 """
+import hashlib
 import json
 import re
 import time
+from datetime import datetime, timezone
 
 import httpx
 
@@ -26,26 +28,26 @@ _LANDING = "Module/Tenders/en"
 _SEARCH = "Module/Tenders/en/Tender/Search/"
 _NODE_RE = re.compile(r'id="NodeId"[^>]*value="([^"]+)"')
 _TOKEN_RE = re.compile(r'name="__RequestVerificationToken"[^>]*value="([^"]+)"')
-# The status codes the endpoint accepts (Open / Awarded / Cancelled / ...). The exact
-# code->label mapping is recorded when data first appears; the sweep covers them all.
-_STATUS_CODES = range(0, 6)
+# The UI sends named filters, not integer enum values: numeric filters silently return
+# success=true, total=0 (#226). Its empty "All" filter includes every published status.
+_STATUS_FILTERS = ("",)
 _PAGE = 50
 _DELAY = 1.5
 
 
-def _search_params(status: int, start: int, limit: int = _PAGE) -> dict:
-    # NEVER include 'sort' — 'sort=ClosingDate desc,Id' (space/comma) triggers a server error
-    # that redirects to Error?aspxerrorpath (verified live 2026-07-18). Default order is fine.
-    return {"status": status, "limit": limit, "start": start, "dir": "desc", "from": "", "to": ""}
+def _search_params(status: str, start: int, limit: int = _PAGE) -> dict:
+    # Match the UI's deterministic DateClosing + Id sort so pages cannot overlap on ties.
+    return {"status": status, "limit": limit, "start": start, "dir": "DESC",
+            "from": "", "to": "", "sort": "DateClosing DESC,Id"}
 
 
-def _search_payload(resp, slug: str, status: int, start: int) -> dict:
+def _search_payload(resp, slug: str, status: str, start: int) -> dict:
     """The search reply's JSON payload — or RAISE, naming the portal, HTTP status and status
     filter (#226). A non-2xx, a non-JSON body (e.g. the Error?aspxerrorpath page a bad request
     redirects to) or `success: false` means the portal is BROKEN, which must never read as
     "no open bids": run_portal_capture turns the raise into that slug's `FAILED: ...`. A
     payload with no `success` key at all is accepted — only an explicit false fails."""
-    where = f"bids&tenders {slug}: search status={status} start={start} got HTTP {resp.status_code}"
+    where = f"bids&tenders {slug}: search status={status or 'All'} start={start} got HTTP {resp.status_code}"
     if not resp.is_success:
         raise RuntimeError(where)
     try:
@@ -56,16 +58,23 @@ def _search_payload(resp, slug: str, status: int, start: int) -> dict:
         raise RuntimeError(f"{where} with a non-object JSON body")
     if payload.get("success", True) is False:
         raise RuntimeError(f"{where} with success=false")
+    rows, total = payload.get("data"), payload.get("total")
+    if not isinstance(rows, list) or any(not isinstance(row, dict) for row in rows):
+        raise RuntimeError(f"{where} with invalid/missing data rows")
+    if type(total) is not int or total < 0:
+        raise RuntimeError(f"{where} with invalid/missing total")
+    if (not rows and start < total) or start + len(rows) > total:
+        raise RuntimeError(f"{where} with incomplete/inconsistent page ({len(rows)} rows, total={total})")
     return payload
 
 
 def fetch_listings(portal: dict, *, delay: float = _DELAY, log=lambda _m: None):
-    """Yield every listing record for a portal, across all statuses, paged and rate-limited.
+    """Yield all public listings using the UI's All filter, paged and rate-limited.
 
     Manages its own httpx.Client (the antiforgery cookie set on the landing GET must persist
     to the search POSTs — a session concern specific to this source, not the shared HttpClient).
-    Yields each raw JSON record with `buyer_slug` and `status_code` attached. On an empty portal
-    (total=0, the current reality) this yields nothing — a clean no-op. A broken reply
+    Yields each raw JSON record with `buyer_slug` and `status_filter` attached. An explicit
+    empty page with total=0 yields nothing. A broken or incomplete reply
     (non-2xx, non-JSON, `success: false`) RAISES instead (#226), so it can't pass for empty.
     """
     if not portal.get("enabled"):
@@ -78,25 +87,36 @@ def fetch_listings(portal: dict, *, delay: float = _DELAY, log=lambda _m: None):
         headers={"User-Agent": config.USER_AGENT, "X-Requested-With": "XMLHttpRequest"},
         timeout=config.HTTP_TIMEOUT, follow_redirects=True)
     try:
-        land = client.get(base + _LANDING).text
+        response = client.get(base + _LANDING)
+        response.raise_for_status()
+        land = response.text
         node_m, tok_m = _NODE_RE.search(land), _TOKEN_RE.search(land)
         if not (node_m and tok_m):
             raise RuntimeError(f"bids&tenders {portal['slug']}: no NodeId/token on landing page")
-        node, token = node_m.group(1), tok_m.group(1)   # FIRST token (bidDetail-scoped one 302s)
-        for status in _STATUS_CODES:
+        node, token = node_m.group(1), tok_m.group(1)
+        for status in _STATUS_FILTERS:
             start = 0
+            seen = set()
+            expected_total = None
             while True:
                 time.sleep(delay)                        # rate-limit (permission condition)
                 resp = client.post(base + _SEARCH + node,
                                    params=_search_params(status, start),
                                    data={"keywords": "", "__RequestVerificationToken": token})
                 payload = _search_payload(resp, portal["slug"], status, start)
-                rows = payload.get("data") or []
-                total = payload.get("total") or 0
+                rows, total = payload["data"], payload["total"]
+                if expected_total is not None and total != expected_total:
+                    raise RuntimeError(f"bids&tenders {portal['slug']}: total changed during pagination")
+                expected_total = total
                 for rec in rows:
-                    yield {**rec, "buyer_slug": portal["slug"], "status_code": status}
+                    rid = rec.get("Id")
+                    if not isinstance(rid, str) or not rid or rid in seen:
+                        raise RuntimeError(f"bids&tenders {portal['slug']}: missing/duplicate listing Id")
+                    seen.add(rid)
+                    yield {**rec, "buyer_slug": portal["slug"], "status_filter": status or "All"}
                 start += len(rows)
-                if not rows or start >= total:
+                if start >= total:
+                    log(f"  {portal['slug']}: fetched {start}/{total} listings (All)")
                     break
     finally:
         client.close()
@@ -106,21 +126,59 @@ def fetch_listings(portal: dict, *, delay: float = _DELAY, log=lambda _m: None):
 # stay in sync.
 _PORTAL_BASE = {p["slug"]: p["portal_url"].rstrip("/") for p in config.BIDS_TENDERS_PORTALS}
 
-_WS = re.compile(r"\s+")
-
 
 def _native_ref(record: dict) -> str:
-    """The body's own bid identifier, normalized like the board-report path (trim/upper/
-    collapse-ws) so a portal row and a board-report row for one procurement share a key."""
-    raw = record.get("ReferenceNumber") or record.get("BidNumber") or record.get("Id") or ""
+    """Prefer explicit bid numbers; recognize only demonstrated title-prefix shapes.
+
+    A GUID locates a portal page, but cannot join the agency's board-report keyspace.
+    Unknown layouts are refused and their raw replies remain recorded for review.
+    """
+    raw = record.get("ReferenceNumber") or record.get("BidNumber")
+    if not raw:
+        title = record.get("Title") or ""
+        if record.get("buyer_slug") == "trca":
+            pattern = r"^\s*(?:(?:RF[PQT]|RFSQ|RFI|REPOST)\s+)?(\d{8}(?:[_-]\d+)?)\s+-\s+"
+            match = re.match(pattern, title, re.I)
+            raw = match[1] if match else None
+        elif record.get("buyer_slug") == "toronto-zoo":
+            # The captured grid consistently publishes "identifier - description".
+            # Zoo identifiers are not restricted to RFQ/RFP: preserve numeric, NRFP,
+            # dotted and spaced values verbatim rather than inventing a prefix from
+            # the description ("127 - RFQ 127 ..." is published under "127").
+            prefix, separator, description = title.partition(" - ")
+            prefix = prefix.strip()
+            if (separator and description.strip()
+                    and re.fullmatch(r"[A-Z0-9][A-Z0-9 ._-]*", prefix, re.I)
+                    and re.search(r"\d", prefix)):
+                import uuid
+                try:
+                    uuid.UUID(prefix)
+                except ValueError:
+                    raw = prefix
     from toronto_bids.linking.agency_reference import normalize_agency_reference
 
-    return normalize_agency_reference(record.get("buyer_slug"), raw) or ""
+    ref = normalize_agency_reference(record.get("buyer_slug"), raw)
+    if not ref:
+        raise ValueError(f"bids&tenders: missing/unrecognized bid reference for {record.get('Id')}")
+    return ref
+
+
+def _listing_date(value):
+    if value is None:
+        return None
+    match = re.fullmatch(r"/Date\((-?\d+)(?:[+-]\d{4})?\)/", str(value))
+    if match:
+        return datetime.fromtimestamp(int(match[1]) / 1000, timezone.utc).isoformat()
+    # Existing ISO date fields stay verbatim; unfamiliar formats must not enter the store.
+    try:
+        datetime.fromisoformat(value)
+    except (ValueError, TypeError):
+        raise ValueError(f"bids&tenders: unrecognized date {value!r}") from None
+    return value
 
 
 def parse_listing(record: dict, buyer_id: int) -> AgencySolicitation:
-    """Map one raw portal record to an AgencySolicitation. PROVISIONAL (see module docstring):
-    field names/formats are from the grid JS, unverified until a real record is captured."""
+    """Map verified grid fields to an agency listing; refuse an unresolved reference."""
     base = _PORTAL_BASE.get(record.get("buyer_slug"), "")
     rid = record.get("Id")
     portal_url = f"{base}/Module/Tenders/en/Tender/Detail/{rid}" if (base and rid) else None
@@ -129,8 +187,8 @@ def parse_listing(record: dict, buyer_id: int) -> AgencySolicitation:
         native_ref=_native_ref(record),
         title=record.get("Title"),
         status=record.get("StatusText") or record.get("Status"),
-        posted_date=record.get("DatePosted") or record.get("PostDate"),
-        closing_date=record.get("ClosingDate") or record.get("BidClosingDate"),
+        posted_date=_listing_date(record.get("DateAvailable") or record.get("DatePosted") or record.get("PostDate")),
+        closing_date=_listing_date(record.get("DateClosing") or record.get("ClosingDate") or record.get("BidClosingDate")),
         portal_url=portal_url,
         source="bids_tenders",
     )
@@ -140,38 +198,53 @@ def store_listings(conn, records, buyer_ids: dict) -> int:
     """Upsert each parsed listing into agency_solicitation with overwrite=False (backfill):
     fills any NULL field — a portal-only solicitation gets its full record including title,
     while a board-report row keeps its title/status and only has its empty dates filled in.
-    (Nightly status refresh of an open bid is intentionally NOT done here — revisited when the
-    portals have real data and the parser is validated, #135.) Skips a record whose buyer_slug
-    is not a seeded buyer. Returns rows upserted."""
-    n = 0
-    for record in records:
-        buyer_id = buyer_ids.get(record.get("buyer_slug"))
-        if buyer_id is None:
-            continue
-        row = parse_listing(record, buyer_id)
+    Status refresh remains deferred to #140: existing non-null fields stay authoritative.
+    Validate every row and posting-to-reference relationship before writing. Unknown layouts
+    and references shared by distinct portal pages refuse the batch instead of merging
+    unrelated procurements or partially storing it; raw snapshots remain available (#124).
+    Skips unseeded buyers. Returns the number of listing records processed; repeated native
+    references can enrich the same solicitation row."""
+    rows = [parse_listing(record, buyer_ids[record["buyer_slug"]]) for record in records
+            if record.get("buyer_slug") in buyer_ids]
+    # A native bid number is not necessarily a unique procurement across years/stages.
+    # Keep every source posting in raw snapshots, but do not silently collapse distinct
+    # pages into a single agency row while the wider identity contract (#124) is unresolved.
+    identities = {}
+    for row in rows:
+        identities.setdefault((row.buyer_id, row.native_ref), set()).add(row.portal_url)
+    conflicts = [ref for (_,ref), pages in identities.items() if len(pages) > 1]
+    if conflicts:
+        raise ValueError(
+            f"bids&tenders: identity conflict: {len(rows)} parsed listings include "
+            f"{len(conflicts)} reference(s) shared by distinct portal postings: "
+            f"{', '.join(sorted(conflicts)[:10])}; no solicitation rows written; "
+            "raw listings retained; identity resolution is tracked in #124")
+    for row in rows:
         db.upsert_row(conn, row, overwrite=False)
-        n += 1
     conn.commit()
-    return n
+    return len(rows)
 
 
 def record_listings(records, out_dir) -> int:
-    """Write each raw record to out_dir/<slug>-<status>-<n>.json — the seed for real fixtures
-    once a portal has data. Returns the count written."""
+    """Keep content-addressed raw record snapshots without overwriting prior observations."""
     import pathlib
     out = pathlib.Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
     n = 0
     for record in records:
         slug = record.get("buyer_slug", "unknown")
-        status = record.get("status_code", "x")
-        (out / f"{slug}-{status}-{n}.json").write_text(json.dumps(record, indent=1, default=str))
+        status = record.get("status_filter", record.get("status_code", "x"))
+        encoded = json.dumps(record, indent=1, default=str, sort_keys=True)
+        digest = hashlib.sha256(encoded.encode()).hexdigest()[:16]
+        path = out / f"{slug}-{status}-{digest}.json"
+        if not path.exists():
+            path.write_text(encoded)
         n += 1
     return n
 
 
 def run_portal_capture(conn, *, record: bool = False, only=None, log=lambda _m: None) -> dict:
-    """Fetch + store (and optionally record) every enabled portal, per-body isolated: one
+    """Fetch, record nonempty replies, and store every enabled portal, per-body isolated: one
     body's failure is caught and reported, never stops the others. Returns {slug: count | 'FAILED: ...'}."""
     buyer_ids = seed_buyers(conn)
     result = {}
@@ -181,10 +254,14 @@ def run_portal_capture(conn, *, record: bool = False, only=None, log=lambda _m: 
         if only and portal["slug"] not in only:
             continue
         try:
-            records = list(fetch_listings(portal, log=log))
-            if record:
-                written = record_listings(records, config.PORTAL_RECORDINGS_DIR)
-                log(f"  {portal['slug']}: recorded {written} raw record(s)")
+            records = []
+            try:
+                for item in fetch_listings(portal, log=log):
+                    records.append(item)
+            finally:
+                if records or record:
+                    written = record_listings(records, config.PORTAL_RECORDINGS_DIR)
+                    log(f"  {portal['slug']}: recorded {written} raw record(s)")
             result[portal["slug"]] = store_listings(conn, records, buyer_ids)
             log(f"  {portal['slug']}: {result[portal['slug']]} listing(s) stored")
         except Exception as exc:                       # per-body isolation (empty portal is fine; a real error is caught)
