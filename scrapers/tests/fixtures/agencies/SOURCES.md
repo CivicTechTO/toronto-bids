@@ -1,5 +1,18 @@
 # Agency board-report fixtures (#135)
 
+## Agency identity refusal cache fixtures (#257)
+
+`identity_refusals_2026-10-21.json` contains three complete, unchanged held extraction
+results read offline on 2026-10-21. Each records the published source URL, source PDF
+SHA-256, original extraction version and result digest. These are cached model outputs,
+not claims that every extracted fact has been independently verified against the PDF.
+Expected refusal positions are zero-based indices in the complete contract array.
+
+TRCA DocumentId=4831 mixes valid contracts with an unknown-reference contract;
+DocumentId=19635 carries distinct solicitation and contract numbers. Zoo backgroundfile-76755
+has a reference-less multi-contract result, including one empty contract. The fixtures
+exercise retention and refusal reporting without paid extraction or new source requests.
+
 pdftotext -layout output of real board award reports, captured 2026-07-18.
 
 | fixture | source URL |

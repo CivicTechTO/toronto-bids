@@ -19,6 +19,11 @@ def build_parser() -> argparse.ArgumentParser:
 
     sub.add_parser("status", help="Show row counts in the local store")
 
+    p_coverage = sub.add_parser('agency-coverage', help='Inspect agency identity decisions and coverage as JSON (#257)')
+    p_coverage.add_argument('--only', choices=['trca', 'zoo', 'ep'])
+    p_coverage.add_argument('--baseline', help='Read-only SQLite baseline for prior-fact reconciliation')
+    p_coverage.add_argument('--out', help='Write report to this path instead of stdout')
+
     p_export = sub.add_parser(
         "export", help="Write the store to a nested JSON artifact"
     )
@@ -447,6 +452,8 @@ def _cmd_sync(args) -> int:
 
 
 def _cmd_status(args) -> int:
+    import json
+
     conn = _open_db()
     for table, n in db.counts(conn).items():
         print(f"{table:16s} {n}")
@@ -456,6 +463,16 @@ def _cmd_status(args) -> int:
         for r in runs:
             line = f"  {r['source']:22s} {r['status']:8s} {r['started_at']}  rows={r['rows_upserted']}"
             print(line + (f"\n    error: {r['error']}" if r["error"] else ""))
+    coverage = conn.execute('SELECT * FROM agency_coverage ORDER BY corpus').fetchall()
+    if coverage:
+        print('\nAgency identity coverage (latest successful rebuild):')
+        for row in coverage:
+            summary = json.loads(row['summary_json'])
+            state = 'incomplete' if summary['contracts_refused'] else 'complete'
+            print(f"  {row['corpus']}: {state}; {summary['contracts_accepted']} accepted, "
+                  f"{summary['contracts_refused']} refused contracts; "
+                  f"{summary['refused_bid_facts']} bid / {summary['refused_award_facts']} award facts affected "
+                  f"({row['rebuilt_at']}; tb agency-coverage for evidence)")
     conn.close()
     return 0
 
@@ -959,7 +976,7 @@ def _cmd_nightly(args) -> int:
                     a1 = db.counts(conn)
                     da = a1["agency_award"] - a0["agency_award"]
                     db_ = a1["agency_bid"] - a0["agency_bid"]
-                    return f"+{da} awards, +{db_} bids"
+                    return f"{da:+d} awards, {db_:+d} bids"
 
                 before_len = len(failures)
                 run_id = _run_step(steps, failures, "agencies", _agencies, conn=conn)
@@ -1523,6 +1540,29 @@ def _cmd_extract_validate(args) -> int:
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
+    if args.command == 'agency-coverage':
+        import json
+        import sqlite3
+        from pathlib import Path
+        from toronto_bids.agency_coverage import report
+
+        conn = _open_db()
+        baseline = None
+        try:
+            if args.baseline:
+                baseline = sqlite3.connect(Path(args.baseline).resolve().as_uri() + '?mode=ro', uri=True)
+                baseline.row_factory = sqlite3.Row
+            result = report(conn, only=args.only, baseline=baseline)
+            text = json.dumps(result, indent=2, ensure_ascii=False) + '\n'
+            if args.out:
+                Path(args.out).write_text(text)
+            else:
+                print(text, end='')
+            return 1 if result['incomplete'] else 0
+        finally:
+            if baseline is not None:
+                baseline.close()
+            conn.close()
     if args.command == "sync":
         return _cmd_sync(args)
     if args.command == "status":

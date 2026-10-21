@@ -480,6 +480,32 @@ def test_agency_store_extraction_errors_reach_the_agencies_failures(monkeypatch,
     assert [name for name, _ in got] == ["extract:trca", "extract:zoo", "extract:ep"]
 
 
+def test_real_identity_refusal_marks_nightly_and_history_incomplete(
+        nightly, monkeypatch, conn, tmp_path):
+    from tests.test_agency_extraction_fields import cache, contract
+    from toronto_bids.sources import zoo_board, ep_board, trca_board
+    import toronto_bids.extract as extract
+
+    cache(conn, 'trca', [contract('10008808'), contract(None)])
+    monkeypatch.setattr(extract, 'ExtractionClient', lambda: (_ for _ in ()).throw(ValueError('no key')))
+    monkeypatch.setattr(trca_board, 'download_reports', lambda *a, **k: 0)
+    monkeypatch.setattr(zoo_board, 'scrape_zb_agendas', lambda **k: {})
+    monkeypatch.setattr(ep_board, 'scrape_ep_agendas', lambda **k: {})
+    monkeypatch.setattr(cli, '_capture_agency_bodies', _real_agency_capture)
+    monkeypatch.setattr(cli, '_open_db', lambda: _KeepOpen(conn))
+    posted = {}
+    monkeypatch.setattr(notify, 'post', lambda text, **k: posted.setdefault('text', text))
+    assert nightly() == 1
+    assert '❌ agencies' in posted['text']
+    assert 'identity:trca' in posted['text']
+    row = conn.execute("SELECT status,error FROM sync_run WHERE source='agencies'").fetchone()
+    assert row['status'] == 'failed'
+    assert 'identity:trca' in row['error']
+    assert 'download:trca' not in row['error']
+    assert conn.execute('SELECT count(*) FROM agency_derivation WHERE reason IS NOT NULL').fetchone()[0] == 1
+    assert (tmp_path / 'export' / 'bids.json').exists()
+
+
 def test_a_step_that_raises_is_recorded_failed_in_sync_run_too(nightly, monkeypatch, conn):
     monkeypatch.setattr(cli, "_open_db", lambda: _KeepOpen(conn))
     from toronto_bids.sources import ariba_attachments
