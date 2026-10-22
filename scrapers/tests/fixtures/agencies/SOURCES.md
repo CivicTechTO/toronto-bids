@@ -113,15 +113,19 @@ TRCA logo, the same 22,692 bytes on all 230 meeting pages). It also carries a do
 anchor whose `href` is NOT the first attribute (`<a class='Link' tabindex='15' href=...>`),
 which is the ordinary shape on these pages.
 
-## bids_tenders_record_sample.json — SYNTHETIC (#135)
+## bids_tenders_record_sample.json — REAL (#140)
 
-Hand-built, NOT a real capture. As of 2026-07-18 both permitted bids&tenders portals (TRCA,
-Zoo) are empty (total=0, all statuses), so no real listing record exists to record. This
-fixture matches the field names documented in the portal's grid JS
-(Module/Tenders/Resources/scriptsV2/home/index.js: Id, Title, ClosingDate, Documents,
-Addendums, PlanTakers) and exercises parse_listing's mapping mechanics only. `parse_listing`
-is PROVISIONAL until `tb enrich-agencies --portal --record` captures a real record and replaces
-this fixture (#135 deferred item).
+Complete unchanged TRCA public grid record for page
+`5082161c-f80a-4cd8-aaac-8388a237e99e`, bid `10044383`, read from the captured
+production recordings on 2026-10-22. The source is
+`https://trca.bidsandtenders.ca/Module/Tenders/en`; the page identity, named Closed
+status, title-prefix reference and JSON.NET dates are independently covered by the
+real TRCA positive controls below. `buyer_slug`/`status_filter` are capture context.
+This replaces the original provisional synthetic primary sample.
+
+`bids_tenders_legacy_synthetic.json` retains that hand-built #135 sample solely for
+backwards-compatible field aliases (`ReferenceNumber`, `ClosingDate`, `DatePosted`,
+`StatusText`). Its values are invented and establish no live-source coverage.
 
 ## Exhibition Place board-report fixtures (#130)
 
@@ -177,7 +181,7 @@ Public Bid Number fields on these detail pages independently confirmed the title
 | 10022400_33 | https://trca.bidsandtenders.ca/Module/Tenders/en/Tender/Detail/6de5fbf3-f9d6-4698-a27d-f0b882e51469 |
 | 10044944-1 | https://trca.bidsandtenders.ca/Module/Tenders/en/Tender/Detail/3c6879d8-b712-42cb-ba23-cd1ea1ea8ad0 |
 
-The synthetic sample remains a compatibility input. It does not establish Zoo coverage.
+The explicitly named legacy synthetic sample remains a compatibility input. It does not establish Zoo coverage.
 
 ### TRCA public Laserfiche history (#224)
 

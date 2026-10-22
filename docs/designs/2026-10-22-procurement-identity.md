@@ -40,6 +40,7 @@ first-seen timestamp and raw identifier. Existing legacy agency listing rows sta
 new portal observations use their own table and never overwrite a board row. The resolver
 runs after source linking and before export, so enrichment performed after sync is included.
 Resolution, associations and key/redirect changes are transactional and repeatable.
+Portal metadata refreshes from the latest non-null source values (#140); IDs and raw history persist.
 
 JSON retains existing top-level sections and adds the procurement index and keys. Existing
 single-procurement facts expose `procurement_id`; buyers expose separate `portal_listings`.

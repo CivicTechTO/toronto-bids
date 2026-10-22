@@ -120,7 +120,7 @@ def test_repeated_observation_of_same_page_does_not_trigger_identity_conflict(co
     row=next(r for r in ROWS if r['Id']=='6fc2f901-6847-469e-b630-d09fc5e75cb9')
     assert store_listings(conn,[row,dict(row,Status='Closed')],seed_buyers(conn))==2
     result=conn.execute('SELECT COUNT(*),MAX(status) FROM portal_listing').fetchone()
-    assert tuple(result)==(1,'Awarded')
+    assert tuple(result)==(1,'Closed')
 
 
 def test_reused_references_are_preserved_alongside_unique_references(conn):

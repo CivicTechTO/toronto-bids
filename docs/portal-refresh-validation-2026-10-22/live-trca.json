@@ -1,0 +1,52 @@
+{
+  "captured_at": "2026-10-22T13:28:01.468147+00:00",
+  "buyer": "trca",
+  "records": 249,
+  "parsed": 249,
+  "distinct_page_ids": 249,
+  "statuses": {
+    "Open": 4,
+    "Closed": 29,
+    "Awarded": 187,
+    "Terminated": 24,
+    "Archived": 5
+  },
+  "fields": [
+    "Addendums",
+    "Advertisements",
+    "AllowBidQuestionSubmission",
+    "DateAvailable",
+    "DateAvailableDisplay",
+    "DateClosing",
+    "DateClosingDisplay",
+    "DatePlannedIssue",
+    "DatePlannedIssueDisplay",
+    "DaysLeft",
+    "DaysLeftPublish",
+    "Description",
+    "Documents",
+    "FirstSubmissionId",
+    "Id",
+    "IncludeSeconds",
+    "IsEmployee",
+    "OnlyRegisteredPlantakersCanSubmitQuestions",
+    "PlanTakers",
+    "Scope",
+    "ShowPlanTakers",
+    "ShowRegisterAsPlanTaker",
+    "ShowSubmitOnline",
+    "ShowSubmitted",
+    "Status",
+    "Submitted",
+    "TimeZoneLabel",
+    "Title",
+    "VendorHasBidInProgress",
+    "VendorHasMultipleActiveSubmissions",
+    "VendorIsRegistered",
+    "buyer_slug",
+    "status_filter"
+  ],
+  "pagination_log": [
+    "  trca: fetched 249/249 listings (All)"
+  ]
+}

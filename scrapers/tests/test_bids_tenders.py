@@ -12,12 +12,12 @@ from toronto_bids.store import db
 FIXTURES = pathlib.Path(__file__).parent / "fixtures" / "agencies"
 
 
-def _sample():
-    return json.loads((FIXTURES / "bids_tenders_record_sample.json").read_text())
+def _legacy_sample():
+    return json.loads((FIXTURES / "bids_tenders_legacy_synthetic.json").read_text())
 
 
-def test_parse_listing_maps_documented_fields():
-    row = parse_listing(_sample(), buyer_id=7)
+def test_legacy_listing_field_aliases_remain_supported():
+    row = parse_listing(_legacy_sample(), buyer_id=7)
     assert row.buyer_id == 7
     assert row.native_ref == "RFT-2026-014"          # ReferenceNumber, normalized
     assert row.title == "Trail Bridge Replacement - Example Creek"
@@ -40,7 +40,7 @@ def conn():
 
 def test_store_listings_inserts_portal_row(conn):
     ids = seed_buyers(conn)
-    n = store_listings(conn, [_sample()], ids)
+    n = store_listings(conn, [_legacy_sample()], ids)
     assert n == 1
     row = conn.execute("SELECT native_ref, title, status, source FROM portal_listing").fetchone()
     assert row["native_ref"] == "RFT-2026-014"
@@ -53,7 +53,7 @@ def test_portal_reference_alone_does_not_enrich_or_join_a_board_row(conn):
     db.upsert_row(conn, AgencySolicitation(
         buyer_id=ids["trca"], native_ref="RFT-2026-014", title="Board title",
         status="awarded", source="trca_board"), overwrite=False)
-    store_listings(conn, [_sample()], ids)
+    store_listings(conn, [_legacy_sample()], ids)
     board = conn.execute('SELECT * FROM agency_solicitation').fetchone()
     portal = conn.execute('SELECT * FROM portal_listing').fetchone()
     assert board['title'] == 'Board title' and board['closing_date'] is None
@@ -68,7 +68,7 @@ def test_store_listings_empty_is_noop(conn):
 
 def test_record_listings_writes_one_file_per_record(tmp_path):
     from toronto_bids.sources.bids_tenders import record_listings
-    recs = [dict(_sample(), status_code=1), dict(_sample(), status_code=3)]
+    recs = [dict(_legacy_sample(), status_code=1), dict(_legacy_sample(), status_code=3)]
     n = record_listings(recs, tmp_path)
     assert n == 2
     written = sorted(p.name for p in tmp_path.glob("*.json"))
@@ -82,7 +82,7 @@ def test_run_portal_capture_isolates_a_failing_body(conn, monkeypatch):
     def fake_fetch(portal, **_kw):
         if portal["slug"] == "trca":
             raise RuntimeError("boom")            # one body fails
-        yield dict(_sample(), buyer_slug="toronto-zoo")
+        yield dict(_legacy_sample(), buyer_slug="toronto-zoo")
 
     monkeypatch.setattr(bt, "fetch_listings", fake_fetch)
     result = bt.run_portal_capture(conn, log=lambda _m: None)
@@ -230,7 +230,7 @@ def test_real_trca_call_suffix_is_not_merged_with_the_parent_call():
 
 
 def test_identifierless_page_does_not_invent_a_reference():
-    rec = _sample()
+    rec = _legacy_sample()
     del rec['ReferenceNumber']
     row = parse_listing(rec, buyer_id=7)
     assert row.native_ref is None
@@ -242,7 +242,7 @@ def test_nonempty_capture_records_automatically_before_parsing(conn, monkeypatch
     from toronto_bids.sources import bids_tenders as bt
     portal = next(p for p in config.BIDS_TENDERS_PORTALS if p['slug'] == 'trca')
     monkeypatch.setattr(config, 'BIDS_TENDERS_PORTALS', [portal])
-    invalid = dict(_sample())
+    invalid = dict(_legacy_sample())
     invalid['DateAvailable'] = 'invalid date'
     monkeypatch.setattr(bt, 'fetch_listings', lambda *a, **k: iter([invalid]))
     result = bt.run_portal_capture(conn)
@@ -281,7 +281,7 @@ def test_repeated_pages_are_refused_instead_of_inflating_recall(conn, monkeypatc
 
 def test_recording_keeps_changed_snapshots_and_deduplicates_identical_ones(tmp_path):
     from toronto_bids.sources.bids_tenders import record_listings
-    first = _sample()
+    first = _legacy_sample()
     record_listings([first], tmp_path)
     record_listings([first], tmp_path)
     record_listings([dict(first, StatusText='Closed')], tmp_path)
@@ -291,9 +291,9 @@ def test_recording_keeps_changed_snapshots_and_deduplicates_identical_ones(tmp_p
 
 def test_batch_identity_validation_happens_before_any_upsert(conn):
     ids = seed_buyers(conn)
-    invalid = dict(_sample(), Id=None)
+    invalid = dict(_legacy_sample(), Id=None)
     with pytest.raises(ValueError, match='identity'):
-        store_listings(conn, [_sample(), invalid], ids)
+        store_listings(conn, [_legacy_sample(), invalid], ids)
     assert conn.execute('SELECT count(*) FROM portal_listing').fetchone()[0] == 0
 
 

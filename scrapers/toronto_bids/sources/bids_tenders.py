@@ -175,6 +175,19 @@ def _listing_date(value):
     return value
 
 
+def _listing_status(record):
+    """The live UI publishes named statuses; preserve them without guessing enum codes."""
+    for field in ('StatusText', 'Status'):
+        value = record.get(field)
+        if value is None:
+            continue
+        if not isinstance(value, str) or re.fullmatch(r'[+-]?\d+(?:\.\d+)?', value.strip()):
+            raise ValueError(f'bids&tenders: {field} must be a named status, got {value!r}')
+        if value.strip():
+            return value
+    return None
+
+
 def parse_listing(record: dict, buyer_id: int) -> PortalListing:
     """Preserve a source page independently of its optional printed reference."""
     base = _PORTAL_BASE.get(record.get("buyer_slug"), "")
@@ -186,7 +199,7 @@ def parse_listing(record: dict, buyer_id: int) -> PortalListing:
         buyer_id=buyer_id,
         native_ref=_native_ref(record),
         title=record.get("Title"),
-        status=record.get("StatusText") or record.get("Status"),
+        status=_listing_status(record),
         posted_date=_listing_date(record.get("DateAvailable") or record.get("DatePosted") or record.get("PostDate")),
         closing_date=_listing_date(record.get("DateClosing") or record.get("ClosingDate") or record.get("BidClosingDate")),
         portal_url=portal_url,
@@ -197,15 +210,16 @@ def parse_listing(record: dict, buyer_id: int) -> PortalListing:
 def store_listings(conn, records, buyer_ids: dict) -> int:
     """Capture every distinct buyer/page; references are optional, nonunique labels.
 
-    Validate the complete batch before any write. Portal metadata remains backfill-only
-    (#140); a page never overwrites a board row on the strength of a reference alone.
+    Validate the complete batch before any write. The latest non-null source metadata
+    refreshes the same page (#140); missing fields preserve held values. An absent page
+    is never inferred closed/deleted, and board rows are untouched.
     """
     from toronto_bids.linking.procurement import _transaction, resolve_procurements
     rows = [parse_listing(record, buyer_ids[record["buyer_slug"]]) for record in records
             if record.get("buyer_slug") in buyer_ids]
     with _transaction(conn):
         for row in rows:
-            db.upsert_row(conn, row, overwrite=False)
+            db.upsert_row(conn, row, overwrite=True)
         resolve_procurements(conn)
     conn.commit()
     return len(rows)
