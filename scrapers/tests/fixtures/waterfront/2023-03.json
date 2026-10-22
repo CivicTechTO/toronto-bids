@@ -1,0 +1,143 @@
+{
+  "extractor_version": "v1-b63aa8c835ae",
+  "text": "Waterfront Toronto — published awarded contracts.\nPublication month only (no exact award day published): 2023-03\n\nDelivery of Waterfront Toronto’s Integrated Annual Report 2022-2023 – Bespoke Cultural Collective ($55,312) (Sole Source)\nOld Cherry Street Bridge Early Engineering Costs for Port Lands Flood Protection Project - Sarens Canada – ($80,000) (Contract awarded by Ellis Don Civil Ltd on behalf of Waterfront Toronto)\nStreet Lighting, Pedestrian Lighting, Traffic Control Signals and RESCU for Lake Shore Boulevard East - Guild Electric Limited ($3,892,098) (Contract awarded by Ellis Don Civil Ltd on behalf of Waterfront Toronto)\nTraffic Control Signals for Port Lands Flood Protection Project - Guild Electric Limited ($761,108) (Contract awarded by Ellis Don Civil Ltd on behalf of Waterfront Toronto)\nDewatering System for Chamber CC6567 Rebuild Operations for Port Lands Flood Protection ($313,750) (Contract awarded by Ellis Don Civil Ltd on behalf of Waterfront Toronto)",
+  "result": {
+    "contracts": [
+      {
+        "reference": null,
+        "solicitation_type": "sole_source",
+        "title": "Delivery of Waterfront Toronto’s Integrated Annual Report 2022-2023",
+        "buyer": "Waterfront Toronto",
+        "posted_date": null,
+        "closed_date": null,
+        "documents_taken": null,
+        "declared_submissions": null,
+        "declared_compliant": null,
+        "stage": "single_stage",
+        "prequalified": [],
+        "invited_to_tender": [],
+        "bids": [],
+        "awards": [
+          {
+            "supplier_name": "Bespoke Cultural Collective",
+            "amount_raw": "$55,312",
+            "amount_basis": "unknown",
+            "contingency_raw": null,
+            "value_confidential": false
+          }
+        ],
+        "funding_source": null,
+        "decision_date": null,
+        "decision_body": null
+      },
+      {
+        "reference": null,
+        "solicitation_type": "unknown",
+        "title": "Old Cherry Street Bridge Early Engineering Costs for Port Lands Flood Protection Project",
+        "buyer": "Ellis Don Civil Ltd on behalf of Waterfront Toronto",
+        "posted_date": null,
+        "closed_date": null,
+        "documents_taken": null,
+        "declared_submissions": null,
+        "declared_compliant": null,
+        "stage": "single_stage",
+        "prequalified": [],
+        "invited_to_tender": [],
+        "bids": [],
+        "awards": [
+          {
+            "supplier_name": "Sarens Canada",
+            "amount_raw": "$80,000",
+            "amount_basis": "unknown",
+            "contingency_raw": null,
+            "value_confidential": false
+          }
+        ],
+        "funding_source": null,
+        "decision_date": null,
+        "decision_body": null
+      },
+      {
+        "reference": null,
+        "solicitation_type": "unknown",
+        "title": "Street Lighting, Pedestrian Lighting, Traffic Control Signals and RESCU for Lake Shore Boulevard East",
+        "buyer": "Ellis Don Civil Ltd on behalf of Waterfront Toronto",
+        "posted_date": null,
+        "closed_date": null,
+        "documents_taken": null,
+        "declared_submissions": null,
+        "declared_compliant": null,
+        "stage": "single_stage",
+        "prequalified": [],
+        "invited_to_tender": [],
+        "bids": [],
+        "awards": [
+          {
+            "supplier_name": "Guild Electric Limited",
+            "amount_raw": "$3,892,098",
+            "amount_basis": "unknown",
+            "contingency_raw": null,
+            "value_confidential": false
+          }
+        ],
+        "funding_source": null,
+        "decision_date": null,
+        "decision_body": null
+      },
+      {
+        "reference": null,
+        "solicitation_type": "unknown",
+        "title": "Traffic Control Signals for Port Lands Flood Protection Project",
+        "buyer": "Ellis Don Civil Ltd on behalf of Waterfront Toronto",
+        "posted_date": null,
+        "closed_date": null,
+        "documents_taken": null,
+        "declared_submissions": null,
+        "declared_compliant": null,
+        "stage": "single_stage",
+        "prequalified": [],
+        "invited_to_tender": [],
+        "bids": [],
+        "awards": [
+          {
+            "supplier_name": "Guild Electric Limited",
+            "amount_raw": "$761,108",
+            "amount_basis": "unknown",
+            "contingency_raw": null,
+            "value_confidential": false
+          }
+        ],
+        "funding_source": null,
+        "decision_date": null,
+        "decision_body": null
+      },
+      {
+        "reference": null,
+        "solicitation_type": "unknown",
+        "title": "Dewatering System for Chamber CC6567 Rebuild Operations for Port Lands Flood Protection",
+        "buyer": "Ellis Don Civil Ltd on behalf of Waterfront Toronto",
+        "posted_date": null,
+        "closed_date": null,
+        "documents_taken": null,
+        "declared_submissions": null,
+        "declared_compliant": null,
+        "stage": "single_stage",
+        "prequalified": [],
+        "invited_to_tender": [],
+        "bids": [],
+        "awards": [
+          {
+            "supplier_name": "Ellis Don Civil Ltd",
+            "amount_raw": "$313,750",
+            "amount_basis": "unknown",
+            "contingency_raw": null,
+            "value_confidential": false
+          }
+        ],
+        "funding_source": null,
+        "decision_date": null,
+        "decision_body": null
+      }
+    ]
+  }
+}

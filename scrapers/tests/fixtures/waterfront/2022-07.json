@@ -1,0 +1,116 @@
+{
+  "extractor_version": "v1-b63aa8c835ae",
+  "text": "Waterfront Toronto — published awarded contracts.\nPublication month only (no exact award day published): 2022-07\n\nRelocation and Lowering of Bell Canada Structure on the east side of the Lakeshore Blvd and Logan Ave Intersection for the Port Lands Flood Protection Project – Bell Canada ($139,781) (Sole Source)\nOld Cherry Street Bridge Demolition for the Port Lands Flood Protection and Enabling Infrastructure Project – Priestly Demolition Incorporated ($759,720) (Contract awarded by Ellis Don Civil Ltd on behalf of Waterfront Toronto)\nOld Cherry Street Bridge Demolition in Port Lands Flood Protection and Enabling Infrastructure Project - Priestly Demolition Incorporated ($759,720) (Contract awarded by Ellis Don Civil Ltd on behalf of Waterfront Toronto)\nExcavation and Finishing of Bell Canada Cable Chambers on Commissioners Street and New Cherry Street in Port Lands Flood Protection Project - Aecon Utilities ($172,912) (Contract awarded by Ellis Don Civil Ltd on behalf of Waterfront Toronto)",
+  "result": {
+    "contracts": [
+      {
+        "reference": null,
+        "solicitation_type": "sole_source",
+        "title": "Relocation and Lowering of Bell Canada Structure on the east side of the Lakeshore Blvd and Logan Ave Intersection for the Port Lands Flood Protection Project",
+        "buyer": "Waterfront Toronto",
+        "posted_date": null,
+        "closed_date": null,
+        "documents_taken": null,
+        "declared_submissions": null,
+        "declared_compliant": null,
+        "stage": "single_stage",
+        "prequalified": [],
+        "invited_to_tender": [],
+        "bids": [],
+        "awards": [
+          {
+            "supplier_name": "Bell Canada",
+            "amount_raw": "$139,781",
+            "amount_basis": "unknown",
+            "contingency_raw": null,
+            "value_confidential": false
+          }
+        ],
+        "funding_source": null,
+        "decision_date": null,
+        "decision_body": null
+      },
+      {
+        "reference": null,
+        "solicitation_type": "unknown",
+        "title": "Old Cherry Street Bridge Demolition for the Port Lands Flood Protection and Enabling Infrastructure Project",
+        "buyer": "Ellis Don Civil Ltd on behalf of Waterfront Toronto",
+        "posted_date": null,
+        "closed_date": null,
+        "documents_taken": null,
+        "declared_submissions": null,
+        "declared_compliant": null,
+        "stage": "single_stage",
+        "prequalified": [],
+        "invited_to_tender": [],
+        "bids": [],
+        "awards": [
+          {
+            "supplier_name": "Priestly Demolition Incorporated",
+            "amount_raw": "$759,720",
+            "amount_basis": "unknown",
+            "contingency_raw": null,
+            "value_confidential": false
+          }
+        ],
+        "funding_source": null,
+        "decision_date": null,
+        "decision_body": null
+      },
+      {
+        "reference": null,
+        "solicitation_type": "unknown",
+        "title": "Old Cherry Street Bridge Demolition in Port Lands Flood Protection and Enabling Infrastructure Project",
+        "buyer": "Ellis Don Civil Ltd on behalf of Waterfront Toronto",
+        "posted_date": null,
+        "closed_date": null,
+        "documents_taken": null,
+        "declared_submissions": null,
+        "declared_compliant": null,
+        "stage": "single_stage",
+        "prequalified": [],
+        "invited_to_tender": [],
+        "bids": [],
+        "awards": [
+          {
+            "supplier_name": "Priestly Demolition Incorporated",
+            "amount_raw": "$759,720",
+            "amount_basis": "unknown",
+            "contingency_raw": null,
+            "value_confidential": false
+          }
+        ],
+        "funding_source": null,
+        "decision_date": null,
+        "decision_body": null
+      },
+      {
+        "reference": null,
+        "solicitation_type": "unknown",
+        "title": "Excavation and Finishing of Bell Canada Cable Chambers on Commissioners Street and New Cherry Street in Port Lands Flood Protection Project",
+        "buyer": "Ellis Don Civil Ltd on behalf of Waterfront Toronto",
+        "posted_date": null,
+        "closed_date": null,
+        "documents_taken": null,
+        "declared_submissions": null,
+        "declared_compliant": null,
+        "stage": "single_stage",
+        "prequalified": [],
+        "invited_to_tender": [],
+        "bids": [],
+        "awards": [
+          {
+            "supplier_name": "Aecon Utilities",
+            "amount_raw": "$172,912",
+            "amount_basis": "unknown",
+            "contingency_raw": null,
+            "value_confidential": false
+          }
+        ],
+        "funding_source": null,
+        "decision_date": null,
+        "decision_body": null
+      }
+    ]
+  }
+}

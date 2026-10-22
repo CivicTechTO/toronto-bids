@@ -3,6 +3,10 @@ from toronto_bids.models import Buyer
 from toronto_bids.store import db
 
 DEFAULT_BUYERS = [
+    Buyer(slug="waterfront-toronto", name="Waterfront Toronto", kind="corporation",
+          partnered=1, funding_share=None, platform="own-site / Bonfire",
+          notes="Joint federal, Ontario and Toronto corporation. Own-site monthly award "
+                "publication captured under explicit permission (#108); Bonfire is separate (#134)."),
     Buyer(slug="toronto-zoo", name="Toronto Zoo", kind="agency", partnered=0,
           funding_share=None, platform="bids&tenders",
           notes="Board of Management on TMMIS as the ZB committee; portal "

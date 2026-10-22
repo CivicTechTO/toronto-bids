@@ -1,0 +1,116 @@
+{
+  "extractor_version": "v1-b63aa8c835ae",
+  "text": "Waterfront Toronto — published awarded contracts.\nPublication month only (no exact award day published): 2019-11\n\nInterim Project Management Support Services for Stormwater Facility and In-Water Pipes – Colliers Project Leaders ($108,171) (Sole Source)\nAtlas Crane Test Pit Excavation for Port Lands Flood Protection Project – GLF Infrastructure ($99,758) (Contract awarded by Ellis Don Civil Ltd on behalf of Waterfront Toronto)\nFundraising Advisory Services – Ketchum Canada (2002) Inc. ($97,500)\nField Liaison Representatives for Archeological Monitoring and Fisheries Monitoring – Mississaugas of the Credit First Nation ($463,883) (Sole Source)",
+  "result": {
+    "contracts": [
+      {
+        "reference": null,
+        "solicitation_type": "sole_source",
+        "title": "Interim Project Management Support Services for Stormwater Facility and In-Water Pipes",
+        "buyer": "Waterfront Toronto",
+        "posted_date": null,
+        "closed_date": null,
+        "documents_taken": null,
+        "declared_submissions": null,
+        "declared_compliant": null,
+        "stage": "single_stage",
+        "prequalified": [],
+        "invited_to_tender": [],
+        "bids": [],
+        "awards": [
+          {
+            "supplier_name": "Colliers Project Leaders",
+            "amount_raw": "$108,171",
+            "amount_basis": "unknown",
+            "contingency_raw": null,
+            "value_confidential": false
+          }
+        ],
+        "funding_source": null,
+        "decision_date": null,
+        "decision_body": null
+      },
+      {
+        "reference": null,
+        "solicitation_type": "unknown",
+        "title": "Atlas Crane Test Pit Excavation for Port Lands Flood Protection Project",
+        "buyer": "Waterfront Toronto",
+        "posted_date": null,
+        "closed_date": null,
+        "documents_taken": null,
+        "declared_submissions": null,
+        "declared_compliant": null,
+        "stage": "single_stage",
+        "prequalified": [],
+        "invited_to_tender": [],
+        "bids": [],
+        "awards": [
+          {
+            "supplier_name": "GLF Infrastructure",
+            "amount_raw": "$99,758",
+            "amount_basis": "unknown",
+            "contingency_raw": null,
+            "value_confidential": false
+          }
+        ],
+        "funding_source": null,
+        "decision_date": null,
+        "decision_body": null
+      },
+      {
+        "reference": null,
+        "solicitation_type": "unknown",
+        "title": "Fundraising Advisory Services",
+        "buyer": "Waterfront Toronto",
+        "posted_date": null,
+        "closed_date": null,
+        "documents_taken": null,
+        "declared_submissions": null,
+        "declared_compliant": null,
+        "stage": "single_stage",
+        "prequalified": [],
+        "invited_to_tender": [],
+        "bids": [],
+        "awards": [
+          {
+            "supplier_name": "Ketchum Canada (2002) Inc.",
+            "amount_raw": "$97,500",
+            "amount_basis": "unknown",
+            "contingency_raw": null,
+            "value_confidential": false
+          }
+        ],
+        "funding_source": null,
+        "decision_date": null,
+        "decision_body": null
+      },
+      {
+        "reference": null,
+        "solicitation_type": "sole_source",
+        "title": "Field Liaison Representatives for Archeological Monitoring and Fisheries Monitoring",
+        "buyer": "Waterfront Toronto",
+        "posted_date": null,
+        "closed_date": null,
+        "documents_taken": null,
+        "declared_submissions": null,
+        "declared_compliant": null,
+        "stage": "single_stage",
+        "prequalified": [],
+        "invited_to_tender": [],
+        "bids": [],
+        "awards": [
+          {
+            "supplier_name": "Mississaugas of the Credit First Nation",
+            "amount_raw": "$463,883",
+            "amount_basis": "unknown",
+            "contingency_raw": null,
+            "value_confidential": false
+          }
+        ],
+        "funding_source": null,
+        "decision_date": null,
+        "decision_body": null
+      }
+    ]
+  }
+}

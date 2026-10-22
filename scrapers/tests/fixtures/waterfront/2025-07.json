@@ -1,0 +1,143 @@
+{
+  "extractor_version": "v1-b63aa8c835ae",
+  "text": "Waterfront Toronto — published awarded contracts.\nPublication month only (no exact award day published): 2025-07\n\nEnbridge Work Fee - Infrastructure Work supporting Lake - Enbridge Gas Inc ($5,0000,000) (Non-Competitive-Utilities)\nRemoval & New Asphalt Roadway – Sanscon Construction ($3,887,370) (Contract Awarded by Construction Manager Eastern Construction Company Ltd.)\nFH30 Winter Heating and Miscellaneous Work - EllisDon Civil Ltd ($176,079.64) (Contract Awarded by Construction Manager EllisDon Civil Ltd.)\nRemedial Works Oversite – W.F. Baird & Associates Coastal Engineers Ltd. (50,000) (Contract Awarded by Construction Manager EllisDon Civil Ltd.) (Non-Competitive)\nRisk Assessment and Peer Review Services Supporting Keating Channel Pedestrian Bridge - HDR Corporation ($65,781) (Vendor of Record)",
+  "result": {
+    "contracts": [
+      {
+        "reference": null,
+        "solicitation_type": "sole_source",
+        "title": "Enbridge Work Fee - Infrastructure Work supporting Lake",
+        "buyer": "Waterfront Toronto",
+        "posted_date": null,
+        "closed_date": null,
+        "documents_taken": null,
+        "declared_submissions": null,
+        "declared_compliant": null,
+        "stage": "single_stage",
+        "prequalified": [],
+        "invited_to_tender": [],
+        "bids": [],
+        "awards": [
+          {
+            "supplier_name": "Enbridge Gas Inc",
+            "amount_raw": "$5,0000,000",
+            "amount_basis": "unknown",
+            "contingency_raw": null,
+            "value_confidential": false
+          }
+        ],
+        "funding_source": null,
+        "decision_date": null,
+        "decision_body": null
+      },
+      {
+        "reference": null,
+        "solicitation_type": "unknown",
+        "title": "Removal & New Asphalt Roadway",
+        "buyer": "Waterfront Toronto",
+        "posted_date": null,
+        "closed_date": null,
+        "documents_taken": null,
+        "declared_submissions": null,
+        "declared_compliant": null,
+        "stage": "single_stage",
+        "prequalified": [],
+        "invited_to_tender": [],
+        "bids": [],
+        "awards": [
+          {
+            "supplier_name": "Sanscon Construction",
+            "amount_raw": "$3,887,370",
+            "amount_basis": "unknown",
+            "contingency_raw": null,
+            "value_confidential": false
+          }
+        ],
+        "funding_source": null,
+        "decision_date": null,
+        "decision_body": "Construction Manager Eastern Construction Company Ltd."
+      },
+      {
+        "reference": null,
+        "solicitation_type": "unknown",
+        "title": "FH30 Winter Heating and Miscellaneous Work",
+        "buyer": "Waterfront Toronto",
+        "posted_date": null,
+        "closed_date": null,
+        "documents_taken": null,
+        "declared_submissions": null,
+        "declared_compliant": null,
+        "stage": "single_stage",
+        "prequalified": [],
+        "invited_to_tender": [],
+        "bids": [],
+        "awards": [
+          {
+            "supplier_name": "EllisDon Civil Ltd",
+            "amount_raw": "$176,079.64",
+            "amount_basis": "unknown",
+            "contingency_raw": null,
+            "value_confidential": false
+          }
+        ],
+        "funding_source": null,
+        "decision_date": null,
+        "decision_body": "Construction Manager EllisDon Civil Ltd."
+      },
+      {
+        "reference": null,
+        "solicitation_type": "sole_source",
+        "title": "Remedial Works Oversite",
+        "buyer": "Waterfront Toronto",
+        "posted_date": null,
+        "closed_date": null,
+        "documents_taken": null,
+        "declared_submissions": null,
+        "declared_compliant": null,
+        "stage": "single_stage",
+        "prequalified": [],
+        "invited_to_tender": [],
+        "bids": [],
+        "awards": [
+          {
+            "supplier_name": "W.F. Baird & Associates Coastal Engineers Ltd.",
+            "amount_raw": "50,000",
+            "amount_basis": "unknown",
+            "contingency_raw": null,
+            "value_confidential": false
+          }
+        ],
+        "funding_source": null,
+        "decision_date": null,
+        "decision_body": "Construction Manager EllisDon Civil Ltd."
+      },
+      {
+        "reference": null,
+        "solicitation_type": "VOR",
+        "title": "Risk Assessment and Peer Review Services Supporting Keating Channel Pedestrian Bridge",
+        "buyer": "Waterfront Toronto",
+        "posted_date": null,
+        "closed_date": null,
+        "documents_taken": null,
+        "declared_submissions": null,
+        "declared_compliant": null,
+        "stage": "single_stage",
+        "prequalified": [],
+        "invited_to_tender": [],
+        "bids": [],
+        "awards": [
+          {
+            "supplier_name": "HDR Corporation",
+            "amount_raw": "$65,781",
+            "amount_basis": "unknown",
+            "contingency_raw": null,
+            "value_confidential": false
+          }
+        ],
+        "funding_source": null,
+        "decision_date": null,
+        "decision_body": null
+      }
+    ]
+  }
+}

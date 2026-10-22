@@ -9,7 +9,7 @@ from contextlib import contextmanager
 
 FACT_TABLES = ('solicitation', 'award', 'noncompetitive', 'ariba_posting', 'bid',
                'background_pdf', 'composite_award', 'ariba_attachment', 'capital_project',
-               'agency_solicitation', 'agency_award', 'agency_bid', 'portal_listing')
+               'agency_solicitation', 'agency_award', 'agency_bid', 'portal_listing', 'published_award')
 
 
 @contextmanager
@@ -123,6 +123,8 @@ def _resolve(conn):
                 else:
                     # A stored observation with no publisher ID still has archive identity.
                     pid = row['procurement_id'] or ids.get('unidentified_bid', row['id'])
+            elif table == 'published_award':
+                pid = ids.get('published_award:' + str(row['buyer_id']), row['source_key'])
             elif table == 'portal_listing' or (table == 'agency_solicitation'
                                                and row['source'] == 'bids_tenders' and row['portal_url']):
                 pid = ids.get('agency_portal:' + str(row['buyer_id']), row['portal_url'])

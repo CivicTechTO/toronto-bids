@@ -20,7 +20,8 @@ def nightly(conn, monkeypatch, tmp_path):
     monkeypatch.setattr(cli.pipeline, "sync", lambda *a, **k: [])
     monkeypatch.setattr(cli.HttpClient, "__init__", lambda self, *a, **k: None)
     monkeypatch.setattr(cli.HttpClient, "close", lambda self: None)
-    from toronto_bids.sources import award_summary, bids_tenders
+    from toronto_bids.sources import award_summary, bids_tenders, waterfront
+    monkeypatch.setattr(waterfront, "capture_awards", lambda *a, **k: {"blocks": 0, "failures": []})
     monkeypatch.setattr(award_summary, "download_award_summaries", lambda *a, **k: 0)
     monkeypatch.setattr(award_summary, "store_award_summary_bids", lambda *a, **k: 0)
     monkeypatch.setattr(bids_tenders, "run_portal_capture", lambda *a, **k: {})
@@ -780,3 +781,11 @@ def test_real_portal_refresh_reaches_nightly_history_and_export(nightly, monkeyp
     zoo = next(b for b in exported['buyers'] if b['slug']=='toronto-zoo')
     assert len(zoo['portal_listings']) == 122 and zoo['awards'] == []
     assert next(p for p in zoo['portal_listings'] if p['portal_url'].endswith(control['Id']))['status'] == 'Awarded'
+
+
+def test_waterfront_partial_coverage_fails_its_step_but_export_runs(nightly, monkeypatch, tmp_path):
+    from toronto_bids.sources import waterfront
+    monkeypatch.setattr(waterfront, 'capture_awards', lambda *a, **k:
+                        {'blocks': 5, 'failures': [('waterfront:2023-03', 'supplier not published')]})
+    assert nightly() == 1
+    assert (tmp_path / 'export' / 'bids.json').exists()

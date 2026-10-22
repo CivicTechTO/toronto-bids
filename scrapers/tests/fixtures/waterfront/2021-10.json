@@ -1,0 +1,191 @@
+{
+  "extractor_version": "v1-b63aa8c835ae",
+  "text": "Waterfront Toronto — published awarded contracts.\nPublication month only (no exact award day published): 2021-10\n\nWater Service Connections from the Property line to the Watermain and Sewers for Love Park in Central Waterfront - The Treasurer, City of Toronto ($100,507) (Sole Source)\nDesign and Supply of Play Equipment Phase 1 for Port Lands Flood Protection Project\nAPE Studio Inc. ($409,136)\nEarthscape Play Inc. ($465,660)\nMonstrum APS ($416,931)\nWhole Trees LLC ($210,880)\nCIP Concrete (SPS, OGS1, SWTF, Outfall) for Port Lands Flood Protection Project - Alliance Verdi Civil Inc. ($2,915,010) (Contract awarded by Ellis Don Civil Ltd on behalf of Waterfront Toronto)\nDry Utilities for New Cherry St and Lakeshore for Port Lands Flood Protection Project - Guild Electric Limited ($680,653) (Contract awarded by Ellis Don Civil Ltd on behalf of Waterfront Toronto)\nBioengineering Supervision Services for Port Lands Flood Protection Project - Urban Forest Associates ($249,400) (Contract awarded by Ellis Don Civil Ltd on behalf of Waterfront Toronto)\nTemporary Street Lighting Design for Port Lands Flood Protection Project - Utility Solutions ($214,108) (Contract awarded by Ellis Don Civil Ltd on behalf of Waterfront Toronto)",
+  "result": {
+    "contracts": [
+      {
+        "reference": null,
+        "solicitation_type": "sole_source",
+        "title": "Water Service Connections from the Property line to the Watermain and Sewers for Love Park in Central Waterfront",
+        "buyer": "Waterfront Toronto",
+        "posted_date": null,
+        "closed_date": null,
+        "documents_taken": null,
+        "declared_submissions": null,
+        "declared_compliant": null,
+        "stage": "single_stage",
+        "prequalified": [],
+        "invited_to_tender": [],
+        "bids": [],
+        "awards": [
+          {
+            "supplier_name": "The Treasurer, City of Toronto",
+            "amount_raw": "$100,507",
+            "amount_basis": "unknown",
+            "contingency_raw": null,
+            "value_confidential": false
+          }
+        ],
+        "funding_source": null,
+        "decision_date": null,
+        "decision_body": null
+      },
+      {
+        "reference": null,
+        "solicitation_type": "unknown",
+        "title": "Design and Supply of Play Equipment Phase 1 for Port Lands Flood Protection Project",
+        "buyer": "Waterfront Toronto",
+        "posted_date": null,
+        "closed_date": null,
+        "documents_taken": null,
+        "declared_submissions": null,
+        "declared_compliant": null,
+        "stage": "single_stage",
+        "prequalified": [],
+        "invited_to_tender": [],
+        "bids": [],
+        "awards": [
+          {
+            "supplier_name": "APE Studio Inc.",
+            "amount_raw": "$409,136",
+            "amount_basis": "unknown",
+            "contingency_raw": null,
+            "value_confidential": false
+          },
+          {
+            "supplier_name": "Earthscape Play Inc.",
+            "amount_raw": "$465,660",
+            "amount_basis": "unknown",
+            "contingency_raw": null,
+            "value_confidential": false
+          },
+          {
+            "supplier_name": "Monstrum APS",
+            "amount_raw": "$416,931",
+            "amount_basis": "unknown",
+            "contingency_raw": null,
+            "value_confidential": false
+          },
+          {
+            "supplier_name": "Whole Trees LLC",
+            "amount_raw": "$210,880",
+            "amount_basis": "unknown",
+            "contingency_raw": null,
+            "value_confidential": false
+          }
+        ],
+        "funding_source": null,
+        "decision_date": null,
+        "decision_body": null
+      },
+      {
+        "reference": null,
+        "solicitation_type": "unknown",
+        "title": "CIP Concrete (SPS, OGS1, SWTF, Outfall) for Port Lands Flood Protection Project",
+        "buyer": "Ellis Don Civil Ltd on behalf of Waterfront Toronto",
+        "posted_date": null,
+        "closed_date": null,
+        "documents_taken": null,
+        "declared_submissions": null,
+        "declared_compliant": null,
+        "stage": "single_stage",
+        "prequalified": [],
+        "invited_to_tender": [],
+        "bids": [],
+        "awards": [
+          {
+            "supplier_name": "Alliance Verdi Civil Inc.",
+            "amount_raw": "$2,915,010",
+            "amount_basis": "unknown",
+            "contingency_raw": null,
+            "value_confidential": false
+          }
+        ],
+        "funding_source": null,
+        "decision_date": null,
+        "decision_body": null
+      },
+      {
+        "reference": null,
+        "solicitation_type": "unknown",
+        "title": "Dry Utilities for New Cherry St and Lakeshore for Port Lands Flood Protection Project",
+        "buyer": "Ellis Don Civil Ltd on behalf of Waterfront Toronto",
+        "posted_date": null,
+        "closed_date": null,
+        "documents_taken": null,
+        "declared_submissions": null,
+        "declared_compliant": null,
+        "stage": "single_stage",
+        "prequalified": [],
+        "invited_to_tender": [],
+        "bids": [],
+        "awards": [
+          {
+            "supplier_name": "Guild Electric Limited",
+            "amount_raw": "$680,653",
+            "amount_basis": "unknown",
+            "contingency_raw": null,
+            "value_confidential": false
+          }
+        ],
+        "funding_source": null,
+        "decision_date": null,
+        "decision_body": null
+      },
+      {
+        "reference": null,
+        "solicitation_type": "unknown",
+        "title": "Bioengineering Supervision Services for Port Lands Flood Protection Project",
+        "buyer": "Ellis Don Civil Ltd on behalf of Waterfront Toronto",
+        "posted_date": null,
+        "closed_date": null,
+        "documents_taken": null,
+        "declared_submissions": null,
+        "declared_compliant": null,
+        "stage": "single_stage",
+        "prequalified": [],
+        "invited_to_tender": [],
+        "bids": [],
+        "awards": [
+          {
+            "supplier_name": "Urban Forest Associates",
+            "amount_raw": "$249,400",
+            "amount_basis": "unknown",
+            "contingency_raw": null,
+            "value_confidential": false
+          }
+        ],
+        "funding_source": null,
+        "decision_date": null,
+        "decision_body": null
+      },
+      {
+        "reference": null,
+        "solicitation_type": "unknown",
+        "title": "Temporary Street Lighting Design for Port Lands Flood Protection Project",
+        "buyer": "Ellis Don Civil Ltd on behalf of Waterfront Toronto",
+        "posted_date": null,
+        "closed_date": null,
+        "documents_taken": null,
+        "declared_submissions": null,
+        "declared_compliant": null,
+        "stage": "single_stage",
+        "prequalified": [],
+        "invited_to_tender": [],
+        "bids": [],
+        "awards": [
+          {
+            "supplier_name": "Utility Solutions",
+            "amount_raw": "$214,108",
+            "amount_basis": "unknown",
+            "contingency_raw": null,
+            "value_confidential": false
+          }
+        ],
+        "funding_source": null,
+        "decision_date": null,
+        "decision_body": null
+      }
+    ]
+  }
+}

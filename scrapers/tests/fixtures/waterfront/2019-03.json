@@ -1,0 +1,278 @@
+{
+  "extractor_version": "v1-b63aa8c835ae",
+  "text": "Waterfront Toronto — published awarded contracts.\nPublication month only (no exact award day published): 2019-03\n\nConstruction Manager for Lakefilling Revenue – EllisDon Civil Ltd ($115,050)\nDesign Competition for York Street Park – Claude Cormier et Associes Inc ($1,067,500)\nCut-Off Walls Phase I for Port Lands Flood Protection Project – GFL & Geo Solutions ($41,828,224) (contract awarded by Ellis Don Civil Ltd on behalf of Waterfront Toronto)\nBuilding Demolition Phase II for Port Lands Flood Protection Project – Priestly Demolition Inc ($3,043,728.50) (contract awarded by Ellis Don Civil Ltd on behalf of Waterfront Toronto)\nCherry Street North Bridge Foundation and Sheet Piling for Port Lands Flood Protection Project – Soletanche Bachy Canada ($5,812,007) (contract awarded by Ellis Don Civil Ltd on behalf of Waterfront Toronto)\nLaboratory and Testing (Roads and Bridges) for Port Lands Flood Protection Project – Golder Associates Ltd (3,579,797) (contract awarded by Ellis Don Civil Ltd on behalf of Waterfront Toronto)\nCrisis Communications Planning and On Call Support for Waterfront Toronto – Hill+Knowlton Strategies ($50,000)\nMaster Innovation and Development Plan: Housing Pillar, Subject Matter Expert – N. Barry Lyon Consultants Ltd. ($64,970)\nPublic Engagement Strategy and Execution for Quayside Project – Swerhun Inc ($184,525)\nRealty Taxes (2018) for 255 Queens Quay East – City of Toronto ($79,55)",
+  "result": {
+    "contracts": [
+      {
+        "reference": null,
+        "solicitation_type": "unknown",
+        "title": "Construction Manager for Lakefilling Revenue",
+        "buyer": "Waterfront Toronto",
+        "posted_date": null,
+        "closed_date": null,
+        "documents_taken": null,
+        "declared_submissions": null,
+        "declared_compliant": null,
+        "stage": "single_stage",
+        "prequalified": [],
+        "invited_to_tender": [],
+        "bids": [],
+        "awards": [
+          {
+            "supplier_name": "EllisDon Civil Ltd",
+            "amount_raw": "$115,050",
+            "amount_basis": "unknown",
+            "contingency_raw": null,
+            "value_confidential": false
+          }
+        ],
+        "funding_source": null,
+        "decision_date": null,
+        "decision_body": null
+      },
+      {
+        "reference": null,
+        "solicitation_type": "unknown",
+        "title": "Design Competition for York Street Park",
+        "buyer": "Waterfront Toronto",
+        "posted_date": null,
+        "closed_date": null,
+        "documents_taken": null,
+        "declared_submissions": null,
+        "declared_compliant": null,
+        "stage": "single_stage",
+        "prequalified": [],
+        "invited_to_tender": [],
+        "bids": [],
+        "awards": [
+          {
+            "supplier_name": "Claude Cormier et Associes Inc",
+            "amount_raw": "$1,067,500",
+            "amount_basis": "unknown",
+            "contingency_raw": null,
+            "value_confidential": false
+          }
+        ],
+        "funding_source": null,
+        "decision_date": null,
+        "decision_body": null
+      },
+      {
+        "reference": null,
+        "solicitation_type": "unknown",
+        "title": "Cut-Off Walls Phase I for Port Lands Flood Protection Project",
+        "buyer": "Waterfront Toronto",
+        "posted_date": null,
+        "closed_date": null,
+        "documents_taken": null,
+        "declared_submissions": null,
+        "declared_compliant": null,
+        "stage": "single_stage",
+        "prequalified": [],
+        "invited_to_tender": [],
+        "bids": [],
+        "awards": [
+          {
+            "supplier_name": "GFL & Geo Solutions",
+            "amount_raw": "$41,828,224",
+            "amount_basis": "unknown",
+            "contingency_raw": null,
+            "value_confidential": false
+          }
+        ],
+        "funding_source": null,
+        "decision_date": null,
+        "decision_body": null
+      },
+      {
+        "reference": null,
+        "solicitation_type": "unknown",
+        "title": "Building Demolition Phase II for Port Lands Flood Protection Project",
+        "buyer": "Waterfront Toronto",
+        "posted_date": null,
+        "closed_date": null,
+        "documents_taken": null,
+        "declared_submissions": null,
+        "declared_compliant": null,
+        "stage": "single_stage",
+        "prequalified": [],
+        "invited_to_tender": [],
+        "bids": [],
+        "awards": [
+          {
+            "supplier_name": "Priestly Demolition Inc",
+            "amount_raw": "$3,043,728.50",
+            "amount_basis": "unknown",
+            "contingency_raw": null,
+            "value_confidential": false
+          }
+        ],
+        "funding_source": null,
+        "decision_date": null,
+        "decision_body": null
+      },
+      {
+        "reference": null,
+        "solicitation_type": "unknown",
+        "title": "Cherry Street North Bridge Foundation and Sheet Piling for Port Lands Flood Protection Project",
+        "buyer": "Waterfront Toronto",
+        "posted_date": null,
+        "closed_date": null,
+        "documents_taken": null,
+        "declared_submissions": null,
+        "declared_compliant": null,
+        "stage": "single_stage",
+        "prequalified": [],
+        "invited_to_tender": [],
+        "bids": [],
+        "awards": [
+          {
+            "supplier_name": "Soletanche Bachy Canada",
+            "amount_raw": "$5,812,007",
+            "amount_basis": "unknown",
+            "contingency_raw": null,
+            "value_confidential": false
+          }
+        ],
+        "funding_source": null,
+        "decision_date": null,
+        "decision_body": null
+      },
+      {
+        "reference": null,
+        "solicitation_type": "unknown",
+        "title": "Laboratory and Testing (Roads and Bridges) for Port Lands Flood Protection Project",
+        "buyer": "Waterfront Toronto",
+        "posted_date": null,
+        "closed_date": null,
+        "documents_taken": null,
+        "declared_submissions": null,
+        "declared_compliant": null,
+        "stage": "single_stage",
+        "prequalified": [],
+        "invited_to_tender": [],
+        "bids": [],
+        "awards": [
+          {
+            "supplier_name": "Golder Associates Ltd",
+            "amount_raw": "3,579,797",
+            "amount_basis": "unknown",
+            "contingency_raw": null,
+            "value_confidential": false
+          }
+        ],
+        "funding_source": null,
+        "decision_date": null,
+        "decision_body": null
+      },
+      {
+        "reference": null,
+        "solicitation_type": "unknown",
+        "title": "Crisis Communications Planning and On Call Support for Waterfront Toronto",
+        "buyer": "Waterfront Toronto",
+        "posted_date": null,
+        "closed_date": null,
+        "documents_taken": null,
+        "declared_submissions": null,
+        "declared_compliant": null,
+        "stage": "single_stage",
+        "prequalified": [],
+        "invited_to_tender": [],
+        "bids": [],
+        "awards": [
+          {
+            "supplier_name": "Hill+Knowlton Strategies",
+            "amount_raw": "$50,000",
+            "amount_basis": "unknown",
+            "contingency_raw": null,
+            "value_confidential": false
+          }
+        ],
+        "funding_source": null,
+        "decision_date": null,
+        "decision_body": null
+      },
+      {
+        "reference": null,
+        "solicitation_type": "unknown",
+        "title": "Master Innovation and Development Plan: Housing Pillar, Subject Matter Expert",
+        "buyer": "Waterfront Toronto",
+        "posted_date": null,
+        "closed_date": null,
+        "documents_taken": null,
+        "declared_submissions": null,
+        "declared_compliant": null,
+        "stage": "single_stage",
+        "prequalified": [],
+        "invited_to_tender": [],
+        "bids": [],
+        "awards": [
+          {
+            "supplier_name": "N. Barry Lyon Consultants Ltd.",
+            "amount_raw": "$64,970",
+            "amount_basis": "unknown",
+            "contingency_raw": null,
+            "value_confidential": false
+          }
+        ],
+        "funding_source": null,
+        "decision_date": null,
+        "decision_body": null
+      },
+      {
+        "reference": null,
+        "solicitation_type": "unknown",
+        "title": "Public Engagement Strategy and Execution for Quayside Project",
+        "buyer": "Waterfront Toronto",
+        "posted_date": null,
+        "closed_date": null,
+        "documents_taken": null,
+        "declared_submissions": null,
+        "declared_compliant": null,
+        "stage": "single_stage",
+        "prequalified": [],
+        "invited_to_tender": [],
+        "bids": [],
+        "awards": [
+          {
+            "supplier_name": "Swerhun Inc",
+            "amount_raw": "$184,525",
+            "amount_basis": "unknown",
+            "contingency_raw": null,
+            "value_confidential": false
+          }
+        ],
+        "funding_source": null,
+        "decision_date": null,
+        "decision_body": null
+      },
+      {
+        "reference": null,
+        "solicitation_type": "unknown",
+        "title": "Realty Taxes (2018) for 255 Queens Quay East",
+        "buyer": "Waterfront Toronto",
+        "posted_date": null,
+        "closed_date": null,
+        "documents_taken": null,
+        "declared_submissions": null,
+        "declared_compliant": null,
+        "stage": "single_stage",
+        "prequalified": [],
+        "invited_to_tender": [],
+        "bids": [],
+        "awards": [
+          {
+            "supplier_name": "City of Toronto",
+            "amount_raw": "$79,55",
+            "amount_basis": "unknown",
+            "contingency_raw": null,
+            "value_confidential": false
+          }
+        ],
+        "funding_source": null,
+        "decision_date": null,
+        "decision_body": null
+      }
+    ]
+  }
+}

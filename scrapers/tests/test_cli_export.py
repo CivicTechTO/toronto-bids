@@ -21,7 +21,7 @@ def _run_export(monkeypatch, conn, tmp_path, capsys):
 def test_an_agency_only_db_mentions_the_buyers_it_actually_exported(conn, monkeypatch, tmp_path, capsys):
     seed_buyers(conn)              # agency enrichment has run; tb sync never has
     out = _run_export(monkeypatch, conn, tmp_path, capsys)
-    assert "0 solicitations + 3 agency buyer(s)" in out
+    assert "0 solicitations + 4 agency buyer(s)" in out
 
 
 def test_a_plain_city_spine_export_is_unchanged(conn, monkeypatch, tmp_path, capsys):
