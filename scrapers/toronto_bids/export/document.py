@@ -108,20 +108,16 @@ def build_export_document(conn, generated_at: str | None = None) -> dict:
             "size_bytes": None,
             "url": form["url"],
         })
-    # Staff reports join a solicitation through the bid-bridge (#126): an Ariba-era bid row
-    # carries BOTH the council reference and the document_number, so the link is exact — no
-    # fuzzy matching. Derived from `bid` at query time; the reference side is 1:1 (verified), so
-    # a plain dict is exact and the ORDER BY makes any future many-to-one deterministic.
-    bridge: dict[str, str] = {}
+    # Legacy nesting uses a reference only when all held evidence names one document.
+    # Many-procurement item/PDF associations remain explicit in the identity index.
+    bridge_candidates = {}
     for row in _rows(conn, "SELECT DISTINCT reference, document_number FROM bid "
                            "WHERE reference IS NOT NULL AND document_number IS NOT NULL "
                            "ORDER BY reference, document_number"):
-        bridge[row["reference"]] = row["document_number"]
-    # Pre-Ariba items have no dual-key bid to derive from; solicitation_link records the
-    # (winner,value) match instead (#124). setdefault so a bid-derived bridge is never overridden.
-    for row in _rows(conn, "SELECT reference, document_number FROM solicitation_link "
-                           "ORDER BY reference"):
-        bridge.setdefault(row["reference"], row["document_number"])
+        bridge_candidates.setdefault(row["reference"], set()).add(row["document_number"])
+    for row in _rows(conn, "SELECT reference, document_number FROM solicitation_link ORDER BY reference"):
+        bridge_candidates.setdefault(row["reference"], set()).add(row["document_number"])
+    bridge = {ref: next(iter(docs)) for ref, docs in bridge_candidates.items() if len(docs) == 1}
     for report in _rows(conn, "SELECT reference, url FROM background_pdf "
                               "WHERE kind='bgrd' ORDER BY reference, url"):
         doc = bridge.get(report["reference"])
@@ -220,6 +216,8 @@ def build_export_document(conn, generated_at: str | None = None) -> dict:
             "solicitations": [_drop(r, "id", "buyer_id") for r in _rows(
                 conn, f"SELECT * FROM agency_solicitation WHERE buyer_id={bid_} "
                       "ORDER BY native_ref")],
+            "portal_listings": [_drop(r, "id", "buyer_id") for r in _rows(
+                conn, f"SELECT * FROM portal_listing WHERE buyer_id={bid_} ORDER BY portal_url")],
             "awards": [_drop(r, "id", "buyer_id") for r in _rows(
                 conn, f"SELECT * FROM agency_award WHERE buyer_id={bid_} "
                       "ORDER BY native_ref, supplier_name_raw")],
@@ -246,4 +244,8 @@ def build_export_document(conn, generated_at: str | None = None) -> dict:
         "unlinked_awards": unlinked_awards,
         "unlinked_bids": unlinked_bids,
         "buyers": buyers_out,
+        "procurements": _rows(conn, "SELECT * FROM procurement ORDER BY id"),
+        "procurement_keys": _rows(conn, "SELECT * FROM procurement_key ORDER BY namespace,value"),
+        "procurement_documents": _rows(conn, "SELECT * FROM procurement_document ORDER BY procurement_id,url"),
+        "procurement_council_items": _rows(conn, "SELECT * FROM procurement_council_item ORDER BY procurement_id,reference"),
     }

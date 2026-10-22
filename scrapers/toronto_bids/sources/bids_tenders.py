@@ -1,4 +1,4 @@
-"""The bids&tenders portal source (#135) — listing metadata, PROVISIONAL parser.
+"""The bids&tenders portal source (#135) — listing metadata with page-scoped identities.
 
 Reads public bid listings from a body's bids&tenders portal via its plain-HTTP JSON grid
 endpoint (no browser). GATED: fetch_listings raises PermissionError unless the portal's
@@ -8,7 +8,7 @@ Vendor clickwrap and are never fetched.
 
 TRCA fields are verified against real grid records and public detail metadata (#226).
 Zoo parsing is verified against its complete recorded off-peak sweep. Distinct portal
-postings sharing a native reference are refused pending identity resolution (#124).
+postings retain distinct identities when a native reference is absent or reused (#124).
 Nonempty replies are recorded automatically, including when later parsing fails.
 """
 import hashlib
@@ -21,7 +21,7 @@ import httpx
 
 from toronto_bids import config
 from toronto_bids.buyers import seed_buyers
-from toronto_bids.models import AgencySolicitation
+from toronto_bids.models import PortalListing
 from toronto_bids.store import db
 
 _LANDING = "Module/Tenders/en"
@@ -127,11 +127,11 @@ def fetch_listings(portal: dict, *, delay: float = _DELAY, log=lambda _m: None):
 _PORTAL_BASE = {p["slug"]: p["portal_url"].rstrip("/") for p in config.BIDS_TENDERS_PORTALS}
 
 
-def _native_ref(record: dict) -> str:
+def _native_ref(record: dict) -> str | None:
     """Prefer explicit bid numbers; recognize only demonstrated title-prefix shapes.
 
-    A GUID locates a portal page, but cannot join the agency's board-report keyspace.
-    Unknown layouts are refused and their raw replies remain recorded for review.
+    A GUID locates a portal page, but is never invented as a printed reference.
+    Unknown layouts remain unlabelled; source pages and raw replies are still preserved.
     """
     raw = record.get("ReferenceNumber") or record.get("BidNumber")
     if not raw:
@@ -158,8 +158,6 @@ def _native_ref(record: dict) -> str:
     from toronto_bids.linking.agency_reference import normalize_agency_reference
 
     ref = normalize_agency_reference(record.get("buyer_slug"), raw)
-    if not ref:
-        raise ValueError(f"bids&tenders: missing/unrecognized bid reference for {record.get('Id')}")
     return ref
 
 
@@ -177,12 +175,14 @@ def _listing_date(value):
     return value
 
 
-def parse_listing(record: dict, buyer_id: int) -> AgencySolicitation:
-    """Map verified grid fields to an agency listing; refuse an unresolved reference."""
+def parse_listing(record: dict, buyer_id: int) -> PortalListing:
+    """Preserve a source page independently of its optional printed reference."""
     base = _PORTAL_BASE.get(record.get("buyer_slug"), "")
     rid = record.get("Id")
     portal_url = f"{base}/Module/Tenders/en/Tender/Detail/{rid}" if (base and rid) else None
-    return AgencySolicitation(
+    if not portal_url:
+        raise ValueError('bids&tenders: missing buyer/page identity')
+    return PortalListing(
         buyer_id=buyer_id,
         native_ref=_native_ref(record),
         title=record.get("Title"),
@@ -195,32 +195,18 @@ def parse_listing(record: dict, buyer_id: int) -> AgencySolicitation:
 
 
 def store_listings(conn, records, buyer_ids: dict) -> int:
-    """Upsert each parsed listing into agency_solicitation with overwrite=False (backfill):
-    fills any NULL field — a portal-only solicitation gets its full record including title,
-    while a board-report row keeps its title/status and only has its empty dates filled in.
-    Status refresh remains deferred to #140: existing non-null fields stay authoritative.
-    Validate every row and posting-to-reference relationship before writing. Unknown layouts
-    and references shared by distinct portal pages refuse the batch instead of merging
-    unrelated procurements or partially storing it; raw snapshots remain available (#124).
-    Skips unseeded buyers. Returns the number of listing records processed; repeated native
-    references can enrich the same solicitation row."""
+    """Capture every distinct buyer/page; references are optional, nonunique labels.
+
+    Validate the complete batch before any write. Portal metadata remains backfill-only
+    (#140); a page never overwrites a board row on the strength of a reference alone.
+    """
+    from toronto_bids.linking.procurement import _transaction, resolve_procurements
     rows = [parse_listing(record, buyer_ids[record["buyer_slug"]]) for record in records
             if record.get("buyer_slug") in buyer_ids]
-    # A native bid number is not necessarily a unique procurement across years/stages.
-    # Keep every source posting in raw snapshots, but do not silently collapse distinct
-    # pages into a single agency row while the wider identity contract (#124) is unresolved.
-    identities = {}
-    for row in rows:
-        identities.setdefault((row.buyer_id, row.native_ref), set()).add(row.portal_url)
-    conflicts = [ref for (_,ref), pages in identities.items() if len(pages) > 1]
-    if conflicts:
-        raise ValueError(
-            f"bids&tenders: identity conflict: {len(rows)} parsed listings include "
-            f"{len(conflicts)} reference(s) shared by distinct portal postings: "
-            f"{', '.join(sorted(conflicts)[:10])}; no solicitation rows written; "
-            "raw listings retained; identity resolution is tracked in #124")
-    for row in rows:
-        db.upsert_row(conn, row, overwrite=False)
+    with _transaction(conn):
+        for row in rows:
+            db.upsert_row(conn, row, overwrite=False)
+        resolve_procurements(conn)
     conn.commit()
     return len(rows)
 

@@ -252,9 +252,9 @@ def test_sync_detail_counts_every_unit_the_run_recorded(conn):
         _record(conn, name)
 
     detail = cli._sync_detail(conn, 0)
-    assert detail == "schema check · 8 sources · 5 passes"
+    assert detail == "schema check · 8 sources · 6 passes"
     # The categories account for every row, which is the property that actually broke.
-    assert 1 + 8 + 5 == len(cli.db.sync_runs_since(conn, 0)) == 14
+    assert 1 + 8 + 6 == len(cli.db.sync_runs_since(conn, 0)) == 15
 
 
 def test_sync_detail_names_a_failure_wherever_it_happened(conn):

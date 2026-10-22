@@ -9,6 +9,7 @@ from toronto_bids.linking.ariba import bridge_postings_to_spine
 from toronto_bids.linking.amount_labels import apply_amount_labels, backfill_numeric_amounts
 from toronto_bids.linking.supplier import build_supplier_dimension
 from toronto_bids.title import clear_placeholder_titles
+from toronto_bids.linking.procurement import resolve_procurements
 
 
 def default_sources():
@@ -47,7 +48,8 @@ def linking_passes():
             ("ariba_bridge", bridge_postings_to_spine),
             ("amount_backfill", backfill_numeric_amounts),
             ("amount_labels", apply_amount_labels),
-            ("supplier_dimension", build_supplier_dimension))
+            ("supplier_dimension", build_supplier_dimension),
+            ("procurement_identity", resolve_procurements))
 
 
 def run_source(conn, http, source):
