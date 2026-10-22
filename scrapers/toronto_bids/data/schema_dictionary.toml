@@ -147,3 +147,30 @@ description = "Archive procurement identity, independent of the source ingest ke
 
 ["agency_bid.procurement_id"]
 description = "Archive procurement identity, independent of the source ingest key. NULL when no single procurement association is established; consult the procurement document/item associations for multi-procurement context."
+
+["award_publication.source_key"]
+description = "Archive observation key: published month, literal text block and duplicate occurrence; not a publisher contract number."
+["award_publication.publication_month"]
+description = "Publication month (YYYY-MM); the source does not publish an exact award day."
+["award_publication.raw_text"]
+description = "Complete visible source block with whitespace normalized; original HTML retained by snapshot SHA-256. A block may be context or contain several awards."
+["award_publication.labels"]
+description = "JSON array of verbatim published procurement-method and construction-manager attribution annotations; absence is not an inferred method."
+["award_publication.snapshot_sha256"]
+description = "SHA-256 of the latest complete original HTML snapshot in which this observation appeared."
+["published_award.publication_key"]
+description = "Foreign key to the source text block; source month, annotations, URL and snapshot provenance are on award_publication."
+["published_award.supplier_name_raw"]
+description = "Shared-model recipient, accepted only with an unambiguous literal name/value match outside construction-manager attribution annotations."
+["published_award.award_amount"]
+description = "Literal source value including rate or package qualifiers, where published. Never aggregate this text."
+["published_award.award_amount_numeric"]
+description = "Strictly parsed single amount; NULL for malformed grouping, rates, described package totals, or missing values."
+["published_award.title_extracted"]
+description = "Model-derived title; consult the source block for verbatim wording."
+["published_award.extraction_sha256"]
+description = "SHA-256 of the complete monthly extraction input; identifies the shared extraction cache result together with extractor_version."
+["publication_extraction.status"]
+description = "Latest monthly verification status: ok or incomplete. Supported claims may coexist with unresolved evidence; this is not a publisher-declared award count."
+["publication_extraction.errors"]
+description = "JSON list of pending extraction, unsupported model claims or unmatched monetary evidence. Raw source observations remain available."

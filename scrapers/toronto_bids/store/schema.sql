@@ -551,3 +551,42 @@ CREATE TABLE IF NOT EXISTS extraction_cache (
     extracted_at      TEXT NOT NULL DEFAULT (datetime('now')),
     PRIMARY KEY (sha256, extractor_version)
 );
+
+-- Public HTML publication observations. A month is not an invented award day.
+CREATE TABLE IF NOT EXISTS award_publication (
+    source_key TEXT PRIMARY KEY,
+    buyer_id INTEGER NOT NULL REFERENCES buyer(id),
+    publication_month TEXT NOT NULL,
+    raw_text TEXT NOT NULL,
+    source_position INTEGER NOT NULL,
+    labels TEXT NOT NULL,
+    source_url TEXT NOT NULL,
+    snapshot_sha256 TEXT NOT NULL,
+    first_seen TEXT NOT NULL DEFAULT (datetime('now')),
+    last_seen TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE TABLE IF NOT EXISTS published_award (
+    source_key TEXT PRIMARY KEY,
+    publication_key TEXT NOT NULL REFERENCES award_publication(source_key),
+    buyer_id INTEGER NOT NULL REFERENCES buyer(id),
+    supplier_name_raw TEXT NOT NULL,
+    supplier_id INTEGER,
+    award_amount TEXT,
+    award_amount_numeric REAL,
+    title_extracted TEXT,
+    extraction_sha256 TEXT NOT NULL,
+    extractor_version TEXT NOT NULL,
+    procurement_id INTEGER REFERENCES procurement(id),
+    first_seen TEXT NOT NULL DEFAULT (datetime('now')),
+    last_seen TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE TABLE IF NOT EXISTS publication_extraction (
+    buyer_id INTEGER NOT NULL REFERENCES buyer(id),
+    publication_month TEXT NOT NULL,
+    extraction_sha256 TEXT NOT NULL,
+    extractor_version TEXT NOT NULL,
+    status TEXT NOT NULL,
+    errors TEXT NOT NULL,
+    last_seen TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (buyer_id, publication_month)
+);

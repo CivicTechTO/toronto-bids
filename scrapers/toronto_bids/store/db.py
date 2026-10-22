@@ -103,6 +103,9 @@ EXPORT_TABLES = [
     "procurement_key",
     "procurement_document",
     "procurement_council_item",
+    "award_publication",
+    "published_award",
+    "publication_extraction",
 ]
 
 

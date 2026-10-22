@@ -140,6 +140,11 @@ def build_parser() -> argparse.ArgumentParser:
         "2026-07-17-deployment-design.md",
     )
 
+    p_waterfront = sub.add_parser('capture-waterfront-awards',
+        help='Archive Waterfront Toronto monthly public awards with cached shared extraction (#108)')
+    p_waterfront.add_argument('--limit', type=int,
+        help='Maximum new model requests (0 replays cache only); all source text is always archived')
+
     p_history = sub.add_parser(
         "capture-trca-history",
         help="Archive pre-2019 public Laserfiche PDFs; no extraction or publishing (#224)",
@@ -986,6 +991,18 @@ def _cmd_nightly(args) -> int:
                 run_id = _run_step(steps, failures, "agencies", _agencies, conn=conn)
                 _mark_if_swallowed_failures(steps, failures, conn, run_id, before_len)
 
+                def _waterfront():
+                    from toronto_bids.sources.waterfront import capture_awards
+                    before = conn.execute('SELECT COUNT(*) FROM published_award').fetchone()[0]
+                    result = capture_awards(conn, http, log=out)
+                    failures.extend(result['failures'])
+                    after = conn.execute('SELECT COUNT(*) FROM published_award').fetchone()[0]
+                    return f"{after - before:+d} awards; {result['blocks']} source blocks"
+
+                before_len = len(failures)
+                run_id = _run_step(steps, failures, "waterfront awards", _waterfront, conn=conn)
+                _mark_if_swallowed_failures(steps, failures, conn, run_id, before_len)
+
                 if _is_first_of_month():
 
                     def _council():
@@ -1589,6 +1606,27 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_amounts(args)
     if args.command == "enrich-ariba-attachments":
         return _cmd_enrich_ariba_attachments(args)
+    if args.command == 'capture-waterfront-awards':
+        from toronto_bids.sources.waterfront import capture_awards
+        from toronto_bids.linking.procurement import resolve_procurements
+        from toronto_bids.linking.supplier import build_supplier_dimension
+        if args.limit is not None and args.limit < 0:
+            parser.error('--limit must be nonnegative')
+        conn = _open_db()
+        http = HttpClient()
+        try:
+            result = capture_awards(conn, http, limit=args.limit, log=lambda m: print(m, flush=True))
+            resolve_procurements(conn)
+            conn.commit()
+            build_supplier_dimension(conn)
+            print(f"{result['blocks']} blocks; {result['months']} months; "
+                  f"{result['awards']} supported awards; {len(result['failures'])} incomplete months")
+            for source, error in result['failures']:
+                print(f'{source}: {error}')
+            return 1 if result['failures'] else 0
+        finally:
+            http.close()
+            conn.close()
     if args.command == "capture-trca-history":
         from toronto_bids.sources.trca_history import capture_history
 

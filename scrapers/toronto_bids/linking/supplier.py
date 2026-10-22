@@ -109,6 +109,7 @@ _SUPPLIER_TABLES = [
     # is queryable at all. Same rationale as `bid` (#87).
     ("agency_award", "id"),
     ("agency_bid", "id"),
+    ("published_award", "source_key"),
 ]
 
 # bid and agency_bid name their supplier in a different column from the others.

@@ -1,0 +1,164 @@
+{
+  "extractor_version": "v1-b63aa8c835ae",
+  "text": "Waterfront Toronto — published awarded contracts.\nPublication month only (no exact award day published): 2017-09\n\nPort Lands Area – Soil & Groundwater Remediation and Treatment Technologies – Part B: Field-Scale Pilot Testing:\nEthical Solutions - surfactant enhanced injection combined with chemical oxidation technology ($278,100)\nGeosyntec Consultants – demonstration of self-sustaining smouldering remediation in both in-situ and ex-situ environments technology ($869,110)\nGroundwater Technology BV - in-situ biological cementation using urea-based solution to enhance geotechnical stability of soils technology ($313,022)\nWSP Canada - Block and Absorb and Enhanced Aerobic Biodegration technology ($340,335)​​\nEngineering and Inspection Fees for Services for Bayside Phase II – City of Toronto ($88,950) (Sole Source)\nLegal Services to Assist with Board/Corporate Governance Matters – Axiom Global Canada Inc. ($52,000) (Sole Source)\nInterior Design-Build Services for Waterfront Toronto’s Corporate Office – Greenferd Construction Inc. ($186,446)\nEast Bayfront Dockside Block 1 - Dockwall Reinforcing Design and Contract Administration – SNC-Lavalin Inc. ($173,082)",
+  "result": {
+    "contracts": [
+      {
+        "reference": null,
+        "solicitation_type": "unknown",
+        "title": "Port Lands Area – Soil & Groundwater Remediation and Treatment Technologies – Part B: Field-Scale Pilot Testing",
+        "buyer": "Waterfront Toronto",
+        "posted_date": null,
+        "closed_date": null,
+        "documents_taken": null,
+        "declared_submissions": null,
+        "declared_compliant": null,
+        "stage": "single_stage",
+        "prequalified": [],
+        "invited_to_tender": [],
+        "bids": [],
+        "awards": [
+          {
+            "supplier_name": "Ethical Solutions",
+            "amount_raw": "$278,100",
+            "amount_basis": "unknown",
+            "contingency_raw": null,
+            "value_confidential": false
+          },
+          {
+            "supplier_name": "Geosyntec Consultants",
+            "amount_raw": "$869,110",
+            "amount_basis": "unknown",
+            "contingency_raw": null,
+            "value_confidential": false
+          },
+          {
+            "supplier_name": "Groundwater Technology BV",
+            "amount_raw": "$313,022",
+            "amount_basis": "unknown",
+            "contingency_raw": null,
+            "value_confidential": false
+          },
+          {
+            "supplier_name": "WSP Canada",
+            "amount_raw": "$340,335",
+            "amount_basis": "unknown",
+            "contingency_raw": null,
+            "value_confidential": false
+          }
+        ],
+        "funding_source": null,
+        "decision_date": null,
+        "decision_body": null
+      },
+      {
+        "reference": null,
+        "solicitation_type": "sole_source",
+        "title": "Engineering and Inspection Fees for Services for Bayside Phase II – City of Toronto",
+        "buyer": "Waterfront Toronto",
+        "posted_date": null,
+        "closed_date": null,
+        "documents_taken": null,
+        "declared_submissions": null,
+        "declared_compliant": null,
+        "stage": "single_stage",
+        "prequalified": [],
+        "invited_to_tender": [],
+        "bids": [],
+        "awards": [
+          {
+            "supplier_name": "City of Toronto",
+            "amount_raw": "$88,950",
+            "amount_basis": "unknown",
+            "contingency_raw": null,
+            "value_confidential": false
+          }
+        ],
+        "funding_source": null,
+        "decision_date": null,
+        "decision_body": null
+      },
+      {
+        "reference": null,
+        "solicitation_type": "sole_source",
+        "title": "Legal Services to Assist with Board/Corporate Governance Matters",
+        "buyer": "Waterfront Toronto",
+        "posted_date": null,
+        "closed_date": null,
+        "documents_taken": null,
+        "declared_submissions": null,
+        "declared_compliant": null,
+        "stage": "single_stage",
+        "prequalified": [],
+        "invited_to_tender": [],
+        "bids": [],
+        "awards": [
+          {
+            "supplier_name": "Axiom Global Canada Inc.",
+            "amount_raw": "$52,000",
+            "amount_basis": "unknown",
+            "contingency_raw": null,
+            "value_confidential": false
+          }
+        ],
+        "funding_source": null,
+        "decision_date": null,
+        "decision_body": null
+      },
+      {
+        "reference": null,
+        "solicitation_type": "unknown",
+        "title": "Interior Design-Build Services for Waterfront Toronto’s Corporate Office",
+        "buyer": "Waterfront Toronto",
+        "posted_date": null,
+        "closed_date": null,
+        "documents_taken": null,
+        "declared_submissions": null,
+        "declared_compliant": null,
+        "stage": "single_stage",
+        "prequalified": [],
+        "invited_to_tender": [],
+        "bids": [],
+        "awards": [
+          {
+            "supplier_name": "Greenferd Construction Inc.",
+            "amount_raw": "$186,446",
+            "amount_basis": "unknown",
+            "contingency_raw": null,
+            "value_confidential": false
+          }
+        ],
+        "funding_source": null,
+        "decision_date": null,
+        "decision_body": null
+      },
+      {
+        "reference": null,
+        "solicitation_type": "unknown",
+        "title": "East Bayfront Dockside Block 1 - Dockwall Reinforcing Design and Contract Administration",
+        "buyer": "Waterfront Toronto",
+        "posted_date": null,
+        "closed_date": null,
+        "documents_taken": null,
+        "declared_submissions": null,
+        "declared_compliant": null,
+        "stage": "single_stage",
+        "prequalified": [],
+        "invited_to_tender": [],
+        "bids": [],
+        "awards": [
+          {
+            "supplier_name": "SNC-Lavalin Inc.",
+            "amount_raw": "$173,082",
+            "amount_basis": "unknown",
+            "contingency_raw": null,
+            "value_confidential": false
+          }
+        ],
+        "funding_source": null,
+        "decision_date": null,
+        "decision_body": null
+      }
+    ]
+  }
+}
