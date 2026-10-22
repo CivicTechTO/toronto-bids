@@ -1,0 +1,651 @@
+{
+  "generated_at": "2026-10-22T12:31:02.269944+00:00",
+  "documents": [
+    {
+      "provenance": {
+        "document_id": 5558,
+        "original_url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=5558",
+        "agenda_url": "https://pub-trca.escribemeetings.com/Meeting.aspx?Id=c7ce8330-5fa2-4997-89ce-50ce5fbeed44&Agenda=Agenda&lang=English",
+        "agenda_item": "9.MINUTES OF SPECIAL EXECUTIVE COMMITTEE MEETING, HELD ON FEBRUARY 21, 2020 Open Session Meeting Minutes (Copy of the Closed Session Minutes will be circulated to the Board Members separately)",
+        "replacements": [],
+        "assessment": "Public agenda labels open-session Special Executive Committee minutes; the original meeting calendar publishes no documents. The held April 24 Board package only refers to those minutes."
+      },
+      "original": null,
+      "observation": {
+        "status": 404,
+        "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=5558",
+        "content_type": "text/html",
+        "bytes": 1245,
+        "body_sha256": "dc1d54dab6ec8c00f70137927504e4f222c8395f10760b6beecfcfa94e08249f",
+        "title": "404 - File or directory not found.",
+        "error": "Browser HTTP 404; availability cause unverified"
+      },
+      "replacements": [],
+      "outcome": "unresolved"
+    },
+    {
+      "provenance": {
+        "document_id": 7234,
+        "original_url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=7234",
+        "agenda_url": "https://pub-trca.escribemeetings.com/Meeting.aspx?Id=18346524-dedb-45ff-b76e-952f37ea05bc&Agenda=Agenda&lang=English",
+        "agenda_item": "2.MINUTES OF BOARD OF DIRECTORS MEETING HELD ON MARCH 26, 2021 Meeting Minutes Link",
+        "replacements": [
+          {
+            "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=7294",
+            "sha256": "9879370ff7f25b6685c7005026a76afaf9185987787fd6531fc9f4f044872d53",
+            "calendar_url": "https://pub-trca.escribemeetings.com/MeetingsCalendarView.aspx/GetCalendarMeetings",
+            "calendar_year": 2021,
+            "meeting_id": "464b42f1-71c8-4c67-be0a-67e6f415eb65",
+            "meeting_name": "Board of Directors",
+            "meeting_date": "2021/03/26",
+            "label": "Minutes with Attachments (PDF)",
+            "identity_excerpt": "Board of Directors Meeting was held via videoconference, on Friday, March 26, 2021, pursuant to section C.12 of the TRCA’s Board of Directors Administrative By-Law. The Chair Jennifer Innis called the meeting to order at 9:32 a.m. PRESENT Jennifer Innis Chair Jack Heath (out: 10:07 a.m., in: 10:08 a.m.) Vice-Chair Pa",
+            "relationship": "Published minutes/package for the exact meeting named by the original agenda item; not asserted byte-identical to the unavailable file."
+          }
+        ]
+      },
+      "original": null,
+      "observation": {
+        "status": 404,
+        "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=7234",
+        "content_type": "text/html",
+        "bytes": 1245,
+        "body_sha256": "dc1d54dab6ec8c00f70137927504e4f222c8395f10760b6beecfcfa94e08249f",
+        "title": "404 - File or directory not found.",
+        "error": "Browser HTTP 404; availability cause unverified"
+      },
+      "replacements": [
+        {
+          "provenance": {
+            "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=7294",
+            "sha256": "9879370ff7f25b6685c7005026a76afaf9185987787fd6531fc9f4f044872d53",
+            "calendar_url": "https://pub-trca.escribemeetings.com/MeetingsCalendarView.aspx/GetCalendarMeetings",
+            "calendar_year": 2021,
+            "meeting_id": "464b42f1-71c8-4c67-be0a-67e6f415eb65",
+            "meeting_name": "Board of Directors",
+            "meeting_date": "2021/03/26",
+            "label": "Minutes with Attachments (PDF)",
+            "identity_excerpt": "Board of Directors Meeting was held via videoconference, on Friday, March 26, 2021, pursuant to section C.12 of the TRCA’s Board of Directors Administrative By-Law. The Chair Jennifer Innis called the meeting to order at 9:32 a.m. PRESENT Jennifer Innis Chair Jack Heath (out: 10:07 a.m., in: 10:08 a.m.) Vice-Chair Pa",
+            "relationship": "Published minutes/package for the exact meeting named by the original agenda item; not asserted byte-identical to the unavailable file."
+          },
+          "held": {
+            "sha256": "9879370ff7f25b6685c7005026a76afaf9185987787fd6531fc9f4f044872d53",
+            "bytes": 47330718,
+            "pages": 142,
+            "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=7294",
+            "already_held": true
+          },
+          "observation": null
+        }
+      ],
+      "outcome": "replacement_held_original_unresolved"
+    },
+    {
+      "provenance": {
+        "document_id": 6819,
+        "original_url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=6819",
+        "agenda_url": "https://pub-trca.escribemeetings.com/Meeting.aspx?Id=45f88df9-507a-4dc7-84b4-d62248c88c60&Agenda=Agenda&lang=English",
+        "agenda_item": "BUSINESS MEETING6.MINUTES OF BOARD OF DIRECTORS MEETING, HELD ON JANUARY 29, 2021 Meeting Minutes Link (January 29, 2021 Closed Session Minutes will be circulated to Board Members separately)",
+        "replacements": [
+          {
+            "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=6980",
+            "sha256": "dd0bf043625a54fac1005fb9f0d3ef9a758db3ed45e38cabb79a1ed14017ed76",
+            "calendar_url": "https://pub-trca.escribemeetings.com/MeetingsCalendarView.aspx/GetCalendarMeetings",
+            "calendar_year": 2021,
+            "meeting_id": "42fd48ae-4c8a-460c-a45a-97f21e692c9d",
+            "meeting_name": "Board of Directors",
+            "meeting_date": "2021/01/29",
+            "label": "Minutes with Attachments (PDF)",
+            "identity_excerpt": "Board of Directors Meeting #9/20 was held via videoconference, on Friday, January 29, 2021, pursuant to section C.12, of the TRCA’s Board of Directors Administrative By-Law. The Chair Jennifer Innis, called the meeting to order at 9:40 a.m. PRESENT Jennifer Innis Chair Jack Heath Vice-Chair Paul Ainslie Member Kevin Ashe M",
+            "relationship": "Published minutes/package for the exact meeting named by the original agenda item; not asserted byte-identical to the unavailable file."
+          }
+        ]
+      },
+      "original": null,
+      "observation": {
+        "status": 404,
+        "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=6819",
+        "content_type": "text/html",
+        "bytes": 1245,
+        "body_sha256": "dc1d54dab6ec8c00f70137927504e4f222c8395f10760b6beecfcfa94e08249f",
+        "title": "404 - File or directory not found.",
+        "error": "Browser HTTP 404; availability cause unverified"
+      },
+      "replacements": [
+        {
+          "provenance": {
+            "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=6980",
+            "sha256": "dd0bf043625a54fac1005fb9f0d3ef9a758db3ed45e38cabb79a1ed14017ed76",
+            "calendar_url": "https://pub-trca.escribemeetings.com/MeetingsCalendarView.aspx/GetCalendarMeetings",
+            "calendar_year": 2021,
+            "meeting_id": "42fd48ae-4c8a-460c-a45a-97f21e692c9d",
+            "meeting_name": "Board of Directors",
+            "meeting_date": "2021/01/29",
+            "label": "Minutes with Attachments (PDF)",
+            "identity_excerpt": "Board of Directors Meeting #9/20 was held via videoconference, on Friday, January 29, 2021, pursuant to section C.12, of the TRCA’s Board of Directors Administrative By-Law. The Chair Jennifer Innis, called the meeting to order at 9:40 a.m. PRESENT Jennifer Innis Chair Jack Heath Vice-Chair Paul Ainslie Member Kevin Ashe M",
+            "relationship": "Published minutes/package for the exact meeting named by the original agenda item; not asserted byte-identical to the unavailable file."
+          },
+          "held": {
+            "sha256": "dd0bf043625a54fac1005fb9f0d3ef9a758db3ed45e38cabb79a1ed14017ed76",
+            "bytes": 23318081,
+            "pages": 128,
+            "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=6980",
+            "already_held": true
+          },
+          "observation": null
+        }
+      ],
+      "outcome": "replacement_held_original_unresolved"
+    },
+    {
+      "provenance": {
+        "document_id": 6818,
+        "original_url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=6818",
+        "agenda_url": "https://pub-trca.escribemeetings.com/Meeting.aspx?Id=45f88df9-507a-4dc7-84b4-d62248c88c60&Agenda=Agenda&lang=English",
+        "agenda_item": "12.11OUTDOOR EDUCATION TASK FORCE MINUTES Meeting #5/20, held on January 25, 2021 - Meeting Minutes Link",
+        "replacements": [],
+        "assessment": "No matching task-force calendar entry or full minutes were verified. The held February 26 Board package contains a receipt resolution, not the task-force minutes."
+      },
+      "original": null,
+      "observation": {
+        "status": 404,
+        "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=6818",
+        "content_type": "text/html",
+        "bytes": 1245,
+        "body_sha256": "dc1d54dab6ec8c00f70137927504e4f222c8395f10760b6beecfcfa94e08249f",
+        "title": "404 - File or directory not found.",
+        "error": "Browser HTTP 404; availability cause unverified"
+      },
+      "replacements": [],
+      "outcome": "unresolved"
+    },
+    {
+      "provenance": {
+        "document_id": 6817,
+        "original_url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=6817",
+        "agenda_url": "https://pub-trca.escribemeetings.com/Meeting.aspx?Id=45f88df9-507a-4dc7-84b4-d62248c88c60&Agenda=Agenda&lang=English",
+        "agenda_item": "13.MATERIALS FROM EXECUTIVE COMMITTEE MEETING, HELD ON FEBRUARY 5, 2021 Meeting Minutes Link",
+        "replacements": [
+          {
+            "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=6884",
+            "sha256": "3df60e398021422ced0f91bd2ce40006905c27dd3059172d8e763344dc846f9e",
+            "calendar_url": "https://pub-trca.escribemeetings.com/MeetingsCalendarView.aspx/GetCalendarMeetings",
+            "calendar_year": 2021,
+            "meeting_id": "8f3998f2-89d4-4539-b117-2a23c3d19d79",
+            "meeting_name": "Executive Committee",
+            "meeting_date": "2021/02/05",
+            "label": "Minutes with Attachments (PDF)",
+            "identity_excerpt": "Executive Committee Meeting #9/20 was held via videoconference, on Friday, February 5, 2021, pursuant to section C.12 of the Toronto and Region Conservation Authority’s Board of Directors Administrative By-Law. The Chair Jennifer Innis, called the meeting to order at 9:32 a.m. PRESENT Jennifer Innis Chair Jack Heath Vice-Ch",
+            "relationship": "Published minutes/package for the exact meeting named by the original agenda item; not asserted byte-identical to the unavailable file."
+          }
+        ]
+      },
+      "original": null,
+      "observation": {
+        "status": 404,
+        "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=6817",
+        "content_type": "text/html",
+        "bytes": 1245,
+        "body_sha256": "dc1d54dab6ec8c00f70137927504e4f222c8395f10760b6beecfcfa94e08249f",
+        "title": "404 - File or directory not found.",
+        "error": "Browser HTTP 404; availability cause unverified"
+      },
+      "replacements": [
+        {
+          "provenance": {
+            "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=6884",
+            "sha256": "3df60e398021422ced0f91bd2ce40006905c27dd3059172d8e763344dc846f9e",
+            "calendar_url": "https://pub-trca.escribemeetings.com/MeetingsCalendarView.aspx/GetCalendarMeetings",
+            "calendar_year": 2021,
+            "meeting_id": "8f3998f2-89d4-4539-b117-2a23c3d19d79",
+            "meeting_name": "Executive Committee",
+            "meeting_date": "2021/02/05",
+            "label": "Minutes with Attachments (PDF)",
+            "identity_excerpt": "Executive Committee Meeting #9/20 was held via videoconference, on Friday, February 5, 2021, pursuant to section C.12 of the Toronto and Region Conservation Authority’s Board of Directors Administrative By-Law. The Chair Jennifer Innis, called the meeting to order at 9:32 a.m. PRESENT Jennifer Innis Chair Jack Heath Vice-Ch",
+            "relationship": "Published minutes/package for the exact meeting named by the original agenda item; not asserted byte-identical to the unavailable file."
+          },
+          "held": {
+            "sha256": "3df60e398021422ced0f91bd2ce40006905c27dd3059172d8e763344dc846f9e",
+            "bytes": 9882951,
+            "pages": 91,
+            "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=6884",
+            "already_held": true
+          },
+          "observation": null
+        }
+      ],
+      "outcome": "replacement_held_original_unresolved"
+    },
+    {
+      "provenance": {
+        "document_id": 9229,
+        "original_url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=9229",
+        "agenda_url": "https://pub-trca.escribemeetings.com/Meeting.aspx?Id=00ef4b8b-36eb-434d-b01b-1b426db3073e&Agenda=Agenda&lang=English",
+        "agenda_item": "2.MINUTES OF MEETING #3/22, HELD ON APRIL 22, 2022 Minutes Link",
+        "replacements": [
+          {
+            "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=9224",
+            "sha256": "9e69ae5e8364f3d2d692cd406c9016286177b886b4c9080f40b86fdc04cd4d00",
+            "calendar_url": "https://pub-trca.escribemeetings.com/MeetingsCalendarView.aspx/GetCalendarMeetings",
+            "calendar_year": 2022,
+            "meeting_id": "f22655e3-be42-46d9-88e2-c4b2656967a9",
+            "meeting_name": "Board of Directors",
+            "meeting_date": "2022/04/22",
+            "label": "Minutes (PDF)",
+            "identity_excerpt": "Board of Directors Meeting #3/22 was held via videoconference, on Friday, April 22, 2022. The Chair Jennifer Innis, called the meeting to order at 9:48AM. PRESENT Jennifer Innis, Chair Jack Heath, Vice-Chair Paul Ainslie Kevin Ashe Shelley Carroll Ronald Chopowick Dipika Damerla Joanne Dies Jennifer Drake Chris Fonseca Gor",
+            "relationship": "Published minutes/package for the exact meeting named by the original agenda item; not asserted byte-identical to the unavailable file."
+          }
+        ]
+      },
+      "original": null,
+      "observation": {
+        "status": 404,
+        "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=9229",
+        "content_type": "text/html",
+        "bytes": 1245,
+        "body_sha256": "dc1d54dab6ec8c00f70137927504e4f222c8395f10760b6beecfcfa94e08249f",
+        "title": "404 - File or directory not found.",
+        "error": "Browser HTTP 404; availability cause unverified"
+      },
+      "replacements": [
+        {
+          "provenance": {
+            "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=9224",
+            "sha256": "9e69ae5e8364f3d2d692cd406c9016286177b886b4c9080f40b86fdc04cd4d00",
+            "calendar_url": "https://pub-trca.escribemeetings.com/MeetingsCalendarView.aspx/GetCalendarMeetings",
+            "calendar_year": 2022,
+            "meeting_id": "f22655e3-be42-46d9-88e2-c4b2656967a9",
+            "meeting_name": "Board of Directors",
+            "meeting_date": "2022/04/22",
+            "label": "Minutes (PDF)",
+            "identity_excerpt": "Board of Directors Meeting #3/22 was held via videoconference, on Friday, April 22, 2022. The Chair Jennifer Innis, called the meeting to order at 9:48AM. PRESENT Jennifer Innis, Chair Jack Heath, Vice-Chair Paul Ainslie Kevin Ashe Shelley Carroll Ronald Chopowick Dipika Damerla Joanne Dies Jennifer Drake Chris Fonseca Gor",
+            "relationship": "Published minutes/package for the exact meeting named by the original agenda item; not asserted byte-identical to the unavailable file."
+          },
+          "held": {
+            "sha256": "9e69ae5e8364f3d2d692cd406c9016286177b886b4c9080f40b86fdc04cd4d00",
+            "bytes": 173703,
+            "pages": 8,
+            "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=9224",
+            "already_held": false
+          },
+          "observation": {
+            "status": 200,
+            "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=9224",
+            "content_type": "application/pdf",
+            "bytes": 173703,
+            "body_sha256": "9e69ae5e8364f3d2d692cd406c9016286177b886b4c9080f40b86fdc04cd4d00",
+            "title": null
+          }
+        }
+      ],
+      "outcome": "replacement_held_original_unresolved"
+    },
+    {
+      "provenance": {
+        "document_id": 13785,
+        "original_url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=13785",
+        "agenda_url": "https://pub-trca.escribemeetings.com/Meeting.aspx?Id=82fa331c-e7cb-4e9a-87e2-093a1a51899f&Agenda=Agenda&lang=English",
+        "agenda_item": "4.MINUTES OF THE TRCA BOARD OF DIRECTORS MEETING #1/23, HELD ON JANUARY 13, 2023 Minutes Link",
+        "replacements": [
+          {
+            "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=18834",
+            "sha256": "4cc0239fc226933f7c338c6fbfdc2d5e2b99004172f216c90f2db8054e6e8744",
+            "calendar_url": "https://pub-trca.escribemeetings.com/MeetingsCalendarView.aspx/GetCalendarMeetings",
+            "calendar_year": 2023,
+            "meeting_id": "21ffd864-8c7b-4bf0-bf00-2d5a69472cfc",
+            "meeting_name": "Board of Directors",
+            "meeting_date": "2023/01/13",
+            "label": "Minutes (PDF)",
+            "identity_excerpt": "irectors Administrative By-Law. CALL TO ORDER Board of Directors Meeting #1/23 was held at TRCA Head Office, on Friday, January 13, 2023. The Acting Chair, Joanne Hyde, called the meeting to order at 9:45 a.m. 1 RES.#A 1/23 APPOINTMENTS TO TORONTO AND REGION CONSERVATION AUTHORITY (TRCA) FOR 2023-2026 Moved By: Linda Jackson Seconded By: Rowena Santos THAT the list of",
+            "relationship": "Published minutes/package for the exact meeting named by the original agenda item; not asserted byte-identical to the unavailable file."
+          }
+        ]
+      },
+      "original": null,
+      "observation": {
+        "status": 404,
+        "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=13785",
+        "content_type": "text/html",
+        "bytes": 1245,
+        "body_sha256": "dc1d54dab6ec8c00f70137927504e4f222c8395f10760b6beecfcfa94e08249f",
+        "title": "404 - File or directory not found.",
+        "error": "Browser HTTP 404; availability cause unverified"
+      },
+      "replacements": [
+        {
+          "provenance": {
+            "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=18834",
+            "sha256": "4cc0239fc226933f7c338c6fbfdc2d5e2b99004172f216c90f2db8054e6e8744",
+            "calendar_url": "https://pub-trca.escribemeetings.com/MeetingsCalendarView.aspx/GetCalendarMeetings",
+            "calendar_year": 2023,
+            "meeting_id": "21ffd864-8c7b-4bf0-bf00-2d5a69472cfc",
+            "meeting_name": "Board of Directors",
+            "meeting_date": "2023/01/13",
+            "label": "Minutes (PDF)",
+            "identity_excerpt": "irectors Administrative By-Law. CALL TO ORDER Board of Directors Meeting #1/23 was held at TRCA Head Office, on Friday, January 13, 2023. The Acting Chair, Joanne Hyde, called the meeting to order at 9:45 a.m. 1 RES.#A 1/23 APPOINTMENTS TO TORONTO AND REGION CONSERVATION AUTHORITY (TRCA) FOR 2023-2026 Moved By: Linda Jackson Seconded By: Rowena Santos THAT the list of",
+            "relationship": "Published minutes/package for the exact meeting named by the original agenda item; not asserted byte-identical to the unavailable file."
+          },
+          "held": {
+            "sha256": "4cc0239fc226933f7c338c6fbfdc2d5e2b99004172f216c90f2db8054e6e8744",
+            "bytes": 201263,
+            "pages": 13,
+            "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=18834",
+            "already_held": false
+          },
+          "observation": {
+            "status": 200,
+            "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=18834",
+            "content_type": "application/pdf",
+            "bytes": 201263,
+            "body_sha256": "4cc0239fc226933f7c338c6fbfdc2d5e2b99004172f216c90f2db8054e6e8744",
+            "title": null
+          }
+        }
+      ],
+      "outcome": "replacement_held_original_unresolved"
+    },
+    {
+      "provenance": {
+        "document_id": 15601,
+        "original_url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=15601",
+        "agenda_url": "https://pub-trca.escribemeetings.com/Meeting.aspx?Id=86520bde-9542-4cb6-a567-619a71c7cc17&Agenda=Agenda&lang=English",
+        "agenda_item": "5.APPROVAL OF MINUTES OF MEETING #4/23, HELD ON NOVEMBER 15, 2023 Minutes Link",
+        "replacements": [
+          {
+            "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=16792",
+            "sha256": "87b4c985755c956099882b1d5f48ef66aa61b775ed8d0670fd286f99605a44e7",
+            "calendar_url": "https://pub-trca.escribemeetings.com/MeetingsCalendarView.aspx/GetCalendarMeetings",
+            "calendar_year": 2023,
+            "meeting_id": "420031ff-15ee-4508-bb8a-fd8662f14cff",
+            "meeting_name": "Regional Watershed Alliance",
+            "meeting_date": "2023/11/15",
+            "label": "Minutes (PDF)",
+            "identity_excerpt": "artap Singh Toor 1. CALL TO ORDER Regional Watershed Alliance Meeting #4/23 was held via video conference, on Wednesday November 15, 2023, pursuant to section C.12 of the TRCA’s Board of Directors Administrative By-Law. The Chair, Anna-Louise Richardson, called the meeting to order at 6:35 p.m. 2. ACKNOWLEDGEMENT OF INDIGENOUS TERRITORY The Chair recited the Acknowled",
+            "relationship": "Published minutes/package for the exact meeting named by the original agenda item; not asserted byte-identical to the unavailable file."
+          }
+        ]
+      },
+      "original": null,
+      "observation": {
+        "status": 404,
+        "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=15601",
+        "content_type": "text/html",
+        "bytes": 1245,
+        "body_sha256": "dc1d54dab6ec8c00f70137927504e4f222c8395f10760b6beecfcfa94e08249f",
+        "title": "404 - File or directory not found.",
+        "error": "Browser HTTP 404; availability cause unverified"
+      },
+      "replacements": [
+        {
+          "provenance": {
+            "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=16792",
+            "sha256": "87b4c985755c956099882b1d5f48ef66aa61b775ed8d0670fd286f99605a44e7",
+            "calendar_url": "https://pub-trca.escribemeetings.com/MeetingsCalendarView.aspx/GetCalendarMeetings",
+            "calendar_year": 2023,
+            "meeting_id": "420031ff-15ee-4508-bb8a-fd8662f14cff",
+            "meeting_name": "Regional Watershed Alliance",
+            "meeting_date": "2023/11/15",
+            "label": "Minutes (PDF)",
+            "identity_excerpt": "artap Singh Toor 1. CALL TO ORDER Regional Watershed Alliance Meeting #4/23 was held via video conference, on Wednesday November 15, 2023, pursuant to section C.12 of the TRCA’s Board of Directors Administrative By-Law. The Chair, Anna-Louise Richardson, called the meeting to order at 6:35 p.m. 2. ACKNOWLEDGEMENT OF INDIGENOUS TERRITORY The Chair recited the Acknowled",
+            "relationship": "Published minutes/package for the exact meeting named by the original agenda item; not asserted byte-identical to the unavailable file."
+          },
+          "held": {
+            "sha256": "87b4c985755c956099882b1d5f48ef66aa61b775ed8d0670fd286f99605a44e7",
+            "bytes": 153873,
+            "pages": 4,
+            "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=16792",
+            "already_held": false
+          },
+          "observation": {
+            "status": 200,
+            "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=16792",
+            "content_type": "application/pdf",
+            "bytes": 153873,
+            "body_sha256": "87b4c985755c956099882b1d5f48ef66aa61b775ed8d0670fd286f99605a44e7",
+            "title": null
+          }
+        }
+      ],
+      "outcome": "replacement_held_original_unresolved"
+    },
+    {
+      "provenance": {
+        "document_id": 20197,
+        "original_url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=20197",
+        "agenda_url": "https://pub-trca.escribemeetings.com/Meeting.aspx?Id=49c1155e-8e94-4787-b147-2ab7b4ed3ce2&Agenda=Agenda&lang=English",
+        "agenda_item": "4.APPROVAL OF MINUTES OF MEETING 2/26, HELD ON APRIL 14, 2026 Minutes Link",
+        "replacements": [
+          {
+            "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=20636",
+            "sha256": "1408970c589a2eaa78c102ad09afacc5f788039f48ba11aaa8648cdf565450fe",
+            "calendar_url": "https://pub-trca.escribemeetings.com/MeetingsCalendarView.aspx/GetCalendarMeetings",
+            "calendar_year": 2026,
+            "meeting_id": "941520ba-b029-43bd-a849-2d478db3b0bc",
+            "meeting_name": "Partners in Project Green Executive Management Committee",
+            "meeting_date": "2026/04/14",
+            "label": "Minutes (PDF)",
+            "identity_excerpt": "CUNIARY INTEREST AND THE GENERAL NATURE THEREOF None. 4. APPROVAL OF MINUTES OF MEETING #1/26, HELD ON JANUARY 20, 2026 RES.#PPG 7/26 Moved By: John MacKenzie Seconded By: Chris Fonseca THAT the meeting minutes from the January 20, 2026 Partners in Project Green Executive Management Committee, be approved. Carried 1 5. DELEGATIONS None. 6. PRESENTATIONS None. 7. CORRE",
+            "relationship": "Published minutes/package for the exact meeting named by the original agenda item; not asserted byte-identical to the unavailable file."
+          }
+        ],
+        "identity_note": "The PDF omits its meeting date/call-to-order section. The current calendar and dated HTML minutes publish it for April 14, 2026; the HTML and PDF share RES.#PPG 7/26 and its January 20 minutes approval."
+      },
+      "original": null,
+      "observation": {
+        "status": 404,
+        "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=20197",
+        "content_type": "text/html",
+        "bytes": 1245,
+        "body_sha256": "dc1d54dab6ec8c00f70137927504e4f222c8395f10760b6beecfcfa94e08249f",
+        "title": "404 - File or directory not found.",
+        "error": "Browser HTTP 404; availability cause unverified"
+      },
+      "replacements": [
+        {
+          "provenance": {
+            "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=20636",
+            "sha256": "1408970c589a2eaa78c102ad09afacc5f788039f48ba11aaa8648cdf565450fe",
+            "calendar_url": "https://pub-trca.escribemeetings.com/MeetingsCalendarView.aspx/GetCalendarMeetings",
+            "calendar_year": 2026,
+            "meeting_id": "941520ba-b029-43bd-a849-2d478db3b0bc",
+            "meeting_name": "Partners in Project Green Executive Management Committee",
+            "meeting_date": "2026/04/14",
+            "label": "Minutes (PDF)",
+            "identity_excerpt": "CUNIARY INTEREST AND THE GENERAL NATURE THEREOF None. 4. APPROVAL OF MINUTES OF MEETING #1/26, HELD ON JANUARY 20, 2026 RES.#PPG 7/26 Moved By: John MacKenzie Seconded By: Chris Fonseca THAT the meeting minutes from the January 20, 2026 Partners in Project Green Executive Management Committee, be approved. Carried 1 5. DELEGATIONS None. 6. PRESENTATIONS None. 7. CORRE",
+            "relationship": "Published minutes/package for the exact meeting named by the original agenda item; not asserted byte-identical to the unavailable file."
+          },
+          "held": {
+            "sha256": "1408970c589a2eaa78c102ad09afacc5f788039f48ba11aaa8648cdf565450fe",
+            "bytes": 51068,
+            "pages": 5,
+            "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=20636",
+            "already_held": false
+          },
+          "observation": {
+            "status": 200,
+            "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=20636",
+            "content_type": "application/pdf",
+            "bytes": 51068,
+            "body_sha256": "1408970c589a2eaa78c102ad09afacc5f788039f48ba11aaa8648cdf565450fe",
+            "title": null
+          }
+        }
+      ],
+      "outcome": "replacement_held_original_unresolved"
+    },
+    {
+      "provenance": {
+        "document_id": 20289,
+        "original_url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=20289",
+        "agenda_url": "https://pub-trca.escribemeetings.com/Meeting.aspx?Id=465b312e-3233-4f92-b56c-55b0bed159e2&Agenda=Agenda&lang=English",
+        "agenda_item": "10.MATERIAL FROM EXECUTIVE COMMITTEE MEETING Minutes Link",
+        "replacements": [
+          {
+            "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=20515",
+            "sha256": "14b4928cd40ba089a956e361aecdfb96dcbf17139ff4f96607b93254e309a8a6",
+            "calendar_url": "https://pub-trca.escribemeetings.com/MeetingsCalendarView.aspx/GetCalendarMeetings",
+            "calendar_year": 2026,
+            "meeting_id": "a21dfb5c-7f54-44ec-9c54-6793ad0f1211",
+            "meeting_name": "Executive Committee",
+            "meeting_date": "2026/05/08",
+            "label": "Minutes (PDF)",
+            "identity_excerpt": " Vice-Chair Joanne Dies Nick Mantas 1. CALL TO ORDER Executive Committee Meeting #4/26 was held via videoconference, on May 8, 2026, pursuant to section c.12 of the Toronto and Region Conservation Authority Board of Directors Administrative By-Law. The Chair, Dave Barton, called the meeting to order at 9:30 a.m. 2. ACKNOWLEDGEMENT OF INDIGENOUS TERRITORY The Chair rec",
+            "relationship": "Published minutes/package for the exact meeting named by the original agenda item; not asserted byte-identical to the unavailable file."
+          }
+        ]
+      },
+      "original": null,
+      "observation": {
+        "status": 404,
+        "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=20289",
+        "content_type": "text/html",
+        "bytes": 1245,
+        "body_sha256": "dc1d54dab6ec8c00f70137927504e4f222c8395f10760b6beecfcfa94e08249f",
+        "title": "404 - File or directory not found.",
+        "error": "Browser HTTP 404; availability cause unverified"
+      },
+      "replacements": [
+        {
+          "provenance": {
+            "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=20515",
+            "sha256": "14b4928cd40ba089a956e361aecdfb96dcbf17139ff4f96607b93254e309a8a6",
+            "calendar_url": "https://pub-trca.escribemeetings.com/MeetingsCalendarView.aspx/GetCalendarMeetings",
+            "calendar_year": 2026,
+            "meeting_id": "a21dfb5c-7f54-44ec-9c54-6793ad0f1211",
+            "meeting_name": "Executive Committee",
+            "meeting_date": "2026/05/08",
+            "label": "Minutes (PDF)",
+            "identity_excerpt": " Vice-Chair Joanne Dies Nick Mantas 1. CALL TO ORDER Executive Committee Meeting #4/26 was held via videoconference, on May 8, 2026, pursuant to section c.12 of the Toronto and Region Conservation Authority Board of Directors Administrative By-Law. The Chair, Dave Barton, called the meeting to order at 9:30 a.m. 2. ACKNOWLEDGEMENT OF INDIGENOUS TERRITORY The Chair rec",
+            "relationship": "Published minutes/package for the exact meeting named by the original agenda item; not asserted byte-identical to the unavailable file."
+          },
+          "held": {
+            "sha256": "14b4928cd40ba089a956e361aecdfb96dcbf17139ff4f96607b93254e309a8a6",
+            "bytes": 202308,
+            "pages": 10,
+            "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=20515",
+            "already_held": true
+          },
+          "observation": null
+        }
+      ],
+      "outcome": "replacement_held_original_unresolved"
+    },
+    {
+      "provenance": {
+        "document_id": 20288,
+        "original_url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=20288",
+        "agenda_url": "https://pub-trca.escribemeetings.com/Meeting.aspx?Id=465b312e-3233-4f92-b56c-55b0bed159e2&Agenda=Agenda&lang=English",
+        "agenda_item": "10.5.1VERBAL UPDATE ON REGIONAL CONSOLIDATION OF ONTARIO'S CONSERVATION AUTHORITIES (BILL 97) Pursuant to Section C.4(2)(I) of TRCA's Administrative By-law as the subject matter consists of a position, plan, procedure, criteria or instruction to be applied to any negotiations carried on or to be carried on, by, or on behalf of TRCA.RES.#B29/26",
+        "replacements": [],
+        "assessment": "The agenda describes a negotiation-related Bill 97 item under Administrative By-law C.4(2)(I). No verified public replacement for the linked resolution was found; the reason for its 404 is not established."
+      },
+      "original": null,
+      "observation": {
+        "status": 404,
+        "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=20288",
+        "content_type": "text/html",
+        "bytes": 1245,
+        "body_sha256": "dc1d54dab6ec8c00f70137927504e4f222c8395f10760b6beecfcfa94e08249f",
+        "title": "404 - File or directory not found.",
+        "error": "Browser HTTP 404; availability cause unverified"
+      },
+      "replacements": [],
+      "outcome": "unresolved"
+    },
+    {
+      "provenance": {
+        "document_id": 20812,
+        "original_url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=20812",
+        "agenda_url": "https://pub-trca.escribemeetings.com/Meeting.aspx?Id=549c7ce5-4f68-469c-876c-6560ceb81b95&Agenda=Agenda&lang=English",
+        "agenda_item": "4.APPROVAL OF MINUTES OF MEETING #3/26, HELD ON JUNE 16, 2026 Minutes Link",
+        "replacements": []
+      },
+      "original": {
+        "sha256": "54e75536115fa1149ba9e7e9d7355a34b261325adef59ba7b6d6830b21a1b347",
+        "bytes": 93294,
+        "pages": 5,
+        "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=20812",
+        "already_held": false
+      },
+      "observation": {
+        "status": 200,
+        "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=20812",
+        "content_type": "application/pdf",
+        "bytes": 93294,
+        "body_sha256": "54e75536115fa1149ba9e7e9d7355a34b261325adef59ba7b6d6830b21a1b347",
+        "title": null
+      },
+      "replacements": [],
+      "outcome": "original_held"
+    },
+    {
+      "provenance": {
+        "document_id": 21024,
+        "original_url": "https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=21024",
+        "agenda_url": "https://pub-trca.escribemeetings.com/Meeting.aspx?Id=549c7ce5-4f68-469c-876c-6560ceb81b95&Agenda=Agenda&lang=English",
+        "agenda_item": "9.1UPDATE ON CAMP CONNECTIONS 2026 1.UPDATE ON CAMP CONNECTIONS 2026.pdfUpdate on the Camp Connections program and highlight of outcomes achieved through the 2026 program delivery.",
+        "replacements": []
+      },
+      "original": {
+        "sha256": "3d476f538d5881ce79d6b0fd941cd5840f0b1a7dd95fa7bbf1f73e67ee0e587e",
+        "bytes": 212489,
+        "pages": 4,
+        "url": "https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=21024",
+        "already_held": false
+      },
+      "observation": {
+        "status": 200,
+        "url": "https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=21024",
+        "content_type": "application/pdf",
+        "bytes": 212489,
+        "body_sha256": "3d476f538d5881ce79d6b0fd941cd5840f0b1a7dd95fa7bbf1f73e67ee0e587e",
+        "title": null
+      },
+      "replacements": [],
+      "outcome": "original_held"
+    },
+    {
+      "provenance": {
+        "document_id": 21025,
+        "original_url": "https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=21025",
+        "agenda_url": "https://pub-trca.escribemeetings.com/Meeting.aspx?Id=549c7ce5-4f68-469c-876c-6560ceb81b95&Agenda=Agenda&lang=English",
+        "agenda_item": "9.2LOCAL BUSINESS PERSPECTIVES ON TARIFFS AND ECONOMIC RESILIENCE 1.LOCAL BUSINESS PERSPECTIVES ON TARIFFS AND ECONOMIC RESILIENCE.pdfTo provide the Partners in Project Green Executive Management Committee (PPG EMC) with an overview of how businesses across the Greater Toronto Area are responding to ongoing trade uncertainty and tariff-related pressures.",
+        "replacements": []
+      },
+      "original": {
+        "sha256": "c87ae517939a6d555c95617b60ab7657a195cf79b7dbe9bd7aaf7d3318570e92",
+        "bytes": 223162,
+        "pages": 3,
+        "url": "https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=21025",
+        "already_held": false
+      },
+      "observation": {
+        "status": 200,
+        "url": "https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=21025",
+        "content_type": "application/pdf",
+        "bytes": 223162,
+        "body_sha256": "c87ae517939a6d555c95617b60ab7657a195cf79b7dbe9bd7aaf7d3318570e92",
+        "title": null
+      },
+      "replacements": [],
+      "outcome": "original_held"
+    }
+  ],
+  "failures": [
+    "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=5558: Browser HTTP 404; availability cause unverified; original left queued; no verified alternative held",
+    "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=7234: Browser HTTP 404; availability cause unverified; original left queued; verified alternative held separately",
+    "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=6819: Browser HTTP 404; availability cause unverified; original left queued; verified alternative held separately",
+    "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=6818: Browser HTTP 404; availability cause unverified; original left queued; no verified alternative held",
+    "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=6817: Browser HTTP 404; availability cause unverified; original left queued; verified alternative held separately",
+    "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=9229: Browser HTTP 404; availability cause unverified; original left queued; verified alternative held separately",
+    "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=13785: Browser HTTP 404; availability cause unverified; original left queued; verified alternative held separately",
+    "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=15601: Browser HTTP 404; availability cause unverified; original left queued; verified alternative held separately",
+    "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=20197: Browser HTTP 404; availability cause unverified; original left queued; verified alternative held separately",
+    "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=20289: Browser HTTP 404; availability cause unverified; original left queued; verified alternative held separately",
+    "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=20288: Browser HTTP 404; availability cause unverified; original left queued; no verified alternative held"
+  ],
+  "originals_held": 3,
+  "replacement_coverage": 8,
+  "unresolved_originals": 11,
+  "without_verified_replacement": 3
+}

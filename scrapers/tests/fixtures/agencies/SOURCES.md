@@ -1,5 +1,19 @@
 # Agency board-report fixtures (#135)
 
+## TRCA public PDF recovery fixtures (#259)
+
+`trca_20812.pdf` and `trca_20636.pdf` are complete public PDF responses captured
+anonymously in ordinary headed Chromium on 2026-10-21 from
+`https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=20812` and
+`https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=20636`.
+The first contains the June 16, 2026 Partners in Project Green Executive Management
+Committee minutes. The second is the calendar-published April 14, 2026 minutes;
+its PDF omits the meeting date, so identity was cross-checked against the dated HTML
+minutes and matching PPG 7/26 resolution. The reviewed source links, hashes and
+identity evidence live in `toronto_bids/data/trca_document_gaps.json`.
+These fixtures exercise actual byte/structure validation, stored text, exact-hash
+replacement acceptance and resumability. Viewer/verification HTML is tested separately.
+
 ## Agency identity recovery fixtures (#258)
 
 `identity_recovery_2026-10-21.json` retains ten complete, unchanged cached extraction
