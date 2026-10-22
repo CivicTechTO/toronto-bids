@@ -10,6 +10,7 @@ import pytest
 from toronto_bids import cli, config, notify
 from toronto_bids.cli import _capture_agency_bodies as _real_agency_capture
 from toronto_bids.sources.bids_tenders import run_portal_capture as _real_portal_capture
+from toronto_bids.sources.bonfire import run_bonfire_capture as _real_bonfire_capture
 
 
 @pytest.fixture
@@ -20,7 +21,8 @@ def nightly(conn, monkeypatch, tmp_path):
     monkeypatch.setattr(cli.pipeline, "sync", lambda *a, **k: [])
     monkeypatch.setattr(cli.HttpClient, "__init__", lambda self, *a, **k: None)
     monkeypatch.setattr(cli.HttpClient, "close", lambda self: None)
-    from toronto_bids.sources import award_summary, bids_tenders, waterfront
+    from toronto_bids.sources import award_summary, bids_tenders, waterfront, bonfire
+    monkeypatch.setattr(bonfire, "run_bonfire_capture", lambda *a, **k: {})
     monkeypatch.setattr(waterfront, "capture_awards", lambda *a, **k: {"blocks": 0, "failures": []})
     monkeypatch.setattr(award_summary, "download_award_summaries", lambda *a, **k: 0)
     monkeypatch.setattr(award_summary, "store_award_summary_bids", lambda *a, **k: 0)
@@ -789,3 +791,54 @@ def test_waterfront_partial_coverage_fails_its_step_but_export_runs(nightly, mon
                         {'blocks': 5, 'failures': [('waterfront:2023-03', 'supplier not published')]})
     assert nightly() == 1
     assert (tmp_path / 'export' / 'bids.json').exists()
+
+
+def test_bonfire_failure_marks_step_and_keeps_export(nightly, monkeypatch, tmp_path, conn):
+    from toronto_bids.sources import bonfire
+    monkeypatch.setattr(cli, '_open_db', lambda: _KeepOpen(conn))
+    monkeypatch.setattr(bonfire, 'run_bonfire_capture', lambda *a, **k:
+                        {'toronto-public-library': 'FAILED: rate limited; retry deferred'})
+    assert nightly() == 1
+    assert (tmp_path / 'export' / 'bids.json').exists()
+
+    row = conn.execute("SELECT status,error FROM sync_run WHERE source='bonfire listings'").fetchone()
+    assert row['status'] == 'failed' and 'retry deferred' in row['error']
+
+
+def test_real_bonfire_capture_reaches_nightly_history_and_bulk_exports(nightly, monkeypatch, conn, tmp_path):
+    import csv
+    import io
+    import json
+    import zipfile
+    from datetime import datetime, timezone
+    from pathlib import Path
+    import httpx
+    import pyarrow.parquet as pq
+    from toronto_bids.sources import bonfire
+
+    fixtures = Path(__file__).parent / 'fixtures/bonfire'
+    bodies = {'/portal/': (fixtures/'library-portal.html').read_bytes(),
+              bonfire.SECTIONS['open']: (fixtures/'library-open.json').read_bytes(),
+              bonfire.SECTIONS['past']: (fixtures/'library-past.json').read_bytes()}
+    requests, waits = [], []
+    def respond(request):
+        requests.append(request)
+        return httpx.Response(200, content=bodies[request.url.path])
+    actual_capture = bonfire.capture_portal
+    def capture(conn, portal):
+        with httpx.Client(transport=httpx.MockTransport(respond)) as client:
+            return actual_capture(conn, portal, client=client, sleep=waits.append,
+                                  clock=lambda:datetime(2026,10,22,15,tzinfo=timezone.utc))
+    monkeypatch.setattr(bonfire, 'capture_portal', capture)
+    monkeypatch.setattr(bonfire, 'run_bonfire_capture', _real_bonfire_capture)
+    monkeypatch.setattr(cli, '_open_db', lambda: _KeepOpen(conn))
+    assert nightly() == 0
+    assert len(requests) == 3 and waits == [1,1,1]
+    assert conn.execute("SELECT status FROM sync_run WHERE source='bonfire listings'").fetchone()[0] == 'ok'
+    export = tmp_path/'export'
+    doc = json.loads((export/'bids.json').read_text())
+    library = next(b for b in doc['buyers'] if b['slug']=='toronto-public-library')
+    assert len(library['portal_listings']) == 412 and library['awards'] == library['bids'] == []
+    assert pq.read_metadata(export/'portal_listing.parquet').num_rows == 412
+    with zipfile.ZipFile(export/'bids-csv.zip') as z:
+        assert len(list(csv.DictReader(io.StringIO(z.read('portal_listing.csv').decode())))) == 412

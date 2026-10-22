@@ -174,3 +174,10 @@ description = "SHA-256 of the complete monthly extraction input; identifies the 
 description = "Latest monthly verification status: ok or incomplete. Supported claims may coexist with unresolved evidence; this is not a publisher-declared award count."
 ["publication_extraction.errors"]
 description = "JSON list of pending extraction, unsupported model claims or unmatched monetary evidence. Raw source observations remain available."
+
+["portal_listing.source"]
+description = "Portal adapter that captured the public listing (bids_tenders or bonfire); distinct from board-report award evidence."
+["portal_listing.status"]
+description = "Named public listing status. Bonfire follows the anonymous UI's Open/Closed/Awarded/Cancelled rules; Awarded alone supplies no recipient/value fact."
+["portal_listing.closing_date"]
+description = "Published closing timestamp; Bonfire's UTC date strings are emitted with an explicit +00:00 offset. Cancelled Bonfire listings retain their published scheduled close."
