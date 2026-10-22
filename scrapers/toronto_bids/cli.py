@@ -149,6 +149,10 @@ def build_parser() -> argparse.ArgumentParser:
     p_history.add_argument("--limit", type=int,
                            help="Stop after this many successful new downloads")
 
+    p_recovery = sub.add_parser('recover-trca-documents',
+                               help='OPT-IN: ordinary anonymous browser recovery of reviewed TRCA PDF gaps; no extraction (#259)')
+    p_recovery.add_argument('--only', type=int, action='append', help='Attempt only this reviewed DocumentId (repeatable)')
+
     p_ag = sub.add_parser(
         "enrich-agencies",
         help="Capture agency/corporation procurement from board records (#135): TRCA "
@@ -1604,6 +1608,27 @@ def main(argv: list[str] | None = None) -> int:
             conn.close()
     if args.command == "enrich-agencies":
         return _cmd_enrich_agencies(args)
+    if args.command == 'recover-trca-documents':
+        from toronto_bids.sources.trca_document_recovery import browser_fetch, load_documents, recover_documents
+        documents = load_documents()
+        if args.only:
+            known = {d['document_id'] for d in documents}
+            if set(args.only) - known:
+                parser.error('--only must name a reviewed TRCA gap DocumentId')
+            documents = [d for d in documents if d['document_id'] in args.only]
+        conn = _open_db()
+        try:
+            with browser_fetch() as fetch:
+                result = recover_documents(conn, fetch, documents=documents, reports_dir=config.TRCA_REPORTS_DIR,
+                                           log=lambda m: print(m, flush=True))
+            print(f"{result['originals_held']} originals held; {result['replacement_coverage']} verified alternatives held; "
+                  f"{result['unresolved_originals']} original URLs unresolved; "
+                  f"{result['without_verified_replacement']} without a verified alternative")
+            for failure in result['failures']:
+                print(f'FAILED  download:trca: {failure}', file=sys.stderr)
+            return 1 if result['failures'] else 0
+        finally:
+            conn.close()
     if args.command == "enrich-committee-awards":
         return _cmd_enrich_committee_awards(args)
     if args.command == "extract":
