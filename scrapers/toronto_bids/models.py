@@ -268,3 +268,16 @@ class AgencyBid:
 
     def __post_init__(self):
         object.__setattr__(self, "bid_price_numeric", parse_bid_price(self.bid_price))
+
+
+@dataclass(frozen=True)
+class PortalListing:
+    """A buyer's published portal page; a printed reference can be absent or reused."""
+    buyer_id: int
+    portal_url: str
+    native_ref: str | None = None
+    title: str | None = None
+    status: str | None = None
+    posted_date: str | None = None
+    closing_date: str | None = None
+    source: str = "bids_tenders"

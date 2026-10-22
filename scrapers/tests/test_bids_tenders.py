@@ -42,24 +42,23 @@ def test_store_listings_inserts_portal_row(conn):
     ids = seed_buyers(conn)
     n = store_listings(conn, [_sample()], ids)
     assert n == 1
-    row = conn.execute("SELECT native_ref, title, status, source FROM agency_solicitation").fetchone()
+    row = conn.execute("SELECT native_ref, title, status, source FROM portal_listing").fetchone()
     assert row["native_ref"] == "RFT-2026-014"
     assert row["source"] == "bids_tenders"
     assert row["title"] == "Trail Bridge Replacement - Example Creek"
 
 
-def test_store_listings_enriches_a_board_report_row(conn):
+def test_portal_reference_alone_does_not_enrich_or_join_a_board_row(conn):
     ids = seed_buyers(conn)
-    # A board-report row already exists for the same ref, with a title but no dates/status.
     db.upsert_row(conn, AgencySolicitation(
         buyer_id=ids["trca"], native_ref="RFT-2026-014", title="Board title",
         status="awarded", source="trca_board"), overwrite=False)
     store_listings(conn, [_sample()], ids)
-    rows = conn.execute("SELECT title, status, closing_date FROM agency_solicitation "
-                        "WHERE native_ref='RFT-2026-014'").fetchall()
-    assert len(rows) == 1                              # COALESCE-enriched, not duplicated
-    assert rows[0]["title"] == "Board title"           # board title preserved (overwrite guard)
-    assert rows[0]["closing_date"] == "2026-08-15T14:00:00"  # portal filled the empty date
+    board = conn.execute('SELECT * FROM agency_solicitation').fetchone()
+    portal = conn.execute('SELECT * FROM portal_listing').fetchone()
+    assert board['title'] == 'Board title' and board['closing_date'] is None
+    assert portal['closing_date'] == '2026-08-15T14:00:00'
+    assert board['procurement_id'] != portal['procurement_id']
 
 
 def test_store_listings_empty_is_noop(conn):
@@ -230,11 +229,12 @@ def test_real_trca_call_suffix_is_not_merged_with_the_parent_call():
     assert normalize_agency_reference('trca', 'RFT 10022400_32') == '10022400_32'
 
 
-def test_a_missing_reference_is_refused_instead_of_storing_a_guid():
+def test_identifierless_page_does_not_invent_a_reference():
     rec = _sample()
     del rec['ReferenceNumber']
-    with pytest.raises(ValueError, match='reference'):
-        parse_listing(rec, buyer_id=7)
+    row = parse_listing(rec, buyer_id=7)
+    assert row.native_ref is None
+    assert row.portal_url.endswith(rec['Id'])
 
 
 def test_nonempty_capture_records_automatically_before_parsing(conn, monkeypatch, tmp_path):
@@ -243,7 +243,7 @@ def test_nonempty_capture_records_automatically_before_parsing(conn, monkeypatch
     portal = next(p for p in config.BIDS_TENDERS_PORTALS if p['slug'] == 'trca')
     monkeypatch.setattr(config, 'BIDS_TENDERS_PORTALS', [portal])
     invalid = dict(_sample())
-    del invalid['ReferenceNumber']
+    invalid['DateAvailable'] = 'invalid date'
     monkeypatch.setattr(bt, 'fetch_listings', lambda *a, **k: iter([invalid]))
     result = bt.run_portal_capture(conn)
     assert result['trca'].startswith('FAILED')
@@ -291,11 +291,10 @@ def test_recording_keeps_changed_snapshots_and_deduplicates_identical_ones(tmp_p
 
 def test_batch_identity_validation_happens_before_any_upsert(conn):
     ids = seed_buyers(conn)
-    invalid = dict(_sample(), Title='Unknown layout')
-    del invalid['ReferenceNumber']
-    with pytest.raises(ValueError, match='reference'):
+    invalid = dict(_sample(), Id=None)
+    with pytest.raises(ValueError, match='identity'):
         store_listings(conn, [_sample(), invalid], ids)
-    assert conn.execute('SELECT count(*) FROM agency_solicitation').fetchone()[0] == 0
+    assert conn.execute('SELECT count(*) FROM portal_listing').fetchone()[0] == 0
 
 
 def test_real_hyphenated_trca_call_suffix_is_preserved():

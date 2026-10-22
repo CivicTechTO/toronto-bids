@@ -219,3 +219,16 @@ The 122 page IDs reduce to 114 normalized reference strings. Eight references ar
 for distinct published listings/projects across years. This fixture preserves those separate
 page IDs and must not be read as proof that those procurements can safely be coalesced into
 one solicitation row. Wider solicitation identity work is tracked under #124.
+
+
+## TRCA complete portal identity replay (#124)
+
+`bids_tenders_trca_identity_2026-10-22.json` retains 249 distinct TRCA portal page
+observations from the production raw recordings inspected on 2026-10-22. Each selected
+field is copied unchanged: Id, Title, optional ReferenceNumber/BidNumber, status, opening
+and closing dates, and buyer_slug. Descriptions and unrelated grid counters are omitted.
+Source: `https://trca.bidsandtenders.ca/Module/Tenders/en`, the permitted anonymous All
+listing sweep captured before this migration. No new portal requests were made for the
+identity replay. Seven normalized references are reused across distinct page IDs. Together
+with the complete Zoo fixture (122 pages), this tests 371 source identities without treating
+any shared reference, title or date as equivalence evidence.

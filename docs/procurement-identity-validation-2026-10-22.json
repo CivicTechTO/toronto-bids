@@ -1,0 +1,156 @@
+{
+  "validated_at": "2026-10-22T13:12:42.482533+00:00",
+  "integrity_check": "ok",
+  "foreign_key_violations": 0,
+  "identity_seconds": 2.475,
+  "active_identities": 13947,
+  "redirects": 3197,
+  "source_rows_preserved": {
+    "agency_award": {
+      "rows": 1011,
+      "sha256": "c42d065769b407390b9e732d8f86cc400c79c84760d9e28ba9b50cefe0c6864c"
+    },
+    "agency_bid": {
+      "rows": 1457,
+      "sha256": "dcca0c3857226cfe6658ccb29edf45a369d377c7b3b2f7998af122146c89559b"
+    },
+    "agency_coverage": {
+      "rows": 3,
+      "sha256": "b82f7e5fb2589d0384f90fe3e4fc15b446b1eca5d9ae2eed38274b88248e3930"
+    },
+    "agency_derivation": {
+      "rows": 2236,
+      "sha256": "a7a42595194b48f733ea57031774e1ccfe190b1cfea112615019807e7316d3ec"
+    },
+    "agency_solicitation": {
+      "rows": 610,
+      "sha256": "be7703351eab485c4bf77e32456fb582d2104bcb6244d734c5d3601e77bb8638"
+    },
+    "ariba_attachment": {
+      "rows": 3063,
+      "sha256": "df975646f8572af65929b5718b6fd0ac857099a2c332f157cc2dfb9e03e445d7"
+    },
+    "ariba_posting": {
+      "rows": 154,
+      "sha256": "80a30bf52ff3ccde4b997c7711f2bd85714e2280d4b8286ec807f244d5818c2a"
+    },
+    "award": {
+      "rows": 15555,
+      "sha256": "86ada631fa29ba38e842c101936dbaf5daa234d6fb6790b2b29ac074371946a4"
+    },
+    "background_pdf": {
+      "rows": 11700,
+      "sha256": "239fef9d39bf28c5014efd34f6ab3d42b8fc6d92457d45c792af7f230dee653e"
+    },
+    "bid": {
+      "rows": 19009,
+      "sha256": "2171c0641b7baceae752d748a8310446d78adab8561737cc428b0a5ce188ac8c"
+    },
+    "buyer": {
+      "rows": 3,
+      "sha256": "c209f0d538af16328406246a2035f0133a5d504e51c85a43129882cec7f84b87"
+    },
+    "capital_project": {
+      "rows": 46,
+      "sha256": "328601862a058129d6da9ca54b7b0af02a7b6fb613dee11b80f4605150fabcab"
+    },
+    "composite_award": {
+      "rows": 1052,
+      "sha256": "2ec49e9f6363596597d7438043c5b2b3a310fb7b9fc46ec06cccff63b03e98b6"
+    },
+    "council_item": {
+      "rows": 4804,
+      "sha256": "1128be99d73d7e9c477ff024b97faa12e6a28cddb6d1bbb3075196ebb54e9e6a"
+    },
+    "extraction_cache": {
+      "rows": 1777,
+      "sha256": "f8bc1b1d9c047bb8b1e45d8507893f722819b6dd41fbf18f12648f22085d6139"
+    },
+    "noncompetitive": {
+      "rows": 2873,
+      "sha256": "cb1bbd3b35730e3d14dd03eb73ac2f79e6126305fe8cf64267ea35e7b107bd22"
+    },
+    "solicitation": {
+      "rows": 7567,
+      "sha256": "4804fadd09f5eb1c1423b84d3010bd726af5689dc0b10a2ee2a5a51ca473bbc4"
+    },
+    "solicitation_link": {
+      "rows": 1284,
+      "sha256": "66a40112951758e22033e414895a19b2159bbf866ddb77311abd4748bfe14596"
+    },
+    "supplier": {
+      "rows": 8638,
+      "sha256": "dade0289c14866a0cf8d1c2d1ba7fbe94d81afe2fcfa52fce5c5a89cd9c9303f"
+    },
+    "suspended_firm": {
+      "rows": 3,
+      "sha256": "02068b08fedf3d0fde9143f8250025feb65464e12d0aa8739c0ec122af8eefd9"
+    },
+    "sync_run": {
+      "rows": 1771,
+      "sha256": "1d2052550eb1931fcbab68fffced590d58fbd0febc60992f8250279efc779f85"
+    }
+  },
+  "identity_coverage": {
+    "solicitation": {
+      "rows": 7567,
+      "identified": 7567
+    },
+    "award": {
+      "rows": 15555,
+      "identified": 15555
+    },
+    "noncompetitive": {
+      "rows": 2873,
+      "identified": 2873
+    },
+    "ariba_posting": {
+      "rows": 154,
+      "identified": 154
+    },
+    "bid": {
+      "rows": 19009,
+      "identified": 19009
+    },
+    "background_pdf": {
+      "rows": 11700,
+      "identified": 4586
+    },
+    "composite_award": {
+      "rows": 1052,
+      "identified": 1052
+    },
+    "ariba_attachment": {
+      "rows": 3063,
+      "identified": 3063
+    },
+    "capital_project": {
+      "rows": 46,
+      "identified": 46
+    },
+    "agency_solicitation": {
+      "rows": 610,
+      "identified": 610
+    },
+    "agency_award": {
+      "rows": 1011,
+      "identified": 1011
+    },
+    "agency_bid": {
+      "rows": 1457,
+      "identified": 1457
+    },
+    "portal_listing": {
+      "rows": 371,
+      "identified": 371
+    }
+  },
+  "portal_records": 371,
+  "portal_distinct_procurements": 371,
+  "replay_ids_and_keys_unchanged": true,
+  "export_bytes": 44350706,
+  "exported_tables": 23,
+  "paid_calls": 0,
+  "network_capture_requests": 0,
+  "production_modified": false
+}

@@ -6,6 +6,7 @@ from toronto_bids.models import (
     AgencyAward,
     AgencyBid,
     AgencySolicitation,
+    PortalListing,
     AribaAttachment,
     AribaPosting,
     Award,
@@ -53,6 +54,7 @@ _TABLES = {
         ["call_number", "supplier_name_raw", "award_value", "source"],
     ),
     Buyer: ("buyer", ["slug"]),
+    PortalListing: ("portal_listing", ["buyer_id", "portal_url"]),
     AgencySolicitation: ("agency_solicitation", ["buyer_id", "native_ref"]),
     AgencyAward: (
         "agency_award",
@@ -96,6 +98,11 @@ EXPORT_TABLES = [
     "agency_bid",
     "ariba_attachment",
     "solicitation_link",
+    "portal_listing",
+    "procurement",
+    "procurement_key",
+    "procurement_document",
+    "procurement_council_item",
 ]
 
 
@@ -109,6 +116,12 @@ def connect(path) -> sqlite3.Connection:
 def init_db(conn) -> None:
     schema = resources.files("toronto_bids.store").joinpath("schema.sql").read_text()
     conn.executescript(schema)
+    # Preserve real FK declarations on legacy stores; the generic additive migration
+    # below knows only types/defaults and cannot reconstruct REFERENCES clauses.
+    from toronto_bids.linking.procurement import FACT_TABLES
+    for table in FACT_TABLES:
+        if 'procurement_id' not in {r[1] for r in conn.execute(f'PRAGMA table_info({table})')}:
+            conn.execute(f'ALTER TABLE {table} ADD COLUMN procurement_id INTEGER REFERENCES procurement(id)')
     _add_missing_columns(conn, schema)
     _rebuild_award_for_line_key(conn, schema)
     _rebuild_bid_for_nullable_reference(conn, schema)

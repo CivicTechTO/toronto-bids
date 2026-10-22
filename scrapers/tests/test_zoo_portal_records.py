@@ -49,10 +49,9 @@ def test_all_saved_live_zoo_records_parse_with_dates_and_stable_page_ids():
     'https://example.com/127 - invalid identifier',
     'd9f495ef-bd78-4d8c-ac29-2cf7e4714ec6 - opaque page id',
 ])
-def test_zoo_unknown_layouts_and_page_guids_still_fail_closed(title):
+def test_zoo_unknown_layouts_remain_unlabelled_without_inventing_references(title):
     row=dict(ROWS[0],Title=title)
-    with pytest.raises(ValueError,match='reference'):
-        parse_listing(row,1)
+    assert parse_listing(row,1).native_ref is None
 
 
 @pytest.mark.parametrize('page_id,reference,closed,status',[
@@ -83,13 +82,10 @@ def test_full_zoo_capture_path_records_all_pages_and_stores_all_keys(conn,monkey
     monkeypatch.setattr(bt.time,'sleep',lambda _:None)
     monkeypatch.setattr(config,'PORTAL_RECORDINGS_DIR',tmp_path/'recordings')
     result=bt.run_portal_capture(conn,only={'toronto-zoo'})
-    assert result['toronto-zoo'].startswith('FAILED:')
-    assert '122 parsed listings' in result['toronto-zoo']
-    assert '8 reference(s)' in result['toronto-zoo']
-    assert 'identity conflict' in result['toronto-zoo']
+    assert result['toronto-zoo'] == 122
     assert [int(r.url.params['start']) for r in requests]==[0,50,100]
     assert len(list((tmp_path/'recordings').glob('*.json')))==122
-    assert conn.execute('SELECT COUNT(*) FROM agency_solicitation').fetchone()[0]==0
+    assert conn.execute('SELECT COUNT(*) FROM portal_listing').fetchone()[0]==122
 
 
 def test_reused_portal_reference_cannot_silently_merge_different_listings(conn):
@@ -97,9 +93,8 @@ def test_reused_portal_reference_cannot_silently_merge_different_listings(conn):
     from toronto_bids.sources.bids_tenders import store_listings
     rows=[r for r in ROWS if r['Title'].startswith('RFP-38 - ')]
     assert len(rows)==2
-    with pytest.raises(ValueError,match='identity conflict'):
-        store_listings(conn,rows,seed_buyers(conn))
-    assert conn.execute('SELECT COUNT(*) FROM agency_solicitation').fetchone()[0]==0
+    assert store_listings(conn,rows,seed_buyers(conn)) == 2
+    assert conn.execute('SELECT COUNT(DISTINCT procurement_id) FROM portal_listing').fetchone()[0] == 2
 
 
 def test_unique_portal_identities_store_with_exact_positive_controls(conn):
@@ -111,10 +106,10 @@ def test_unique_portal_identities_store_with_exact_positive_controls(conn):
     rows=[row for row in ROWS if counts[parse_listing(row,ids['toronto-zoo']).native_ref]==1]
     assert len(rows)==106
     assert store_listings(conn,rows,ids)==106
-    assert conn.execute('SELECT COUNT(*) FROM agency_solicitation').fetchone()[0]==106
+    assert conn.execute('SELECT COUNT(*) FROM portal_listing').fetchone()[0]==106
     for ref,closed,status in [('RFQ-50','2022-11-04T16:00:00+00:00','Awarded'),
                               ('RFP-03','2026-02-06T17:00:00+00:00','Terminated')]:
-        row=conn.execute('SELECT closing_date,status FROM agency_solicitation WHERE buyer_id=? AND native_ref=?',
+        row=conn.execute('SELECT closing_date,status FROM portal_listing WHERE buyer_id=? AND native_ref=?',
                          (ids['toronto-zoo'],ref)).fetchone()
         assert tuple(row)==(closed,status)
 
@@ -124,15 +119,14 @@ def test_repeated_observation_of_same_page_does_not_trigger_identity_conflict(co
     from toronto_bids.sources.bids_tenders import store_listings
     row=next(r for r in ROWS if r['Id']=='6fc2f901-6847-469e-b630-d09fc5e75cb9')
     assert store_listings(conn,[row,dict(row,Status='Closed')],seed_buyers(conn))==2
-    result=conn.execute('SELECT COUNT(*),MAX(status) FROM agency_solicitation').fetchone()
+    result=conn.execute('SELECT COUNT(*),MAX(status) FROM portal_listing').fetchone()
     assert tuple(result)==(1,'Awarded')
 
 
-def test_conflicting_records_refuse_valid_records_in_the_same_batch(conn):
+def test_reused_references_are_preserved_alongside_unique_references(conn):
     from toronto_bids.buyers import seed_buyers
     from toronto_bids.sources.bids_tenders import store_listings
     control=next(r for r in ROWS if r['Id']=='6fc2f901-6847-469e-b630-d09fc5e75cb9')
     conflicts=[r for r in ROWS if r['Title'].startswith('RFP-38 - ')]
-    with pytest.raises(ValueError,match='identity conflict'):
-        store_listings(conn,[control,*conflicts],seed_buyers(conn))
-    assert conn.execute('SELECT COUNT(*) FROM agency_solicitation').fetchone()[0]==0
+    assert store_listings(conn,[control,*conflicts],seed_buyers(conn)) == 3
+    assert conn.execute('SELECT COUNT(DISTINCT procurement_id) FROM portal_listing').fetchone()[0] == 3

@@ -1,0 +1,1994 @@
+[
+  {
+    "Id": "00b447d0-2b66-438c-af3a-3de4dbee39f8",
+    "Title": "10039300 - Supply and Installation of Truck Mounted Snow and Ice Removal Equipment",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1725460200000)/",
+    "DateClosing": "/Date(1726239600000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "00ba39f8-1264-48f5-8145-f8d0b43f2255",
+    "Title": "10040258 - Bruce Handscomb Park Trail Retrofit Project - Vibration Monitoring",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1694793600000)/",
+    "DateClosing": "/Date(1696608000000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "0123e578-1868-4d13-85bd-949b68a9728c",
+    "Title": "10044563 - RFP Etobicoke Creek Bank Stabilization and Trail Repairs, Engineer Designs",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1771536600000)/",
+    "DateClosing": "/Date(1772744400000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "030f09b2-ad71-4c65-83c8-23aeb9a0e892",
+    "Title": "10044248 - RFT Evergreen Estate Dredging & Restoration Project",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1767718800000)/",
+    "DateClosing": "/Date(1769202000000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "03736a00-651e-4bdc-a86d-3f97a721e120",
+    "Title": "10044103 - RFQ - Supply and Installation of Used Mud Mats for Ashbridges Bay Park East Headlands Major Maintenance Project",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1767726000000)/",
+    "DateClosing": "/Date(1769029200000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "044d9fce-017c-4429-b7b8-7f093f430006",
+    "Title": "10043325 - RFP Consulting Engineering Services for Design of Various Wetland and Shoreline Restoration Projects ",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1751319000000)/",
+    "DateClosing": "/Date(1753128000000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "07ca7515-d8ec-4d95-8da4-dc758ee848b7",
+    "Title": "10042909 - Scarlett Channel Fence Installation Project",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1748980800000)/",
+    "DateClosing": "/Date(1750449600000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "0904e52d-0b88-4d3b-8deb-e57a0aac51a2",
+    "Title": "10038521 - Leslie Street Culvert And Drainage Channel - Concept Design Services",
+    "Status": "Terminated",
+    "DateAvailable": "/Date(1686758400000)/",
+    "DateClosing": "/Date(1691006400000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "0973a687-2ba4-431b-a54b-6ad432d7bb8b",
+    "Title": "10043178 - RFT - Supply and Installation of Automated Gates at  3 Sites - Bruce’s Mill Conservation Area, Boyd Conservation Area, and the Kortright Centre for Conservation",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1749130200000)/",
+    "DateClosing": "/Date(1751299200000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "0aabcfd8-6a18-441a-859e-9087c4bf5d20",
+    "Title": "10039018 - Solid Waste Collection for TRCA Facilities",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1706563800000)/",
+    "DateClosing": "/Date(1708030800000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "0b726823-9194-4b99-9b47-a874648659b7",
+    "Title": "10022400_32 - Supply, Delivery and Licensing of Hybrid Electric Trucks",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1716213600000)/",
+    "DateClosing": "/Date(1717426800000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "11921384-f1bb-4b76-bcb6-1ce907b3b1d9",
+    "Title": "10043248 - Colonel Samuel Smith Park Coastal Wetland Restoration Project",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1755638400000)/",
+    "DateClosing": "/Date(1758312000000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "13bbd812-ccaf-429d-a09a-93a5f9f91bcb",
+    "Title": "10045260 - RFT SUPPLY OF SAND, BARGING AND DREDGING SERVICES, TORONTO ISLANDS",
+    "Status": "Closed",
+    "DateAvailable": "/Date(1790870400000)/",
+    "DateClosing": "/Date(1792180800000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "15973527-9ea4-4147-b24b-37f061449f41",
+    "Title": "10043662 - RFT Paving, Earl Bales Stormwater Management Pond,  Toronto",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1753882200000)/",
+    "DateClosing": "/Date(1755547200000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "1601aa3d-9393-4f60-8078-b25c160c2b27",
+    "Title": "10040929 - Vendor of Record for Rental of Construction Equipment",
+    "Status": "Closed",
+    "DateAvailable": "/Date(1710536400000)/",
+    "DateClosing": "/Date(1712174400000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "18cd7c42-1403-44d3-ae7a-5deb86118a70",
+    "Title": "10039381 - Scarborough Bluffs West Project Individual Environmental Assessment",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1681840800000)/",
+    "DateClosing": "/Date(1685376000000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "1a053969-e698-4d7b-b0d6-64477c06d783",
+    "Title": "10045087 - RFP Detailed Designs for Erosion Mitigation and Trail Improvements – Vale of Avoca Improvement Project ",
+    "Status": "Closed",
+    "DateAvailable": "/Date(1778789700000)/",
+    "DateClosing": "/Date(1780603200000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "1a47a937-6e5d-4eef-bd47-c5cd2f39e7c6",
+    "Title": "10040534-1 - Safety Railing Installation - G. Ross Lord Dam",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1701984600000)/",
+    "DateClosing": "/Date(1702918800000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "1c5c0c8d-0275-49e5-a776-abf9ffae5715",
+    "Title": "RFSQ 10042320 - SCARBOROUGH WATERFRONT PROJECT WEST SEGMENT - BRIMLEY ROAD MULTI-USE TRAIL",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1730372400000)/",
+    "DateClosing": "/Date(1732914000000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "1d0a24c6-bda8-4631-9cff-250ccf9ba6d4",
+    "Title": "10044751 - RFP Supply and Implementation of Automated Online Meeting/Appointment Scheduling Solution",
+    "Status": "Terminated",
+    "DateAvailable": "/Date(1775854800000)/",
+    "DateClosing": "/Date(1777665600000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "1d39a080-40fe-4004-afcc-54bde0e8cccc",
+    "Title": "10042329 - RFT for General Contractors for Dredging and Restoration Project at Heath to Simpson Channel in Brampton",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1737507600000)/",
+    "DateClosing": "/Date(1739394000000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "1d85288e-ce33-4ba8-a16a-55c0d9baa17b",
+    "Title": "10043670 - RFP - Vendors of Record (VOR) for Mechanical Services",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1754685900000)/",
+    "DateClosing": "/Date(1757692800000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "1e137794-5d1b-4d4c-85da-7138d3c0b6fd",
+    "Title": "10042791 - RFT Supply and Installation of Chainlink Fence at Ashbridge’s Bay Treatment Plant Landform Project in City of Toronto",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1740771000000)/",
+    "DateClosing": "/Date(1742587200000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "1e8f8984-6493-4b79-950d-40432c2d00d1",
+    "Title": "10045642 - External Audit Services",
+    "Status": "Closed",
+    "DateAvailable": "/Date(1790276820000)/",
+    "DateClosing": "/Date(1792180800000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "20da1373-8d96-46fc-8115-ad4e17e67f8b",
+    "Title": "10044924 - RFT Canyon Avenue (DR 15.1) Bank Stabilization Project",
+    "Status": "Open",
+    "DateAvailable": "/Date(1790107800000)/",
+    "DateClosing": "/Date(1792785600000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "217a3296-a801-4cdd-bf16-6ca7a07bde7e",
+    "Title": "10043426 - RFP Consulting Engineering Services for 2025 Carruthers Creek Hydrology Update",
+    "Status": "Archived",
+    "DateAvailable": "/Date(1751659800000)/",
+    "DateClosing": "/Date(1754064000000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "234e0c35-ce9c-48b1-ace3-699334817812",
+    "Title": "10045108 - RFP Tommy Thompson Park Eastern Shoreline Major Maintenance Project: Coastal Assessment and Detailed Design Development",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1783440000000)/",
+    "DateClosing": "/Date(1787169600000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "249ecb1c-0108-408a-814b-68575f41a401",
+    "Title": "10041677 - Shoreline Coastal Assessment Study - West Shore Boulevard to Marksbury Road",
+    "Status": "Closed",
+    "DateAvailable": "/Date(1726768800000)/",
+    "DateClosing": "/Date(1728662400000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "24b8243c-626a-4e28-9e2e-0f6c0381b074",
+    "Title": "10039763 - Rouge Park Whitchurch-Stouffville Trail Feasibility Study and Detailed Design",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1688572800000)/",
+    "DateClosing": "/Date(1690387200000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "26e4f25a-f494-47b4-aea6-79082720484b",
+    "Title": "10043704 - G. Ross Lord Dam Spillway Joint Repair Project",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1755889200000)/",
+    "DateClosing": "/Date(1757707200000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "27966b1f-8b4d-4815-bce9-b84638c50924",
+    "Title": "10041047 - Development of Sponsorship Program for The Meadoway",
+    "Status": "Archived",
+    "DateAvailable": "/Date(1709908200000)/",
+    "DateClosing": "/Date(1711569600000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "285a5505-974f-4a4d-abfb-a7af4a5be7e3",
+    "Title": "10039372 - Supply and Delivery of Two (2) Skidsteer Mounted Hydraulic Rotary Brooms",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1683741600000)/",
+    "DateClosing": "/Date(1684512000000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "2954011e-1183-4e97-9c37-bfb314c816b3",
+    "Title": "10039615 - Pre- & Post-Construction CCTV Inspection, Lakeland Drive Major Maintenance & Slope Stabilization Project",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1686254400000)/",
+    "DateClosing": "/Date(1687464000000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "2a1e0c53-a049-4a16-aa1e-ebf93d4d7db8",
+    "Title": "10041657-2 - Claireville Dam Gate Inspection and Maintenance Access Upgrades Professional Services",
+    "Status": "Terminated",
+    "DateAvailable": "/Date(1723667400000)/",
+    "DateClosing": "/Date(1726848000000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "2aee77c0-72df-44bb-b0c1-75b96c697bc3",
+    "Title": "10044536 - TRCA Bridge Inventory and Condition Assessment",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1773864000000)/",
+    "DateClosing": "/Date(1775851200000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "2ff52f46-f9a2-4dff-810e-3524e56ab5a2",
+    "Title": "10042139 - Vendors of Record for Sweeper and Flusher Truck Services",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1732824000000)/",
+    "DateClosing": "/Date(1734123600000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "30187fd0-804e-4039-bd49-266fa1dc7764",
+    "Title": "10044721 - RFQ Shredded Pine Mulch, Supply and Delivery, Plantings",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1773780300000)/",
+    "DateClosing": "/Date(1774987200000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "306bd57c-73f6-47d4-b9c4-04281d6968a6",
+    "Title": "10042427 - Supply and Delivery of Recycled Concrete to Ashbridge's Landform Project",
+    "Status": "Closed",
+    "DateAvailable": "/Date(1734617400000)/",
+    "DateClosing": "/Date(1736542800000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "324e5912-f1bb-45b0-a77e-9d984883c8a9",
+    "Title": "10044783 - RFP Amos Pond: Wildlife Passage Design, in the City of Pickering, ON",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1775055600000)/",
+    "DateClosing": "/Date(1777320000000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "34cff82b-f7b6-4815-8db6-2af383bb6f70",
+    "Title": "10043813  - RFT - Bruce’s Mills Washroom-Design, Fabrication and Construction Project ",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1758746220000)/",
+    "DateClosing": "/Date(1760976000000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "355f3bcf-d9f2-48ec-8b10-bc35ba19f372",
+    "Title": "10045398 - RFP Engineering Design, Mouth of Mimico West Wetland",
+    "Status": "Closed",
+    "DateAvailable": "/Date(1786048200000)/",
+    "DateClosing": "/Date(1788465600000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "374faeca-d49a-42ae-ba5f-86cb09317af8",
+    "Title": "10038972 - 2023 Spring Leaf-off Airborne LiDAR Data Acquisition and Classification for Greater Toronto Area to Hamilton",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1677333600000)/",
+    "DateClosing": "/Date(1678723200000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "37c5008e-7cf0-45fc-a489-86f21060866e",
+    "Title": "10044052 - RFT SUPPLY AND DELIVERY OF GUMBO CLAY,  MUD CREEK INLET PROJECT, TORONTO",
+    "Status": "Terminated",
+    "DateAvailable": "/Date(1763151000000)/",
+    "DateClosing": "/Date(1764363600000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "37e0b297-0b5a-4a84-b6aa-88b59807f056",
+    "Title": "10041705 - Mid Humber Gap Multi-use Trail - Detailed Design",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1727719200000)/",
+    "DateClosing": "/Date(1731099600000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "3c6879d8-b712-42cb-ba23-cd1ea1ea8ad0",
+    "Title": "10044944-1 - Supply and Delivery of Fixed Access Ladders for Claireville Dam",
+    "Status": "Closed",
+    "DateAvailable": "/Date(1785348780000)/",
+    "DateClosing": "/Date(1787774400000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "3e1320c1-8ac4-4fd6-9b0e-8aa9cef7b900",
+    "Title": "10044093 - Pump System Assessment & Restoration Design, Humber Bay Park East, Toronto",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1763575200000)/",
+    "DateClosing": "/Date(1766178000000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "3e22fc08-49ac-4e0f-b227-52bd44cfb2c9",
+    "Title": "10041657 - Claireville Dam Gate Inspection and Maintenance Access Upgrades",
+    "Status": "Terminated",
+    "DateAvailable": "/Date(1718985600000)/",
+    "DateClosing": "/Date(1721232000000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "3ee5747a-b873-4dd8-ad58-1c3fcc0bc7b6",
+    "Title": "10043762  - RFT Supply and Delivery of Pebbles to Humber Bay Park West Major Maintenance Project",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1757102400000)/",
+    "DateClosing": "/Date(1758657600000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "3ef12d2d-728f-4f53-8a66-1d96ac195a65",
+    "Title": "10042141 - Vendors of Record for Portable Toilet Rentals",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1729011600000)/",
+    "DateClosing": "/Date(1731013200000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "4283da6c-ed6c-4971-91f0-ee22a6eea7a0",
+    "Title": "10041264 - Supply and Installation of Automated Gates at Albion Hills Conservation Park",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1731443400000)/",
+    "DateClosing": "/Date(1734109200000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "429db345-a3db-4240-ac03-739789a6db9c",
+    "Title": "10043830 - RFT 10043830 - ASPHALT PAVING AND CONCRETE BRIDGE APPROACH PADS FOR THE HUMBER BAY PARK EAST REVITALIZATION PROJECT",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1761856800000)/",
+    "DateClosing": "/Date(1763154000000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "446062b7-3b22-4f45-91a4-ea793d1290b7",
+    "Title": "10043359 - RFP Project Management & Consulting Services for Procurement Operations Optimization",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1747966500000)/",
+    "DateClosing": "/Date(1749754800000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "44f7b608-4ee9-4e8c-a960-f808a8fa8af4",
+    "Title": "10042559 - RFT ALBION HILLS CONSERVATION AREA PARK POWER UPGRADES – MAPLE LANE CAMPSITE PROJECT",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1744202700000)/",
+    "DateClosing": "/Date(1747324800000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "453a7588-0744-42f3-9ccb-c2027d1e25c3",
+    "Title": "10045700 - Real Estate Appraisal Services VOR",
+    "Status": "Open",
+    "DateAvailable": "/Date(1791475200000)/",
+    "DateClosing": "/Date(1793217600000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "45c31666-0749-4dad-b350-03b0266f72cb",
+    "Title": "10043101 - RFQ SEDIMENT DISPOSAL FACILITY –  SWMP Cleanouts, Toronto",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1745355600000)/",
+    "DateClosing": "/Date(1746734400000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "46f4b86f-14cd-40b9-a894-e4aaef73d6f5",
+    "Title": "10043944 - Rehabilitation of Edelweiss Bridge at Humber Valley Heritage Trail ",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1760040000000)/",
+    "DateClosing": "/Date(1762462800000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "471e0037-2d61-4846-a52c-c99890527d3c",
+    "Title": "10041019 - Structural Review of Standard Boardwalk Design",
+    "Status": "Archived",
+    "DateAvailable": "/Date(1715356800000)/",
+    "DateClosing": "/Date(1716566400000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "471f7266-32a8-4544-ad67-adf1d0c72e26",
+    "Title": "10040257 - Supply and Installation of Snow and Ice Removal Equipment",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1695398400000)/",
+    "DateClosing": "/Date(1696258800000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "472e999f-7f00-46fa-b210-2794e91a43e8",
+    "Title": "10041335 - Keating Channel Dockwall Structural Stability Investigation",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1717437600000)/",
+    "DateClosing": "/Date(1721404800000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "47b05ed5-6837-4748-8a0b-2e42be928f57",
+    "Title": "10042359 - RFT - Supply, Delivery and Installation of Custom Seating and Related Site Works at The Meadoway in Scarborough",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1731014100000)/",
+    "DateClosing": "/Date(1733868000000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "47b6e3e6-3a87-455e-8957-cbf72fa4015f",
+    "Title": "10044130 - RFQ Cliff Lumsdon Park Chain-link Fence and Guard Rail: Design and Install",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1763673300000)/",
+    "DateClosing": "/Date(1764882000000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "48572e77-bc4b-44d4-944d-4abee013686c",
+    "Title": "10045162 - RFT SUPPLY AND DELIVERY OF ALBION HILLS PARK RD CULVERT",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1781899200000)/",
+    "DateClosing": "/Date(1783368000000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "496d901f-ca28-4f9e-ac4c-57415c9c723d",
+    "Title": "10042420 - RFP - Vendor of Record for Operated Construction Equipment Rental ",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1736864100000)/",
+    "DateClosing": "/Date(1738357200000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "4bed365c-be6b-4193-8fd1-763ec42c7729",
+    "Title": "10042138 - Vendors of Record for Construction Waste Disposal",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1732129200000)/",
+    "DateClosing": "/Date(1733432400000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "4c5cec87-9239-4802-8689-cbe142f9feb5",
+    "Title": "10039520 - Vendors of Record (VOR) for the Supply and Delivery of Topsoil",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1684350000000)/",
+    "DateClosing": "/Date(1685718000000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "4d462db4-5cbf-43b4-a8ee-8cd9783883b0",
+    "Title": "10044361 - RFT U-Fill Cement, Supply, Delivery and Pouring,  Mud Creek, Evergreen Brick Works, Toronto",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1768323600000)/",
+    "DateClosing": "/Date(1769461200000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "4e209f45-bc86-47a8-accb-81188d023e5a",
+    "Title": "10039644 - RFT - BLACK CREEK PIONEER VILLAGE (BCPV) PARKING LOT LIGHTING, SECURITY AND EVSE RETROFIT",
+    "Status": "Terminated",
+    "DateAvailable": "/Date(1694543400000)/",
+    "DateClosing": "/Date(1696348800000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "4ec622e9-1bb9-48f8-a86f-6fdd134965d6",
+    "Title": "10039108 - Beverley Acres German Mills Creek Erosion Control - Engineering Consulting for Study, Design, and Contract Management Services",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1679666400000)/",
+    "DateClosing": "/Date(1683230400000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "50245222-0ee4-49af-a8eb-0a18822958d3",
+    "Title": "10042179 - VOR- RFP Invasive Plant Management Services",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1759424400000)/",
+    "DateClosing": "/Date(1761681600000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "5082161c-f80a-4cd8-aaac-8388a237e99e",
+    "Title": "10044383 - RFP TORONTO ISLAND PARK FLOOD AND EROSION MITIGATION PROJECT – DETAILED DESIGN DEVELOPMENT",
+    "Status": "Closed",
+    "DateAvailable": "/Date(1774379400000)/",
+    "DateClosing": "/Date(1779220800000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "50dadb67-3c73-459b-92de-c2f1ba7b2610",
+    "Title": "10042794 - RFP Consulting Engineering Services for 2024 Canopy Cover and Woodland Cover Assessment for the Region of York",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1739397600000)/",
+    "DateClosing": "/Date(1741809600000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "51bbeb53-2037-41a3-8525-96359b13739a",
+    "Title": "10041488 - Sand, Supply & Delivery, Loafers Lake, Brampton",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1714593600000)/",
+    "DateClosing": "/Date(1715803200000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "53a1204c-df49-422d-bb09-a6a579c242a6",
+    "Title": "10043380 - RFT - Supply and Delivery of Various Aggregates to Ashbridge's Bay Maintenance Project",
+    "Status": "Closed",
+    "DateAvailable": "/Date(1754085600000)/",
+    "DateClosing": "/Date(1755806400000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "54f3a7d1-d8a3-4732-81ab-a5782f573f59",
+    "Title": "10044658 - RFP Vendor of Record (VOR) for Sign Production Services",
+    "Status": "Closed",
+    "DateAvailable": "/Date(1776805200000)/",
+    "DateClosing": "/Date(1778860800000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "54f58abc-d353-4128-85eb-481427bd2ade",
+    "Title": "10040720 - RFP Western Beaches Breakwaters Conditions Assessment  and Coastal Analysis",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1750434000000)/",
+    "DateClosing": "/Date(1751918400000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "55d6fda0-20aa-4326-90df-fdabe3c297c3",
+    "Title": "10043647 - RFQ Port Union Waterfront Park Major Maintenance Project - CCTV Investigation",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1754506800000)/",
+    "DateClosing": "/Date(1756324800000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "56a545ff-a603-466f-94c6-c33b49400ee8",
+    "Title": "10045025 - RFT Sandalwood Park Erosion Control and Infrastructure Protection Project ",
+    "Status": "Closed",
+    "DateAvailable": "/Date(1785528000000)/",
+    "DateClosing": "/Date(1787601600000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "5818bc58-0375-4b78-904d-cdd575648c6a",
+    "Title": "10042582 - RFQ Box Culvert, Supply and Delivery, Centennial ",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1742832000000)/",
+    "DateClosing": "/Date(1744056000000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "583b930b-9fa6-49ab-9bc7-e84eae4f6b8b",
+    "Title": "10043400 - RFP - VOR for Temporary Staffing Services ",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1754577000000)/",
+    "DateClosing": "/Date(1756497600000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "5bea189f-d39c-4a08-a64c-ddae9c505587",
+    "Title": "10041459 - Crawley Park (P-133 to P-137) Bank Stabilization and Sanitary Infrastructure Protection Project",
+    "Status": "Terminated",
+    "DateAvailable": "/Date(1715943600000)/",
+    "DateClosing": "/Date(1718827200000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "5c6e830e-4df3-47af-9f1b-1c8c8e2f8df4",
+    "Title": "10039159 - RFT - Burbank Drive Slope Stabilization Project",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1680024600000)/",
+    "DateClosing": "/Date(1682539200000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "5c902ffb-800d-46b3-8a59-a3c491d980d6",
+    "Title": "10039858 - Rouge Park Whitchurch-Stouffville Trail Signage and Wayfinding Strategy",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1701104400000)/",
+    "DateClosing": "/Date(1703264400000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "5d63d8a2-4756-457a-a9f0-ef2c31b6cad6",
+    "Title": "10043887 - RFT Humber River Major Maintenance, Area 2 (HR 81.1)",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1762807800000)/",
+    "DateClosing": "/Date(1764709200000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "5db1bc2e-f7ae-4a8b-876e-e8b1a0704655",
+    "Title": "10041446 - BLACK CREEK PIONEER VILLAGE (BCPV) PARKING LOT LIGHTING, SECURITY  AND EVSE RETROFIT",
+    "Status": "Closed",
+    "DateAvailable": "/Date(1715257800000)/",
+    "DateClosing": "/Date(1717776000000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "5df38daa-c5b8-4a2f-8d49-6ff5662f9b36",
+    "Title": "10039238 - Supply, Delivery and Licensing of One (1) Watering Trailer",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1679934600000)/",
+    "DateClosing": "/Date(1681225200000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "5f4c637c-586e-497a-9761-e207d1b1fd6d",
+    "Title": "10043301 - RFP St Marks Trail - Feasibility Study and Conceptual Design",
+    "Status": "Closed",
+    "DateAvailable": "/Date(1774281600000)/",
+    "DateClosing": "/Date(1779220800000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "5f822279-46e7-4770-b138-c524031bd4f7",
+    "Title": "10045232 - RFT SUPPLY, DELIVERY AND INSTALLATION OF ALBION HILLS PARK RD STEEL SHEET PILING ",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1783605600000)/",
+    "DateClosing": "/Date(1784923200000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "61d5dec3-d71f-4d40-9cd3-43226e09f4a7",
+    "Title": "10043605 - RFT Stormwater Outfall Remediation Sites - City of Brampton",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1753305300000)/",
+    "DateClosing": "/Date(1754942400000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "62563bf1-ba4c-4476-a55d-67ee499f5e13",
+    "Title": "10045293 - RFT Humber Bay Park East (HBPE) Pump Station Restoration ",
+    "Status": "Open",
+    "DateAvailable": "/Date(1792443600000)/",
+    "DateClosing": "/Date(1794589200000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "636c63ac-829d-4626-8a76-21e15251a777",
+    "Title": "10040103 - RFP - Non-Occupational Disability Management Services",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1691172900000)/",
+    "DateClosing": "/Date(1694203200000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "63f8121a-f970-4398-a141-e3546c8e7b00",
+    "Title": "10042473 - RFP Consulting Engineering Services for Detail Design Services for the Meadoway Multi-Use Trail (Section 6, Phase 2)",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1767888000000)/",
+    "DateClosing": "/Date(1769806800000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "653bb0be-c6e3-4cc2-84ed-f81489adbdc3",
+    "Title": "10042002 - Supply and Installation of Electric Vehicle Supply Equipment (EVSE) at 5 Shoreham Drive",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1727706600000)/",
+    "DateClosing": "/Date(1729004400000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "65b11776-3521-4ba6-b66e-c0d397e84b0f",
+    "Title": "10045062 - BLUFFER’S PARK MARINA ENTRANCE CHANNEL DREDGING ",
+    "Status": "Closed",
+    "DateAvailable": "/Date(1779384600000)/",
+    "DateClosing": "/Date(1780588800000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "6672972f-fae5-4423-b1aa-f497cec69650",
+    "Title": "10041714 - Morningside Legacy Project - Station 1",
+    "Status": "Closed",
+    "DateAvailable": "/Date(1718915400000)/",
+    "DateClosing": "/Date(1722024000000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "66db3333-34ef-4451-930c-a7155551deb6",
+    "Title": "10038426 - BRMT Works Yard Switchback Trail Project",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1686585600000)/",
+    "DateClosing": "/Date(1689955200000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "6937f8bc-b7b6-48ad-bd5a-23637b80e81c",
+    "Title": "10022400_30 - Supply, Delivery, and Licensing of Mid-Sized Sport Utility Vehicle for Enforcement",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1716210000000)/",
+    "DateClosing": "/Date(1717081200000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "6a405fdf-ac28-4227-8acd-8bbc926587e8",
+    "Title": "10041576 - Farlinger Ravine Park Pedestrian Bridge Replacement Project",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1728329400000)/",
+    "DateClosing": "/Date(1737144000000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "6b1222b0-600b-4fef-acae-2ee2105b7ae8",
+    "Title": "10043526 - RFP Detailed Design Development - West Shore Boulevard to Marksbury Road",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1756310400000)/",
+    "DateClosing": "/Date(1759348800000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "6ba7a4bb-f111-4341-8b54-b615e47084a7",
+    "Title": "10042506 - RFP Supply and Delivery of Food Services for Bruce's Mill Conservation Park",
+    "Status": "Terminated",
+    "DateAvailable": "/Date(1744144800000)/",
+    "DateClosing": "/Date(1745942400000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "6c083db0-daac-41f9-8924-7e6c8a29e281",
+    "Title": "10039299 - Supply, Delivery and Licensing of One (1) Skidsteer Trailer",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1688997600000)/",
+    "DateClosing": "/Date(1689951600000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "6c2534be-4306-4a4b-b922-2e63992d9ccb",
+    "Title": "10042209 - Railings: Supply, Delivery and Installation, Loafers Lake, Brampton",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1729008000000)/",
+    "DateClosing": "/Date(1730476800000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "6c5935dd-df24-4c5a-842c-54ab03f35065",
+    "Title": "10043485 - RFT Bank Stabilization and Erosion Control Project at 300 Orenda Road ",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1750795200000)/",
+    "DateClosing": "/Date(1753214400000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "6c5cb7dc-e660-4039-9a4f-80e7e8ce43a9",
+    "Title": "10044235 - RFP Geotechnical Studies and Conceptual Design for St. Clair Avenue East Staircase - Vale of Avoca ",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1769205600000)/",
+    "DateClosing": "/Date(1771016400000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "6da475aa-ccde-415a-8db2-189f37dd12c0",
+    "Title": "10042572 - RFT 10042572 - Jim Tovey Lakeview Conservation Area Asphalt Paving Project",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1742826600000)/",
+    "DateClosing": "/Date(1744815600000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "6de5fbf3-f9d6-4698-a27d-f0b882e51469",
+    "Title": "10022400_33 - Supply, Delivery, and Licensing of Compact Sport Utility Vehicles with Hybrid Electric Drivetrain",
+    "Status": "Closed",
+    "DateAvailable": "/Date(1717784100000)/",
+    "DateClosing": "/Date(1718809200000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "6e5b34fd-2e44-48ff-9114-177964816206",
+    "Title": "10042322 - RFP - Parks and Education Customer Management System",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1733173200000)/",
+    "DateClosing": "/Date(1737752400000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "6f55e126-f379-4eed-ae19-a92536058257",
+    "Title": "10042701 - RFP Engineered Design Services, Mud Creek Bank Repair & Don Valley Brick Works Wetland Enhancement",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1739394000000)/",
+    "DateClosing": "/Date(1740603600000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "6f5d71cc-d42d-4dc6-af39-a9eb8dd6d88c",
+    "Title": "10041657-3 - Claireville Dam Gate Repair and Access Design",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1726862400000)/",
+    "DateClosing": "/Date(1729267200000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "7209dbd9-059a-4f69-adbe-e4b33a8a6218",
+    "Title": "10040088 - Scarlett Channel Fence Repair Design Project",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1690473600000)/",
+    "DateClosing": "/Date(1692374400000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "728cac81-afec-4ad9-b4a5-3d9b6d395950",
+    "Title": "10038506 - Humber Bay Park East - Inlet Pipe and Grate",
+    "Status": "Terminated",
+    "DateAvailable": "/Date(1688652000000)/",
+    "DateClosing": "/Date(1689951600000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "72d2b153-8bd0-4cf3-bcc6-fa13dfef0b1c",
+    "Title": "10043667 - RFP Implementation of a Software Architecture and Detailed Design for the Erosion Risk Management Program",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1753290600000)/",
+    "DateClosing": "/Date(1755705600000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "73dcb9a8-a91f-4492-adc6-c4cafcf3c8ce",
+    "Title": "10043803 - Vendor of Record- RFP Supply and Delivery of Various Plant Materials",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1762803000000)/",
+    "DateClosing": "/Date(1764709200000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "750786de-8e77-4551-b326-a5333676eb8a",
+    "Title": "10045514 - RFT Loafer's Lake Park Erosion Control and Infrastructure Protection Project",
+    "Status": "Closed",
+    "DateAvailable": "/Date(1786723200000)/",
+    "DateClosing": "/Date(1788552000000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "75d0c36f-fb80-412c-a456-1822651ec1d7",
+    "Title": "10043064 - RFP Wedding, Corporate Meeting, and Special Event Services  ",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1746538500000)/",
+    "DateClosing": "/Date(1749240000000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "75d1435c-5cf8-450a-855a-9e1a176f98ca",
+    "Title": "10039871 - SEPTIC PUMP OUT AND REPLACEMENT AT TRCA WESTERN REGION 2023 ",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1687471200000)/",
+    "DateClosing": "/Date(1689955200000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "763cfd28-9af9-49d3-b2d4-380bdf79e244",
+    "Title": "10043668 - RFP - Vendors of Record (VOR) for Plumbing Services",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1754509800000)/",
+    "DateClosing": "/Date(1757088000000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "78857d71-ef73-4260-b953-76908eb8d0ea",
+    "Title": "10043957 - RFQ Removal of Timber,  Glen Haffy Forest, Caledon",
+    "Status": "Terminated",
+    "DateAvailable": "/Date(1759442460000)/",
+    "DateClosing": "/Date(1761595200000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "78f3d1aa-80ec-4acc-8f5a-ac34905272c8",
+    "Title": "10041375 - Birkdale Ravine Park Bridge Replacement",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1718888400000)/",
+    "DateClosing": "/Date(1722628800000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "7caa6e26-f9ef-4d9b-93b3-a9ad23ebc5f8",
+    "Title": "10039040 - Supply and Delivery of Agricultural Utility Tractors",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1678456800000)/",
+    "DateClosing": "/Date(1679929200000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "7d63fba6-1d43-443b-ac0d-fcfcf751fcbb",
+    "Title": "10043849 - RFP - Detailed Design and Geotechnical - Duffy's Lane Secondary Access Road at Albion Hills Conservation Park ",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1759179600000)/",
+    "DateClosing": "/Date(1760990400000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "7d940c06-54b0-46f8-a073-70a6c87b843c",
+    "Title": "10044659 - RFP Vendor of Record (VOR) for Printing Services",
+    "Status": "Closed",
+    "DateAvailable": "/Date(1776441600000)/",
+    "DateClosing": "/Date(1778256000000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "7da0f5aa-b055-4055-a585-3ad0374fcbac",
+    "Title": "10042382 - RFP Glen Stewart Park, Site 1 (EMS1065) - Geotechnical Investigation & Concepts",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1739557800000)/",
+    "DateClosing": "/Date(1749067200000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "7dc59ede-fb75-4cac-823a-395ef7da5171",
+    "Title": "10041424 - CUDMORE CREEK WETLAND & TRAILHEAD PROJECT - LOOKOUTS AND BRIDGE",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1716566400000)/",
+    "DateClosing": "/Date(1718290800000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "81953abd-6c6f-48d2-8751-2a59ecc5ef25",
+    "Title": "10039396 - Stage 1 Marine Archeological Investigation for Toronto Islands Park  Flood and Erosion Project, Class Environmental Assessment",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1680105600000)/",
+    "DateClosing": "/Date(1681329600000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "81d24722-4cb6-424e-bacd-83dce52fd4eb",
+    "Title": "10039956 - RFQ - Supply and Delivery of Front Mount Mowers",
+    "Status": "Terminated",
+    "DateAvailable": "/Date(1693926000000)/",
+    "DateClosing": "/Date(1695049200000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "822da169-241f-494a-ac5a-46fdf13d2b42",
+    "Title": "10041036 - Supply and Delivery of Staff Work Wear for the Toronto and Region Conservation Authority (TRCA) ",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1710964800000)/",
+    "DateClosing": "/Date(1712952000000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "82463d39-33a6-462a-9f94-f6f8bfdcdc5f",
+    "Title": "10045608 - RFQ - Winter Grounds Maintenance at Various TRCA Sites",
+    "Status": "Closed",
+    "DateAvailable": "/Date(1790256600000)/",
+    "DateClosing": "/Date(1791576000000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "8296f6dc-3737-4c42-9738-d63f65aadd72",
+    "Title": "10042674 - RFP Supply and Implementation of a Digital Signature Solution",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1748538000000)/",
+    "DateClosing": "/Date(1750435200000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "83987f9c-aedc-428c-a35e-b9acfabd01f9",
+    "Title": "10043827 - RFP - Vendors of Record (VOR) for Supply of Rental Vehicles",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1762462800000)/",
+    "DateClosing": "/Date(1764363600000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "83c58f10-79f0-492e-9f8c-6fd3e67af5d5",
+    "Title": "10022400_31 - Supply, Delivery, and Licensing of Battery Electric Trucks",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1715947200000)/",
+    "DateClosing": "/Date(1717167600000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "8491425b-8068-45fa-b057-68363e9b740f",
+    "Title": "10040255 - Vendor of Record (VOR) for Short Term Rental Vehicles",
+    "Status": "Terminated",
+    "DateAvailable": "/Date(1698866100000)/",
+    "DateClosing": "/Date(1700496000000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "861c84f4-58d6-489c-ad65-aa5bca762f46",
+    "Title": "10042260 - Vendors of Record for Rental of Office and Storage Containers",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1731963600000)/",
+    "DateClosing": "/Date(1733432400000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "86234b9f-6e0c-4b53-ba15-077ab4c6eb72",
+    "Title": "10040197 - VOR for Rental of Construction Fence",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1698321600000)/",
+    "DateClosing": "/Date(1699632000000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "88df57d7-784d-4d91-8065-02dad0fe548f",
+    "Title": "10040473 - RFP - Village at Black Creek Rebranding",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1698768000000)/",
+    "DateClosing": "/Date(1701464400000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "8a47140a-6512-48ce-8acf-b7ae5ccf3df1",
+    "Title": "10043826 - RFQ Sediment Disposal Facility, King SWMPs",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1758229200000)/",
+    "DateClosing": "/Date(1759780800000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "8ad7d525-5d7d-47cd-822a-65e2aab75a46",
+    "Title": "10039371 - Supply, and Delivery of Dewatering Equipment",
+    "Status": "Terminated",
+    "DateAvailable": "/Date(1683896400000)/",
+    "DateClosing": "/Date(1685372400000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "8bc07d44-bf03-4386-ab91-93cf7b0bb76c",
+    "Title": "10045677 - RFP West Shore Boulevard to Marksbury Road Shoreline Restoration Project - Marine Archaeology",
+    "Status": "Open",
+    "DateAvailable": "/Date(1792180800000)/",
+    "DateClosing": "/Date(1794427200000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "8d455882-e9f7-4313-a883-ca4e631afad3",
+    "Title": "10038177 - DEVELOPMENT OF GUIDELINE IN ESTABLISHING STORMWATER MANAGEMENT QUANTITY CONTROL CRITERIA WITHIN TRCA JURISDICTION",
+    "Status": "Terminated",
+    "DateAvailable": "/Date(1678388400000)/",
+    "DateClosing": "/Date(1682020800000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "8d99022d-b462-46cf-8c4a-ba0fa0b429ed",
+    "Title": "10044531 - RFT - Supply and Installation of Access Control Terminals at Six Parks",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1780430400000)/",
+    "DateClosing": "/Date(1783713600000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "902b402b-44b6-45f7-b76e-58e593447407",
+    "Title": "10043090 - RFQ Supply & Delivery of Post & Paddle Fence Material",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1745330700000)/",
+    "DateClosing": "/Date(1746734400000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "9085d3d8-f92d-46ac-88e8-a143e85bca3b",
+    "Title": "10044247 - RFT Transit to Simpson Pond Dredging and Restoration Project",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1767632400000)/",
+    "DateClosing": "/Date(1769202000000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "9182e2c8-0b83-40f1-854d-40b3d5d2292b",
+    "Title": "10045110 - RFT East Highland Creek near Ellesmere Road Erosion Control",
+    "Status": "Closed",
+    "DateAvailable": "/Date(1789747200000)/",
+    "DateClosing": "/Date(1791316800000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "93212caf-927c-4a41-89f1-3bc9ce7a4253",
+    "Title": "10041111 - RFSQ - Wilket Creek below 25 Tudor Gate Erosion Control Project",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1709908200000)/",
+    "DateClosing": "/Date(1712347200000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "9341f918-877b-4b6b-bfc7-e302ae577718",
+    "Title": "10043384 - RFP Vale of Avoca Improvement Project - Detailed Designs for Erosion Control Works and Trail Planning",
+    "Status": "Terminated",
+    "DateAvailable": "/Date(1768327200000)/",
+    "DateClosing": "/Date(1772226000000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "93c06a88-f3a5-4c77-9919-c23678b29131",
+    "Title": "10044455 - RFT SUPPLY AND DELIVERY OF ARMOURSTONE AND PEBBLES TO HUMBER BAY PARK WEST SHORELINE MAINTENANCE PROJECT ",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1772038800000)/",
+    "DateClosing": "/Date(1773345600000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "93e09d93-3dd4-4804-b269-8484e7597062",
+    "Title": "10042967 - RFQ Supply & Delivery of Armour Stone for Seating Wall at Jim Tovey Lakeview Conservation Area (JTLCA)",
+    "Status": "Closed",
+    "DateAvailable": "/Date(1743088500000)/",
+    "DateClosing": "/Date(1744920000000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "95353298-a854-49e8-a3e8-df91b6e22e95",
+    "Title": "10039908 - The Meadoway Section 7 Trail Branding Project",
+    "Status": "Terminated",
+    "DateAvailable": "/Date(1690891200000)/",
+    "DateClosing": "/Date(1692370800000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "95cbef21-56d2-43ae-a659-268ea1f94c4b",
+    "Title": "10044604 -  RFQ for Vendors of Record (“VOR”) to Supply and Deliver Black Tenax Fencing for Plantings",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1773428400000)/",
+    "DateClosing": "/Date(1774641600000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "96504d56-7f51-443b-b225-4327ca4e0685",
+    "Title": "10038477 - Lakeland Drive Major Maintenance & Slope Stabilization Project",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1678996800000)/",
+    "DateClosing": "/Date(1681243200000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "96f01448-25ee-4414-b092-2628d12bb66b",
+    "Title": "10043439 - RFP Detailed Design Services, Alex Marchetti & North Park Crossing Replacements, Toronto  ",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1768849200000)/",
+    "DateClosing": "/Date(1770670800000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "991d8ad0-d3ce-4217-b570-09cd8f608190",
+    "Title": "10039863 - RFT - ALBION HILLS CONSERVATION PARK ELECTRICAL UPGRADES, PHASE I",
+    "Status": "Terminated",
+    "DateAvailable": "/Date(1693231200000)/",
+    "DateClosing": "/Date(1695398400000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "999d84d8-12c2-4905-a17b-279685a76afc",
+    "Title": "10038813 - CLAREMONT NATURE CENTRE - DRINKING WATER SYSTEM RETROFIT ",
+    "Status": "Terminated",
+    "DateAvailable": "/Date(1677704400000)/",
+    "DateClosing": "/Date(1680292800000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "9a7bd5ab-2b30-41af-93e5-92b67c533b42",
+    "Title": "10038520 - Humber River Sanitary Infrastructure Protection Project ",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1677794400000)/",
+    "DateClosing": "/Date(1680292800000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "9b8a3ee6-e5e3-4c7e-8f17-857ebc0acd1c",
+    "Title": "10044134 - RFQ Prescribed Burn, Nashville Meadow, King Township",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1767373200000)/",
+    "DateClosing": "/Date(1768597200000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "9c7eaedd-c516-45ff-828b-991a7f7899f0",
+    "Title": "10042488 - Request for Pre-Qualification of General Contractors for East  Humber River Bank Stabilization Project ",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1736373600000)/",
+    "DateClosing": "/Date(1738357200000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "9e3b4728-d030-4c6c-95fc-5df750c245c2",
+    "Title": "10039422 - Wilket Creek Rehabilitation Project: Channel Restoration Detailed Design Services for the Remainder of Reach 3",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1698078600000)/",
+    "DateClosing": "/Date(1704488400000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "9e7691f9-2b07-4e3b-8ed9-b444bde7e53e",
+    "Title": "10039333 - German Mills Creek Stream Erosion Site GM1 North Point - Detailed Design Development",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1681243200000)/",
+    "DateClosing": "/Date(1683057600000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "9efc0553-738b-4e39-838a-a764e06a42c3",
+    "Title": "10039976 - 6 Shelters at Various TRCA locations",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1687896000000)/",
+    "DateClosing": "/Date(1690560000000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "a17c95c2-6ad2-462d-9bff-ae4371df3a47",
+    "Title": "10043234 - RFP Chinguacousy Stream Restoration",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1756155600000)/",
+    "DateClosing": "/Date(1757707200000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "a1fff65f-9154-4803-8b7c-e904a87693fd",
+    "Title": "10042692 - RFP for Vendors of Record for Supply and Delivery of Erosion and Sediment Control Materials",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1740519900000)/",
+    "DateClosing": "/Date(1741982400000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "a26271e6-01a8-4eeb-96c4-d1bfda1f0fb6",
+    "Title": "10040290 - Supply and Delivery of Agricultural Utility Tractor and Wing Mower",
+    "Status": "Terminated",
+    "DateAvailable": "/Date(1695826800000)/",
+    "DateClosing": "/Date(1697468400000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "a4b6f46f-7cee-4009-be54-3f23dd8d6217",
+    "Title": "10039957 - RFP - Supply and Delivery of One (1) Brush Chipper",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1692622800000)/",
+    "DateClosing": "/Date(1694185200000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "a52a3df9-e4e0-494b-9182-cc2ac002d6bc",
+    "Title": "10043669 - RFP - Vendors of Record (VOR) for Electrical Services",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1754685300000)/",
+    "DateClosing": "/Date(1758297600000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "a7d50789-ef17-49f0-8f38-aca1eda02bb3",
+    "Title": "10041772 - Supply, Delivery, and Licensing of Equipment Trailers",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1720792800000)/",
+    "DateClosing": "/Date(1722006000000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "a7eb1d49-7908-4289-a49d-e102353794c9",
+    "Title": "10040125 - HUMBER BAY PARK EAST REVITALIZATION PROJECT - FABRICATION, SUPPLY AND DELIVERY OF INLET PIPE AND GRATE ",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1723580100000)/",
+    "DateClosing": "/Date(1724770800000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "a8e471d5-d7a7-4da6-8d87-85d7ea35c10a",
+    "Title": "10045006 - Supply and Delivery of Cedar Post and Paddle Fence Materials",
+    "Status": "Closed",
+    "DateAvailable": "/Date(1784649600000)/",
+    "DateClosing": "/Date(1786132800000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "aa57045f-23ea-489d-931f-f411d240e1bd",
+    "Title": "10040001  - Fabrication and Installation of Four Washrooms at Albion Hills Conservations Park \t",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1689614100000)/",
+    "DateClosing": "/Date(1691769600000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "aa948812-447f-48b0-9420-5d78359d0cf8",
+    "Title": "10041810 - Centennial Park Trail Protection Project (E22-ESA1)",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1720459800000)/",
+    "DateClosing": "/Date(1722628800000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "aaaa8e71-1a36-4ed4-bed7-7b20f012984f",
+    "Title": "10040962 - Pre- & Post- Construction CCTV Inspections, Yellow Creek Channel Repairs Project",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1708696800000)/",
+    "DateClosing": "/Date(1709931600000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "ac360f5c-3b9f-408b-9a36-35cff0852f7b",
+    "Title": "10042320 - RFT - SCARBOROUGH WATERFRONT PROJECT WEST SEGMENT - BRIMLEY ROAD MULTI-USE TRAIL",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1744058220000)/",
+    "DateClosing": "/Date(1747080000000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "adb900e1-efac-4a14-a313-2c15fe1731e6",
+    "Title": "Repost 10038973 - RFQ - Supply, Delivery and Licensing of One (1) 6x12 Enclosed Trailer",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1693234800000)/",
+    "DateClosing": "/Date(1694185200000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "b06c63c7-bc2a-47cd-8a09-f9aac40d6ae2",
+    "Title": "10042823 - RFP Vendors of Record for Supply and Delivery of Various Aggregates",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1743801300000)/",
+    "DateClosing": "/Date(1745420400000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "b0de12e5-c39b-491c-afec-a36584298e0f",
+    "Title": "10039416 - Bucksburn Erosion Control and Outfall Replacement Project",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1710792000000)/",
+    "DateClosing": "/Date(1713211200000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "b2c66e7a-3807-47bd-924c-628a91f7f7ae",
+    "Title": "10042025 - Pre- and Post-Construction CCTV Inspections, Wilket Creek Erosion Control Minor Works Project",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1724961600000)/",
+    "DateClosing": "/Date(1726257600000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "b3521793-5956-4adb-af7c-68811c9ed300",
+    "Title": "10034974 - Detailed Design Services for Yellow Creek near Heath Street Erosion Control and Slope Stabilization Project",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1688493600000)/",
+    "DateClosing": "/Date(1690574400000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "b35d9170-9da1-4abc-84b3-ed78443b881c",
+    "Title": "10043621 - RFP - Rope Access Services - Claireville Dam",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1754924400000)/",
+    "DateClosing": "/Date(1756497600000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "b35f9214-ba37-47ce-8e86-501f710a58da",
+    "Title": "10045110 - REQUEST FOR PRE-QUALIFICATION FOR EROSION CONTROL, SLOPE STABILIZATION, AND INFRASTRUCTURE CONSTRUCTION WORKS",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1784044800000)/",
+    "DateClosing": "/Date(1786564800000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "b4edd273-2939-4ce3-a465-1674e6b44492",
+    "Title": "10042140 - Vendors of Record for Steel Road Plate Rental",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1729180800000)/",
+    "DateClosing": "/Date(1730491200000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "b818ac86-c31c-49d3-b336-5169d0ecf996",
+    "Title": "10042820 - Supply and Delivery of Agricultural Utility Tractor",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1747238400000)/",
+    "DateClosing": "/Date(1748635200000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "b8b4eb61-495f-47cb-8db1-453a059bedff",
+    "Title": "10041942 - Ajax Nearshore Restoration and Shoreline Protection Project",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1726084800000)/",
+    "DateClosing": "/Date(1727726400000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "b932b316-c74f-4932-8a6e-80d185462769",
+    "Title": "10044517 - Miller Ave (Rodick Road) Ditch Dredging Project",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1773255600000)/",
+    "DateClosing": "/Date(1775073600000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "bc7f31e0-56c0-4859-9e25-c662a5e3d683",
+    "Title": "10044090 - RFQ - Rental of 6-foot-high Construction Fence for Ashbridges Bay Park East Headlands Major Maintenance Project",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1767733200000)/",
+    "DateClosing": "/Date(1768942800000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "bd4436f7-fe35-4981-888a-4d2abd5a1ce1",
+    "Title": "10039636 - RFP - Florida Crescent (HR90.1 - HR90.3) Major Maintenance Project - Detailed Design Services",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1692892800000)/",
+    "DateClosing": "/Date(1697832000000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "c005a2e0-ee83-425c-9fb7-fd31b053454e",
+    "Title": "10044246 - RFP 21ft ALUMINUM VESSEL WITH ELECTROFISHING EQUIPMENT",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1768491900000)/",
+    "DateClosing": "/Date(1770930000000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "c040a7f2-36e8-48bd-a0bb-0fedc0648474",
+    "Title": "10042569 - RFP for Consulting Engineering Services for July 16 and August 17, 2024, Extreme Rainfall Event Climate Pattern Analysis",
+    "Status": "Archived",
+    "DateAvailable": "/Date(1740673800000)/",
+    "DateClosing": "/Date(1742846400000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "c39d1c4a-0152-4a65-82c7-1ef521a09fe1",
+    "Title": "10045267 - RFP Marine and Terrestrial Archaeology, Toronto Islands Dredging and Hanlan’s Beach South Renourishment",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1787256000000)/",
+    "DateClosing": "/Date(1789416000000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "c3bea480-5c26-4829-97a0-3e47e4672579",
+    "Title": "10042061 - Picnic Shelters at Albion Hills and Glen Haffy Conservation Area",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1727280000000)/",
+    "DateClosing": "/Date(1730131200000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "c5753d8d-c3a8-492e-941d-19a315a82c1b",
+    "Title": "10041763 - Vendor of Record: Supply and Delivery of Native Seed",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1730390400000)/",
+    "DateClosing": "/Date(1731704400000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "c68d76a9-2f15-4a55-9898-debd88d36ab9",
+    "Title": "10044956  - 2026 Peer Review of Carruthers Creek Hydrology Model",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1778256000000)/",
+    "DateClosing": "/Date(1781884800000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "c7574226-eefc-401a-8308-c231f8841bb1",
+    "Title": "10044981 - RFQ Stone Engravings – Morningside and Rowntree Mills Parks",
+    "Status": "Closed",
+    "DateAvailable": "/Date(1785357000000)/",
+    "DateClosing": "/Date(1788381000000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "c758f555-66ac-421e-afa4-07adad8257ee",
+    "Title": "10022400_29 - Supply, Delivery and Licensing of Class 3 Truck with Hydraulic Dumping Stake Bed",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1715947200000)/",
+    "DateClosing": "/Date(1717081200000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "c9146804-4d92-492f-bce1-6d081917ffb8",
+    "Title": "10044944 - Supply and Delivery of Fixed Access Ladders for Claireville Dam",
+    "Status": "Terminated",
+    "DateAvailable": "/Date(1777492800000)/",
+    "DateClosing": "/Date(1779307200000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "c9c6e35b-54e1-4a3f-879b-0d5c76a4a06c",
+    "Title": "10036219 - Parkview Hill Crescent Slope Stabilization Project - Detailed Design Development",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1701185400000)/",
+    "DateClosing": "/Date(1706302800000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "cb4cd716-a162-49af-bc67-218533df1e79",
+    "Title": "10044634 - RFT German Mills Creek Channel Restoration - Site 04",
+    "Status": "Closed",
+    "DateAvailable": "/Date(1777651200000)/",
+    "DateClosing": "/Date(1779818400000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "cf46d182-897e-42e5-89ee-f2eaa84bf40f",
+    "Title": "10043955 - RFP Tommy Thompson Park Peninsula Erosion Protection Project",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1761850920000)/",
+    "DateClosing": "/Date(1764795600000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "d06e6ad4-05f5-4ea8-a263-cc3d2f2d4c3a",
+    "Title": "10045072 - Spring Creek Bridge Project - Detailed Design",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1779379200000)/",
+    "DateClosing": "/Date(1783353600000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "d07770cb-e126-4b66-9cb9-82bf05f79724",
+    "Title": "10044903 - Climate Ready Homes: Peel Energy Grant Program",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1778868000000)/",
+    "DateClosing": "/Date(1781287200000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "d1d533e4-5133-4de3-ad5a-0d722ab34467",
+    "Title": "10043863 - RFQ - Vendor of Record Construction Fence Rental",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1760119200000)/",
+    "DateClosing": "/Date(1761595200000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "d1e39e07-c349-4c50-824d-b8312c89a3e3",
+    "Title": "10042572 - RFPQ Jim Tovey Conservation Area Asphalt Paving Project",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1739568600000)/",
+    "DateClosing": "/Date(1741122000000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "d21c42ff-d1ab-4630-908a-3849e3603a1e",
+    "Title": "10039293 - Supply and Delivery of Zero Turn Mowers",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1680195600000)/",
+    "DateClosing": "/Date(1681488000000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "d2f36e39-77cd-4503-be54-6ade8c72d7a6",
+    "Title": "10041738 - Port Union Waterfront Park Major Maintenance Project - Detailed Design Development",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1721307600000)/",
+    "DateClosing": "/Date(1723492800000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "d3c0a9c1-9306-433d-aa14-3fdc7bdfe6aa",
+    "Title": "10039863 - RFT - Albion Hills Conservation Park Electrical Upgrades, Phase I",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1698163200000)/",
+    "DateClosing": "/Date(1699894800000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "d3ee78f9-abb2-4d78-9726-a650283a4684",
+    "Title": "10041150 - Wilket Creek Bridge Replacement Project - Detailed Design Services",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1718888400000)/",
+    "DateClosing": "/Date(1722628800000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "d50b2841-57ae-46ed-8359-d5d10b47e7d8",
+    "Title": "10040751 - Kortright Centre  Backup Generator Supply & Installation ",
+    "Status": "Terminated",
+    "DateAvailable": "/Date(1706634000000)/",
+    "DateClosing": "/Date(1708448400000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "d58d0f1a-696d-4ee2-8f01-ac13ba93b07b",
+    "Title": "10042501 - RFP - Uniformed Security Services",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1738772100000)/",
+    "DateClosing": "/Date(1741381200000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "d71cdea3-d3b1-47d0-86d4-13f967e4eb42",
+    "Title": "10044140 - 2D Modeling of Spill Areas within the Etobicoke Creek Watershed and Floodplain Mapping Update",
+    "Status": "Archived",
+    "DateAvailable": "/Date(1768582800000)/",
+    "DateClosing": "/Date(1771002000000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "d7c5cfc7-618c-4d03-862b-1deb9101a549",
+    "Title": "10041020 - Engineer Design, Tree Inventory & Assessment, and Arborist Report Services: Rowntree Mills Park, Upper Black Creek, Morningside Park",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1708970400000)/",
+    "DateClosing": "/Date(1710792000000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "dad6de8c-2b34-474e-84a2-158e108dde34",
+    "Title": "10043326 - RFPQ - Request for Pre-Qualification for Erosion Control, Slope Stabilization and Infrastructure Construction Works",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1749671100000)/",
+    "DateClosing": "/Date(1752091200000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "de0c6bdd-4c69-443e-80b0-bbbf91a5e24c",
+    "Title": "10043938 - RFP- Total Compensation and Pay Equity Review and Compensation Advisory Services",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1760639400000)/",
+    "DateClosing": "/Date(1762981200000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "dea4f1fa-724b-4db3-9016-adc093520736",
+    "Title": "10042614 - RFT Bluffer's Marina Entrance Channel Dredging ",
+    "Status": "Closed",
+    "DateAvailable": "/Date(1745942400000)/",
+    "DateClosing": "/Date(1747944000000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "df3616aa-5190-430d-a911-93d6006f8276",
+    "Title": "10040534 - Safety Railing Installation - G. Ross Lord Dam",
+    "Status": "Terminated",
+    "DateAvailable": "/Date(1698955200000)/",
+    "DateClosing": "/Date(1701205200000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "e00a72c8-2f47-475c-8249-350d8f96dd1e",
+    "Title": "10044601 - RFQ for Vendors of Record (“VOR”) to Supply and Deliver T-bars for Plantings",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1773331800000)/",
+    "DateClosing": "/Date(1774555200000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "e0cc326c-6cbe-4d92-b13f-6151c2b809b0",
+    "Title": "10042977 - RFP for Consulting Services for  Tommy Thompson Park Visitor Experience Plan",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1745333400000)/",
+    "DateClosing": "/Date(1748030400000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "e12a787a-481d-49e5-93cf-30c427e67bf7",
+    "Title": "10038949 - Albion Hills Field Center and Chalet Walkway Replacement Project",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1686589200000)/",
+    "DateClosing": "/Date(1689609600000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "e180ee7c-db8a-4aaa-9d00-8bda65c79fde",
+    "Title": "10042739 - Supply and Delivery of Front Mount Mower",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1757620800000)/",
+    "DateClosing": "/Date(1758657600000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "e1e3efe8-5a89-4883-8c20-fb2b942b594f",
+    "Title": "10044582 - RFT Humber Bay East Revitalization Project - Asphalt Paving and Concrete Foundations",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1772227800000)/",
+    "DateClosing": "/Date(1773864000000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "e38ac7bd-7cca-47ea-a1a5-6bc018c6148c",
+    "Title": "10042160  - RFP for Consulting Engineering Services for Analysis of Rainfall Events on July 16 and August 17, 2024",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1738702800000)/",
+    "DateClosing": "/Date(1740776400000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "e4a58f98-fb2e-477b-b19b-b7a2dc304593",
+    "Title": "10042594 - RFT - Tommy Thompson Park New 2.4KV Service Connection to Nature School",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1738873800000)/",
+    "DateClosing": "/Date(1742313600000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "e4da5ecc-5779-47cf-bf64-11f868ceb779",
+    "Title": "10043790 - RFT - Supply And Delivery of Various Armourstone To  Colonel Sam Smith Park Major Maintenance Project PH-B1 (Land Delivery)",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1757619300000)/",
+    "DateClosing": "/Date(1759176000000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "e552b2b7-a450-42f4-8c68-fe712491adcb",
+    "Title": "10042488 - RFT 10042488 - East Humber River Bank Stabilization Project",
+    "Status": "Closed",
+    "DateAvailable": "/Date(1741314600000)/",
+    "DateClosing": "/Date(1744833600000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "e67708b1-44d0-4a2d-9dbc-cb2bb048553e",
+    "Title": "10043246  - RFT Allan Kerbel Park (EMS926) Hazard Protection Project",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1746216600000)/",
+    "DateClosing": "/Date(1748635200000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "e7595174-6e9b-4479-a264-bf65ebfcf302",
+    "Title": "10044233 - RFQ Waterline Connection, Meadoway Entry Garden, Toronto",
+    "Status": "Terminated",
+    "DateAvailable": "/Date(1767373200000)/",
+    "DateClosing": "/Date(1768597200000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "e8713c9e-1db3-454b-b3fe-e31946e3c377",
+    "Title": "10041809 - Carabram Park West Humber Trail Protection Project",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1720459800000)/",
+    "DateClosing": "/Date(1731099600000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "e8e25ff0-5456-4883-b75b-0451fa304167",
+    "Title": "10040280 - Supply and Delivery of Golf Cart Rentals for Bathurst Glen Golf Course",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1695387600000)/",
+    "DateClosing": "/Date(1697227200000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "eabe2182-94f2-45ad-87d8-7297272bcdd8",
+    "Title": "10044104 - RFT FOR MARINE SUPPLY AND DELIVERY OF VARIOUS AGGREGATES TO PORT UNION WATERFRONT MAJOR MAINTENANCE PROJECT",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1768604400000)/",
+    "DateClosing": "/Date(1770152400000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "eae8fefe-7a3d-43e3-81ce-ae0ae54e2e59",
+    "Title": "10041834 - PAVING – LOAFERS LAKE, BRAMPTON",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1726675200000)/",
+    "DateClosing": "/Date(1727971200000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "ec59477a-3ead-4833-8a13-d463fecc630f",
+    "Title": "10043138 - RFT - 2 Kevi Lane Slope Stabilization Project",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1758564000000)/",
+    "DateClosing": "/Date(1760457600000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "ee86edae-0b14-47e4-826f-ed853f029572",
+    "Title": "Repost 10039371 - Supply and Delivery of Dewatering Equipment",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1689613200000)/",
+    "DateClosing": "/Date(1690556400000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "eec8c163-0f81-4496-a2b1-cd7c91e371f4",
+    "Title": "10043586 - RFP- Supply and Implementation of Automated Online Interview Scheduling Solution ",
+    "Status": "Terminated",
+    "DateAvailable": "/Date(1758571200000)/",
+    "DateClosing": "/Date(1761336000000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "ef3da83d-aa93-42a4-9396-496364af8926",
+    "Title": "10043353 - RFT PARK AMENITIES, DESIGN, FABRICATION AND INSTALLATION,  HUMBER BAY PARK EAST, TORONTO",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1764262800000)/",
+    "DateClosing": "/Date(1766091600000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "efd3788e-bca5-4a4f-9034-24557b30e7dc",
+    "Title": "10039725 - Stouffville Channel Feasibility Study",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1684872120000)/",
+    "DateClosing": "/Date(1686931200000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "f086b7f2-ccce-4fc3-9680-3775231c6f16",
+    "Title": "10042825 - RFQ - Vendors of Record for Supply and Delivery of Topsoil",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1747964400000)/",
+    "DateClosing": "/Date(1749585600000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "f0e864fb-f88e-401c-82df-aa3bd79a7179",
+    "Title": "10041149 - Kortright Centre New Backup Generator R2",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1713196800000)/",
+    "DateClosing": "/Date(1715011200000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "f4152463-092a-49bf-8b74-b5153445ba00",
+    "Title": "10037616 - G. Ross Lord Dam Engineer of Record - EPP",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1693951200000)/",
+    "DateClosing": "/Date(1699027200000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "f45f3252-aec5-45d6-995a-eda425813930",
+    "Title": "10044056 - RFP Fluvial Geomorphic Report and Design,  Corner Marsh Breach, Durham",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1762282800000)/",
+    "DateClosing": "/Date(1763758800000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "f51ee5f2-7880-419f-becf-1738de697820",
+    "Title": "10042840 - Supply, and Delivery of Mini Skid Steer",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1749681900000)/",
+    "DateClosing": "/Date(1751054400000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "f54485f0-b5b6-464a-b027-31f9420bb66b",
+    "Title": "10041237 - Greenwood Lands - Detailed Design of an Off-Leash Dog Park",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1730131200000)/",
+    "DateClosing": "/Date(1733504400000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "f54ab9e2-a4c1-476f-a077-da145f9e8f74",
+    "Title": "10042455 - RFP Consulting Engineering Services for Fluvio-Geomorphic Assessment at University of Toronto",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1746731700000)/",
+    "DateClosing": "/Date(1749240000000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "f6279e2c-ee4c-4600-9b49-dc06c26ffd70",
+    "Title": "10044509 - RFT SOLIDIFICATION REAGENT, SUPPLY AND DELIVERY,  BRAMPTON, STORMWATER MANAGEMENT PONDS (SWMPs)",
+    "Status": "Closed",
+    "DateAvailable": "/Date(1772134200000)/",
+    "DateClosing": "/Date(1773345600000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "f6c0e525-cb41-4c1d-b123-8d3e6a473b0a",
+    "Title": "10044507 - RFT SEDIMENT DISPOSAL FACILITY,  BRAMPTON STORMWATER MANAGEMENT PONDS (SWMPs)",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1772656200000)/",
+    "DateClosing": "/Date(1773864000000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "f79e11de-dcc7-4e32-8775-08ca8225f8cc",
+    "Title": "10040951 - RFT - Channel Works in Yellow Creek near Heath Street",
+    "Status": "Closed",
+    "DateAvailable": "/Date(1732311000000)/",
+    "DateClosing": "/Date(1734642000000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "f8fb2239-72c6-4fa5-b937-fa46a85edecb",
+    "Title": "10040270 - Don Head East Channel Improvements – Valleyland Sites UED4 & UED5 Detailed Design Development",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1697634000000)/",
+    "DateClosing": "/Date(1700254800000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "f951f802-9090-496e-84dc-a4d4126c9e0a",
+    "Title": "10041258 - Petticoat Creek Conservation Park Aquatic Complex Decommissioning Plan",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1724688000000)/",
+    "DateClosing": "/Date(1726502400000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "f9b2f513-8f7b-48fb-b578-71afe2bf2b3f",
+    "Title": "10039682 - RFP - Supply and Delivery of Wide Area Mowers",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1692799200000)/",
+    "DateClosing": "/Date(1694185200000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "fa51226a-22e2-40d0-8eca-dfcf6a9b0751",
+    "Title": "10044294 - RFP Annandale Restoration Project: Fluvial Geomorphic Assessment and Restoration Design ",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1768582800000)/",
+    "DateClosing": "/Date(1770411600000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "faef4126-1555-4854-9559-6894337717ff",
+    "Title": "10043516 - RFP Supply and Implementation of Automated Online Reference Checking Solution ",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1758052800000)/",
+    "DateClosing": "/Date(1759521600000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "fbd41bbe-6c36-4ead-beb3-b7292c5c275e",
+    "Title": "10043895 - Engineer Designs, Heart Lake Rd. Wetland Connectivity Project, Brampton",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1771002000000)/",
+    "DateClosing": "/Date(1772571600000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "fc1df5b4-4584-4542-ae27-bafa3613026a",
+    "Title": "10042883 - RFP Shoreline Coastal Assessment- Gibraltar Point and Hanlan's Beach",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1751659200000)/",
+    "DateClosing": "/Date(1754071200000)/",
+    "buyer_slug": "trca"
+  },
+  {
+    "Id": "febfd605-1b2e-4127-8efa-904edee7a4a8",
+    "Title": "10040951 - RFSQ - Channel Works in Yellow Creek near Heath Street ",
+    "Status": "Awarded",
+    "DateAvailable": "/Date(1708968600000)/",
+    "DateClosing": "/Date(1710878400000)/",
+    "buyer_slug": "trca"
+  }
+]

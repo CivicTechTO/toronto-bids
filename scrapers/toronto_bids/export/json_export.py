@@ -6,6 +6,9 @@ from toronto_bids.export.schema_export import build_schema_document
 
 
 def export_json(conn, out_path, generated_at: str | None = None) -> Path:
+    from toronto_bids.linking.procurement import resolve_procurements
+    resolve_procurements(conn)
+    conn.commit()
     document = build_export_document(conn, generated_at)
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)

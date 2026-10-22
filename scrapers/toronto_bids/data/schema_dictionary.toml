@@ -83,3 +83,67 @@ description = "Tax basis mapped from the extraction: including or excluding HST;
 
 ["agency_bid.price_header"]
 description = "Verbatim price column header when held in the extraction; never synthesized from the tax basis."
+
+
+["procurement.id"]
+description = "Archive-owned stable procurement identity. Publisher identifiers remain source keys or nonunique labels."
+["procurement.merged_into"]
+description = "Canonical procurement ID after a source-proven equivalence; NULL for current identities. Old IDs remain durable redirects."
+["procurement.merge_evidence"]
+description = "JSON evidence for joining this historical ID to another identity; no new fuzzy matching is performed."
+["procurement_key.namespace"]
+description = "Identity keyspace, including City document/workspace/call, Ariba event, legacy agency contract and buyer-scoped portal page."
+["procurement_key.value"]
+description = "Source identity within its namespace; a portal page URL, never an invented bid number."
+["procurement_key.procurement_id"]
+description = "Canonical archive procurement identity for this namespaced source key."
+["portal_listing.portal_url"]
+description = "Stable source page URL, unique per buyer; distinct pages remain separate even when printed references repeat."
+["portal_listing.native_ref"]
+description = "Published bid reference where recognized, nullable and nonunique; not sufficient evidence to join a board contract."
+["portal_listing.procurement_id"]
+description = "Archive procurement identity for this source page."
+["procurement_document.procurement_id"]
+description = "Procurement described by this document; a PDF may describe several procurements."
+["procurement_document.url"]
+description = "Source background_pdf URL. Association does not imply the bytes have been retrieved."
+["procurement_council_item.procurement_id"]
+description = "Procurement related to this council item; an item can concern several procurements."
+["procurement_council_item.reference"]
+description = "Source council_item reference, retained separately from procurement identity."
+
+["solicitation.procurement_id"]
+description = "Archive procurement identity, independent of the source ingest key. NULL when no single procurement association is established; consult the procurement document/item associations for multi-procurement context."
+
+["award.procurement_id"]
+description = "Archive procurement identity, independent of the source ingest key. NULL when no single procurement association is established; consult the procurement document/item associations for multi-procurement context."
+
+["noncompetitive.procurement_id"]
+description = "Archive procurement identity, independent of the source ingest key. NULL when no single procurement association is established; consult the procurement document/item associations for multi-procurement context."
+
+["ariba_posting.procurement_id"]
+description = "Archive procurement identity, independent of the source ingest key. NULL when no single procurement association is established; consult the procurement document/item associations for multi-procurement context."
+
+["bid.procurement_id"]
+description = "Archive procurement identity, independent of the source ingest key. NULL when no single procurement association is established; consult the procurement document/item associations for multi-procurement context."
+
+["background_pdf.procurement_id"]
+description = "Archive procurement identity, independent of the source ingest key. NULL when no single procurement association is established; consult the procurement document/item associations for multi-procurement context."
+
+["composite_award.procurement_id"]
+description = "Archive procurement identity, independent of the source ingest key. NULL when no single procurement association is established; consult the procurement document/item associations for multi-procurement context."
+
+["ariba_attachment.procurement_id"]
+description = "Archive procurement identity, independent of the source ingest key. NULL when no single procurement association is established; consult the procurement document/item associations for multi-procurement context."
+
+["capital_project.procurement_id"]
+description = "Archive procurement identity, independent of the source ingest key. NULL when no single procurement association is established; consult the procurement document/item associations for multi-procurement context."
+
+["agency_solicitation.procurement_id"]
+description = "Archive procurement identity, independent of the source ingest key. NULL when no single procurement association is established; consult the procurement document/item associations for multi-procurement context."
+
+["agency_award.procurement_id"]
+description = "Archive procurement identity, independent of the source ingest key. NULL when no single procurement association is established; consult the procurement document/item associations for multi-procurement context."
+
+["agency_bid.procurement_id"]
+description = "Archive procurement identity, independent of the source ingest key. NULL when no single procurement association is established; consult the procurement document/item associations for multi-procurement context."

@@ -1,3 +1,43 @@
+-- Archive-owned identities; natural source keys remain ingest keys (#124).
+CREATE TABLE IF NOT EXISTS procurement (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    merged_into INTEGER REFERENCES procurement(id),
+    merge_evidence TEXT,
+    first_seen TEXT NOT NULL DEFAULT (datetime('now')),
+    CHECK (merged_into IS NULL OR merged_into != id)
+);
+CREATE TABLE IF NOT EXISTS procurement_key (
+    namespace TEXT NOT NULL,
+    value TEXT NOT NULL,
+    procurement_id INTEGER NOT NULL REFERENCES procurement(id),
+    PRIMARY KEY (namespace, value)
+);
+CREATE TABLE IF NOT EXISTS procurement_document (
+    procurement_id INTEGER NOT NULL REFERENCES procurement(id),
+    url TEXT NOT NULL REFERENCES background_pdf(url),
+    PRIMARY KEY (procurement_id, url)
+);
+CREATE TABLE IF NOT EXISTS procurement_council_item (
+    procurement_id INTEGER NOT NULL REFERENCES procurement(id),
+    reference TEXT NOT NULL REFERENCES council_item(reference),
+    PRIMARY KEY (procurement_id, reference)
+);
+CREATE TABLE IF NOT EXISTS portal_listing (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    buyer_id INTEGER NOT NULL REFERENCES buyer(id),
+    portal_url TEXT NOT NULL,
+    native_ref TEXT,
+    title TEXT,
+    status TEXT,
+    posted_date TEXT,
+    closing_date TEXT,
+    source TEXT,
+    procurement_id INTEGER REFERENCES procurement(id),
+    first_seen TEXT NOT NULL DEFAULT (datetime('now')),
+    last_seen TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE (buyer_id, portal_url)
+);
+
 CREATE TABLE IF NOT EXISTS solicitation (
     document_number      TEXT PRIMARY KEY,
     status               TEXT,
@@ -30,6 +70,7 @@ CREATE TABLE IF NOT EXISTS solicitation (
     -- This column is NOT on the Solicitation model, so db.upsert_row cannot write it and the
     -- spine cannot reach it. Only the title passes set it, like supplier_id.
     title_source         TEXT,
+    procurement_id INTEGER REFERENCES procurement(id),
     first_seen           TEXT NOT NULL DEFAULT (datetime('now')),
     last_seen            TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -53,6 +94,7 @@ CREATE TABLE IF NOT EXISTS award (
     award_amount_verdict   TEXT,
     award_date         TEXT,
     source             TEXT,
+    procurement_id INTEGER REFERENCES procurement(id),
     first_seen         TEXT NOT NULL DEFAULT (datetime('now')),
     last_seen          TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -92,6 +134,7 @@ CREATE TABLE IF NOT EXISTS noncompetitive (
     council_authority_link  TEXT,
     odata_id                TEXT,
     source                  TEXT,
+    procurement_id INTEGER REFERENCES procurement(id),
     first_seen              TEXT NOT NULL DEFAULT (datetime('now')),
     last_seen               TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -128,6 +171,7 @@ CREATE TABLE IF NOT EXISTS ariba_posting (
     external_rfx_id     TEXT,
     raw_json            TEXT,
     source              TEXT,
+    procurement_id INTEGER REFERENCES procurement(id),
     first_seen          TEXT NOT NULL DEFAULT (datetime('now')),
     last_seen           TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -187,6 +231,7 @@ CREATE TABLE IF NOT EXISTS background_pdf (
     local_path  TEXT,
     sha256      TEXT,
     text        TEXT,
+    procurement_id INTEGER REFERENCES procurement(id),
     first_seen  TEXT NOT NULL DEFAULT (datetime('now')),
     last_seen   TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -215,6 +260,7 @@ CREATE TABLE IF NOT EXISTS capital_project (
     estimated_range          TEXT,
     estimated_term_months    TEXT,
     source                   TEXT,
+    procurement_id INTEGER REFERENCES procurement(id),
     first_seen               TEXT NOT NULL DEFAULT (datetime('now')),
     last_seen                TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -253,6 +299,7 @@ CREATE TABLE IF NOT EXISTS bid (
     price_header       TEXT,            -- the column header verbatim — provenance for hst_basis
     status             TEXT,            -- extracted compliance/outcome, independent of price
     source             TEXT,
+    procurement_id INTEGER REFERENCES procurement(id),
     first_seen         TEXT NOT NULL DEFAULT (datetime('now')),
     last_seen          TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -305,6 +352,7 @@ CREATE TABLE IF NOT EXISTS composite_award (
     source              TEXT,
     -- nullable supplier_id backfilled by build_supplier_dimension, declared bare exactly as
     -- award/noncompetitive/bid do. supplier's PK is `supplier_id`, not `id`.
+    procurement_id INTEGER REFERENCES procurement(id),
     first_seen          TEXT NOT NULL DEFAULT (datetime('now')),
     last_seen           TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -361,6 +409,7 @@ CREATE TABLE IF NOT EXISTS ariba_attachment (
     crc32           TEXT,
     zip_name        TEXT,            -- stored bundle basename under <DATA_DIR>/ariba/attachments/
     zip_sha256      TEXT,            -- sha256 of the whole bundle: integrity + cross-event dedup
+    procurement_id INTEGER REFERENCES procurement(id),
     first_seen      TEXT NOT NULL DEFAULT (datetime('now')),
     last_seen       TEXT NOT NULL DEFAULT (datetime('now')),
     UNIQUE (document_number, path)
@@ -401,6 +450,7 @@ CREATE TABLE IF NOT EXISTS agency_solicitation (
     closing_date TEXT,
     portal_url   TEXT,
     source       TEXT,
+    procurement_id INTEGER REFERENCES procurement(id),
     first_seen   TEXT NOT NULL DEFAULT (datetime('now')),
     last_seen    TEXT NOT NULL DEFAULT (datetime('now')),
     UNIQUE (buyer_id, native_ref)
@@ -422,6 +472,7 @@ CREATE TABLE IF NOT EXISTS agency_award (
     award_date           TEXT,
     report_url           TEXT,
     source               TEXT,
+    procurement_id INTEGER REFERENCES procurement(id),
     first_seen           TEXT NOT NULL DEFAULT (datetime('now')),
     last_seen            TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -449,6 +500,7 @@ CREATE TABLE IF NOT EXISTS agency_bid (
     status            TEXT,
     report_url        TEXT,
     source            TEXT,
+    procurement_id INTEGER REFERENCES procurement(id),
     first_seen        TEXT NOT NULL DEFAULT (datetime('now')),
     last_seen         TEXT NOT NULL DEFAULT (datetime('now')),
     UNIQUE (buyer_id, native_ref, bidder_name_raw, source)
