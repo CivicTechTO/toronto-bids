@@ -1,0 +1,209 @@
+{
+  "records": 371,
+  "refreshed_fields": [
+    "native_ref",
+    "title",
+    "status",
+    "posted_date",
+    "closing_date"
+  ],
+  "controlled_stale_state_restored": true,
+  "identities_and_first_seen_preserved": true,
+  "source_tables_unchanged": {
+    "agency_award": {
+      "rows": 1011,
+      "sha256": "0e3bd4a72722918202b628b1c3f2d3ec74c1014e8c8b85350fea6c1d10dd5bc8"
+    },
+    "agency_bid": {
+      "rows": 1457,
+      "sha256": "a306cfd00d42fa211b427d1c6c911de5ad7f01482a180ac25bbcba21cf0671e6"
+    },
+    "agency_coverage": {
+      "rows": 3,
+      "sha256": "b82f7e5fb2589d0384f90fe3e4fc15b446b1eca5d9ae2eed38274b88248e3930"
+    },
+    "agency_derivation": {
+      "rows": 2236,
+      "sha256": "a7a42595194b48f733ea57031774e1ccfe190b1cfea112615019807e7316d3ec"
+    },
+    "agency_solicitation": {
+      "rows": 610,
+      "sha256": "84383d9a7778e9047515e3b2e73e873e0e9ef759cd1196a177cbfef87483d5bc"
+    },
+    "ariba_attachment": {
+      "rows": 3063,
+      "sha256": "b9aa9c40021f0f9e7feb9811d2b7721619fbdee56d0a6e4079d7b895d5f9972b"
+    },
+    "ariba_posting": {
+      "rows": 154,
+      "sha256": "9ce38210839e70fb49755d88e1795d5f35c07b99378a62138cad56d4c13676c5"
+    },
+    "award": {
+      "rows": 15555,
+      "sha256": "046cfd8e7d8261902d08bea09bb97368c5d00f43f7e1846abcb8b9b752517655"
+    },
+    "background_pdf": {
+      "rows": 11700,
+      "sha256": "86e49c7273babb0720717c31b27726d42e2bae4568b31e0db11a323c4854886a"
+    },
+    "bid": {
+      "rows": 19009,
+      "sha256": "9af6b9de131d50ad84d538d18c2878a23b9b015f4fbaa762d05282d0074abf53"
+    },
+    "buyer": {
+      "rows": 3,
+      "sha256": "c209f0d538af16328406246a2035f0133a5d504e51c85a43129882cec7f84b87"
+    },
+    "capital_project": {
+      "rows": 46,
+      "sha256": "3acfbed5fb9c42695a95f2d2e695fa97b7c914152d0723c76ca7351bdc9a919a"
+    },
+    "composite_award": {
+      "rows": 1052,
+      "sha256": "69067d6e35f7295e3b6bd4b1d789aa0717fbcfb81c890c6dd4af5a9ac4524641"
+    },
+    "council_item": {
+      "rows": 4804,
+      "sha256": "1128be99d73d7e9c477ff024b97faa12e6a28cddb6d1bbb3075196ebb54e9e6a"
+    },
+    "extraction_cache": {
+      "rows": 1777,
+      "sha256": "f8bc1b1d9c047bb8b1e45d8507893f722819b6dd41fbf18f12648f22085d6139"
+    },
+    "noncompetitive": {
+      "rows": 2873,
+      "sha256": "447108315816cafaa89b849165d66e7cc49000f553807496a6a1679e6f61f17d"
+    },
+    "procurement": {
+      "rows": 17144,
+      "sha256": "6e369a9ae4f3f4111fa6c0805b1245c44f03242aea3892e8739e149a7c1e22f5"
+    },
+    "procurement_council_item": {
+      "rows": 4784,
+      "sha256": "c05b16369f4f31cc99bfc4833b310a321cc0a673fb420ac3ebbfd3ec8f7a649d"
+    },
+    "procurement_document": {
+      "rows": 5925,
+      "sha256": "d98e8d0e029f22047998cede20d6ea716b46321fd4b2a0c133af49f97cbd5779"
+    },
+    "procurement_key": {
+      "rows": 17144,
+      "sha256": "3511a679d49176c12004ea21eeee8b4ab203a07fc6ef693912d2a5e2b109da22"
+    },
+    "solicitation": {
+      "rows": 7567,
+      "sha256": "95cb4e6a017916ab5bae3632cf97df42016971f12f0af8022a8fdfa290f2f9dd"
+    },
+    "solicitation_link": {
+      "rows": 1284,
+      "sha256": "66a40112951758e22033e414895a19b2159bbf866ddb77311abd4748bfe14596"
+    },
+    "supplier": {
+      "rows": 8638,
+      "sha256": "dade0289c14866a0cf8d1c2d1ba7fbe94d81afe2fcfa52fce5c5a89cd9c9303f"
+    },
+    "suspended_firm": {
+      "rows": 3,
+      "sha256": "02068b08fedf3d0fde9143f8250025feb65464e12d0aa8739c0ec122af8eefd9"
+    },
+    "sync_run": {
+      "rows": 1771,
+      "sha256": "1d2052550eb1931fcbab68fffced590d58fbd0febc60992f8250279efc779f85"
+    }
+  },
+  "integrity_check": "ok",
+  "foreign_key_violations": 0,
+  "status_counts": {
+    "trca": {
+      "Terminated": 24,
+      "Closed": 29,
+      "Awarded": 187,
+      "Archived": 5,
+      "Open": 4
+    },
+    "toronto-zoo": {
+      "Awarded": 70,
+      "Terminated": 10,
+      "Closed": 29,
+      "Archived": 12,
+      "Cancelled": 1
+    }
+  },
+  "awarded_grid_records": 257,
+  "grid_fields": {
+    "trca": [
+      "Addendums",
+      "Advertisements",
+      "AllowBidQuestionSubmission",
+      "DateAvailable",
+      "DateAvailableDisplay",
+      "DateClosing",
+      "DateClosingDisplay",
+      "DatePlannedIssue",
+      "DatePlannedIssueDisplay",
+      "DaysLeft",
+      "DaysLeftPublish",
+      "Description",
+      "Documents",
+      "FirstSubmissionId",
+      "Id",
+      "IncludeSeconds",
+      "IsEmployee",
+      "OnlyRegisteredPlantakersCanSubmitQuestions",
+      "PlanTakers",
+      "Scope",
+      "ShowPlanTakers",
+      "ShowRegisterAsPlanTaker",
+      "ShowSubmitOnline",
+      "ShowSubmitted",
+      "Status",
+      "Submitted",
+      "TimeZoneLabel",
+      "Title",
+      "VendorHasBidInProgress",
+      "VendorHasMultipleActiveSubmissions",
+      "VendorIsRegistered",
+      "buyer_slug",
+      "status_filter"
+    ],
+    "toronto-zoo": [
+      "Addendums",
+      "Advertisements",
+      "AllowBidQuestionSubmission",
+      "DateAvailable",
+      "DateAvailableDisplay",
+      "DateClosing",
+      "DateClosingDisplay",
+      "DatePlannedIssue",
+      "DatePlannedIssueDisplay",
+      "DaysLeft",
+      "DaysLeftPublish",
+      "Description",
+      "Documents",
+      "FirstSubmissionId",
+      "Id",
+      "IncludeSeconds",
+      "IsEmployee",
+      "OnlyRegisteredPlantakersCanSubmitQuestions",
+      "PlanTakers",
+      "Scope",
+      "ShowPlanTakers",
+      "ShowRegisterAsPlanTaker",
+      "ShowSubmitOnline",
+      "ShowSubmitted",
+      "Status",
+      "Submitted",
+      "TimeZoneLabel",
+      "Title",
+      "VendorHasBidInProgress",
+      "VendorHasMultipleActiveSubmissions",
+      "VendorIsRegistered",
+      "buyer_slug",
+      "status_filter"
+    ]
+  },
+  "raw_snapshots": 371,
+  "replay_network_requests": 0,
+  "paid_calls": 0,
+  "production_modified": false
+}

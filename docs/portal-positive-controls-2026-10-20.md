@@ -1,5 +1,8 @@
 # Portal false empties (#226): both captured corpora verified; identity conflicts explicit
 
+Follow-on: [#140 validation and source-owned refresh](portal-refresh-validation-2026-10-22.md)
+settles the remaining status and award-field questions; the findings below are dated history.
+
 Investigation date: 2026-10-20. The TRCA portal was not empty. The configured numeric
 status filters silently returned successful empty responses. The public UI sends names
 such as `Open` and `Awarded`; its All option sends an empty status string.

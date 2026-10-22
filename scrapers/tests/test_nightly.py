@@ -9,6 +9,7 @@ import pytest
 
 from toronto_bids import cli, config, notify
 from toronto_bids.cli import _capture_agency_bodies as _real_agency_capture
+from toronto_bids.sources.bids_tenders import run_portal_capture as _real_portal_capture
 
 
 @pytest.fixture
@@ -735,3 +736,47 @@ def test_real_event_failure_is_preserved_alongside_training_restriction_notices(
     assert 'ariba:Doc5999999999' in posted['text']
     row = conn.execute("SELECT status,error FROM sync_run WHERE source='ariba attachments'").fetchone()
     assert row['status'] == 'failed' and 'ariba:Doc5999999999' in row['error']
+
+
+
+def test_real_portal_refresh_reaches_nightly_history_and_export(nightly, monkeypatch, conn, tmp_path):
+    import json
+    from pathlib import Path
+    import httpx
+    from toronto_bids.buyers import seed_buyers
+    from toronto_bids.sources import bids_tenders as bt
+    fixtures = Path(__file__).parent/'fixtures/agencies'
+    rows = {
+        'trca': json.loads((fixtures/'bids_tenders_trca_identity_2026-10-22.json').read_text()),
+        'toronto-zoo': json.loads((fixtures/'bids_tenders_zoo_2026-10-21.json').read_text()),
+    }
+    control = next(r for r in rows['toronto-zoo'] if r['Id']=='6fc2f901-6847-469e-b630-d09fc5e75cb9')
+    bt.store_listings(conn, [dict(control, Status='Open')], seed_buyers(conn))
+    old = dict(conn.execute('SELECT * FROM portal_listing').fetchone())
+    real_client = httpx.Client
+    requests = []
+    def respond(request):
+        slug = 'toronto-zoo' if request.url.host.startswith('torontozoo') else 'trca'
+        if request.method == 'GET':
+            return httpx.Response(200, text='<input id="NodeId" value="offline-node">'
+                                  '<input name="__RequestVerificationToken" value="offline-token">')
+        requests.append((slug, int(request.url.params['start'])))
+        assert request.url.params['status'] == ''
+        start = int(request.url.params['start']); limit = int(request.url.params['limit'])
+        return httpx.Response(200, json={'success':True,'total':len(rows[slug]),'data':rows[slug][start:start+limit]})
+    monkeypatch.setattr(bt.httpx, 'Client', lambda **kwargs:real_client(transport=httpx.MockTransport(respond), **kwargs))
+    monkeypatch.setattr(bt.time, 'sleep', lambda _:None)
+    monkeypatch.setattr(bt, 'run_portal_capture', _real_portal_capture)
+    monkeypatch.setattr(config, 'PORTAL_RECORDINGS_DIR', tmp_path/'recordings')
+    monkeypatch.setattr(cli, '_open_db', lambda:_KeepOpen(conn))
+    assert nightly() == 0
+    current = dict(conn.execute('SELECT * FROM portal_listing WHERE id=?',(old['id'],)).fetchone())
+    assert current['status'] == 'Awarded'
+    assert (current['procurement_id'],current['first_seen']) == (old['procurement_id'],old['first_seen'])
+    assert conn.execute("SELECT status FROM sync_run WHERE source='portal' ORDER BY id DESC LIMIT 1").fetchone()[0] == 'ok'
+    assert len(requests) == 8
+    assert len(list((tmp_path/'recordings').glob('*.json'))) == 371
+    exported = json.loads((tmp_path/'export/bids.json').read_text())
+    zoo = next(b for b in exported['buyers'] if b['slug']=='toronto-zoo')
+    assert len(zoo['portal_listings']) == 122 and zoo['awards'] == []
+    assert next(p for p in zoo['portal_listings'] if p['portal_url'].endswith(control['Id']))['status'] == 'Awarded'
