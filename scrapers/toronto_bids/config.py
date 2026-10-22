@@ -175,3 +175,16 @@ CLASSIFICATION_LABELS_PATH = (
     / "document-classification"
     / "labels-machine.json"
 )
+
+# Anonymous listing metadata only. The maintainer explicitly confirmed Bonfire
+# permission with respectful access/backoff; see the referenced record (#110/#134).
+BONFIRE_PORTALS = [
+    {
+        'slug': 'toronto-public-library',
+        'body': 'Toronto Public Library',
+        'portal_url': 'https://torontopubliclibrary.bonfirehub.ca',
+        'enabled': True,
+        'permission': 'docs/permissions/2026-10-22-bonfire.md',
+        'attribution': 'Source: Toronto Public Library (torontopubliclibrary.bonfirehub.ca).',
+    },
+]

@@ -34,8 +34,8 @@ def _ext(name: str | None) -> str | None:
 def _attribution() -> list[dict]:
     """Attribution statements the recorded permission grants require (#228).
 
-    Derived from `config.BIDS_TENDERS_PORTALS` — the one place a grant is recorded — so a
-    new grant carrying an `attribution` appears here with no change to this module. Static
+    Derived from the enabled bids&tenders and Bonfire configuration, where grants
+    are recorded. A new `attribution` needs no change to this module. Static
     config, sorted by slug: deterministic, and present whether or not the body has rows yet
     (the grant conditions the publication, not any particular night's data).
     """
@@ -47,7 +47,7 @@ def _attribution() -> list[dict]:
             "source_url": p["portal_url"],
             "permission": p["permission"],
         }
-        for p in sorted(config.BIDS_TENDERS_PORTALS, key=lambda p: p["slug"])
+        for p in sorted(config.BIDS_TENDERS_PORTALS + config.BONFIRE_PORTALS, key=lambda p: p["slug"])
         if p["enabled"] and p.get("attribution")
     ]
 

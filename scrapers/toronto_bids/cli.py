@@ -140,6 +140,10 @@ def build_parser() -> argparse.ArgumentParser:
         "2026-07-17-deployment-design.md",
     )
 
+    p_bonfire = sub.add_parser('capture-bonfire-listings',
+        help='Capture public Bonfire listing metadata with respectful backoff (#110/#134)')
+    p_bonfire.add_argument('--only', choices=[p['slug'] for p in config.BONFIRE_PORTALS])
+
     p_waterfront = sub.add_parser('capture-waterfront-awards',
         help='Archive Waterfront Toronto monthly public awards with cached shared extraction (#108)')
     p_waterfront.add_argument('--limit', type=int,
@@ -949,6 +953,19 @@ def _cmd_nightly(args) -> int:
                 run_id = _run_step(steps, failures, "portal", _portal, conn=conn)
                 _mark_if_swallowed_failures(steps, failures, conn, run_id, before_len)
 
+                def _bonfire():
+                    from toronto_bids.sources.bonfire import run_bonfire_capture
+                    res = run_bonfire_capture(conn, log=out)
+                    for slug, value in res.items():
+                        if isinstance(value, str) and value.startswith('FAILED'):
+                            failures.append((f'bonfire:{slug}', value))
+                    total = sum(v for v in res.values() if isinstance(v, int))
+                    return f'{total} listings'
+
+                before_len = len(failures)
+                run_id = _run_step(steps, failures, 'bonfire listings', _bonfire, conn=conn)
+                _mark_if_swallowed_failures(steps, failures, conn, run_id, before_len)
+
                 def _ariba():
                     from toronto_bids.sources import ariba_attachments as aa
 
@@ -1606,6 +1623,15 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_amounts(args)
     if args.command == "enrich-ariba-attachments":
         return _cmd_enrich_ariba_attachments(args)
+    if args.command == 'capture-bonfire-listings':
+        from toronto_bids.sources.bonfire import run_bonfire_capture
+        conn = _open_db()
+        try:
+            results = run_bonfire_capture(conn, only=[args.only] if args.only else None,
+                                          log=lambda m: print(m, flush=True))
+            return int(any(isinstance(v, str) and v.startswith('FAILED') for v in results.values()))
+        finally:
+            conn.close()
     if args.command == 'capture-waterfront-awards':
         from toronto_bids.sources.waterfront import capture_awards
         from toronto_bids.linking.procurement import resolve_procurements

@@ -3,6 +3,10 @@ from toronto_bids.models import Buyer
 from toronto_bids.store import db
 
 DEFAULT_BUYERS = [
+    Buyer(slug="toronto-public-library", name="Toronto Public Library", kind="agency",
+          partnered=0, funding_share=None, platform="Bonfire",
+          notes="Public Open/Past opportunity listings captured from the Library's "
+                "linked Bonfire portal (#110); closed listings do not establish awards."),
     Buyer(slug="waterfront-toronto", name="Waterfront Toronto", kind="corporation",
           partnered=1, funding_share=None, platform="own-site / Bonfire",
           notes="Joint federal, Ontario and Toronto corporation. Own-site monthly award "
