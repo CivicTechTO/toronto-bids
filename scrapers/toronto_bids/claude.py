@@ -18,6 +18,64 @@ _HAIKU_LONG = ("0.50", "0.625", "0.05", "2.50")
 MAX_TOKENS = 32768
 
 
+def _object(properties):
+    return {
+        "type": "object", "properties": properties,
+        "required": list(properties), "additionalProperties": False,
+    }
+
+
+def _array(item):
+    return {"type": "array", "items": item}
+
+
+# Mirrors the existing shared prompt; this is a transport constraint, not a
+# source-specific extraction prompt. Keep nullable, verbatim evidence fields.
+_TEXT = {"type": ["string", "null"]}
+_COUNT = {"type": ["integer", "null"]}
+_BASIS = {"anyOf": [
+    {"type": "string", "enum": ["plus_HST", "net_of_taxes", "including_HST", "unknown"]},
+    {"type": "null"},
+]}
+EXTRACTION_SCHEMA = _object({
+    "contracts": _array(_object({
+        "reference": _TEXT,
+        "solicitation_type": {"type": "string", "enum": [
+            "RFT", "RFP", "RFQ", "RFSQ", "VOR", "sole_source", "blanket", "unknown",
+        ]},
+        "title": {"type": "string"},
+        "buyer": _TEXT,
+        "posted_date": _TEXT,
+        "closed_date": _TEXT,
+        "documents_taken": {"type": ["integer", "string", "null"]},
+        "declared_submissions": _COUNT,
+        "declared_compliant": _COUNT,
+        "stage": {"type": "string", "enum": ["single_stage", "prequalification_then_tender"]},
+        "prequalified": _array({"type": "string"}),
+        "invited_to_tender": _array({"type": "string"}),
+        "bids": _array(_object({
+            "supplier_name": {"type": "string"},
+            "amount_raw": _TEXT,
+            "amount_basis": _BASIS,
+            "status": {"type": "string", "enum": [
+                "compliant", "non_compliant", "disqualified", "withdrawn", "no_bid", "not_stated",
+            ]},
+            "rank": _COUNT,
+        })),
+        "awards": _array(_object({
+            "supplier_name": {"type": "string"},
+            "amount_raw": _TEXT,
+            "amount_basis": _BASIS,
+            "contingency_raw": _TEXT,
+            "value_confidential": {"type": "boolean"},
+        })),
+        "funding_source": _TEXT,
+        "decision_date": _TEXT,
+        "decision_body": _TEXT,
+    })),
+})
+
+
 def _charge(model, usage):
     if not isinstance(usage, dict):
         raise ValueError("Claude response missing usage counters")
@@ -108,7 +166,10 @@ class ClaudeExtractionClient:
         body = {
             "model": model, "max_tokens": MAX_TOKENS,
             "messages": [{"role": "user", "content": content}],
-            "output_config": {"effort": "medium"},
+            "output_config": {
+                "effort": "high" if model == "claude-sonnet-5-5" else "medium",
+                "format": {"type": "json_schema", "schema": EXTRACTION_SCHEMA},
+            },
         }
         # UTF-8 bytes plus framing is a deliberately loose input-token bound.
         # Reserve the highest input tier, including cache-write premium, and all

@@ -60,6 +60,16 @@ def test_request_preserves_prompt_and_cache_version(client, monkeypatch):
     assert body["model"] == "claude-sonnet-5-5"
     assert body["max_tokens"] == 32768
     assert "temperature" not in body
+    # Prompting alone allowed prose and fenced JSON in a real July 2022 response.
+    assert body["output_config"]["effort"] == "high"
+    fmt = body["output_config"]["format"]
+    assert fmt["type"] == "json_schema"
+    schema = fmt["schema"]
+    assert schema["required"] == ["contracts"]
+    assert schema["additionalProperties"] is False
+    contract = schema["properties"]["contracts"]["items"]
+    assert {"reference", "bids", "awards", "prequalified"} <= set(contract["required"])
+    assert contract["properties"]["awards"]["items"]["additionalProperties"] is False
     blocks = body["messages"][0]["content"]
     assert blocks[0]["cache_control"] == {"type": "ephemeral"}
     assert "cache_control" not in blocks[1]
@@ -184,3 +194,27 @@ def test_retry_accounts_for_both_billed_attempts(client, monkeypatch):
     client.backoff = 0
     assert client.extract("report") == {"contracts": []}
     assert rows(client) == [(4100, "reported"), (4100, "reported")]
+
+
+def test_schema_meets_claude_compilation_limits():
+    from toronto_bids.claude import EXTRACTION_SCHEMA
+
+    unions = 0
+    def check(node):
+        nonlocal unions
+        if isinstance(node, dict):
+            if isinstance(node.get("type"), list) or "anyOf" in node:
+                unions += 1
+            if node.get("type") == "object":
+                assert node["additionalProperties"] is False
+                assert set(node["required"]) == set(node["properties"])
+            # Nullable enums need a typed anyOf branch in the Claude validator.
+            if "enum" in node:
+                assert isinstance(node["type"], str)
+            for value in node.values():
+                check(value)
+        elif isinstance(node, list):
+            for value in node:
+                check(value)
+    check(EXTRACTION_SCHEMA)
+    assert unions <= 16

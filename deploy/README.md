@@ -107,7 +107,7 @@ eligible documents already have cached extraction results. Downloads remain arch
 if extraction fails for a missing key or exhausted budget.
 
 The default is `TB_LLM_PROVIDER=anthropic`, `TB_CLAUDE_MODEL=claude-sonnet-5-5` and
-`TB_LLM_MONTHLY_USD=20`. Sonnet is the conservative initial choice; the supported
+`TB_LLM_MONTHLY_USD=20`. Sonnet uses high effort after live testing found an omission at medium effort; the supported
 `claude-haiku-5-5` option must pass a representative real-document evaluation before
 becoming the production default. `tb extract --model ...` overrides the model for
 both single-document and corpus commands. There is no automatic paid-provider
@@ -115,7 +115,9 @@ fallback. Legacy OpenRouter remains available only with `TB_LLM_PROVIDER=openrou
 and `OPENROUTER_API_KEY`, using `openai/gpt-5.6-luna` with Flex; the rejected free
 model has been removed.
 
-The shared extraction prompt and `EXTRACTOR_VERSION` are unchanged. The existing
+Claude requests schema-constrained JSON rather than relying on the prompt alone to
+avoid prose or malformed responses. The shared extraction prompt and
+`EXTRACTOR_VERSION` are unchanged. The existing
 per-document cache stays usable; provider migration does not trigger a corpus
 re-extraction. Claude also receives a five-minute cache breakpoint on the shared
 instruction prefix, leaving each varying document outside that cache breakpoint.
