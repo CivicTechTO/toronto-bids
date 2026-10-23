@@ -130,7 +130,9 @@ def _amount_extent(text, amount):
         return False
     start = positions[0]
     for match in re.finditer(r'\([^()]*\)', text):
-        if match.start() < start and start + len(amount) <= match.end() - 1:
+        # The source determines the extent, including qualifiers, whether the
+        # model copied the display parentheses or just their contents.
+        if match.start() <= start and start + len(amount) <= match.end():
             return match.group()[1:-1].strip()
     return amount
 

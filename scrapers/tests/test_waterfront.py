@@ -171,3 +171,36 @@ def test_missing_published_recipient_cannot_be_filled_from_manager_annotation():
     claims, errors = wf.verified_claims(rows, pilot['result'])
     assert len(claims) == 4 and errors
     assert all(c['supplier_name_raw'] != 'Ellis Don Civil Ltd' for c in claims)
+
+
+@pytest.mark.parametrize('extent,numeric', [
+    ('3,579,797', 3579797.0),
+    ('50,000', 50000.0),
+    ('$50,000', 50000.0),
+    ('$79,55', None),
+    ('$5,0000,000', None),
+    ('$2,750 per week as and when required', None),
+    ('$858,000,000 including construction trade packages', None),
+    ('$1,000 USD', None),
+    ('-$1,000', None),
+])
+def test_source_amount_and_identity_ignore_extraction_of_display_parentheses(extent, numeric):
+    rows = [dict(source_key='published-block', raw_text=f'Works - Supplier ({extent})')]
+    def verify(amount):
+        return wf.verified_claims(rows, {'contracts': [{'awards': [
+            {'supplier_name': 'Supplier', 'amount_raw': amount},
+        ]}]})
+
+    bare, bare_errors = verify(extent)
+    wrapped, wrapped_errors = verify(f'({extent})')
+    assert bare_errors == wrapped_errors == []
+    assert wrapped == bare  # Includes stable claim identity, raw evidence and numeric value.
+    assert wrapped[0]['award_amount'] == extent
+    assert wrapped[0]['award_amount_numeric'] == numeric
+
+
+def test_parenthesized_extraction_still_requires_literal_source_evidence():
+    rows = [dict(source_key='published-block', raw_text='Works - Supplier ($2,750 per week)')]
+    result = {'contracts': [{'awards': [{'supplier_name': 'Supplier', 'amount_raw': '($2,750)'}]}]}
+    claims, errors = wf.verified_claims(rows, result)
+    assert claims == [] and errors

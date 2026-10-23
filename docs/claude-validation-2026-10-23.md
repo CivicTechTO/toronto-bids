@@ -26,7 +26,7 @@ Each complete model pass used the same 12 real inputs and unchanged shared promp
 Waterfront expectations use the held source-verified claims, not record counts alone. TRCA comparisons retain the human labels and show discrepancies for review. Supplier matching normalizes whitespace, case and apostrophe style for evaluation; production stores verbatim names.
 
 * **Sonnet, medium:** 10/12 automatic checks passed. The nested-list omission and TRCA D04 label discrepancy were visible failures. An additional printed-reference prefix difference appeared in D04; the source has the same printed call number. This comparison did not change production identity rules.
-* **Haiku, medium:** 9/12 automatic checks passed. It recovered the supported relationships, but returned `(3,579,797)` and `(50,000)` where the held derivation used bare numeric extents. The existing conservative parser left those numeric values NULL. D04 had the same Bell Canada label discrepancy. These numeric regressions prevent promotion of the cheaper model in this change.
+* **Haiku, medium:** 9/12 automatic checks passed. It recovered the supported relationships, but returned `(3,579,797)` and `(50,000)` where the held derivation used bare numeric extents. The existing conservative parser left those numeric values NULL. D04 had the same Bell Canada label discrepancy. These differences were subsequently traced to the verifier and fixed; the follow-up below records fresh model checks.
 * **Sonnet, high:** 11/12 automatic checks passed. All seven Waterfront sets matched the 44 held supported relationships exactly. The remaining automatic mismatch is the source/label disagreement below. The Exhibition Place bid/award distinction and non-procurement exclusion passed.
 
 ### TRCA D04: preserve the label disagreement
@@ -41,12 +41,25 @@ The source still supplies no winning supplier for the $313,750 dewatering entry.
 
 ## Usage, caching and conservation
 
-All live work, including failures and repeated validation, made **46 Messages requests**: 44 HTTP-success responses and two schema rejections. The ledger reconciles every reported token counter to the reviewed prices, with no unsettled reservations. The two schema rejections released their allowances. Total estimated cost is **USD 0.586624**. This includes the HTTP-success outputs rejected as malformed JSON. The Models API authentication check was separate.
+The initial live validation, including failures and repeats, made **46 Messages requests**: 44 HTTP-success responses and two schema rejections. The ledger reconciles every reported token counter to the reviewed prices, with no unsettled reservations. The two schema rejections released their allowances. Total estimated cost is **USD 0.586624**. This includes the HTTP-success outputs rejected as malformed JSON. The Models API authentication check was separate.
 
 The final 12-document Sonnet/high pass cost **USD 0.226494** by reported usage. Later requests reused the 1,184-token instruction prefix; usage showed cache creation followed by cache reads. These measured samples are not a monthly forecast for larger documents. The local budget still reserves a conservative allowance before every attempt and the Console workspace limit remains the account-level control. Prices: [official Claude pricing](https://platform.claude.com/docs/en/about-claude/pricing).
 
 The production extraction-cache digest remained unchanged across every validation run. Existing extraction results remain reusable, so deployment does not trigger a historical re-extraction. Credentials remain in the service environment file; the public procurement export contains neither credentials nor the usage ledger.
 
-Offline regression suite: **1,189 passed**, including the structured-output request constraint, schema complexity, billing of rejected extraction results, reservations across retries, concurrency and month rollover.
+Initial offline regression suite: **1,189 passed**, including the structured-output request constraint, schema complexity, billing of rejected extraction results, reservations across retries, concurrency and month rollover.
 
 Host evidence is retained under `/home/alex/tb-data/operations/claude-validation-2026-10-23/`: all trial reports, captured responses where available, the validation harness, Models result and independently reconciled `summary.json`. Earlier failures remain alongside the final pass. Human source documents and held Waterfront responses are already in the repository fixtures and ground-truth directories.
+
+
+## Follow-up: source delimiters, effort and cost
+
+The verifier treated the same published amount differently when a model included the source's display parentheses. Its source-span comparison now includes the full parenthesized span, yielding the same source-derived raw amount, numeric value and claim identity as extraction of the inner text. Source qualifiers remain intact. Regression cases cover malformed amounts, rates, package qualifiers, foreign currencies, negative values and refusal of wrappers absent from the actual source. The global numeric parser and shared prompt are unchanged.
+
+Replaying all seven held Haiku results now matches all **44** baseline supported relationships. Fresh medium-effort requests then exposed two different problems: failing to name City of Toronto as the recipient of $88,950, and copying the period-bearing `EllisDon Civil Ltd.` from an attribution instead of the literal primary-recipient spelling. Higher effort was evaluated separately; it did not consistently eliminate these failures. Sonnet/high remains the default. Effort is now configurable through `TB_CLAUDE_EFFORT` without source edits.
+
+The expanded comparison and asynchronous-processing recommendation are in [Claude cost options](claude-cost-options-2026-10-23.md). Across all trials, **79** Messages requests cost an estimated **USD 0.659832**, with no unsettled reservations and no change to the production extraction cache. Running two trials concurrently initially made the prototype's per-trial totals include other trials' ledger entries. Those report totals were independently reconciled from each response's usage to matching ledger entries; original interim estimates remain recorded where corrected. The production spending guard was correct throughout. Future prototype runs record their own reservation IDs.
+
+Follow-up evidence is retained under `/home/alex/tb-data/operations/claude-validation-2026-10-23/haiku-optimization/`, including every response, corrected trial reports, the harness and summary. The original human labels and earlier unsuccessful trials remain unchanged.
+
+The completed follow-up regression suite passes **1,205 tests**, including source-span normalization and all five configurable effort levels.

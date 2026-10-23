@@ -125,6 +125,9 @@ class ClaudeExtractionClient:
         for model in self.models:
             if model not in _RATES:
                 raise ValueError(f"Claude model has no reviewed price schedule: {model}")
+        self.effort = os.environ.get("TB_CLAUDE_EFFORT")
+        if self.effort is not None and self.effort not in {"low", "medium", "high", "xhigh", "max"}:
+            raise ValueError("TB_CLAUDE_EFFORT must be low, medium, high, xhigh or max")
         self.budget = UsageBudget(
             DATA_DIR / "llm-usage.sqlite", os.environ.get("TB_LLM_MONTHLY_USD", "20")
         )
@@ -167,7 +170,7 @@ class ClaudeExtractionClient:
             "model": model, "max_tokens": MAX_TOKENS,
             "messages": [{"role": "user", "content": content}],
             "output_config": {
-                "effort": "high" if model == "claude-sonnet-5-5" else "medium",
+                "effort": self.effort or ("high" if model == "claude-sonnet-5-5" else "medium"),
                 "format": {"type": "json_schema", "schema": EXTRACTION_SCHEMA},
             },
         }

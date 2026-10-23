@@ -16,6 +16,7 @@ from toronto_bids.llm_budget import BudgetExceeded, UsageBudget
 def client(monkeypatch, tmp_path):
     monkeypatch.setattr("toronto_bids.config.DATA_DIR", tmp_path)
     monkeypatch.delenv("TB_CLAUDE_MODEL", raising=False)
+    monkeypatch.delenv("TB_CLAUDE_EFFORT", raising=False)
     monkeypatch.delenv("TB_LLM_MONTHLY_USD", raising=False)
     return ClaudeExtractionClient(api_key="test-key", retries=0)
 
@@ -218,3 +219,23 @@ def test_schema_meets_claude_compilation_limits():
                 check(value)
     check(EXTRACTION_SCHEMA)
     assert unions <= 16
+
+
+@pytest.mark.parametrize("effort", ["low", "medium", "high", "xhigh", "max"])
+def test_effort_can_be_tuned_without_changing_prompt_or_model(client, monkeypatch, effort):
+    monkeypatch.setenv("TB_CLAUDE_EFFORT", effort)
+    calls = posted(monkeypatch, response())
+    tuned = ClaudeExtractionClient(api_key="test", models=["claude-haiku-5-5"], retries=0)
+    assert tuned.extract("report") == {"contracts": []}
+    body = calls[0][1]["json"]
+    assert body["model"] == "claude-haiku-5-5"
+    assert body["output_config"]["effort"] == effort
+    assert "".join(b["text"] for b in body["messages"][0]["content"]) == build_prompt("report")
+
+
+def test_invalid_effort_is_rejected_before_sending(client, monkeypatch):
+    monkeypatch.setenv("TB_CLAUDE_EFFORT", "unlimited")
+    calls = posted(monkeypatch, response())
+    with pytest.raises(ValueError, match="TB_CLAUDE_EFFORT"):
+        ClaudeExtractionClient(api_key="test")
+    assert not calls

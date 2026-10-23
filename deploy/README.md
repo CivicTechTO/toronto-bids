@@ -107,10 +107,15 @@ eligible documents already have cached extraction results. Downloads remain arch
 if extraction fails for a missing key or exhausted budget.
 
 The default is `TB_LLM_PROVIDER=anthropic`, `TB_CLAUDE_MODEL=claude-sonnet-5-5` and
-`TB_LLM_MONTHLY_USD=20`. Sonnet uses high effort after live testing found an omission at medium effort; the supported
+`TB_LLM_MONTHLY_USD=20`. Sonnet uses high effort after live testing found an
+omission at medium effort; the supported
 `claude-haiku-5-5` option must pass a representative real-document evaluation before
 becoming the production default. `tb extract --model ...` overrides the model for
-both single-document and corpus commands. There is no automatic paid-provider
+both single-document and corpus commands. `TB_CLAUDE_EFFORT` optionally selects
+`low`, `medium`, `high`, `xhigh` or `max` without a prompt edit; unset uses Sonnet
+`high` or Haiku `medium`. Higher effort is bounded by the same output-token and
+monthly budget controls. The measured tradeoffs, including batch processing, are
+in `docs/claude-cost-options-2026-10-23.md`. There is no automatic paid-provider
 fallback. Legacy OpenRouter remains available only with `TB_LLM_PROVIDER=openrouter`
 and `OPENROUTER_API_KEY`, using `openai/gpt-5.6-luna` with Flex; the rejected free
 model has been removed.
