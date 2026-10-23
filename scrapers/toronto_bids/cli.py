@@ -240,7 +240,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p_extract.add_argument(
         "--model",
-        help="Force a specific OpenRouter model (e.g. openai/gpt-5.6-luna)",
+        help="Force a model for TB_LLM_PROVIDER (default: direct Anthropic)",
     )
     p_extract.add_argument(
         "--report",
@@ -276,6 +276,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="Run --scrape's headed browser under Xvfb (headless servers; needs Xvfb "
         "installed)",
     )
+    p_batch = sub.add_parser('extraction-batches', help='Inspect, submit and collect durable Claude extraction batches')
+    p_batch.add_argument('action', choices=['status', 'submit', 'collect', 'refresh', 'acknowledge', 'attach', 'retry', 'list-remote'])
+    p_batch.add_argument('ids', nargs='*', help='attach: LOCAL_ID REMOTE_ID; retry: JOB_ID')
+    p_batch.add_argument('--manifest', help='Publication handoff file for refresh/acknowledge')
+    p_batch.add_argument('--limit', type=int, default=100, help='Maximum requests in one submission (1-100)')
+    p_extract.add_argument('--batch', action='store_true', help='Queue corpus extraction for asynchronous Claude processing')
     return parser
 
 
@@ -305,21 +311,26 @@ def _run_step(steps: list, failures: list, name: str, fn, conn=None):
     """
     import time
 
+    from toronto_bids.batch_extraction import pending_events
+    pending_before = pending_events()
     t = time.monotonic()
     run_id = db.start_sync_run(conn, name) if conn is not None else None
     try:
         detail = fn()
+        pending = pending_events() > pending_before
+        if pending:
+            detail = (detail + '; ' if detail else '') + 'extraction pending'
         steps.append(
             {
                 "name": name,
-                "status": "ok",
+                "status": "pending" if pending else "ok",
                 "detail": detail or "",
                 "seconds": time.monotonic() - t,
                 "error": None,
             }
         )
         if run_id is not None:
-            db.finish_sync_run(conn, run_id, status="ok")
+            db.finish_sync_run(conn, run_id, status="pending" if pending else "ok")
     except Exception as exc:  # isolation: never propagates
         steps.append(
             {
@@ -834,6 +845,20 @@ def _cmd_amounts(args) -> int:
 
 
 def _cmd_nightly(args) -> int:
+    import os
+    from toronto_bids import notify
+    from toronto_bids.batch_extraction import nightly_batching
+    if os.environ.get('TB_CLAUDE_MODE', 'batch') not in ('batch', 'sync'):
+        report = {'ok': False, 'failures': [('batch configuration', 'TB_CLAUDE_MODE must be batch or sync')]}
+        text = notify.summarize(report)
+        print(text)
+        notify.post(text, log=lambda m: print(m, file=sys.stderr))
+        return 1
+    with nightly_batching():
+        return _run_nightly(args)
+
+
+def _run_nightly(args) -> int:
     """The whole unattended run: sync -> award summaries -> portal -> ariba attachments ->
     agency board reports -> (monthly) council -> supplier rebuild -> export -> tell Slack.
 
@@ -872,6 +897,8 @@ def _cmd_nightly(args) -> int:
     near_close: list[dict] = []
     near_close_error = None
     training_restrictions: list[dict] = []
+    batch_queue = None
+    batch_status = {}
 
     try:
         conn = _open_db()
@@ -888,6 +915,21 @@ def _cmd_nightly(args) -> int:
             failures.append(("counts", str(exc)))
 
     if conn is not None:
+        try:
+            from toronto_bids.batch_extraction import BatchQueue, note_pending
+            batch_queue = BatchQueue()
+            if batch_queue.has_work():
+                def _collect_batch():
+                    result = batch_queue.collect(conn)
+                    if result['errors']:
+                        raise ValueError('; '.join(result['errors']))
+                    jobs = result['queue']['jobs']
+                    if any(jobs.get(s, 0) for s in ('queued', 'submitting', 'submitted')):
+                        note_pending()
+                    return f"{result['cached']} documents cached"
+                _run_step(steps, failures, 'batch collection', _collect_batch, conn=conn)
+        except Exception as exc:
+            failures.append(('batch queue', str(exc)))
         http = None
         try:
             http = HttpClient()
@@ -1051,6 +1093,23 @@ def _cmd_nightly(args) -> int:
                 except Exception as exc:
                     failures.append(("http_close", str(exc)))
 
+        if batch_queue is not None:
+            try:
+                from toronto_bids.batch_extraction import batching_enabled, note_pending
+                if batching_enabled() and batch_queue.has_work() and batch_queue.status()['jobs'].get('queued', 0):
+                    def _submit_batch():
+                        result = batch_queue.submit()
+                        if result.get('submitted'):
+                            note_pending()
+                        if result.get('budget_blocked'):
+                            raise ValueError(result['budget_blocked'])
+                        return f"{result['submitted']} requests submitted"
+                    _run_step(steps, failures, 'batch submission', _submit_batch, conn=conn)
+                if batch_queue.path.exists():
+                    batch_status = batch_queue.status()
+            except Exception as exc:
+                failures.append(('batch queue', str(exc)))
+
         def _supplier():
             from toronto_bids.linking.supplier import build_supplier_dimension
 
@@ -1108,6 +1167,7 @@ def _cmd_nightly(args) -> int:
         "ariba_near_close": near_close,
         "ariba_near_close_error": near_close_error,
         "ariba_training_restrictions": training_restrictions,
+        "batch_extraction": batch_status,
     }
     text = notify.summarize(report)
     print(text)
@@ -1453,6 +1513,22 @@ def _cmd_extract(args) -> int:
         print("--backfill requires --corpus", file=sys.stderr)
         return 1
 
+    if args.batch:
+        if not args.corpus or args.dry_run:
+            print('--batch requires --corpus and cannot be combined with --dry-run', file=sys.stderr)
+            return 1
+        from toronto_bids.batch_extraction import BatchQueue, nightly_batching
+        import httpx
+        import sqlite3
+        try:
+            with nightly_batching(enabled=True):
+                rc = _cmd_extract_corpus(args)
+                submitted = BatchQueue().submit()
+                print(json.dumps(submitted))
+                return rc
+        except (ValueError, TypeError, httpx.HTTPError, sqlite3.Error, OSError) as exc:
+            print(f'Batch extraction: {exc}', file=sys.stderr)
+            return 1
     if args.corpus:
         return _cmd_extract_corpus(args)
 
@@ -1477,7 +1553,7 @@ def _cmd_extract(args) -> int:
             return 1
         print(f"Extractor version: {EXTRACTOR_VERSION}")
         print(f"Document text: {len(row['text'])} chars")
-        client = ExtractionClient()
+        client = ExtractionClient(models=[args.model] if args.model else None)
         result = client.extract(row["text"])
         print(json.dumps(result, indent=2))
         return 0
@@ -1538,7 +1614,7 @@ def _cmd_extract_corpus(args) -> int:
             for key, val in result.items():
                 print(f"  {key}: {val}")
 
-        return 0
+        return 1 if stats['errors'] else 2 if stats['pending'] else 0
     finally:
         conn.close()
 
@@ -1573,6 +1649,61 @@ def _cmd_extract_validate(args) -> int:
         return 0
     finally:
         conn.close()
+
+
+def _cmd_extraction_batches(args):
+    import json
+    import sqlite3
+    import httpx
+    from toronto_bids.batch_extraction import BatchQueue
+
+    try:
+        queue = BatchQueue()
+        if args.action == 'status':
+            print(json.dumps(dict(queue.status(), requests=queue.jobs()), indent=2))
+        elif args.action == 'submit':
+            print(json.dumps(queue.submit(limit=args.limit), indent=2))
+        elif args.action in ('collect', 'refresh'):
+            conn = _open_db()
+            try:
+                if args.action == 'refresh':
+                    if not args.manifest:
+                        raise ValueError('refresh requires --manifest for publication acknowledgement')
+                    from toronto_bids.batch_refresh import refresh
+                    result = refresh(queue, conn, export=lambda: _cmd_export(argparse.Namespace(out=None)),
+                                     manifest_path=args.manifest)
+                else:
+                    result = queue.collect(conn)
+                print(json.dumps(result, indent=2))
+                return 1 if result['errors'] else 0
+            finally:
+                conn.close()
+        elif args.action == 'acknowledge':
+            if not args.manifest:
+                raise ValueError('acknowledge requires --manifest from a successful refresh/publication')
+            from pathlib import Path
+            manifest = json.loads(Path(args.manifest).read_text())
+            documents = manifest.get('documents') if isinstance(manifest, dict) else None
+            if not isinstance(documents, list) or any(not isinstance(d, str) for d in documents):
+                raise ValueError('Invalid publication manifest')
+            queue.acknowledge(documents)
+            print(f'{len(documents)} documents acknowledged after publication')
+        elif args.action == 'attach':
+            if len(args.ids) != 2:
+                raise ValueError('attach requires LOCAL_ID REMOTE_ID')
+            queue.attach(*args.ids)
+            print('Receipt attached after custom-ID verification; run extraction-batches collect')
+        elif args.action == 'retry':
+            if len(args.ids) != 1:
+                raise ValueError('retry requires JOB_ID')
+            queue.retry(args.ids[0])
+            print('Failed request requeued; run extraction-batches submit')
+        else:
+            print(json.dumps(queue.list_remote(), indent=2))
+        return 0
+    except (ValueError, TypeError, httpx.HTTPError, sqlite3.Error, OSError) as exc:
+        print(f'Batch extraction: {exc}', file=sys.stderr)
+        return 1
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -1695,6 +1826,8 @@ def main(argv: list[str] | None = None) -> int:
             conn.close()
     if args.command == "enrich-committee-awards":
         return _cmd_enrich_committee_awards(args)
+    if args.command == 'extraction-batches':
+        return _cmd_extraction_batches(args)
     if args.command == "extract":
         return _cmd_extract(args)
     parser.print_help()

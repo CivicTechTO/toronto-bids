@@ -842,3 +842,33 @@ def test_real_bonfire_capture_reaches_nightly_history_and_bulk_exports(nightly, 
     assert pq.read_metadata(export/'portal_listing.parquet').num_rows == 412
     with zipfile.ZipFile(export/'bids-csv.zip') as z:
         assert len(list(csv.DictReader(io.StringIO(z.read('portal_listing.csv').decode())))) == 412
+
+
+def test_nightly_batches_uncached_work_and_reports_pending(nightly, monkeypatch, capsys, tmp_path):
+    import httpx
+    from toronto_bids.batch_extraction import ExtractionPending, batching_enabled
+    from toronto_bids.extract import ExtractionClient
+    from toronto_bids.sources import award_summary
+    monkeypatch.setenv('ANTHROPIC_API_KEY', 'test')
+    monkeypatch.setenv('TB_CLAUDE_MODE', 'batch')
+    monkeypatch.setenv('TB_LLM_PROVIDER', 'anthropic')
+    requests = []
+    def post(url, **kwargs):
+        assert url.endswith('/messages/batches')
+        requests.append(kwargs['json'])
+        return httpx.Response(200, json={'id': 'msgbatch_nightly'}, request=httpx.Request('POST', url))
+    monkeypatch.setattr(httpx, 'post', post)
+    def store(*args, **kwargs):
+        assert batching_enabled()
+        try:
+            ExtractionClient().extract('Uncached report')
+        except ExtractionPending:
+            pass
+        return 0
+    monkeypatch.setattr(award_summary, 'store_award_summary_bids', store)
+    assert nightly() == 0
+    assert len(requests) == 1
+    text = capsys.readouterr().out
+    assert '⏳' in text and 'Extraction pending' in text
+    assert (tmp_path / 'export/bids.json').exists()
+    assert not batching_enabled()

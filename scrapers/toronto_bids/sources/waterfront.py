@@ -130,7 +130,9 @@ def _amount_extent(text, amount):
         return False
     start = positions[0]
     for match in re.finditer(r'\([^()]*\)', text):
-        if match.start() < start and start + len(amount) <= match.end() - 1:
+        # The source determines the extent, including qualifiers, whether the
+        # model copied the display parentheses or just their contents.
+        if match.start() <= start and start + len(amount) <= match.end():
             return match.group()[1:-1].strip()
     return amount
 
@@ -196,7 +198,8 @@ def verified_claims(rows, result):
     return claims, errors
 
 
-def capture_awards(conn, http, *, data_dir=None, client=None, limit=None, log=print):
+def capture_awards(conn, http, *, data_dir=None, client=None, limit=None, log=print,
+                   cached_only=False, only_extractions=None):
     """One HTTP page, immutable snapshots, cached month extraction, honest coverage.
 
     `limit` bounds new model requests only; every source block is always archived.
@@ -234,23 +237,42 @@ def capture_awards(conn, http, *, data_dir=None, client=None, limit=None, log=pr
                      (row['source_key'], buyer_id, row['publication_month'], row['raw_text'], row['source_position'], row['labels'], URL, sha))
         by_month[row['publication_month']].append(row)
     conn.commit()
-    requests, failures, accepted = 0, [], 0
+    from toronto_bids.batch_extraction import ExtractionPending
+    # Record the last successfully parsed snapshot for offline batch completion.
+    with tempfile.NamedTemporaryFile(dir=root, mode='w', delete=False) as marker:
+        temporary = Path(marker.name)
+        try:
+            marker.write(sha)
+            marker.close()
+            os.replace(temporary, root / 'latest')
+        finally:
+            temporary.unlink(missing_ok=True)
+    requests, failures, accepted, pending = 0, [], 0, 0
+    processed = []
     for month, blocks in by_month.items():
         text = extraction_text(month, blocks)
         digest = _sha(text)
+        if only_extractions is not None and digest not in only_extractions:
+            continue
         errors = []
         cached = db.get_extraction(conn, digest, EXTRACTOR_VERSION)
         try:
             if cached is None:
+                if cached_only:
+                    continue
                 if limit is not None and requests >= limit:
                     raise ValueError('Extraction pending (new-request limit reached)')
                 if client is None:
                     client = ExtractionClient()
                 requests += 1
-                result = client.extract(text)
+                if hasattr(client, 'extract_document'):
+                    result = client.extract_document(digest, [text], source='waterfront')
+                else:
+                    result = client.extract(text)
                 db.mark_extracted(conn, digest, EXTRACTOR_VERSION, json.dumps(result, ensure_ascii=False))
             else:
                 result = json.loads(cached)
+            processed.append(digest)
             claims, errors = verified_claims(blocks, result)
             # Supported claims survive a partial month. Only a complete verification
             # may retire older derived claims; source observations are never deleted.
@@ -271,6 +293,15 @@ def capture_awards(conn, http, *, data_dir=None, client=None, limit=None, log=pr
                               claim['award_amount_numeric'], claim['title_extracted'], digest, EXTRACTOR_VERSION))
             conn.execute('RELEASE waterfront_month')
             accepted += len(claims)
+        except ExtractionPending as exc:
+            pending += 1
+            conn.execute('INSERT INTO publication_extraction (buyer_id,publication_month,extraction_sha256,extractor_version,status,errors) '
+                         'VALUES (?,?,?,?,?,?) ON CONFLICT(buyer_id,publication_month) DO UPDATE SET '
+                         "extraction_sha256=excluded.extraction_sha256,extractor_version=excluded.extractor_version,status=excluded.status,errors=excluded.errors,last_seen=datetime('now')",
+                         (buyer_id, month, digest, EXTRACTOR_VERSION, 'pending', json.dumps([str(exc)])))
+            conn.commit()
+            log(f'Waterfront {month}: extraction pending; prior supported claims retained')
+            continue
         except Exception as exc:
             # Roll back any derived-fact refresh as a unit; source capture is committed.
             if conn.in_transaction:
@@ -284,4 +315,21 @@ def capture_awards(conn, http, *, data_dir=None, client=None, limit=None, log=pr
         if errors:
             failures.append((f'waterfront:{month}', '; '.join(errors)))
         log(f'Waterfront {month}: {len(blocks)} source blocks; {"incomplete" if errors else "verified"}')
-    return dict(blocks=len(rows), months=len(by_month), awards=accepted, requests=requests, failures=failures)
+    return dict(blocks=len(rows), months=len(by_month), awards=accepted, requests=requests, failures=failures, pending=pending, processed=processed)
+
+
+
+def replay_cached_awards(conn, *, data_dir=None, only_extractions=None, log=print):
+    """Apply completed batches against the last validated snapshot without fetching."""
+    root = Path(data_dir or config.DATA_DIR) / 'waterfront'
+    sha = (root / 'latest').read_text().strip()
+    if not re.fullmatch(r'[a-f0-9]{64}', sha):
+        raise ValueError('Invalid held Waterfront snapshot pointer')
+    content = (root / (sha + '.html')).read_bytes()
+    if hashlib.sha256(content).hexdigest() != sha:
+        raise ValueError('Held Waterfront snapshot failed hash verification')
+    class HeldPage:
+        def get_bytes(self, url):
+            return content
+    return capture_awards(conn, HeldPage(), data_dir=data_dir, cached_only=True,
+                          only_extractions=only_extractions, log=log)

@@ -11,6 +11,7 @@ from pathlib import Path
 import httpx
 
 from toronto_bids.extract import EXTRACTOR_VERSION
+from toronto_bids.batch_extraction import ExtractionPending
 from toronto_bids.store.db import get_extraction, is_extracted, mark_extracted
 
 CORPORA = {
@@ -161,6 +162,7 @@ def extract_corpus(
         "cached": 0,
         "extracted": 0,
         "errors": 0,
+        "pending": 0,
         "count_flags": 0,
         "split": 0,
         "chunks": 0,
@@ -184,12 +186,16 @@ def extract_corpus(
             stats["cached"] += 1
             continue
 
+        extracted_count += 1
         try:
             chunks = split_document(text, max_chars=max_chars)
             if len(chunks) > 1:
                 stats["split"] += 1
                 stats["chunks"] += len(chunks)
                 log(f"  splitting {url} into {len(chunks)} chunks")
+            if hasattr(client, 'extract_document'):
+                result = client.extract_document(sha256, chunks)
+            elif len(chunks) > 1:
                 all_contracts = []
                 for chunk in chunks:
                     chunk_result = client.extract(chunk)
@@ -210,10 +216,12 @@ def extract_corpus(
                 conn, sha256, EXTRACTOR_VERSION, result_json=json.dumps(result)
             )
             stats["extracted"] += 1
-            extracted_count += 1
             log(f"  extracted {url}")
         # TypeError too (#219): a response of an unexpected shape is one document's
         # refusal, never a crash that blocks every uncached document after it.
+        except ExtractionPending as exc:
+            stats["pending"] += 1
+            log(f"  PENDING {url}: {exc}")
         except (ValueError, TypeError, httpx.HTTPError) as exc:
             stats["errors"] += 1
             log(f"  FAILED {url}: {exc}")
@@ -789,7 +797,7 @@ def extract_and_backfill(
 ) -> dict:
     """Extract any uncached documents via LLM, then backfill store tables.
 
-    If OPENROUTER_API_KEY is unset and all documents are already cached,
+    If the configured provider key is unset and all documents are already cached,
     the extraction step is skipped and only backfill runs.
 
     Per-document extraction errors are caught and logged by `extract_corpus`, so this
@@ -815,7 +823,7 @@ def extract_and_backfill(
         stats = extract_corpus(conn, corpus, client=client, labels=labels, log=log)
         log(
             f"  extraction: {stats['extracted']} new, "
-            f"{stats['cached']} cached, "
+            f"{stats['cached']} cached, {stats['pending']} pending, "
             f"{stats['skipped_classifier']} skipped by classifier, {stats['errors']} errors, "
             f"{stats['count_flags']} count flags"
         )

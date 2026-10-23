@@ -9,6 +9,14 @@ import pytest
 FIXTURES = Path(__file__).parent / "fixtures"
 
 
+@pytest.fixture(autouse=True)
+def legacy_provider(monkeypatch):
+    # These are the retained OpenRouter protocol/retry tests. The Claude default
+    # and its independent spending guard are exercised in test_claude.py.
+    monkeypatch.setenv("TB_LLM_PROVIDER", "openrouter")
+    monkeypatch.setattr("toronto_bids.extract.MODELS", ["test/first", "test/second"])
+
+
 def _load_fixture(name="extract_response.json"):
     return json.loads((FIXTURES / name).read_text())
 
@@ -167,7 +175,7 @@ def test_client_raises_on_missing_key():
         patch.dict("os.environ", {}, clear=True),
         pytest.raises(ValueError, match="OPENROUTER_API_KEY"),
     ):
-        ExtractionClient()
+        ExtractionClient(provider="openrouter")
 
 
 def test_client_raises_on_placeholder_key():
@@ -206,7 +214,7 @@ def test_client_extract_calls_openrouter(monkeypatch):
     client = ExtractionClient(api_key="sk-or-v1-test123")
     result = client.extract("Some document text")
     assert len(result["contracts"]) == 1
-    assert calls[0]["model"] == "nvidia/nemotron-3-ultra-253b-v1:free"
+    assert calls[0]["model"] == "test/first"
     assert "Bearer sk-or-v1-test123" in str(calls)
 
 
@@ -218,7 +226,7 @@ def test_client_falls_back_to_second_model(monkeypatch):
 
     def mock_post(url, *, json, headers, timeout):
         calls.append(json["model"])
-        if json["model"].startswith("nvidia/"):
+        if json["model"] == "test/first":
             import httpx
 
             resp = httpx.Response(status_code=429)
@@ -241,8 +249,8 @@ def test_client_falls_back_to_second_model(monkeypatch):
     client = ExtractionClient(api_key="sk-or-v1-test123", retries=0, backoff=0)
     result = client.extract("Some document text")
     assert len(result["contracts"]) == 1
-    assert "nvidia/nemotron-3-ultra-253b-v1:free" in calls
-    assert "openai/gpt-5.6-luna" in calls
+    assert "test/first" in calls
+    assert "test/second" in calls
 
 
 def test_client_retries_on_500(monkeypatch):

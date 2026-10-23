@@ -13,6 +13,12 @@ set -uo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
 UV="${TB_NIGHTLY_UV:-$HOME/.local/bin/uv}"
 
+DATA_ROOT="${TB_DATA_DIR:-$HOME/tb-data}"
+mkdir -p "$DATA_ROOT" || exit 1
+exec 9>"$DATA_ROOT/.pipeline.lock"
+# Wait for a short collector; the collector skips while a long nightly owns it.
+flock 9 || exit 1
+
 cd "$HERE/../scrapers" || exit 1
 
 "$UV" run tb nightly

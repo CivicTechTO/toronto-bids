@@ -1,0 +1,12 @@
+[Unit]
+Description=Collect toronto-bids Claude batches and publish completed extraction
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=%h/toronto-bids/scrapers
+Environment=TB_DATA_DIR=%h/tb-data
+EnvironmentFile=-%h/.config/toronto-bids/tb.env
+ExecStart=%h/toronto-bids/deploy/tb-batch-collect.sh
+TimeoutStartSec=30min
