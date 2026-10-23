@@ -142,6 +142,7 @@ def test_budget_reservations_are_atomic(tmp_path):
 def test_previous_month_does_not_consume_current_budget(tmp_path):
     budget = UsageBudget(tmp_path / "ledger.sqlite", "1")
     token = budget.reserve("test", 1000000)
+    budget.settle(token, 1000000, 'reported')
     with sqlite3.connect(budget.path) as conn:
         conn.execute("UPDATE request SET month='2000-01' WHERE id=?", (token,))
     budget.reserve("test", 1000000)
@@ -239,3 +240,18 @@ def test_invalid_effort_is_rejected_before_sending(client, monkeypatch):
     with pytest.raises(ValueError, match="TB_CLAUDE_EFFORT"):
         ClaudeExtractionClient(api_key="test")
     assert not calls
+
+
+
+def test_old_outstanding_reservation_carries_into_new_month(tmp_path):
+    budget = UsageBudget(tmp_path / "ledger.sqlite", "1")
+    token = budget.reserve("test", 900000)
+    with sqlite3.connect(budget.path) as conn:
+        conn.execute("UPDATE request SET month='2000-01' WHERE id=?", (token,))
+    with pytest.raises(BudgetExceeded):
+        budget.reserve("test", 200000)
+    budget.settle(token, 500000, 'reported')
+    # Settlement is booked conservatively in the current month.
+    with pytest.raises(BudgetExceeded):
+        budget.reserve("test", 600000)
+    budget.reserve("test", 500000)

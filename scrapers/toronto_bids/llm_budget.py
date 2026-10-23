@@ -41,40 +41,48 @@ class UsageBudget:
         )""")
         return conn
 
-    def reserve(self, model: str, allowance: int) -> int:
+    def reserve(self, model: str, allowance: int, *, conn=None) -> int:
+        if conn is None:
+            own = self._connect()
+            try:
+                own.execute("BEGIN IMMEDIATE")
+                result = self.reserve(model, allowance, conn=own)
+                own.commit()
+                return result
+            finally:
+                own.close()
         now = datetime.now(timezone.utc).isoformat()
-        conn = self._connect()
-        try:
-            conn.execute("BEGIN IMMEDIATE")
-            used = conn.execute(
-                "SELECT COALESCE(SUM(charged_microdollars), 0) FROM request WHERE month=?",
-                (now[:7],),
-            ).fetchone()[0]
-            if used + allowance > self.limit:
-                raise BudgetExceeded(
-                    f"Claude monthly budget would be exceeded: "
-                    f"${used / 1_000_000:.4f} charged/reserved, "
-                    f"${allowance / 1_000_000:.4f} needed; "
-                    f"limit ${self.limit / 1_000_000:.2f}. "
-                    "See TB_LLM_MONTHLY_USD and llm-usage.sqlite."
-                )
-            cursor = conn.execute(
-                "INSERT INTO request (created_at, month, model, charged_microdollars, status) "
-                "VALUES (?, ?, ?, ?, 'reserved')",
-                (now, now[:7], model, allowance),
+        # Outstanding reservations carry across month boundaries until billing
+        # is known, so an overnight batch cannot evade the next month's guard.
+        used = conn.execute(
+            "SELECT COALESCE(SUM(charged_microdollars), 0) FROM request "
+            "WHERE month=? OR status='reserved'", (now[:7],),
+        ).fetchone()[0]
+        if used + allowance > self.limit:
+            raise BudgetExceeded(
+                f"Claude monthly budget would be exceeded: "
+                f"${used / 1_000_000:.4f} charged/reserved, "
+                f"${allowance / 1_000_000:.4f} needed; "
+                f"limit ${self.limit / 1_000_000:.2f}. "
+                "See TB_LLM_MONTHLY_USD and llm-usage.sqlite."
             )
-            conn.commit()
-            return cursor.lastrowid
-        finally:
-            conn.close()
+        cursor = conn.execute(
+            "INSERT INTO request (created_at, month, model, charged_microdollars, status) "
+            "VALUES (?, ?, ?, ?, 'reserved')", (now, now[:7], model, allowance),
+        )
+        return cursor.lastrowid
 
-    def settle(self, request_id: int, charge: int, status: str, usage=None):
-        conn = self._connect()
-        try:
-            with conn:
-                conn.execute(
-                    "UPDATE request SET charged_microdollars=?, status=?, usage_json=? WHERE id=?",
-                    (charge, status, json.dumps(usage) if usage is not None else None, request_id),
-                )
-        finally:
-            conn.close()
+    def settle(self, request_id: int, charge: int, status: str, usage=None, *, conn=None):
+        if conn is None:
+            own = self._connect()
+            try:
+                with own:
+                    self.settle(request_id, charge, status, usage, conn=own)
+            finally:
+                own.close()
+            return
+        conn.execute(
+            "UPDATE request SET charged_microdollars=?, status=?, usage_json=?, month=? WHERE id=?",
+            (charge, status, json.dumps(usage) if usage is not None else None,
+             datetime.now(timezone.utc).strftime("%Y-%m"), request_id),
+        )

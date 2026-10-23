@@ -91,12 +91,12 @@ def test_run_portal_capture_isolates_a_failing_body(conn, monkeypatch):
 
 
 def test_nightly_wires_up_the_portal_step():
-    """Doc-smoke: `tb nightly` (cli._cmd_nightly) actually calls into this module, isolated
+    """Doc-smoke: `tb nightly` (cli._run_nightly) actually calls into this module, isolated
     the same way sync/award_summary are (#135 asks it never stop the export)."""
     import inspect
 
     from toronto_bids import cli
-    src = inspect.getsource(cli._cmd_nightly)
+    src = inspect.getsource(cli._run_nightly)
     assert "bids_tenders import run_portal_capture" in src
     assert "run_portal_capture(conn" in src
 

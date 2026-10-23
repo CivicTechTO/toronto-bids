@@ -1,0 +1,10 @@
+[Unit]
+Description=Check toronto-bids Claude extraction batches hourly, including weekends
+
+[Timer]
+OnCalendar=hourly
+RandomizedDelaySec=5m
+Persistent=true
+
+[Install]
+WantedBy=timers.target

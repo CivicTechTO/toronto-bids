@@ -146,7 +146,9 @@ the nominal remaining balance is fully consumed. Use the Console workspace limit
 as the account billing authority: the local estimate does not control other keys,
 applications, provider pricing changes or legacy OpenRouter calls.
 
-Inspect current-month charges and unresolved reservations without API access:
+Outstanding reservations carry into subsequent calendar months until reconciled;
+a batch crossing midnight cannot bypass the new month's guard. Settlement is
+booked conservatively in the month received. Inspect charges and unresolved reservations without API access:
 
 ```shell
 sqlite3 "$TB_DATA_DIR/llm-usage.sqlite" \
@@ -169,6 +171,32 @@ mkdir -p ~/.config/systemd/user
 cp ~/toronto-bids/deploy/tb-nightly.{service,timer} ~/.config/systemd/user/
 systemctl --user daemon-reload
 ```
+
+### Asynchronous extraction collector
+
+The nightly queues uncached Sonnet work and the hourly collector imports completed
+results, derives supported facts from held sources, exports and publishes. Both
+wrappers use `<TB_DATA_DIR>/.pipeline.lock`: the collector skips an active nightly,
+and the nightly waits for a short collector. No new source scraping occurs in the
+collector. Failed publication keeps its document handoff unacknowledged for retry.
+
+Install the collector alongside the nightly after deploying the code:
+
+```shell
+cp ~/toronto-bids/deploy/tb-batch-collect.{service,timer} ~/.config/systemd/user/
+systemctl --user daemon-reload
+systemctl --user start tb-batch-collect.service
+journalctl --user -u tb-batch-collect -n 50 --no-pager
+systemctl --user enable --now tb-batch-collect.timer
+```
+
+The collector runs hourly on all days, including weekends. It publishes only when
+completed results need applying. Pending work is explicit in the nightly summary;
+its presence alone does not fail the unit. API, derivation or publishing failures
+still produce nonzero status. For queue operations, failed-job retry and lost
+receipt recovery, read [Claude batches](../docs/claude-batches.md).
+`TB_CLAUDE_MODE=sync` restores immediate nightly extraction. Standalone commands
+remain immediate unless `tb extract --batch --corpus ...` is selected.
 
 ## 5. Prove it before scheduling it
 

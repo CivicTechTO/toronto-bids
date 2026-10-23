@@ -114,13 +114,28 @@ def parse_response(response):
         raise ValueError("Claude returned malformed extraction JSON") from exc
 
 
+def request_allowance(body, *, batch=False):
+    model = body["model"]
+    rates = _HAIKU_LONG if model == "claude-haiku-5-5" else _RATES[model]
+    input_bound = len(json.dumps(body, ensure_ascii=False).encode()) + 4096
+    cost = Decimal(rates[1]) * input_bound + Decimal(rates[3]) * body["max_tokens"]
+    if batch:
+        cost /= 2
+    return int(cost.to_integral_value(rounding=ROUND_CEILING))
+
+
+def api_headers(api_key=None):
+    key = api_key or os.environ.get("ANTHROPIC_API_KEY", "")
+    if not key.strip() or key.startswith("your-"):
+        raise ValueError("ANTHROPIC_API_KEY is not set or is a placeholder. Configure a direct Claude API key.")
+    return {"x-api-key": key, "anthropic-version": "2026-10-21", "content-type": "application/json"}
+
+
 class ClaudeExtractionClient:
     def __init__(self, api_key=None, models=None, retries=3, backoff=1.0, timeout=120.0):
         from toronto_bids.config import DATA_DIR
 
-        self.key = api_key or os.environ.get("ANTHROPIC_API_KEY", "")
-        if not self.key.strip() or self.key.startswith("your-"):
-            raise ValueError("ANTHROPIC_API_KEY is not set or is a placeholder. Configure a direct Claude API key.")
+        self.key = api_headers(api_key)["x-api-key"]
         self.models = models or [os.environ.get("TB_CLAUDE_MODEL", DEFAULT_MODEL)]
         for model in self.models:
             if model not in _RATES:
@@ -165,7 +180,7 @@ class ClaudeExtractionClient:
                         time.sleep(self.backoff * 2**attempt)
         raise last
 
-    def _call(self, httpx, model, content):
+    def _body(self, model, content):
         body = {
             "model": model, "max_tokens": MAX_TOKENS,
             "messages": [{"role": "user", "content": content}],
@@ -174,21 +189,24 @@ class ClaudeExtractionClient:
                 "format": {"type": "json_schema", "schema": EXTRACTION_SCHEMA},
             },
         }
-        # UTF-8 bytes plus framing is a deliberately loose input-token bound.
-        # Reserve the highest input tier, including cache-write premium, and all
-        # possible output (including thinking). Reconcile to returned usage.
-        rates = _HAIKU_LONG if model == "claude-haiku-5-5" else _RATES[model]
-        input_bound = len(json.dumps(body, ensure_ascii=False).encode()) + 4096
-        worst_cost = Decimal(rates[1]) * input_bound + Decimal(rates[3]) * MAX_TOKENS
-        allowance = int(worst_cost.to_integral_value(rounding=ROUND_CEILING))
+        return body
+
+    def request_body(self, text, model=None):
+        from toronto_bids.extract import build_prompt
+
+        content = [{"type": "text", "text": build_prompt(""), "cache_control": {"type": "ephemeral"}}]
+        if text:
+            content.append({"type": "text", "text": text})
+        return self._body(model or self.models[0], content)
+
+    def _call(self, httpx, model, content):
+        body = self._body(model, content)
+        allowance = request_allowance(body)
         reservation = self.budget.reserve(model, allowance)
         try:
             resp = httpx.post(
                 "https://api.anthropic.com/v1/messages", json=body,
-                headers={
-                    "x-api-key": self.key, "anthropic-version": "2026-10-21",
-                    "content-type": "application/json",
-                },
+                headers=api_headers(self.key),
                 timeout=self.timeout,
             )
             resp.raise_for_status()

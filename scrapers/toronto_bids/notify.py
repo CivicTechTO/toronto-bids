@@ -19,7 +19,7 @@ def _elapsed(seconds: float) -> str:
     return f"{m}m{s:02d}s" if m else f"{s}s"
 
 
-_STEP_ICON = {"ok": "✅", "fail": "❌", "skip": "➖"}
+_STEP_ICON = {"ok": "✅", "fail": "❌", "skip": "➖", "pending": "⏳"}
 
 # Nicer labels for the Growth section; unlisted tables fall back to the raw key.
 _LABELS = {
@@ -104,7 +104,10 @@ def summarize(report: dict) -> str:
     elapsed_s = report.get("elapsed_s", 0.0)
     ok = report.get("ok", not failures)
 
-    lines = [f"*{'✅' if ok else '❌'} toronto-bids nightly* · {_elapsed(elapsed_s)}"]
+    batch_jobs = report.get('batch_extraction', {}).get('jobs', {})
+    pending = sum(batch_jobs.get(s, 0) for s in ('queued', 'submitting', 'submitted'))
+    icon = '❌' if not ok else '⏳' if pending else '✅'
+    lines = [f"*{icon} toronto-bids nightly* · {_elapsed(elapsed_s)}"]
 
     if steps:
         lines += ["", "*Steps*"]
@@ -117,6 +120,9 @@ def summarize(report: dict) -> str:
             dur = s.get("seconds") or 0.0
             suffix = f" · {_elapsed(dur)}" if dur >= 1 else ""
             lines.append(f"{icon} {s.get('name', '?')}  {detail}{suffix}".rstrip())
+
+    if pending:
+        lines += ['', f'*Extraction pending* · {pending} batch request(s); prior archive facts retained']
 
     if sources:
         # Fetched rows per data source — did each City feed respond, and with how much. NOT

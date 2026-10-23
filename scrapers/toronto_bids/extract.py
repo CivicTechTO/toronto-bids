@@ -181,9 +181,11 @@ class ExtractionClient:
         provider = provider or os.environ.get("TB_LLM_PROVIDER", "anthropic")
         self._claude = None
         if provider == "anthropic":
+            from toronto_bids.batch_extraction import BatchExtractionClient, batching_enabled
             from toronto_bids.claude import ClaudeExtractionClient
 
-            self._claude = ClaudeExtractionClient(
+            client_class = BatchExtractionClient if batching_enabled() else ClaudeExtractionClient
+            self._claude = client_class(
                 api_key=api_key,
                 models=models,
                 retries=retries,
@@ -203,6 +205,15 @@ class ExtractionClient:
         self._retries = retries
         self._backoff = backoff
         self._timeout = timeout
+
+    def extract_document(self, sha256, chunks, *, source='pdf'):
+        if self._claude is not None and hasattr(self._claude, "extract_document"):
+            return self._claude.extract_document(sha256, chunks, source=source)
+        from toronto_bids.extraction import dedup_contracts
+
+        results = [self.extract(text) for text in chunks]
+        return results[0] if len(results) == 1 else {
+            "contracts": dedup_contracts([c for result in results for c in result["contracts"]])}
 
     def extract(self, text: str) -> dict:
         import time
