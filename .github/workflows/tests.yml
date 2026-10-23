@@ -19,7 +19,9 @@ jobs:
           enable-cache: true
       # pdftotext is a system package, not a Python dep. The council tests skip
       # without it; install it so they actually run here.
-      - run: sudo apt-get install -y poppler-utils
+      - run: |
+          sudo apt-get update
+          sudo apt-get install -y poppler-utils
       # --locked fails if pyproject.toml changed without re-locking.
       - run: uv sync --locked
       - run: uv run pytest
