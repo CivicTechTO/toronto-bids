@@ -11,6 +11,16 @@ from toronto_bids.linking.supplier import build_supplier_dimension
 
 def refresh(queue, archive, *, export, manifest_path, log=print):
     result = queue.collect(archive)
+    # Completed work frees reservations for the next bounded outbox group.
+    # Never retry failed/uncertain jobs automatically.
+    if result['queue']['jobs'].get('queued', 0):
+        try:
+            result['submission'] = queue.submit()
+            if result['submission'].get('budget_blocked'):
+                result['errors'].append(result['submission']['budget_blocked'])
+        except Exception as exc:
+            result['errors'].append(f'batch submission: {exc}')
+        result['queue'] = queue.status()
     documents = queue.ready_documents()
     result['ready_documents'] = []
     result['ignored_documents'] = []

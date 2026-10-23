@@ -118,3 +118,34 @@ def test_nonzero_export_result_does_not_create_publication_handoff(ready, conn):
     with pytest.raises(ValueError, match='export failed'):
         refresh(queue, conn, export=lambda: 1, manifest_path=path)
     assert not path.exists() and queue.status()['documents'] == {'cached': 1}
+
+
+def test_waterfront_factory_tags_manifests_for_offline_collection(conn, tmp_path, monkeypatch):
+    from toronto_bids.extract import ExtractionClient
+    from toronto_bids.sources import waterfront as wf
+    monkeypatch.setattr('toronto_bids.config.DATA_DIR', tmp_path)
+    monkeypatch.setattr(wf, 'parse_publication', lambda _: [dict(
+        source_key='block', publication_month='2026-01', raw_text='Works - Supplier ($100)', source_position=0, labels='[]')])
+    class Page:
+        def get_bytes(self, url): return b'held bytes'
+    with batch.nightly_batching(enabled=True):
+        client = ExtractionClient(api_key='test')
+        result = wf.capture_awards(conn, Page(), data_dir=tmp_path, client=client, log=lambda _: None)
+        ops = client._claude.queue._connect()
+        try:
+            assert ops.execute('SELECT source FROM batch_document').fetchone()[0] == 'waterfront'
+        finally:
+            ops.close()
+    assert result['pending'] == 1 and not result['failures']
+
+
+def test_budget_blocked_outbox_does_not_block_publication_of_completed_work(ready, conn):
+    queue, api, path = ready
+    body = ClaudeExtractionClient(api_key='test').request_body('another document')
+    with pytest.raises(batch.ExtractionPending):
+        queue.document('next', EXTRACTOR_VERSION, [body], source='pdf')
+    queue.budget.limit = 2000 # Exactly the cost of the already completed first request.
+    result = refresh(queue, conn, export=lambda: None, manifest_path=path)
+    assert result['ready_documents'] and path.exists()
+    assert any('budget' in error for error in result['errors'])
+    assert len(api.posts) == 1 and queue.status()['jobs']['queued'] == 1
