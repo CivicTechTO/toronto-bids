@@ -240,7 +240,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p_extract.add_argument(
         "--model",
-        help="Force a specific OpenRouter model (e.g. openai/gpt-5.6-luna)",
+        help="Force a model for TB_LLM_PROVIDER (default: direct Anthropic)",
     )
     p_extract.add_argument(
         "--report",
@@ -1477,7 +1477,7 @@ def _cmd_extract(args) -> int:
             return 1
         print(f"Extractor version: {EXTRACTOR_VERSION}")
         print(f"Document text: {len(row['text'])} chars")
-        client = ExtractionClient()
+        client = ExtractionClient(models=[args.model] if args.model else None)
         result = client.extract(row["text"])
         print(json.dumps(result, indent=2))
         return 0

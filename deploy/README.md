@@ -92,35 +92,68 @@ Unset the webhook and `tb nightly` still runs — it just posts nothing.
 Unlike the webhook, authentication is **required** for publishing — the nightly's publish step
 fails loudly if `gh auth status` fails (publishing is the deliverable, not a notification).
 
-### `OPENROUTER_API_KEY` — LLM bid extraction (#221)
+### `ANTHROPIC_API_KEY` — direct Claude document extraction
 
-Every store step that reads bids or awards out of a document — award summaries, the TRCA / EP /
-Zoo board reports, committee awards and the composite reports — goes through
-`extract_and_backfill` (`scrapers/toronto_bids/extraction.py`), which sends each document's text
-to an LLM via [OpenRouter](https://openrouter.ai) (`scrapers/toronto_bids/extract.py`). Append
-the key to the same env file:
+Uncached document text goes directly to the Claude Messages API. Use a key in the
+Console organization linked to the subscription's included API credits. Those credits
+apply to direct Claude API usage; OpenRouter billing is separate. Create a dedicated
+scraper workspace and set its spending limit in the Console before unattended use.
+See [Anthropic's subscriber credit guide](https://platform.claude.com/docs/en/about-claude/api-credits-for-subscribers).
+
+Set `ANTHROPIC_API_KEY` in `~/.config/toronto-bids/tb.env`, mode `0600`, using a private
+editor or secret manager. Do not paste the key into a ticket, chat or shell history.
+The placeholders in `scrapers/.env.example` read as unset. No key is needed when all
+eligible documents already have cached extraction results. Downloads remain archived
+if extraction fails for a missing key or exhausted budget.
+
+The default is `TB_LLM_PROVIDER=anthropic`, `TB_CLAUDE_MODEL=claude-sonnet-5-5` and
+`TB_LLM_MONTHLY_USD=20`. Sonnet is the conservative initial choice; the supported
+`claude-haiku-5-5` option must pass a representative real-document evaluation before
+becoming the production default. `tb extract --model ...` overrides the model for
+both single-document and corpus commands. There is no automatic paid-provider
+fallback. Legacy OpenRouter remains available only with `TB_LLM_PROVIDER=openrouter`
+and `OPENROUTER_API_KEY`, using `openai/gpt-5.6-luna` with Flex; the rejected free
+model has been removed.
+
+The shared extraction prompt and `EXTRACTOR_VERSION` are unchanged. The existing
+per-document cache stays usable; provider migration does not trigger a corpus
+re-extraction. Claude also receives a five-minute cache breakpoint on the shared
+instruction prefix, leaving each varying document outside that cache breakpoint.
+
+#### Usage and budget accounting
+
+`<TB_DATA_DIR>/llm-usage.sqlite` is private operational state, excluded from public
+procurement exports. Each Claude attempt reserves a conservative maximum allowance
+before network access. Successful responses replace that allowance with estimated
+cost from reported input, output (including thinking), cache-write and cache-read
+tokens. Refused, malformed and truncated outputs are billed and counted too. Definite
+HTTP 4xx rejections release their allowance. Timeouts, 5xx responses, process crashes
+and unusable usage metadata keep the reservation because billing is uncertain.
+Retries require a fresh allowance, and concurrent processes share the same ledger.
+
+The guard uses reviewed per-model prices; unknown models are refused until their
+prices are added. Prices were checked on 23 October 2026 against the
+[official price list](https://platform.claude.com/docs/en/about-claude/pricing).
+Reservations deliberately overestimate input tokens and can stop a request before
+the nominal remaining balance is fully consumed. Use the Console workspace limit
+as the account billing authority: the local estimate does not control other keys,
+applications, provider pricing changes or legacy OpenRouter calls.
+
+Inspect current-month charges and unresolved reservations without API access:
 
 ```shell
-read -rs K && printf 'OPENROUTER_API_KEY=%s\n' "$K" >> ~/.config/toronto-bids/tb.env
-chmod 600 ~/.config/toronto-bids/tb.env
+sqlite3 "$TB_DATA_DIR/llm-usage.sqlite" \
+  "SELECT month, status, count(*), sum(charged_microdollars)/1000000.0 AS usd FROM request GROUP BY month, status;"
 ```
 
-- **What happens without it.** Results are cached per document (`extraction_cache`, keyed on the
-  PDF's sha256 and `EXTRACTOR_VERSION`), so a night where every document is already cached needs
-  no key and makes no API call. But if **any** document in a corpus is uncached, the missing-key
-  error is re-raised and that step goes ❌ in the nightly report and in `tb status`. Nothing is
-  lost: the PDFs are downloaded and archived before the extraction step, and they are extracted
-  on the first run after the key is set. The placeholder in `scrapers/.env.example`
-  (`your-openrouter-api-key`) reads as unset, exactly like an absent key.
-- **Models.** `extract.MODELS`, tried in order: `nvidia/nemotron-3-ultra-253b-v1:free` first, then
-  `openai/gpt-5.6-luna` as the fallback (sent with `service_tier: flex`). Each model is retried
-  with backoff on HTTP 429, 5xx, transport errors and malformed JSON before falling through to
-  the next; any other 4xx (e.g. a rejected key) fails immediately without falling back.
-- **A prompt edit re-extracts everything.** `EXTRACTOR_VERSION` is `v1-` plus a hash of the
-  prompt template, and the cache is keyed on it — so *any* change to the prompt text in
-  `extract.py` invalidates every cached extraction, and the next nightly re-extracts the whole
-  corpus through the API. Treat a
-  prompt change as a deployment event, not a refactor.
+`TB_LLM_MONTHLY_USD=0` blocks new Claude requests while cached work continues.
+Changing the limit does not erase earlier usage. Retain the ledger across deployments;
+deleting it resets the local accounting. Its months are UTC calendar months, whereas
+included credits renew on the subscription billing cycle. Investigate uncertain
+reservations against Console billing before adjusting operational state.
+
+A prompt edit still changes the cache version and can re-extract the entire corpus;
+treat it as a deployment event.
 
 ## 4. Units
 

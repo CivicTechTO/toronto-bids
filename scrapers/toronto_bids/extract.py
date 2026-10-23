@@ -1,8 +1,8 @@
 """LLM-based bid extraction client.
 
-Text in, validated extraction records out. Two models via OpenRouter:
-Nemotron 3 Ultra (free) as default, GPT-5.6-Luna as automatic fallback
-on rate-limit or unavailability.
+Text in, validated extraction records out. Direct Claude is the default;
+OpenRouter remains an explicit legacy option. Provider changes preserve the prompt
+and document cache.
 """
 
 import hashlib
@@ -11,7 +11,6 @@ import os
 import re
 
 MODELS = [
-    "nvidia/nemotron-3-ultra-253b-v1:free",
     "openai/gpt-5.6-luna",
 ]
 
@@ -160,7 +159,7 @@ def parse_llm_response(response: dict) -> dict:
 
 
 class ExtractionClient:
-    """Calls OpenRouter, retries with backoff, falls back across models.
+    """Uses direct Claude by default, or explicitly selected legacy OpenRouter.
 
     Per model: 429, 5xx, transport errors and malformed output (ValueError) are
     retried with exponential backoff, then fall through to the next model. Any
@@ -177,7 +176,23 @@ class ExtractionClient:
         retries: int = 3,
         backoff: float = 1.0,
         timeout: float = 120.0,
+        provider: str | None = None,
     ):
+        provider = provider or os.environ.get("TB_LLM_PROVIDER", "anthropic")
+        self._claude = None
+        if provider == "anthropic":
+            from toronto_bids.claude import ClaudeExtractionClient
+
+            self._claude = ClaudeExtractionClient(
+                api_key=api_key,
+                models=models,
+                retries=retries,
+                backoff=backoff,
+                timeout=timeout,
+            )
+            return
+        if provider != "openrouter":
+            raise ValueError(f"Unknown TB_LLM_PROVIDER: {provider}")
         self._api_key = api_key or _real_openrouter_key()
         if not self._api_key:
             raise ValueError(
@@ -193,6 +208,9 @@ class ExtractionClient:
         import time
 
         import httpx
+
+        if self._claude is not None:
+            return self._claude.extract(text)
 
         prompt = build_prompt(text)
         last_exc = None

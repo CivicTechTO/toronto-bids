@@ -789,7 +789,7 @@ def extract_and_backfill(
 ) -> dict:
     """Extract any uncached documents via LLM, then backfill store tables.
 
-    If OPENROUTER_API_KEY is unset and all documents are already cached,
+    If the configured provider key is unset and all documents are already cached,
     the extraction step is skipped and only backfill runs.
 
     Per-document extraction errors are caught and logged by `extract_corpus`, so this

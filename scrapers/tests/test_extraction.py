@@ -1377,6 +1377,7 @@ def test_extract_and_backfill_keyless_ignores_text_less_docs(conn, monkeypatch):
     from toronto_bids.store.db import mark_extracted
 
     monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     conn.execute(
         "INSERT INTO background_pdf (url, kind, sha256, text, reference) "
         "VALUES ('https://example.com/has-text.pdf', 'bgrd', 'ttt', 'text', '2011.BD5.1')"
