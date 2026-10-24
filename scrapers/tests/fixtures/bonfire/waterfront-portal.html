@@ -1,0 +1,1464 @@
+<!DOCTYPE html>
+<html lang=en>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="referrer" content="origin">
+    <title>Portal — Open Opportunities - Toronto Waterfront Revitalization Corporation</title>
+
+    <link rel="shortcut icon" href="https://assets.bonfirehub.com/100697/img/favicon.ico">
+
+    <link rel="stylesheet" type="text/css" href="https://assets.bonfirehub.com/100697/css/reset.css" />
+    <link rel="stylesheet" type="text/css" href="https://assets.bonfirehub.com/100697/css/common.css" />
+    <link rel="stylesheet" type="text/css" href="https://assets.bonfirehub.com/100697/css/public.css" />
+    <link rel="stylesheet" type="text/css" href="https://assets.bonfirehub.com/100697/css/datatables/jquery.dataTables.css" >
+    <link rel='stylesheet' type='text/css' href="https://assets.bonfirehub.com/100697/css/jqmodal.css" />
+    <link rel='stylesheet' type='text/css' href="https://assets.bonfirehub.com/100697/css/bonfire/bfModal.css" />
+    <link rel="stylesheet" type="text/css" href="https://assets.bonfirehub.com/100697/node_modules/fullcalendar/dist/fullcalendar.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://assets.bonfirehub.com/100697/css/fullcalendar/fullcalendar_portal.css" />
+    <link rel='stylesheet' type='text/css' href="https://assets.bonfirehub.com/100697/css/readmore.css" />
+    <link rel="stylesheet" type="text/css" href="https://assets.bonfirehub.com/100697/node_modules/tooltipster/dist/css/tooltipster.bundle.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://assets.bonfirehub.com/100697/css/dropit/dropit.css" />
+    <link rel="stylesheet" type="text/css" href="https://assets.bonfirehub.com/100697/node_modules/select2/dist/css/select2.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://assets.bonfirehub.com/100697/css/bootstrap-tabs/bootstrap-tabs.css" />
+    <link rel="stylesheet" type="text/css" href="https://assets.bonfirehub.com/100697/css/font-awesome/css/fontawesome.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://assets.bonfirehub.com/100697/css/font-awesome/css/regular.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://assets.bonfirehub.com/100697/css/font-awesome/css/solid.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://assets.bonfirehub.com/100697/css/font-awesome/css/v4-shims.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://assets.bonfirehub.com/100697/css/font-awesome/css/v4-font-face.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://assets.bonfirehub.com/100697/css/bonfire/custom.css" />
+
+    
+            <link rel="stylesheet" href="https://assets.bonfirehub.com/100697/dist/top-bar-app/css/app.css">
+    
+    <script type="text/javascript" src="https://assets.bonfirehub.com/100697/node_modules/jquery/dist/jquery.min.js"></script>
+    <script type="text/javascript" src="https://assets.bonfirehub.com/100697/node_modules/jquery-migrate/dist/jquery-migrate.min.js"></script>
+    <script type="text/javascript" src="https://assets.bonfirehub.com/100697/node_modules/jquery-ui-dist/jquery-ui.min.js" ></script>
+    <script type="text/javascript" src="https://assets.bonfirehub.com/100697/js/jqModal.js" ></script>
+    <script type="text/javascript" src="https://assets.bonfirehub.com/100697/node_modules/moment/min/moment.min.js"></script>
+    <script type="text/javascript" src="https://assets.bonfirehub.com/100697/node_modules/moment/min/moment-with-locales.min.js"></script>
+    <script type="text/javascript" src="https://assets.bonfirehub.com/100697/node_modules/moment-timezone/builds/moment-timezone-with-data.min.js"></script>
+    <script type="text/javascript" src="https://assets.bonfirehub.com/100697/node_modules/fullcalendar/dist/fullcalendar.min.js" ></script>
+    <script type="text/javascript" src="https://assets.bonfirehub.com/100697/node_modules/fullcalendar/dist/lang-all.js" ></script>
+    <script type="text/javascript" src="https://assets.bonfirehub.com/100697/node_modules/datatables.net/js/jquery.dataTables.min.js" ></script>
+    <script type="text/javascript" src="https://assets.bonfirehub.com/100697/node_modules/datatables.net-plugins/sorting/natural.js" ></script>
+    <script type="text/javascript" src="https://assets.bonfirehub.com/100697/node_modules/readmore-js/readmore.min.js" ></script>
+    <script type="text/javascript" src="https://assets.bonfirehub.com/100697/node_modules/tooltipster/dist/js/tooltipster.bundle.min.js" ></script>
+    <script type="text/javascript" src="https://assets.bonfirehub.com/100697/js/dropit/dropit.js" ></script>
+    <script type="text/javascript" src="https://assets.bonfirehub.com/100697/node_modules/sortablejs/Sortable.min.js" ></script>
+    <script type="text/javascript" src="https://assets.bonfirehub.com/100697/node_modules/underscore/underscore-min.js" ></script>
+    <script type="text/javascript" src="https://assets.bonfirehub.com/100697/node_modules/bootstrap/dist/js/bootstrap.bundle.min.js" ></script>
+    <script type="text/javascript" src="https://assets.bonfirehub.com/100697/node_modules/select2/dist/js/select2.full.min.js" ></script>
+    <script>
+    var Bonfire = (function (bonfire) {
+
+        var timezone = "America\/Toronto";
+
+        // -- Public Api
+
+        bonfire.timezone = timezone;
+
+        return bonfire;
+    }(Bonfire || {}));
+</script>
+    <script type="text/javascript" src="https://assets.bonfirehub.com/100697/dist/bonfire-common/lang/en.js" ></script>    <script type="text/javascript" src="https://assets.bonfirehub.com/100697/js/bonfire/app.js"></script>
+    <script type="text/javascript" src="https://assets.bonfirehub.com/100697/js/bonfire/bonfireConstants.js"></script>
+    <script type="text/javascript" src="https://assets.bonfirehub.com/100697/js/bonfire/bonfireUtil.js"></script>
+    <script type="text/javascript" src="https://assets.bonfirehub.com/100697/js/bonfire/bonfireDataTables.js" ></script>
+
+        
+<script type="text/javascript">
+
+    // may be null
+    var userId = null;
+
+    if (userId === null) {
+        userId = 'User is not logged in';
+    }
+
+    // make sure userId is a string
+    userId = userId.toString();
+
+    window._trackJs = {
+        enabled: true,
+        token: "a4685d9ee05041ab9c406ca68838f561" || '',
+        application: "ca-production" || 'dev',
+        userId: userId,
+        onError: function (payload, error) {
+
+            // Add the error's name if present to the metadata array
+            payload.metadata.push({
+              key: 'Error Name',
+              value: error.name || 'Not Defined'
+            });
+
+            // Ensure error is sent
+            return true;
+        }
+    };
+</script>
+<script type="text/javascript" src="https://assets.bonfirehub.com/100697/node_modules/trackjs/tracker.js" ></script>
+<script type="text/javascript">
+    window.addEventListener('securitypolicyviolation', function(event) {
+
+        var reportError = new Error(JSON.stringify(event, [
+            'blockedURI',
+            'columnNumber',
+            'disposition',
+            'documentURI',
+            'effectiveDirective',
+            'lineNumber',
+            'referrer',
+            'sample',
+            'sourceFile',
+            'statusCode',
+            'violatedDirective'
+        ]));
+        reportError.name = "CSP Violation"
+        if (window.trackJs) {
+            trackJs.track(reportError);
+        }
+    });
+</script>
+
+<script>
+    // analyticsSettings may be undefined/null.
+    (function(analyticsSettings) {
+
+        if (typeof analyticsSettings === 'undefined' || analyticsSettings === null) {
+            return;
+        }
+
+        var apiKey = analyticsSettings.pendoApiKey;
+
+        (function(p,e,n,d,o){var v,w,x,y,z;o=p[d]=p[d]||{};o._q=[];
+        v=['initialize','identify','updateOptions','pageLoad'];for(w=0,x=v.length;w<x;++w)(function(m){
+            o[m]=o[m]||function(){o._q[m===v[0]?'unshift':'push']([m].concat([].slice.call(arguments,0)));};})(v[w]);
+            y=e.createElement(n);y.async=!0;y.src='https://cdn.pendo.io/agent/static/'+apiKey+'/pendo.js';
+            z=e.getElementsByTagName(n)[0];z.parentNode.insertBefore(y,z);
+        })(window,document,'script','pendo');
+
+        var options = {
+            account: {
+                id: analyticsSettings.organization.name,
+                bonfireOrganizationId: analyticsSettings.organization.id,
+                database: analyticsSettings.database.name
+            }
+        };
+
+        if (analyticsSettings.user !== null) {
+            options.visitor = {
+                id: analyticsSettings.user.email,
+                bonfireUserId: analyticsSettings.user.id,
+                dateCreated: analyticsSettings.user.dateCreated,
+                isBuyer: analyticsSettings.user.isBuyer,
+                isVendor: analyticsSettings.user.isVendor,
+                isPremiumVendor: analyticsSettings.user.isPremiumVendor,
+                isSeatHolder: analyticsSettings.user.isSeatHolder,
+                isEvaluator: analyticsSettings.user.isEvaluator,
+                isContractManager: analyticsSettings.user.isContractManager,
+                page: window.location.href
+            };
+        }
+
+        pendo.initialize(options);
+    })({"pendoApiKey":"3f89d56c-d478-489b-7c4c-2c0fde02765f","organization":{"id":"301","name":"Toronto Waterfront Revitalization Corporation"},"user":null,"database":{"name":"ca-production"}});
+</script>
+
+        <script type="text/javascript" src="https://play.vidyard.com/embed/v4.js"></script>
+</head>
+<body>
+    <dialog id="masterLoading" style="padding: 0; margin: 0;">
+    <div style="height: 100%; width: 100%; position: fixed; left: 0px; top: 0px; z-index: 99999; opacity: 0.2; -ms-filter:'progid:DXImageTransform.Microsoft.Alpha(opacity=20)';" class="jqmOverlay"></div>
+    <div id="loading"><span id="masterLoadingText">Working</span>...<br><img src="/img/spinner.gif" class="loading_img" alt="loading" />
+            </div>
+</dialog>
+
+<div id="masterSuccess" class="pageNotificationStrip reversed-green bold">
+</div>
+
+<div id="masterFail" class="pageNotificationStrip reversed-orange bold">
+</div>
+
+    
+    <noscript>
+                <div class="badBrowserOverlay"></div>
+        <div class="badBrowserMessageBox">
+            <div id="noScript">
+                <p><strong>WARNING:</strong>This site was designed to use Javascript, which has been disabled in your browser</p>
+                <br>
+                <p><strong>Enabling Javascript is easy: <a href="http://support.google.com/bin/answer.py?hl=en&answer=23852" target="_blank" rel="noopener noreferrer">refer to these instructions.</a></strong></p>
+                <br>
+                <p>If you require assistance or think this is an error please contact us at <a href='mailto:support.procurement@eunasolutions.com?subject=No%20Javascript%20Warning%20Message%20-%20Toronto%20Waterfront%20Revitalization%20Corporation&body=%0D%0A%20UserAgent%3A%20toronto-bids%20%28%2Bhttps%3A%2F%2Fgithub.com%2FCivicTechTO%2Ftoronto-bids%29%0D%0A%20URL%3A%20%2A.bonfirehub.ca%2Fportal%2F%3Ftab%3DopenOpportunities'>support.procurement@eunasolutions.com</a>.</p>
+                <br>
+                <p>For more technical details regarding the requirements please see the <em>'Minimum System Requirements'</em> on our <a href='https://procurement-help.eunasolutions.com/hc/en-us/articles/48749940634003-Minimum-System-Requirements' target='_blank' rel='noopener noreferrer'>support page</a></p>
+            </div>
+        </div>
+    </noscript>
+    <dialog class="jqmWindow" id="modal_AccountAccess"></dialog>
+<dialog class="jqmWindow" id="modal_ApproveProposal"></dialog>
+<dialog class="jqmWindow" id="modal_CancelProject"></dialog>
+<dialog class="jqmWindow" id="modal_ChangeUserDepartment"></dialog>
+<dialog class="jqmWindow" id="modal_CompleteProject"></dialog>
+<dialog class="jqmWindow" id="modal_ConsensusScorecard"></dialog>
+<dialog class="jqmWindow" id="modal_CreateAgent"></dialog>
+<dialog class="jqmWindow" id="modal_CreateASubmission"></dialog>
+<dialog class="jqmWindow" id="modal_DisqualifyProposal"></dialog>
+<dialog class="jqmWindow" id="modal_EditUserRoles"></dialog>
+<dialog class="jqmWindow" id="modal_ImportCriteria"></dialog>
+<dialog class="jqmWindow" id="modal_ImportQuestionnaire"></dialog>
+<dialog class="jqmWindow" id="modal_Register"></dialog>
+<dialog class="jqmWindow" id="modal_ManageAdvisors"></dialog>
+<dialog class="jqmWindow" id="modal_ManageCriteria"></dialog>
+<dialog class="jqmWindow" id="modal_ManageEditors"></dialog>
+<dialog class="jqmWindow" id="modal_ManageEvaluationGroups"></dialog>
+<dialog class="jqmWindow" id="modal_ManageObservers"></dialog>
+<dialog class="jqmWindow" id="modal_ManageReviewers"></dialog>
+<dialog class="jqmWindow" id="modal_ManageSlots"></dialog>
+<dialog class="jqmWindow" id="modal_Notes"></dialog>
+<dialog class="jqmWindow" id="modal_PrivateProjectLink"></dialog>
+<dialog class="jqmWindow" id="modal_ProjectDeclarations"></dialog>
+<dialog class="jqmWindow" id="modal_ResumeProject"></dialog>
+<dialog class="jqmWindow" id="modal_RFxWording"></dialog>
+<dialog class="jqmWindow" id="modal_Scorecard"></dialog>
+<dialog class="jqmWindow" id="modal_CompleteProjects"></dialog>
+<dialog class="jqmWindow" id="modal_WelcomeReviewers"></dialog>
+
+<dialog class="modalWrapper" id="modal_AmendSubmission"></dialog>
+<dialog class="modalWrapper" id="modal_CreateEditCategory"></dialog>
+<dialog class="modalWrapper" id="modal_CreateEditCategoryItem"></dialog>
+<dialog class="modalWrapper" id="modal_CreateEditDecision"></dialog>
+<dialog class="modalWrapper" id="modal_CreateEditRequestedDocumentOrData"></dialog>
+<dialog class="modalWrapper" id="modal_CreateEditRequestedQuestionnaire"></dialog>
+<dialog class="modalWrapper" id="modal_ProjectAddenda"></dialog>
+<dialog class="modalWrapper" id="modal_QuestionSetScoringSummary"></dialog>
+<dialog class="modalWrapper" id="modal_CreateEditContractDocument"></dialog>
+<dialog class="modalWrapper" id="modal_CreateEditContractRole"></dialog>
+<dialog class="modalWrapper" id="modal_CreateEditContractReminder"></dialog>
+<dialog class="modalWrapper" id="modal_CreateEditContractContact"></dialog>
+<dialog class="modalWrapper" id="modal_CreateTerminatedContract"></dialog>
+<dialog class="modalWrapper" id="modal_AddEditOrgPrimaryContact"></dialog>
+<dialog class="modalWrapper" id="modal_EditDepartment"></dialog>
+<dialog class="modalWrapper" id="modal_CreateDepartment"></dialog>
+<dialog class="modalWrapper" id="modal_DocusignFileSizeError"></dialog>
+<dialog class="modalWrapper" id="modal_DocusignFileTypeError"></dialog>
+<dialog class="modalWrapper" id="modal_AdobesignFileSizeError"></dialog>
+<dialog class="modalWrapper" id="modal_AdobesignFileTypeError"></dialog>
+<dialog class="modalWrapper" id="modal_ESignatureRemoveLink"></dialog>    <script type="text/javascript" src="https://assets.bonfirehub.com/100697/dist/bonfire-common/lang/en.js" ></script>
+    <div ng-app="TopBarApp" ng-controller="MainCtrl as main" ng-init="main.init({&quot;commonViewData&quot;:{&quot;timezone&quot;:&quot;America\/Toronto&quot;,&quot;organizationId&quot;:&quot;301&quot;,&quot;organization&quot;:{&quot;OrganizationID&quot;:&quot;301&quot;,&quot;OrganizationUUID&quot;:&quot;db8781a0-9d2d-4206-8af7-a6894e6fa47c&quot;,&quot;OrganizationName&quot;:&quot;Toronto Waterfront Revitalization Corporation&quot;,&quot;OrganizationPortalTitle&quot;:null,&quot;OrganizationLogoBucket&quot;:&quot;bonfirehub-ca-org-logos&quot;,&quot;OrganizationLogoURL&quot;:&quot;\/organizations\/OrganizationID-301\/logos\/OrganizationID-301-Timestamp-1580763144.jpeg&quot;,&quot;OrganizationShortName&quot;:&quot;waterfrontoronto&quot;,&quot;OrganizationIndustryID&quot;:null,&quot;OrganizationSubIndustryID&quot;:null,&quot;OrganizationLevelOfGovernanceID&quot;:null,&quot;VerticalDeprecated&quot;:&quot;Federal&quot;,&quot;Domain&quot;:&quot;waterfrontoronto.bonfirehub.ca&quot;,&quot;Timezone&quot;:&quot;America\/Toronto&quot;,&quot;LanguageID&quot;:&quot;1&quot;,&quot;RubricID&quot;:&quot;1&quot;,&quot;CurrencyID&quot;:&quot;19&quot;,&quot;FiscalYearStartMonth&quot;:&quot;1&quot;,&quot;FiscalYearStartDay&quot;:&quot;1&quot;,&quot;DefaultDepartmentID&quot;:null,&quot;DefaultModule&quot;:&quot;projects&quot;,&quot;ProjectReferenceNumberAutoIncrement&quot;:&quot;1&quot;,&quot;ProjectReferenceNumberFormula&quot;:&quot;&quot;,&quot;WorkOSOrganizationID&quot;:null,&quot;StartDateOrganizationContractKeyID&quot;:&quot;2028&quot;,&quot;EndDateOrganizationContractKeyID&quot;:&quot;2029&quot;,&quot;ValueOrganizationContractKeyID&quot;:&quot;2030&quot;,&quot;OrganizationVendorPerformanceAtRiskThreshold&quot;:&quot;70.0000&quot;,&quot;OrganizationVendorPerformanceMaxAgeOfResponse&quot;:&quot;90&quot;,&quot;DateCreated&quot;:&quot;2020-01-31 17:10:59&quot;,&quot;DateModified&quot;:&quot;2026-07-14 18:23:49&quot;,&quot;IsDeleted&quot;:&quot;0&quot;,&quot;CommodityCodeSetID&quot;:&quot;1&quot;,&quot;RegionData&quot;:&quot;{\&quot;regions\&quot;:[],\&quot;subregions\&quot;:[9]}&quot;,&quot;CustomTranslations&quot;:null,&quot;EndDepartmentOwnerField&quot;:null},&quot;featurePreferences&quot;:{&quot;DecisionSensitivityAnalysis&quot;:&quot;0&quot;,&quot;NewCustomEvents&quot;:&quot;0&quot;,&quot;ProposalAnalysisSensitivityAgGrid&quot;:&quot;0&quot;,&quot;DocumentDrafting&quot;:&quot;0&quot;,&quot;McdSplitToExternalSubmissions&quot;:&quot;0&quot;,&quot;ProjectDetailsLeftNav&quot;:&quot;1&quot;,&quot;ProjectIndexLeftNav&quot;:&quot;1&quot;,&quot;Approvals&quot;:&quot;1&quot;,&quot;ApprovalsRevisions&quot;:&quot;1&quot;,&quot;Auctions&quot;:&quot;0&quot;,&quot;CustomTranslations&quot;:&quot;0&quot;,&quot;DocumentDownloadWarnings&quot;:&quot;1&quot;,&quot;AIInsights&quot;:&quot;0&quot;,&quot;AIProjectSummary&quot;:&quot;0&quot;,&quot;AISolicitationAdvisor&quot;:&quot;0&quot;,&quot;BulkImportUsers&quot;:&quot;1&quot;,&quot;CanadaEuropeFreeTradeAgreement&quot;:&quot;0&quot;,&quot;CanadianFreeTradeAgreementCompliance&quot;:&quot;1&quot;,&quot;AllowMsgContractFiles&quot;:&quot;0&quot;,&quot;ClauseLibrary&quot;:&quot;0&quot;,&quot;ContractManagement&quot;:&quot;0&quot;,&quot;ContractsSideNavigation&quot;:&quot;1&quot;,&quot;ContractWorkflows&quot;:&quot;0&quot;,&quot;eSignature&quot;:&quot;0&quot;,&quot;ExpenseManagement&quot;:&quot;0&quot;,&quot;InternalContractTasks&quot;:&quot;0&quot;,&quot;MultiUserContractApprovals&quot;:&quot;0&quot;,&quot;VendorOnboarding&quot;:&quot;0&quot;,&quot;TextLibrary&quot;:&quot;0&quot;,&quot;DataHub&quot;:&quot;0&quot;,&quot;ShowSupportEmailAddresses&quot;:&quot;0&quot;,&quot;AdvancedAlgorithms&quot;:&quot;0&quot;,&quot;AlternateOptions&quot;:&quot;1&quot;,&quot;AnonymousSubmissions&quot;:&quot;1&quot;,&quot;AutoScoreQuestionnaires&quot;:&quot;1&quot;,&quot;BoxProxy&quot;:&quot;0&quot;,&quot;ConsensusScoring&quot;:&quot;1&quot;,&quot;Criteria&quot;:&quot;1&quot;,&quot;DuplicateProject&quot;:&quot;0&quot;,&quot;EmailVendorsSurveyLink&quot;:&quot;0&quot;,&quot;Evaluation&quot;:&quot;1&quot;,&quot;EvaluationGroup&quot;:&quot;1&quot;,&quot;InternalSubmission&quot;:&quot;1&quot;,&quot;Library&quot;:&quot;0&quot;,&quot;MergeApiProjects&quot;:&quot;0&quot;,&quot;PricingSheet&quot;:&quot;1&quot;,&quot;ProjectVendorFields&quot;:&quot;1&quot;,&quot;ProtectedProjects&quot;:&quot;1&quot;,&quot;RatedInputOutOfTenCriteria&quot;:&quot;0&quot;,&quot;ShowDraftRefNumber&quot;:&quot;0&quot;,&quot;SimpleBidding&quot;:&quot;1&quot;,&quot;ViewDocumentsDuringOpenStage&quot;:&quot;0&quot;,&quot;BestValue&quot;:&quot;0&quot;,&quot;BidTables&quot;:&quot;1&quot;,&quot;PartialBidTables&quot;:&quot;0&quot;,&quot;ProjectDeclarations&quot;:&quot;1&quot;,&quot;MultiCategoryDecisions&quot;:&quot;0&quot;,&quot;Questionnaires&quot;:&quot;1&quot;,&quot;ForumConsentVisible&quot;:&quot;1&quot;,&quot;GlobalOpportunities&quot;:&quot;1&quot;,&quot;MySupplierHubLink&quot;:&quot;1&quot;,&quot;CustomIntakeFieldsForm&quot;:&quot;0&quot;,&quot;Intake&quot;:&quot;0&quot;,&quot;IntakeRequesterEdit&quot;:&quot;0&quot;,&quot;IntakeCategories&quot;:&quot;1&quot;,&quot;BonfireAcademy&quot;:&quot;1&quot;,&quot;BafoViaMessages&quot;:&quot;1&quot;,&quot;CommodityCodes&quot;:&quot;1&quot;,&quot;CommunityProjects&quot;:&quot;1&quot;,&quot;CommunityProjectsVisible&quot;:&quot;1&quot;,&quot;DocumentTakers&quot;:&quot;1&quot;,&quot;InAppPublishingErrorChecking&quot;:&quot;1&quot;,&quot;NigpCommodityCodesSevenDigit&quot;:&quot;0&quot;,&quot;OpenAccessCommunityProject&quot;:&quot;0&quot;,&quot;OpportunityIntentToBid&quot;:&quot;1&quot;,&quot;OpportunityNonDisclosureAgreements&quot;:&quot;1&quot;,&quot;OpportunityQAndA&quot;:&quot;1&quot;,&quot;PortalDepartmentFiltering&quot;:&quot;0&quot;,&quot;PublicAwardNotices&quot;:&quot;0&quot;,&quot;PublicContracts&quot;:&quot;0&quot;,&quot;PublicDocumentTakers&quot;:&quot;0&quot;,&quot;PublicFiles&quot;:&quot;1&quot;,&quot;PublicFilesUnauthenticatedDownloading&quot;:&quot;0&quot;,&quot;PublicPortal&quot;:&quot;1&quot;,&quot;PublicPortalArchives&quot;:&quot;1&quot;,&quot;PublicQAndA&quot;:&quot;1&quot;,&quot;PublicQAndADefaultToPublic&quot;:&quot;0&quot;,&quot;PublicVendorFields&quot;:&quot;1&quot;,&quot;SubcontractorListing&quot;:&quot;0&quot;,&quot;VendorDiscussions&quot;:&quot;1&quot;,&quot;VendorPerformance&quot;:&quot;0&quot;,&quot;VpmWeighting&quot;:&quot;0&quot;,&quot;DisableLegacyProjectCreation&quot;:&quot;0&quot;,&quot;InformalProjects&quot;:&quot;0&quot;,&quot;MultiUserProjectApprovals&quot;:&quot;0&quot;,&quot;ProjectWorkflows&quot;:&quot;0&quot;,&quot;Surety2000&quot;:&quot;0&quot;,&quot;FullTextSearch&quot;:&quot;0&quot;,&quot;BrowserSubmission&quot;:&quot;1&quot;,&quot;PremiumVendorSignupStep&quot;:&quot;0&quot;,&quot;VendorRegistrationAddressIsMandatory&quot;:&quot;1&quot;},&quot;featureFlags&quot;:{&quot;FF_117_CONTRACT_OWNER_ON_CONTRACTS&quot;:true,&quot;FF_125_RELEASE_TOGGLE_ESN_UI_UX_UPDATES&quot;:true,&quot;FF_130_RELEASE_TOGGLE_USE_EUNA_ACADEMY_LINK&quot;:true,&quot;FF_139_RELEASE_TOGGLE_AI_PROJECT_SUMMARY&quot;:true,&quot;FF_144_FEATURE_TOGGLE_MANAGE_REBUILD&quot;:true,&quot;FF_163_CONVERT_TO_SOLICITATION_BUILDER&quot;:true,&quot;FF_173_RELEASE_NEW_PROPOSALS_DATA_PAGE&quot;:true},&quot;featuresAvailability&quot;:{&quot;EvaluationGroup&quot;:true,&quot;Criteria&quot;:true,&quot;Evaluation&quot;:true,&quot;ExcelReport&quot;:true},&quot;organizationLogoUrl&quot;:&quot;https:\/\/bonfirehub-ca-org-logos.s3.ca-central-1.amazonaws.com\/organizations\/OrganizationID-301\/logos\/OrganizationID-301-Timestamp-1580763144.jpeg&quot;,&quot;language&quot;:&quot;en&quot;,&quot;languageId&quot;:&quot;1&quot;,&quot;userId&quot;:null,&quot;user&quot;:null,&quot;isAuthenticated&quot;:false,&quot;organizationPermissions&quot;:[],&quot;allDepartmentPermissions&quot;:[],&quot;allContractPermissions&quot;:[],&quot;profilePicUrl&quot;:&quot;\/img\/no_pic.png&quot;,&quot;globalVendorForUser&quot;:null,&quot;organizationVendorForUser&quot;:null,&quot;totangoSettings&quot;:false,&quot;analyticsSettings&quot;:{&quot;pendoApiKey&quot;:&quot;3f89d56c-d478-489b-7c4c-2c0fde02765f&quot;,&quot;organization&quot;:{&quot;id&quot;:&quot;301&quot;,&quot;name&quot;:&quot;Toronto Waterfront Revitalization Corporation&quot;},&quot;user&quot;:null,&quot;database&quot;:{&quot;name&quot;:&quot;ca-production&quot;}},&quot;bonfireAcademyUrl&quot;:null,&quot;bonfireApiBaseUrl&quot;:&quot;https:\/\/ca-production-api-internal.bonfirehub.ca\/v1.0&quot;,&quot;pvUrl&quot;:&quot;https:\/\/vendor.bonfirehub.com&quot;},&quot;pageName&quot;:&quot;portal&quot;})">
+    <bf-top-bar
+        feature-preferences="main.featurePreferences"
+        feature-flags="main.featureFlags"
+        organization-logo-url="{{main.organizationLogoUrl}}"
+        organization="main.organization"
+        user="main.user"
+        is-authenticated="main.isAuthenticated"
+        organization-permissions="main.organizationPermissions"
+        all-department-permissions="main.allDepartmentPermissions"
+        all-contract-permissions="main.allContractPermissions"
+        all-project-permissions="main.allProjectPermissions"
+        profile-pic-url="{{main.profilePicUrl}}"
+        pv-url="main.pvUrl"
+        page-name="main.pageName"
+        bonfire-academy-url="main.bonfireAcademyUrl"
+        is-login-modal="main.isLoginModal"
+        has-vendors="!!main.organizationVendorForUser"
+            ></bf-top-bar>
+</div><div id="publicBox">
+    <div id="publicContent">
+        <div id="publicHeader">
+    <div id="publicTitle">
+        <h1>Procurement Portal</h1>
+        <p>
+            <b>Toronto Waterfront Revitalization Corporation</b>
+                    </p>
+    </div>
+    <a href="https://waterfrontoronto.bonfirehub.ca/portal/"><img src="https://bonfirehub-ca-org-logos.s3.ca-central-1.amazonaws.com/organizations/OrganizationID-301/logos/OrganizationID-301-Timestamp-1580763144.jpeg" id="publicLogo" alt="Organization logo"></a>
+</div>        <div id="publicList">
+                        <script type="text/javascript">
+
+    $(document).ready(function () {
+
+        // May be [] if user is not logged in.
+        var organizationPermissions = [];
+
+        // May be null if user is not logged in.
+        var organizationVendorForUser = null;
+
+        var hasVendors = !!organizationVendorForUser;
+
+        var featurePreferences = {"DecisionSensitivityAnalysis":"0","NewCustomEvents":"0","ProposalAnalysisSensitivityAgGrid":"0","DocumentDrafting":"0","McdSplitToExternalSubmissions":"0","ProjectDetailsLeftNav":"1","ProjectIndexLeftNav":"1","Approvals":"1","ApprovalsRevisions":"1","Auctions":"0","CustomTranslations":"0","DocumentDownloadWarnings":"1","AIInsights":"0","AIProjectSummary":"0","AISolicitationAdvisor":"0","BulkImportUsers":"1","CanadaEuropeFreeTradeAgreement":"0","CanadianFreeTradeAgreementCompliance":"1","AllowMsgContractFiles":"0","ClauseLibrary":"0","ContractManagement":"0","ContractsSideNavigation":"1","ContractWorkflows":"0","eSignature":"0","ExpenseManagement":"0","InternalContractTasks":"0","MultiUserContractApprovals":"0","VendorOnboarding":"0","TextLibrary":"0","DataHub":"0","ShowSupportEmailAddresses":"0","AdvancedAlgorithms":"0","AlternateOptions":"1","AnonymousSubmissions":"1","AutoScoreQuestionnaires":"1","BoxProxy":"0","ConsensusScoring":"1","Criteria":"1","DuplicateProject":"0","EmailVendorsSurveyLink":"0","Evaluation":"1","EvaluationGroup":"1","InternalSubmission":"1","Library":"0","MergeApiProjects":"0","PricingSheet":"1","ProjectVendorFields":"1","ProtectedProjects":"1","RatedInputOutOfTenCriteria":"0","ShowDraftRefNumber":"0","SimpleBidding":"1","ViewDocumentsDuringOpenStage":"0","BestValue":"0","BidTables":"1","PartialBidTables":"0","ProjectDeclarations":"1","MultiCategoryDecisions":"0","Questionnaires":"1","ForumConsentVisible":"1","GlobalOpportunities":"1","MySupplierHubLink":"1","CustomIntakeFieldsForm":"0","Intake":"0","IntakeRequesterEdit":"0","IntakeCategories":"1","BonfireAcademy":"1","BafoViaMessages":"1","CommodityCodes":"1","CommunityProjects":"1","CommunityProjectsVisible":"1","DocumentTakers":"1","InAppPublishingErrorChecking":"1","NigpCommodityCodesSevenDigit":"0","OpenAccessCommunityProject":"0","OpportunityIntentToBid":"1","OpportunityNonDisclosureAgreements":"1","OpportunityQAndA":"1","PortalDepartmentFiltering":"0","PublicAwardNotices":"0","PublicContracts":"0","PublicDocumentTakers":"0","PublicFiles":"1","PublicFilesUnauthenticatedDownloading":"0","PublicPortal":"1","PublicPortalArchives":"1","PublicQAndA":"1","PublicQAndADefaultToPublic":"0","PublicVendorFields":"1","SubcontractorListing":"0","VendorDiscussions":"1","VendorPerformance":"0","VpmWeighting":"0","DisableLegacyProjectCreation":"0","InformalProjects":"0","MultiUserProjectApprovals":"0","ProjectWorkflows":"0","Surety2000":"0","FullTextSearch":"0","BrowserSubmission":"1","PremiumVendorSignupStep":"0","VendorRegistrationAddressIsMandatory":"1"};
+
+        var isConfirmed = parseInt('0', 10);
+
+        var departments = [];
+
+        // Used to keep the browser tab title in sync with the active tab, since switching tabs
+        // is a client-side only operation (see the click handler below).
+        var portalPageTitlesByTab = {
+            openOpportunities: "Portal \u2014 Open Opportunities",
+            myOpportunities: "Portal \u2014 My Opportunities",
+            pastOpportunities: "Portal \u2014 Past Opportunities",
+            publicContracts: "Portal \u2014 Public Contracts"        };
+        var portalOrganizationName = "Toronto Waterfront Revitalization Corporation";
+
+        var defaultSectionData = {};
+
+        var projectsGroupedByDepartmentGroup = {};
+
+        var isMyOpportunities = false;
+
+        var dataTableInstances = {};
+
+        $('#departmentFilterSelect').select2();
+
+        var filterOptions = {}
+
+        $('#departmentFilterSelect').find('option').each(function (e) {
+            filterOptions[$(this).val()] = true;
+        });
+
+        var departmentFilter = {
+            departmentGroup: 'noGroup',
+            DepartmentID: '-1'
+        };
+
+        // -- Event Handlers
+
+        $('#portalIndexTabs').on('click', 'a', function (e) {
+            e.preventDefault();
+            $(this).tab('show');
+
+            // Adjust DataTables column widths when tabs are shown
+            var hash = this.hash;
+            if (hash && dataTableInstances[hash]) {
+                dataTableInstances[hash].columns.adjust();
+            }
+        });
+
+        $('a[href$="#openOpportunitiesTabPane"]').one('click', function() {
+            initOpenOpportunitiesTab();
+        });
+
+        $('a[href$="#pastOpportunitiesTabPane"]').one('click', function() {
+            initPastOpportunitiesTab();
+        });
+
+        $('a[href$="#publicContractsTabPane"]').one('click', function() {
+            initPublicContractsTab();
+        });
+
+        $(document).on('change', '#departmentFilterSelect', function () {
+
+            // Validate value (could be from url)
+            var isValidOption = isDepartmentFilterValid($(this).val());
+
+            if (!isValidOption) {
+                $(this).val('noGroup.-1');
+                $(this).trigger('change');
+            }
+
+            var groupAndDepartmentId = $(this).val().split('.');
+            var group = groupAndDepartmentId[0];
+            var departmentId = groupAndDepartmentId[1];
+
+            departmentFilter = {
+                departmentGroup: group,
+                DepartmentID: departmentId
+            };
+
+            if (defaultSectionData.openOpportunities !== undefined) {
+
+                defaultSectionData.openOpportunities.projects = getFilteredOpportunities(
+                        defaultSectionData.openOpportunities.allProjects);
+
+                loadOpportunitiesTable(
+                    'openOpportunitiesTabPane',
+                    'opportunitiesTableTemplate',
+                    defaultSectionData.openOpportunities
+                );
+            }
+
+            if (defaultSectionData.pastOpportunities !== undefined) {
+
+                defaultSectionData.pastOpportunities.projects = getFilteredOpportunities(
+                        defaultSectionData.pastOpportunities.allProjects);
+
+                loadOpportunitiesTable(
+                    'pastOpportunitiesTabPane',
+                    'opportunitiesTableTemplate',
+                    defaultSectionData.pastOpportunities,
+                    false
+                );
+            }
+
+            if (defaultSectionData.myOpportunities !== undefined) {
+
+                defaultSectionData.myOpportunities.projects = getFilteredOpportunities(
+                        defaultSectionData.myOpportunities.allProjects);
+
+                loadOpportunitiesTable(
+                    'myOpportunitiesTabPane',
+                    'opportunitiesTableTemplate',
+                    defaultSectionData.myOpportunities
+                );
+            }
+
+            if (defaultSectionData.auctions !== undefined) {
+
+                defaultSectionData.auctions.auctions = getFilteredOpportunities(
+                        defaultSectionData.auctions.allAuctions);
+
+                loadAuctionsTable(
+                    'auctionsTabPane',
+                    'auctionsTableTemplate',
+                    defaultSectionData.auctions
+                );
+            }
+
+            // Update URL
+
+            var newHash = '#';
+
+            if (departmentFilter.DepartmentID !== '-1') {
+
+                newHash += 'department=' + departments[departmentFilter.DepartmentID].DepartmentName;
+
+            } else if (departmentFilter.departmentGroup !== 'noGroup') {
+
+                newHash += 'department=' + departmentFilter.departmentGroup + ' - All';
+            }
+
+            window.location.hash = newHash;
+        });
+
+        // Note: This method does not support multiple URL search parameters
+        $('a[href$="TabPane"]').on('click', function () {
+
+            // Get the tab name and remove "TabPane" so the link is more human readable
+            // this.href does not include department filtering, so splitting on "#" works
+            var tabPaneName = this.href.split('#')[1].slice(0, -7);
+
+            var departmentFilter = location.hash;
+            var departmentFilterPieces = departmentFilter.split('=');
+
+            if (departmentFilterPieces.length < 2 ||
+                departmentFilterPieces[0] !== '#department' ||
+                !isDepartmentFilterValid(departmentFilterPieces[1])) {
+
+                departmentFilter = '';
+            }
+
+            history.replaceState('', '', '/portal/?tab=' + tabPaneName + departmentFilter);
+
+            if (portalPageTitlesByTab[tabPaneName]) {
+                document.title = portalPageTitlesByTab[tabPaneName] + ' - ' + portalOrganizationName;
+            }
+        })
+
+        var isDepartmentFilterValid = function (departmentFilter) {
+
+            return filterOptions[departmentFilter] || false;
+        };
+
+        var getFilteredOpportunities = function (opportunities) {
+
+            var filteredOpportunities = _.filter(opportunities, function (opportunity) {
+
+                // ie: 'All'
+                if (departmentFilter.departmentGroup === 'noGroup' && departmentFilter.DepartmentID === '-1') {
+
+                    return true;
+
+                // ie: {Group} - All
+                } else if (departmentFilter.DepartmentID === '-1') {
+
+                    if (departments[opportunity.DepartmentID] === undefined) {
+
+                        return false;
+                    }
+
+                    var groupAndDepartment = departments[opportunity.DepartmentID].DepartmentName.split(' - ');
+
+                    // ie: the project's department has no group.
+                    if (groupAndDepartment.length === 1) {
+                        return false;
+                    }
+
+                    return groupAndDepartment[0] === departmentFilter.departmentGroup;
+                }
+
+                return opportunity.DepartmentID === departmentFilter.DepartmentID;
+            });
+
+            return filteredOpportunities;
+        };
+
+        // -- Init Section
+
+        var initDepartmentFilter = function () {
+
+            // Default to All
+            var departmentFilter = {
+                departmentGroup: 'noGroup',
+                DepartmentID: '-1'
+            };
+
+            var urlDecoded = decodeURIComponent(window.location.hash.split('#')[1]);
+            var variableNameAndValue = urlDecoded.split('=');
+
+            if (variableNameAndValue.length === 2 &&
+                variableNameAndValue[0] === 'department') {
+
+                var departmentName = variableNameAndValue[1];
+                var groupAndDepartment = departmentName.split(' - ');
+
+                if (groupAndDepartment.length > 1) {
+
+                    departmentFilter.departmentGroup = groupAndDepartment[0];
+                }
+
+                var correspondingDepartmentId = _.findKey(departments, function (department) {
+
+                    return department.DepartmentName === departmentName;
+                }) || '-1';
+
+                departmentFilter.DepartmentID = correspondingDepartmentId;
+            }
+
+            $('#departmentFilterSelect').val(departmentFilter.departmentGroup + '.' + departmentFilter.DepartmentID);
+            $('#departmentFilterSelect').trigger('change');
+        }();
+
+        var initOpportunitiesTable = function (tabPaneId) {
+
+            var tableElem = $('#' + tabPaneId).find('table');
+
+            var table = BFDataTables.create(
+                tableElem,
+                {
+                    language: {
+                        emptyTable: "There are no open projects at this time."
+                    },
+                    scrollX: true
+                }
+            );
+
+            // Store table instance for later adjustment
+            dataTableInstances['#' + tabPaneId] = table;
+
+            return table;
+        };
+
+        var initAuctionsTable = function (tableElem) {
+
+            var table = BFDataTables.create(
+                tableElem,
+                {
+                    language: {
+                        emptyTable: 'There are no auctions to view at this time.'
+                    },
+                    scrollX: true
+                }
+            );
+
+            // Store table instance for later adjustment
+            dataTableInstances['#auctionsTabPane'] = table;
+
+            return table;
+        };
+
+        var initPublicContractsTable = function (tabPaneId) {
+
+            var tableElem = $('#' + tabPaneId).find('table');
+
+            var table = BFDataTables.create(
+                tableElem,
+                {
+                    language: {
+                        emptyTable: 'There are no public contracts to view at this time.'
+                    },
+                    scrollX: true
+                }
+            );
+
+            // Store table instance for later adjustment
+            dataTableInstances['#' + tabPaneId] = table;
+
+            return table;
+        };
+
+        // Get the data needed for the Status column (class, label).
+        function getAuctionStatusData(auction) {
+
+            var nowMoment = moment().tz(Bonfire.timezone);
+
+            var startDateMoment = BFUtil.createMomentFromUtcDateString(
+                auction.StartDate,
+                BFConstants.DB_DATE_STRING
+            );
+
+            var endDateMoment = BFUtil.createMomentFromUtcDateString(
+                auction.EndDate,
+                BFConstants.DB_DATE_STRING
+            );
+
+            // Is now <= the start date?
+            if (nowMoment.isBefore(startDateMoment)) {
+                return {
+                    statusClass: 'statusPending',
+                    statusLabel: 'Pending'
+                };
+            }
+
+            // Is now <= the end date?
+            if (endDateMoment.isAfter(nowMoment)) {
+                return {
+                    statusClass: 'statusLive',
+                    statusLabel: 'Live'
+                };
+            }
+
+            // Closed.
+            return {
+                statusClass: 'statusClosed',
+                statusLabel: 'Closed'
+            };
+        }
+
+        var loadAuctionsTable = function (tabPaneId, tableTemplateId, sectionData) {
+
+            BFUtil.initContent(
+                $('#' + tabPaneId),
+                $('#' + tableTemplateId),
+                _.extend({}, sectionData, { getAuctionStatusData: getAuctionStatusData }),
+                function () {
+
+                    var table = initAuctionsTable(
+                        $('#' + tabPaneId).find('table')
+                    );
+
+                    // Sort by DaysLeft ASC by default
+                    BFDataTables.sortByColumnIfExists(table, 3, 'asc');
+                    BFApp.bootstrapDropit();
+                }
+            );
+        };
+
+        var loadOpportunitiesTable = function (tabPaneId, tableTemplateId, sectionData,
+                isDaysLeftColumn) {
+
+            // The Past Public Opportunities table doesn't need a Days Left column.
+            isDaysLeftColumn = (isDaysLeftColumn === false) ?
+                false :
+                true;
+
+            // In order to sort the projects correctly in the My Opportunities tab, we need to know
+            // what the latest DateClose is in the collection of projects (we don't need to factor
+            // in pastScheduledProjectOpenPeriods here).
+
+            var projectDateCloseTimestamps = _.map(sectionData.projects, function (project) {
+
+                return BFUtil.createMomentFromUtcDateString(
+                    project.DateClose,
+                    BFConstants.DB_DATE_STRING
+                ).unix();
+            });
+
+            // Unix timestamp
+            var latestProjectDateCloseTimestamp = _.max(projectDateCloseTimestamps);
+
+            BFUtil.initContent(
+                $('#' + tabPaneId),
+                $('#' + tableTemplateId),
+                _.extend(
+                    {
+                        proposalsForVendorForOrganization: [],
+                        pastScheduledProjectOpenPeriodsWhereNotIsReopen: []
+                    },
+                    sectionData,
+                    {
+                        isDaysLeftColumn: isDaysLeftColumn,
+                        latestProjectDateCloseTimestamp: latestProjectDateCloseTimestamp,
+                        getProjectUrl: getProjectUrl,
+                        getProjectStatusData: getProjectStatusData
+                    }
+                ),
+                function () {
+
+                    var table = initOpportunitiesTable(tabPaneId);
+
+                    // Sort by Status ASC by default
+                    BFDataTables.sortByColumnIfExists(table, 0, 'asc');
+                    BFApp.bootstrapDropit();
+                }
+            );
+        };
+
+        // Get the data needed for the Contract Status column (class, label).
+        function getPublicContractStatus(publicContract) {
+
+            var statusClass;
+            var statusLabel;
+            var statudId = parseInt(publicContract.ContractStatusID, 10);
+
+            switch(statudId) {
+                case BFConstants.CONTRACT_STATUS_PENDING:
+                    statusClass = 'contractStatusPending';
+                    statusLabel = 'Pending';
+                    break;
+
+                case BFConstants.CONTRACT_STATUS_ACTIVE:
+                    statusClass = 'contractStatusActive';
+                    statusLabel = 'Active';
+                    break;
+
+                case BFConstants.CONTRACT_STATUS_EXPIRED:
+                    statusClass = 'contractStatusExpired';
+                    statusLabel = 'Closed';
+                    break;
+
+                case BFConstants.CONTRACT_STATUS_TERMINATED:
+                    statusClass = 'contractStatusTerminated';
+                    statusLabel = 'Terminated';
+                    break;
+
+                case BFConstants.CONTRACT_STATUS_TERM_EXPIRED:
+                    statusClass = 'contractStatusTermExpired';
+                    statusLabel = 'Term Expired';
+                    break;
+
+                default:
+                    break;
+            }
+
+            return {
+                statusClass: statusClass,
+                statusLabel: statusLabel,
+            };
+        }
+
+        // Determine whether to display green checker or red X based on value of IsExtendable
+        function getPublicExtendableStatus(publicContract) {
+
+            var extendable = parseInt(publicContract.IsExtendable, 10);
+
+            var statusClass = (extendable === 0) ?
+                'fa-solid fa-times red' :
+                'fa-solid fa-check green';
+            var statusLabel = (extendable === 0) ?
+                'No' :
+                'Yes';
+            return { statusClass: statusClass, statusLabel: statusLabel };
+        }
+
+        // get vendor's name.
+        function getVendorName(publicContract, vendors) {
+
+            return _.has(vendors, publicContract.VendorID) ?
+                vendors[publicContract.VendorID].VendorContactOrganizationName :
+                '{ Vendor not found }';
+        }
+
+        var loadPublicContractsTable = function (tabPaneId, tableTemplateId, sectionData) {
+
+            BFUtil.initContent(
+                $('#' + tabPaneId),
+                $('#' + tableTemplateId),
+                _.extend(
+                    {},
+                    sectionData,
+                    {
+                        getPublicContractStatus: getPublicContractStatus,
+                        getPublicExtendableStatus: getPublicExtendableStatus,
+                        getVendorName:getVendorName
+                    }
+                ),
+                function () {
+
+                    var table = initPublicContractsTable(tabPaneId);
+
+                    BFApp.bootstrapDropit();
+                }
+            );
+        };
+
+        // Get the badge for the Days Left column.
+        function getDaysLeftBadge(nowMoment, dateCloseMoment) {
+
+            var defaultBadge = '<div class="alignCenter">-</div>';
+
+            if (!moment(nowMoment).isValid() || !moment(dateCloseMoment).isValid()) {
+                return defaultBadge;
+            }
+
+            // dayDiff is not rounded since we are passing true as the 3rd argument.
+            var dayDiff = dateCloseMoment.diff(nowMoment, 'days', true);
+
+            // Project is closed?
+            if (dayDiff < 0) {
+                return defaultBadge;
+            }
+
+            var daysLeftBadgeContent = Math.ceil(dayDiff);
+
+            if (dayDiff < 1) {
+                daysLeftBadgeContent = '< 1';
+            }
+
+            var classBadge = '';
+
+            if (dayDiff < 7) {
+                classBadge = 'warning';
+            }
+
+            return '<div class="alignCenter badgeDaysLeft ' + classBadge + '">' +
+                daysLeftBadgeContent +
+            '</div>';
+        }
+
+        // Since private projects have special urls, this helper function can be used to easily get
+        // the correct url.
+        function getProjectUrl(project) {
+
+            return (parseInt(project.ProjectVisibilityID, 10) ===
+                    BFConstants.PROJECT_VISIBILITY_PRIVATE) ?
+                '/opportunities/private/' + project.PrivateProjectID :
+                '/opportunities/' + project.ProjectID;
+        }
+
+        // Get the data needed for the Status column (label, class, sort order, etc) as well as the
+        // close date and the days left.
+        function getProjectStatusData(project, proposalsForVendorForOrganizationGrouped,
+                pastScheduledProjectOpenPeriodsWhereNotIsReopenGrouped,
+                latestProjectDateCloseTimestamp) {
+
+            var nowMoment = moment().tz(Bonfire.timezone);
+
+            var dateClose = project.DateClose;
+
+            // If a project is reopened but the user does not have a proposal for the project (the
+            // proposalsForVendorForOrganizationGrouped collection does not contain proposals that
+            // have been eliminated), then the project should appear as if it were closed to the
+            // user. So we need to get the original DateClose, not the DateClose for the reopened
+            // stage.
+            if (parseInt(project.ProjectStatusID, 10) === BFConstants.STATE_REOPENED &&
+                !_.has(proposalsForVendorForOrganizationGrouped, project.ProjectID)) {
+
+                // If the following condition fails, then the implementation is bad. But, since this
+                // is the portal, the vendor may be constrained for time, so instead of throwing an
+                // error and alerting the user, we will track this error in the background using
+                // trackjs.
+                if (_.has(pastScheduledProjectOpenPeriodsWhereNotIsReopenGrouped, project.ProjectID) &&
+                    pastScheduledProjectOpenPeriodsWhereNotIsReopenGrouped[project.ProjectID].length) {
+
+                    // There should only ever be one PastScheduledProjectOpenPeriod for a project
+                    // where IsReopen = 0...so get the first element in the array.
+                    var pastScheduledProjectOpenPeriod =
+                            pastScheduledProjectOpenPeriodsWhereNotIsReopenGrouped[project.ProjectID][0];
+
+                    dateClose = pastScheduledProjectOpenPeriod.DateClose;
+                } else {
+                    if (window.trackJs) {
+                        trackJs.track('Bad pastScheduledProjectOpenPeriod data for ProjectID ' + project.ProjectID);
+                    }
+                }
+            }
+
+            var dateCloseMoment = BFUtil.createMomentFromUtcDateString(
+                dateClose,
+                BFConstants.DB_DATE_STRING
+            );
+
+            // Is now <= the date close?
+            if (nowMoment.isValid() &&
+                dateCloseMoment.isValid() &&
+                dateCloseMoment.isAfter(nowMoment)) {
+
+                if (parseInt(project.ProjectStatusID, 10) === BFConstants.STATE_OPEN) {
+                    return {
+                        statusClass: 'statusOpen',
+                        statusLabel: 'Open',
+                        statusSortOrder: dateCloseMoment.unix(),
+                        dateClose: dateClose,
+                        daysLeftBadge: getDaysLeftBadge(nowMoment, dateCloseMoment)
+                    };
+                }
+
+                if (parseInt(project.ProjectStatusID, 10) === BFConstants.STATE_REOPENED &&
+                    _.has(proposalsForVendorForOrganizationGrouped, project.ProjectID)) {
+
+                    return {
+                        statusClass: 'statusReopened',
+                        statusLabel: 'Reopened',
+                        statusSortOrder: dateCloseMoment.unix(),
+                        dateClose: dateClose,
+                        daysLeftBadge: getDaysLeftBadge(nowMoment, dateCloseMoment)
+                    };
+                }
+            }
+
+            // We sort the Status column as follows:
+            // * Projects where now <= the date close come first, sorted by date close asc.
+            // * Projects where now > the date close come next, sorted by date close desc.
+
+            // default in case the data is bad
+            var statusSortOrder = latestProjectDateCloseTimestamp;
+
+            // Is now > the date close?
+            if (nowMoment.isValid() &&
+                dateCloseMoment.isValid() &&
+                nowMoment.isAfter(dateCloseMoment)) {
+
+                // Add the latestProjectDateCloseTimestamp to the difference b/w now and the date
+                // close so that projects where now > date close come after projects where now <=
+                // date close.
+                statusSortOrder = (latestProjectDateCloseTimestamp + (nowMoment.unix() -
+                    dateCloseMoment.unix()));
+            }
+
+            var statusClass = 'statusClosed';
+            var statusLabel = 'Closed';
+
+            // If the project has been awarded publically and is Completed or Archived, then we show
+            // an Awarded badge.
+
+            var projectStatusId = parseInt(project.ProjectStatusID, 10);
+            var projectSubStatusId = parseInt(project.ProjectSubStatusID, 10);
+
+            if (project.IsPublicAward &&
+                (projectStatusId === BFConstants.STATE_COMPLETED ||
+                        projectStatusId === BFConstants.STATE_ARCHIVED)) {
+
+                var statusClass = 'statusAwarded';
+                var statusLabel = 'Awarded';
+            }
+
+            if (projectSubStatusId === BFConstants.STATE_SUBSTATUS_CANCELLED) {
+                statusClass = 'statusCancelled';
+                statusLabel = 'Cancelled';
+                dateClose = null;
+            }
+
+            return {
+                statusClass: statusClass,
+                statusLabel: statusLabel,
+                statusSortOrder: statusSortOrder,
+                dateClose: dateClose,
+                daysLeftBadge: getDaysLeftBadge(null)
+            };
+        }
+
+        function changePanelAfterLoad () {
+
+            // The logic below has a bit of a bad code smell since we're basically determine the state of the page based on
+            // this call back since we implicitly do it all the time.
+            //
+            // A better solution would be to refactor the page such that it knows once all the callbacks have completed,
+            // and can then determine which tab / content to display.
+
+            // If there is a URL query parameter then load that tab if it exists, otherwise
+            // If there are other tabs show one, otherwise show the placeholder content that there is nothing for you to see
+            var query = location.search.substr(1);
+            var result = {};
+
+            // url params look like 'field1=value1&field2=value2&field3=value3'
+            // so splitting on '&' yields each key-value pair and then splitting on '=' separates them
+            // with the key being item[0] and the value being item[1]
+            _.forEach(query.split('&'), function(part) {
+
+                var item = part.split('=');
+                result[item[0]] = decodeURIComponent(item[1]);
+            });
+
+            var tabLink = {};
+
+            // Limit linked tabs to alphabetic characters only
+            if (result.tab && _.isString(result.tab) && result.tab.match(/^[a-zA-Z]+$/)) {
+
+                tabLink = $('a[href$="#' + result.tab + 'TabPane"]');
+            }
+
+            if($('#portalIndexTabs li').length) {
+                // Default load the linked tab if it exists...
+                if(tabLink.length) {
+                    tabLink.trigger('click');
+                // ...then try to load Open Opportunities if present...
+                } else if ($('a[href$="#openOpportunitiesTabPane"]').length) {
+                    $('a[href$="#openOpportunitiesTabPane"]').trigger('click');
+                // ...then load the My Opportunities if present and there are opportunities...
+                } else if ($('a[href$="#myOpportunitiesTabPane"]').length  && isMyOpportunities) {
+                    $('a[href$="#myOpportunitiesTabPane"]').trigger('click');
+                // ...otherwise fall back on first tab
+                } else {
+                    $('#portalIndexTabs li').first().show();
+                    $('#portalIndexTabs a').first().trigger('click');
+                }
+            } else {
+                var content = "<br><br><br>" +
+                           "<p class='size14 alignCenter'>Welcome! It appears there isn&apos;t anything here for you to access.</p>" +
+                           "<br><br>" +
+                           "<p class='size14 alignCenter'>If you believe this message is in error, contact us at <a href='mailto:support.procurement@eunasolutions.com'>support.procurement@eunasolutions.com</a>.</p>" +
+                           "<br><br><br>";
+
+                $("#publicList .tab-Container").html(content);
+            }
+        }
+
+        var initMyOpportunitiesTab = function () {
+
+            if (!isConfirmed) {
+
+                var containerElem = $('#myOpportunitiesTabPane');
+
+                var sectionContent = (hasVendors) ?
+                    '<div class="warning-notice size13 alignCenter"><span class="fa-solid fa-warning"></span> Additional information is required in order to complete your registration. <br><strong><a class="warning-link button radius" href="/registration">Complete Registration &raquo;</a></strong></div>' :
+                    '<div class="warning-notice size13 alignCenter"><span class="fa-solid fa-warning"></span> You must confirm your account before you can see your invited opportunities. Go to your Settings page to confirm your account. <br><strong><a class="warning-link button radius" href="/settings">Go to Settings &raquo;</a></strong></div>';
+
+                if ($(containerElem).is(':visible')) {
+                    $(containerElem).fadeTo(0, 0, function () {
+                        $(this).html(sectionContent);
+                        $(this).fadeTo(600, 100, 'easeOutExpo');
+                    });
+                } else {
+                    $(containerElem).html(sectionContent);
+                    $('#myOpportunitiesTab').show();
+                }
+
+                changePanelAfterLoad();
+                return;
+            }
+
+            BFUtil.loadSection(
+                '/PublicPortal/getMyOpportunitiesSectionData',
+                function (sectionData) {
+
+                    if (_.size(sectionData.projects) && hasVendors) {
+
+                        // Clone sectionData
+                        defaultSectionData.myOpportunities = JSON.parse(JSON.stringify(sectionData));
+                        defaultSectionData.myOpportunities.allProjects = sectionData.projects;
+                        defaultSectionData.myOpportunities.projects = getFilteredOpportunities(sectionData.projects);
+
+                        isMyOpportunities = (sectionData.projects.length > 0);
+
+                        loadOpportunitiesTable(
+                            'myOpportunitiesTabPane',
+                            'opportunitiesTableTemplate',
+                            defaultSectionData.myOpportunities
+                        );
+
+                        $("#myOpportunitiesTab").show();
+
+                    } else {
+
+                        var sectionContent =
+                            '<div class="size13 alignCenter bf-dark-gray">' +
+                                'There is currently nothing to display here.' +
+                            '</div>';
+
+                        $('#myOpportunitiesTabPane').html(sectionContent);
+                        $('#myOpportunitiesTab').show();
+
+                        changePanelAfterLoad();
+                        return;
+                    }
+
+                    changePanelAfterLoad();
+                }
+            );
+        };
+
+        var initOpenOpportunitiesTab = function () {
+
+            BFUtil.loadSection(
+                '/PublicPortal/getOpenPublicOpportunitiesSectionData',
+                function (sectionData) {
+
+                    // Clone sectionData
+                    defaultSectionData.openOpportunities = JSON.parse(JSON.stringify(sectionData));
+                    defaultSectionData.openOpportunities.allProjects = sectionData.projects;
+                    defaultSectionData.openOpportunities.projects = getFilteredOpportunities(sectionData.projects);
+
+                    loadOpportunitiesTable(
+                        'openOpportunitiesTabPane',
+                        'opportunitiesTableTemplate',
+                        defaultSectionData.openOpportunities
+                    );
+                }
+            );
+        };
+
+        var initPublicContractsTab = function () {
+
+            BFUtil.loadSection(
+                '/PublicPortal/getPublicContractsSectionData',
+                function (sectionData) {
+
+                    var vendors = _.indexBy(sectionData.vendors, 'VendorID');
+
+                    // Clone sectionData
+                    defaultSectionData.publicContracts = JSON.parse(JSON.stringify(sectionData));
+                    defaultSectionData.publicContracts.vendors = vendors;
+                    loadPublicContractsTable(
+                        'publicContractsTabPane',
+                        'publicContractsTableTemplate',
+                         defaultSectionData.publicContracts
+                    );
+
+                }
+            );
+        };
+
+        var initPastOpportunitiesTab = function () {
+
+            BFUtil.loadSection(
+                '/PublicPortal/getPastPublicOpportunitiesSectionData',
+                function (sectionData) {
+
+                    // Clone sectionData
+                    defaultSectionData.pastOpportunities = JSON.parse(JSON.stringify(sectionData));
+                    defaultSectionData.pastOpportunities.allProjects = sectionData.projects;
+                    defaultSectionData.pastOpportunities.projects = getFilteredOpportunities(sectionData.projects);
+
+                    loadOpportunitiesTable(
+                        'pastOpportunitiesTabPane',
+                        'opportunitiesTableTemplate',
+                        defaultSectionData.pastOpportunities,
+                        false
+                    );
+                }
+            );
+        };
+
+        var initAuctionsTab = function () {
+
+            var userId = '';
+
+            if (userId === '') {
+                return;
+            }
+
+            $.get(
+                '/internalApi/users/' + userId + '/auctions',
+                function (data) {
+
+                    // We hide the 'Auctions' tab if:
+                    //   - data.auctions is undefined (not sure which scenario this is but it has happened) OR
+                    //   - data.auctions is defined AND one of: there are no auctions OR the user is not a "vendor"
+                    if (!_.has(data, 'auctions') || !data.auctions.length || !hasVendors) {
+                        $('#auctionsTab').remove();
+                        $('#auctionsTabPane').remove();
+                        return;
+                    }
+
+                    defaultSectionData.auctions = { departments: data.departments };
+                    defaultSectionData.auctions.allAuctions = data.auctions;
+                    defaultSectionData.auctions.auctions = getFilteredOpportunities(data.auctions);
+
+                    loadAuctionsTable(
+                        'auctionsTabPane',
+                        'auctionsTableTemplate',
+                        defaultSectionData.auctions
+                    );
+
+                    $('#auctionsTab').show();
+
+                    changePanelAfterLoad();
+                },
+                'json'
+            );
+        };
+
+        // My Opportunities is always hidden so fetch the data and show if you have any
+        initMyOpportunitiesTab();
+        initAuctionsTab();
+        BFApp.bootstrapToolTips($('#portalIndexTabs'));
+    });
+
+</script>
+
+
+<script id="opportunitiesTableTemplate" type="text/template">
+
+    <%
+    // Group the proposals by ProjectID so that if a project is reopened and the user has at least
+    // one proposal for the project (the collection does not contain proposals that have been
+    // eliminated), then the project will appear as Reopened to the user; otherwise, the  project
+    // will appear as closed to the user.
+    var proposalsForVendorForOrganizationGrouped = _.groupBy(
+        proposalsForVendorForOrganization,
+        'ProjectID'
+    );
+
+    // If a project is reopened but appears to be closed to the user (see comment above), then we
+    // need to get the original DateClose to display to the user.
+    var pastScheduledProjectOpenPeriodsWhereNotIsReopenGrouped = _.groupBy(
+        pastScheduledProjectOpenPeriodsWhereNotIsReopen,
+        'ProjectID'
+    );
+    %>
+    <table>
+        <thead>
+            <tr class="head">
+                <th class="sortme">Status</th>
+                <th class="sortme table-html">Ref. #</th>
+                <th class="sortme" width="35%">Project</th>
+                                <th class="sortme datetime">Close Date</th>
+                <% if (isDaysLeftColumn) { %>
+                    <th class="daysleftsort">Days Left</th>
+                <% } %>
+                <th class="nosort nosearch">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% _.each(projects, function (project) { %>
+
+                <%
+                var projectUrl = getProjectUrl(project);
+
+                // Get the data needed for the status column (label, class, sort order, etc) as well
+                // as the close date and the days left.
+                var projectStatusData = getProjectStatusData(
+                    project,
+                    proposalsForVendorForOrganizationGrouped,
+                    pastScheduledProjectOpenPeriodsWhereNotIsReopenGrouped,
+                    latestProjectDateCloseTimestamp
+                );
+                %>
+                <tr>
+                    <td data-order="<%- projectStatusData.statusSortOrder %>">
+                        <div class="statusTag <%- projectStatusData.statusClass %>">
+                            <%- projectStatusData.statusLabel %>
+                        </div>
+                    </td>
+                    <td><%- project.ReferenceID %></td>
+                    <td id="projectNameId-<%- project.ReferenceID %>"><b><%- project.ProjectName %></b></td>
+                                        <td><%- projectStatusData.dateClose %></td>
+                    <% if (isDaysLeftColumn) { %>
+                        <td><%= projectStatusData.daysLeftBadge %></td>
+                    <% } %>
+                    <td>
+                        <a class="btn bold box-sizing alignCenter" aria-describedby="projectNameId-<%- project.ReferenceID %>" style="font-size:12px" href="<%- projectUrl %>">
+                            View Opportunity                        </a>
+                    </td>
+                </tr>
+            <% }); %>
+        </tbody>
+    </table>
+</script>
+
+<script id="auctionsTableTemplate" type="text/template">
+    <table id="live-auctions-table">
+        <thead>
+            <tr class="head">
+                <th class="sortme" style="width: 10%;">Status</th>
+                <th class="sortme" style="width: 13%;">Title</th>
+                <th class="sortme" style="width: 20%;">Description</th>
+                                <th class="sortme datetime" style="width: 20%;">Start Date</th>
+                <th class="sortme datetime" style="width: 20%;">End Date</th>
+                <th class="nosort nosearch" style="width: 12%;">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% _.each(auctions, function (auction) { %>
+
+                <%
+                // Get the data needed for the status column (class, label).
+                var auctionStatusData = getAuctionStatusData(auction);
+                %>
+
+                <tr>
+                    <td>
+                        <div class="statusTag <%- auctionStatusData.statusClass %>">
+                            <%- auctionStatusData.statusLabel %>
+                        </div>
+                    </td>
+                    <td><%- auction.Title %></td>
+                    <td><%- auction.Description %></td>
+                                        <td><%- auction.StartDate %></td>
+                    <td><%- auction.EndDate %></td>
+                    <td>
+                        <a class="btn bold box-sizing alignCenter" style="font-size:12px" href="/opportunities/<%- auction.ProjectID %>/auctions/<%- auction.AuctionID %>/proposals/<%- auction.ProposalID %>">
+                            View Auction                        </a>
+                    </td>
+                </tr>
+            <% }); %>
+        </tbody>
+    </table>
+</script>
+
+<script id="publicContractsTableTemplate" type="text/template">
+    <table>
+        <thead>
+            <tr class="head">
+                <th class="sortme">Status</th>
+                <th class="sortme">Title</th>
+                <th class="sortme">Vendor</th>
+                <th class="sortme datetime">Start Date</th>
+                <th class="sortme datetime">End Date</th>
+                <th class="nosort nosearch">Extendable</th>
+                <th class="nosort nosearch">Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% _.each(publicContracts, function (publicContract) { %>
+
+                <%
+                    // Get the data needed for the status column (class, label).
+                    var publicContractData = getPublicContractStatus(publicContract);
+                    var extendableChecker = getPublicExtendableStatus(publicContract);
+                    var vendorContactOrganizationName = getVendorName(publicContract, vendors);
+                %>
+
+                <tr>
+                    <td>
+                        <div class="statusTag <%- publicContractData.statusClass %>">
+                            <%- publicContractData.statusLabel %>
+                        </div>
+                    </td>
+                    <td><%- publicContract.Name %></td>
+                    <td><%- vendorContactOrganizationName %></td>
+                    <td><%- publicContract.StartDate %></td>
+                    <td><%- publicContract.EndDate %></td>
+                    <td><span class="<%- extendableChecker.statusClass %>"><span class="sr-only"><%- extendableChecker.statusLabel %></span></span></td>
+                    <td>
+                        <a class="btn bold box-sizing alignCenter" style="font-size:12px" href="/publicContracts/<%- publicContract.ContractID %>">
+                            View                        </a>
+                  </td>
+                </tr>
+            <% }); %>
+        </tbody>
+    </table>
+</script>
+
+<script type="text/javascript">
+    $(document).ready(function() {
+        $('.departmentFilter .select2-selection__rendered').attr('aria-labelledby', 'departmentFilterSelectLabel');
+        $('.departmentFilter .select2-selection__rendered').attr('role', 'combobox');
+    });
+</script>
+
+<div class="tab-Container">
+    <ul id="portalIndexTabs" class='nav nav-tabs'>
+                    <li id="openOpportunitiesTab"><a href="#openOpportunitiesTabPane" role="button">
+                <strong>Open Public Opportunities</strong>
+            </a></li>
+                            <li id="pastOpportunitiesTab"><a href="#pastOpportunitiesTabPane" role="button">
+                <strong>Past Public Opportunities</strong>
+            </a></li>
+                                    </ul>
+    <div class="tab-content">
+                    <div class="tab-pane" id="openOpportunitiesTabPane">
+                <div style="width:100%; text-align:center; padding: 25px 0"><img src="/img/spinner.gif" alt="loading" /></div>            </div>
+                            <div class="tab-pane" id="pastOpportunitiesTabPane">
+                <div style="width:100%; text-align:center; padding: 25px 0"><img src="/img/spinner.gif" alt="loading" /></div>            </div>
+                                    </div>
+</div>        </div><!-- publicList -->
+        <div id="publicFooter">
+    <div class="publicFooterItemLeft floatLeft">
+        <ul>
+            <li><a href="https://procurement-help.eunasolutions.com/hc/en-us" target="_blank" rel="noopener noreferrer">Technical Support</a></li>
+            <li><a href="/portal/security">Portal Security</a></li>
+            <li><a href="https://gobonfire.com/terms-service" target="_blank" rel="noopener noreferrer">Terms of Service</a></li>
+            <li><a href="https://eunasolutions.com/privacy-policy" target="_blank" rel="noopener noreferrer">Privacy Policy</a></li>
+            <li><a href="/sitemap">Sitemap</a></li>
+            <li id="footerToggleClosedProjectsTable" style="display:none"><a id="toggleClosedProjectsTable" class="saveSectionExpansion"><span id="closedProjectsTableLink">Show</span> Closed Projects</a></li>
+        </ul>
+    </div>
+    <br class="clear">
+</div>    </div><!-- publicContent -->
+</div><!-- publicBox -->
+                                <script type="text/javascript">
+                var _gaq = _gaq || [];
+                _gaq.push(['_setAccount', 'UA-36372450-1']);
+                _gaq.push(['_setDomainName', '*.bonfirehub.ca']);
+                _gaq.push(['_setAllowLinker', true]);
+                _gaq.push(['_trackPageview']);
+
+                (function() {
+                var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+                ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+                var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+                })();
+            </script>
+            
+        <script type="text/javascript" src="https://assets.bonfirehub.com/100697/js/bonfire/end.js" ></script>
+
+        <script>
+    var Bonfire = (function (bonfire) {
+
+        var timezone = "America\/Toronto";
+
+        // -- Public Api
+
+        bonfire.timezone = timezone;
+
+        return bonfire;
+    }(Bonfire || {}));
+</script>
+
+        <script>
+    var Bonfire = (function (bonfire) {
+
+        var bonfireApiBaseUrl = "https:\/\/ca-production-api-internal.bonfirehub.ca\/v1.0";
+
+        var organizationId = "301";
+
+        var agGridLicenseKey = "Using_this_{AG_Grid}_Enterprise_key_{AG-106156}_in_excess_of_the_licence_granted_is_not_permitted___Please_report_misuse_to_legal@ag-grid.com___For_help_with_changing_this_key_please_contact_info@ag-grid.com___{Euna_Solutions_Inc.}_is_granted_a_{Single_Application}_Developer_License_for_the_application_{Bonfire_Core}_only_for_{10}_Front-End_JavaScript_developers___All_Front-End_JavaScript_developers_working_on_{Bonfire_Core}_need_to_be_licensed___{Bonfire_Core}_has_been_granted_a_Deployment_License_Add-on_for_{1}_Production_Environment___This_key_works_with_{AG_Grid}_Enterprise_versions_released_before_{15_September_2027}____[v3]_[01]_MTgyMDk2MjgwMDAwMA==466569590b14c76a2f41afc9ecc6418a";
+
+        var googleMapsApiKey = "AIzaSyBk6sEzLvBWvJVSEEprVPKUNKgnZnI2csE";
+
+        var recaptchaSiteKey = "6Lcr47oqAAAAACf-o8cP8E9785gYxyylUMk1rN4o";
+
+        var defaultRegionId = 1;
+
+        var sendCredentialsCrossDomain = true;
+
+        /*
+         * W3C traceparent for THIS page request, so browser XHRs can join the trace of the page
+         * that issued them instead of each starting a fresh one.
+         *
+         * Gated on span export actually being on, NOT merely on TraceContext having ids.
+         * TraceContext mints a trace id and span id for every request unconditionally, because
+         * MY_Log wants them, but TraceSpanExporter only exports when `otel_traces_endpoint` is
+         * set. Handing the browser a traceparent naming a span that was never recorded would make
+         * every downstream span an orphan pointing at a parent that does not exist, which is the
+         * exact defect the span exporter was added to remove. Empty string when export is off, and
+         * the JS below then sends no header at all.
+         */
+        var traceparent = "00-375ce1b2aa84250e45b77a07d3effe6b-b4b348f9bff6baa0-01";
+
+        // -- Public Api
+
+        bonfire.sendCredentialsCrossDomain = sendCredentialsCrossDomain;
+
+        bonfire.traceparent = traceparent;
+
+        bonfire.bonfireApiBaseUrl = bonfireApiBaseUrl;
+        
+        bonfire.organizationId = organizationId;
+
+        bonfire.agGridLicenseKey = agGridLicenseKey;
+
+        bonfire.googleMapsApiKey = googleMapsApiKey;
+
+        bonfire.recaptchaSiteKey = recaptchaSiteKey;
+
+        bonfire.defaultRegionId = defaultRegionId;
+
+        return bonfire;
+    }(Bonfire || {}));
+</script>
+
+        
+        
+        
+        
+        
+        
+                    <script type="module" src="https://assets.bonfirehub.com/100697/dist/top-bar-app/app/app.js"></script>
+        
+            </body>
+</html>

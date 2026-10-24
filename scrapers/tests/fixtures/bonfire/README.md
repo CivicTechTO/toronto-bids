@@ -35,3 +35,31 @@ Public department labels distinguish Toronto Community Housing, Toronto Seniors
 Housing and TCHC/TSHC; the buyer profile explicitly groups their shared portal.
 No credentials, cookies or request headers are included. As in the Library fixture,
 public response identifiers are retained but never used for private-route requests.
+
+
+## Remaining #134 portals — 2026-10-24
+
+The `waterfront-*`, `exhibition-*` and `taf-*` fixtures are unchanged anonymous
+landing/Open/Past response bodies from the official linked portals listed below.
+The landing files preserve original source whitespace. No credentials, cookies
+or request headers are included; public identifiers are retained but never
+followed to private routes.
+
+| Fixture | Source URL | SHA-256 |
+| --- | --- | --- |
+| `waterfront-portal.html` | `https://waterfrontoronto.bonfirehub.ca/portal/?tab=openOpportunities` | `50dd395eadff215bbab40c19a6f1b746c6503f46b830512e87566e7c93ef334a` |
+| `waterfront-open.json` | `https://waterfrontoronto.bonfirehub.ca/PublicPortal/getOpenPublicOpportunitiesSectionData` | `5f4a2720c4084b253e05f401b5e4725e27899b9bb774e084b668d39a6dd15e43` |
+| `waterfront-past.json` | `https://waterfrontoronto.bonfirehub.ca/PublicPortal/getPastPublicOpportunitiesSectionData` | `bfdb8ed8ec39c458d4d6dd2ec0ec8b6c25c9b067698073795004770dff21e9f2` |
+| `exhibition-portal.html` | `https://explace.bonfirehub.ca/portal/?tab=openOpportunities` | `7450a3218be1d89a7db601679d05eb0837fda4088fb8d94010f29d521691bfb4` |
+| `exhibition-open.json` | `https://explace.bonfirehub.ca/PublicPortal/getOpenPublicOpportunitiesSectionData` | `faae77147156dbe5a9d9e555fd1d4134b780bcfebadb47a18d70cdee62ae397e` |
+| `exhibition-past.json` | `https://explace.bonfirehub.ca/PublicPortal/getPastPublicOpportunitiesSectionData` | `299bf20a650de50733ca42ce3aafbbe97799c23acd90f134b96bbf480c5f33cf` |
+| `taf-portal.html` | `https://taf.bonfirehub.ca/portal/?tab=openOpportunities` | `560564652ebc5e5189f0985675b113d93742238a105b3ed217962890e3855602` |
+| `taf-open.json` | `https://taf.bonfirehub.ca/PublicPortal/getOpenPublicOpportunitiesSectionData` | `15633c14378754a41193e203d6ad19a187354f52b3e2c0df051ae5a803dfc12a` |
+| `taf-past.json` | `https://taf.bonfirehub.ca/PublicPortal/getPastPublicOpportunitiesSectionData` | `31797d30981e9f3f99d703da38e090b517062f4c487edbe67af0b162495c36b8` |
+
+Waterfront's title is Toronto Waterfront Revitalization Corporation, its legal name;
+its fixture contains 78 postings (1 Open, 77 Closed). Exhibition Place contains
+94 (1 Open, 77 Awarded, 12 Cancelled, 4 Closed), including two distinct pages
+labelled EPRFP2025-7745. TAF contains 16 past postings (8 Awarded, 6 Closed,
+2 Cancelled) and an explicit empty Open collection. Badge labels do not identify
+winning suppliers or contract values.

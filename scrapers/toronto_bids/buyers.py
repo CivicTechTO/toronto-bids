@@ -3,6 +3,11 @@ from toronto_bids.models import Buyer
 from toronto_bids.store import db
 
 DEFAULT_BUYERS = [
+    Buyer(slug="the-atmospheric-fund", name="The Atmospheric Fund", kind="agency",
+          partnered=0, funding_share=None, platform="Bonfire",
+          notes="City agency serving the Greater Toronto and Hamilton Area. Public "
+                "procurement opportunities are captured from its Bonfire portal; "
+                "listing badges do not establish winning suppliers or contract values."),
     Buyer(slug="toronto-community-housing",
           name="Toronto Community Housing and Toronto Seniors Housing", kind="corporation",
           partnered=0, funding_share=None, platform="Bonfire",
@@ -17,7 +22,7 @@ DEFAULT_BUYERS = [
     Buyer(slug="waterfront-toronto", name="Waterfront Toronto", kind="corporation",
           partnered=1, funding_share=None, platform="own-site / Bonfire",
           notes="Joint federal, Ontario and Toronto corporation. Own-site monthly award "
-                "publication captured under explicit permission (#108); Bonfire is separate (#134)."),
+                "publication and public Bonfire opportunity listings are captured separately."),
     Buyer(slug="toronto-zoo", name="Toronto Zoo", kind="agency", partnered=0,
           funding_share=None, platform="bids&tenders",
           notes="Board of Management on TMMIS as the ZB committee; portal "
@@ -29,9 +34,9 @@ DEFAULT_BUYERS = [
                 "is mixed (Biddingo through ~2023, then trca.bidsandtenders.ca)."),
     Buyer(slug="exhibition-place", name="Exhibition Place", kind="agency", partnered=0,
           funding_share=None, platform="Bonfire",
-          notes="City agency (Board of Governors); left the PMMD feed in 2019 for its own "
-                "Bonfire portal. Awards captured from Board of Governors reports on legdocs "
-                "(TMMIS EP committee); the Bonfire portal is gated (#134)."),
+          notes="City agency (Board of Governors). Awards captured from Board of Governors "
+                "reports on legdocs "
+                "(TMMIS EP committee); public Bonfire listings are captured separately."),
 ]
 
 

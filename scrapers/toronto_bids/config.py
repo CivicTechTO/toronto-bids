@@ -196,4 +196,28 @@ BONFIRE_PORTALS = [
         'attribution': 'Source: Toronto Community Housing and Toronto Seniors Housing '
                        '(torontohousing.bonfirehub.ca).',
     },
+    {
+        'slug': 'waterfront-toronto',
+        'body': 'Toronto Waterfront Revitalization Corporation',
+        'portal_url': 'https://waterfrontoronto.bonfirehub.ca',
+        'enabled': True,
+        'permission': 'docs/permissions/2026-10-22-bonfire.md',
+        'attribution': 'Source: Toronto Waterfront Revitalization Corporation (waterfrontoronto.bonfirehub.ca).',
+    },
+    {
+        'slug': 'exhibition-place',
+        'body': 'Exhibition Place',
+        'portal_url': 'https://explace.bonfirehub.ca',
+        'enabled': True,
+        'permission': 'docs/permissions/2026-10-22-bonfire.md',
+        'attribution': 'Source: Exhibition Place (explace.bonfirehub.ca).',
+    },
+    {
+        'slug': 'the-atmospheric-fund',
+        'body': 'The Atmospheric Fund',
+        'portal_url': 'https://taf.bonfirehub.ca',
+        'enabled': True,
+        'permission': 'docs/permissions/2026-10-22-bonfire.md',
+        'attribution': 'Source: The Atmospheric Fund (taf.bonfirehub.ca).',
+    },
 ]
