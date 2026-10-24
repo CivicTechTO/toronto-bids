@@ -187,4 +187,13 @@ BONFIRE_PORTALS = [
         'permission': 'docs/permissions/2026-10-22-bonfire.md',
         'attribution': 'Source: Toronto Public Library (torontopubliclibrary.bonfirehub.ca).',
     },
+    {
+        'slug': 'toronto-community-housing',
+        'body': 'Toronto Community Housing and Toronto Seniors Housing',
+        'portal_url': 'https://torontohousing.bonfirehub.ca',
+        'enabled': True,
+        'permission': 'docs/permissions/2026-10-22-bonfire.md',
+        'attribution': 'Source: Toronto Community Housing and Toronto Seniors Housing '
+                       '(torontohousing.bonfirehub.ca).',
+    },
 ]
