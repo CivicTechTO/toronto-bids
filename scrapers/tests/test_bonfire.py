@@ -254,3 +254,43 @@ def test_server_deadline_persists_across_capture_runs_without_early_requests(con
             httpx.Response(200, content=source_data()[request.url.path]))) as client:
         assert bf.capture_portal(conn, PORTAL, client=client, data_dir=tmp_path,
                                  sleep=lambda _:None, clock=lambda:NOW+timedelta(seconds=121)) == 412
+
+
+def test_shared_housing_portal_retains_all_public_postings_without_inventing_awards(conn, tmp_path):
+    portal = next(p for p in config.BONFIRE_PORTALS if p['slug'] == 'toronto-community-housing')
+    bodies = {LANDING: (FIXTURES / 'housing-portal.html').read_bytes(),
+              OPEN: (FIXTURES / 'housing-open.json').read_bytes(),
+              PAST: (FIXTURES / 'housing-past.json').read_bytes()}
+    calls, waits = [], []
+    def handle(request):
+        calls.append(str(request.url))
+        return httpx.Response(200, content=bodies[request.url.path])
+    observed = datetime(2026, 10, 23, 16, 30, tzinfo=timezone.utc)
+    with httpx.Client(transport=httpx.MockTransport(handle)) as client:
+        count = bf.capture_portal(conn, portal, client=client, data_dir=tmp_path,
+                                  sleep=waits.append, clock=lambda: observed)
+    assert count == 961 and len(calls) == 3 and waits == [1, 1, 1]
+    assert all(httpx.URL(u).host == 'torontohousing.bonfirehub.ca' for u in calls)
+    rows = list(conn.execute('SELECT * FROM portal_listing'))
+    assert Counter(r['status'] for r in rows) == {'Open': 16, 'Awarded': 629, 'Closed': 226, 'Cancelled': 90}
+    assert len({r['procurement_id'] for r in rows}) == 961
+    repeated = [r for r in rows if r['native_ref'] == 'RFP 25270-PP']
+    assert len(repeated) == len({r['procurement_id'] for r in repeated}) == 6
+    assert min(r['closing_date'] for r in rows) == '2019-05-21T18:00:00+00:00'
+    assert all(conn.execute(f'SELECT COUNT(*) FROM {table}').fetchone()[0] == 0
+               for table in ('agency_award', 'agency_bid', 'agency_solicitation', 'solicitation', 'award'))
+    export = build_export_document(conn, generated_at='fixed')
+    housing = next(b for b in export['buyers'] if b['slug'] == portal['slug'])
+    assert housing['name'] == 'Toronto Community Housing and Toronto Seniors Housing'
+    assert housing['kind'] == 'corporation' and housing['partnered'] == 0
+    assert len(housing['portal_listings']) == 961 and housing['awards'] == housing['bids'] == []
+    assert any(a['slug'] == portal['slug'] and 'Toronto Seniors Housing' in a['statement']
+               for a in export['meta']['attribution'])
+    assert conn.execute('PRAGMA foreign_key_check').fetchall() == []
+
+
+def test_enabled_bonfire_buyers_have_durable_permission_records():
+    root = Path(__file__).resolve().parents[2]
+    for portal in config.BONFIRE_PORTALS:
+        if portal['enabled']:
+            assert portal['permission'] and (root / portal['permission']).is_file()

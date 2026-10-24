@@ -817,31 +817,37 @@ def test_real_bonfire_capture_reaches_nightly_history_and_bulk_exports(nightly, 
     from toronto_bids.sources import bonfire
 
     fixtures = Path(__file__).parent / 'fixtures/bonfire'
-    bodies = {'/portal/': (fixtures/'library-portal.html').read_bytes(),
-              bonfire.SECTIONS['open']: (fixtures/'library-open.json').read_bytes(),
-              bonfire.SECTIONS['past']: (fixtures/'library-past.json').read_bytes()}
+    bodies = {
+        host: {'/portal/': (fixtures/f'{prefix}-portal.html').read_bytes(),
+               bonfire.SECTIONS['open']: (fixtures/f'{prefix}-open.json').read_bytes(),
+               bonfire.SECTIONS['past']: (fixtures/f'{prefix}-past.json').read_bytes()}
+        for host, prefix in [('torontopubliclibrary.bonfirehub.ca', 'library'),
+                             ('torontohousing.bonfirehub.ca', 'housing')]
+    }
     requests, waits = [], []
     def respond(request):
         requests.append(request)
-        return httpx.Response(200, content=bodies[request.url.path])
+        return httpx.Response(200, content=bodies[request.url.host][request.url.path])
     actual_capture = bonfire.capture_portal
     def capture(conn, portal):
         with httpx.Client(transport=httpx.MockTransport(respond)) as client:
             return actual_capture(conn, portal, client=client, sleep=waits.append,
-                                  clock=lambda:datetime(2026,10,22,15,tzinfo=timezone.utc))
+                                  clock=lambda:datetime(2026,10,23,16,30,tzinfo=timezone.utc))
     monkeypatch.setattr(bonfire, 'capture_portal', capture)
     monkeypatch.setattr(bonfire, 'run_bonfire_capture', _real_bonfire_capture)
     monkeypatch.setattr(cli, '_open_db', lambda: _KeepOpen(conn))
     assert nightly() == 0
-    assert len(requests) == 3 and waits == [1,1,1]
+    assert len(requests) == 6 and waits == [1]*6
     assert conn.execute("SELECT status FROM sync_run WHERE source='bonfire listings'").fetchone()[0] == 'ok'
     export = tmp_path/'export'
     doc = json.loads((export/'bids.json').read_text())
     library = next(b for b in doc['buyers'] if b['slug']=='toronto-public-library')
     assert len(library['portal_listings']) == 412 and library['awards'] == library['bids'] == []
-    assert pq.read_metadata(export/'portal_listing.parquet').num_rows == 412
+    housing = next(b for b in doc['buyers'] if b['slug']=='toronto-community-housing')
+    assert len(housing['portal_listings']) == 961 and housing['awards'] == housing['bids'] == []
+    assert pq.read_metadata(export/'portal_listing.parquet').num_rows == 1373
     with zipfile.ZipFile(export/'bids-csv.zip') as z:
-        assert len(list(csv.DictReader(io.StringIO(z.read('portal_listing.csv').decode())))) == 412
+        assert len(list(csv.DictReader(io.StringIO(z.read('portal_listing.csv').decode())))) == 1373
 
 
 def test_nightly_batches_uncached_work_and_reports_pending(nightly, monkeypatch, capsys, tmp_path):

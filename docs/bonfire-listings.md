@@ -1,6 +1,6 @@
 # Public Bonfire listings (#110, #134)
 
-`tb capture-bonfire-listings` captures enabled Bonfire buyers; `--only toronto-public-library` selects the Library. The same adapter runs in the isolated `bonfire listings` nightly step. Configuration is in `BONFIRE_PORTALS`, with each enabled buyer's source and [recorded permission](permissions/2026-10-22-bonfire.md). The initial buyer is Toronto Public Library; other Bonfire buyers can use the adapter after checking their actual portal behavior and adding their buyer/configuration. No platform-wide crawl is performed.
+`tb capture-bonfire-listings` captures enabled Bonfire buyers; `--only toronto-public-library` selects the Library. The same adapter runs in the isolated `bonfire listings` nightly step. Configuration is in `BONFIRE_PORTALS`, with each enabled buyer's source and [recorded permission](permissions/2026-10-22-bonfire.md). Enabled buyers are Toronto Public Library and the shared TCHC/TSHC portal (`--only toronto-community-housing`); other Bonfire buyers can use the adapter after checking their actual portal behavior and adding their buyer/configuration. No platform-wide crawl is performed.
 
 ## Source correction
 
