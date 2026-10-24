@@ -3,6 +3,20 @@ from toronto_bids.models import Buyer
 from toronto_bids.store import db
 
 DEFAULT_BUYERS = [
+    Buyer(slug='toronto-police-service', name='Toronto Police Service', kind='agency', partnered=0, funding_share=None,
+          platform="MERX", notes="Public buyer-scoped MERX notices; page identity is independent of printed references."),
+    Buyer(slug='toronto-parking-authority', name='Toronto Parking Authority', kind='agency', partnered=0, funding_share=None,
+          platform="MERX", notes="Public buyer-scoped MERX notices; page identity is independent of printed references."),
+    Buyer(slug='createto', name='CreateTO (Build Toronto, TPLC)', kind='agency', partnered=0, funding_share=None,
+          platform="MERX", notes="Public buyer-scoped MERX notices; page identity is independent of printed references."),
+    Buyer(slug='toronto-pan-am-sports-centre', name='Toronto Pan Am Sports Centre', kind='corporation', partnered=1, funding_share=None,
+          platform="MERX", notes="Public buyer-scoped MERX notices; page identity is independent of printed references."),
+
+    Buyer(slug="toronto-transit-commission", name="Toronto Transit Commission", kind="agency",
+          partnered=0, funding_share=None, platform="MERX / Bonfire",
+          notes="Public MERX pages and independent TTC reports. Unofficial bid results "
+                "are distinct from awards; legacy detail and historical coverage gaps "
+                "are reported by capture-merx. Printed references do not establish page identity."),
     Buyer(slug="the-atmospheric-fund", name="The Atmospheric Fund", kind="agency",
           partnered=0, funding_share=None, platform="Bonfire",
           notes="City agency serving the Greater Toronto and Hamilton Area. Public "

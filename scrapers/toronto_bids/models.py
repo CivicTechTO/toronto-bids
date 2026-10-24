@@ -245,6 +245,7 @@ class AgencyAward:
     award_amount: str | None = None      # extracted dollar token, verbatim — never summable
     value_confidential: int = 0
     award_date: str | None = None
+    publication_date: str | None = None
     report_url: str | None = None
     source: str = ""
     award_amount_numeric: float | None = field(init=False, default=None)
@@ -264,6 +265,7 @@ class AgencyBid:
     hst_basis: str | None = None
     price_header: str | None = None
     status: str | None = None
+    result_stage: str | None = None
     bid_price_numeric: float | None = field(init=False, default=None)
 
     def __post_init__(self):

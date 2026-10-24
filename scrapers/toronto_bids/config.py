@@ -221,3 +221,23 @@ BONFIRE_PORTALS = [
         'attribution': 'Source: The Atmospheric Fund (taf.bonfirehub.ca).',
     },
 ]
+
+# MERX buyer profiles verified against public listing fixtures (#133).
+MERX_PORTALS = [
+    dict(slug='toronto-transit-commission', body='Toronto Transit Commission',
+         portal_url='https://www.merx.com/ttc', enabled=True,
+         permission='docs/permissions/2026-10-24-merx.md',
+         attribution='Source: Toronto Transit Commission, published on MERX.'),
+    dict(slug='toronto-police-service', body='Toronto Police Service', portal_url='https://www.merx.com/torontopolice', enabled=True,
+         permission='docs/permissions/2026-10-24-merx.md', listing_buyer_label=False,
+         attribution='Source: Toronto Police Service, published on MERX.'),
+    dict(slug='toronto-parking-authority', body='Toronto Parking Authority', portal_url='https://www.merx.com/torontoparkingauthority', enabled=True,
+         permission='docs/permissions/2026-10-24-merx.md', listing_buyer_label=False,
+         attribution='Source: Toronto Parking Authority, published on MERX.'),
+    dict(slug='createto', body='CreateTO (Build Toronto, TPLC)', portal_url='https://www.merx.com/buildtorontotplc', enabled=True,
+         permission='docs/permissions/2026-10-24-merx.md', listing_buyer_label=False,
+         attribution='Source: CreateTO (Build Toronto, TPLC), published on MERX.'),
+    dict(slug='toronto-pan-am-sports-centre', body='Toronto Pan Am Sports Centre', portal_url='https://www.merx.com/torontopanamsportscentre', enabled=True,
+         permission='docs/permissions/2026-10-24-merx.md', listing_buyer_label=False,
+         attribution='Source: Toronto Pan Am Sports Centre, published on MERX.'),
+]

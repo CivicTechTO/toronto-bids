@@ -20,7 +20,7 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_parser("status", help="Show row counts in the local store")
 
     p_coverage = sub.add_parser('agency-coverage', help='Inspect agency identity decisions and coverage as JSON (#257)')
-    p_coverage.add_argument('--only', choices=['trca', 'zoo', 'ep'])
+    p_coverage.add_argument('--only', choices=['trca', 'zoo', 'ep', 'ttc'])
     p_coverage.add_argument('--baseline', help='Read-only SQLite baseline for prior-fact reconciliation')
     p_coverage.add_argument('--out', help='Write report to this path instead of stdout')
 
@@ -140,6 +140,19 @@ def build_parser() -> argparse.ArgumentParser:
         "2026-07-17-deployment-design.md",
     )
 
+    sub.add_parser('capture-ttc-reports',
+        help='Archive reviewed independent TTC procurement reports; extraction is separate')
+
+    p_merx = sub.add_parser('capture-merx', help='Archive public MERX listings/results with explicit coverage (#133)')
+    p_merx.add_argument('--only', choices=[p['slug'] for p in config.MERX_PORTALS])
+    p_merx.add_argument('--backfill', action='store_true', help='Reconcile historical windows and smaller positive searches')
+    p_merx.add_argument('--resume', action='store_true', help='Reuse hash-verified historical pages; always recheck live population')
+    p_merx.add_argument('--details', action='store_true', help='Capture advertised public bid/award tabs; report legacy gates')
+    p_merx.add_argument('--section', choices=['open', 'closed', 'results', 'awarded'], action='append')
+    p_merx.add_argument('--keywords', help='Capture a bounded buyer-scoped query; coverage applies only to this query')
+    p_merx.add_argument('--query', action='append', default=[], help='Additional positive buyer-scoped backfill query')
+    p_merx.add_argument('--max-requests', type=int, default=300, help='Hard per-buyer request budget (default 300)')
+
     p_bonfire = sub.add_parser('capture-bonfire-listings',
         help='Capture public Bonfire listing metadata with respectful backoff (#110/#134)')
     p_bonfire.add_argument('--only', choices=[p['slug'] for p in config.BONFIRE_PORTALS])
@@ -218,6 +231,7 @@ def build_parser() -> argparse.ArgumentParser:
             "trca",
             "ep",
             "zoo",
+            "ttc",
             "award_summary",
             "committee",
             "composite",
@@ -1008,6 +1022,27 @@ def _run_nightly(args) -> int:
                 run_id = _run_step(steps, failures, 'bonfire listings', _bonfire, conn=conn)
                 _mark_if_swallowed_failures(steps, failures, conn, run_id, before_len)
 
+                def _merx():
+                    from toronto_bids.sources.merx import run_merx_capture
+                    def counts():
+                        return tuple(conn.execute(
+                            f"SELECT COUNT(*) FROM {table} WHERE source='merx'"
+                        ).fetchone()[0] for table in ('agency_bid', 'agency_award'))
+                    bids_before, awards_before = counts()
+                    results = run_merx_capture(conn, log=out)
+                    for slug, result in results.items():
+                        failures.extend((f'merx:{slug}', error) for error in result['failures'])
+                        failures.extend((f"merx:{slug}:{gap['notice_id']}", gap['reason'])
+                                        for gap in result['detail_gaps'])
+                    bids_after, awards_after = counts()
+                    listings = sum(result['listings'] for result in results.values())
+                    return (f'{listings} listings · {bids_after - bids_before:+d} bids · '
+                            f'{awards_after - awards_before:+d} awards')
+
+                before_len = len(failures)
+                run_id = _run_step(steps, failures, 'merx', _merx, conn=conn)
+                _mark_if_swallowed_failures(steps, failures, conn, run_id, before_len)
+
                 def _ariba():
                     from toronto_bids.sources import ariba_attachments as aa
 
@@ -1754,6 +1789,41 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_amounts(args)
     if args.command == "enrich-ariba-attachments":
         return _cmd_enrich_ariba_attachments(args)
+    if args.command == 'capture-ttc-reports':
+        import json
+        from toronto_bids.sources.ttc_reports import capture_reports
+        conn = _open_db()
+        try:
+            report = capture_reports(conn)
+            print(json.dumps(report, indent=2))
+            return int(bool(report['failures']))
+        finally:
+            conn.close()
+    if args.command == 'capture-merx':
+        import json
+        from toronto_bids.sources.merx import capture_portal
+        if args.resume and not args.backfill:
+            parser.error('--resume requires --backfill')
+        if args.max_requests < 1:
+            parser.error('--max-requests must be positive')
+        conn = _open_db()
+        failed = False
+        try:
+            for portal in config.MERX_PORTALS:
+                if not portal['enabled'] or (args.only and args.only != portal['slug']):
+                    continue
+                try:
+                    report = capture_portal(conn, portal, backfill=args.backfill, resume=args.resume,
+                        details=args.details, sections=args.section, queries=args.query, keyword=args.keywords,
+                        max_requests=args.max_requests, log=lambda m: print(m, flush=True))
+                    print(json.dumps(report, indent=2))
+                    failed |= bool(report['failures'] or report['detail_gaps'])
+                except Exception as exc:
+                    print(f"FAILED merx:{portal['slug']}: {exc}", file=sys.stderr)
+                    failed = True
+            return int(failed)
+        finally:
+            conn.close()
     if args.command == 'capture-bonfire-listings':
         from toronto_bids.sources.bonfire import run_bonfire_capture
         conn = _open_db()

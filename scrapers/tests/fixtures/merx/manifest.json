@@ -1,0 +1,138 @@
+{
+  "captured_on": "2026-10-24",
+  "sanitization": "HTML scripts/styles, login forms and CSRF tokens removed. JS fixtures retain only the unchanged literal fragment envelope. Public listing and field payloads are unchanged.",
+  "responses": [
+    {
+      "fixture": "ttc.html",
+      "url": "https://www.merx.com/ttc",
+      "original_sha256": "09e764b0be231e23bcbe17f78b0d7ec72382d3b5573bd90a2fde2842dc0f00ab",
+      "fixture_sha256": "bc984e4b57edc2133ef505a384924124279d49f1b773467ea526d419c3a7e40d"
+    },
+    {
+      "fixture": "closed.html",
+      "url": "https://www.merx.com/ttc/solicitations/closed-bids?selectedContent=BUYER",
+      "original_sha256": "8ebfbad0fc8314d7de2270dabfd915d76411b4502a7147b9aa5710d6731d15c8",
+      "fixture_sha256": "68652e4e4fa305aeba06acdcbc329ffa3158efcc390fb1d13c89228cb7bc2351"
+    },
+    {
+      "fixture": "bidresults.html",
+      "url": "https://www.merx.com/ttc/solicitations/bidresults-bids?selectedContent=BUYER",
+      "original_sha256": "610070468e7aa51ae43fa961d2548c731bd1270643acbcf01398818d6261adb7",
+      "fixture_sha256": "2f7c701a96ae77f48fe61ba5bf0c6643644973ea9a55e1b761de34cab9a17c63"
+    },
+    {
+      "fixture": "awarded.html",
+      "url": "https://www.merx.com/ttc/solicitations/awarded-bids?selectedContent=BUYER",
+      "original_sha256": "2a8d643e9a9ba2dd3eecf209de164c1c409d7b89d1d0936005042ab45a8978ca",
+      "fixture_sha256": "b8bc5676aa6d4362eca3243f944a58d5506d8ceef325f1a53b8da5d37c62bfae"
+    },
+    {
+      "fixture": "result-detail.html",
+      "url": "https://www.merx.com/ttc/ttcpurchasingandsales/solicitations/REQUEST-FOR-BIDS-FOR-THE-SUPPLY-OF-AXLE-BID-NO-T06BI26617/0000333265?purchasingGroupId=1177575101&origin=1",
+      "original_sha256": "c9ae1312dd7812477d597fdeee075d9a20e5b32e71073118c6cc014cd2668fed",
+      "fixture_sha256": "12eeb5f3a540e75d83e3a685d08b852a5e24ec4cd907ad936789822ba4134324"
+    },
+    {
+      "fixture": "award-detail.html",
+      "url": "https://www.merx.com/ttc/ttcpurchasingandsales/solicitations/REQUEST-FOR-BIDS-FOR-THE-SUPPLY-OF-MCC-CONDENSER-BID-NO-T06BI26599/0000331101?purchasingGroupId=1177575101&origin=1",
+      "original_sha256": "32ee531f22c0fcc49a95685a38a30ae12d4520fb90c0020f5b830ab2ade04ec4",
+      "fixture_sha256": "dee8d4db99873f8a83e804d301295181310133cb154b8764b0be1cc16b0e4bd6"
+    },
+    {
+      "fixture": "bid-fragment.js",
+      "url": "https://www.merx.com/public/solicitations/4109202665/abstract/bid-results",
+      "original_sha256": "e950edc182d1ffe4d79701d60fdbc2946d9ba96ccfe3c6894ffd91fd9d625ae8",
+      "fixture_sha256": "c2a78bb7ce6706043be47046fa98332baa8d2f0db86accd7d3bdefe7130b0541"
+    },
+    {
+      "fixture": "award-fragment.js",
+      "url": "https://www.merx.com/public/solicitations/4076848809/abstract/award",
+      "original_sha256": "ad0d8e565429a314579fa1e97e6f6eaa7bffca0702d75f9bc96204caceb10f4a",
+      "fixture_sha256": "f009a306bf6249cbbd6cf7d289bdcd3820a78a60a2efb87d0d123c8d832a7b94"
+    },
+    {
+      "fixture": "t11-1.html",
+      "url": "https://www.merx.com/ttc/solicitations/closed-bids?selectedContent=BUYER&keywords=T11&pageNumber=1&sortBy=publicationDate&sortDirection=ASC",
+      "original_sha256": "ba5abfe7c16f352b0437e5a5a7603695697077e2334098dba301c191ffbf25ba",
+      "fixture_sha256": "2391b28ca51e117374dea6525ae8b64d2fa9cf857400c4759b62632372180480"
+    },
+    {
+      "fixture": "t11-2.html",
+      "url": "https://www.merx.com/ttc/solicitations/closed-bids?selectedContent=BUYER&keywords=T11&pageNumber=2&sortBy=publicationDate&sortDirection=ASC",
+      "original_sha256": "6956a0f0c9980b539c330834438549ec3c314081fd7a18ce0df3514ff9deaeaa",
+      "fixture_sha256": "c7ed2f706e6aa0fe25a4ed2457246fdbee1f640a53494c4ed6a869aff1c62e5b"
+    },
+    {
+      "fixture": "t11-3.html",
+      "url": "https://www.merx.com/ttc/solicitations/closed-bids?selectedContent=BUYER&keywords=T11&pageNumber=3&sortBy=publicationDate&sortDirection=ASC",
+      "original_sha256": "ef4ee7a3bff3ffd14e17c9b6eb8ada07a5f425e34f1710708a53d8d4eeec0f34",
+      "fixture_sha256": "7fda18f38feb3f1c69e28076a0b2518d7f90586929f55f513fb6cac8c259fe69"
+    },
+    {
+      "fixture": "t11-4.html",
+      "url": "https://www.merx.com/ttc/solicitations/closed-bids?selectedContent=BUYER&keywords=T11&pageNumber=4&sortBy=publicationDate&sortDirection=ASC",
+      "original_sha256": "170c58738014c5f5a37376790c684a18387f2c899b92ba466413716e2e7c9695",
+      "fixture_sha256": "3ac98416760d272d23632d90165cca59b36847eb277460690dbe12e088aae66a"
+    },
+    {
+      "fixture": "t11-5.html",
+      "url": "https://www.merx.com/ttc/solicitations/closed-bids?selectedContent=BUYER&keywords=T11&pageNumber=5&sortBy=publicationDate&sortDirection=ASC",
+      "original_sha256": "265f78c7b53bd6dee5c2fa42fdd4b2a14c7e767616d9587551df9ddea5d79b29",
+      "fixture_sha256": "6003784642801eda24878aa297b1fca564fd9914786e9a5dc4a5a0f2676621f2"
+    },
+    {
+      "fixture": "t11-6.html",
+      "url": "https://www.merx.com/ttc/solicitations/closed-bids?selectedContent=BUYER&keywords=T11&pageNumber=6&sortBy=publicationDate&sortDirection=ASC",
+      "original_sha256": "9e7fc6acf95062e9e0a97d5fdfd5df732b80e1934772813cd1c3880f362693b7",
+      "fixture_sha256": "6d79fc12d2d1e64a89f82b574bc3284e32f09f1325b9ff7f5e3f61c05c2309af"
+    },
+    {
+      "fixture": "t11-7.html",
+      "url": "https://www.merx.com/ttc/solicitations/closed-bids?selectedContent=BUYER&keywords=T11&pageNumber=7&sortBy=publicationDate&sortDirection=ASC",
+      "original_sha256": "d7ce8f95e27878cc9892902b41b8cdfc2b373bdae26406aa85ddcc5854d3d997",
+      "fixture_sha256": "8e413fc802e7c16cf72d04a88f14f0208370e23a127a0137f5bf554e4cbb37ad"
+    },
+    {
+      "fixture": "t11-8.html",
+      "url": "https://www.merx.com/ttc/solicitations/closed-bids?selectedContent=BUYER&keywords=T11&pageNumber=8&sortBy=publicationDate&sortDirection=ASC",
+      "original_sha256": "2272d5c88d281fa024ac0dfae8e9fdf164ef42a903bcae6ab4e278eab9e85911",
+      "fixture_sha256": "35c51b140af53e87ae02dea73102836cccc4f924631617d17b0e8d8a82fe4da6"
+    },
+    {
+      "fixture": "t11-9.html",
+      "url": "https://www.merx.com/ttc/solicitations/closed-bids?selectedContent=BUYER&keywords=T11&pageNumber=9&sortBy=publicationDate&sortDirection=ASC",
+      "original_sha256": "82b184c3f8c7dc6eb0e9c435266f7b4781d2508b9ce55eb6c1db2d324c2f4b18",
+      "fixture_sha256": "de1a0a03d386b861e111b6510415ed08c30f5cc705e26ffefd5abf35ffd9c49a"
+    },
+    {
+      "fixture": "torontopolice.html",
+      "url": "https://www.merx.com/torontopolice/solicitations/open-bids?selectedContent=BUYER",
+      "original_sha256": "e66ddc909ebd49229d5f63929d4a483371ef17e6dc61e128132a3d501092d2e9",
+      "fixture_sha256": "2c44ca0ef2dc529664dd91b4f28d2bbf98f99cb61ef4038fb054ff4ca39d7790"
+    },
+    {
+      "fixture": "torontoparkingauthority.html",
+      "url": "https://www.merx.com/torontoparkingauthority/solicitations/open-bids?selectedContent=BUYER",
+      "original_sha256": "b1201731146ef5431b84e8b59f9d01afba320cbda6492a709b964c5d820ee7ef",
+      "fixture_sha256": "216e48aa6126fe5d7bd3541d8e0dfe078d15e2659406566fae6b5c52debe0fa9"
+    },
+    {
+      "fixture": "buildtorontotplc.html",
+      "url": "https://www.merx.com/buildtorontotplc/solicitations/open-bids?selectedContent=BUYER",
+      "original_sha256": "53e9aed81681a3bd533fac44a51625f3a45be362a48af470eb94e26c3e5e7b8b",
+      "fixture_sha256": "3512936a0f0d02e03e3f86ad05f3fed49052568522dd121fdb9380a4eec6b9aa"
+    },
+    {
+      "fixture": "torontopanamsportscentre.html",
+      "url": "https://www.merx.com/torontopanamsportscentre/solicitations/open-bids?selectedContent=BUYER",
+      "original_sha256": "9f937613a8b5b27b9efa9130347e35b2faa61169327ad9de8f77cac9ba835cb4",
+      "fixture_sha256": "9fc409b29cfab14e188a0c42709e1d2ed034875a9c4f0d3bbf41ed955e5bbce1"
+    },
+    {
+      "fixture": "award-bid-fragment.js",
+      "url": "https://www.merx.com/public/solicitations/4076848809/abstract/bid-results",
+      "original_sha256": "f4c95fc5e4d848bb1532faf077afa2e1ee9289ab8079327a8dc0fa790307a35f",
+      "fixture_sha256": "66ac39fa4d63566062eb74da3de5855072779ef594c6a92ad3043ce53418c75e"
+    }
+  ]
+}

@@ -11,6 +11,7 @@ from toronto_bids import cli, config, notify
 from toronto_bids.cli import _capture_agency_bodies as _real_agency_capture
 from toronto_bids.sources.bids_tenders import run_portal_capture as _real_portal_capture
 from toronto_bids.sources.bonfire import run_bonfire_capture as _real_bonfire_capture
+from toronto_bids.sources.merx import run_merx_capture as _real_merx_capture
 
 
 @pytest.fixture
@@ -21,7 +22,8 @@ def nightly(conn, monkeypatch, tmp_path):
     monkeypatch.setattr(cli.pipeline, "sync", lambda *a, **k: [])
     monkeypatch.setattr(cli.HttpClient, "__init__", lambda self, *a, **k: None)
     monkeypatch.setattr(cli.HttpClient, "close", lambda self: None)
-    from toronto_bids.sources import award_summary, bids_tenders, waterfront, bonfire
+    from toronto_bids.sources import award_summary, bids_tenders, waterfront, bonfire, merx
+    monkeypatch.setattr(merx, "run_merx_capture", lambda *a, **k: {})
     monkeypatch.setattr(bonfire, "run_bonfire_capture", lambda *a, **k: {})
     monkeypatch.setattr(waterfront, "capture_awards", lambda *a, **k: {"blocks": 0, "failures": []})
     monkeypatch.setattr(award_summary, "download_award_summaries", lambda *a, **k: 0)
@@ -339,7 +341,7 @@ def test_nightly_records_a_sync_run_row_for_every_step_but_sync(nightly, monkeyp
     monkeypatch.setattr(cli, "_open_db", lambda: _KeepOpen(conn))
     nightly()
     sources = _sync_run_sources(conn)
-    for step in ("award summaries", "portal", "ariba attachments", "agencies",
+    for step in ("award summaries", "portal", "merx", "ariba attachments", "agencies",
                 "supplier rebuild", "export"):
         assert sources.get(step) == "ok", sources
     assert "sync" not in sources
@@ -884,3 +886,116 @@ def test_nightly_batches_uncached_work_and_reports_pending(nightly, monkeypatch,
     assert '⏳' in text and 'Extraction pending' in text
     assert (tmp_path / 'export/bids.json').exists()
     assert not batching_enabled()
+
+
+def test_merx_coverage_failure_reaches_nightly_status_and_export(nightly, monkeypatch, conn, tmp_path):
+    from toronto_bids.sources import merx
+    monkeypatch.setattr(cli, '_open_db', lambda: _KeepOpen(conn))
+    monkeypatch.setattr(merx, 'run_merx_capture', lambda *a, **k: {
+        'toronto-transit-commission': dict(listings=25, failures=['changing total'],
+            detail_gaps=[dict(notice_id='879704954', reason='legacy detail requires entitlement')])})
+    posted = []
+    monkeypatch.setattr(notify, 'post', lambda text, **k: posted.append(text))
+    assert nightly() == 1
+    row = conn.execute("SELECT status,error FROM sync_run WHERE source='merx'").fetchone()
+    assert row['status'] == 'failed' and 'changing total' in row['error']
+    assert '879704954' in posted[0] and 'legacy detail requires entitlement' in posted[0]
+    assert (tmp_path / 'export' / 'bids.json').exists()
+
+
+def test_raising_merx_step_is_isolated(nightly, monkeypatch, conn, tmp_path):
+    from toronto_bids.sources import merx
+    monkeypatch.setattr(cli, '_open_db', lambda: _KeepOpen(conn))
+    def fail(*a, **k):
+        raise RuntimeError('MERX unavailable')
+    monkeypatch.setattr(merx, 'run_merx_capture', fail)
+    assert nightly() == 1
+    assert conn.execute("SELECT status FROM sync_run WHERE source='merx'").fetchone()[0] == 'failed'
+    assert conn.execute("SELECT status FROM sync_run WHERE source='ariba attachments'").fetchone()[0] == 'ok'
+    assert (tmp_path / 'export' / 'bids.json').exists()
+
+
+def test_nightly_merx_counts_actual_bid_and_award_growth(nightly, monkeypatch, conn):
+    from toronto_bids.sources import merx
+    from toronto_bids.buyers import seed_buyers
+    from toronto_bids.models import AgencyBid, AgencyAward
+    monkeypatch.setattr(cli, '_open_db', lambda: _KeepOpen(conn))
+    buyer = seed_buyers(conn)['toronto-transit-commission']
+    def capture(*a, **k):
+        cli.db.upsert_row(conn, AgencyBid(buyer_id=buyer,native_ref='page',bidder_name_raw='Bidder',source='merx'), overwrite=True)
+        cli.db.upsert_row(conn, AgencyAward(buyer_id=buyer,native_ref='page',supplier_name_raw='Awardee',source='merx'), overwrite=True)
+        conn.commit()
+        return {'toronto-transit-commission': dict(listings=25, failures=[], detail_gaps=[])}
+    monkeypatch.setattr(merx, 'run_merx_capture', capture)
+    posted = []
+    monkeypatch.setattr(notify, 'post', lambda text, **k: posted.append(text))
+    assert nightly() == 0
+    assert '25 listings · +1 bids · +1 awards' in posted[0]
+    posted.clear()
+    assert nightly() == 0
+    assert '25 listings · +0 bids · +0 awards' in posted[0]
+
+
+def test_real_merx_capture_reaches_nightly_history_and_export(nightly, monkeypatch, conn, tmp_path):
+    """Real listing/detail parsers and the real per-buyer runner, with HTTP fixtures."""
+    import json
+    from pathlib import Path
+    import httpx
+    from lxml import html
+    from toronto_bids.sources import merx
+    fixtures=Path(__file__).parent/'fixtures/merx'
+    portal=config.MERX_PORTALS[0]
+    monkeypatch.setattr(config,'MERX_PORTALS',[portal])
+    monkeypatch.setattr(cli,'_open_db',lambda:_KeepOpen(conn))
+    def listing(name,keep):
+        tree=html.fromstring((fixtures/(name+'.html')).read_bytes())
+        for a in tree.xpath('//a[contains(@class,"solicitation-link")]'):
+            if not keep or not a.get('href').split('?')[0].endswith('/'+keep):
+                a.xpath('ancestor::tr[1]')[0].drop_tree()
+        count=1 if keep else 0
+        # Replace only the numeric listing heading; navigation stays untouched.
+        label={'ttc':'Open Solicitations','closed':'Closed Solicitations',
+               'bidresults':'Bid Results','awarded':'Awarded Solicitations'}[name]
+        nodes=tree.xpath('//*[not(*) and contains(text(),"'+label+'")]')
+        import re
+        headings=[e for e in nodes if re.search(r'\d[\d,]*\s+'+label,e.text or '')]
+        assert len(headings)==1
+        headings[0].text=str(count)+' '+label
+        return html.tostring(tree)
+    pages={'open-bids':listing('ttc',None),'closed-bids':listing('closed','0000333265'),
+           'bidresults-bids':listing('bidresults','0000333265'),
+           'awarded-bids':listing('awarded','0000331101')}
+    calls=[]
+    def handle(request):
+        path=request.url.path;calls.append(path)
+        if path.rsplit('/',1)[-1] in pages:
+            return httpx.Response(200,content=pages[path.rsplit('/',1)[-1]])
+        if path.endswith('/0000333265'):
+            name='result-detail.html'
+        elif path.endswith('/0000331101'):
+            name='award-detail.html'
+        elif path.endswith('/4109202665/abstract/bid-results'):
+            name='bid-fragment.js'
+        elif path.endswith('/4076848809/abstract/bid-results'):
+            name='award-bid-fragment.js'
+        elif path.endswith('/4076848809/abstract/award'):
+            name='award-fragment.js'
+        else:
+            raise AssertionError('Unexpected MERX request: '+path)
+        return httpx.Response(200,content=(fixtures/name).read_bytes())
+    actual=merx.capture_portal
+    with httpx.Client(transport=httpx.MockTransport(handle)) as client:
+        monkeypatch.setattr(merx,'capture_portal',lambda conn,portal,**kw:
+            actual(conn,portal,client=client,sleep=lambda n:None,**kw))
+        monkeypatch.setattr(merx,'run_merx_capture',_real_merx_capture)
+        assert nightly()==0
+    assert len(calls)==9
+    assert conn.execute("SELECT status FROM sync_run WHERE source='merx'").fetchone()[0]=='ok'
+    assert conn.execute("SELECT COUNT(*) FROM agency_bid WHERE source='merx'").fetchone()[0]==15
+    assert conn.execute("SELECT COUNT(*) FROM agency_award WHERE source='merx'").fetchone()[0]==1
+    doc=json.loads((tmp_path/'export/bids.json').read_text())
+    buyer=next(b for b in doc['buyers'] if b['slug']==portal['slug'])
+    assert len(buyer['portal_listings'])==2 and len(buyer['bids'])==15 and len(buyer['awards'])==1
+    assert {r['result_stage'] for r in buyer['bids']}=={'Unofficial Results'}
+    assert buyer['awards'][0]['award_date']=='2026-10-05'
+    assert buyer['awards'][0]['publication_date']=='2026-10-08'

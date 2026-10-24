@@ -470,6 +470,7 @@ CREATE TABLE IF NOT EXISTS agency_award (
     -- Distinct from "not published": the award happened, the value is deliberately withheld.
     value_confidential   INTEGER DEFAULT 0,
     award_date           TEXT,
+    publication_date     TEXT,
     report_url           TEXT,
     source               TEXT,
     procurement_id INTEGER REFERENCES procurement(id),
@@ -498,6 +499,7 @@ CREATE TABLE IF NOT EXISTS agency_bid (
     hst_basis         TEXT,
     price_header      TEXT,
     status            TEXT,
+    result_stage      TEXT,
     report_url        TEXT,
     source            TEXT,
     procurement_id INTEGER REFERENCES procurement(id),
@@ -589,4 +591,21 @@ CREATE TABLE IF NOT EXISTS publication_extraction (
     errors TEXT NOT NULL,
     last_seen TEXT NOT NULL DEFAULT (datetime('now')),
     PRIMARY KEY (buyer_id, publication_month)
+);
+
+-- Source ID -> first observed public page: slugs/tabs are not notice identity.
+CREATE TABLE IF NOT EXISTS merx_notice (
+    buyer_id INTEGER NOT NULL REFERENCES buyer(id),
+    notice_id TEXT NOT NULL,
+    portal_url TEXT NOT NULL,
+    PRIMARY KEY(buyer_id, notice_id),
+    UNIQUE(buyer_id, portal_url)
+);
+CREATE TABLE IF NOT EXISTS merx_capture (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    buyer_id INTEGER NOT NULL REFERENCES buyer(id),
+    captured_at TEXT NOT NULL,
+    mode TEXT NOT NULL,
+    complete INTEGER NOT NULL,
+    report_json TEXT NOT NULL
 );

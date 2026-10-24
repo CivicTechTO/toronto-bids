@@ -47,7 +47,7 @@ def _attribution() -> list[dict]:
             "source_url": p["portal_url"],
             "permission": p["permission"],
         }
-        for p in sorted(config.BIDS_TENDERS_PORTALS + config.BONFIRE_PORTALS, key=lambda p: p["slug"])
+        for p in sorted(config.BIDS_TENDERS_PORTALS + config.BONFIRE_PORTALS + config.MERX_PORTALS, key=lambda p: p["slug"])
         if p["enabled"] and p.get("attribution")
     ]
 
@@ -222,6 +222,8 @@ def build_export_document(conn, generated_at: str | None = None) -> dict:
                 conn, f"SELECT * FROM published_award WHERE buyer_id={bid_} ORDER BY source_key")],
             "publication_extractions": [_parse_json(_drop(r, "buyer_id"), "errors") for r in _rows(
                 conn, f"SELECT * FROM publication_extraction WHERE buyer_id={bid_} ORDER BY publication_month")],
+            "merx_captures": [_parse_json(_drop(r, "id", "buyer_id"), "report_json") for r in _rows(
+                conn, f"SELECT * FROM merx_capture WHERE buyer_id={bid_} ORDER BY id")],
             "portal_listings": [_drop(r, "id", "buyer_id") for r in _rows(
                 conn, f"SELECT * FROM portal_listing WHERE buyer_id={bid_} ORDER BY portal_url")],
             "awards": [_drop(r, "id", "buyer_id") for r in _rows(

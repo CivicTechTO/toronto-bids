@@ -106,6 +106,8 @@ EXPORT_TABLES = [
     "award_publication",
     "published_award",
     "publication_extraction",
+    "merx_notice",
+    "merx_capture",
 ]
 
 
