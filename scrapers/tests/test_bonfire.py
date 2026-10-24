@@ -294,3 +294,38 @@ def test_enabled_bonfire_buyers_have_durable_permission_records():
     for portal in config.BONFIRE_PORTALS:
         if portal['enabled']:
             assert portal['permission'] and (root / portal['permission']).is_file()
+
+
+@pytest.mark.parametrize('slug,prefix,expected,statuses', [
+    ('waterfront-toronto', 'waterfront', 78, {'Open': 1, 'Closed': 77}),
+    ('exhibition-place', 'exhibition', 94, {'Open': 1, 'Awarded': 77, 'Cancelled': 12, 'Closed': 4}),
+    ('the-atmospheric-fund', 'taf', 16, {'Awarded': 8, 'Closed': 6, 'Cancelled': 2}),
+])
+def test_remaining_bonfire_buyers_use_real_public_responses(conn, tmp_path, slug, prefix, expected, statuses):
+    portal = next(p for p in config.BONFIRE_PORTALS if p['slug'] == slug)
+    bodies = {LANDING: (FIXTURES/f'{prefix}-portal.html').read_bytes(),
+              OPEN: (FIXTURES/f'{prefix}-open.json').read_bytes(),
+              PAST: (FIXTURES/f'{prefix}-past.json').read_bytes()}
+    calls, waits = [], []
+    def handle(request):
+        calls.append(str(request.url))
+        return httpx.Response(200, content=bodies[request.url.path])
+    observed = datetime(2026, 10, 24, 4, tzinfo=timezone.utc)
+    with httpx.Client(transport=httpx.MockTransport(handle)) as client:
+        count = bf.capture_portal(conn, portal, client=client, data_dir=tmp_path,
+                                  sleep=waits.append, clock=lambda: observed)
+    assert count == expected and len(calls) == 3 and waits == [1, 1, 1]
+    assert all(str(httpx.URL(u).copy_with(path='/', query=None)).rstrip('/') == portal['portal_url'] for u in calls)
+    rows = list(conn.execute('SELECT * FROM portal_listing'))
+    assert Counter(r['status'] for r in rows) == statuses
+    assert len({r['procurement_id'] for r in rows}) == expected
+    if slug == 'exhibition-place':
+        assert len({r['procurement_id'] for r in rows if r['native_ref'] == 'EPRFP2025-7745'}) == 2
+    # Public Awarded badges carry no winning-supplier/value evidence.
+    assert all(conn.execute(f'SELECT COUNT(*) FROM {table}').fetchone()[0] == 0
+               for table in ('agency_award', 'agency_bid', 'agency_solicitation', 'solicitation', 'award'))
+    export = build_export_document(conn, generated_at='fixed')
+    buyer = next(b for b in export['buyers'] if b['slug'] == slug)
+    assert len(buyer['portal_listings']) == expected
+    assert any(a['slug'] == slug and a['source_url'] == portal['portal_url'] for a in export['meta']['attribution'])
+    assert conn.execute('PRAGMA foreign_key_check').fetchall() == []
