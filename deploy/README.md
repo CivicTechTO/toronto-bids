@@ -2,7 +2,7 @@
 
 Design: [`docs/superpowers/specs/2026-07-17-deployment-design.md`](../docs/superpowers/specs/2026-07-17-deployment-design.md)
 
-User-level systemd. `tb nightly` is a single unified run: sync, award summaries, Ariba
+User-level systemd. `tb nightly` is a single unified run: sync, award summaries, MERX, Ariba
 attachment capture, agency (Zoo/TRCA/EP) board-report scrapes, council enrichment (monthly,
 gated to the 1st), export, then publish. The browser-driven captures run in-line, isolated the
 same way sources are — a failure in one is recorded and never blocks the rest, and export +
@@ -453,3 +453,13 @@ monthly inside the nightly (gated to the 1st), so there is nothing separate to s
   nightly (gated to the 1st) rather than every run.
 
 Run either by hand if ever needed outside the nightly's own schedule.
+
+### MERX capture
+
+The nightly `merx` step captures public listings and advertised public bid/award
+tabs for the five enabled buyer profiles after Bonfire. It requires no credentials
+or new timer. Requests identify the archive and serialize with a five-second
+minimum interval and persistent Retry-After deadlines. The summary reports listing
+counts and actual bid/award growth; a buyer failure or detail gap fails the step
+while the remaining buyers, later steps and export continue. Full historical
+backfills remain a separate operation; see [MERX operation](../docs/merx.md).

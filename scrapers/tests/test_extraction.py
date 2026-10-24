@@ -58,7 +58,7 @@ def test_load_labels_returns_empty_dict_when_file_missing(tmp_path):
 # ── corpus definitions ──
 
 
-def test_all_seven_corpora_are_defined():
+def test_all_corpora_are_defined():
     assert set(CORPORA.keys()) == {
         "trca",
         "ep",
@@ -67,6 +67,7 @@ def test_all_seven_corpora_are_defined():
         "committee",
         "composite",
         "ba_report",
+        "ttc",
     }
 
 

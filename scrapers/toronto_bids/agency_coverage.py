@@ -82,7 +82,7 @@ def summarize(decisions):
 
 def report(conn, *, only=None, baseline=None):
     """Read-only report of latest successful coverage, current and historical decisions."""
-    corpora = [only] if only else ['trca', 'zoo', 'ep']
+    corpora = [only] if only else ['trca', 'zoo', 'ep', 'ttc']
     agencies = {}
     for corpus in corpora:
         saved = conn.execute('SELECT * FROM agency_coverage WHERE corpus=?', (corpus,)).fetchone()

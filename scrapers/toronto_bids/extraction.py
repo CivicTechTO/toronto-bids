@@ -15,6 +15,7 @@ from toronto_bids.batch_extraction import ExtractionPending
 from toronto_bids.store.db import get_extraction, is_extracted, mark_extracted
 
 CORPORA = {
+    "ttc": "kind='ttc_board'",
     "trca": "kind='agency_board' AND url LIKE '%escribemeetings%'",
     "ep": "kind='agency_board' AND url LIKE '%/ep/%'",
     "zoo": "kind='agency_board' AND url LIKE '%/zb/%'",
@@ -430,6 +431,7 @@ def _normalize_name(name: str | None) -> str:
 
 
 _CORPUS_SOURCE = {
+    "ttc": "ttc_board",
     "trca": "trca_board",
     "ep": "ep_board",
     "zoo": "zoo_board",
@@ -440,6 +442,7 @@ _CORPUS_SOURCE = {
 }
 
 _CORPUS_BUYER_SLUG = {
+    "ttc": "toronto-transit-commission",
     "trca": "trca",
     "ep": "exhibition-place",
     "zoo": "toronto-zoo",
@@ -559,7 +562,7 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
     contracts_refused = 0
     decisions = []
     coverage = None
-    if corpus in ("trca", "ep", "zoo"):
+    if corpus in ("trca", "ep", "zoo", "ttc"):
         from toronto_bids.linking.agency_reference import normalize_agency_reference, report_reference
         from toronto_bids.agency_coverage import decision
         from toronto_bids.linking.agency_identity import reviewed_identity
@@ -589,6 +592,11 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
                     continue
                 withheld_awards_reason = (identity_evidence.get('withheld_awards_reason')
                                           if identity_evidence is not None else None)
+                if corpus == 'ttc' and contract.get('awards'):
+                    # A procurement authorization report is a recommendation. Its
+                    # minutes/decision must be reviewed separately before an award fact.
+                    withheld_awards_reason = 'TTC report award recommendation requires independent decision verification'
+                    identity_evidence = dict(identity_evidence or {}, withheld_awards_reason=withheld_awards_reason)
                 if withheld_awards_reason:
                     contracts_refused += 1
                     refusal_details.append(f"{row['url']}: {withheld_awards_reason}")
@@ -600,7 +608,7 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
                         buyer_id=buyer_id,
                         native_ref=ref,
                         title=contract.get("title"),
-                        status="awarded" if has_awards else None,
+                        status="awarded" if has_awards and not withheld_awards_reason else None,
                         posted_date=contract.get("posted_date"),
                         closing_date=contract.get("closed_date"),
                         portal_url=None,
@@ -620,6 +628,7 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
                             hst_basis=_hst_basis(bid),
                             price_header=bid.get("price_header"),
                             status=bid.get("status"),
+                            result_stage="Board report" if corpus == "ttc" else None,
                             report_url=row["url"],
                             source=source,
                         )

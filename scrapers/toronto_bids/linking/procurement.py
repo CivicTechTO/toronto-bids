@@ -125,6 +125,9 @@ def _resolve(conn):
                     pid = row['procurement_id'] or ids.get('unidentified_bid', row['id'])
             elif table == 'published_award':
                 pid = ids.get('published_award:' + str(row['buyer_id']), row['source_key'])
+            elif table in ('agency_bid', 'agency_award') and row['source'] == 'merx':
+                # MERX facts use the held notice page, never its reusable printed label.
+                pid = ids.get('agency_portal:' + str(row['buyer_id']), row['native_ref'])
             elif table == 'portal_listing' or (table == 'agency_solicitation'
                                                and row['source'] == 'bids_tenders' and row['portal_url']):
                 pid = ids.get('agency_portal:' + str(row['buyer_id']), row['portal_url'])
