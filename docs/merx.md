@@ -169,3 +169,10 @@ Parking Authority URL. AWS documents this [HTTP 202 browser-check behavior](http
 The reader loads the site's normal rendering assets, bounds automatic navigation,
 and refuses an incomplete page if normal rendering does not finish. An HTTP 202
 alone never establishes a successful capture or permanent blocking.
+
+An advertised Bid Results tab with no bidder entries and an explicit visible
+`No Files` row in its result-document table is retained as `no_bidder_disclosure`
+in capture `detail_notes`. It creates no bid rows and does not imply zero
+submissions. Any advertised award tab is still captured. Such notes make
+`bidder_disclosure_complete` and overall coverage `complete` false, while malformed
+or unmarked empty fragments remain parser failures.

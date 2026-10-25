@@ -294,6 +294,13 @@ def parse_bids(content, buyer_id, page_url, source_url):
             bidder_name_raw=_text(names[0]), bid_price=price if price not in (None, '', 'N/A', 'No Bid') else None,
             status='No Bid' if price == 'No Bid' else None, result_stage=stage,
             price_header='Bid Amount' if 'Bid Amount' in fields else None, report_url=source_url, source='merx'))
+    if not rows:
+        tables = tree.xpath('//table[@id="tblBidResultDocument"]')
+        documents = tables[0].xpath('./tbody/tr') if len(tables) == 1 else []
+        if (len(documents) == 1 and
+                {'mets-table-row-empty', 'visible'} <= set(documents[0].get('class', '').split()) and
+                _text(documents[0]) == 'No Files' and not tables[0].xpath('.//a[@href]')):
+            return []  # No disclosed bidder data; never infer zero submissions.
     if not rows or len({r.bidder_name_raw for r in rows}) != len(rows):
         raise ValueError('MERX empty/repeated bidder collection')
     return rows
@@ -330,7 +337,7 @@ def parse_awards(content, buyer_id, page_url, source_url, notice_id):
     return rows
 
 
-def capture_details(conn, session, listing, detail_url, notice_id, *, fetch=None):
+def capture_details(conn, session, listing, detail_url, notice_id, *, fetch=None, observations=None):
     """Only tabs advertised by this notice's public detail, never guessed tab IDs."""
     # Legacy published links lead to an account gate; preserve the known gap without
     # repeatedly requesting it. Modern public listing routes are fetched directly.
@@ -343,6 +350,7 @@ def capture_details(conn, session, listing, detail_url, notice_id, *, fetch=None
         raise ValueError('MERX detail reference differs from listing')
     native_ref = fields.get('Solicitation Number')
     rows = []
+    notes = []
     for tab in ('bid-results', 'award'):
         paths = set(tree.xpath('//*[@data-ajax-url]/@data-ajax-url'))
         paths = {p for p in paths if re.fullmatch(r'/public/solicitations/\d+/abstract/' + tab, p)}
@@ -353,7 +361,11 @@ def capture_details(conn, session, listing, detail_url, notice_id, *, fetch=None
             raw = fetch(url)
             parser = parse_bids if tab == 'bid-results' else parse_awards
             args = (raw, listing.buyer_id, listing.portal_url, url)
-            rows.extend(parser(*args) if tab == 'bid-results' else parser(*args, notice_id))
+            parsed = parser(*args) if tab == 'bid-results' else parser(*args, notice_id)
+            rows.extend(parsed)
+            if tab == 'bid-results' and not parsed:
+                notes.append(dict(notice_id=notice_id, kind='no_bidder_disclosure', source_url=url,
+                    reason='Public result tab contains no bidder entries and explicitly reports no result files.'))
     with _transaction(conn):
         if native_ref:
             db.upsert_row(conn, replace(listing, native_ref=native_ref), overwrite=True)
@@ -361,6 +373,8 @@ def capture_details(conn, session, listing, detail_url, notice_id, *, fetch=None
             db.upsert_row(conn, row, overwrite=True)
         resolve_procurements(conn)
     conn.commit()
+    if observations is not None:
+        observations.extend(notes)
     return len(rows)
 
 
@@ -398,7 +412,7 @@ def capture_portal(conn, portal, *, backfill=False, resume=False, details=False,
             pointer.write_text(json.dumps(dict(url=url, sha256=hashlib.sha256(response.content).hexdigest())))
         return response.content
     report = dict(buyer=portal['slug'], mode='backfill' if backfill else 'incremental',
-                  started_at=clock().isoformat(), keyword=keyword, details_requested=details, sections={}, failures=[], detail_gaps=[], detail_facts=0)
+                  started_at=clock().isoformat(), keyword=keyword, details_requested=details, sections={}, failures=[], detail_gaps=[], detail_notes=[], detail_facts=0)
     all_listings, all_links = {}, {}
     def query(section, keyword='', direction='DESC', *, window=False):
         base = portal['portal_url'] + '/solicitations/' + SECTIONS[section][0]
@@ -484,7 +498,7 @@ def capture_portal(conn, portal, *, backfill=False, resume=False, details=False,
             for nid, listing in all_listings.items():
                 try:
                     report['detail_facts'] += capture_details(conn, session, listing, all_links[nid], nid,
-                        fetch=fetch_page if backfill else None)
+                        fetch=fetch_page if backfill else None, observations=report['detail_notes'])
                 except PermissionError as exc:
                     report['detail_gaps'].append(dict(notice_id=nid, reason=str(exc)))
                 except Exception as exc:
@@ -495,7 +509,8 @@ def capture_portal(conn, portal, *, backfill=False, resume=False, details=False,
         report['requests'] = session.requests
         report['finished_at'] = clock().isoformat()
         report['listings'] = len(all_listings)
-        report['complete'] = not report['failures'] and not report['detail_gaps'] and all(
+        report['bidder_disclosure_complete'] = not report['detail_notes']
+        report['complete'] = not report['failures'] and not report['detail_gaps'] and not report['detail_notes'] and all(
             s['complete'] for s in report['sections'].values())
         encoded = json.dumps(report, sort_keys=True, indent=2) + '\n'
         digest = hashlib.sha256(encoded.encode()).hexdigest()
