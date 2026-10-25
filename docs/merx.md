@@ -68,8 +68,14 @@ All request attempts wait at least 5.2 seconds. A process lock serializes MERX
 requests for buyers sharing a data directory; retries use bounded exponential
 backoff and honour Retry-After. Long deadlines persist across buyers/runs and defer
 capture. A redirect or access denial stops that buyer's network sequence. Requests
-identify the Toronto Bids archive. No browser, login, registration or submissions
-are required. Separate data directories do not share the process lock; run only one
+identify the Toronto Bids archive. Ordinary capture uses HTTP. An incomplete HTTP 202/empty reply triggers one
+bounded anonymous Chromium fallback after at least 60 seconds (and any longer
+Retry-After deadline defers the run). The site's normal JavaScript may render the
+public page; navigation is bounded and shares the request budget and pacing. The
+reader retains source bytes, reuses anonymous browser cookies privately, and never
+logs cookie values or interacts with account/CAPTCHA controls. Diagnostic response
+headers are stored under `diagnostics/` using an allowlist. No login, registration
+or submissions are performed. Separate data directories do not share the process lock; run only one
 live capture environment against MERX at a time.
 
 ## Identity, bids and awards
@@ -90,11 +96,15 @@ Modern detail pages must match the listing's Reference Number. Only advertised
 public `data-ajax-url` tabs are fetched. JavaScript envelopes are decoded as a
 literal string, never executed. Bidder amounts bind inside each bidder container;
 `No Bid` has a null price and explicit status. `agency_bid.result_stage` preserves
-`Unofficial Results` or `Official Results` independently of compliance status.
+`Unofficial Results`, `Official Results`, or the generic `Bid Results` label
+independently of compliance status. `N/A` and omitted prices retain named bidders
+with null prices; they do not mean No Bid. Only required metadata fields must be
+unique: repeated ancillary locations, events or pricing sections are valid.
 No lowest-price award or unknown tax basis is inferred.
 
 Awards require the separate explicit awardee collection and matching notice
-reference. `agency_award.award_date` and `publication_date` retain distinct source
+reference. An explicit `No Award` tab creates no award facts and is a valid
+non-award outcome, including cancellations. `agency_award.award_date` and `publication_date` retain distinct source
 days; tax/value semantics remain those of the source. MERX bid/award facts use the
 held notice page as their internal `native_ref`, keeping them on the listing's
 procurement ID even when printed references are missing or reused. These facts
@@ -151,3 +161,11 @@ A subsequent live open capture also validated Police (4 listings), Parking Autho
 nine pages plus a fresh first-page population check. This differs from the earlier
 210-record snapshot: preserve counts as dated observations. No full buyer-wide
 history, paid extraction, production deployment or publication was performed.
+
+The first production run's refusals and saved evidence are recorded in
+[the validation report](merx-production-validation-2026-10-25.md). A subsequent
+ordinary Chromium probe observed `x-amzn-waf-action: challenge` on the exact
+Parking Authority URL. AWS documents this [HTTP 202 browser-check behavior](https://docs.aws.amazon.com/waf/latest/developerguide/waf-captcha-and-challenge-actions.html).
+The reader loads the site's normal rendering assets, bounds automatic navigation,
+and refuses an incomplete page if normal rendering does not finish. An HTTP 202
+alone never establishes a successful capture or permanent blocking.

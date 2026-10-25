@@ -1,0 +1,58 @@
+[
+  {
+    "fixture": "duplicate-location.html",
+    "url": "https://www.merx.com/ttc/solicitations/open-bids/P73SM26689-SUPPLY-OF-INDOOR-OUTDOOR-FORKLIFT-TRUCKS/0000334741?purchasingGroupId=1177575101&origin=1",
+    "original_sha256": "855558c47b10174347d5685b37d4af1aa31ae8abb99c9c495cbeb8217df4da0a",
+    "notice_id": "0000334741",
+    "buyer": "toronto-transit-commission"
+  },
+  {
+    "fixture": "duplicate-events.html",
+    "url": "https://www.merx.com/ttc/ttcpurchasingandsales/solicitations/REQUEST-FOR-BIDS-FOR-THE-SUPPLY-DELIVER-INSTALL-AND-COMMISSION-AN-RFID-BASED/0000329486?purchasingGroupId=1177575101&origin=1",
+    "original_sha256": "3442ad9c7679c6c188bc6719b3f66914de17988c617e8f563d65f88073c92ef7",
+    "notice_id": "0000329486",
+    "buyer": "toronto-transit-commission"
+  },
+  {
+    "fixture": "duplicate-pricing.html",
+    "url": "https://www.merx.com/solicitations/open-bids/Media-Monitoring-Risk-Intelligence-and-Social-Media-Management/0000334413?origin=2",
+    "original_sha256": "55cdf706034acb79785910c00aac8b98c5e8c789f2d4016eedb7e774dd30c6d1",
+    "notice_id": "0000334413",
+    "buyer": "toronto-police-service"
+  },
+  {
+    "fixture": "bids-na.js",
+    "url": "https://www.merx.com/public/solicitations/4087363652/abstract/bid-results",
+    "original_sha256": "ee84230b8bf10c8913d144fd57a7e20a68cb36baf159c9246a9d9a9ef97cd128",
+    "notice_id": "0000331768",
+    "buyer": "toronto-transit-commission"
+  },
+  {
+    "fixture": "bids-names-only.js",
+    "url": "https://www.merx.com/public/solicitations/4029162117/abstract/bid-results",
+    "original_sha256": "a6a82504adffd4802a8edb85cffae48de954ddd24cc8e7124d82aee368ee996e",
+    "notice_id": "0000327608",
+    "buyer": "toronto-transit-commission"
+  },
+  {
+    "fixture": "bids-generic-stage.js",
+    "url": "https://www.merx.com/public/solicitations/3616879410/abstract/bid-results",
+    "original_sha256": "db11003d7f815bf07aa14ffad86417085913b3f41f3229d9f654193800ad82ef",
+    "notice_id": "0000303964",
+    "buyer": "toronto-police-service"
+  },
+  {
+    "fixture": "no-award-ttc.js",
+    "url": "https://www.merx.com/public/solicitations/4045459115/abstract/award",
+    "original_sha256": "d3ffa34a796949b44a863ecfba77cc2e6657bf21d51116d0576fd9639d82a087",
+    "notice_id": "0000329037",
+    "buyer": "toronto-transit-commission"
+  },
+  {
+    "fixture": "no-award-parking.js",
+    "url": "https://www.merx.com/public/solicitations/3767967217/abstract/award",
+    "original_sha256": "c13d64e5151f84c9d2e078e42522c5da844041ddc157d111f03e035674dedb82",
+    "notice_id": "0000309923",
+    "buyer": "toronto-parking-authority"
+  }
+]
