@@ -133,7 +133,10 @@ def parse_page(content, portal, section, buyer_id):
 class PublicSession:
     """Serial five-second access, bounded backoff and persistent server deadlines."""
     def __init__(self, root, client=None, *, sleep=time.sleep,
-                 clock=lambda: datetime.now(timezone.utc), max_requests=300, allowed_hosts=("www.merx.com",)):
+                 clock=lambda: datetime.now(timezone.utc), max_requests=300, allowed_hosts=("www.merx.com",), browser_factory=None):
+        self.browser_factory = browser_factory
+        self.browser = None
+        self.last_page = None
         self.allowed_hosts = allowed_hosts
         self.root, self.sleep, self.clock = Path(root), sleep, clock
         self.client = client or httpx.Client(timeout=config.HTTP_TIMEOUT, follow_redirects=False,
@@ -150,6 +153,55 @@ class PublicSession:
             fcntl.flock(lock, fcntl.LOCK_EX)
             return self._get(url, host_key)
 
+    def _pace(self):
+        if self.requests >= self.max_requests:
+            raise RuntimeError('MERX request budget exhausted; capture is partial')
+        self.sleep(5.2)
+        self.requests += 1
+
+    def _record_response(self, response):
+        _record(response, self.root, self.clock())
+        # Diagnostics are separate from raw-response manifests and contain an
+        # allowlist only: cookies, authentication and request headers stay private.
+        diagnostic = dict(url=str(response.request.url), status=response.status_code,
+            captured_at=self.clock().isoformat(), bytes=len(response.content),
+            headers={k:response.headers[k] for k in ('content-type', 'content-length',
+                'retry-after', 'server', 'x-amzn-waf-action', 'x-cache') if k in response.headers})
+        encoded = json.dumps(diagnostic, sort_keys=True)
+        directory = self.root / 'diagnostics'
+        directory.mkdir(exist_ok=True)
+        (directory / (hashlib.sha256(encoded.encode()).hexdigest() + '.json')).write_text(encoded + '\n')
+
+    def _incomplete_response(self, response, cooldown):
+        delay = max(60, _retry_after(response.headers.get('Retry-After'), self.clock()))
+        cooldown.write_text((self.clock() + timedelta(seconds=delay)).isoformat())
+        if self.requests >= self.max_requests:
+            raise RuntimeError(f'MERX HTTP {response.status_code}: request budget exhausted; capture is partial')
+        if delay > 60 or urlsplit(str(response.request.url)).netloc != 'www.merx.com':
+            raise RuntimeError(f'MERX HTTP {response.status_code}: incomplete response; retry deferred {delay:g}s')
+        self.sleep(delay)  # one bounded fallback, never a fast retry loop
+        try:
+            if self.browser is None:
+                if self.browser_factory is None:
+                    from toronto_bids.sources.merx_browser import BrowserReader
+                    self.browser = BrowserReader()
+                else:
+                    self.browser = self.browser_factory()
+            result = self.browser.get(str(response.request.url), prepare=self.last_page,
+                                      before_request=self._pace, record=self._record_response)
+            if result.status_code != 200 or not result.content:
+                raise RuntimeError(f'MERX browser HTTP {result.status_code}: incomplete public response')
+            # Reuse anonymous browser state in subsequent HTTP requests. No login
+            # state is supplied, and cookie values never enter response manifests.
+            for cookie in self.browser.cookies():
+                self.client.cookies.set(cookie['name'], cookie['value'],
+                                        domain=cookie['domain'], path=cookie['path'])
+            cooldown.unlink(missing_ok=True)
+            return result
+        except Exception as exc:
+            cooldown.write_text((self.clock() + timedelta(seconds=delay)).isoformat())
+            raise RuntimeError(f'MERX HTTP {response.status_code}: browser fallback incomplete; {exc}') from exc
+
     def _get(self, url, host_key):
         parsed = urlsplit(url)
         if (parsed.scheme != 'https' or parsed.netloc not in self.allowed_hosts
@@ -159,10 +211,7 @@ class PublicSession:
         if cooldown.exists() and datetime.fromisoformat(cooldown.read_text().strip()) > self.clock():
             raise RuntimeError('MERX deferred by held Retry-After deadline')
         for attempt in range(4):
-            if self.requests >= self.max_requests:
-                raise RuntimeError('MERX request budget exhausted; capture is partial')
-            self.sleep(5.2)
-            self.requests += 1
+            self._pace()
             try:
                 response = self.client.get(url, headers={'User-Agent': USER_AGENT})
             except httpx.TransportError:
@@ -170,7 +219,7 @@ class PublicSession:
                     raise
                 self.sleep(2 ** (attempt + 1))
                 continue
-            _record(response, self.root, self.clock())
+            self._record_response(response)
             if response.status_code == 429 or 500 <= response.status_code < 600:
                 delay = max(2 ** (attempt + 1), _retry_after(response.headers.get('Retry-After'), self.clock()))
                 cooldown.write_text((self.clock() + timedelta(seconds=delay)).isoformat())
@@ -181,22 +230,28 @@ class PublicSession:
                 self.sleep(delay)
                 continue
             response.raise_for_status()  # redirects/denials are not empty datasets
+            if response.status_code == 202 or not response.content:
+                response = self._incomplete_response(response, cooldown)
+            if '/abstract/' not in urlsplit(url).path:
+                self.last_page = url
             return response
         raise AssertionError('Unreachable retry state')
 
     def close(self):
+        if self.browser is not None:
+            self.browser.close()
         if self.owned:
             self.client.close()
 
 
-def _fields(tree):
+def _fields(tree, wanted=None):
     values = {}
     for element in tree.xpath('.//*[' + _class('mets-field') + ']'):
         label = element.xpath('./*[' + _class('mets-field-label') + ']')
         body = element.xpath('./*[' + _class('mets-field-body') + ']')
         if len(label) == len(body) == 1:
             name, value = _text(label[0]), _text(body[0])
-            if not name:
+            if not name or (wanted is not None and name not in wanted):
                 continue  # unlabeled contact/address fields are not named notice metadata
             if name in values:
                 raise ValueError('MERX repeated field: ' + name)
@@ -223,22 +278,22 @@ def parse_bids(content, buyer_id, page_url, source_url):
     stage_fields = tree.xpath('//*[' + _class('mets-field') + '][./*[' + _class('mets-field-label') + ' and normalize-space(.)="Publication Type"]]')
     if len(stage_fields) != 1:
         raise ValueError('MERX missing bid publication type')
-    stage = _fields(stage_fields[0].getparent()).get('Publication Type')
-    if stage not in ('Unofficial Results', 'Official Results'):
+    stage = _fields(stage_fields[0].getparent(), {'Publication Type'}).get('Publication Type')
+    if stage not in ('Unofficial Results', 'Official Results', 'Bid Results'):
         raise ValueError('MERX unfamiliar bid publication type')
     rows = []
     for item in tree.xpath('//*[' + _class('bidResultItems') + ']'):
         names = item.xpath('./h3')
-        fields = _fields(item)
-        if len(names) != 1 or not _text(names[0]) or not fields.get('Bid Amount'):
+        fields = _fields(item, {'Bid Amount'})
+        if len(names) != 1 or not _text(names[0]):
             raise ValueError('MERX malformed bidder/amount binding')
-        price = fields['Bid Amount']
-        if price != 'No Bid' and not re.fullmatch(r'\$[\d,]+\.\d{2}', price):
+        price = fields.get('Bid Amount')
+        if price not in (None, '', 'N/A', 'No Bid') and not re.fullmatch(r'\$[\d,]+\.\d{2}', price):
             raise ValueError('MERX unfamiliar bid amount; retained for review')
         rows.append(AgencyBid(buyer_id=buyer_id, native_ref=page_url,
-            bidder_name_raw=_text(names[0]), bid_price=None if price == 'No Bid' else price,
+            bidder_name_raw=_text(names[0]), bid_price=price if price not in (None, '', 'N/A', 'No Bid') else None,
             status='No Bid' if price == 'No Bid' else None, result_stage=stage,
-            price_header='Bid Amount', report_url=source_url, source='merx'))
+            price_header='Bid Amount' if 'Bid Amount' in fields else None, report_url=source_url, source='merx'))
     if not rows or len({r.bidder_name_raw for r in rows}) != len(rows):
         raise ValueError('MERX empty/repeated bidder collection')
     return rows
@@ -246,6 +301,11 @@ def parse_bids(content, buyer_id, page_url, source_url):
 
 def parse_awards(content, buyer_id, page_url, source_url, notice_id):
     tree = fragment(content, 'award')
+    headers = tree.xpath('//*[' + _class('awardSectionHeader') + ']')
+    if len(headers) == 1 and _text(headers[0]) == 'No Award':
+        if tree.xpath('//*[' + _class('awardeeItem') + ']'):
+            raise ValueError('MERX contradictory No Award/awardee content')
+        return []  # explicit public non-award outcome, not a missing identity
     refs = tree.xpath('//*[' + _class('mets-field') + '][./*[' + _class('mets-field-label') + ' and normalize-space(.)="Reference Number"]]')
     if len(refs) != 1 or _fields(refs[0].getparent()).get('Reference Number') != notice_id:
         raise ValueError('MERX award reference differs from listing')
@@ -278,7 +338,7 @@ def capture_details(conn, session, listing, detail_url, notice_id, *, fetch=None
         raise PermissionError('legacy detail entitlement unverified; public listing retained')
     fetch = fetch or (lambda url: session.get(url).content)
     tree = _tree(fetch(detail_url))
-    fields = _fields(tree)
+    fields = _fields(tree, {'Reference Number', 'Solicitation Number'})
     if fields.get('Reference Number') != notice_id:
         raise ValueError('MERX detail reference differs from listing')
     native_ref = fields.get('Solicitation Number')
