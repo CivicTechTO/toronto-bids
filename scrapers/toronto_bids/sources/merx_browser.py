@@ -23,7 +23,7 @@ class BrowserReader:
             def route(request_route):
                 request = request_route.request
                 host = urlsplit(request.url).netloc
-                ordinary_asset = host == 'www.merx.com' or host.endswith('.token.awswaf.com')
+                ordinary_asset = host == 'www.merx.com' or host.endswith(('.token.awswaf.com', '.sdk.awswaf.com'))
                 if (request.resource_type in ('image', 'media', 'font') or not ordinary_asset):
                     request_route.abort()
                 else:
@@ -66,7 +66,11 @@ class BrowserReader:
                     # Let the site's normal JavaScript render the public page. No
                     # token API calls, injection, puzzle interaction or stealth.
                     try:
-                        self.page.wait_for_function("document.title.startsWith('MERX : ')", timeout=30000)
+                        ready = [r for r in documents if r.status == 200]
+                        if not ready:
+                            self.page.wait_for_event('response', predicate=lambda r:
+                                r.status == 200 and r.request.is_navigation_request()
+                                and r.frame == self.page.main_frame, timeout=30000)
                     except Exception as exc:
                         raise RuntimeError('MERX browser HTTP 202: public page did not load after normal rendering') from exc
                     response = documents[-1]
@@ -93,7 +97,7 @@ class BrowserReader:
         response = self.context.request.get(url, headers={'X-Requested-With': 'XMLHttpRequest'},
                                             max_redirects=0, timeout=60000)
         result = httpx.Response(response.status, content=response.body(),
-            headers=response.all_headers(), request=httpx.Request('GET', response.url))
+            headers=response.headers, request=httpx.Request('GET', response.url))
         record(result)
         return result
 

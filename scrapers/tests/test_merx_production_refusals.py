@@ -99,3 +99,46 @@ def test_202_cannot_launch_browser_after_request_budget_is_spent(tmp_path):
         with pytest.raises(RuntimeError,match='budget exhausted'):
             session.get('https://www.merx.com/ttc')
     assert waits==[5.2]
+
+
+def test_browser_readiness_uses_navigation_status_not_buyer_title():
+    from types import SimpleNamespace
+    from toronto_bids.sources.merx_browser import BrowserReader
+    class Response:
+        url='https://www.merx.com/ttc/solicitations/title/0000329490'
+        def __init__(self,status):
+            self.status=status;self.request=SimpleNamespace(is_navigation_request=lambda:True);self.frame='main'
+        def body(self):return b'public notice' if self.status==200 else b'ordinary JavaScript check'
+        def all_headers(self):return {'x-amzn-waf-action':'challenge'} if self.status==202 else {}
+    class Page:
+        main_frame='main'
+        def on(self,event,callback):self.callback=callback
+        def remove_listener(self,*a):pass
+        def goto(self,*a,**kw):
+            response=Response(202);self.callback(response);return response
+        def wait_for_function(self,*a,**kw):raise AssertionError('Solicitation titles do not start MERX :')
+        def wait_for_event(self,event,**kw):
+            response=Response(200);assert kw['predicate'](response);self.callback(response);return response
+    reader=BrowserReader.__new__(BrowserReader);reader.page=Page()
+    recorded=[]
+    result=reader.get(Response.url,prepare=None,before_request=lambda:None,record=recorded.append)
+    assert result.content==b'public notice' and [r.status_code for r in recorded]==[202,200]
+
+
+def test_browser_fragment_uses_apiresponse_headers_property():
+    from types import SimpleNamespace
+    from toronto_bids.sources.merx_browser import BrowserReader
+    class Page:
+        main_frame='main'
+        def on(self,*a):pass
+        def remove_listener(self,*a):pass
+        def goto(self,url,**kw):
+            return SimpleNamespace(status=200,body=lambda:b'detail',url=url,all_headers=lambda:{})
+    reader=BrowserReader.__new__(BrowserReader);reader.page=Page()
+    reader.context=SimpleNamespace(request=SimpleNamespace(get=lambda url,**kw:
+        SimpleNamespace(status=200,body=lambda:b'public fragment',url=url,headers={'content-type':'text/javascript'})))
+    held=[]
+    result=reader.get('https://www.merx.com/public/solicitations/123/abstract/award',
+        prepare='https://www.merx.com/ttc/solicitations/notice/0000329490',before_request=lambda:None,record=held.append)
+    assert result.content==b'public fragment' and result.headers['content-type']=='text/javascript'
+    assert len(held)==2
