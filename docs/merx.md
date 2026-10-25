@@ -161,3 +161,11 @@ A subsequent live open capture also validated Police (4 listings), Parking Autho
 nine pages plus a fresh first-page population check. This differs from the earlier
 210-record snapshot: preserve counts as dated observations. No full buyer-wide
 history, paid extraction, production deployment or publication was performed.
+
+The first production run's refusals and saved evidence are recorded in
+[the validation report](merx-production-validation-2026-10-25.md). A subsequent
+ordinary Chromium probe observed `x-amzn-waf-action: challenge` on the exact
+Parking Authority URL. AWS documents this [HTTP 202 browser-check behavior](https://docs.aws.amazon.com/waf/latest/developerguide/waf-captcha-and-challenge-actions.html).
+The reader loads the site's normal rendering assets, bounds automatic navigation,
+and refuses an incomplete page if normal rendering does not finish. An HTTP 202
+alone never establishes a successful capture or permanent blocking.
