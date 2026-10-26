@@ -287,7 +287,9 @@ def capture_history(conn, years, *, resume=False, download=True, max_requests=10
     _require(type(max_requests) is int and max_requests > 0, 'max_requests must be positive')
     years = sorted(set(years))
     root = Path(data_dir or config.DATA_DIR) / 'agencies' / 'ttc_history'
-    session = PublicSession(root / 'responses', client, sleep=sleep, clock=clock,
+    # Match other TTC readers' parent directory so the shared host lock and
+    # Retry-After deadline serialize traffic across TTC capture commands.
+    session = PublicSession(root, client, sleep=sleep, clock=clock,
                             max_requests=max_requests, allowed_hosts=HOSTS)
     result = dict(scope='meeting and PDF capture' if download else 'meeting and link discovery',
         started_at=clock().isoformat(), years={}, failures=[], complete=False,
