@@ -1,0 +1,141 @@
+{
+  "basis": "Held 2017 source responses; search telemetry omitted, meeting main content preserved with scripts/styles/forms removed. Insignificant line indentation and blank lines normalized.",
+  "sources": {
+    "board.json": {
+      "captured_at": "2026-10-26T07:44:46.944583+00:00",
+      "content_type": "application/json; charset=utf-8",
+      "retry_after": null,
+      "sha256": "170e85343539c47df46eb5fcb7fbb7142f2c1d35d499468eb8186ecbe39bec24",
+      "status": 200,
+      "url": "https://www.ttc.ca//sxa/search/results/?s=%7B44F1ECF1-8A36-4F2D-9F87-06D501C3DE06%7D&itemid=%7B1450DB42-0543-4C73-B159-421DF22D9460%7D&sig=&autoFireSearch=true&contentyearfacet=2017&meetingtype=Board&v=%7BF9A088B4-AFC4-4EE7-8649-0ACA83AB2783%7D&p=20&e=0&o=ContentDateFacet%2CDescending"
+    },
+    "board-meetings-apr-20.html": {
+      "captured_at": "2026-10-26T07:45:04.705168+00:00",
+      "content_type": "text/html; charset=utf-8",
+      "retry_after": null,
+      "sha256": "1ce1ad0a2ab6ebfdcf277077670911bba2e2774d14aaa5a21d024fd976a1da3c",
+      "status": 200,
+      "url": "https://www.ttc.ca/All-public-meetings/board/2017/board-meetings-apr-20"
+    },
+    "year-20.json": {
+      "captured_at": "2026-10-26T07:44:36.158810+00:00",
+      "content_type": "application/json; charset=utf-8",
+      "retry_after": null,
+      "sha256": "7c1adadd3fff6a6d7b2432a3ce5e1f42e8dd74564c72da9a3b64f2184cb3d2eb",
+      "status": 200,
+      "url": "https://www.ttc.ca//sxa/search/results/?s=%7B44F1ECF1-8A36-4F2D-9F87-06D501C3DE06%7D&itemid=%7B1450DB42-0543-4C73-B159-421DF22D9460%7D&sig=&autoFireSearch=true&contentyearfacet=2017&v=%7BF9A088B4-AFC4-4EE7-8649-0ACA83AB2783%7D&p=20&e=20&o=ContentDateFacet%2CDescending"
+    },
+    "board-meetings-june-15.html": {
+      "captured_at": "2026-10-26T07:45:48.418263+00:00",
+      "content_type": "text/html; charset=utf-8",
+      "retry_after": null,
+      "sha256": "35d16a08803b37b4e06d1896d337263ee6a4c461902e908b1f1628acaad2ecae",
+      "status": 200,
+      "url": "https://www.ttc.ca/All-public-meetings/board/2017/board-meetings-june-15"
+    },
+    "board-meetings-july-12.html": {
+      "captured_at": "2026-10-26T07:45:41.055765+00:00",
+      "content_type": "text/html; charset=utf-8",
+      "retry_after": null,
+      "sha256": "4e3b35e300dd381c415a3535cacf818f02cd372867d992d26dbeb1c01641ef54",
+      "status": 200,
+      "url": "https://www.ttc.ca/All-public-meetings/board/2017/board-meetings-july-12"
+    },
+    "board-meetings-december-11.html": {
+      "captured_at": "2026-10-26T07:45:19.047478+00:00",
+      "content_type": "text/html; charset=utf-8",
+      "retry_after": null,
+      "sha256": "493af7aa5462ac115d0e2a51536f3493af1fbfa5bbf02826bbf5615495133b53",
+      "status": 200,
+      "url": "https://www.ttc.ca/All-public-meetings/board/2017/board-meetings-december-11"
+    },
+    "year-0.json": {
+      "captured_at": "2026-10-26T07:44:30.705872+00:00",
+      "content_type": "application/json; charset=utf-8",
+      "retry_after": null,
+      "sha256": "80b19d3117cbc47d184c582e221ec25121723c1c6475d8a436d1cdce5496e8aa",
+      "status": 200,
+      "url": "https://www.ttc.ca//sxa/search/results/?s=%7B44F1ECF1-8A36-4F2D-9F87-06D501C3DE06%7D&itemid=%7B1450DB42-0543-4C73-B159-421DF22D9460%7D&sig=&autoFireSearch=true&contentyearfacet=2017&v=%7BF9A088B4-AFC4-4EE7-8649-0ACA83AB2783%7D&p=20&e=0&o=ContentDateFacet%2CDescending"
+    },
+    "board-meetings-february-21.html": {
+      "captured_at": "2026-10-26T07:45:26.726243+00:00",
+      "content_type": "text/html; charset=utf-8",
+      "retry_after": null,
+      "sha256": "607bcd84fc6741d8d2b060449de0fcfd26dfea8d8a0d7dd7b701735e6df826b7",
+      "status": 200,
+      "url": "https://www.ttc.ca/All-public-meetings/board/2017/board-meetings-february-21"
+    },
+    "board-meetings-january-18.html": {
+      "captured_at": "2026-10-26T07:45:34.053922+00:00",
+      "content_type": "text/html; charset=utf-8",
+      "retry_after": null,
+      "sha256": "8fcbc6ce1f02d0765cc036f42a6daf1ba6d89f3eb8cb8807da563a1cb7c7ab33",
+      "status": 200,
+      "url": "https://www.ttc.ca/All-public-meetings/board/2017/board-meetings-january-18"
+    },
+    "board-meetings-november-28.html": {
+      "captured_at": "2026-10-26T07:46:17.727891+00:00",
+      "content_type": "text/html; charset=utf-8",
+      "retry_after": null,
+      "sha256": "b7eea6efd5537f42b87173958e2c47c96d76b8e844f5c65b229f9008fa12bee2",
+      "status": 200,
+      "url": "https://www.ttc.ca/All-public-meetings/board/2017/board-meetings-november-28"
+    },
+    "board-meetings-september-5.html": {
+      "captured_at": "2026-10-26T07:46:32.409314+00:00",
+      "content_type": "text/html; charset=utf-8",
+      "retry_after": null,
+      "sha256": "4f051f46ec56482af3fc124b34d3b2e483d6aedaa20185c8a6434a7b404f7a38",
+      "status": 200,
+      "url": "https://www.ttc.ca/All-public-meetings/board/2017/board-meetings-september-5"
+    },
+    "year-40.json": {
+      "captured_at": "2026-10-26T07:44:41.550167+00:00",
+      "content_type": "application/json; charset=utf-8",
+      "retry_after": null,
+      "sha256": "c7770313d8dc4b2b02c1efa0c2f991f1d004422362a655895053053dceff8616",
+      "status": 200,
+      "url": "https://www.ttc.ca//sxa/search/results/?s=%7B44F1ECF1-8A36-4F2D-9F87-06D501C3DE06%7D&itemid=%7B1450DB42-0543-4C73-B159-421DF22D9460%7D&sig=&autoFireSearch=true&contentyearfacet=2017&v=%7BF9A088B4-AFC4-4EE7-8649-0ACA83AB2783%7D&p=20&e=40&o=ContentDateFacet%2CDescending"
+    },
+    "board-meetings-march-22.html": {
+      "captured_at": "2026-10-26T07:45:55.854215+00:00",
+      "content_type": "text/html; charset=utf-8",
+      "retry_after": null,
+      "sha256": "62f329bda5b2bf897b8fd824b56430db1a4d7457458359a6786ffb8b8ecd5bdf",
+      "status": 200,
+      "url": "https://www.ttc.ca/All-public-meetings/board/2017/board-meetings-march-22"
+    },
+    "board-meetings-may-18.html": {
+      "captured_at": "2026-10-26T07:46:03.308043+00:00",
+      "content_type": "text/html; charset=utf-8",
+      "retry_after": null,
+      "sha256": "304a38406327a9ac1c07b0cde2f8cc9e4fa4dcb7bd14407a93dcbdd3d575d276",
+      "status": 200,
+      "url": "https://www.ttc.ca/All-public-meetings/board/2017/board-meetings-may-18"
+    },
+    "board-meetings-october-16.html": {
+      "captured_at": "2026-10-26T07:46:25.405217+00:00",
+      "content_type": "text/html; charset=utf-8",
+      "retry_after": null,
+      "sha256": "da2bec0cfab2ab21ef1632517b52ffe20640e5cfb2cdfaa547150a807cef5a54",
+      "status": 200,
+      "url": "https://www.ttc.ca/All-public-meetings/board/2017/board-meetings-october-16"
+    },
+    "board-meetings-april-6.html": {
+      "captured_at": "2026-10-26T07:45:11.583729+00:00",
+      "content_type": "text/html; charset=utf-8",
+      "retry_after": null,
+      "sha256": "5d4085610c030dfa932d486cad455d537efee602fe1b49083cd98181ee267bf8",
+      "status": 200,
+      "url": "https://www.ttc.ca/All-public-meetings/board/2017/board-meetings-april-6"
+    },
+    "board-meetings-november-13.html": {
+      "captured_at": "2026-10-26T07:46:10.814404+00:00",
+      "content_type": "text/html; charset=utf-8",
+      "retry_after": null,
+      "sha256": "9466828009f881a4560653f21174677a77247fe495e5a428d70734843d51084c",
+      "status": 200,
+      "url": "https://www.ttc.ca/All-public-meetings/board/2017/board-meetings-november-13"
+    }
+  }
+}

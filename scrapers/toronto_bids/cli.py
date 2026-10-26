@@ -140,8 +140,19 @@ def build_parser() -> argparse.ArgumentParser:
         "2026-07-17-deployment-design.md",
     )
 
-    sub.add_parser('capture-ttc-reports',
+    p_ttc_reports = sub.add_parser('capture-ttc-reports',
         help='Archive reviewed independent TTC procurement reports; extraction is separate')
+    p_ttc_reports.add_argument('--inventory', help='Reviewed JSON array with URL, basis and pinned sha256 for each PDF')
+
+    p_ttc_history = sub.add_parser('capture-ttc-history',
+        help='Preserve explicit TTC Board archive years; no model extraction or publication')
+    p_ttc_year = p_ttc_history.add_mutually_exclusive_group(required=True)
+    p_ttc_year.add_argument('--year', type=int, help='One year in the 2000–2024 archive')
+    p_ttc_year.add_argument('--from-year', type=int, help='First year of an inclusive range')
+    p_ttc_history.add_argument('--to-year', type=int, help='Last year; requires --from-year')
+    p_ttc_history.add_argument('--resume', action='store_true', help='Verify held bytes and recover missing documents; refresh meeting census')
+    p_ttc_history.add_argument('--discover-only', action='store_true', help='Reconcile meetings and inventory links without PDF downloads')
+    p_ttc_history.add_argument('--max-requests', type=int, default=1000, help='Total request-attempt budget for this invocation')
 
     p_merx = sub.add_parser('capture-merx', help='Archive public MERX listings/results with explicit coverage (#133)')
     p_merx.add_argument('--only', choices=[p['slug'] for p in config.MERX_PORTALS])
@@ -1792,11 +1803,38 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == 'capture-ttc-reports':
         import json
         from toronto_bids.sources.ttc_reports import capture_reports
+        inventory = None
+        if args.inventory:
+            from pathlib import Path
+            try:
+                inventory = json.loads(Path(args.inventory).read_text())
+                if not isinstance(inventory, list) or not all(isinstance(i, dict) and i.get('sha256') for i in inventory):
+                    raise ValueError('Reviewed inventory requires a pinned sha256 for every document')
+            except (ValueError, OSError) as exc:
+                parser.error(str(exc))
         conn = _open_db()
         try:
-            report = capture_reports(conn)
+            report = capture_reports(conn, inventory=inventory)
             print(json.dumps(report, indent=2))
             return int(bool(report['failures']))
+        finally:
+            conn.close()
+    if args.command == 'capture-ttc-history':
+        import json
+        from toronto_bids.sources.ttc_history import capture_history
+        if args.year is not None and args.to_year is not None:
+            parser.error('--to-year requires --from-year')
+        start = args.year if args.year is not None else args.from_year
+        end = args.to_year if args.to_year is not None else start
+        if not 2000 <= start <= end <= 2024 or args.max_requests < 1:
+            parser.error('Choose ordered years within 2000–2024 and a positive request budget')
+        conn = _open_db()
+        try:
+            report = capture_history(conn, list(range(start, end + 1)), resume=args.resume,
+                download=not args.discover_only, max_requests=args.max_requests,
+                log=lambda message: print(message, flush=True))
+            print(json.dumps(report, indent=2))
+            return int(not report['complete'])
         finally:
             conn.close()
     if args.command == 'capture-merx':

@@ -13,6 +13,8 @@ COUNTING = (
     'overlap if document contexts produce different decisions or a reviewed contract '
     'has accepted bids but withheld award claims. Fact counts include '
     'named suppliers only and describe extraction evidence, not distinct stored rows. '
+    'Bid facts include explicit no_bid declarations; submitted_bid_facts excludes those '
+    'and is not an audited source receipt count. '
     'Alias counts describe stored rows normalized/merged in this rebuild, across '
     'solicitations, bids and awards; they are not lost facts.'
 )
@@ -77,6 +79,11 @@ def summarize(decisions):
         for kind in ('bid', 'award'):
             result[f'{status}_{kind}_facts'] = sum(
                 bool(f.get('supplier_name')) for c in contracts.values() for f in c.get(kind + 's', []))
+        result[f'{status}_no_bid_declarations'] = sum(
+            bool(f.get('supplier_name')) and f.get('status') == 'no_bid'
+            for c in contracts.values() for f in c.get('bids', []))
+        result[f'{status}_submitted_bid_facts'] = (
+            result[f'{status}_bid_facts'] - result[f'{status}_no_bid_declarations'])
     return result
 
 
