@@ -236,3 +236,22 @@ def test_wrong_year_without_publisher_date_is_not_accepted(conn, tmp_path):
         report = capture_history(conn, [2018], download=False, client=client,
                                  data_dir=tmp_path, sleep=lambda _: None)
     assert not report['complete'] and not conn.execute('SELECT * FROM background_pdf').fetchall()
+
+
+def test_textless_new_version_cannot_inherit_old_pdf_text(conn, tmp_path):
+    with httpx.Client(transport=httpx.MockTransport(small_archive)) as client:
+        first = capture_history(conn, [2018], client=client, data_dir=tmp_path, sleep=lambda _: None)
+    assert first['complete']
+    old = conn.execute("SELECT sha256,text FROM background_pdf WHERE url='https://cdn.ttc.ca/report.pdf'").fetchone()
+    assert old['text']
+    def replaced(request):
+        response = small_archive(request)
+        if request.url.path == '/report.pdf':
+            return httpx.Response(200, content=response.content.replace(b'HELLO PDF', b'         '))
+        return response
+    with httpx.Client(transport=httpx.MockTransport(replaced)) as client:
+        current = capture_history(conn, [2018], client=client, data_dir=tmp_path, sleep=lambda _: None)
+    assert current['complete']
+    assert current['years']['2018']['documents']['textless'] == ['https://cdn.ttc.ca/report.pdf']
+    row = conn.execute("SELECT sha256,text FROM background_pdf WHERE url='https://cdn.ttc.ca/report.pdf'").fetchone()
+    assert row['sha256'] != old['sha256'] and row['text'] is None

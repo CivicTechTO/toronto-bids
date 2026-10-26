@@ -258,6 +258,9 @@ def _year(conn, year, root, session, settings, report, *, resume, download, cloc
             else:
                 db.upsert_row(conn, BackgroundPdf(url=url, kind=kind, local_path=held['path'],
                               sha256=held['sha256'], text=text or None), overwrite=True)
+                # Archive-owned text belongs to these exact bytes. The shared
+                # COALESCE upsert cannot clear an older version's text on its own.
+                conn.execute('UPDATE background_pdf SET text=? WHERE url=?', (text or None, url))
                 conn.commit()
             docs['held'] += 1
             if not text:
