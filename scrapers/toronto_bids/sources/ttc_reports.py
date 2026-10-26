@@ -5,6 +5,7 @@ content and no automatic bridge from TTC contract labels to MERX pages.
 """
 import hashlib
 import json
+import re
 import subprocess
 import time
 from datetime import datetime, timezone
@@ -25,7 +26,13 @@ def capture_reports(conn, *, inventory=None, client=None, data_dir=None, sleep=t
                     clock=lambda: datetime.now(timezone.utc)):
     inventory = inventory if inventory is not None else json.loads(
         resources.files('toronto_bids.data').joinpath('ttc_reports.json').read_text())
+    if not isinstance(inventory, list):
+        raise ValueError('TTC inventory must be an array')
     for item in inventory:
+        if not isinstance(item, dict) or not isinstance(item.get('url'), str):
+            raise ValueError('TTC inventory requires PDF URLs')
+        if item.get('sha256') is not None and not re.fullmatch('[a-f0-9]{64}', str(item['sha256'])):
+            raise ValueError('TTC reviewed document hash must be a full SHA-256')
         p = urlsplit(item['url'])
         if (p.scheme != 'https' or p.netloc not in HOSTS or p.fragment or
                 not p.path.lower().endswith('.pdf') or not item.get('basis')):
@@ -39,9 +46,11 @@ def capture_reports(conn, *, inventory=None, client=None, data_dir=None, sleep=t
         for item in inventory:
             url = item['url']
             row = conn.execute('SELECT local_path,sha256 FROM background_pdf WHERE url=?', (url,)).fetchone()
-            if row and row['local_path'] and row['sha256']:
+            if row and row['local_path'] and row['sha256'] and item.get('sha256', row['sha256']) == row['sha256']:
                 path = Path(row['local_path'])
                 if path.exists() and hashlib.sha256(path.read_bytes()).hexdigest() == row['sha256']:
+                    db.upsert_row(conn, BackgroundPdf(url=url, kind='ttc_board'), overwrite=True)
+                    conn.commit()
                     report['held'] += 1
                     continue
             # Index the retry queue before attempting bytes. A failed download is never
@@ -54,6 +63,8 @@ def capture_reports(conn, *, inventory=None, client=None, data_dir=None, sleep=t
                 if not data.startswith(b'%PDF-') or b'%%EOF' not in data[-4096:]:
                     raise ValueError('TTC response is not a complete PDF')
                 digest = hashlib.sha256(data).hexdigest()
+                if item.get('sha256') and digest != item['sha256']:
+                    raise ValueError('TTC bytes differ from the reviewed SHA-256; not admitted to extraction')
                 path = root / (digest + '.pdf')
                 path.write_bytes(data)
                 proc = subprocess.run(['pdftotext', '-layout', str(path), '-'],

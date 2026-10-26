@@ -117,6 +117,10 @@ Whole-history reconciliation and exhaustive legacy detail recovery remain unprov
 
 ## Independent TTC reports
 
+Year-scoped Board discovery, complete linked-PDF capture and reviewed extraction
+admission are documented in [TTC history](ttc-history.md). Historical capture is
+separate from MERX and invokes no model automatically.
+
 ```sh
 uv run tb capture-ttc-reports
 # Queue shared Sonnet batch extraction; collection and extraction are separate.
@@ -125,10 +129,10 @@ uv run tb agency-coverage --only ttc
 ```
 
 The reviewed seed inventory in `toronto_bids/data/ttc_reports.json` contains three
-independently published TTC procurement reports. This is supplementary coverage,
-not an exhaustive meeting crawler. The source investigation is recorded in
-[the TTC note](ttc-independent-sources-2026-10-24.md); systematic meeting enumeration
-remains future work. Add reports only from verified published TTC links, with a
+independently published TTC procurement reports. This remains a reviewed supplementary seed list,
+not a claim of exhaustive meeting coverage. The source investigation is recorded in
+[the TTC note](ttc-independent-sources-2026-10-24.md); year-scoped meeting enumeration is separately available through
+`capture-ttc-history`. Add reports only from verified published TTC links, with a
 review basis. Downloading invokes no model, publication or supplier-account action.
 
 Reports are queued as `background_pdf.kind='ttc_board'`. Downloads validate PDF
