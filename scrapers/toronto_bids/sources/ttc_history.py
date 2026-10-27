@@ -124,14 +124,41 @@ def _topic(heading):
     return 'other'
 
 
-def _links(raw, meeting, year):
+def _meeting(raw, year):
     tree = html.fromstring(raw)
     main = tree.xpath('//main')
     _require(len(main) == 1, 'Missing TTC meeting main content')
     title = main[0].xpath('.//h1')
-    _require(len(title) == 1 and str(year) in _text(title[0]), 'Unexpected TTC meeting year/title')
+    _require(len(title) == 1, 'Unexpected TTC meeting year/title')
+    heading = _text(title[0])
+    if re.search(r'\b' + str(year) + r'\b', heading):
+        return main[0], heading, None
+    # The archive includes cancelled/rescheduled placeholders whose h1 is just
+    # "Board Meeting". Only an explicit source date and disposition establish
+    # their scope; neither their URL nor absence of PDFs proves a cancellation.
+    _require(heading == 'Board Meeting', 'Unexpected TTC meeting year/title')
+    fields = {}
+    for label in main[0].xpath('.//strong'):
+        name = _text(label)
+        if name in ('Date:', 'Start Time:'):
+            _require(name not in fields, 'Ambiguous TTC meeting notice fields')
+            fields[name] = (label.tail or '').strip()
+    try:
+        date = datetime.strptime(fields.get('Date:', ''), '%A, %B %d, %Y')
+    except ValueError:
+        raise ValueError('Unexpected TTC meeting notice date') from None
+    status = fields.get('Start Time:', '')
+    match = re.fullmatch(r'(Cancelled|Re-?scheduled)(?: to .+)?', status, re.I)
+    _require(date.year == year and match, 'Unexpected TTC meeting year/title')
+    disposition = 'cancelled' if match[1].casefold() == 'cancelled' else 'rescheduled'
+    return main[0], heading, dict(published_date=fields['Date:'],
+        published_start_time=status, disposition=disposition)
+
+
+def _links(raw, meeting, year):
+    main, title, _ = _meeting(raw, year)
     records = []
-    for anchor in main[0].xpath('.//a[@href]'):
+    for anchor in main.xpath('.//a[@href]'):
         href = urljoin(meeting['url'], anchor.get('href'))
         p = urlsplit(href)
         if not p.path.lower().endswith('.pdf'):
@@ -146,7 +173,7 @@ def _links(raw, meeting, year):
         role = ('decision' if 'decision' in low else 'report' if 'staff report' in low else
                 'minutes' if 'minutes' in low else 'agenda' if 'agenda' in low else 'document')
         records.append(dict(meeting_id=meeting['id'], meeting_url=meeting['url'],
-            meeting_title=_text(title[0]), heading=heading, label=label, href=href,
+            meeting_title=title, heading=heading, label=label, href=href,
             url=url, role=role, topic=_topic(heading), allowed_origin=_allowed(url)))
     return records
 
@@ -204,6 +231,7 @@ def _year(conn, year, root, session, settings, report, *, resume, download, cloc
         fresh_population_verified_at=clock().isoformat(), snapshot_caveat='No transactional publisher snapshot')
     _write(directory / 'census.json', dict(report['discovery'], meetings=board))
     observations = []
+    report['discovery']['meeting_notices'] = []
     for meeting in board:
         url = meeting['url']
         try:
@@ -214,7 +242,10 @@ def _year(conn, year, root, session, settings, report, *, resume, download, cloc
                 raw = session.get(url).content
                 held = _hold(root / 'pages', raw, '.html')
                 held['captured_at'] = clock().isoformat()
+            _, _, notice = _meeting(raw, year)
             links = _links(raw, meeting, year)
+            if notice:
+                report['discovery']['meeting_notices'].append(dict(url=url, **notice))
             state['meetings'][url] = held
             observations.extend(links)
             save()

@@ -33,6 +33,13 @@ when the publisher's rendered result date supports the requested year. The year
 cohort is not permission to fetch other meeting types. The actual Board meeting
 page must identify the requested year.
 
+Cancelled/rescheduled placeholders sometimes use the generic heading "Board
+Meeting". They are accepted only with an explicit, unambiguous published Date
+in the selected year and a Start Time field stating cancellation or
+rescheduling. Their literal date/status and URL appear in `meeting_notices` in
+the discovery report. They remain part of the source census; neither their URL
+nor missing PDF links is treated as evidence that a meeting took place.
+
 The source provides no transactional snapshot. Coverage describes the dated public
 search cohort and links in held meeting pages, not every meeting or procurement
 that ever existed. Zero results, source changes and missing bytes are distinct.

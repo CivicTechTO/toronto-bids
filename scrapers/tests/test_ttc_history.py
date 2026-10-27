@@ -3,10 +3,59 @@ import json
 from pathlib import Path
 
 import httpx
+import pytest
 
-from toronto_bids.sources.ttc_history import capture_history
+from toronto_bids.sources.ttc_history import _meeting, capture_history
 
 F = Path(__file__).parent / 'fixtures' / 'ttc_history'
+
+
+@pytest.mark.parametrize('notice', json.loads((F / 'meeting-notices.json').read_text())['notices'])
+def test_retained_notice_source_fields_establish_year_and_disposition(notice):
+    raw = f'''<main><h1>{notice['title']}</h1>
+        <p><strong>Date:</strong>{notice['published_date']}</p>
+        <p><strong>Start Time:</strong>{notice['published_start_time']}</p></main>'''
+    _, _, result = _meeting(raw, int(notice['year']))
+    assert result['disposition'] == notice['disposition']
+    assert result['published_date'] == notice['published_date']
+
+
+def test_cancelled_and_rescheduled_notices_have_explicit_source_dispositions(conn, tmp_path):
+    def notices(request):
+        if '/board/2018/' in request.url.path:
+            status = 'Cancelled' if request.url.path.endswith('1') else 'Re-scheduled to July 11, 2018'
+            return httpx.Response(200, text=f'''<main><h1>Board Meeting</h1>
+                <p><strong>Date:</strong>Tuesday, June 12, 2018</p>
+                <p><strong>Start Time:</strong>{status}</p></main>''')
+        return small_archive(request)
+    with httpx.Client(transport=httpx.MockTransport(notices)) as client:
+        report = capture_history(conn, [2018], client=client, data_dir=tmp_path, sleep=lambda _: None)
+    assert report['complete']
+    notices = report['years']['2018']['discovery']['meeting_notices']
+    assert len(notices) == 2
+    assert {n['disposition'] for n in notices} == {'cancelled', 'rescheduled'}
+    assert all(n['published_date'] == 'Tuesday, June 12, 2018' for n in notices)
+    assert report['years']['2018']['documents']['held'] == 0
+
+
+@pytest.mark.parametrize('date,status,title', [
+    ('Tuesday, June 12, 2017', 'Cancelled', 'Board Meeting'),
+    ('Tuesday, June 12, 2018', '10:00 AM', 'Board Meeting'),
+    ('Tuesday, June 12, 2018', 'Cancelled', 'ACAT Meeting'),
+    ('', 'Cancelled', 'Board Meeting'),
+    ('Tuesday, June 12, 2018', 'Cancelled', 'Board Meeting 2017'),
+])
+def test_generic_notice_does_not_bypass_meeting_identity(conn, tmp_path, date, status, title):
+    def invalid(request):
+        if '/board/2018/' in request.url.path:
+            return httpx.Response(200, text=f'''<main><h1>{title}</h1>
+                <p><strong>Date:</strong>{date}</p>
+                <p><strong>Start Time:</strong>{status}</p></main>''')
+        return small_archive(request)
+    with httpx.Client(transport=httpx.MockTransport(invalid)) as client:
+        report = capture_history(conn, [2018], client=client, data_dir=tmp_path, sleep=lambda _: None)
+    assert not report['complete']
+    assert report['years']['2018']['failures']
 
 
 def test_real_2017_census_and_all_link_roles_are_reconciled(conn, tmp_path):

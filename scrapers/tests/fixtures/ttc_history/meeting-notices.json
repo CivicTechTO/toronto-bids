@@ -1,0 +1,83 @@
+{
+  "complete": true,
+  "notices": [
+    {
+      "year": "2019",
+      "url": "https://www.ttc.ca/All-public-meetings/board/2019/board-meetings-jun-3",
+      "source_sha256": "58c48df5f6eb1ff78100db0c22e4fe3cf663b1350916de5c0f115ecf9e55b44a",
+      "title": "Board Meeting",
+      "published_date": "Monday, June 03, 2019",
+      "published_start_time": "Cancelled",
+      "disposition": "cancelled",
+      "published_pdf_links": 0,
+      "resolution": "Verified explicit source cancellation/rescheduling notice; no procurement facts inferred"
+    },
+    {
+      "year": "2020",
+      "url": "https://www.ttc.ca/All-public-meetings/board/2020/board-meetings-jul-16",
+      "source_sha256": "1ad76eab09547369b646dc4b859bd66f4a65a5678a675183e17ac6e6fd9853f7",
+      "title": "Board Meeting",
+      "published_date": "Thursday, July 16, 2020",
+      "published_start_time": "Rescheduled to July 14, 2020",
+      "disposition": "rescheduled",
+      "published_pdf_links": 0,
+      "resolution": "Verified explicit source cancellation/rescheduling notice; no procurement facts inferred"
+    },
+    {
+      "year": "2016",
+      "url": "https://www.ttc.ca/All-public-meetings/board/2016/board-meetings-dec-7",
+      "source_sha256": "975e5928d12b9dfef2433fc5cea4d8772626b69744754c8672d73b99d82ca379",
+      "title": "Board Meeting",
+      "published_date": "Tuesday, December 06, 2016",
+      "published_start_time": "Cancelled",
+      "disposition": "cancelled",
+      "published_pdf_links": 0,
+      "resolution": "Verified explicit source cancellation/rescheduling notice; no procurement facts inferred"
+    },
+    {
+      "year": "2016",
+      "url": "https://www.ttc.ca/All-public-meetings/board/2016/board-meetings-jul-27",
+      "source_sha256": "026b0eb9e4dc00c1657c30e86720da0c4fd1f7eafe845859b4a6deee6ccb5afe",
+      "title": "Board Meeting",
+      "published_date": "Tuesday, July 26, 2016",
+      "published_start_time": "Re-scheduled to July 11, 2016",
+      "disposition": "rescheduled",
+      "published_pdf_links": 0,
+      "resolution": "Verified explicit source cancellation/rescheduling notice; no procurement facts inferred"
+    },
+    {
+      "year": "2016",
+      "url": "https://www.ttc.ca/All-public-meetings/board/2016/board-meetings-jun-29",
+      "source_sha256": "2f19d741ac9376a16b543de9bc476cc963f0f202a57e8f97ccb6b17d86e1fa25",
+      "title": "Board Meeting",
+      "published_date": "Tuesday, June 28, 2016",
+      "published_start_time": "Re-scheduled to July 11, 2016",
+      "disposition": "rescheduled",
+      "published_pdf_links": 0,
+      "resolution": "Verified explicit source cancellation/rescheduling notice; no procurement facts inferred"
+    },
+    {
+      "year": "2016",
+      "url": "https://www.ttc.ca/All-public-meetings/board/2016/board-meetings-apr-7",
+      "source_sha256": "43f5b56a893cea8a6d9d9d8ce050a0ec3da83c0f4dad95a6f2a801521bab1495",
+      "title": "Board Meeting",
+      "published_date": "Wednesday, April 06, 2016",
+      "published_start_time": "Cancelled",
+      "disposition": "cancelled",
+      "published_pdf_links": 0,
+      "resolution": "Verified explicit source cancellation/rescheduling notice; no procurement facts inferred"
+    },
+    {
+      "year": "2015",
+      "url": "https://www.ttc.ca/All-public-meetings/board/2015/board-meetings-apr-8",
+      "source_sha256": "98669e558a4c33520a020ba2b7f81db8d66916262283184248a5dbac63b5213c",
+      "title": "Board Meeting",
+      "published_date": "Tuesday, April 07, 2015",
+      "published_start_time": "Rescheduled",
+      "disposition": "rescheduled",
+      "published_pdf_links": 0,
+      "resolution": "Verified explicit source cancellation/rescheduling notice; no procurement facts inferred"
+    }
+  ],
+  "source_reviewed_at": "2026-10-27"
+}
