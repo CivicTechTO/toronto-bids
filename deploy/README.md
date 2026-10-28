@@ -381,22 +381,24 @@ cd ~/toronto-bids/scrapers && TB_DATA_DIR=~/tb-data uv run tb enrich-titles   # 
 GitHub release assets no longer send `Access-Control-Allow-Origin`, so the frontend's in-browser
 SQL page cannot load `bids.sqlite` from the release. `publish-data.sh` therefore also mirrors
 `bids.sqlite` each night to a **CORS-enabled Cloudflare R2 bucket** (overwriting the same object,
-so the URL is stable), reusing `CLOUDFLARE_API_TOKEN` via `wrangler`. The step is **best-effort**
+so the URL is stable), using the Python S3 multipart uploader and the existing
+`CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_ACCOUNT_ID`. The step is **best-effort**
 (a failed push warns; the GitHub release is the deliverable) and **skips cleanly** when
 `CLOUDFLARE_API_TOKEN` is unset.
 
 Public URL: `https://pub-99a890c186c743c19ef7bcd00024dca8.r2.dev/bids.sqlite`
 (Datasette-Lite: `https://lite.datasette.io/?url=<that URL>`).
 
-**This step needs Node >= 22, and the distro's Node is not it (#173).** Ubuntu's `nodejs`
-package installs `/usr/bin/node` + `/usr/bin/npx` at **v20**, and `/usr/bin` *is* on systemd's
-minimal PATH — so a `command -v npx` check passes on the server while `wrangler` (>= 4 requires
-Node >= 22) exits 1 immediately. That combination silently broke this mirror on every nightly
-run from 2026-07-19 to 2026-07-27: the commands above work when you paste them into a login
-shell (nvm's Node is first on *your* PATH) and fail under systemd. `deploy/resolve-node.sh`
-now resolves a Node by **version, never by presence**, preferring the newest suitable nvm
-install; `TB_NODE_MIN_MAJOR` tracks wrangler's floor. Keep an nvm Node >= 22 installed on the
-box — there is no other source of one.
+The uploader uses bounded managed multipart transfers, avoiding Wrangler's 300 MiB
+object-upload limit as the archive grows. It verifies account tokens through the
+account-scoped endpoint, falling back to the legacy user-token endpoint. S3 key
+material is derived in memory using [Cloudflare's documented token mapping](https://developers.cloudflare.com/r2/api/tokens/);
+no additional credentials are stored. Authenticated object size and SHA-256 metadata
+are checked after upload; the independent public freshness check still runs.
+The caller holds the pipeline lock so the SQLite file stays stable during upload.
+
+The nightly mirror no longer requires Node. Wrangler is still used for the one-time
+bucket provisioning below; those commands require a suitable Node installation.
 
 **One-time R2 setup** (already done for the current deployment):
 
