@@ -136,6 +136,34 @@ statuses, omitted responses or unresolved quote options. Source evidence and
 regression results for the reviewed recovery are recorded in
 [`ttc-identity-recovery-validation-2026-10-29.md`](ttc-identity-recovery-validation-2026-10-29.md).
 
+## Reviewed bid metadata
+
+A correct bidder name and submitted price can coexist with an unsupported model
+claim about HST or commercial compliance. Source review may withhold those exact
+fields from derived bidder observations. Add `withheld_bid_fields` to an otherwise
+fully bound TTC evidence decision, recording each `bid_index`, `field`,
+`expected_value` and source-based `reason`. Only `amount_basis` and affirmative
+`compliant`/`non_compliant` status claims can be withheld, and the derived value is
+always null. The mechanism cannot replace a value, change a price, name or rank,
+remove a bidder, or erase an explicit `no_bid`/withdrawal.
+
+Review the complete report, including appendices and final evaluation outcomes.
+Generic tax inclusion does not prove an HST-specific basis, and failing a qualitative
+score does not prove commercial noncompliance. Keep explicitly supported metadata;
+do not clear every bidder because one claim is unsupported. Missing named
+responses, unresolved price scopes, quote alternatives and identity ambiguity still
+prevent admission. Non-exported model arrays and award recommendations are not
+approved by bidder-only review; record any source limitations with the proof.
+
+The raw extraction cache and ledger `contract_json` retain the original model
+claims. `identity_evidence_json` records the suppression proof, and
+`tb agency-coverage --only ttc` reports `withheld_bid_metadata_fields` separately
+from bid-fact counts. Mismatched context or field guards abort before the derived
+row swap, preserving earlier verified facts. Deploy evidence and resolver together,
+then rehearse against a fresh production copy before admitting the held reports.
+See [`ttc-metadata-recovery-validation-2026-10-29.md`](ttc-metadata-recovery-validation-2026-10-29.md)
+for the source-bound replay and preservation checks.
+
 ## Regression evidence
 
 The held 2017 source replay independently expects 52 all-type records, 13 Board

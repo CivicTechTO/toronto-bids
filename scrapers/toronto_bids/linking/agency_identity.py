@@ -3,7 +3,9 @@
 Evidence binds a buyer, held document, extraction version and exact contract payload.
 Unmatched legacy decisions retain their existing identity rules. Known TTC sources
 require re-review when context changes. This registry does not infer matches from
-names, titles, amounts, document positions or digit substrings.
+names, titles, amounts, document positions or digit substrings. Reviewed TTC
+decisions may also withhold unproven tax/compliance fields from derived bids;
+prices, supplier names and the original extraction remain unchanged.
 """
 import hashlib
 import json
@@ -62,6 +64,24 @@ def _evidence():
                     or not any(s['url'] == item.get('report_url') and s['sha256'] == item['document_sha256']
                                for s in item['sources']) or item.get('legacy_native_ref')):
                 raise ValueError('TTC identity evidence requires exact report context without an inferred alias')
+        if 'withheld_bid_fields' in item:
+            fields = item['withheld_bid_fields']
+            if corpus != 'ttc' or not isinstance(fields, list) or not fields:
+                raise ValueError('bid metadata withholding requires a nonempty TTC review')
+            seen = set()
+            allowed = {'amount_basis': {'plus_HST', 'net_of_taxes', 'including_HST'},
+                       'status': {'compliant', 'non_compliant'}}
+            for field in fields:
+                if (set(field) != {'bid_index', 'field', 'expected_value', 'reason'}
+                        or type(field['bid_index']) is not int or field['bid_index'] < 0
+                        or field['field'] not in allowed
+                        or field['expected_value'] not in allowed[field['field']]
+                        or not isinstance(field['reason'], str) or not field['reason'].strip()):
+                    raise ValueError('review may only withhold exact unproven tax/compliance fields')
+                target = (field['bid_index'], field['field'])
+                if target in seen:
+                    raise ValueError('duplicate reviewed bid field')
+                seen.add(target)
         key = (corpus, item['document_sha256'], item['extractor_version'], item['contract_sha256'])
         if key in result:
             raise ValueError('duplicate agency identity decision')
@@ -76,7 +96,10 @@ def reviewed_identity(corpus, document_sha256, contract, *, report_url=None, con
     explicitly bind the held URL and collection count so an administrative footer
     cannot reappear as the identity after a payload/version/source change.
     """
-    evidence = _evidence()
+    try:
+        evidence = _evidence()
+    except ValueError as exc:
+        raise IdentityReviewRequired(f'invalid agency review evidence: {exc}; re-review required') from exc
     match = evidence.get((corpus, document_sha256, EXTRACTOR_VERSION, contract_fingerprint(contract)))
     if corpus != 'ttc':
         return match
@@ -88,6 +111,22 @@ def reviewed_identity(corpus, document_sha256, contract, *, report_url=None, con
             or match['contract_count'] != contract_count):
         raise IdentityReviewRequired('reviewed TTC identity no longer matches its source, extraction or collection context; re-review required')
     return match
+
+
+def reviewed_bids(contract, evidence):
+    """Derive copies with only explicitly reviewed metadata withheld.
+
+    Call after reviewed_identity has bound the exact raw contract and source context.
+    No price, supplier, rank, participation or raw-cache correction is supported.
+    Guards are checked before the caller swaps any stored facts.
+    """
+    bids = [dict(bid) for bid in contract.get('bids', [])]
+    for field in (evidence or {}).get('withheld_bid_fields', []):
+        index, name = field['bid_index'], field['field']
+        if index >= len(bids) or bids[index].get(name) != field['expected_value']:
+            raise IdentityReviewRequired('reviewed bid metadata no longer matches; re-review required')
+        bids[index][name] = None
+    return bids
 
 
 def history_aliases(decisions):

@@ -135,3 +135,57 @@ def test_invalid_report_identity_evidence_is_not_loaded(evidence,change):
     if change=='wrong_primary_source':proof['sources'][0]['sha256']='e'*64
     save()
     with pytest.raises(ValueError):agency_identity._evidence()
+
+
+def test_reviewed_metadata_withholding_preserves_prices_participation_and_raw_evidence(conn,evidence):
+    records,contract,save=evidence
+    contract['bids']=[
+        dict(supplier_name='Bidder',amount_raw='$10',amount_basis='including_HST',status='compliant'),
+        dict(supplier_name='Other bidder',amount_raw='$20',amount_basis='including_HST',status='compliant'),
+        dict(supplier_name='Declined',amount_raw=None,amount_basis=None,status='no_bid')]
+    proof=records[0]
+    proof['contract_sha256']=agency_identity.contract_fingerprint(contract)
+    proof['withheld_bid_fields']=[
+        dict(bid_index=1,field='amount_basis',expected_value='including_HST',reason='Only winner has an explicit tax basis.'),
+        dict(bid_index=1,field='status',expected_value='compliant',reason='Received submission alone does not prove commercial compliance.')]
+    save();hold(conn,proof,[contract])
+    cached=[tuple(r) for r in conn.execute('SELECT * FROM extraction_cache')]
+    raw=copy.deepcopy(contract)
+    stats=backfill_from_extraction(conn,'ttc')
+    found={r['bidder_name_raw']:dict(r) for r in conn.execute('SELECT * FROM agency_bid')}
+    assert (found['Bidder']['hst_basis'],found['Bidder']['status'])==('including','compliant')
+    assert (found['Other bidder']['hst_basis'],found['Other bidder']['status'])==(None,None)
+    assert found['Other bidder']['bid_price']=='$20'
+    assert found['Other bidder']['bid_price_numeric']==20
+    assert found['Declined']['status']=='no_bid'
+    assert [tuple(r) for r in conn.execute('SELECT * FROM extraction_cache')]==cached
+    assert contract==raw
+    saved=conn.execute('SELECT * FROM agency_derivation WHERE active=1').fetchone()
+    assert json.loads(saved['contract_json'])==raw
+    assert json.loads(saved['identity_evidence_json'])['withheld_bid_fields']==proof['withheld_bid_fields']
+    coverage=json.loads(conn.execute("SELECT summary_json FROM agency_coverage WHERE corpus='ttc'").fetchone()[0])
+    assert coverage['withheld_bid_metadata_fields']==2
+    assert coverage['accepted_bid_facts']==3 and coverage['accepted_no_bid_declarations']==1
+    assert not conn.execute('SELECT * FROM agency_award').fetchall()
+    before=[tuple(r) for r in conn.execute('SELECT id,first_seen,status,hst_basis FROM agency_bid ORDER BY id')]
+    backfill_from_extraction(conn,'ttc')
+    assert [tuple(r) for r in conn.execute('SELECT id,first_seen,status,hst_basis FROM agency_bid ORDER BY id')]==before
+
+
+@pytest.mark.parametrize('change',['price','supplier','rank','participation','replacement','duplicate','wrong_value','wrong_index','other_buyer'])
+def test_metadata_review_cannot_edit_bid_facts_or_bypass_guards(conn,evidence,change):
+    records,contract,save=evidence;proof=records[0]
+    hold(conn,proof,[contract]);backfill_from_extraction(conn,'ttc')
+    before=[tuple(r) for r in conn.execute('SELECT * FROM agency_bid')]
+    field=dict(bid_index=0,field='amount_basis',expected_value='including_HST',reason='No explicit HST evidence.')
+    if change in ('price','supplier','rank','participation'):
+        field['field']={'price':'amount_raw','supplier':'supplier_name','rank':'rank','participation':'status'}[change]
+        field['expected_value']={'price':'$10','supplier':'Bidder','rank':1,'participation':'no_bid'}[change]
+    if change=='replacement':field['replacement']='plus_HST'
+    if change=='wrong_index':field['bid_index']=4
+    if change=='other_buyer':proof['corpus']='zoo'
+    proof['withheld_bid_fields']=[field,dict(field)] if change=='duplicate' else [field]
+    save()
+    with pytest.raises((ValueError,RuntimeError)):
+        backfill_from_extraction(conn,'ttc')
+    assert [tuple(r) for r in conn.execute('SELECT * FROM agency_bid')]==before

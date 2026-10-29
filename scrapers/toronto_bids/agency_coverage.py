@@ -14,7 +14,8 @@ COUNTING = (
     'has accepted bids but withheld award claims. Fact counts include '
     'named suppliers only and describe extraction evidence, not distinct stored rows. '
     'Bid facts include explicit no_bid declarations; submitted_bid_facts excludes those '
-    'and is not an audited source receipt count. '
+    'and is not an audited source receipt count. Withheld bid metadata counts exact reviewed '
+    'tax/compliance fields omitted from derived bids; original contract_json retains those claims. '
     'Alias counts describe stored rows normalized/merged in this rebuild, across '
     'solicitations, bids and awards; they are not lost facts.'
 )
@@ -72,7 +73,10 @@ def summarize(decisions):
             groups['refused' if item['reason'] else 'accepted'][key] = contract
             if proof and not item['reason']:
                 groups['recovered'][key] = contract
-    result = {'source_observations': len(decisions),
+    metadata = {tuple(d[k] for k in ('sha256', 'extractor_version', 'result_sha256', 'contract_index')):
+                json.loads(d.get('identity_evidence_json') or 'null') or {} for d in decisions}
+    result = {'withheld_bid_metadata_fields': sum(len(p.get('withheld_bid_fields', [])) for p in metadata.values()),
+              'source_observations': len(decisions),
               'unique_documents_with_facts': len({d['sha256'] for d in decisions}), 'counting': COUNTING}
     for status, contracts in groups.items():
         result[f'contracts_{status}'] = len(contracts)
