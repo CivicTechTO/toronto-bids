@@ -1,14 +1,5 @@
 {
   "reviewed_on": "2026-10-29",
   "issue": 283,
-  "waterfront": {
-    "2023-03": {
-      "errors": [
-        "Unresolved literal supplier/value evidence: 'Ellis Don Civil Ltd', '$313,750' (0 blocks)",
-        "Unmapped monetary evidence: 9d1e6afd47834cd33c2730452ecd3bcb4ed36769af63506defd7b1ec8987a203"
-      ],
-      "source_text": "Dewatering System for Chamber CC6567 Rebuild Operations for Port Lands Flood Protection ($313,750) (Contract awarded by Ellis Don Civil Ltd on behalf of Waterfront Toronto)",
-      "reason": "publisher names no recipient for the $313,750 dewatering award; Ellis Don is the awarding construction manager (docs/claude-validation-2026-10-23.md)"
-    }
-  }
+  "waterfront": {}
 }

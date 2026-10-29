@@ -21,6 +21,11 @@ WATERFRONT_2023_03 = (
 def baseline(tmp_path, monkeypatch):
     path = tmp_path / 'known_agency_refusals.json'
     monkeypatch.setattr(known_gaps, 'REFUSALS_PATH', path)
+    # Generic classifier fixtures stay independent of resolved production gaps.
+    gaps=tmp_path/'known_gaps.json'
+    gaps.write_text(json.dumps({'waterfront':{'2023-03':dict(
+        errors=WATERFRONT_2023_03.split('; '),reason='names no recipient (test fixture)')}}))
+    monkeypatch.setattr(known_gaps,'GAPS_PATH',gaps)
     return path
 
 
@@ -148,3 +153,8 @@ def test_an_unreadable_registry_recognizes_nothing(nightly, monkeypatch, conn, b
     assert code == 1
     assert '❌ waterfront awards' in text and 'known_gaps: registry corrupt' in text
     assert 'waterfront:2023-03' in text.split('*Failures')[1]
+
+
+def test_resolved_waterfront_gap_is_no_longer_an_active_exception(conn):
+    unknown,known=known_gaps.classify(conn,[('waterfront:2023-03',WATERFRONT_2023_03)])
+    assert unknown==[('waterfront:2023-03',WATERFRONT_2023_03)] and known==[]
