@@ -1,0 +1,688 @@
+[
+  {
+    "url": "https://cdn.ttc.ca/-/media/Project/TTC/DevProto/Documents/Home/Public-Meetings/Board/2018/April-11/Reports/14_Lawrence_West_Station_Miscellaneous_Works.pdf?rev=5baf7174d7a540ab922d3a9691a1327f&hash=42D9EE1083EB43B6700D9D3323D05BA1",
+    "sha256": "8cf1a54dee2aa9848af8668252ce96c9612aa259db259397a3bc7822b0404c4e",
+    "result_json": "{\"contracts\":[{\"awards\":[{\"amount_basis\":\"including_HST\",\"amount_raw\":\"$10,739,520.00\",\"contingency_raw\":null,\"supplier_name\":\"Duron Ontario Limited\",\"value_confidential\":false}],\"bids\":[{\"amount_basis\":\"including_HST\",\"amount_raw\":\"$10,739,520.00\",\"rank\":1,\"status\":\"compliant\",\"supplier_name\":\"Duron Ontario Ltd.\"},{\"amount_basis\":\"including_HST\",\"amount_raw\":\"$12,018,767.01\",\"rank\":2,\"status\":\"compliant\",\"supplier_name\":\"Maystar General Contractors Inc.\"},{\"amount_basis\":\"including_HST\",\"amount_raw\":\"$12,212,644.50\",\"rank\":3,\"status\":\"compliant\",\"supplier_name\":\"Triumph Roofing & Sheet Metal Inc.\"},{\"amount_basis\":\"including_HST\",\"amount_raw\":\"$10,425,267.00\",\"rank\":null,\"status\":\"disqualified\",\"supplier_name\":\"Bondfield Construction Company Limited\"}],\"buyer\":\"TTC\",\"closed_date\":\"2018-02-23\",\"decision_body\":\"TTC Board\",\"decision_date\":\"2018-04-11\",\"declared_compliant\":3,\"declared_submissions\":4,\"documents_taken\":\"Eleven\",\"funding_source\":\"TTC 2018-2027 Capital Budget: 3.9 Buildings & Structures Program Easier Access III Program (Legislative) and 3.1 Finishes Roofing Rehabilitation Program (State of Good Repair)\",\"invited_to_tender\":[],\"posted_date\":\"2018-01-12\",\"prequalified\":[],\"reference\":\"A13-11\",\"solicitation_type\":\"RFT\",\"stage\":\"single_stage\",\"title\":\"Lawrence West Station – EA III Miscellaneous Works, and Skylight Seals Replacement and Roofing Rehabilitation\"}]}",
+    "native_ref": "A13-11",
+    "bid_count": 4,
+    "withheld_bid_fields": [
+      {
+        "bid_index": 0,
+        "field": "amount_basis",
+        "expected_value": "including_HST",
+        "reason": "Full source does not establish this exact HST-specific basis for this bidder amount. Generic taxes, historical GST/PST, or winner-only wording cannot establish table-wide HST."
+      },
+      {
+        "bid_index": 1,
+        "field": "amount_basis",
+        "expected_value": "including_HST",
+        "reason": "Full source does not establish this exact HST-specific basis for this bidder amount. Generic taxes, historical GST/PST, or winner-only wording cannot establish table-wide HST."
+      },
+      {
+        "bid_index": 2,
+        "field": "amount_basis",
+        "expected_value": "including_HST",
+        "reason": "Full source does not establish this exact HST-specific basis for this bidder amount. Generic taxes, historical GST/PST, or winner-only wording cannot establish table-wide HST."
+      },
+      {
+        "bid_index": 3,
+        "field": "amount_basis",
+        "expected_value": "including_HST",
+        "reason": "Full source does not establish this exact HST-specific basis for this bidder amount. Generic taxes, historical GST/PST, or winner-only wording cannot establish table-wide HST."
+      }
+    ]
+  },
+  {
+    "url": "https://cdn.ttc.ca/-/media/Project/TTC/DevProto/Documents/Home/Public-Meetings/Board/2001/March-21/Other/Supply_Of_Service_Bu.pdf?rev=0b56fe222639429bb85fcf7a67ec18e5&hash=0EA1356A1D55619FBF2FB9AF4913B1AF",
+    "sha256": "48c8a329e10835ddab42dcdeea484d3360fd7a2970cb5be97a5ddd743b5cce28",
+    "result_json": "{\"contracts\":[{\"awards\":[{\"amount_basis\":\"unknown\",\"amount_raw\":\"$900,000\",\"contingency_raw\":\"allowance of approximately 12% for variations in the use of these services included in upset limit\",\"supplier_name\":\"Reliable Data Entry Inc.\",\"value_confidential\":false}],\"bids\":[{\"amount_basis\":\"including_HST\",\"amount_raw\":\"$ 805,166.68\",\"rank\":1,\"status\":\"not_stated\",\"supplier_name\":\"Reliable Data Entry Inc.\"}],\"buyer\":\"Toronto Transit Commission\",\"closed_date\":null,\"decision_body\":\"Commission\",\"decision_date\":\"2001-03-21\",\"declared_compliant\":null,\"declared_submissions\":1,\"documents_taken\":null,\"funding_source\":\"2001 TTC Operating budget\",\"invited_to_tender\":[],\"posted_date\":\"2001-01-16\",\"prequalified\":[],\"reference\":null,\"solicitation_type\":\"RFT\",\"stage\":\"single_stage\",\"title\":\"Supply of Service Bureau Data Entry Services\"}]}",
+    "native_ref": "https://cdn.ttc.ca/-/media/Project/TTC/DevProto/Documents/Home/Public-Meetings/Board/2001/March-21/Other/Supply_Of_Service_Bu.pdf?rev=0b56fe222639429bb85fcf7a67ec18e5&hash=0EA1356A1D55619FBF2FB9AF4913B1AF",
+    "bid_count": 1,
+    "withheld_bid_fields": [
+      {
+        "bid_index": 0,
+        "field": "amount_basis",
+        "expected_value": "including_HST",
+        "reason": "Full source does not establish this exact HST-specific basis for this bidder amount. Generic taxes, historical GST/PST, or winner-only wording cannot establish table-wide HST."
+      }
+    ]
+  },
+  {
+    "url": "https://cdn.ttc.ca/-/media/Project/TTC/DevProto/Documents/Home/Public-Meetings/Board/2016/March-23/Reports/TYSSE_Procurement_Authorization_Contract_A3527_Structural_Fi.pdf?rev=6a348b56e2074921917c9455869c94c6&hash=A1E4424D18E81DC832CBD54C25EFB72D",
+    "sha256": "5b9a717593ac200d1f3226666097f0c0d5913d10cdc726a46acb8f7ea6fd70da",
+    "result_json": "{\"_flags\":[{\"actual\":3,\"declared\":5,\"delta\":-2,\"reference\":\"A35-27\"}],\"contracts\":[{\"awards\":[{\"amount_basis\":\"including_HST\",\"amount_raw\":\"$9,763,200.00\",\"contingency_raw\":null,\"supplier_name\":\"Bondfield Construction Company Limited\",\"value_confidential\":false}],\"bids\":[{\"amount_basis\":\"including_HST\",\"amount_raw\":\"$9,763,200.00\",\"rank\":1,\"status\":\"compliant\",\"supplier_name\":\"Bondfield Construction Company Limited\"},{\"amount_basis\":\"unknown\",\"amount_raw\":\"$9,995,659.08\",\"rank\":2,\"status\":\"compliant\",\"supplier_name\":\"EllisDon Civil Ltd.\"},{\"amount_basis\":\"unknown\",\"amount_raw\":\"$13,786,000.00\",\"rank\":3,\"status\":\"compliant\",\"supplier_name\":\"Grascan Construction Ltd.\"}],\"buyer\":\"TTC\",\"closed_date\":null,\"decision_body\":\"TTC Board\",\"decision_date\":null,\"declared_compliant\":3,\"declared_submissions\":5,\"documents_taken\":23,\"funding_source\":\"TTC 2016-2025 Capital Budget for the TYSSE Project\",\"invited_to_tender\":[],\"posted_date\":\"2015-12-18\",\"prequalified\":[],\"reference\":\"A35-27\",\"solicitation_type\":\"unknown\",\"stage\":\"single_stage\",\"title\":\"Toronto-York Spadina Subway Extension (TYSSE) – Structural Finishing\"}]}",
+    "native_ref": "A35-27",
+    "bid_count": 3,
+    "withheld_bid_fields": [
+      {
+        "bid_index": 0,
+        "field": "amount_basis",
+        "expected_value": "including_HST",
+        "reason": "Full source does not establish this exact HST-specific basis for this bidder amount. Generic taxes, historical GST/PST, or winner-only wording cannot establish table-wide HST."
+      }
+    ]
+  },
+  {
+    "url": "https://cdn.ttc.ca/-/media/Project/TTC/DevProto/Documents/Home/Public-Meetings/Board/2012/June-29/Reports/Procurement_Authoriz.pdf?rev=6262a23daa46430d88601960fb463f46&hash=207DEC1D60A7CAE449D4E847D45F0104",
+    "sha256": "81a4a140a58c19654752d2216dbfe27f8c658142be9624dea3afd2c1c7901398",
+    "result_json": "{\"contracts\":[{\"awards\":[{\"amount_basis\":\"including_HST\",\"amount_raw\":\"$24,364,691.62\",\"contingency_raw\":null,\"supplier_name\":\"Walsh Construction Company Canada\",\"value_confidential\":false}],\"bids\":[{\"amount_basis\":\"including_HST\",\"amount_raw\":\"$24,364,691.62\",\"rank\":1,\"status\":\"compliant\",\"supplier_name\":\"Walsh Construction Company Canada\"},{\"amount_basis\":\"unknown\",\"amount_raw\":\"$25,730,100.00\",\"rank\":2,\"status\":\"compliant\",\"supplier_name\":\"Bondfield Construction Company Limited\"},{\"amount_basis\":\"unknown\",\"amount_raw\":\"$26,449,910.00\",\"rank\":3,\"status\":\"compliant\",\"supplier_name\":\"Buttcon Limited\"},{\"amount_basis\":\"unknown\",\"amount_raw\":\"$28,296,028.29\",\"rank\":4,\"status\":\"not_stated\",\"supplier_name\":\"EllisDon Corporation\"},{\"amount_basis\":\"unknown\",\"amount_raw\":\"$30,117,413.14\",\"rank\":5,\"status\":\"not_stated\",\"supplier_name\":\"The State Group Inc.\"}],\"buyer\":\"Toronto Transit Commission\",\"closed_date\":null,\"decision_body\":\"Toronto Transit Commission\",\"decision_date\":\"2012-06-29\",\"declared_compliant\":null,\"declared_submissions\":5,\"documents_taken\":null,\"funding_source\":\"TTC 2012 – 2016 Capital Program, Project 3.9 Fire Ventilation Upgrade, State of Good Repair/Safety Category\",\"invited_to_tender\":[\"EllisDon Corporation\",\"Bondfield Construction Company Limited\",\"Pomerleau Inc.\",\"Buttcon Limited\",\"Walsh Construction Company Canada\",\"The State Group Inc.\"],\"posted_date\":\"2012-03-19\",\"prequalified\":[\"Pomerleau Inc.\"],\"reference\":\"Y60-6\",\"solicitation_type\":\"RFT\",\"stage\":\"prequalification_then_tender\",\"title\":\"Fire Ventilation Upgrade – Lawrence Station\"}]}",
+    "native_ref": "Y60-6",
+    "bid_count": 5,
+    "withheld_bid_fields": [
+      {
+        "bid_index": 0,
+        "field": "amount_basis",
+        "expected_value": "including_HST",
+        "reason": "Full source does not establish this exact HST-specific basis for this bidder amount. Generic taxes, historical GST/PST, or winner-only wording cannot establish table-wide HST."
+      }
+    ]
+  },
+  {
+    "url": "https://cdn.ttc.ca/-/media/Project/TTC/DevProto/Documents/Home/Public-Meetings/Board/2004/October-20/Other/DesignFabrication.pdf?rev=e183712b1bcb43f186a2dac89f229581&hash=156EE16EA84E4842F073EB1AB6731114",
+    "sha256": "fee2cf182374403fc3692ec69e598400db8d373283830d468d439cff71cbe2db",
+    "result_json": "{\"contracts\":[{\"awards\":[{\"amount_basis\":\"including_HST\",\"amount_raw\":\"$792,951.41\",\"contingency_raw\":null,\"supplier_name\":\"Arva Industries Inc.\",\"value_confidential\":false}],\"bids\":[{\"amount_basis\":\"including_HST\",\"amount_raw\":\"$792,951.41\",\"rank\":1,\"status\":\"compliant\",\"supplier_name\":\"Arva Industries Inc.\"},{\"amount_basis\":\"unknown\",\"amount_raw\":\"$1,431,520.00\",\"rank\":2,\"status\":\"non_compliant\",\"supplier_name\":\"Tor Truck Corporation\"},{\"amount_basis\":\"unknown\",\"amount_raw\":\"$1,485,557.57\",\"rank\":3,\"status\":\"compliant\",\"supplier_name\":\"Diesel Electric Services\"},{\"amount_basis\":\"net_of_taxes\",\"amount_raw\":\"$931,305.00 U.S.\",\"rank\":null,\"status\":\"non_compliant\",\"supplier_name\":\"Harsco Truck Technologies*\"}],\"buyer\":\"Toronto Transit Commission\",\"closed_date\":null,\"decision_body\":\"Toronto Transit Commission\",\"decision_date\":\"2004-10-20\",\"declared_compliant\":null,\"declared_submissions\":4,\"documents_taken\":null,\"funding_source\":\"Project 4.23 Purchase of Rail Non-Revenue Vehicles, 2004-2008 Capital Program (State of Good Repair)\",\"invited_to_tender\":[],\"posted_date\":null,\"prequalified\":[],\"reference\":\"RFP #P31PK04852\",\"solicitation_type\":\"RFP\",\"stage\":\"single_stage\",\"title\":\"Design, Fabrication and Assembly of a Rail Non-Revenue Vehicle – Vacuum Rodder (RT-56)\"}]}",
+    "native_ref": "RFP #P31PK04852",
+    "bid_count": 4,
+    "withheld_bid_fields": [
+      {
+        "bid_index": 0,
+        "field": "amount_basis",
+        "expected_value": "including_HST",
+        "reason": "Full source does not establish this exact HST-specific basis for this bidder amount. Generic taxes, historical GST/PST, or winner-only wording cannot establish table-wide HST."
+      }
+    ]
+  },
+  {
+    "url": "https://cdn.ttc.ca/-/media/Project/TTC/DevProto/Documents/Home/Public-Meetings/Board/2018/April-11/Reports/13_Chester_Station_Second_Exit_and_Easier_Access.pdf?rev=720bd1c08a934a59b5d826f98dd47dcc&hash=666232F4B5C80B5B445E3F9D1167D793",
+    "sha256": "f7fe66799b73495eee0e6c95fb952410aab7ee7a5f5832a8f40cb7a383287899",
+    "result_json": "{\"contracts\":[{\"awards\":[{\"amount_basis\":\"including_HST\",\"amount_raw\":\"$19,569,792\",\"contingency_raw\":null,\"supplier_name\":\"Buttcon Limited\",\"value_confidential\":false}],\"bids\":[{\"amount_basis\":\"including_HST\",\"amount_raw\":\"$19,569,792.00\",\"rank\":1,\"status\":\"compliant\",\"supplier_name\":\"Buttcon Limited*\"},{\"amount_basis\":\"unknown\",\"amount_raw\":\"$20,934,320.11\",\"rank\":2,\"status\":\"compliant\",\"supplier_name\":\"Traugott Building Contractors Inc.\"},{\"amount_basis\":\"unknown\",\"amount_raw\":\"$21,549,100.00\",\"rank\":3,\"status\":\"compliant\",\"supplier_name\":\"Maystar General Contractors Inc.\"},{\"amount_basis\":\"unknown\",\"amount_raw\":\"$31,755,306.33\",\"rank\":4,\"status\":\"compliant\",\"supplier_name\":\"Ellis Don Civil Ltd.\"},{\"amount_basis\":\"unknown\",\"amount_raw\":\"$18,580,590.00\",\"rank\":null,\"status\":\"non_compliant\",\"supplier_name\":\"Varcon Construction Corporation**\"},{\"amount_basis\":\"unknown\",\"amount_raw\":\"$18,605,450.00\",\"rank\":null,\"status\":\"non_compliant\",\"supplier_name\":\"Bondfield Construction Company Limited**\"},{\"amount_basis\":\"unknown\",\"amount_raw\":\"$18,608,040.41\",\"rank\":null,\"status\":\"non_compliant\",\"supplier_name\":\"J. J. McGuire General Contractors Inc.**\"}],\"buyer\":\"TTC Board\",\"closed_date\":\"2018-02-21\",\"decision_body\":\"TTC Board\",\"decision_date\":\"2018-04-11\",\"declared_compliant\":4,\"declared_submissions\":7,\"documents_taken\":15,\"funding_source\":\"TTC's 2018-2027 Capital Budget under 3.9 Building and Structures Program, Fire Ventilation Upgrades project, State of Good Repair/Safety category and Easier Access III project, Legislative category\",\"invited_to_tender\":[],\"posted_date\":\"2017-12-15\",\"prequalified\":[],\"reference\":\"D5-16\",\"solicitation_type\":\"RFT\",\"stage\":\"single_stage\",\"title\":\"Chester Station Second Exit and Easier Access\"}]}",
+    "native_ref": "D5-16",
+    "bid_count": 7,
+    "withheld_bid_fields": [
+      {
+        "bid_index": 0,
+        "field": "amount_basis",
+        "expected_value": "including_HST",
+        "reason": "Full source does not establish this exact HST-specific basis for this bidder amount. Generic taxes, historical GST/PST, or winner-only wording cannot establish table-wide HST."
+      },
+      {
+        "bid_index": 1,
+        "field": "status",
+        "expected_value": "compliant",
+        "reason": "Source supports named submission but not the asserted commercial/technical compliance outcome: qualitative non-qualification, table-only receipt, or unadjudicated exception is distinct from a definite compliant/non_compliant finding."
+      },
+      {
+        "bid_index": 2,
+        "field": "status",
+        "expected_value": "compliant",
+        "reason": "Source supports named submission but not the asserted commercial/technical compliance outcome: qualitative non-qualification, table-only receipt, or unadjudicated exception is distinct from a definite compliant/non_compliant finding."
+      },
+      {
+        "bid_index": 3,
+        "field": "status",
+        "expected_value": "compliant",
+        "reason": "Source supports named submission but not the asserted commercial/technical compliance outcome: qualitative non-qualification, table-only receipt, or unadjudicated exception is distinct from a definite compliant/non_compliant finding."
+      }
+    ]
+  },
+  {
+    "url": "https://cdn.ttc.ca/-/media/Project/TTC/DevProto/Documents/Home/Public-Meetings/Board/2019/September_24/Reports/7_Sheppard_West_Station_Pavement_Rehabilitation.pdf?rev=f82df3115af94afea4aca87e9c98ad78&hash=76EF225BBD9972F9CA76B2D52E55BDAB",
+    "sha256": "f09eb9791ccc7f96ad98423d02160f6a7677df44acf092fd71227a16acbca218",
+    "result_json": "{\"contracts\":[{\"awards\":[{\"amount_basis\":\"including_HST\",\"amount_raw\":\"$6,942,720.00\",\"contingency_raw\":null,\"supplier_name\":\"Duron Ontario Ltd.\",\"value_confidential\":false}],\"bids\":[{\"amount_basis\":\"including_HST\",\"amount_raw\":\"$6,942,720.00\",\"rank\":1,\"status\":\"compliant\",\"supplier_name\":\"Duron Ontario Ltd. (Duron)\"},{\"amount_basis\":\"unknown\",\"amount_raw\":\"$8,198,150.00\",\"rank\":2,\"status\":\"compliant\",\"supplier_name\":\"Sanscon Construction Ltd. (Sanscon)\"},{\"amount_basis\":\"unknown\",\"amount_raw\":\"$8,562,010.00\",\"rank\":3,\"status\":\"compliant\",\"supplier_name\":\"Maystar General Contractors Inc. (Maystar)\"},{\"amount_basis\":\"unknown\",\"amount_raw\":\"$9,030,960.00\",\"rank\":4,\"status\":\"not_stated\",\"supplier_name\":\"Blackstone Paving + Construction Limited\"},{\"amount_basis\":\"unknown\",\"amount_raw\":\"$9,243,400.00\",\"rank\":5,\"status\":\"not_stated\",\"supplier_name\":\"Structural Contracting Ltd.\"},{\"amount_basis\":\"unknown\",\"amount_raw\":\"$9,749,345.07\",\"rank\":6,\"status\":\"not_stated\",\"supplier_name\":\"EllisDon Civil Ltd.\"}],\"buyer\":\"TTC\",\"closed_date\":\"2019-07-11\",\"decision_body\":\"TTC Board\",\"decision_date\":\"2019-09-24\",\"declared_compliant\":null,\"declared_submissions\":6,\"documents_taken\":8,\"funding_source\":\"TTC 2019-2028 Capital Budget, Project No. 6967 – On-Grade Paving Rehabilitation Program\",\"invited_to_tender\":[],\"posted_date\":\"2019-05-22\",\"prequalified\":[],\"reference\":\"A23-15\",\"solicitation_type\":\"unknown\",\"stage\":\"single_stage\",\"title\":\"Sheppard West Station Bus Driveway and Passenger Pickup and Drop Off (PPUDO) On-Grade Pavement Rehabilitation\"}]}",
+    "native_ref": "A23-15",
+    "bid_count": 6,
+    "withheld_bid_fields": [
+      {
+        "bid_index": 0,
+        "field": "amount_basis",
+        "expected_value": "including_HST",
+        "reason": "Full source does not establish this exact HST-specific basis for this bidder amount. Generic taxes, historical GST/PST, or winner-only wording cannot establish table-wide HST."
+      }
+    ]
+  },
+  {
+    "url": "https://cdn.ttc.ca/-/media/Project/TTC/DevProto/Documents/Home/Public-Meetings/Board/2019/January_10/13_Notice_of_Award_Making_Wilson_Station_Accessible.pdf?rev=79d207c53dbb42d08605e709ecd4f023&hash=F4CA2A41DBE58A57DD7F4CBDE277E882",
+    "sha256": "507da259c3af9ab907c5a19e43ffec67e3ce92c472e497d9680ebdd0c12e01b9",
+    "result_json": "{\"contracts\":[{\"awards\":[{\"amount_basis\":\"including_HST\",\"amount_raw\":\"$13,413,896.65\",\"contingency_raw\":null,\"supplier_name\":\"EllisDon Civil Ltd.\",\"value_confidential\":false}],\"bids\":[{\"amount_basis\":\"including_HST\",\"amount_raw\":\"$13,413,896.65\",\"rank\":1,\"status\":\"compliant\",\"supplier_name\":\"EllisDon Civil Ltd.*\"},{\"amount_basis\":\"unknown\",\"amount_raw\":\"$13,769,717.83\",\"rank\":2,\"status\":\"compliant\",\"supplier_name\":\"J.J. McGuire General Contractors Inc.\"},{\"amount_basis\":\"unknown\",\"amount_raw\":\"$14,464,000.00\",\"rank\":3,\"status\":\"compliant\",\"supplier_name\":\"Maystar General Contractors Inc.\"}],\"buyer\":\"TTC\",\"closed_date\":\"2018-09-14\",\"decision_body\":\"Chair, Vice-Chair and CEO (delegated authority)\",\"decision_date\":\"2018-09-27\",\"declared_compliant\":3,\"declared_submissions\":3,\"documents_taken\":11,\"funding_source\":\"TTC's 2018-2027 Capital Budget under 3.9 Building and Structures Program, Easier Access III (EA III) project, Legislative category\",\"invited_to_tender\":[],\"posted_date\":\"2018-08-13\",\"prequalified\":[],\"reference\":\"A45-10\",\"solicitation_type\":\"RFT\",\"stage\":\"single_stage\",\"title\":\"Wilson Station Easier Access Phase III - construction and installation of elevators and other associated works\"}]}",
+    "native_ref": "A45-10",
+    "bid_count": 3,
+    "withheld_bid_fields": [
+      {
+        "bid_index": 0,
+        "field": "amount_basis",
+        "expected_value": "including_HST",
+        "reason": "Full source does not establish this exact HST-specific basis for this bidder amount. Generic taxes, historical GST/PST, or winner-only wording cannot establish table-wide HST."
+      }
+    ]
+  },
+  {
+    "url": "https://cdn.ttc.ca/-/media/Project/TTC/DevProto/Documents/Home/Public-Meetings/Board/2020/June_17/Reports/11_Sheppard_West_Station_Subway_Ventilation_-System.pdf?rev=1e05f3f7ed8e47e19caf97240f367072&hash=9EC2F4E319DB39A009695B99F083B69A",
+    "sha256": "bf135d2cd5739c15a01655f1ec40a3f4474cf620a8219222b6ce6a003da07244",
+    "result_json": "{\"contracts\":[{\"awards\":[{\"amount_basis\":\"including_HST\",\"amount_raw\":\"$9,260,846.00\",\"contingency_raw\":null,\"supplier_name\":\"E.S. Fox Limited\",\"value_confidential\":false}],\"bids\":[{\"amount_basis\":\"including_HST\",\"amount_raw\":\"$9,260,846.00\",\"rank\":1,\"status\":\"compliant\",\"supplier_name\":\"E.S. Fox Ltd.\"},{\"amount_basis\":\"unknown\",\"amount_raw\":\"$11,051,107.00\",\"rank\":2,\"status\":\"compliant\",\"supplier_name\":\"The State Group Inc.\"}],\"buyer\":\"TTC Board\",\"closed_date\":\"2020-02-05\",\"decision_body\":\"TTC Board\",\"decision_date\":\"2020-06-17\",\"declared_compliant\":2,\"declared_submissions\":2,\"documents_taken\":\"8\",\"funding_source\":\"TTC's 2020-2029 Capital Budget & Plan under Program 3.9 Building & Structures – Fire Ventilation Upgrade project, State of Good Repair/Safety category\",\"invited_to_tender\":[],\"posted_date\":\"2019-12-20\",\"prequalified\":[],\"reference\":\"A60-30\",\"solicitation_type\":\"RFT\",\"stage\":\"single_stage\",\"title\":\"Sheppard West Station and Clanton Park Emergency Service Building (ESB) – Subway Ventilation Equipment Replacement\"}]}",
+    "native_ref": "A60-30",
+    "bid_count": 2,
+    "withheld_bid_fields": [
+      {
+        "bid_index": 0,
+        "field": "amount_basis",
+        "expected_value": "including_HST",
+        "reason": "Full source does not establish this exact HST-specific basis for this bidder amount. Generic taxes, historical GST/PST, or winner-only wording cannot establish table-wide HST."
+      }
+    ]
+  },
+  {
+    "url": "https://cdn.ttc.ca/-/media/Project/TTC/DevProto/Documents/Home/Public-Meetings/Board/2023/July-12/10_St_Clair_Station_Streetcar_Off_Loading_Platform_Utility_Relocation.pdf?rev=e1ea646239d34f63bd9cb38d8c6ca228&hash=94B4645370F72DA7890214EF43BAFE46",
+    "sha256": "e86439600b3adfdb20ab1ecd81d5a8f0c7ca1eec428027920cdc1a7e21c3ff03",
+    "result_json": "{\"contracts\":[{\"awards\":[{\"amount_basis\":\"including_HST\",\"amount_raw\":\"$6,084,236.40\",\"contingency_raw\":null,\"supplier_name\":\"Duron Ontario Ltd.\",\"value_confidential\":false}],\"bids\":[{\"amount_basis\":\"including_HST\",\"amount_raw\":\"$6,084,236.40\",\"rank\":1,\"status\":\"compliant\",\"supplier_name\":\"Duron Ontario Ltd.\"},{\"amount_basis\":\"unknown\",\"amount_raw\":\"$7,731,777.53\",\"rank\":2,\"status\":\"compliant\",\"supplier_name\":\"The State Group Inc.\"},{\"amount_basis\":\"unknown\",\"amount_raw\":\"$8,951,022.67\",\"rank\":3,\"status\":\"compliant\",\"supplier_name\":\"E. S. Fox Ltd\"}],\"buyer\":\"TTC\",\"closed_date\":\"2023-06-06\",\"decision_body\":\"TTC Board\",\"decision_date\":\"2023-07-12\",\"declared_compliant\":null,\"declared_submissions\":3,\"documents_taken\":\"7\",\"funding_source\":\"TTC 2023-2032 Capital Budget and Plan, Program 3.4 Structural Paving Rehabilitation Program\",\"invited_to_tender\":[],\"posted_date\":\"2023-05-04\",\"prequalified\":[],\"reference\":\"S40-15\",\"solicitation_type\":\"unknown\",\"stage\":\"single_stage\",\"title\":\"St Clair Station – Streetcar Off-Loading Platform Utility Relocation\"}]}",
+    "native_ref": "S40-15",
+    "bid_count": 3,
+    "withheld_bid_fields": []
+  },
+  {
+    "url": "https://cdn.ttc.ca/-/media/Project/TTC/DevProto/Documents/Home/Public-Meetings/Board/2016/November-30/Reports/17_PA_Lakeshore_Garage_Bus_Hoist_Replacement-_WT60-8.pdf?rev=8b915ccd41c742759a4151b6558f3c4d&hash=E1E50C094E3F439EFD8A2B5C09E64340",
+    "sha256": "d549817cc1c2ff33413b1d2440595d67c919cd26d31e75f1fabce20d4d146fad",
+    "result_json": "{\"contracts\":[{\"awards\":[{\"amount_basis\":\"including_HST\",\"amount_raw\":\"$7,119,000.00\",\"contingency_raw\":null,\"supplier_name\":\"Maystar General Contractors Inc.\",\"value_confidential\":false}],\"bids\":[{\"amount_basis\":\"including_HST\",\"amount_raw\":\"$7,119,000.00\",\"rank\":1,\"status\":\"compliant\",\"supplier_name\":\"Maystar General Contractors Inc.\"},{\"amount_basis\":\"unknown\",\"amount_raw\":\"$7,264,770.00\",\"rank\":2,\"status\":\"compliant\",\"supplier_name\":\"Century Group Inc.\"},{\"amount_basis\":\"unknown\",\"amount_raw\":\"$7,994,750.00\",\"rank\":3,\"status\":\"compliant\",\"supplier_name\":\"Matheson Constructors Limited\"}],\"buyer\":\"TTC Board\",\"closed_date\":\"2016-08-10\",\"decision_body\":\"TTC Board\",\"decision_date\":null,\"declared_compliant\":3,\"declared_submissions\":3,\"documents_taken\":14,\"funding_source\":\"TTC 2016-2025 Capital Budget, Project No. 6050 – Bus Hoists\",\"invited_to_tender\":[],\"posted_date\":\"2016-07-07\",\"prequalified\":[],\"reference\":\"WT60-8\",\"solicitation_type\":\"RFT\",\"stage\":\"single_stage\",\"title\":\"Lakeshore Garage Bus Hoist Replacement\"}]}",
+    "native_ref": "WT60-8",
+    "bid_count": 3,
+    "withheld_bid_fields": [
+      {
+        "bid_index": 0,
+        "field": "amount_basis",
+        "expected_value": "including_HST",
+        "reason": "Full source does not establish this exact HST-specific basis for this bidder amount. Generic taxes, historical GST/PST, or winner-only wording cannot establish table-wide HST."
+      }
+    ]
+  },
+  {
+    "url": "https://cdn.ttc.ca/-/media/Project/TTC/DevProto/Documents/Home/Public-Meetings/Board/2009/July-9/Reports/Supply_of_Tunnel_Bor.pdf",
+    "sha256": "76c487dec5509c51be06964d28aa4229ca825abc38c326dfed8dd8e075460aef",
+    "result_json": "{\"contracts\":[{\"awards\":[{\"amount_basis\":\"including_HST\",\"amount_raw\":\"$58,446,480.60\",\"contingency_raw\":null,\"supplier_name\":\"LOVAT Inc.\",\"value_confidential\":false}],\"bids\":[{\"amount_basis\":\"including_HST\",\"amount_raw\":\"$58,446,480.60\",\"rank\":1,\"status\":\"compliant\",\"supplier_name\":\"LOVAT Inc.\"},{\"amount_basis\":\"unknown\",\"amount_raw\":\"$64,016,835.00\",\"rank\":2,\"status\":\"compliant\",\"supplier_name\":\"Herrenknecht Tunnelling Systems\"}],\"buyer\":\"Toronto Transit Commission\",\"closed_date\":\"2009-05-01\",\"decision_body\":\"Toronto Transit Commission\",\"decision_date\":\"2009-07-09\",\"declared_compliant\":2,\"declared_submissions\":2,\"documents_taken\":null,\"funding_source\":\"Toronto-York Spadina Subway Extension Project, TTC 2009-2013 Capital Program (Category – Expansion)\",\"invited_to_tender\":[\"Herrenknecht Tunnelling Systems USA, Inc.\",\"LOVAT Inc.\"],\"posted_date\":null,\"prequalified\":[],\"reference\":\"A35-16\",\"solicitation_type\":\"RFP\",\"stage\":\"prequalification_then_tender\",\"title\":\"Supply of Four Earth Pressure Balance Type Tunnel Boring Machines and Ancillary Equipment\"}]}",
+    "native_ref": "A35-16",
+    "bid_count": 2,
+    "withheld_bid_fields": [
+      {
+        "bid_index": 0,
+        "field": "amount_basis",
+        "expected_value": "including_HST",
+        "reason": "Full source does not establish this exact HST-specific basis for this bidder amount. Generic taxes, historical GST/PST, or winner-only wording cannot establish table-wide HST."
+      }
+    ]
+  },
+  {
+    "url": "https://cdn.ttc.ca/-/media/Project/TTC/DevProto/Documents/Home/Public-Meetings/Board/2006/April-19/Other/Notice_Of_Award__Pur1.pdf?rev=2dc657be8f03479fb960460453759c26&hash=45B5458C55090B95A6445C259C6A1D1F",
+    "sha256": "5c3d20922fbf9eed7f23824bc642a63c4e044510ec9e8ec4103ecd3ab701359b",
+    "result_json": "{\"contracts\":[{\"awards\":[{\"amount_basis\":\"including_HST\",\"amount_raw\":\"$293,250.00\",\"contingency_raw\":null,\"supplier_name\":\"Anixter Canada Incorporated\",\"value_confidential\":false}],\"bids\":[{\"amount_basis\":\"unknown\",\"amount_raw\":\"$279,036.00\",\"rank\":null,\"status\":\"non_compliant\",\"supplier_name\":\"King Cable Canada\"},{\"amount_basis\":\"including_HST\",\"amount_raw\":\"$293,250.00\",\"rank\":null,\"status\":\"compliant\",\"supplier_name\":\"Anixter Canada Incoporated\"},{\"amount_basis\":\"unknown\",\"amount_raw\":\"$325,023.81\",\"rank\":null,\"status\":\"compliant\",\"supplier_name\":\"Milrail Incorporated\"}],\"buyer\":\"Toronto Transit Commission\",\"closed_date\":null,\"decision_body\":\"Chair, Vice Chair and Chief General Manager (interim authorization; notice of award to Commission)\",\"decision_date\":null,\"declared_compliant\":null,\"declared_submissions\":3,\"documents_taken\":null,\"funding_source\":\"2006 TTC Operating Budget and TTC 2006-2010 Capital Program (Surface Track Replacement Program; Reserved Transit Lanes on St. Clair Avenue; Overhead Pole Replacement; Replace/Rebuild Rectifier Transformers)\",\"invited_to_tender\":[],\"posted_date\":\"2006-01-24\",\"prequalified\":[],\"reference\":null,\"solicitation_type\":\"RFT\",\"stage\":\"single_stage\",\"title\":\"Purchase Of 1500 MCM Cable (supply of 10,000 feet of 1500 MCM Cable)\"}]}",
+    "native_ref": "https://cdn.ttc.ca/-/media/Project/TTC/DevProto/Documents/Home/Public-Meetings/Board/2006/April-19/Other/Notice_Of_Award__Pur1.pdf?rev=2dc657be8f03479fb960460453759c26&hash=45B5458C55090B95A6445C259C6A1D1F",
+    "bid_count": 3,
+    "withheld_bid_fields": [
+      {
+        "bid_index": 1,
+        "field": "amount_basis",
+        "expected_value": "including_HST",
+        "reason": "Full source does not establish this exact HST-specific basis for this bidder amount. Generic taxes, historical GST/PST, or winner-only wording cannot establish table-wide HST."
+      },
+      {
+        "bid_index": 1,
+        "field": "status",
+        "expected_value": "compliant",
+        "reason": "Source supports named submission but not the asserted commercial/technical compliance outcome: qualitative non-qualification, table-only receipt, or unadjudicated exception is distinct from a definite compliant/non_compliant finding."
+      },
+      {
+        "bid_index": 2,
+        "field": "status",
+        "expected_value": "compliant",
+        "reason": "Source supports named submission but not the asserted commercial/technical compliance outcome: qualitative non-qualification, table-only receipt, or unadjudicated exception is distinct from a definite compliant/non_compliant finding."
+      }
+    ]
+  },
+  {
+    "url": "https://cdn.ttc.ca/-/media/Project/TTC/DevProto/Documents/Home/Public-Meetings/Board/2001/October-31/Other/Rental_Of_Cranes_Wit.pdf?rev=5f27e6f807224be2beee8598596e63bb&hash=2AB0182067B7647316CF5E69491BBE72",
+    "sha256": "0770b4a18e28b8d5ed5c848708a6b093ac5ec459429bad1812e1a876cf5c636b",
+    "result_json": "{\"contracts\":[{\"awards\":[{\"amount_basis\":\"including_HST\",\"amount_raw\":\"$404,460.00\",\"contingency_raw\":null,\"supplier_name\":\"Heavy Lifting Crane Service Ltd.\",\"value_confidential\":false}],\"bids\":[{\"amount_basis\":\"including_HST\",\"amount_raw\":\"$404,460.00\",\"rank\":1,\"status\":\"compliant\",\"supplier_name\":\"Heavy Lifting Crane Service Ltd.\"},{\"amount_basis\":\"including_HST\",\"amount_raw\":\"$416,658.00\",\"rank\":2,\"status\":\"not_stated\",\"supplier_name\":\"Cooper Crane Rental\"},{\"amount_basis\":\"including_HST\",\"amount_raw\":\"$510,390.00\",\"rank\":3,\"status\":\"not_stated\",\"supplier_name\":\"C.W. Smith Crane Canada\"},{\"amount_basis\":\"including_HST\",\"amount_raw\":\"$551,906.00\",\"rank\":4,\"status\":\"not_stated\",\"supplier_name\":\"Superior Crane Canada\"}],\"buyer\":\"Toronto Transit Commission\",\"closed_date\":null,\"decision_body\":\"Commission\",\"decision_date\":null,\"declared_compliant\":null,\"declared_submissions\":4,\"documents_taken\":null,\"funding_source\":\"Project 1.1 Subway Track, State of Good Repair category (Capital); 2001 TTC Operating Budget\",\"invited_to_tender\":[],\"posted_date\":\"2001-07-18\",\"prequalified\":[],\"reference\":null,\"solicitation_type\":\"RFT\",\"stage\":\"single_stage\",\"title\":\"Rental of Cranes with Operators\"}]}",
+    "native_ref": "https://cdn.ttc.ca/-/media/Project/TTC/DevProto/Documents/Home/Public-Meetings/Board/2001/October-31/Other/Rental_Of_Cranes_Wit.pdf?rev=5f27e6f807224be2beee8598596e63bb&hash=2AB0182067B7647316CF5E69491BBE72",
+    "bid_count": 4,
+    "withheld_bid_fields": [
+      {
+        "bid_index": 0,
+        "field": "amount_basis",
+        "expected_value": "including_HST",
+        "reason": "Full source does not establish this exact HST-specific basis for this bidder amount. Generic taxes, historical GST/PST, or winner-only wording cannot establish table-wide HST."
+      },
+      {
+        "bid_index": 1,
+        "field": "amount_basis",
+        "expected_value": "including_HST",
+        "reason": "Full source does not establish this exact HST-specific basis for this bidder amount. Generic taxes, historical GST/PST, or winner-only wording cannot establish table-wide HST."
+      },
+      {
+        "bid_index": 2,
+        "field": "amount_basis",
+        "expected_value": "including_HST",
+        "reason": "Full source does not establish this exact HST-specific basis for this bidder amount. Generic taxes, historical GST/PST, or winner-only wording cannot establish table-wide HST."
+      },
+      {
+        "bid_index": 3,
+        "field": "amount_basis",
+        "expected_value": "including_HST",
+        "reason": "Full source does not establish this exact HST-specific basis for this bidder amount. Generic taxes, historical GST/PST, or winner-only wording cannot establish table-wide HST."
+      }
+    ]
+  },
+  {
+    "url": "https://cdn.ttc.ca/-/media/Project/TTC/DevProto/Documents/Home/Public-Meetings/Board/2009/April-27/Reports/Radio_Based_ATC_for_.pdf",
+    "sha256": "f1af1ebb5898893ebb08bcdd152f9b46221a901e4928782e1591da9d3eb30553",
+    "result_json": "{\"contracts\":[{\"awards\":[{\"amount_basis\":\"including_HST\",\"amount_raw\":\"$50,757,369.60 (CAD)\",\"contingency_raw\":null,\"supplier_name\":\"Alstom Transportation Information and Security Inc.\",\"value_confidential\":false}],\"bids\":[{\"amount_basis\":\"including_HST\",\"amount_raw\":\"$50,757,369.60 (CAD)\",\"rank\":1,\"status\":\"compliant\",\"supplier_name\":\"Alstom Transportation Information and Security Inc.\"},{\"amount_basis\":\"unknown\",\"amount_raw\":\"$110,164,726.00 (CAD)\",\"rank\":2,\"status\":\"compliant\",\"supplier_name\":\"Siemens Canada Limited\"},{\"amount_basis\":null,\"amount_raw\":null,\"rank\":null,\"status\":\"non_compliant\",\"supplier_name\":\"Bombardier Transportation Canada Inc.\"},{\"amount_basis\":null,\"amount_raw\":null,\"rank\":null,\"status\":\"non_compliant\",\"supplier_name\":\"Thales Rail Signalling Solutions Inc.\"}],\"buyer\":\"Toronto Transit Commission\",\"closed_date\":null,\"decision_body\":\"Commission\",\"decision_date\":\"2009-04-27\",\"declared_compliant\":2,\"declared_submissions\":4,\"documents_taken\":\"ten\",\"funding_source\":\"Project 2.4 – YUS ATO Resignalling Line on pages 515 – 524 of the TTC 2009-2013 Capital Program\",\"invited_to_tender\":[],\"posted_date\":\"2008-07-10\",\"prequalified\":[],\"reference\":\"P31PV08752\",\"solicitation_type\":\"RFP\",\"stage\":\"single_stage\",\"title\":\"Design & Supply Radio Based Automatic Train Control (ATC/CBTC) for YUS Subway\"}]}",
+    "native_ref": "P31PV08752",
+    "bid_count": 4,
+    "withheld_bid_fields": [
+      {
+        "bid_index": 0,
+        "field": "amount_basis",
+        "expected_value": "including_HST",
+        "reason": "Full source does not establish this exact HST-specific basis for this bidder amount. Generic taxes, historical GST/PST, or winner-only wording cannot establish table-wide HST."
+      }
+    ]
+  },
+  {
+    "url": "https://cdn.ttc.ca/-/media/Project/TTC/DevProto/Documents/Home/Public-Meetings/Board/2024/June-20/4_Wilson_Bus_Garage_Bus_Hoist_Replacement_in_Bus_Repair_Area.pdf?rev=4b55c93ca0924e85a3a123232e7ac88a&hash=9E3EEAE48F231DEB48B05B1E5143C581",
+    "sha256": "2c58aec59743fe0c219d247854556e14f36af9da60b7f9bfcf1707fb30ae2ea2",
+    "result_json": "{\"contracts\":[{\"awards\":[{\"amount_basis\":\"including_HST\",\"amount_raw\":\"$12,622,100.00\",\"contingency_raw\":null,\"supplier_name\":\"Maystar General Contractors Inc.\",\"value_confidential\":false}],\"bids\":[{\"amount_basis\":\"including_HST\",\"amount_raw\":\"$12,622,100.00\",\"rank\":1,\"status\":\"compliant\",\"supplier_name\":\"Maystar General Contractors Inc.\"},{\"amount_basis\":\"including_HST\",\"amount_raw\":\"$13,293,268.31\",\"rank\":2,\"status\":\"not_stated\",\"supplier_name\":\"Pegah Construction Ltd.\"},{\"amount_basis\":\"including_HST\",\"amount_raw\":\"$14,862,777.00\",\"rank\":3,\"status\":\"not_stated\",\"supplier_name\":\"Duron Ontario Ltd.\"},{\"amount_basis\":\"including_HST\",\"amount_raw\":\"$15,906,332.00\",\"rank\":4,\"status\":\"not_stated\",\"supplier_name\":\"EllisDon Corporation\"},{\"amount_basis\":\"including_HST\",\"amount_raw\":\"$22,710,015.67\",\"rank\":5,\"status\":\"not_stated\",\"supplier_name\":\"Brook Restoration Ltd.\"}],\"buyer\":\"TTC\",\"closed_date\":\"2024-04-24\",\"decision_body\":\"TTC Board\",\"decision_date\":\"2024-06-20\",\"declared_compliant\":null,\"declared_submissions\":5,\"documents_taken\":9,\"funding_source\":\"TTC 2024-2033 Capital Budget and Plan under Program 3.2 Equipment, Bus Hoists, State of Good Repair\",\"invited_to_tender\":[],\"posted_date\":\"2024-03-20\",\"prequalified\":[],\"reference\":\"C60-21\",\"solicitation_type\":\"RFT\",\"stage\":\"single_stage\",\"title\":\"Wilson Bus Garage – Bus Hoist Replacement in Bus Repair Area\"}]}",
+    "native_ref": "C60-21",
+    "bid_count": 5,
+    "withheld_bid_fields": [
+      {
+        "bid_index": 1,
+        "field": "amount_basis",
+        "expected_value": "including_HST",
+        "reason": "Full source does not establish this exact HST-specific basis for this bidder amount. Generic taxes, historical GST/PST, or winner-only wording cannot establish table-wide HST."
+      },
+      {
+        "bid_index": 2,
+        "field": "amount_basis",
+        "expected_value": "including_HST",
+        "reason": "Full source does not establish this exact HST-specific basis for this bidder amount. Generic taxes, historical GST/PST, or winner-only wording cannot establish table-wide HST."
+      },
+      {
+        "bid_index": 3,
+        "field": "amount_basis",
+        "expected_value": "including_HST",
+        "reason": "Full source does not establish this exact HST-specific basis for this bidder amount. Generic taxes, historical GST/PST, or winner-only wording cannot establish table-wide HST."
+      },
+      {
+        "bid_index": 4,
+        "field": "amount_basis",
+        "expected_value": "including_HST",
+        "reason": "Full source does not establish this exact HST-specific basis for this bidder amount. Generic taxes, historical GST/PST, or winner-only wording cannot establish table-wide HST."
+      }
+    ]
+  },
+  {
+    "url": "https://cdn.ttc.ca/-/media/Project/TTC/DevProto/Documents/Home/Public-Meetings/Board/2015/November-23/Reports/Procurement_Authorization__Construction_Management_Services_.pdf?rev=974896cabf4849c9b305bd7b0ed4255f&hash=9367BF47E888E1D1D151D95C9394814A",
+    "sha256": "ccd8e8de46efe82cb1a870fe5a6d388c3e7ca3687119c762de4e4339fec454a8",
+    "result_json": "{\"contracts\":[{\"awards\":[{\"amount_basis\":\"unknown\",\"amount_raw\":\"$60,000,000.00\",\"contingency_raw\":null,\"supplier_name\":\"MMM Group Limited\",\"value_confidential\":false}],\"bids\":[{\"amount_basis\":null,\"amount_raw\":null,\"rank\":null,\"status\":\"non_compliant\",\"supplier_name\":\"AECOM Canada Ltd.\"},{\"amount_basis\":null,\"amount_raw\":null,\"rank\":null,\"status\":\"compliant\",\"supplier_name\":\"Hatch Mott MacDonald Ltd.\"},{\"amount_basis\":null,\"amount_raw\":null,\"rank\":1,\"status\":\"compliant\",\"supplier_name\":\"MMM Group Limited\"}],\"buyer\":\"TTC\",\"closed_date\":\"2015-10-01\",\"decision_body\":\"TTC Board\",\"decision_date\":\"2015-11-23\",\"declared_compliant\":2,\"declared_submissions\":3,\"documents_taken\":29,\"funding_source\":\"2015-2024 TTC Capital Program\",\"invited_to_tender\":[],\"posted_date\":\"2015-08-24\",\"prequalified\":[],\"reference\":\"G85-335\",\"solicitation_type\":\"RFP\",\"stage\":\"single_stage\",\"title\":\"Construction Management Services\"}]}",
+    "native_ref": "G85-335",
+    "bid_count": 3,
+    "withheld_bid_fields": [
+      {
+        "bid_index": 0,
+        "field": "status",
+        "expected_value": "non_compliant",
+        "reason": "Source supports named submission but not the asserted commercial/technical compliance outcome: qualitative non-qualification, table-only receipt, or unadjudicated exception is distinct from a definite compliant/non_compliant finding."
+      }
+    ]
+  },
+  {
+    "url": "https://cdn.ttc.ca/-/media/Project/TTC/DevProto/Documents/Home/Public-Meetings/Board/2013/February-25/Reports/Procurement_Authoriz.pdf?rev=b3f2a4413b6e4d918bb38437d78a4807&hash=2BAE51C190E76E4584FC9DD00C008AED",
+    "sha256": "2465be26c8afacaed12ae77d15771f0f3f7e0f581a81ace2600e8d3352676096",
+    "result_json": "{\"contracts\":[{\"awards\":[{\"amount_basis\":\"including_HST\",\"amount_raw\":\"$23,500,000\",\"contingency_raw\":\"20% contingency included in upset limit\",\"supplier_name\":\"Voestalpine Nortrak Ltd.\",\"value_confidential\":false}],\"bids\":[{\"amount_basis\":\"unknown\",\"amount_raw\":\"$19,554,517.07\",\"rank\":1,\"status\":\"compliant\",\"supplier_name\":\"Voestalpine Nortrak\"},{\"amount_basis\":\"unknown\",\"amount_raw\":\"$20,222,672.34\",\"rank\":null,\"status\":\"non_compliant\",\"supplier_name\":\"Progress Rail Canada Corporation\"},{\"amount_basis\":\"unknown\",\"amount_raw\":\"$19,710,204.52\",\"rank\":null,\"status\":\"non_compliant\",\"supplier_name\":\"H. J. Skelton (Canada) Ltd.\"}],\"buyer\":\"Toronto Transit Commission\",\"closed_date\":null,\"decision_body\":\"Toronto Transit Commission\",\"decision_date\":\"2013-02-25\",\"declared_compliant\":1,\"declared_submissions\":3,\"documents_taken\":null,\"funding_source\":\"Project 1.2, Surface Special Trackwork Replacement Program, TTC 2013 – 2022 Capital Budget\",\"invited_to_tender\":[],\"posted_date\":\"2012-12-05\",\"prequalified\":[],\"reference\":\"P31CA12184\",\"solicitation_type\":\"RFP\",\"stage\":\"single_stage\",\"title\":\"Supply of Surface Special Trackwork for up to a five-year term\"}]}",
+    "native_ref": "P31CA12184",
+    "bid_count": 3,
+    "withheld_bid_fields": [
+      {
+        "bid_index": 2,
+        "field": "status",
+        "expected_value": "non_compliant",
+        "reason": "Source supports named submission but not the asserted commercial/technical compliance outcome: qualitative non-qualification, table-only receipt, or unadjudicated exception is distinct from a definite compliant/non_compliant finding."
+      }
+    ]
+  },
+  {
+    "url": "https://cdn.ttc.ca/-/media/Project/TTC/DevProto/Documents/Home/Public-Meetings/Board/2015/February-25/Supplementary_Reports/Procurement_Authorization_Project_Management_Services_Contra.pdf?rev=b2f6729f07844bf7a24a3e147b06e89c&hash=CB6C9484FA97554A6ECC71C937C6232D",
+    "sha256": "1255552414f45d92d6585806146672c4e9af1c108e80ddd182b6aff64ea61b0a",
+    "result_json": "{\"contracts\":[{\"awards\":[{\"amount_basis\":\"unknown\",\"amount_raw\":\"$80 million\",\"contingency_raw\":null,\"supplier_name\":\"Scarborough Link Joint Venture\",\"value_confidential\":false}],\"bids\":[{\"amount_basis\":null,\"amount_raw\":null,\"rank\":null,\"status\":\"compliant\",\"supplier_name\":\"AECOM Canada Ltd.\"},{\"amount_basis\":null,\"amount_raw\":null,\"rank\":null,\"status\":\"compliant\",\"supplier_name\":\"Parsons Brinckerhoff Halsall Inc.\"},{\"amount_basis\":null,\"amount_raw\":null,\"rank\":1,\"status\":\"compliant\",\"supplier_name\":\"Scarborough Link Joint Venture\"},{\"amount_basis\":null,\"amount_raw\":null,\"rank\":null,\"status\":\"non_compliant\",\"supplier_name\":\"Stantec Consulting Ltd.\"}],\"buyer\":\"TTC\",\"closed_date\":\"2014-12-11\",\"decision_body\":\"TTC Board\",\"decision_date\":\"2015-02-25\",\"declared_compliant\":null,\"declared_submissions\":4,\"documents_taken\":35,\"funding_source\":\"TTC 2014-2023 Capital Budget under Scarborough Subway Extension, pages 1029-1030\",\"invited_to_tender\":[],\"posted_date\":\"2014-10-28\",\"prequalified\":[],\"reference\":\"FE85-3\",\"solicitation_type\":\"RFP\",\"stage\":\"single_stage\",\"title\":\"Project Management Services for the Scarborough Subway Extension (SSE)\"}]}",
+    "native_ref": "FE85-3",
+    "bid_count": 4,
+    "withheld_bid_fields": [
+      {
+        "bid_index": 3,
+        "field": "status",
+        "expected_value": "non_compliant",
+        "reason": "Source supports named submission but not the asserted commercial/technical compliance outcome: qualitative non-qualification, table-only receipt, or unadjudicated exception is distinct from a definite compliant/non_compliant finding."
+      }
+    ]
+  },
+  {
+    "url": "https://cdn.ttc.ca/-/media/Project/TTC/DevProto/Documents/Home/Public-Meetings/Board/2013/December-19/Reports/Procurement_Authoriz.pdf?rev=17b53672dea043e38b2112b13d6857f9&hash=AF167918707E39A5861B6EE791A3188D",
+    "sha256": "aa894ec24663c4e11da3f301def35122d37ef6901dc681508986890a0eeafcd0",
+    "result_json": "{\"contracts\":[{\"awards\":[{\"amount_basis\":\"including_HST\",\"amount_raw\":\"$11,100,000\",\"contingency_raw\":\"inclusive of contingency\",\"supplier_name\":\"CompuCom Canada Co.\",\"value_confidential\":false}],\"bids\":[{\"amount_basis\":null,\"amount_raw\":null,\"rank\":1,\"status\":\"compliant\",\"supplier_name\":\"CompuCom Canada Co.\"},{\"amount_basis\":null,\"amount_raw\":null,\"rank\":null,\"status\":\"non_compliant\",\"supplier_name\":\"Softchoice Corporation\"},{\"amount_basis\":null,\"amount_raw\":null,\"rank\":null,\"status\":\"non_compliant\",\"supplier_name\":\"Compugen Inc.\"}],\"buyer\":\"Toronto Transit Commission\",\"closed_date\":\"2013-09-27\",\"decision_body\":\"Board of Directors\",\"decision_date\":\"2013-12-19\",\"declared_compliant\":null,\"declared_submissions\":3,\"documents_taken\":null,\"funding_source\":\"2014-2023 Capital Budget, 7.15 Service Delivery Management program\",\"invited_to_tender\":[],\"posted_date\":\"2013-08-23\",\"prequalified\":[],\"reference\":\"P25BF13119\",\"solicitation_type\":\"RFP\",\"stage\":\"single_stage\",\"title\":\"Supply of Integrated PC Hardware and Servers\"}]}",
+    "native_ref": "P25BF13119",
+    "bid_count": 3,
+    "withheld_bid_fields": [
+      {
+        "bid_index": 0,
+        "field": "status",
+        "expected_value": "compliant",
+        "reason": "Source supports named submission but not the asserted commercial/technical compliance outcome: qualitative non-qualification, table-only receipt, or unadjudicated exception is distinct from a definite compliant/non_compliant finding."
+      },
+      {
+        "bid_index": 2,
+        "field": "status",
+        "expected_value": "non_compliant",
+        "reason": "Source supports named submission but not the asserted commercial/technical compliance outcome: qualitative non-qualification, table-only receipt, or unadjudicated exception is distinct from a definite compliant/non_compliant finding."
+      }
+    ]
+  },
+  {
+    "url": "https://cdn.ttc.ca/-/media/Project/TTC/DevProto/Documents/Home/Public-Meetings/Board/2003/January-24/Other/Disposal_Of_Hazardou.pdf?rev=936f3c4fdcb94ac6bb13e783f0d74726&hash=5B58B0DBD732E9EE069017E3A05E4212",
+    "sha256": "112343498d2b4b9daf0d9502eeaf0b6f4e2be194da4851963b3a698e489b0728",
+    "result_json": "{\"contracts\":[{\"awards\":[{\"amount_basis\":\"unknown\",\"amount_raw\":\"$900,000\",\"contingency_raw\":null,\"supplier_name\":\"Quantex Technologies Inc.\",\"value_confidential\":false}],\"bids\":[{\"amount_basis\":\"unknown\",\"amount_raw\":\"$897,697.65\",\"rank\":1,\"status\":\"compliant\",\"supplier_name\":\"Quantex Technologies Inc.\"},{\"amount_basis\":\"unknown\",\"amount_raw\":\"$898,633.90\",\"rank\":2,\"status\":\"compliant\",\"supplier_name\":\"Phillip Services Corp.\"}],\"buyer\":\"Toronto Transit Commission\",\"closed_date\":null,\"decision_body\":\"Commission\",\"decision_date\":\"2003-01-24\",\"declared_compliant\":null,\"declared_submissions\":2,\"documents_taken\":null,\"funding_source\":\"2003 TTC Operating Budget; 2004, 2005 and 2006 TTC Operating Budgets as required\",\"invited_to_tender\":[],\"posted_date\":\"2002-11-07\",\"prequalified\":[],\"reference\":null,\"solicitation_type\":\"RFP\",\"stage\":\"single_stage\",\"title\":\"Receiving, hauling and disposal of hazardous liquid waste\"}]}",
+    "native_ref": "https://cdn.ttc.ca/-/media/Project/TTC/DevProto/Documents/Home/Public-Meetings/Board/2003/January-24/Other/Disposal_Of_Hazardou.pdf?rev=936f3c4fdcb94ac6bb13e783f0d74726&hash=5B58B0DBD732E9EE069017E3A05E4212",
+    "bid_count": 2,
+    "withheld_bid_fields": [
+      {
+        "bid_index": 1,
+        "field": "status",
+        "expected_value": "compliant",
+        "reason": "Source supports named submission but not the asserted commercial/technical compliance outcome: qualitative non-qualification, table-only receipt, or unadjudicated exception is distinct from a definite compliant/non_compliant finding."
+      }
+    ]
+  },
+  {
+    "url": "https://cdn.ttc.ca/-/media/Project/TTC/DevProto/Documents/Home/Public-Meetings/Board/2020/June_17/Reports/9_Waterfront_East_LRT_Union_Station_and_Queens_Quay_Link.pdf?rev=d12d45a836944c2389a3db0d0d452d8d&hash=B298F6D6BBB56D8027724C0757B7016B",
+    "sha256": "5f57a59f3380445022defc88c720cb1fc4f7c7a327e3db21c44af97abbc29fce",
+    "result_json": "{\"contracts\":[{\"awards\":[{\"amount_basis\":\"including_HST\",\"amount_raw\":\"$15,000,000\",\"contingency_raw\":null,\"supplier_name\":\"Wood Environment & Infrastructure Solutions, a Division of Wood Canada Limited\",\"value_confidential\":false}],\"bids\":[{\"amount_basis\":null,\"amount_raw\":null,\"rank\":1,\"status\":\"compliant\",\"supplier_name\":\"Wood Environment & Infrastructure Solutions, a Division of Wood Canada Limited\"},{\"amount_basis\":null,\"amount_raw\":null,\"rank\":2,\"status\":\"compliant\",\"supplier_name\":\"IBI Group Architects (Canada) Inc.\"},{\"amount_basis\":null,\"amount_raw\":null,\"rank\":3,\"status\":\"compliant\",\"supplier_name\":\"Hatch Ltd.\"},{\"amount_basis\":null,\"amount_raw\":null,\"rank\":4,\"status\":\"compliant\",\"supplier_name\":\"AECOM Canada Ltd\"},{\"amount_basis\":null,\"amount_raw\":null,\"rank\":5,\"status\":\"compliant\",\"supplier_name\":\"Entuitive Corporation\"},{\"amount_basis\":null,\"amount_raw\":null,\"rank\":6,\"status\":\"compliant\",\"supplier_name\":\"EXP Services Inc.\"},{\"amount_basis\":null,\"amount_raw\":null,\"rank\":7,\"status\":\"compliant\",\"supplier_name\":\"Mott MacDonald Canada Limited\"},{\"amount_basis\":null,\"amount_raw\":null,\"rank\":8,\"status\":\"compliant\",\"supplier_name\":\"WSP Canada Inc.\"},{\"amount_basis\":null,\"amount_raw\":null,\"rank\":null,\"status\":\"non_compliant\",\"supplier_name\":\"Stantec Consulting Ltd.\"}],\"buyer\":\"TTC\",\"closed_date\":\"2020-04-30\",\"decision_body\":\"TTC Board\",\"decision_date\":\"2020-06-17\",\"declared_compliant\":null,\"declared_submissions\":9,\"documents_taken\":\"Thirty\",\"funding_source\":\"TTC's 2020-2029 Capital Budget & Plan under the Waterfront East – Area 1 – Concept Design project, Growth Category\",\"invited_to_tender\":[],\"posted_date\":\"2020-02-28\",\"prequalified\":[],\"reference\":\"G85-395\",\"solicitation_type\":\"RFP\",\"stage\":\"single_stage\",\"title\":\"Design Services for Waterfront East LRT, Union Station – Queens Quay Link\"}]}",
+    "native_ref": "G85-395",
+    "bid_count": 9,
+    "withheld_bid_fields": [
+      {
+        "bid_index": 8,
+        "field": "status",
+        "expected_value": "non_compliant",
+        "reason": "Source supports named submission but not the asserted commercial/technical compliance outcome: qualitative non-qualification, table-only receipt, or unadjudicated exception is distinct from a definite compliant/non_compliant finding."
+      }
+    ]
+  },
+  {
+    "url": "https://cdn.ttc.ca/-/media/Project/TTC/DevProto/Documents/Home/Public-Meetings/Board/2021/February_10/Reports/6_Consultant_Services.pdf?rev=7d5529265c3a4367af2ac613f94c420b&hash=136C08FF93D5C9E0EFE093391B2053C1",
+    "sha256": "d3e5fc2e6a4031840e2c3ac3bceb1196a2cd2a4b54b6df4bf36e917106097f5b",
+    "result_json": "{\"contracts\":[{\"awards\":[{\"amount_basis\":\"including_HST\",\"amount_raw\":\"$15 million\",\"contingency_raw\":null,\"supplier_name\":\"AECOM Canada Ltd.\",\"value_confidential\":false}],\"bids\":[{\"amount_basis\":null,\"amount_raw\":null,\"rank\":1,\"status\":\"compliant\",\"supplier_name\":\"AECOM Canada Ltd.\"},{\"amount_basis\":null,\"amount_raw\":null,\"rank\":2,\"status\":\"compliant\",\"supplier_name\":\"Hatch Ltd.\"},{\"amount_basis\":null,\"amount_raw\":null,\"rank\":null,\"status\":\"non_compliant\",\"supplier_name\":\"Gensler Architecture & Design Canada Inc.\"},{\"amount_basis\":null,\"amount_raw\":null,\"rank\":null,\"status\":\"non_compliant\",\"supplier_name\":\"WZMH Architects\"},{\"amount_basis\":null,\"amount_raw\":null,\"rank\":null,\"status\":\"non_compliant\",\"supplier_name\":\"IBI Group Professional Services (Canada) Inc.\"},{\"amount_basis\":null,\"amount_raw\":null,\"rank\":null,\"status\":\"non_compliant\",\"supplier_name\":\"Strasman Architects Inc.\"},{\"amount_basis\":null,\"amount_raw\":null,\"rank\":null,\"status\":\"non_compliant\",\"supplier_name\":\"EXP Services Inc.\"},{\"amount_basis\":null,\"amount_raw\":null,\"rank\":null,\"status\":\"non_compliant\",\"supplier_name\":\"Parsons Inc.\"},{\"amount_basis\":null,\"amount_raw\":null,\"rank\":null,\"status\":\"non_compliant\",\"supplier_name\":\"DB Engineering & Consulting GmbH\"}],\"buyer\":\"TTC Board\",\"closed_date\":\"2020-11-18\",\"decision_body\":\"TTC Board\",\"decision_date\":\"2021-02-10\",\"declared_compliant\":null,\"declared_submissions\":9,\"documents_taken\":85,\"funding_source\":\"TTC's 2021-2030 Capital Budget and Plan under 3.9 Buildings and Structures, State of Good Repair Category\",\"invited_to_tender\":[],\"posted_date\":\"2020-10-15\",\"prequalified\":[],\"reference\":\"E85-24\",\"solicitation_type\":\"RFP\",\"stage\":\"single_stage\",\"title\":\"Consultant Services\"}]}",
+    "native_ref": "E85-24",
+    "bid_count": 9,
+    "withheld_bid_fields": [
+      {
+        "bid_index": 2,
+        "field": "status",
+        "expected_value": "non_compliant",
+        "reason": "Source supports named submission but not the asserted commercial/technical compliance outcome: qualitative non-qualification, table-only receipt, or unadjudicated exception is distinct from a definite compliant/non_compliant finding."
+      },
+      {
+        "bid_index": 3,
+        "field": "status",
+        "expected_value": "non_compliant",
+        "reason": "Source supports named submission but not the asserted commercial/technical compliance outcome: qualitative non-qualification, table-only receipt, or unadjudicated exception is distinct from a definite compliant/non_compliant finding."
+      },
+      {
+        "bid_index": 4,
+        "field": "status",
+        "expected_value": "non_compliant",
+        "reason": "Source supports named submission but not the asserted commercial/technical compliance outcome: qualitative non-qualification, table-only receipt, or unadjudicated exception is distinct from a definite compliant/non_compliant finding."
+      },
+      {
+        "bid_index": 5,
+        "field": "status",
+        "expected_value": "non_compliant",
+        "reason": "Source supports named submission but not the asserted commercial/technical compliance outcome: qualitative non-qualification, table-only receipt, or unadjudicated exception is distinct from a definite compliant/non_compliant finding."
+      },
+      {
+        "bid_index": 6,
+        "field": "status",
+        "expected_value": "non_compliant",
+        "reason": "Source supports named submission but not the asserted commercial/technical compliance outcome: qualitative non-qualification, table-only receipt, or unadjudicated exception is distinct from a definite compliant/non_compliant finding."
+      },
+      {
+        "bid_index": 7,
+        "field": "status",
+        "expected_value": "non_compliant",
+        "reason": "Source supports named submission but not the asserted commercial/technical compliance outcome: qualitative non-qualification, table-only receipt, or unadjudicated exception is distinct from a definite compliant/non_compliant finding."
+      },
+      {
+        "bid_index": 8,
+        "field": "status",
+        "expected_value": "non_compliant",
+        "reason": "Source supports named submission but not the asserted commercial/technical compliance outcome: qualitative non-qualification, table-only receipt, or unadjudicated exception is distinct from a definite compliant/non_compliant finding."
+      }
+    ]
+  },
+  {
+    "url": "https://cdn.ttc.ca/-/media/Project/TTC/DevProto/Documents/Home/Public-Meetings/Board/2005/June-22/Other/Procurement_Authoriz.pdf?rev=2b9c460e06784cae8ec9d6706af4e505&hash=886F6B8C61AA62E02F8B92B88970F970",
+    "sha256": "fe3d866b08bce72aa224d4325b73d69bc2b78b139e5998b93af44c53bf4d577b",
+    "result_json": "{\"contracts\":[{\"awards\":[{\"amount_basis\":\"unknown\",\"amount_raw\":\"$100,000\",\"contingency_raw\":null,\"supplier_name\":\"Mercer Human Resource Consulting Limited\",\"value_confidential\":false}],\"bids\":[{\"amount_basis\":null,\"amount_raw\":null,\"rank\":1,\"status\":\"compliant\",\"supplier_name\":\"Mercer Human Resource Consulting Ltd.\"},{\"amount_basis\":null,\"amount_raw\":null,\"rank\":2,\"status\":\"non_compliant\",\"supplier_name\":\"Hicks, Morley, Hamilton, Stewart, Storie LLP\"},{\"amount_basis\":null,\"amount_raw\":null,\"rank\":3,\"status\":\"non_compliant\",\"supplier_name\":\"The HayGroup\"}],\"buyer\":\"Toronto Transit Commission\",\"closed_date\":null,\"decision_body\":\"Commission\",\"decision_date\":null,\"declared_compliant\":1,\"declared_submissions\":3,\"documents_taken\":null,\"funding_source\":\"Unbudgeted item; funds made available through under expenditures in the Operations Branch 2005 operating budget\",\"invited_to_tender\":[],\"posted_date\":null,\"prequalified\":[],\"reference\":\"P03CH05110\",\"solicitation_type\":\"RFP\",\"stage\":\"single_stage\",\"title\":\"Attendance Management Audit\"}]}",
+    "native_ref": "P03CH05110",
+    "bid_count": 3,
+    "withheld_bid_fields": [
+      {
+        "bid_index": 1,
+        "field": "status",
+        "expected_value": "non_compliant",
+        "reason": "Source supports named submission but not the asserted commercial/technical compliance outcome: qualitative non-qualification, table-only receipt, or unadjudicated exception is distinct from a definite compliant/non_compliant finding."
+      },
+      {
+        "bid_index": 2,
+        "field": "status",
+        "expected_value": "non_compliant",
+        "reason": "Source supports named submission but not the asserted commercial/technical compliance outcome: qualitative non-qualification, table-only receipt, or unadjudicated exception is distinct from a definite compliant/non_compliant finding."
+      }
+    ]
+  },
+  {
+    "url": "https://cdn.ttc.ca/-/media/Project/TTC/DevProto/Documents/Home/Public-Meetings/Board/2017/October-16/20_Miscellaneous_Design_Services-Procurement_Authorization.pdf?rev=7b8b05ca8f284f3bab9d30eef1804e03&hash=2B91C72D02E780ADA831E27B9112328E",
+    "sha256": "af9b39bfe3e0a7f4c085e3ba458198f99f7f779cd090f9e6403c9793c20cd712",
+    "result_json": "{\"contracts\":[{\"awards\":[{\"amount_basis\":\"unknown\",\"amount_raw\":\"$ 4,000,000.00\",\"contingency_raw\":null,\"supplier_name\":\"CH2M Hill Canada Limited\",\"value_confidential\":false},{\"amount_basis\":\"unknown\",\"amount_raw\":\"$ 4,000,000.00\",\"contingency_raw\":null,\"supplier_name\":\"Cima Canada Inc.\",\"value_confidential\":false},{\"amount_basis\":\"unknown\",\"amount_raw\":\"$ 4,000,000.00\",\"contingency_raw\":null,\"supplier_name\":\"HDR Corporation\",\"value_confidential\":false},{\"amount_basis\":\"unknown\",\"amount_raw\":\"$ 4,000,000.00\",\"contingency_raw\":null,\"supplier_name\":\"Hatch Corporation\",\"value_confidential\":false},{\"amount_basis\":\"unknown\",\"amount_raw\":\"$ 4,000,000.00\",\"contingency_raw\":null,\"supplier_name\":\"IBI Group Professional Services (Canada) Inc.\",\"value_confidential\":false}],\"bids\":[{\"amount_basis\":null,\"amount_raw\":null,\"rank\":null,\"status\":\"compliant\",\"supplier_name\":\"AECOM Canada Ltd.\"},{\"amount_basis\":null,\"amount_raw\":null,\"rank\":null,\"status\":\"compliant\",\"supplier_name\":\"CH2M Hill Canada Limited\"},{\"amount_basis\":null,\"amount_raw\":null,\"rank\":null,\"status\":\"compliant\",\"supplier_name\":\"Cima Canada Inc.\"},{\"amount_basis\":null,\"amount_raw\":null,\"rank\":null,\"status\":\"non_compliant\",\"supplier_name\":\"Entuitive Corporation\"},{\"amount_basis\":null,\"amount_raw\":null,\"rank\":null,\"status\":\"compliant\",\"supplier_name\":\"exp Services Inc.\"},{\"amount_basis\":null,\"amount_raw\":null,\"rank\":null,\"status\":\"compliant\",\"supplier_name\":\"GHD Limited\"},{\"amount_basis\":null,\"amount_raw\":null,\"rank\":null,\"status\":\"compliant\",\"supplier_name\":\"Hatch Corporation\"},{\"amount_basis\":null,\"amount_raw\":null,\"rank\":null,\"status\":\"compliant\",\"supplier_name\":\"HDR Corporation\"},{\"amount_basis\":null,\"amount_raw\":null,\"rank\":null,\"status\":\"compliant\",\"supplier_name\":\"IBI Group Professional Services (Canada) Inc.\"},{\"amount_basis\":null,\"amount_raw\":null,\"rank\":null,\"status\":\"compliant\",\"supplier_name\":\"Lea Consulting Ltd.\"},{\"amount_basis\":null,\"amount_raw\":null,\"rank\":null,\"status\":\"compliant\",\"supplier_name\":\"Read Jones Christoffersen Ltd.\"},{\"amount_basis\":null,\"amount_raw\":null,\"rank\":null,\"status\":\"compliant\",\"supplier_name\":\"WSP Canada Inc.\"}],\"buyer\":\"TTC\",\"closed_date\":\"2017-06-29\",\"decision_body\":\"TTC Board\",\"decision_date\":\"2017-10-16\",\"declared_compliant\":11,\"declared_submissions\":12,\"documents_taken\":35,\"funding_source\":\"TTC's 2017-2026 Capital Budget\",\"invited_to_tender\":[],\"posted_date\":\"2017-06-05\",\"prequalified\":[],\"reference\":\"G85-351\",\"solicitation_type\":\"RFP\",\"stage\":\"single_stage\",\"title\":\"Miscellaneous Design Services\"}]}",
+    "native_ref": "G85-351",
+    "bid_count": 12,
+    "withheld_bid_fields": [
+      {
+        "bid_index": 0,
+        "field": "status",
+        "expected_value": "compliant",
+        "reason": "Source supports named submission but not the asserted commercial/technical compliance outcome: qualitative non-qualification, table-only receipt, or unadjudicated exception is distinct from a definite compliant/non_compliant finding."
+      },
+      {
+        "bid_index": 1,
+        "field": "status",
+        "expected_value": "compliant",
+        "reason": "Source supports named submission but not the asserted commercial/technical compliance outcome: qualitative non-qualification, table-only receipt, or unadjudicated exception is distinct from a definite compliant/non_compliant finding."
+      },
+      {
+        "bid_index": 2,
+        "field": "status",
+        "expected_value": "compliant",
+        "reason": "Source supports named submission but not the asserted commercial/technical compliance outcome: qualitative non-qualification, table-only receipt, or unadjudicated exception is distinct from a definite compliant/non_compliant finding."
+      },
+      {
+        "bid_index": 3,
+        "field": "status",
+        "expected_value": "non_compliant",
+        "reason": "Source supports named submission but not the asserted commercial/technical compliance outcome: qualitative non-qualification, table-only receipt, or unadjudicated exception is distinct from a definite compliant/non_compliant finding."
+      },
+      {
+        "bid_index": 4,
+        "field": "status",
+        "expected_value": "compliant",
+        "reason": "Source supports named submission but not the asserted commercial/technical compliance outcome: qualitative non-qualification, table-only receipt, or unadjudicated exception is distinct from a definite compliant/non_compliant finding."
+      },
+      {
+        "bid_index": 5,
+        "field": "status",
+        "expected_value": "compliant",
+        "reason": "Source supports named submission but not the asserted commercial/technical compliance outcome: qualitative non-qualification, table-only receipt, or unadjudicated exception is distinct from a definite compliant/non_compliant finding."
+      },
+      {
+        "bid_index": 6,
+        "field": "status",
+        "expected_value": "compliant",
+        "reason": "Source supports named submission but not the asserted commercial/technical compliance outcome: qualitative non-qualification, table-only receipt, or unadjudicated exception is distinct from a definite compliant/non_compliant finding."
+      },
+      {
+        "bid_index": 7,
+        "field": "status",
+        "expected_value": "compliant",
+        "reason": "Source supports named submission but not the asserted commercial/technical compliance outcome: qualitative non-qualification, table-only receipt, or unadjudicated exception is distinct from a definite compliant/non_compliant finding."
+      },
+      {
+        "bid_index": 8,
+        "field": "status",
+        "expected_value": "compliant",
+        "reason": "Source supports named submission but not the asserted commercial/technical compliance outcome: qualitative non-qualification, table-only receipt, or unadjudicated exception is distinct from a definite compliant/non_compliant finding."
+      },
+      {
+        "bid_index": 9,
+        "field": "status",
+        "expected_value": "compliant",
+        "reason": "Source supports named submission but not the asserted commercial/technical compliance outcome: qualitative non-qualification, table-only receipt, or unadjudicated exception is distinct from a definite compliant/non_compliant finding."
+      },
+      {
+        "bid_index": 10,
+        "field": "status",
+        "expected_value": "compliant",
+        "reason": "Source supports named submission but not the asserted commercial/technical compliance outcome: qualitative non-qualification, table-only receipt, or unadjudicated exception is distinct from a definite compliant/non_compliant finding."
+      },
+      {
+        "bid_index": 11,
+        "field": "status",
+        "expected_value": "compliant",
+        "reason": "Source supports named submission but not the asserted commercial/technical compliance outcome: qualitative non-qualification, table-only receipt, or unadjudicated exception is distinct from a definite compliant/non_compliant finding."
+      }
+    ]
+  },
+  {
+    "url": "https://cdn.ttc.ca/-/media/Project/TTC/DevProto/Documents/Home/Public-Meetings/Board/2015/May-27/Reports/Procurement_Authorization_Station_Design_Services_Contract_F.pdf?rev=e28327cc4fff46e6beef3e549aa457dc&hash=30B9A03D8F713F061AF077717CE4057C",
+    "sha256": "8be4a205ed29a94cf0a0016fff372f455fad4fea3a2057767231bf815b3bb216",
+    "result_json": "{\"contracts\":[{\"awards\":[{\"amount_basis\":\"unknown\",\"amount_raw\":\"$63 Million\",\"contingency_raw\":null,\"supplier_name\":\"AECOM Canada Limited (Team 1)\",\"value_confidential\":false},{\"amount_basis\":\"unknown\",\"amount_raw\":\"$32 Million\",\"contingency_raw\":null,\"supplier_name\":\"AECOM Canada Limited (Team 2)\",\"value_confidential\":false}],\"bids\":[{\"amount_basis\":null,\"amount_raw\":null,\"rank\":null,\"status\":\"compliant\",\"supplier_name\":\"Arup Canada Inc.\"},{\"amount_basis\":null,\"amount_raw\":null,\"rank\":1,\"status\":\"compliant\",\"supplier_name\":\"AECOM Canada Ltd. (Team 1)\"},{\"amount_basis\":null,\"amount_raw\":null,\"rank\":2,\"status\":\"compliant\",\"supplier_name\":\"AECOM Canada Ltd. (Team 2)\"},{\"amount_basis\":null,\"amount_raw\":null,\"rank\":null,\"status\":\"non_compliant\",\"supplier_name\":\"Hatch Mott MacDonald Ltd.\"},{\"amount_basis\":null,\"amount_raw\":null,\"rank\":null,\"status\":\"compliant\",\"supplier_name\":\"HDR Corporation\"},{\"amount_basis\":null,\"amount_raw\":null,\"rank\":null,\"status\":\"non_compliant\",\"supplier_name\":\"MMM Group Limited\"},{\"amount_basis\":null,\"amount_raw\":null,\"rank\":null,\"status\":\"compliant\",\"supplier_name\":\"The Scarborough Group Associates\"},{\"amount_basis\":null,\"amount_raw\":null,\"rank\":null,\"status\":\"non_compliant\",\"supplier_name\":\"WSP Canada Inc.\"}],\"buyer\":\"TTC\",\"closed_date\":\"2015-02-26\",\"decision_body\":\"Board of Directors\",\"decision_date\":\"2015-05-27\",\"declared_compliant\":5,\"declared_submissions\":8,\"documents_taken\":54,\"funding_source\":\"TTC 2015-2024 Capital Budget under Scarborough Subway Extension, pages 1043-1044\",\"invited_to_tender\":[],\"posted_date\":\"2015-01-16\",\"prequalified\":[],\"reference\":\"FE85-5\",\"solicitation_type\":\"RFP\",\"stage\":\"single_stage\",\"title\":\"Station Design Services for the Scarborough Subway Extension (SSE)\"}]}",
+    "native_ref": "FE85-5",
+    "bid_count": 8,
+    "withheld_bid_fields": [
+      {
+        "bid_index": 3,
+        "field": "status",
+        "expected_value": "non_compliant",
+        "reason": "Source supports named submission but not the asserted commercial/technical compliance outcome: qualitative non-qualification, table-only receipt, or unadjudicated exception is distinct from a definite compliant/non_compliant finding."
+      },
+      {
+        "bid_index": 5,
+        "field": "status",
+        "expected_value": "non_compliant",
+        "reason": "Source supports named submission but not the asserted commercial/technical compliance outcome: qualitative non-qualification, table-only receipt, or unadjudicated exception is distinct from a definite compliant/non_compliant finding."
+      },
+      {
+        "bid_index": 7,
+        "field": "status",
+        "expected_value": "non_compliant",
+        "reason": "Source supports named submission but not the asserted commercial/technical compliance outcome: qualitative non-qualification, table-only receipt, or unadjudicated exception is distinct from a definite compliant/non_compliant finding."
+      }
+    ]
+  },
+  {
+    "url": "https://cdn.ttc.ca/-/media/Project/TTC/DevProto/Documents/Home/Public-Meetings/Board/2021/September_15/Reports/12_Structural_Assessment_and_Design_Services_Triennial_Contr.pdf?rev=de60fe2a6ab741c08a622f016407f70e&hash=FA83A646C1BF9DBD14A5F7715A86C9F3",
+    "sha256": "28ee8bbb1ec20457ee16f41a279264e5979661a1a8d8eae70af778b3ae757fee",
+    "result_json": "{\"contracts\":[{\"awards\":[{\"amount_basis\":\"including_HST\",\"amount_raw\":\"$ 2,000,000\",\"contingency_raw\":null,\"supplier_name\":\"Parsons Inc.\",\"value_confidential\":false},{\"amount_basis\":\"including_HST\",\"amount_raw\":\"$ 2,000,000\",\"contingency_raw\":null,\"supplier_name\":\"LEA Consulting Ltd.\",\"value_confidential\":false},{\"amount_basis\":\"including_HST\",\"amount_raw\":\"$ 2,000,000\",\"contingency_raw\":null,\"supplier_name\":\"Morrison Hershfield Limited\",\"value_confidential\":false},{\"amount_basis\":\"including_HST\",\"amount_raw\":\"$ 2,000,000\",\"contingency_raw\":null,\"supplier_name\":\"AECOM Canada Ltd.\",\"value_confidential\":false},{\"amount_basis\":\"including_HST\",\"amount_raw\":\"$ 2,000,000\",\"contingency_raw\":null,\"supplier_name\":\"Wood Environment & Infrastructure Solutions, a Division of Wood Canada Limited\",\"value_confidential\":false}],\"bids\":[{\"amount_basis\":null,\"amount_raw\":null,\"rank\":1,\"status\":\"compliant\",\"supplier_name\":\"Parsons Inc.\"},{\"amount_basis\":null,\"amount_raw\":null,\"rank\":2,\"status\":\"compliant\",\"supplier_name\":\"LEA Consulting Ltd\"},{\"amount_basis\":null,\"amount_raw\":null,\"rank\":3,\"status\":\"compliant\",\"supplier_name\":\"Morrison Hershfield Limited\"},{\"amount_basis\":null,\"amount_raw\":null,\"rank\":4,\"status\":\"compliant\",\"supplier_name\":\"AECOM Canada Ltd.\"},{\"amount_basis\":null,\"amount_raw\":null,\"rank\":5,\"status\":\"compliant\",\"supplier_name\":\"Wood Environment & Infrastructure Solutions, a Division of Wood Canada Limited\"},{\"amount_basis\":null,\"amount_raw\":null,\"rank\":6,\"status\":\"compliant\",\"supplier_name\":\"CIMA Canada Inc.\"},{\"amount_basis\":null,\"amount_raw\":null,\"rank\":7,\"status\":\"compliant\",\"supplier_name\":\"SNC-Lavalin\"},{\"amount_basis\":null,\"amount_raw\":null,\"rank\":8,\"status\":\"compliant\",\"supplier_name\":\"WSP Canada Inc.\"},{\"amount_basis\":null,\"amount_raw\":null,\"rank\":9,\"status\":\"compliant\",\"supplier_name\":\"HDR Corporation\"},{\"amount_basis\":null,\"amount_raw\":null,\"rank\":10,\"status\":\"compliant\",\"supplier_name\":\"Gannett Fleming Canada ULC\"},{\"amount_basis\":null,\"amount_raw\":null,\"rank\":11,\"status\":\"compliant\",\"supplier_name\":\"R.V. Anderson Associates Limited\"},{\"amount_basis\":null,\"amount_raw\":null,\"rank\":12,\"status\":\"compliant\",\"supplier_name\":\"Read Jones Christoffersen Ltd.\"},{\"amount_basis\":null,\"amount_raw\":null,\"rank\":null,\"status\":\"non_compliant\",\"supplier_name\":\"Fishburn Building Sciences\"},{\"amount_basis\":null,\"amount_raw\":null,\"rank\":null,\"status\":\"non_compliant\",\"supplier_name\":\"Milman & Associates Limited\"}],\"buyer\":\"TTC\",\"closed_date\":\"2021-07-21\",\"decision_body\":\"TTC Board\",\"decision_date\":\"2021-09-15\",\"declared_compliant\":null,\"declared_submissions\":14,\"documents_taken\":40,\"funding_source\":\"TTC’s 2021-2030 approved Capital Budget and Plan: Project No. 6974 – 3.4 Structural Paving Rehabilitation Program; Project No. 6975 – 3.4 Bridges/Structures Maintenance Program; Project No. 7156 – 3.4 Culverts and East Don River Bridge Structural Rehabilitation\",\"invited_to_tender\":[],\"posted_date\":\"2021-06-11\",\"prequalified\":[],\"reference\":\"G85-404\",\"solicitation_type\":\"RFP\",\"stage\":\"single_stage\",\"title\":\"Structural Assessment and Design Services – Triennial Contract\"}]}",
+    "native_ref": "G85-404",
+    "bid_count": 14,
+    "withheld_bid_fields": [
+      {
+        "bid_index": 0,
+        "field": "status",
+        "expected_value": "compliant",
+        "reason": "Source supports named submission but not the asserted commercial/technical compliance outcome: qualitative non-qualification, table-only receipt, or unadjudicated exception is distinct from a definite compliant/non_compliant finding."
+      },
+      {
+        "bid_index": 1,
+        "field": "status",
+        "expected_value": "compliant",
+        "reason": "Source supports named submission but not the asserted commercial/technical compliance outcome: qualitative non-qualification, table-only receipt, or unadjudicated exception is distinct from a definite compliant/non_compliant finding."
+      },
+      {
+        "bid_index": 2,
+        "field": "status",
+        "expected_value": "compliant",
+        "reason": "Source supports named submission but not the asserted commercial/technical compliance outcome: qualitative non-qualification, table-only receipt, or unadjudicated exception is distinct from a definite compliant/non_compliant finding."
+      },
+      {
+        "bid_index": 3,
+        "field": "status",
+        "expected_value": "compliant",
+        "reason": "Source supports named submission but not the asserted commercial/technical compliance outcome: qualitative non-qualification, table-only receipt, or unadjudicated exception is distinct from a definite compliant/non_compliant finding."
+      },
+      {
+        "bid_index": 4,
+        "field": "status",
+        "expected_value": "compliant",
+        "reason": "Source supports named submission but not the asserted commercial/technical compliance outcome: qualitative non-qualification, table-only receipt, or unadjudicated exception is distinct from a definite compliant/non_compliant finding."
+      },
+      {
+        "bid_index": 5,
+        "field": "status",
+        "expected_value": "compliant",
+        "reason": "Source supports named submission but not the asserted commercial/technical compliance outcome: qualitative non-qualification, table-only receipt, or unadjudicated exception is distinct from a definite compliant/non_compliant finding."
+      },
+      {
+        "bid_index": 6,
+        "field": "status",
+        "expected_value": "compliant",
+        "reason": "Source supports named submission but not the asserted commercial/technical compliance outcome: qualitative non-qualification, table-only receipt, or unadjudicated exception is distinct from a definite compliant/non_compliant finding."
+      },
+      {
+        "bid_index": 7,
+        "field": "status",
+        "expected_value": "compliant",
+        "reason": "Source supports named submission but not the asserted commercial/technical compliance outcome: qualitative non-qualification, table-only receipt, or unadjudicated exception is distinct from a definite compliant/non_compliant finding."
+      },
+      {
+        "bid_index": 8,
+        "field": "status",
+        "expected_value": "compliant",
+        "reason": "Source supports named submission but not the asserted commercial/technical compliance outcome: qualitative non-qualification, table-only receipt, or unadjudicated exception is distinct from a definite compliant/non_compliant finding."
+      },
+      {
+        "bid_index": 9,
+        "field": "status",
+        "expected_value": "compliant",
+        "reason": "Source supports named submission but not the asserted commercial/technical compliance outcome: qualitative non-qualification, table-only receipt, or unadjudicated exception is distinct from a definite compliant/non_compliant finding."
+      },
+      {
+        "bid_index": 10,
+        "field": "status",
+        "expected_value": "compliant",
+        "reason": "Source supports named submission but not the asserted commercial/technical compliance outcome: qualitative non-qualification, table-only receipt, or unadjudicated exception is distinct from a definite compliant/non_compliant finding."
+      },
+      {
+        "bid_index": 11,
+        "field": "status",
+        "expected_value": "compliant",
+        "reason": "Source supports named submission but not the asserted commercial/technical compliance outcome: qualitative non-qualification, table-only receipt, or unadjudicated exception is distinct from a definite compliant/non_compliant finding."
+      },
+      {
+        "bid_index": 12,
+        "field": "status",
+        "expected_value": "non_compliant",
+        "reason": "Source supports named submission but not the asserted commercial/technical compliance outcome: qualitative non-qualification, table-only receipt, or unadjudicated exception is distinct from a definite compliant/non_compliant finding."
+      },
+      {
+        "bid_index": 13,
+        "field": "status",
+        "expected_value": "non_compliant",
+        "reason": "Source supports named submission but not the asserted commercial/technical compliance outcome: qualitative non-qualification, table-only receipt, or unadjudicated exception is distinct from a definite compliant/non_compliant finding."
+      }
+    ]
+  }
+]
