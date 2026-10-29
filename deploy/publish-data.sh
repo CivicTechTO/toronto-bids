@@ -151,7 +151,7 @@ fi
 
 # 5c. Mirror bids.sqlite to the CORS-enabled R2 bucket for browser-side Datasette-Lite (#155).
 #     GitHub release assets no longer send CORS, so the in-browser SQL page loads the DB from R2
-#     instead. Reuses CLOUDFLARE_API_TOKEN (already in tb.env for provisioning) via wrangler —
+#     instead. Reuses CLOUDFLARE_API_TOKEN through the S3 multipart interface —
 #     overwrite the same object each night so the URL is stable. Best-effort: the GitHub release
 #     is the deliverable; a failed R2 push leaves last night's copy and only warns. Skips cleanly
 #     when R2 is not configured (dev/CI, or before the account is set up).
@@ -162,29 +162,17 @@ if [ -z "${CLOUDFLARE_API_TOKEN:-}" ]; then
   # the nightly's own `council: skip (not the 1st)` (#176).
   echo "publish-data: R2 not configured (no CLOUDFLARE_API_TOKEN) — skipping the bucket mirror"
 elif [ "$DRY_RUN" = 1 ]; then
-  echo "DRY-RUN wrangler r2 object put $R2_BUCKET/bids.sqlite --file $SQLITE --remote"
-elif ! . "$HERE/resolve-node.sh" || ! tb_resolve_node; then
-  # systemd's PATH is minimal AND carries Ubuntu's Node 20 npx, which satisfies a presence
-  # check but not wrangler (>= 22). Gating on presence is what silently killed this mirror for
-  # eight nights — see deploy/resolve-node.sh (#173). Recorded as a REAL failure (#176), not
-  # skipped: unlike the missing-token case above, this box IS configured for R2 and the mirror
-  # is simply broken — exactly the gap `tb status` showing 14/14 ok used to hide.
-  # :-22 matters: if the source itself failed the var is unbound, and `set -u` would abort
-  # the whole publish over a best-effort mirror.
-  echo "publish-data: WARNING — no Node >= ${TB_NODE_MIN_MAJOR:-22} for wrangler;" \
-       "R2 mirror skipped (release is published)" >&2
-  record_step r2_mirror failed "no Node >= ${TB_NODE_MIN_MAJOR:-22} for wrangler"
+  echo "DRY-RUN python -m toronto_bids.r2_mirror --bucket $R2_BUCKET --file $SQLITE"
 else
-  # Pinned version so a warm npx cache is reused (no nightly re-resolve of "latest").
-  # wrangler's stderr is CAPTURED, never discarded: sending it to /dev/null is precisely why
-  # this failed unnoticed from 2026-07-19 to 2026-07-27 (#173).
-  if _r2_err="$(npx -y wrangler@4.112.0 r2 object put "$R2_BUCKET/bids.sqlite" \
-        --file "$SQLITE" --remote --content-type application/x-sqlite3 2>&1 >/dev/null)"; then
+  # Managed multipart transfer supports databases above Wrangler's 300 MiB limit.
+  # Keep failures visible without failing the already-published GitHub release.
+  if _r2_err="$(cd "$SCRAPERS" && "$UV" run --locked python -m toronto_bids.r2_mirror \
+        --bucket "$R2_BUCKET" --file "$SQLITE" 2>&1)"; then
     echo "publish-data: mirrored bids.sqlite to R2 bucket $R2_BUCKET"
     record_step r2_mirror ok
   else
     echo "publish-data: WARNING — R2 upload of bids.sqlite failed (release is published)" >&2
-    printf 'publish-data: wrangler said: %s\n' "$_r2_err" >&2
+    printf 'publish-data: R2 uploader said: %s\n' "$_r2_err" >&2
     record_step r2_mirror failed "$_r2_err"
   fi
 fi

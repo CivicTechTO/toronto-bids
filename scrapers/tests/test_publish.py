@@ -17,7 +17,7 @@ pytestmark = pytest.mark.skipif(
 )
 
 
-def _publish(tmp_path, error="", dry_run=False):
+def _publish(tmp_path, error="", dry_run=False, r2=False, r2_error=""):
     data = tmp_path / "data"
     export = data / "export"
     export.mkdir(parents=True)
@@ -59,16 +59,32 @@ else:
         f.write(payload+'\\n')
 ''')
     curl.chmod(0o755)
+    uv = bin_dir / 'uv'
+    uv.write_text(f'''#!{sys.executable}
+import json,os,sys
+if 'toronto_bids.r2_mirror' in sys.argv:
+    with open(os.environ['COMMANDS'],'a') as f:
+        f.write(json.dumps(['uv',*sys.argv[1:]])+'\\n')
+    error=os.environ.get('R2_ERROR','')
+    if error:
+        print(error,file=sys.stderr)
+        sys.exit(1)
+    sys.exit(0)
+real={shutil.which('uv')!r}
+os.execv(real,[real,*sys.argv[1:]])
+''')
+    uv.chmod(0o755)
     env = dict(os.environ)
     env.update({
         "PATH": str(bin_dir) + os.pathsep + os.environ["PATH"],
-        "TB_DATA_DIR": str(data), "TB_NIGHTLY_UV": shutil.which("uv"),
+        "TB_DATA_DIR": str(data), "TB_NIGHTLY_UV": str(uv),
         "TB_SLACK_WEBHOOK": "https://hooks.example.invalid/test",
-        "CLOUDFLARE_API_TOKEN": "", "TB_PUBLISH_DAY": "20",
+        "CLOUDFLARE_API_TOKEN": "fixture" if r2 else "", "TB_PUBLISH_DAY": "20",
         "TB_PUBLISH_DRY_RUN": "1" if dry_run else "0",
         "COMMANDS": str(tmp_path / "commands.jsonl"),
         "NOTIFICATIONS": str(tmp_path / "notifications.jsonl"),
         "DISPATCH_ERROR": error,
+        "R2_ERROR": r2_error,
     })
     result = subprocess.run([BASH, str(DEPLOY / "publish-data.sh")],
                             env=env, text=True, capture_output=True)
@@ -125,3 +141,26 @@ def test_publish_dry_run_does_not_dispatch_record_or_send_notification(tmp_path)
     assert rows == []
     assert notifications == []
     assert commands == []
+
+
+def test_configured_r2_uses_python_uploader_and_records_success(tmp_path):
+    result,rows,_,commands=_publish(tmp_path,r2=True)
+    assert result.returncode==0,result.stdout+result.stderr
+    assert ('r2_mirror','ok',None) in rows
+    assert any(c[0]=='uv' and 'toronto_bids.r2_mirror' in c for c in commands)
+
+
+def test_r2_upload_failure_is_recorded_without_losing_primary_publication(tmp_path):
+    result,rows,_,_=_publish(tmp_path,r2=True,r2_error='multipart transfer failed')
+    assert result.returncode==0,result.stdout+result.stderr
+    mirror=next(r for r in rows if r[0]=='r2_mirror')
+    assert mirror[1]=='failed' and 'multipart transfer failed' in mirror[2]
+    assert 'multipart transfer failed' in result.stderr
+    assert rows[-1]==('publish','ok',None)
+
+
+def test_configured_r2_dry_run_never_authenticates_or_uploads(tmp_path):
+    result,rows,notifications,commands=_publish(tmp_path,r2=True,dry_run=True)
+    assert result.returncode==0
+    assert 'DRY-RUN python -m toronto_bids.r2_mirror' in result.stdout
+    assert rows==[] and notifications==[] and commands==[]

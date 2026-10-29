@@ -113,29 +113,3 @@ def test_the_minimum_major_is_overridable(tmp_path):
 
     assert res.returncode == 0, res.stderr
     assert res.stdout.strip() == str(path_dir / "node")
-
-
-def test_publish_data_no_longer_gates_the_fallback_on_mere_presence():
-    """Regression guard on the actual defect: `! command -v npx` must not gate the R2 step."""
-    publish = RESOLVE_NODE.parent / "publish-data.sh"
-    body = publish.read_text()
-    assert "! command -v npx" not in body, (
-        "publish-data.sh is gating on npx PRESENCE again — that is the #173 bug: "
-        "Ubuntu's Node 20 npx satisfies it and wrangler then dies."
-    )
-    assert "resolve-node.sh" in body, "publish-data.sh should source the shared resolver"
-
-
-def test_wrangler_stderr_is_not_discarded():
-    """The reason #173 ran unseen for 8 nights: the error went to /dev/null.
-
-    Scoped to the R2 block alone — later sections discard stderr legitimately (e.g. the
-    `gh release view` existence probe for the monthly snapshot).
-    """
-    publish = (RESOLVE_NODE.parent / "publish-data.sh").read_text()
-    start = publish.index("R2_BUCKET=")
-    r2 = publish[start:publish.index("\n# 6.", start)]
-    assert "wrangler" in r2, "slice missed the R2 block — retarget this test"
-    assert ">/dev/null 2>&1" not in r2, (
-        "the R2 upload is discarding wrangler's stderr again (#173)"
-    )
