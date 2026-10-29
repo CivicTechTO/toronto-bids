@@ -65,7 +65,7 @@ def test_recovery_preserves_old_refusal_and_canonical_history(conn, monkeypatch)
     document = RECORDED[0]
     held(conn, document)
     resolver = agency_identity.reviewed_identity
-    monkeypatch.setattr(agency_identity, 'reviewed_identity', lambda *a: None)
+    monkeypatch.setattr(agency_identity, 'reviewed_identity', lambda *a, **kw: None)
     backfill_from_extraction(conn, 'trca')
     old = conn.execute('SELECT id,first_seen FROM agency_derivation').fetchone()
     monkeypatch.setattr(agency_identity, 'reviewed_identity', resolver)

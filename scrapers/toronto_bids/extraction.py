@@ -565,7 +565,7 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
     if corpus in ("trca", "ep", "zoo", "ttc"):
         from toronto_bids.linking.agency_reference import normalize_agency_reference, report_reference
         from toronto_bids.agency_coverage import decision
-        from toronto_bids.linking.agency_identity import reviewed_identity
+        from toronto_bids.linking.agency_identity import reviewed_identity, IdentityReviewRequired
 
         if rows and buyer_id is None:
             raise RuntimeError(f'backfill {corpus}: buyer is not seeded; existing rows kept')
@@ -577,14 +577,17 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
             for index, contract in enumerate(contracts):
                 if not (contract.get("bids") or contract.get("awards")):
                     continue
-                identity_evidence = reviewed_identity(corpus, row['sha256'], contract)
                 try:
+                    identity_evidence = reviewed_identity(corpus, row['sha256'], contract,
+                        report_url=row['url'], contract_count=len(contracts))
                     ref = (identity_evidence['native_ref'] if identity_evidence is not None else
                            normalize_agency_reference(_CORPUS_BUYER_SLUG[corpus], contract.get("reference")))
                     if not ref:
                         if len(contracts) != 1:
                             raise ValueError("ambiguous reference-less multi-contract report")
                         ref = report_reference(row["reference"], row["url"])
+                except IdentityReviewRequired as exc:
+                    raise RuntimeError(f'backfill {corpus}: {exc}; existing rows kept') from exc
                 except ValueError as exc:
                     contracts_refused += 1
                     refusal_details.append(f"{row['url']}: {exc}")

@@ -115,6 +115,27 @@ bid rows. Unknown prices remain null. TTC staff recommendations remain withheld
 from award rows until independent decision binding is implemented; no MERX alias
 is inferred from matching names, titles, digits or amounts.
 
+## Reviewed procurement identities
+
+Administrative footer codes are not procurement identifiers. The shared identity
+registry can bind a TTC extraction to a source-labelled solicitation or subject
+contract number. Where a reviewed report has one procurement collection and no
+public call identifier, `report_url_fallback` uses its exact held PDF URL as a
+report-specific identity. The registry retains the footer's administrative role;
+the URL is not presented as a printed call number or an alias of that footer.
+
+Each TTC decision binds the buyer, document hash, extraction version, entire
+contract fingerprint, exact report URL and collection count. Changed contexts
+abort the TTC rebuild before replacing existing facts. Alternative URLs are not
+automatically equated, and reference-less multi-contract reports remain withheld.
+These decisions do not change raw extraction results or approve award claims.
+
+Deploy registry and resolver changes together before promoting reviewed archive
+documents. Identity approval alone cannot admit unsupported prices, tax bases,
+statuses, omitted responses or unresolved quote options. Source evidence and
+regression results for the reviewed recovery are recorded in
+[`ttc-identity-recovery-validation-2026-10-29.md`](ttc-identity-recovery-validation-2026-10-29.md).
+
 ## Regression evidence
 
 The held 2017 source replay independently expects 52 all-type records, 13 Board
