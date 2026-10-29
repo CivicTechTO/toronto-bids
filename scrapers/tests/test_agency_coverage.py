@@ -17,7 +17,7 @@ from toronto_bids.store import db
 def test_held_source_refusals_replay_with_exact_evidence(conn, document, monkeypatch):
     # This remains the refusal seam when no reviewed relationship is available (#258).
     from toronto_bids.linking import agency_identity
-    monkeypatch.setattr(agency_identity, 'reviewed_identity', lambda *a: None)
+    monkeypatch.setattr(agency_identity, 'reviewed_identity', lambda *a, **kw: None)
     from toronto_bids.buyers import seed_buyers
     seed_buyers(conn)
     assert hashlib.sha256(document['result_json'].encode()).hexdigest() == document['result_sha256']
