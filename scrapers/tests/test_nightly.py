@@ -663,17 +663,15 @@ def test_a_raising_near_close_check_is_reported_but_does_not_fail_the_run(nightl
     assert "Ariba near-close check failed: disk gone" in posted[0]
 
 
-def test_trca_download_gaps_reach_nightly_status_history_and_summary(
-        nightly, monkeypatch, conn, tmp_path):
-    """Exercise the real downloader through the nightly, including per-document isolation."""
+def _run_trca_downloads(nightly, monkeypatch, conn, tmp_path, ids):
+    """Exercise the real downloader through the nightly, every listed document 404ing."""
     import httpx
     from toronto_bids.sources import trca_board
 
     monkeypatch.setattr(cli, "_open_db", lambda: _KeepOpen(conn))
     monkeypatch.setattr(config, "TRCA_ESCRIBE_YEARS", [])
     monkeypatch.setattr(config, "TRCA_REPORTS_DIR", tmp_path / "trca")
-    urls = [f"https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId={n}"
-            for n in (5558, 7234, 6819)]
+    urls = [f"https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId={n}" for n in ids]
     for url in urls:
         conn.execute("INSERT INTO background_pdf (url, kind) VALUES (?, 'agency_board')", (url,))
     conn.commit()
@@ -693,13 +691,39 @@ def test_trca_download_gaps_reach_nightly_status_history_and_summary(
                                              virtual_display=False, out=k['out']))
     posted = {}
     monkeypatch.setattr(notify, "post", lambda text, **k: posted.setdefault("text", text))
+    return nightly(), posted['text'], urls
 
-    assert nightly() == 1
-    assert "❌ agencies" in posted['text']
-    assert all(url in posted['text'] for url in urls)
+
+def test_trca_download_gaps_reach_nightly_status_history_and_summary(
+        nightly, monkeypatch, conn, tmp_path):
+    """An unreviewed gap fails the step; reviewed #259 originals beside it stay known (#283)."""
+    code, text, urls = _run_trca_downloads(nightly, monkeypatch, conn, tmp_path,
+                                           (99999991, 99999992, 5558))
+    new, reviewed = urls[:2], urls[2]
+    assert code == 1
+    assert "❌ agencies" in text and "1 known gaps" in text
+    failures, known = text.split("*Failures (2)*")[1], text.split("*Known gaps (1)*")[1]
+    assert all(url in failures for url in new) and reviewed not in failures
+    assert "download:trca: reviewed unavailable TRCA original (#259)" in known
     row = conn.execute("SELECT status, error FROM sync_run WHERE source='agencies'").fetchone()
-    assert row['status'] == 'failed' and all(url in row['error'] for url in urls)
+    assert row['status'] == 'failed' and all(url in row['error'] for url in new)
+    assert reviewed not in row['error']
     assert (tmp_path / 'export' / 'bids.json').exists()
+    assert conn.execute("SELECT count(*) FROM background_pdf WHERE sha256 IS NULL").fetchone()[0] == 3
+
+
+def test_only_reviewed_trca_gaps_leave_the_nightly_green_and_queued(
+        nightly, monkeypatch, conn, tmp_path):
+    code, text, urls = _run_trca_downloads(nightly, monkeypatch, conn, tmp_path,
+                                           (5558, 7234, 6819))
+    assert code == 0
+    assert text.startswith("*✅ toronto-bids nightly*")
+    assert "✅ agencies" in text and "3 known gaps" in text
+    assert "*Known gaps (3)*" in text and "download:trca ×3:" in text
+    assert "Failures" not in text
+    row = conn.execute("SELECT status, error FROM sync_run WHERE source='agencies'").fetchone()
+    assert row['status'] == 'ok' and row['error'] is None
+    # Known is a reporting verdict only: the originals stay queued for retry.
     assert conn.execute("SELECT count(*) FROM background_pdf WHERE sha256 IS NULL").fetchone()[0] == 3
 
 

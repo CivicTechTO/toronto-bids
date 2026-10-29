@@ -24,6 +24,12 @@ def build_parser() -> argparse.ArgumentParser:
     p_coverage.add_argument('--baseline', help='Read-only SQLite baseline for prior-fact reconciliation')
     p_coverage.add_argument('--out', help='Write report to this path instead of stdout')
 
+    p_known = sub.add_parser('known-gaps', help="Record reviewed gaps the nightly reports as known (#283)")
+    p_known.add_argument('action', choices=['record-refusals'])
+    p_known.add_argument('--only', choices=['trca', 'zoo', 'ep'], action='append',
+                         help='Corpus to record (repeatable; default: trca, zoo and ep)')
+    p_known.add_argument('--out', help='Write here instead of the packaged known_agency_refusals.json')
+
     p_export = sub.add_parser(
         "export", help="Write the store to a nested JSON artifact"
     )
@@ -372,7 +378,7 @@ def _run_step(steps: list, failures: list, name: str, fn, conn=None):
     return run_id
 
 
-def _mark_if_swallowed_failures(steps, failures, conn, run_id, before: int) -> None:
+def _mark_if_swallowed_failures(steps, failures, conn, run_id, before: int, known: list) -> None:
     """A step whose OWN sub-units (portal slugs, agency bodies) record their failures into the
     shared `failures` list rather than raising reads as ✅ to `_run_step`, which only sees
     whether `fn()` raised — exactly the bug #178 found for `pipeline.sync` and fixed one level
@@ -380,12 +386,30 @@ def _mark_if_swallowed_failures(steps, failures, conn, run_id, before: int) -> N
     grew, the step is corrected in both places `_run_step` already wrote to — the Steps entry
     just appended, and, since the row was already committed as 'ok' before the caller could
     know better, the `sync_run` row itself (#176).
+
+    Sub-failures matching reviewed evidence (`known_gaps`, #283) move from `failures` to
+    `known`: they leave the step ✅ with a count, and never reach the exit code. Only an
+    exact match is known; if classification itself breaks, every failure stays a failure.
     """
     if steps[-1]["status"] == "fail":
         # The step RAISED: _run_step already marked both places, and its own append to
         # `failures` would otherwise read as growth and overwrite the raised error (#223).
         return
     new = failures[before:]
+    if not new:
+        return
+    try:
+        from toronto_bids import known_gaps
+
+        unknown, recognized = known_gaps.classify(conn, new)
+    except Exception as exc:  # fail closed: an unreadable registry recognizes nothing
+        unknown, recognized = new + [("known_gaps", str(exc))], []
+    failures[before:] = unknown
+    known.extend(recognized)
+    if recognized:
+        detail = steps[-1]["detail"]
+        steps[-1]["detail"] = (detail + " · " if detail else "") + f"{len(recognized)} known gaps"
+    new = unknown
     if not new:
         return
     steps[-1]["status"] = "fail"
@@ -922,6 +946,7 @@ def _run_nightly(args) -> int:
     near_close: list[dict] = []
     near_close_error = None
     training_restrictions: list[dict] = []
+    known_gaps: list[dict] = []
     batch_queue = None
     batch_status = {}
 
@@ -1004,7 +1029,7 @@ def _run_nightly(args) -> int:
                 run_id = _run_step(
                     steps, failures, "award summaries", _awards, conn=conn
                 )
-                _mark_if_swallowed_failures(steps, failures, conn, run_id, before_len)
+                _mark_if_swallowed_failures(steps, failures, conn, run_id, before_len, known_gaps)
 
                 def _portal():
                     from toronto_bids.sources.bids_tenders import run_portal_capture
@@ -1018,7 +1043,7 @@ def _run_nightly(args) -> int:
 
                 before_len = len(failures)
                 run_id = _run_step(steps, failures, "portal", _portal, conn=conn)
-                _mark_if_swallowed_failures(steps, failures, conn, run_id, before_len)
+                _mark_if_swallowed_failures(steps, failures, conn, run_id, before_len, known_gaps)
 
                 def _bonfire():
                     from toronto_bids.sources.bonfire import run_bonfire_capture
@@ -1031,7 +1056,7 @@ def _run_nightly(args) -> int:
 
                 before_len = len(failures)
                 run_id = _run_step(steps, failures, 'bonfire listings', _bonfire, conn=conn)
-                _mark_if_swallowed_failures(steps, failures, conn, run_id, before_len)
+                _mark_if_swallowed_failures(steps, failures, conn, run_id, before_len, known_gaps)
 
                 def _merx():
                     from toronto_bids.sources.merx import run_merx_capture
@@ -1052,7 +1077,7 @@ def _run_nightly(args) -> int:
 
                 before_len = len(failures)
                 run_id = _run_step(steps, failures, 'merx', _merx, conn=conn)
-                _mark_if_swallowed_failures(steps, failures, conn, run_id, before_len)
+                _mark_if_swallowed_failures(steps, failures, conn, run_id, before_len, known_gaps)
 
                 def _ariba():
                     from toronto_bids.sources import ariba_attachments as aa
@@ -1070,7 +1095,7 @@ def _run_nightly(args) -> int:
 
                 before_len = len(failures)
                 run_id = _run_step(steps, failures, "ariba attachments", _ariba, conn=conn)
-                _mark_if_swallowed_failures(steps, failures, conn, run_id, before_len)
+                _mark_if_swallowed_failures(steps, failures, conn, run_id, before_len, known_gaps)
 
                 def _agencies():
                     from toronto_bids.buyers import seed_buyers
@@ -1094,7 +1119,7 @@ def _run_nightly(args) -> int:
 
                 before_len = len(failures)
                 run_id = _run_step(steps, failures, "agencies", _agencies, conn=conn)
-                _mark_if_swallowed_failures(steps, failures, conn, run_id, before_len)
+                _mark_if_swallowed_failures(steps, failures, conn, run_id, before_len, known_gaps)
 
                 def _waterfront():
                     from toronto_bids.sources.waterfront import capture_awards
@@ -1106,7 +1131,7 @@ def _run_nightly(args) -> int:
 
                 before_len = len(failures)
                 run_id = _run_step(steps, failures, "waterfront awards", _waterfront, conn=conn)
-                _mark_if_swallowed_failures(steps, failures, conn, run_id, before_len)
+                _mark_if_swallowed_failures(steps, failures, conn, run_id, before_len, known_gaps)
 
                 if _is_first_of_month():
 
@@ -1213,10 +1238,13 @@ def _run_nightly(args) -> int:
         "ariba_near_close": near_close,
         "ariba_near_close_error": near_close_error,
         "ariba_training_restrictions": training_restrictions,
+        "known_gaps": known_gaps,
         "batch_extraction": batch_status,
     }
     text = notify.summarize(report)
     print(text)
+    for gap in known_gaps:
+        print(f"KNOWN   {gap['name']}: {gap['error']}", file=sys.stderr)
     for name, error in failures:
         print(f"FAILED  {name}: {error}", file=sys.stderr)
     notify.post(text, log=lambda m: print(m, file=sys.stderr))
@@ -1755,6 +1783,17 @@ def _cmd_extraction_batches(args):
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
+    if args.command == 'known-gaps':
+        from toronto_bids import known_gaps
+
+        conn = _open_db()
+        try:
+            out = args.out or known_gaps.REFUSALS_PATH
+            counts = known_gaps.record_refusals(conn, args.only or ['trca', 'zoo', 'ep'], out)
+        finally:
+            conn.close()
+        print(f"recorded {', '.join(f'{c} {n}' for c, n in counts.items())} refused contract(s) to {out}")
+        return 0
     if args.command == 'agency-coverage':
         import json
         import sqlite3

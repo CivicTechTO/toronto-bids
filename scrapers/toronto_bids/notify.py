@@ -90,6 +90,22 @@ def _near_close(items: list[dict], error: str | None) -> list[str]:
     return out
 
 
+def _known_gaps(gaps: list[dict]) -> list[str]:
+    """Failures matching reviewed evidence (#283) — one line per name and reason, so eleven
+    unavailable TRCA originals read as one known fact rather than eleven alarms. Never
+    changes the header icon; omitted when empty."""
+    if not gaps:
+        return []
+    groups: dict[tuple[str, str], int] = {}
+    for gap in gaps:
+        key = (gap.get("name", "?"), gap.get("reason", ""))
+        groups[key] = groups.get(key, 0) + 1
+    out = ["", f"*Known gaps ({len(gaps)})*"]
+    for (name, reason), n in groups.items():
+        out.append(f"{name}{f' ×{n}' if n > 1 else ''}: {reason}")
+    return out
+
+
 def summarize(report: dict) -> str:
     """The nightly message — multi-section Slack mrkdwn. Pure and total over a partial report:
     a missing/empty section is simply omitted, never a KeyError, because the report itself must
@@ -155,6 +171,8 @@ def summarize(report: dict) -> str:
 
     lines += _near_close(report.get("ariba_near_close") or [],
                          report.get("ariba_near_close_error"))
+
+    lines += _known_gaps(report.get("known_gaps") or [])
 
     odata_outages: dict[str, list[str]] = {}
     other_failures = []
