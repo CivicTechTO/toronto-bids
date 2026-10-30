@@ -6,6 +6,7 @@ one prompt.
 """
 
 import json
+import hashlib
 from pathlib import Path
 
 import httpx
@@ -565,7 +566,7 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
     if corpus in ("trca", "ep", "zoo", "ttc"):
         from toronto_bids.linking.agency_reference import normalize_agency_reference, report_reference
         from toronto_bids.agency_coverage import decision
-        from toronto_bids.linking.agency_identity import reviewed_identity, reviewed_bids, IdentityReviewRequired
+        from toronto_bids.linking.agency_identity import reviewed_identity, reviewed_bids, reviewed_decision_date, IdentityReviewRequired
 
         if rows and buyer_id is None:
             raise RuntimeError(f'backfill {corpus}: buyer is not seeded; existing rows kept')
@@ -579,7 +580,9 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
                     continue
                 try:
                     identity_evidence = reviewed_identity(corpus, row['sha256'], contract,
-                        report_url=row['url'], contract_count=len(contracts))
+                        report_url=row['url'], contract_count=len(contracts), contract_index=index,
+                        result_sha256=hashlib.sha256(row['result_json'].encode()).hexdigest())
+                    derived_date = reviewed_decision_date(contract, identity_evidence)
                     derived_bids = reviewed_bids(contract, identity_evidence)
                     ref = (identity_evidence['native_ref'] if identity_evidence is not None else
                            normalize_agency_reference(_CORPUS_BUYER_SLUG[corpus], contract.get("reference")))
@@ -650,7 +653,7 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
                             value_confidential=1
                             if award.get("value_confidential")
                             else 0,
-                            award_date=contract.get("decision_date"),
+                            award_date=derived_date,
                             report_url=row["url"],
                             source=source,
                         )

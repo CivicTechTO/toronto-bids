@@ -11,6 +11,7 @@ import hashlib
 import json
 import re
 from functools import cache
+from datetime import date
 from importlib import resources
 
 from toronto_bids.extract import EXTRACTOR_VERSION
@@ -18,7 +19,7 @@ from toronto_bids.linking.agency_reference import normalize_agency_reference
 
 
 class IdentityReviewRequired(ValueError):
-    """A previously reviewed TTC source changed; keep its last verified facts."""
+    """A reviewed agency source changed; keep its last verified facts."""
 
 
 def contract_fingerprint(contract):
@@ -82,6 +83,18 @@ def _evidence():
                 if target in seen:
                     raise ValueError('duplicate reviewed bid field')
                 seen.add(target)
+        if 'decision_date_review' in item:
+            review=item['decision_date_review']
+            if (corpus!='trca' or set(review)!={'expected_value','value','reason'}
+                    or not isinstance(review['reason'],str) or not review['reason'].strip()
+                    or type(item.get('contract_index')) is not int or item['contract_index']<0
+                    or type(item.get('contract_count')) is not int or item['contract_count']<=item['contract_index']
+                    or not re.fullmatch('[a-f0-9]{64}',item.get('result_sha256',''))
+                    or not any(source['url']==item.get('report_url') and source['sha256']==item['document_sha256'] for source in item['sources'])):
+                raise ValueError('decision-date review requires an exact TRCA source and extraction context')
+            for value in (review['expected_value'],review['value']):
+                if not isinstance(value,str) or date.fromisoformat(value).isoformat()!=value:
+                    raise ValueError('reviewed decision dates must be ISO dates')
         key = (corpus, item['document_sha256'], item['extractor_version'], item['contract_sha256'])
         if key in result:
             raise ValueError('duplicate agency identity decision')
@@ -89,10 +102,11 @@ def _evidence():
     return result
 
 
-def reviewed_identity(corpus, document_sha256, contract, *, report_url=None, contract_count=None):
+def reviewed_identity(corpus, document_sha256, contract, *, report_url=None, contract_count=None, contract_index=None, result_sha256=None):
     """Resolve exact reviewed facts; changed TTC report contexts require fresh review.
 
-    Other agencies retain their existing unmatched-reference policy. TTC decisions
+    Legacy decisions retain their unmatched-reference policy. TRCA date reviews
+    also bind result digest and contract index. TTC decisions
     explicitly bind the held URL and collection count so an administrative footer
     cannot reappear as the identity after a payload/version/source change.
     """
@@ -102,6 +116,13 @@ def reviewed_identity(corpus, document_sha256, contract, *, report_url=None, con
         raise IdentityReviewRequired(f'invalid agency review evidence: {exc}; re-review required') from exc
     match = evidence.get((corpus, document_sha256, EXTRACTOR_VERSION, contract_fingerprint(contract)))
     if corpus != 'ttc':
+        scoped=[item for item in evidence.values() if item['corpus']==corpus
+                and item.get('decision_date_review') and item['contract_index']==contract_index
+                and (item['document_sha256']==document_sha256 or item['report_url']==report_url)]
+        if scoped or (match and match.get('decision_date_review')):
+            if (match is None or match['report_url']!=report_url or match['contract_count']!=contract_count
+                    or match['contract_index']!=contract_index or match['result_sha256']!=result_sha256):
+                raise IdentityReviewRequired('reviewed agency decision context changed; re-review required')
         return match
     scoped = [item for item in evidence.values() if item['corpus'] == corpus and
               (item['document_sha256'] == document_sha256 or item.get('report_url') == report_url)]
@@ -127,6 +148,17 @@ def reviewed_bids(contract, evidence):
             raise IdentityReviewRequired('reviewed bid metadata no longer matches; re-review required')
         bids[index][name] = None
     return bids
+
+
+def reviewed_decision_date(contract,evidence):
+    """Use only an explicitly reviewed carried-resolution date; retain raw JSON."""
+    value=contract.get('decision_date')
+    review=(evidence or {}).get('decision_date_review')
+    if review is not None:
+        if value!=review['expected_value']:
+            raise IdentityReviewRequired('reviewed decision-date claim changed; re-review required')
+        return review['value']
+    return value
 
 
 def history_aliases(decisions):
