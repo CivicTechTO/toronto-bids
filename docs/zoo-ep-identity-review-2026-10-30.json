@@ -1,0 +1,1138 @@
+{
+  "version": 1,
+  "issue": 282,
+  "reviewed_on": "2026-10-30",
+  "scope": "Held-source review; no exhaustive spending or permanent inaccessibility claim.",
+  "reviewed_contexts": 37,
+  "identity_recoveries": 2,
+  "new_award_rows": 0,
+  "new_bid_rows": 0,
+  "remaining_holds": {
+    "zoo": 29,
+    "ep": 6
+  },
+  "classification_counts": {
+    "vendor_contribution_not_buyer_award": 1,
+    "historical_governance_consultancy_without_call": 2,
+    "city_consultancy_without_published_assignment_call": 3,
+    "historical_masterplan_without_published_call": 1,
+    "historical_building_audit_without_published_call": 1,
+    "unnamed_historical_construction_award": 1,
+    "repeated_building_audit_without_published_call": 1,
+    "repeated_masterplan_without_published_call": 1,
+    "annual_advertising_cap_not_new_award": 4,
+    "published_call_historical_award_representative": 2,
+    "historical_generator_install_without_published_call": 1,
+    "historical_exhibit_renovation_without_published_call": 1,
+    "unnamed_design_award_without_published_call": 1,
+    "unnamed_submission_placeholder": 1,
+    "no_submissions_not_named_no_bid": 1,
+    "unpriced_unnamed_tender_stage_placeholder": 1,
+    "unnamed_in_progress_evaluation_placeholder": 1,
+    "unnamed_retender_in_progress_placeholder": 1,
+    "repeated_annual_advertising_cap": 2,
+    "published_call_repeated_status_deferred": 2,
+    "repeated_generator_install_without_call": 1,
+    "repeated_exhibit_renovation_without_call": 1,
+    "approved_existing_consultancy_amendment_without_public_call_identity": 1,
+    "historical_authorized_sole_source_consultancy_without_public_call_identity": 1,
+    "historical_authorized_sole_source_additional_consultancy_unnamed_supplier_no_call_identity": 1,
+    "historical_implemented_software_purchase_no_public_call_identity": 1,
+    "historical_signed_software_statement_of_work_no_public_call_identity": 1,
+    "negotiated_revenue_licence_new_agreement_not_procurement_award": 1
+  },
+  "contracts": [
+    {
+      "corpus": "zoo",
+      "document_sha256": "43842bca76de00e5534fb2d49c2008a06dc1b7ba46666d58a525960fdab7c404",
+      "extractor_version": "v1-b63aa8c835ae",
+      "result_sha256": "19cd84d6350610fc60d1915c736f50be92855da43b9dc714df65dd47385f12bc",
+      "contract_index": 1,
+      "contract_sha256": "2125bb1ef3b5a80ec22c9adfe318cbc5d1cf5971a8f9e3d212c7dfd57daa71ce",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2015/zb/bgrd/backgroundfile-76755.pdf",
+      "classification": "vendor_contribution_not_buyer_award",
+      "identity_recovered": false,
+      "native_ref": null,
+      "financial_role": null,
+      "reason": "Source says Compass will contribute$3.0m for renovations/upgrades/equipment, not that Zoo will pay Compass$3.0m. Food-services relationship exists historically, but no primary public solicitation ID printed. Keep financial direction/scope held; no award-amount repair or surrogate identity.",
+      "blockers": [
+        "No independently reviewed actual public solicitation ID for this held contract. No report URL surrogate, title/supplier/value key, purchase-order alias or generic framework substitution allowed.",
+        "Source says Compass will contribute$3.0m for renovations/upgrades/equipment, not that Zoo will pay Compass$3.0m. Food-services relationship exists historically, but no primary public solicitation ID printed. Keep financial direction/scope held; no award-amount repair or surrogate identity."
+      ],
+      "sources": [
+        {
+          "url": "https://www.toronto.ca/legdocs/mmis/2015/zb/bgrd/backgroundfile-76755.pdf",
+          "sha256": "43842bca76de00e5534fb2d49c2008a06dc1b7ba46666d58a525960fdab7c404",
+          "passages": [
+            "th similar\n\fPotential for Financial Independence\n2015-02-18\nPage 2 of 2\n\n\n       programs and aims. Further, this impressive facility will be evidence of the City’s\n       commitment to maintaining its investment in the Toronto Zoo. Construction on the\n       Wildlife Health Centre started in January and is expected to be completed in 2017.\n\n   •   In November, the Board also approved the award of the Food Services Management\n       Agreement to Compass Group Canada for a ten year period. This represents an excellent\n       business arrangement for the Zoo, as Compass will be contributing $3.0 million for\n       renovations, upgrades and new equipment at various food services locations. As well we\n       are working with Compass Group to enhance our food choices, which includes\n       introducing some new well-known brands. These initiatives are expected to generate\n       significant additional revenues for the Zoo over the next ten years.\n\n   •   Zoo staff are currently moving ahead to secure the founding board members for an\n       independent fundraising entity that would serve as the support organization for the\n       Toronto Zoo. By setting up a separate charitable entity, the intent is to improve the Zoo’s\n       ability to attract donations, grants and private funding that will provide additional support\n       for operating programs and capital projects. The Zoo is engaging the services of search\n       firm to assist in the recruitment of the founding members.\n\n   •   The Zoo is continuing to develop its sponsorship program. In the past two years, this was\n       approached with renewed vigor, leveraging partner interest in the excitement created\n       around the giant pandas. Over the next few years, the objective is to connect more\n       corporate sponsors and partners with the Zoo, at various levels of engagement, to\n       generate incremental revenue.\n\n   •   By virtue of the Toronto Zoo’s location on the doorstep of the Rouge National Urban\n       Park (RNUP), there is the potential for synergies between the Zoo and the Park with\n       benefits for both entities. For example in the summer of 2014, Parks Canada had a\n       presence on the Zoo site providing information and interacting with Zoo guests.\n       Currently the Zoo is participating in a joint study with the RNUP on the potential for a\n       shared facility for education, conservation and volunteer programs. As well, there have\n       been discussions with Parks staff on such topics as cross-over visitation between Park\n       and Zoo guests and enhancing joint programs in conservation and education.\n\n   •   Discussions ar"
+          ]
+        }
+      ]
+    },
+    {
+      "corpus": "zoo",
+      "document_sha256": "43842bca76de00e5534fb2d49c2008a06dc1b7ba46666d58a525960fdab7c404",
+      "extractor_version": "v1-b63aa8c835ae",
+      "result_sha256": "19cd84d6350610fc60d1915c736f50be92855da43b9dc714df65dd47385f12bc",
+      "contract_index": 2,
+      "contract_sha256": "608abb9e746e416cc99fed279a92a4cd5e39bce722b96573508c3403406ab3e4",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2015/zb/bgrd/backgroundfile-76755.pdf",
+      "classification": "historical_governance_consultancy_without_call",
+      "identity_recovered": false,
+      "native_ref": null,
+      "financial_role": null,
+      "reason": "Mansfield and Schultz & Williams were retained for governance study; cited2012.ZB15.1 is a report/presentation and policy decision, not a public solicitation identifier. No originating call proven.",
+      "blockers": [
+        "No independently reviewed actual public solicitation ID for this held contract. No report URL surrogate, title/supplier/value key, purchase-order alias or generic framework substitution allowed.",
+        "Mansfield and Schultz & Williams were retained for governance study; cited2012.ZB15.1 is a report/presentation and policy decision, not a public solicitation identifier. No originating call proven."
+      ],
+      "sources": [
+        {
+          "url": "https://www.toronto.ca/legdocs/mmis/2015/zb/bgrd/backgroundfile-76755.pdf",
+          "sha256": "43842bca76de00e5534fb2d49c2008a06dc1b7ba46666d58a525960fdab7c404",
+          "passages": [
+            " staff to report back on a strategy for achieving financial independence from the City.\n\nA considerable amount of resources has been committed to this topic, beginning with the\nestablishment of a Governance Task Force by the Board in November 2011. One of the Task\nForce’s key goals was to examine other governance models for the Zoo with the objective of\nreducing over time the City’s operating investment in the Zoo. The Board retained consultants\nMansfield Communications and Schultz & Williams to undertake this work and their report was\nsubmitted to the Board on 2012-09-05. The report entitled The Future of Toronto Zoo\nGovernance can be found at the following link:\nhttp://app.toronto.ca/tmmis/viewAgendaItemHistory.do?item=2012.ZB15.1\n\nIn summary, the report recommended a new governance structure, such that the Zoo would be\ngoverned by a private non-profit corporation having a management agreement with the City.\nThis was based on research of best practices of other zoos throughout North America. With this\nnew structure of governance, the report concludes that over time the operating contributions from\nthe City of Toronto would decrease and the Zoo could achieve self-sufficiency depending on\ncertain assumptions. Fundraising, sponsor revenues, gate revenues, government grants and\npartnerships would need to replace City funding. The report assumes the City would maintain its\nannual capital investment in the Zoo to ensure the assets remain in good repair. The Board\n\fPotential for Financial Independence\n2015-02-18\nPage 2 of 2\n\n\nreferred the report to the City Manager to make recommendations to the Executive Committee\nand City Council.\n\nIn 2013, Zoo staff worked with consultants MNP on a second phase of work which provided\nmore detailed research and analysis of governance options and financial implications. On 2013-\n09-23, the MNP report was submitted to the Board of Management for consideration and the\nCity Manager submitted his report and made a presentation to the Board on his recommendations\nconcerning the future governance of the Zoo. These reports can be found at the following link:\nhttp://app.toronto.ca/tmmis/viewAgendaItemHistory.do?item=2013.ZB23.1\n\nIn summary, the MNP report recommended that the Zoo be governed by an independent non-\nprofit entity and presented two scenarios to address the question of financial self-sufficiency. It\nwas explained that under one scenario the Zoo would need ongoing operating funding from the\nCity, however under a more optimistic scenario, the Zoo could be self-sufficient in five to ten\nyears depending on the assumptions. The City Manager recommended against the governanc",
+            "rategy for achieving financial independence from the City.\n\nA considerable amount of resources has been committed to this topic, beginning with the\nestablishment of a Governance Task Force by the Board in November 2011. One of the Task\nForce’s key goals was to examine other governance models for the Zoo with the objective of\nreducing over time the City’s operating investment in the Zoo. The Board retained consultants\nMansfield Communications and Schultz & Williams to undertake this work and their report was\nsubmitted to the Board on 2012-09-05. The report entitled The Future of Toronto Zoo\nGovernance can be found at the following link:\nhttp://app.toronto.ca/tmmis/viewAgendaItemHistory.do?item=2012.ZB15.1\n\nIn summary, the report recommended a new governance structure, such that the Zoo would be\ngoverned by a private non-profit corporation having a management agreement with the City.\nThis was based on research of best practices of other zoos throughout North America. With this\nnew structure of governance, the report concludes that over time the operating contributions from\nthe City of Toronto would decrease and the Zoo could achieve self-sufficiency depending on\ncertain assumptions. Fundraising, sponsor revenues, gate revenues, government grants and\npartnerships would need to replace City funding. The report assumes the City would maintain its\nannual capital investment in the Zoo to ensure the assets remain in good repair. The Board\n\fPotential for Financial Independence\n2015-02-18\nPage 2 of 2\n\n\nreferred the report to the City Manager to make recommendations to the Executive Committee\nand City Council.\n\nIn 2013, Zoo staff worked with consultants MNP on a second phase of work which provided\nmore detailed research and analysis of governance options and financial implications. On 2013-\n09-23, the MNP report was submitted to the Board of Management for consideration and the\nCity Manager submitted his report and made a presentation to the Board on his recommendations\nconcerning the future governance of the Zoo. These reports can be found at the following link:\nhttp://app.toronto.ca/tmmis/viewAgendaItemHistory.do?item=2013.ZB23.1\n\nIn summary, the MNP report recommended that the Zoo be governed by an independent non-\nprofit entity and presented two scenarios to address the question of financial self-sufficiency. It\nwas explained that under one scenario the Zoo would need ongoing operating funding from the\nCity, however under a more optimistic scenario, the Zoo could be self-sufficient in five to ten\nyears depending on the assumptions. The City Manager recommended against the governance\nmodel proposed in the MNP r"
+          ]
+        }
+      ]
+    },
+    {
+      "corpus": "zoo",
+      "document_sha256": "43842bca76de00e5534fb2d49c2008a06dc1b7ba46666d58a525960fdab7c404",
+      "extractor_version": "v1-b63aa8c835ae",
+      "result_sha256": "19cd84d6350610fc60d1915c736f50be92855da43b9dc714df65dd47385f12bc",
+      "contract_index": 3,
+      "contract_sha256": "0979b85ddf85b9d503fa0e155f577cb1e8cc02ea3214df75b5eef5a603db10e8",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2015/zb/bgrd/backgroundfile-76755.pdf",
+      "classification": "historical_governance_consultancy_without_call",
+      "identity_recovered": false,
+      "native_ref": null,
+      "financial_role": null,
+      "reason": "MNP conducted second-phase governance research. Cited2013.ZB23.1/2013.EX34.7 identify consideration of governance options, not the consulting procurement call. No public solicitation ID proven; NULL award price/date retained.",
+      "blockers": [
+        "No independently reviewed actual public solicitation ID for this held contract. No report URL surrogate, title/supplier/value key, purchase-order alias or generic framework substitution allowed.",
+        "MNP conducted second-phase governance research. Cited2013.ZB23.1/2013.EX34.7 identify consideration of governance options, not the consulting procurement call. No public solicitation ID proven; NULL award price/date retained."
+      ],
+      "sources": [
+        {
+          "url": "https://www.toronto.ca/legdocs/mmis/2015/zb/bgrd/backgroundfile-76755.pdf",
+          "sha256": "43842bca76de00e5534fb2d49c2008a06dc1b7ba46666d58a525960fdab7c404",
+          "passages": [
+            "revenues, gate revenues, government grants and\npartnerships would need to replace City funding. The report assumes the City would maintain its\nannual capital investment in the Zoo to ensure the assets remain in good repair. The Board\n\fPotential for Financial Independence\n2015-02-18\nPage 2 of 2\n\n\nreferred the report to the City Manager to make recommendations to the Executive Committee\nand City Council.\n\nIn 2013, Zoo staff worked with consultants MNP on a second phase of work which provided\nmore detailed research and analysis of governance options and financial implications. On 2013-\n09-23, the MNP report was submitted to the Board of Management for consideration and the\nCity Manager submitted his report and made a presentation to the Board on his recommendations\nconcerning the future governance of the Zoo. These reports can be found at the following link:\nhttp://app.toronto.ca/tmmis/viewAgendaItemHistory.do?item=2013.ZB23.1\n\nIn summary, the MNP report recommended that the Zoo be governed by an independent non-\nprofit entity and presented two scenarios to address the question of financial self-sufficiency. It\nwas explained that under one scenario the Zoo would need ongoing operating funding from the\nCity, however under a more optimistic scenario, the Zoo could be self-sufficient in five to ten\nyears depending on the assumptions. The City Manager recommended against the governance\nmodel proposed in the MNP report, citing the financial risks to the City. The City Manager\nrecommended that the Toronto Zoo be retained as a City Board and undertake various activities\nto further develop opportunities for the Zoo going forward. These include: leveraging the\nupcoming Strategic Plan, exploring funding opportunities with the federal and provincial\ngovernments and other learning institutions, establishing a separate fundraising entity, and\nupdating current agreements with City and other stakeholders.\n\nOn 2013-10-08/11 City Council adopted the City Manager’s report and made some additional\nrecommendations.\nhttp://app.toronto.ca/tmmis/viewAgendaItemHistory.do?item=2013.EX34.7\n\nComments/Discussion:\n\nSince October 2013, the Toronto Zoo has made significant progress in addressing City Council’s\nrecommendations. Highlights of these activities emphasize how the Zoo is moving forward:\n\n   •   On 2015-11-27, the Board approved a new 2015-2020 Strategic Plan for the Toronto\n       Zoo. This Plan establishes a guiding framework for the Zoo Board and staff to initiate\n       change and make business decisions for the future. A key goal of the Strategic Plan is to\n       build an organization that is fiscally sustainable for the"
+          ]
+        }
+      ]
+    },
+    {
+      "corpus": "zoo",
+      "document_sha256": "a566fdb85810f415c9a447832ac3bf5d7738fb4dde7d5c221ca027c90e6ba1c2",
+      "extractor_version": "v1-b63aa8c835ae",
+      "result_sha256": "26aad46d590017dcd04ee849f3b1db7b08ab20464edfd8a7c0233a09001f3989",
+      "contract_index": 0,
+      "contract_sha256": "61bc91b0a020fbfe0b7d56b06f53d446d951fcae2f985d19b50725944773a6bd",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2015/zb/bgrd/backgroundfile-83357.pdf",
+      "classification": "city_consultancy_without_published_assignment_call",
+      "identity_recovered": false,
+      "native_ref": null,
+      "financial_role": null,
+      "reason": "City Manager retained KPMG for2012Shared Services study. This is City of Toronto consulting history reproduced in a Zoo packet, not a Zoo award. EX32.3 and EX43.21 are Council committee decision references, not call IDs. No underlying assignment public solicitation identifier proven; do not alias a general consulting roster/framework.",
+      "blockers": [
+        "No independently reviewed actual public solicitation ID for this held contract. No report URL surrogate, title/supplier/value key, purchase-order alias or generic framework substitution allowed.",
+        "City Manager retained KPMG for2012Shared Services study. This is City of Toronto consulting history reproduced in a Zoo packet, not a Zoo award. EX32.3 and EX43.21 are Council committee decision references, not call IDs. No underlying assignment public solicitation identifier proven; do not alias a general consulting roster/framework."
+      ],
+      "sources": [
+        {
+          "url": "https://www.toronto.ca/legdocs/mmis/2015/zb/bgrd/backgroundfile-83357.pdf",
+          "sha256": "a566fdb85810f415c9a447832ac3bf5d7738fb4dde7d5c221ca027c90e6ba1c2",
+          "passages": [
+            "fficer\n\nWards:        All\n\nReference\nNumber:\n\n\n\nSUMMARY\n\nThis report provides an update on the Shared Services Project, including a multi-year\nimplementation plan and a summary of benefits achieved. The Shared Services Project aims\nto reduce duplication between the City and the Agencies and Corporations.\n\nThe Shared Services Project was started in 2014 based on direction from City Council to\nimplement the shared services recommendations from the KPMG Shared Service Study,\nwhich were broken down into recommendations that were to be implemented in the short-\nterm and recommendations that were to be implemented in the long-term after further due\ndiligence and analysis.\n\nIn 2014, an Executive Steering Committee and 15 working groups were formed – each\nworking group was given responsibility for a specific functional area (for example, learning,\nhealth & safety, procurement, information technology.) The working groups responsible for\nfunctional areas where KPMG made a recommendation to implement in the short-term were\ntasked with validating the KPMG recommendation and implementing the recommendation\nwhere shown to add value. The working groups responsible for the longer-term opportunities\nwere tasked with performing a detailed analysis of the area, determining where shared\nservices implementations would add value, creating a business case and implementation plan,\nand implementing a shared services model after seeking approval from Council and the\naffected Agency Boards.\n\nAlthough KPMG estimated potential benefits of between $58.8 and $65.3 million, virtually\nall the benefits were estimated to be realized once the long-term opportunities were\nimplemented – KPMG did not estimate any significant savings in the short-term.\n\n\n\nStaff report on the Shared Services Project                                                1\n\fThe Shared Service Project is progressing well. The Executive Steering Committee has taken\nan approach that is consistent with the approach recommended by KPMG, but goes farther\nand deeper than KPMG's recommendations for the majority of areas. In addition, the\nExecutive Steering Committee has expanded the scope of the project to include five\nadditional recommendations, two additional functions (facilities management and fleet\nservices) and two additional organizations (Toronto Community Housing and Toronto Zoo.)\n\nTo ensure success for a project of this size and scope, it is important to take an iterative\napproach to implementation. For this reason, the Executive Steering Committee has decided\nto focus on information technology, procurement, real estate, learning, and insurance shared\nservices assess",
+            "r\n\nWards:        All\n\nReference\nNumber:\n\n\n\nSUMMARY\n\nThis report provides an update on the Shared Services Project, including a multi-year\nimplementation plan and a summary of benefits achieved. The Shared Services Project aims\nto reduce duplication between the City and the Agencies and Corporations.\n\nThe Shared Services Project was started in 2014 based on direction from City Council to\nimplement the shared services recommendations from the KPMG Shared Service Study,\nwhich were broken down into recommendations that were to be implemented in the short-\nterm and recommendations that were to be implemented in the long-term after further due\ndiligence and analysis.\n\nIn 2014, an Executive Steering Committee and 15 working groups were formed – each\nworking group was given responsibility for a specific functional area (for example, learning,\nhealth & safety, procurement, information technology.) The working groups responsible for\nfunctional areas where KPMG made a recommendation to implement in the short-term were\ntasked with validating the KPMG recommendation and implementing the recommendation\nwhere shown to add value. The working groups responsible for the longer-term opportunities\nwere tasked with performing a detailed analysis of the area, determining where shared\nservices implementations would add value, creating a business case and implementation plan,\nand implementing a shared services model after seeking approval from Council and the\naffected Agency Boards.\n\nAlthough KPMG estimated potential benefits of between $58.8 and $65.3 million, virtually\nall the benefits were estimated to be realized once the long-term opportunities were\nimplemented – KPMG did not estimate any significant savings in the short-term.\n\n\n\nStaff report on the Shared Services Project                                                1\n\fThe Shared Service Project is progressing well. The Executive Steering Committee has taken\nan approach that is consistent with the approach recommended by KPMG, but goes farther\nand deeper than KPMG's recommendations for the majority of areas. In addition, the\nExecutive Steering Committee has expanded the scope of the project to include five\nadditional recommendations, two additional functions (facilities management and fleet\nservices) and two additional organizations (Toronto Community Housing and Toronto Zoo.)\n\nTo ensure success for a project of this size and scope, it is important to take an iterative\napproach to implementation. For this reason, the Executive Steering Committee has decided\nto focus on information technology, procurement, real estate, learning, and insurance shared\nservices assessments"
+          ]
+        }
+      ]
+    },
+    {
+      "corpus": "zoo",
+      "document_sha256": "a566fdb85810f415c9a447832ac3bf5d7738fb4dde7d5c221ca027c90e6ba1c2",
+      "extractor_version": "v1-b63aa8c835ae",
+      "result_sha256": "26aad46d590017dcd04ee849f3b1db7b08ab20464edfd8a7c0233a09001f3989",
+      "contract_index": 2,
+      "contract_sha256": "a871ab702ad446cbfb2575045b8955bbb79f8f6010f212c2f6a46c67a3cccd44",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2015/zb/bgrd/backgroundfile-83357.pdf",
+      "classification": "city_consultancy_without_published_assignment_call",
+      "identity_recovered": false,
+      "native_ref": null,
+      "financial_role": null,
+      "reason": "PMMD hired PWC for supply-chain fit-gap/technology roadmap. No specific assignment public solicitation ID in the full source; City buyer preserved. A general management/IT consulting framework, SAP license, purchase order or unrelated IT infrastructure RFP cannot identify this assignment.",
+      "blockers": [
+        "No independently reviewed actual public solicitation ID for this held contract. No report URL surrogate, title/supplier/value key, purchase-order alias or generic framework substitution allowed.",
+        "PMMD hired PWC for supply-chain fit-gap/technology roadmap. No specific assignment public solicitation ID in the full source; City buyer preserved. A general management/IT consulting framework, SAP license, purchase order or unrelated IT infrastructure RFP cannot identify this assignment."
+      ],
+      "sources": [
+        {
+          "url": "https://www.toronto.ca/legdocs/mmis/2015/zb/bgrd/backgroundfile-83357.pdf",
+          "sha256": "a566fdb85810f415c9a447832ac3bf5d7738fb4dde7d5c221ca027c90e6ba1c2",
+          "passages": [
+            "                             (Year End)\n               Divisional Warehouses                 18       8            5\n               Corporate Warehouses                   7       3            1\n               Corporate Stores                       0       3            3\n               Total                                 25      14            9\n\nFinally, PMMD has been working on an overall supply chain management technology\nsolution. PMMD hired PWC to conduct a fit-gap analysis and to provide a technology\nimplementation roadmap in order for PMMD to enhance its' use of technology, including\nitems such as having an online ordering capability for City Stores.\n\nRoadmap\nPMMD will continue to work with Divisions to rationalize Divisional Warehouses and\ndetermine whether those warehouses can be further consolidated into 799 Islington Avenue.\nDiscussions have already begun with Divisions. PMMD continues to create, validate and use\ndirect delivery options with vendors, where appropriate, without incurring unnecessary\ninventories of overstocked goods throughout the City in various departments. PMMD is also\nworking on a business case for the 2016 Budget process related to implementing new\ntechnology.\n\n\nCity provides Freedom of Information submission application to Agencies\n\nCouncil Directive\nCity Council requests the City Clerk to provide as a best practice, the City’s online\nsubmission application for Freedom of Information requests to interested Agencies when it\nbecomes available.\n\nThe City purchased and implemented a module for the City's CLASS system, used\nextensively by Parks, Forestry, and Recreation for online registrations. This module was\nadapted for the FOI submission tool. A demonstration to the Agencies was provided in March\n2015.\n\nRoadmap\n\n\n\nStaff report on the Shared Services Project                                                 23\n\fEach Agency will determine if the City's tool meets their needs. If it does, each Agency will\nwork with the City to install the tool.\n\n\nExpand the City's provision of lessor services to the TTC and the TPA\n\nCouncil Directive\nCity Council requests the Chief Corporate Officer to work with the Chief Executive Officers\nof the Toronto Transit Commission and Toronto Parking Authority regarding the possibility\nof the City providing lessor services to their Agencies.\n\nUpdate\nThe Real Estate Working Group was formed in 2014 and met regularly until February 2015\nwhen it was decided that the best approach was to expand the scope of this project to all real\nestate functions and all Agencies and Corporations.\n\nCouncil approved the City-Wide Real Estate Review report in April 2015. "
+          ]
+        }
+      ]
+    },
+    {
+      "corpus": "zoo",
+      "document_sha256": "a566fdb85810f415c9a447832ac3bf5d7738fb4dde7d5c221ca027c90e6ba1c2",
+      "extractor_version": "v1-b63aa8c835ae",
+      "result_sha256": "26aad46d590017dcd04ee849f3b1db7b08ab20464edfd8a7c0233a09001f3989",
+      "contract_index": 3,
+      "contract_sha256": "590b7535ddcea03382781bb20b625eb153b283c375b8e50f2c3be228bd411892",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2015/zb/bgrd/backgroundfile-83357.pdf",
+      "classification": "city_consultancy_without_published_assignment_call",
+      "identity_recovered": false,
+      "native_ref": null,
+      "financial_role": null,
+      "reason": "City PMMD retained Ernst & Young inJuly2015 for program review/strategic-sourcing models, fit-gap and roadmap. No specific public assignment solicitation ID proven. No alias from a general consulting framework, City item or another consulting project.",
+      "blockers": [
+        "No independently reviewed actual public solicitation ID for this held contract. No report URL surrogate, title/supplier/value key, purchase-order alias or generic framework substitution allowed.",
+        "City PMMD retained Ernst & Young inJuly2015 for program review/strategic-sourcing models, fit-gap and roadmap. No specific public assignment solicitation ID proven. No alias from a general consulting framework, City item or another consulting project."
+      ],
+      "sources": [
+        {
+          "url": "https://www.toronto.ca/legdocs/mmis/2015/zb/bgrd/backgroundfile-83357.pdf",
+          "sha256": "a566fdb85810f415c9a447832ac3bf5d7738fb4dde7d5c221ca027c90e6ba1c2",
+          "passages": [
+            "t was done, the next step\nwould be to bring the Agencies into the strategic sourcing model.\n\nIn order to do this, the City's Purchasing and Materials Management Division (\"PMMD\") has\nembarked on a program review that will review its service delivery and organizational\nstructure and set out an implementation plan that will move to a strategic sourcing model.\nPMMD, using internal resources, has finalized a current state assessment and has retained\nErnst & Young who will recommend potential models for the City to move towards and to\nprovide a fit-gap analysis and a roadmap and implementation plan for the preferred model.\nThe consultant began work in July, 2015 and will provide its final report at the end of March,\n2016. Depending on the implementation roadmap, some items may be implemented in 2016\nthrough to 2017.\n\nCooperative Purchasing Group\nAs noted above, the main recommendation from KPMG's Shared Services Study was for the\nCity to implement strategic sourcing. In the interim, while work is being done to assess how\nthe City would implement strategic sourcing, the City of Toronto and the Agencies and\n\n\nStaff report on the Shared Services Project                                                 29\n\fCorporations are working collaboratively to identify common procurement opportunities\nthrough the monthly Cooperative Purchasing Group (CPG meetings). A formal terms of\nreference was recently signed off by the members of the Executive Shared Service Steering\nCommittee. The terms of reference guide how the CPG will operate. Appendix 2 provides a\nlist of the purchases done jointly with one or more Agencies and/or where an Agency has\npiggy-backed off the City's contract.\n\nThe next steps the CPG is working on include continuing to identify joint procurement\nopportunities, implementing and tracking the cost saving and other metrics established by the\nCPG, reviewing the processes and legal terms to determine standardization amongst the\nAgencies where possible, and comparing procurement opportunities against the Provincial\nVendor of Record (VOR) system.\n\n\nShare common information technology infrastructure\n\nCouncil Directive\nCity Council refers the following shared service opportunities to the City Manager for further\ndue diligence and consultation with City Agencies and report back to Executive Committee\nwith a multi-year shared service implementation plan and after consideration by Boards of\naffected City Agencies:\n    a. Share common information technology infrastructure with a focus on infrastructure\n        management, data management and storage\n\nUpdate\nThe City's Information & Technology Division formed a projec"
+          ]
+        }
+      ]
+    },
+    {
+      "corpus": "zoo",
+      "document_sha256": "3e8ca1a190a5c83a2e243715983d1e709501b50912af30acb837a03b8aac9475",
+      "extractor_version": "v1-b63aa8c835ae",
+      "result_sha256": "7b6a3a2ca563bd3dfbc4860abfff5065eba0cd3153d7a60716433bc4773375d2",
+      "contract_index": 0,
+      "contract_sha256": "a4687cd14ab97287790f62822510a6e7b077f6d58570ff484ab2264c14dfc0e5",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2015/zb/bgrd/backgroundfile-83331.pdf",
+      "classification": "historical_masterplan_without_published_call",
+      "identity_recovered": false,
+      "native_ref": null,
+      "financial_role": null,
+      "reason": "MMM Group Master Plan contract awarded and underway, but status/variance report omits originating public solicitation ID. A consortium-led MMM award must not be identified by title/supplier/PO. Possible old2015RFP form text embedded in a2020document is not an adequate originating-call binding.",
+      "blockers": [
+        "No independently reviewed actual public solicitation ID for this held contract. No report URL surrogate, title/supplier/value key, purchase-order alias or generic framework substitution allowed.",
+        "MMM Group Master Plan contract awarded and underway, but status/variance report omits originating public solicitation ID. A consortium-led MMM award must not be identified by title/supplier/PO. Possible old2015RFP form text embedded in a2020document is not an adequate originating-call binding."
+      ],
+      "sources": [
+        {
+          "url": "https://www.toronto.ca/legdocs/mmis/2015/zb/bgrd/backgroundfile-83331.pdf",
+          "sha256": "3e8ca1a190a5c83a2e243715983d1e709501b50912af30acb837a03b8aac9475",
+          "passages": [
+            "n and\nconstruction/implementation stages.\n\nComments/Discussion:\n\nThe Project Status list is attached for your review (Schedule I). Some of the highlights are as\nfollows:\n\n     Construction of the Wildlife Health Center is proceeding on schedule. The majority of\n      underground services are complete and footings and foundations are complete.\n\n     The contract for the development of the new Master Plan for the Toronto Zoo was awarded\n      to MMM Group and the initial work has commenced. Completion of the Master Plan is\n      anticipated in March 2016.\n\n     The comprehensive Building Audit assessment is 75% complete. The information from the\n      building condition completed assessment will be used as an input to the new Master Plan and\n      future infrastructure maintenance planning.\n\fProject Update and Capital Variance Report\n2015-08-31\nPage 2 of 2\n\n   Footings have been poured for the new Watusi (Hoofstock) House. A pre-cast building is to\n    be installed and completion is anticipated by November 2015.\n\nCapital Budget Variance Report:\n\nThe Hoofstock House construction, although delayed by the relocation of the Giraffes in 2014, is\nprogressing well.\n\nThe Information Systems area completed various life-cycle replacement of computer servers and\ndesktops in the first half of the year. Also anticipated for Information Systems is the\nreplacement of the Parking Lot Control System which is now seven (7) years old.\n\nThe Capital Budget Variance report for the period-ended 2015-06-30 is attached (Schedule II).\nIt is anticipated that full-year spending of 84.0% will be achieved by year-end. This spending\nlevel is influenced significantly by the timing for the Wildlife Health Centre Project, which is\ncurrently on schedule for completion in early 2017.\n\n\n\n\n____________________\n\nR. D. Hale\nChief Operating Officer\n\n\nList of Attachments:\n\nSchedule I - Capital Project Status Report at 2015-06-30\nSchedule II – Capital Variance Report for the Twelve Months Ended 2015-06-30\n\f                                                                                          Schedule I\n\n\n                                 CAPITAL PROJECTS STATUS\n                                       As at 2015-06-30\n\n     PROJECT                        STATUS/DESCRIPTION                        ISSUES     COMPLETION\n                                                                                            DATE\nBuilding & Services   Building Audit                                                     2015-09\nRefurbishment         Completion of a comprehensive building                             (Projected)\n                      condition asses",
+            "e\nrequired information on the status of projects through the planning, design and\nconstruction/implementation stages.\n\nComments/Discussion:\n\nThe Project Status list is attached for your review (Schedule I). Some of the highlights are as\nfollows:\n\n     Construction of the Wildlife Health Center is proceeding on schedule. The majority of\n      underground services are complete and footings and foundations are complete.\n\n     The contract for the development of the new Master Plan for the Toronto Zoo was awarded\n      to MMM Group and the initial work has commenced. Completion of the Master Plan is\n      anticipated in March 2016.\n\n     The comprehensive Building Audit assessment is 75% complete. The information from the\n      building condition completed assessment will be used as an input to the new Master Plan and\n      future infrastructure maintenance planning.\n\fProject Update and Capital Variance Report\n2015-08-31\nPage 2 of 2\n\n   Footings have been poured for the new Watusi (Hoofstock) House. A pre-cast building is to\n    be installed and completion is anticipated by November 2015.\n\nCapital Budget Variance Report:\n\nThe Hoofstock House construction, although delayed by the relocation of the Giraffes in 2014, is\nprogressing well.\n\nThe Information Systems area completed various life-cycle replacement of computer servers and\ndesktops in the first half of the year. Also anticipated for Information Systems is the\nreplacement of the Parking Lot Control System which is now seven (7) years old.\n\nThe Capital Budget Variance report for the period-ended 2015-06-30 is attached (Schedule II).\nIt is anticipated that full-year spending of 84.0% will be achieved by year-end. This spending\nlevel is influenced significantly by the timing for the Wildlife Health Centre Project, which is\ncurrently on schedule for completion in early 2017.\n\n\n\n\n____________________\n\nR. D. Hale\nChief Operating Officer\n\n\nList of Attachments:\n\nSchedule I - Capital Project Status Report at 2015-06-30\nSchedule II – Capital Variance Report for the Twelve Months Ended 2015-06-30\n\f                                                                                          Schedule I\n\n\n                                 CAPITAL PROJECTS STATUS\n                                       As at 2015-06-30\n\n     PROJECT                        STATUS/DESCRIPTION                        ISSUES     COMPLETION\n                                                                                            DATE\nBuilding & Services   Building Audit                                                     2015-09\nRefurbishment         Completion of a comprehensive building  "
+          ]
+        }
+      ]
+    },
+    {
+      "corpus": "zoo",
+      "document_sha256": "3e8ca1a190a5c83a2e243715983d1e709501b50912af30acb837a03b8aac9475",
+      "extractor_version": "v1-b63aa8c835ae",
+      "result_sha256": "7b6a3a2ca563bd3dfbc4860abfff5065eba0cd3153d7a60716433bc4773375d2",
+      "contract_index": 1,
+      "contract_sha256": "f08dbf99ac9886c984c9f06383f76cac43406a9f1340534b9df78dd07e5fa15b",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2015/zb/bgrd/backgroundfile-83331.pdf",
+      "classification": "historical_building_audit_without_published_call",
+      "identity_recovered": false,
+      "native_ref": null,
+      "financial_role": null,
+      "reason": "CCI Group building-condition assessment is75%complete, so historical retention is confirmed, but public solicitation ID is absent. BuildingAudit, capital-program row and projected completion date are not call identifiers.",
+      "blockers": [
+        "No independently reviewed actual public solicitation ID for this held contract. No report URL surrogate, title/supplier/value key, purchase-order alias or generic framework substitution allowed.",
+        "CCI Group building-condition assessment is75%complete, so historical retention is confirmed, but public solicitation ID is absent. BuildingAudit, capital-program row and projected completion date are not call identifiers."
+      ],
+      "sources": [
+        {
+          "url": "https://www.toronto.ca/legdocs/mmis/2015/zb/bgrd/backgroundfile-83331.pdf",
+          "sha256": "3e8ca1a190a5c83a2e243715983d1e709501b50912af30acb837a03b8aac9475",
+          "passages": [
+            "        DATE\nBuilding & Services   Building Audit                                                     2015-09\nRefurbishment         Completion of a comprehensive building                             (Projected)\n                      condition assessment for all buildings on Toronto\n                      Zoo property. Information obtained will be used\n                      to complete the Toronto Zoo Master Plan.\n\n                      Awarded to CCI Group, They are approximately\n                      75% complete on the building site reviews.\n\n                      Roof and Skylight Repairs                                          2015-12\n                      Design for roof and heating system replacement                     (Projected)\n                      for the Mayan Temple. Replacement of asphalt\n                      roofs.\n\n                      Preparing RFPs for design of the roof replacement\n                      and heating system.\n\n                      Substation/Transformer/High Voltage Cabling                        2015-10\n                      Repairs & Replacement.                                             (Projected)\n                      Installation of gas valve at the front entrance,\n                      infrastructure upgrades for food areas, and high\n                      voltage cable work required due to power outage.\n\n                      High voltage work completed. Gas valve\n                      installation is to start this week. Food services\n                      infrastructure to be completed in September.\n\n                      Mechanical Equipment Replacement                       Awaiting    2015-12\n                      Convert fuel oil/electric systems in these buildings   end of      (Projected)\n                      to gas. Provide a new natural gas station to           Shrike\n                      service all buildings east of Meadowvale.              breeding\n                                                                             season to\n                      Gas station supply and installation will be            commence\n                      completed in September.\n\n                      Building Repairs                                                   2015-12\n                      Replacement of deteriorated epoxy, metal work,                     (Projected)\n                      ceilings, walls, siding, windows and doors at\n                      various Zoo buildings to meet the accreditation\n                      standards and safety requirements.\n\n                      To be tendered in early September, work to be\n                      compl"
+          ]
+        }
+      ]
+    },
+    {
+      "corpus": "zoo",
+      "document_sha256": "3e8ca1a190a5c83a2e243715983d1e709501b50912af30acb837a03b8aac9475",
+      "extractor_version": "v1-b63aa8c835ae",
+      "result_sha256": "7b6a3a2ca563bd3dfbc4860abfff5065eba0cd3153d7a60716433bc4773375d2",
+      "contract_index": 2,
+      "contract_sha256": "9d3eb619959ecdc3af30469dcbbf76695c1603b4c357af09ff316f917bbfdb72",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2015/zb/bgrd/backgroundfile-83331.pdf",
+      "classification": "unnamed_historical_construction_award",
+      "identity_recovered": false,
+      "native_ref": null,
+      "financial_role": null,
+      "reason": "ScheduleII note7 says awarded$460.0thousand inQ1, but no contractor name or call ID. Raw supplier not stated is a placeholder, not a verified award party. Source project budget$575,000 and spending/cashflow values are not substitute award prices.",
+      "blockers": [
+        "No independently reviewed actual public solicitation ID for this held contract. No report URL surrogate, title/supplier/value key, purchase-order alias or generic framework substitution allowed.",
+        "ScheduleII note7 says awarded$460.0thousand inQ1, but no contractor name or call ID. Raw supplier not stated is a placeholder, not a verified award party. Source project budget$575,000 and spending/cashflow values are not substitute award prices."
+      ],
+      "sources": [
+        {
+          "url": "https://www.toronto.ca/legdocs/mmis/2015/zb/bgrd/backgroundfile-83331.pdf",
+          "sha256": "3e8ca1a190a5c83a2e243715983d1e709501b50912af30acb837a03b8aac9475",
+          "passages": [
+            "                                                                                        Schedule I\n\n\n\n\nSTAFF REPORT\n\nTo:            Board of Management\n\nFrom:          Robin D. Hale\n               Chief Operating Officer\n\nSubject:       CAPITAL PROJECT UPDATE AND VARIANCE REPORT – JUNE 2015\n\nDate:          2015-08-31\n\nSummary\n\nThis report provides an update to the Board on the status of the Capital Projects at the Zoo as at\n2015-06-30.\n\nRecommendations:\n\nIt is recommended that this report be received for information.\n\nBackground:\n\nEach year construction and renovation projects are submitted, revised and approved as part of the\nCapital Budget process. In accordance with Zoo By-law No. 2-2010, the progress of all projects\nin the approved capital program are reported to the Board on a semi-annual basis to provide the\nrequired information on the status of projects through the planning, design and\nconstruction/implementation stages.\n\nComments/Discussion:\n\nThe Project Status list is attached for your review (Schedule I). Some of the highlights are as\nfollows:\n\n     Construction of the Wildlife Health Center is proceeding on schedule. The majority of\n      underground services are complete and footings and foundations are complete.\n\n     The contract for the development of the new Master Plan for the Toronto Zoo was awarded\n      to MMM Group and the initial work has commenced. Completion of the Master Plan is\n      anticipated in March 2016.\n\n     The comprehensive Building Audit assessment is 75% complete. The information from the\n      building condition completed assessment will be used as an input to the new Master Plan and\n      future infrastructure maintenance planning.\n\fProject Update and Capital Variance Report\n2015-08-31\nPage 2 of 2\n\n   Footings have been poured for the new Watusi (Hoofstock) House. A pre-cast building is to\n    be installed and completion is anticipated by November 2015.\n\nCapital Budget Variance Report:\n\nThe Hoofstock House construction, although delayed by the relocation of the Giraffes in 2014, is\nprogressing well.\n\nThe Information Systems area completed various life-cycle replacement of computer servers and\ndesktops in the first half"
+          ]
+        }
+      ]
+    },
+    {
+      "corpus": "zoo",
+      "document_sha256": "ac2fada4a0635a9921575a78cf43bb0b6b5fac6372b4d7e64ce5b392d743bae8",
+      "extractor_version": "v1-b63aa8c835ae",
+      "result_sha256": "bf5f771f6bdbadc0e1371eba52079ded9c81d8cad0386fb8f3ab929eb02dbc9b",
+      "contract_index": 0,
+      "contract_sha256": "1d36008f46d3c30a2ee96859ee5126e15b65983acab5c32ce10c85870574e34c",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2016/zb/bgrd/backgroundfile-90659.pdf",
+      "classification": "repeated_building_audit_without_published_call",
+      "identity_recovered": false,
+      "native_ref": null,
+      "financial_role": null,
+      "reason": "Later capital status report repeats CCI historical building audit; no underlying call ID. Same historical observation as document2index1, pending primary binding and duplicate review; no reportURL or project-key surrogate.",
+      "blockers": [
+        "No independently reviewed actual public solicitation ID for this held contract. No report URL surrogate, title/supplier/value key, purchase-order alias or generic framework substitution allowed.",
+        "Later capital status report repeats CCI historical building audit; no underlying call ID. Same historical observation as document2index1, pending primary binding and duplicate review; no reportURL or project-key surrogate."
+      ],
+      "sources": [
+        {
+          "url": "https://www.toronto.ca/legdocs/mmis/2016/zb/bgrd/backgroundfile-90659.pdf",
+          "sha256": "ac2fada4a0635a9921575a78cf43bb0b6b5fac6372b4d7e64ce5b392d743bae8",
+          "passages": [
+            "              Building Audit                                                  2016-03\n                      Completion of a comprehensive building                          (Projected Final\n                      condition assessment for all buildings on Toronto               Report)\n                      Zoo property. Information obtained will be used\n                      to complete the Toronto Zoo Master Plan.\n\n                      Awarded to CCI Group, all audit information has\n                      been received and is currently being reviewed by\n                      Toronto Zoo staff.\n\n                      Roof and Skylight Repairs                                       2016-04\n                      Design for roof and heating system replacement                  (Projected)\n                      for the Mayan Temple. Replacement of asphalt\n                      roofs.\n\n                      Preparing RFPs for design of the roof replacement\n                      and heating system.\n\n                      Building Repairs                                                2016-12\n                      Replacement of deteriorated epoxy, metal work,                  (Projected)\n                      ceilings, walls, siding, windows and doors at\n                      various Zoo buildings to meet the accreditation\n                      standards and safety requirements.\n\n                      Remaining work to be completed once animal\n                      areas have been vacated.\n\nGrounds & Visitor     Capital Master Plan                                             2016-06\nImprovements          The Toronto Zoo Capital Master Plan 1990 was                    (Projected)\n                      realized in 2014. A new 15-20 year Toronto Zoo\n                      Capital Master plan must be created to determine\n                      the future developments of the Zoo. The Capital\n\f                                                                                     Schedule I\n\n\n                               CAPITAL PROJECTS STATUS\n                                     As at 2015-12-31\nPROJECT             STATUS/DESCRIPTION                                   ISSUES     COMPLETION\n                                                                                       DATE\n                    Master Plan must include innovative and\n                    visionary designs reflecting the Zoo’s visions and\n                    goals in its commitment to animal welfare,\n                    conservation, education, reproduction and\n                    sustainability in alignment with the 2015-2020\n                    Strat",
+            "  infrastructure upgrades and high voltage cable\n                      work required due to power outage.\n\n                      Mechanical Equipment Replacement                                2015-12\n                      Convert fuel oil/electric systems in these buildings            Complete\n                      to gas. Provide a new natural gas station to\n                      service all buildings east of Meadowvale.\n\n                      Building Audit                                                  2016-03\n                      Completion of a comprehensive building                          (Projected Final\n                      condition assessment for all buildings on Toronto               Report)\n                      Zoo property. Information obtained will be used\n                      to complete the Toronto Zoo Master Plan.\n\n                      Awarded to CCI Group, all audit information has\n                      been received and is currently being reviewed by\n                      Toronto Zoo staff.\n\n                      Roof and Skylight Repairs                                       2016-04\n                      Design for roof and heating system replacement                  (Projected)\n                      for the Mayan Temple. Replacement of asphalt\n                      roofs.\n\n                      Preparing RFPs for design of the roof replacement\n                      and heating system.\n\n                      Building Repairs                                                2016-12\n                      Replacement of deteriorated epoxy, metal work,                  (Projected)\n                      ceilings, walls, siding, windows and doors at\n                      various Zoo buildings to meet the accreditation\n                      standards and safety requirements.\n\n                      Remaining work to be completed once animal\n                      areas have been vacated.\n\nGrounds & Visitor     Capital Master Plan                                             2016-06\nImprovements          The Toronto Zoo Capital Master Plan 1990 was                    (Projected)\n                      realized in 2014. A new 15-20 year Toronto Zoo\n                      Capital Master plan must be created to determine\n                      the future developments of the Zoo. The Capital\n\f                                                                                     Schedule I\n\n\n                               CAPITAL PROJECTS STATUS\n                                     As at 2015-12-31\nPROJECT             STATUS/DESCRIPTION                                   ISSUES     COMPLETION\n    "
+          ]
+        }
+      ]
+    },
+    {
+      "corpus": "zoo",
+      "document_sha256": "ac2fada4a0635a9921575a78cf43bb0b6b5fac6372b4d7e64ce5b392d743bae8",
+      "extractor_version": "v1-b63aa8c835ae",
+      "result_sha256": "bf5f771f6bdbadc0e1371eba52079ded9c81d8cad0386fb8f3ab929eb02dbc9b",
+      "contract_index": 1,
+      "contract_sha256": "45c35d1a6ac4e2b8d3bb63e6a94fdfa534c04fb8405fc102bb8e9a6003eba583",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2016/zb/bgrd/backgroundfile-90659.pdf",
+      "classification": "repeated_masterplan_without_published_call",
+      "identity_recovered": false,
+      "native_ref": null,
+      "financial_role": null,
+      "reason": "Later status report repeats MMM capital masterplan development, without public solicitation identifier. Same historical project as document2index0; no identity from budget line, title, supplier or administrative PO.",
+      "blockers": [
+        "No independently reviewed actual public solicitation ID for this held contract. No report URL surrogate, title/supplier/value key, purchase-order alias or generic framework substitution allowed.",
+        "Later status report repeats MMM capital masterplan development, without public solicitation identifier. Same historical project as document2index0; no identity from budget line, title, supplier or administrative PO."
+      ],
+      "sources": [
+        {
+          "url": "https://www.toronto.ca/legdocs/mmis/2016/zb/bgrd/backgroundfile-90659.pdf",
+          "sha256": "ac2fada4a0635a9921575a78cf43bb0b6b5fac6372b4d7e64ce5b392d743bae8",
+          "passages": [
+            "                                                      DATE\n                    Master Plan must include innovative and\n                    visionary designs reflecting the Zoo’s visions and\n                    goals in its commitment to animal welfare,\n                    conservation, education, reproduction and\n                    sustainability in alignment with the 2015-2020\n                    Strategic Plan.\n\n                    Awarded to MMM Group. Capital master plan\n                    development work has progressed including\n                    numerous focus sessions with staff and\n                    stakeholders.\n\n                    Wayfinding Signage\n                    This has been deleted from 2015 work. Funds\n                    have been be re-allocated to the Capital Master\n                    Plan.\n\n                    Education Washroom:\n                    This has been deleted from 2015 work. Funds\n                    have been re-allocated to the Capital Master Plan.\n\nExhibit & Holding   Indian Rhino Building Refurbishment                  Delayed    2016-05\nRefurbishment       The Indian rhino/babirusa/bird indoor public         due to     (Projected)\n                    viewing and holding building is aging and in need    expected\n                    of enhancement/renovations. Through                  Indian\n                    modification we will provide the animals with        Rhino\n                    better holding facilities and enhance the overall    birth in\n                    visitor experience.                                  the\n                                                                         facility\n                    Scope of work has been finalized. Currently\n                    preparing tender documents.\n\nAugmented Reality   Construct a space to house the new augmented                    2015-06\n                    reality experience and future revenue producing                 Complete\n                    functions and events.\n\nNew Hoofstock       Construct a new holding building for hoofstock at               2015-12\nHouse/Exhibit for   the old giraffe house location for Ankole Watusi.               Complete\nAnkole Watusi       Modifications to the yards and minor changes to\n                    the main exhibit are required.\n\n                    All major work is complete. Completing minor\n                    deficiencies.\n\f                                                                                    Schedule I\n\n\n                             CAPITAL PROJECTS STATUS\n                                   As at 2015-12-31\nPROJECT           STA"
+          ]
+        }
+      ]
+    },
+    {
+      "corpus": "zoo",
+      "document_sha256": "b616130fcc0c38005804e2554595814b23cfaae4f2d04e661922429a8959f313",
+      "extractor_version": "v1-b63aa8c835ae",
+      "result_sha256": "f4159ee9a1fb505dd8000a03990c4a1261b5d86acb2c035bd1174fc054a53be0",
+      "contract_index": 0,
+      "contract_sha256": "9c76709f0c63d95bb88e0bfc486649147277730616a6dd3477447788336cd526",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2017/zb/bgrd/backgroundfile-103389.pdf",
+      "classification": "annual_advertising_cap_not_new_award",
+      "identity_recovered": false,
+      "native_ref": null,
+      "financial_role": null,
+      "reason": "2017staff report recommends reimbursing Grey for creative/production up to$200k plusHST. This is annual expenditure authority under an agency relationship, not evidence of a new competitive award. No specific public call ID; raw2017-05-04 is report date, not verified adoption date.",
+      "blockers": [
+        "No independently reviewed actual public solicitation ID for this held contract. No report URL surrogate, title/supplier/value key, purchase-order alias or generic framework substitution allowed.",
+        "2017staff report recommends reimbursing Grey for creative/production up to$200k plusHST. This is annual expenditure authority under an agency relationship, not evidence of a new competitive award. No specific public call ID; raw2017-05-04 is report date, not verified adoption date."
+      ],
+      "sources": [
+        {
+          "url": "https://www.toronto.ca/legdocs/mmis/2017/zb/bgrd/backgroundfile-103389.pdf",
+          "sha256": "b616130fcc0c38005804e2554595814b23cfaae4f2d04e661922429a8959f313",
+          "passages": [
+            "a plan and expenditures related to the 2017\nadvertising campaign as provided for in the 2017 Operating Budget. The paid\nadvertising will complement the public relations, event and social media strategy to\nensure we are reaching our target audiences in the Greater Toronto Area and beyond,\nand that we are communicating the right messages.\n\nRecommendations:\n\nIt is recommended that the Board approve the following:\n\n      1. Expenditures to reimburse Grey Canada for strategic planning; creative\n         development; and any outsourced production costs related to advertising\n         programs as required for the Toronto Zoo brand, not to exceed $200.0 thousand,\n         plus HST; and,\n\n      2. Expenditures with Zenith Optimedia Canada Inc. for media purchases related to\n         the 2017 advertising campaign, not to exceed $956.0 thousand, plus HST.\n\n\nFinancial Impact:\n\nThere are no financial implications related to approval of these recommendations as the related\nadvertising expenditures are included in the Operating Budget for 2017.\n\nComments:\n\nThe Toronto Zoo set out the following objectives which link directly to the goals in the\nrecent Strategic Plan, to drive the Marketing, Communications & Partnerships planning\nfor 2017:\n\n1. Meet or exceed 1.325 million visitors with a positive net revenue;\n\nAdvertising Expenditure Report\n2017-05-04\n\f2. Highlight the last summer to see the giant pandas at the Toronto Zoo before they\nleave in early 2018 for the Calgary Zoo.\n\n3. Highlight the Zoo as a ‘must-see’, fun and engaging experience filled with discovery\nand learning for all ages while continuing to highlight the work the Toronto Zoo does to\nsave and protect species, particularly Canadian species to coincide with Canada 150,\nand their habitats at home and abroad through conservation, education and research\nprograms;\n\n4. Engage and leverage partnerships (including city, tourism outposts and public and\nprivate);\n\n5. Continue to build a strong year-round public relations and social media campaign to\nattract visitors from Toronto and beyond.\n\nThis summer, the Toronto Zoo’s advertising campaign will have a strong focus on the\ngiant pandas and the urgency to see them as this will be the last summer they will be at\nthe Toronto Zoo. Each year, the Toronto Zoo endeavours to maximize the advertising\nbudget with the greatest reach to our identified target audience. In 2016, with updated\nand more robust information, we were able to utilize data from the visitor survey and\npostal code information collected from our guests, but also leverage the lower Canadian\ndollar by continuing to target American and International tourists"
+          ]
+        }
+      ]
+    },
+    {
+      "corpus": "zoo",
+      "document_sha256": "b616130fcc0c38005804e2554595814b23cfaae4f2d04e661922429a8959f313",
+      "extractor_version": "v1-b63aa8c835ae",
+      "result_sha256": "f4159ee9a1fb505dd8000a03990c4a1261b5d86acb2c035bd1174fc054a53be0",
+      "contract_index": 1,
+      "contract_sha256": "4b15200382787995626b336c352ebc1715017d336f2f92b0359d025595ab7a69",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2017/zb/bgrd/backgroundfile-103389.pdf",
+      "classification": "annual_advertising_cap_not_new_award",
+      "identity_recovered": false,
+      "native_ref": null,
+      "financial_role": null,
+      "reason": "2017Zenith$956k plusHST is proposed annual media spending ceiling, not new contract award price. No current public solicitation ID. Raw2017-05-04 is preparation date; future publication would require independently bound decision date or withholding, not current TRCA-only date rule.",
+      "blockers": [
+        "No independently reviewed actual public solicitation ID for this held contract. No report URL surrogate, title/supplier/value key, purchase-order alias or generic framework substitution allowed.",
+        "2017Zenith$956k plusHST is proposed annual media spending ceiling, not new contract award price. No current public solicitation ID. Raw2017-05-04 is preparation date; future publication would require independently bound decision date or withholding, not current TRCA-only date rule."
+      ],
+      "sources": [
+        {
+          "url": "https://www.toronto.ca/legdocs/mmis/2017/zb/bgrd/backgroundfile-103389.pdf",
+          "sha256": "b616130fcc0c38005804e2554595814b23cfaae4f2d04e661922429a8959f313",
+          "passages": [
+            "ronto Area and beyond,\nand that we are communicating the right messages.\n\nRecommendations:\n\nIt is recommended that the Board approve the following:\n\n      1. Expenditures to reimburse Grey Canada for strategic planning; creative\n         development; and any outsourced production costs related to advertising\n         programs as required for the Toronto Zoo brand, not to exceed $200.0 thousand,\n         plus HST; and,\n\n      2. Expenditures with Zenith Optimedia Canada Inc. for media purchases related to\n         the 2017 advertising campaign, not to exceed $956.0 thousand, plus HST.\n\n\nFinancial Impact:\n\nThere are no financial implications related to approval of these recommendations as the related\nadvertising expenditures are included in the Operating Budget for 2017.\n\nComments:\n\nThe Toronto Zoo set out the following objectives which link directly to the goals in the\nrecent Strategic Plan, to drive the Marketing, Communications & Partnerships planning\nfor 2017:\n\n1. Meet or exceed 1.325 million visitors with a positive net revenue;\n\nAdvertising Expenditure Report\n2017-05-04\n\f2. Highlight the last summer to see the giant pandas at the Toronto Zoo before they\nleave in early 2018 for the Calgary Zoo.\n\n3. Highlight the Zoo as a ‘must-see’, fun and engaging experience filled with discovery\nand learning for all ages while continuing to highlight the work the Toronto Zoo does to\nsave and protect species, particularly Canadian species to coincide with Canada 150,\nand their habitats at home and abroad through conservation, education and research\nprograms;\n\n4. Engage and leverage partnerships (including city, tourism outposts and public and\nprivate);\n\n5. Continue to build a strong year-round public relations and social media campaign to\nattract visitors from Toronto and beyond.\n\nThis summer, the Toronto Zoo’s advertising campaign will have a strong focus on the\ngiant pandas and the urgency to see them as this will be the last summer they will be at\nthe Toronto Zoo. Each year, the Toronto Zoo endeavours to maximize the advertising\nbudget with the greatest reach to our identified target audience. In 2016, with updated\nand more robust information, we were able to utilize data from the visitor survey and\npostal code information collected from our guests, but also leverage the lower Canadian\ndollar by continuing to target American and International tourists and highlighting the\nToronto Zoo’s success with conservation and breeding programs for endangered and\nvulnerable species. The attendance target for 2017 will be achieved in a number of\nways including through the annual advertising campaign, consumer and visitor\npro"
+          ]
+        }
+      ]
+    },
+    {
+      "corpus": "zoo",
+      "document_sha256": "cfcaf5853739866184b1c294f5d764dbeac5cd47ce1aff067c82dae1334fdf11",
+      "extractor_version": "v1-b63aa8c835ae",
+      "result_sha256": "87608138a996e66d5cda0a836b81327e9f9824af5eec6a3fc5a6da63e19a91ad",
+      "contract_index": 0,
+      "contract_sha256": "50c1c9aa04a85adf79b2e413f8a87a38e2ab4d4b74e41d4cb966e501e4c7e8e2",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2019/zb/bgrd/backgroundfile-124311.pdf",
+      "classification": "annual_advertising_cap_not_new_award",
+      "identity_recovered": false,
+      "native_ref": null,
+      "financial_role": null,
+      "reason": "2019Grey$200k reimbursement/production spending is a recommendation within OperatingBudget; no primary public call identifier. Raw2019-01-29 is staff report date, not proven Board award/adoption date.",
+      "blockers": [
+        "No independently reviewed actual public solicitation ID for this held contract. No report URL surrogate, title/supplier/value key, purchase-order alias or generic framework substitution allowed.",
+        "2019Grey$200k reimbursement/production spending is a recommendation within OperatingBudget; no primary public call identifier. Raw2019-01-29 is staff report date, not proven Board award/adoption date."
+      ],
+      "sources": [
+        {
+          "url": "https://www.toronto.ca/legdocs/mmis/2019/zb/bgrd/backgroundfile-124311.pdf",
+          "sha256": "cfcaf5853739866184b1c294f5d764dbeac5cd47ce1aff067c82dae1334fdf11",
+          "passages": [
+            "nes the proposed plan and expenditures related to the 2019 advertising\ncampaign as provided for in the Operating Budget. The paid advertising will complement\nthe public relations, events, corporate/group events, community outreach and digital\nstrategy to ensure we are reaching our target audiences in the Greater Toronto Area and\nbeyond.\n\nRECOMMENDATIONS:\n\nIt is recommended that the Board approve the following:\n\n      1. Expenditures to reimburse Grey Advertising Canada for strategic planning;\n         creative development; and any outsourced production costs related to\n         advertising programs as required for the Toronto Zoo brand, not to exceed\n         $200.0 thousand, plus HST; and,\n\n      2. Expenditures with Zenith Optimedia Canada Inc. for media purchases\n         related to the 2019 advertising campaign, not to exceed $956.0 thousand,\n         plus HST.\n\nFINANCIAL IMPACT:\n\nThere are no financial implications related to approval of these recommendations as the\nrelated advertising expenditures are included in the Operating Budget for 2019.\n\nDECISION HISTORY:\n\nEach year, the Toronto Zoo develops a summer advertising campaign with our agency of\nrecord and implements a paid strategy through our partnership with Zenith Optimedia. In\naddition, we leverage many partnerships to increase our reach across the Greater\nToronto Area (GTA) and beyond.\n\nToronto has one of the most expensive and competitive media and attractions market in\nCanada. While the vast majority of our advertising budget is concentrated on our peak\n\n\nAdvertising Expenditures Report                                               Page 1 of 6\n\fsummer months, in-house campaigns are created each year to ensure the Zoo remains\ntop of mind twelve months of the year and a public relations strategy is implemented to\ncontinuously to remind people of the many reasons to visit the Zoo.\n\nWith the departure of the giant pandas in March 2018, a campaign was developed in-\nhouse to raise awareness to the urgency of seeing them before they left for Calgary. This\ncampaign had a paid and earned media strategy that resulted in exceeding the\nattendance targets during the March Break which was the last opportunity for the public\nto see the pandas. With the departure of the giant pandas, we wanted to build on our past\nconcerted efforts to establish the Toronto Zoo as a leader in wildlife conservation and as\na result, in 2018 we made the recommendation to develop a summer campaign that was\nmore mission based to further promote the Zoo’s critical role in saving and protecting\nspecies.\n\nWhile this campaign was exceptionally well received by staff, volunteers, m"
+          ]
+        }
+      ]
+    },
+    {
+      "corpus": "zoo",
+      "document_sha256": "cfcaf5853739866184b1c294f5d764dbeac5cd47ce1aff067c82dae1334fdf11",
+      "extractor_version": "v1-b63aa8c835ae",
+      "result_sha256": "87608138a996e66d5cda0a836b81327e9f9824af5eec6a3fc5a6da63e19a91ad",
+      "contract_index": 1,
+      "contract_sha256": "0767a33ea2f6c90e361bad6a466657b07c665da38e3405b5022d3212bd328981",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2019/zb/bgrd/backgroundfile-124311.pdf",
+      "classification": "annual_advertising_cap_not_new_award",
+      "identity_recovered": false,
+      "native_ref": null,
+      "financial_role": null,
+      "reason": "2019Zenith$956k plusHST is recommended annual media purchase authority under an ongoing relationship, not a submitted bid or new award price. No call ID. Report date2019-01-29 must not be published as a verified procurement decision date.",
+      "blockers": [
+        "No independently reviewed actual public solicitation ID for this held contract. No report URL surrogate, title/supplier/value key, purchase-order alias or generic framework substitution allowed.",
+        "2019Zenith$956k plusHST is recommended annual media purchase authority under an ongoing relationship, not a submitted bid or new award price. No call ID. Report date2019-01-29 must not be published as a verified procurement decision date."
+      ],
+      "sources": [
+        {
+          "url": "https://www.toronto.ca/legdocs/mmis/2019/zb/bgrd/backgroundfile-124311.pdf",
+          "sha256": "cfcaf5853739866184b1c294f5d764dbeac5cd47ce1aff067c82dae1334fdf11",
+          "passages": [
+            "our target audiences in the Greater Toronto Area and\nbeyond.\n\nRECOMMENDATIONS:\n\nIt is recommended that the Board approve the following:\n\n      1. Expenditures to reimburse Grey Advertising Canada for strategic planning;\n         creative development; and any outsourced production costs related to\n         advertising programs as required for the Toronto Zoo brand, not to exceed\n         $200.0 thousand, plus HST; and,\n\n      2. Expenditures with Zenith Optimedia Canada Inc. for media purchases\n         related to the 2019 advertising campaign, not to exceed $956.0 thousand,\n         plus HST.\n\nFINANCIAL IMPACT:\n\nThere are no financial implications related to approval of these recommendations as the\nrelated advertising expenditures are included in the Operating Budget for 2019.\n\nDECISION HISTORY:\n\nEach year, the Toronto Zoo develops a summer advertising campaign with our agency of\nrecord and implements a paid strategy through our partnership with Zenith Optimedia. In\naddition, we leverage many partnerships to increase our reach across the Greater\nToronto Area (GTA) and beyond.\n\nToronto has one of the most expensive and competitive media and attractions market in\nCanada. While the vast majority of our advertising budget is concentrated on our peak\n\n\nAdvertising Expenditures Report                                               Page 1 of 6\n\fsummer months, in-house campaigns are created each year to ensure the Zoo remains\ntop of mind twelve months of the year and a public relations strategy is implemented to\ncontinuously to remind people of the many reasons to visit the Zoo.\n\nWith the departure of the giant pandas in March 2018, a campaign was developed in-\nhouse to raise awareness to the urgency of seeing them before they left for Calgary. This\ncampaign had a paid and earned media strategy that resulted in exceeding the\nattendance targets during the March Break which was the last opportunity for the public\nto see the pandas. With the departure of the giant pandas, we wanted to build on our past\nconcerted efforts to establish the Toronto Zoo as a leader in wildlife conservation and as\na result, in 2018 we made the recommendation to develop a summer campaign that was\nmore mission based to further promote the Zoo’s critical role in saving and protecting\nspecies.\n\nWhile this campaign was exceptionally well received by staff, volunteers, members and\nour social media community, according to the 2018 On-Site Visitor Survey Results only\n12% of guests indicated it influenced their visit to the Zoo.\n\nApproval by the Board is required for payments to Grey Advertising and Zenith Optimedia.\n\nCOMMENTS:\n\nThe Toronto Zoo s"
+          ]
+        }
+      ]
+    },
+    {
+      "corpus": "zoo",
+      "document_sha256": "6dd54ba0f19e2c8402be512ceae4dbf833abaceac698562cd3102e42c2d33099",
+      "extractor_version": "v1-b63aa8c835ae",
+      "result_sha256": "c0714932bfbe9039d47fd0fd1b63546b09ce852b28164e5bdf2c7d9c0504d45b",
+      "contract_index": 0,
+      "contract_sha256": "39572fa5d0209fc38af1df9aadfdc8665001fe65814e6c225da4c17baf5e22d3",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2019/zb/bgrd/backgroundfile-124291.pdf",
+      "classification": "published_call_historical_award_representative",
+      "identity_recovered": true,
+      "native_ref": "RFP 58 (2018-10)",
+      "financial_role": "Identity recovery and ledger reconciliation only, conditional on exact canonical representative availability. Raw bids[] is empty. All historical award rows are withheld as duplicate claims; no new bids or awards are published. Raw price/basis/contingency/date NULLs remain unchanged.",
+      "reason": "The original public procurement report proves the printed solicitation identity, and the later held status report confirms the Board award. The priced original is already published under the same exact native reference. Recover identity only and withhold the duplicate historical award; retain all raw NULLs and empty bids[].",
+      "blockers": [],
+      "sources": [
+        {
+          "url": "https://www.toronto.ca/legdocs/mmis/2019/zb/bgrd/backgroundfile-124291.pdf",
+          "sha256": "6dd54ba0f19e2c8402be512ceae4dbf833abaceac698562cd3102e42c2d33099",
+          "passages": [
+            "a\nsemi-annual basis to provide the required information on the status of projects through\nthe planning, design and construction/implementation stages.\n\nCOMMENTS:\n\nThe Project Status list is attached for your review (Schedule I). Some of the highlights\nare as follows:\n\n•     Orangutan project delayed. An RFP for design to replace the original Architectural\n      firm was issued in late November. The remaining design work has been awarded to\n      Zeidler Partnership Architects by the Board of Management.\n•     The Amur tiger exhibit opened in October 2018.\n•     Work began on the African Rainforest Pavilion emergency backup generator\n      replacement project in November 2018 and is expected to be completed spring\n      2019.\n•     The Board awarded the new Parking Management System work to Precise ParkLink\n      in November.\n\n\n\nCapital Project Update and Variance Report                                    Page 1 of 2\n\fCapital Budget Variance Report:\n\nThe Capital Budget Variance report for the period-ended 2018-12-31 is attached\n(Schedule II) It is anticipated that full-year spending of 16.3% will be achieved by year-\nend. This percentage is affected significantly by the lack of spending on the Orangutan\nProject due to issues with the consultant. Several other projects have been tendered\nand have either been over budget or we did not receive contractor/consultant\nsubmissions. Several projects have been tendered twice with no submissions being\nreceived.\n\nCONTACT:\n\nLeona Mitchell                                            Paul K. Whittam\nDirector, Facilities & Services                           Manager, Financial Services\nlmitchell@torontozoo.ca                                   pwhittam@torontozoo.ca\n416-392-5985                                              (416) 392-5914\n\n\n\n\n____________________\nR. D. Hale\nChief Operating Officer\n\n\nATTACHMENTS:\n\nSchedule I - Capital Project Status at 2018-12-31\nSchedule II – Capital Variance Report for the Period Ended 2018-12-31\n\n\n\n\nCapital Project Update and Variance Report                                      Page 2 of 2\n\f                                                                                                                             Schedule I\n                                                  CAPITAL PROJECTS STATUS\n                                                        As at 2018-12-31\n\n\nPROJECT                    DESCRIPTION                                            PROGRESS UPDATE                  PROJECTED\n                                                                                                                   COMPLETION\n\nORANGUTAN III       "
+          ]
+        },
+        {
+          "url": "https://www.toronto.ca/legdocs/mmis/2018/zb/bgrd/backgroundfile-122143.pdf",
+          "sha256": "9dabf326859f99c50c443f9d54aa72d858d3cd42487240e6b5d4f4ed6492c774",
+          "passages": [
+            "                                                                       ZB24.17\nSTAFF REPORT\n\nTo:              Board of Management\n\nFrom:            Robin D. Hale\n                 Chief Operating Officer\n\nSubject:         CONSULTING SERVICES – OUTDOOR ORANGUTAN EXHIBIT\n\nDate:            2018-11-27\n\n\nSUMMARY:\n\nThis report recommends the award of a contract for consulting services for the Outdoor\nOrangutan Exhibit, RFP 58 (2018-10).\n\nRECOMMENDATIONS:\n\nIt is recommended that the contract for architectural, engineering and project\nmanagement services for RFP 58 (2018-10) Consulting Services – Outdoor\nOrangutan Exhibit be awarded to Zeidler Partnership Architects in the amount of\n$350,075.00, excluding HST.\n\nFINANCIAL IMPACT:\n\nThis is an approved project under the Capital Works Program. Remaining funding\navailable for this project is $5,063,282 for the balance of design, construction and\ncommissioning.\n\nDECISION HISTORY:\n\nCreation of an outdoor exhibit for orangutans was an approved project for 2016-2018.\nDesign for this project was awarded to Balind Architect Inc. in 2016. Work on the\nproject stopped in the fall of 2017, and in spring of 2018, the Zoo learned that the\nprinciple architect was no longer able to complete the project due to personal reasons.\n\nThe Zoo has terminated the agreement with Balind Architect Inc. and are now in a\nposition to award the detailed design and contract administration portion of this project\nbased on the results of RFP 58 (2018-10).\n\nCOMMENTS:\n\nThe Toronto Zoo issued RFP 58 (2018-10) Outdoor Orangutan Exhibit, inviting 15\nexperienced and qualified consultants to submit a written proposal to design an outdoor\norangutan exhibit. The Request for Proposals was posted on the Toronto Zoo internet\nwebsite.\n\nConsulting Services – Outdoor Orangutan Exhibit                                  Page 1 of 2\n",
+            "Four interested vendors attended an on-site inspection or participated in a tele-\nconference review of the project with the Zoo. Proposals were received from three\nproponents (see Appendix I).\n\nThe proposals were reviewed and rated by an evaluation committee comprised of staff\nmembers from Facilities & Services, Project Management and Purchasing & Supply.\nProposals were evaluated based on consulting experience on similar projects,\ncommitment to the schedule, understanding of the scope, proposed methodology and\ncost.\n\nAt the conclusion of the evaluation process, the final results were tabulated and Zeidler\nPartnership Architects scored the highest with a total of 78.9% out of a total 100.0\npoints available in the full evaluation process. No other proponents scored 70.0% or\nhigher in the process which is considered the minimum threshold for award.\n\nZeidler Partnership Architects’ proposal met all of the Zoo’s requirements and received\nthe highest scoring based on the pre-established evaluation criteria within the RFP.\nZeidler Partnership Architects and their assembled team for this project have related\nexperience designing and providing consulting services for orangutan and great ape\nexhibits at other zoological facilities around the world, which will be most desirable for\nthe successful completion of this project. In addition, Zeidler stated that they can meet\nthe Zoo’s proposed schedule of design and construction for an orangutan exhibit\nopening in 2020.\n\n\n\n\nR. D. Hale\nChief Operating Officer\n\n\nATTACHMENTS:\n\nAppendix I – Schedule of Proposals Received\n\n\n\n\nConsulting Services – Outdoor Orangutan Exhibit                                   Page 2 of 2\n",
+            "                                                                   Appendix I\n\n                                TORONTO ZOO\n                           Outdoor Orangutan Exhibit\n                               RFP 58 (2018-10)\n                       SCHEDULE OF PROPOSALS RECEIVED\n\n\n\n          PROPONENT               PROPOSAL PRICE           SCORE\n                                 (excluding applicable   (OUT OF 100)\n                                        taxes)\n\nL.E. Glazer Architect Limited         $273,000              68.7\nWDM Architects P.A.                   $607,602              64.7\nZeidler Partnership Architects        $350,075              78.9\n"
+          ]
+        }
+      ]
+    },
+    {
+      "corpus": "zoo",
+      "document_sha256": "6dd54ba0f19e2c8402be512ceae4dbf833abaceac698562cd3102e42c2d33099",
+      "extractor_version": "v1-b63aa8c835ae",
+      "result_sha256": "c0714932bfbe9039d47fd0fd1b63546b09ce852b28164e5bdf2c7d9c0504d45b",
+      "contract_index": 1,
+      "contract_sha256": "e3d184309282f8c7ef90d644850ddd0aea4665b0f8f1cb6d0538f0edfdaa948f",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2019/zb/bgrd/backgroundfile-124291.pdf",
+      "classification": "published_call_historical_award_representative",
+      "identity_recovered": true,
+      "native_ref": "RFP #21 (2018-04)",
+      "financial_role": "Identity recovery and ledger reconciliation only, conditional on exact canonical representative availability. Raw bids[] is empty. All historical award rows are withheld as duplicate claims; no new bids or awards are published. Raw price/basis/contingency/date NULLs remain unchanged.",
+      "reason": "The original public procurement report proves the printed solicitation identity, and the later held status report confirms the Board award. The priced original is already published under the same exact native reference. Recover identity only and withhold the duplicate historical award; retain all raw NULLs and empty bids[].",
+      "blockers": [],
+      "sources": [
+        {
+          "url": "https://www.toronto.ca/legdocs/mmis/2019/zb/bgrd/backgroundfile-124291.pdf",
+          "sha256": "6dd54ba0f19e2c8402be512ceae4dbf833abaceac698562cd3102e42c2d33099",
+          "passages": [
+            "ctural\n      firm was issued in late November. The remaining design work has been awarded to\n      Zeidler Partnership Architects by the Board of Management.\n•     The Amur tiger exhibit opened in October 2018.\n•     Work began on the African Rainforest Pavilion emergency backup generator\n      replacement project in November 2018 and is expected to be completed spring\n      2019.\n•     The Board awarded the new Parking Management System work to Precise ParkLink\n      in November.\n\n\n\nCapital Project Update and Variance Report                                    Page 1 of 2\n\fCapital Budget Variance Report:\n\nThe Capital Budget Variance report for the period-ended 2018-12-31 is attached\n(Schedule II) It is anticipated that full-year spending of 16.3% will be achieved by year-\nend. This percentage is affected significantly by the lack of spending on the Orangutan\nProject due to issues with the consultant. Several other projects have been tendered\nand have either been over budget or we did not receive contractor/consultant\nsubmissions. Several projects have been tendered twice with no submissions being\nreceived.\n\nCONTACT:\n\nLeona Mitchell                                            Paul K. Whittam\nDirector, Facilities & Services                           Manager, Financial Services\nlmitchell@torontozoo.ca                                   pwhittam@torontozoo.ca\n416-392-5985                                              (416) 392-5914\n\n\n\n\n____________________\nR. D. Hale\nChief Operating Officer\n\n\nATTACHMENTS:\n\nSchedule I - Capital Project Status at 2018-12-31\nSchedule II – Capital Variance Report for the Period Ended 2018-12-31\n\n\n\n\nCapital Project Update and Variance Report                                      Page 2 of 2\n\f                                                                                                                             Schedule I\n                                                  CAPITAL PROJECTS STATUS\n                                                        As at 2018-12-31\n\n\nPROJECT                    DESCRIPTION                                            PROGRESS UPDATE                  PROJECTED\n                                                                                                                   COMPLETION\n\nORANGUTAN III              Improvements to upgrade the living conditions,         Contract with Balind Architect   2020-05\nOUTDOOR EXHIBIT            animal behaviour enrichment, by providing              Inc. has been terminated due\n                           outside space for the management of the                to inability of Architect to\n                          "
+          ]
+        },
+        {
+          "url": "https://www.toronto.ca/legdocs/mmis/2018/zb/bgrd/backgroundfile-121842.pdf",
+          "sha256": "93f64d8c762cf135c644f0944e2030814426d6426bfab3295264bd307b0cf6ec",
+          "passages": [
+            "                                                                                                       ZB24.10\nSTAFF REPORT\n\nTo:              Board of Management\n\nFrom:            Robin D. Hale\n                 Chief Operating Officer\n\nSubject:         PARKING MANAGEMENT SYSTEM\n\nDate:            2018-11-09\n\n\nSUMMARY:\n\nThis report recommends the award of the request of proposal for a parking\nmanagement system replacement.\n\nRECOMMENDATIONS:\n\nIt is recommended that the tender for the parking management system\nreplacement, RFP #21 (2018-04) – Parking Management System be awarded to\nPrecise ParkLink in the amount of $307,149, excluding Goods and Services Tax.\n\nFINANCIAL IMPACT:\n\nThere is no financial impact to this report, as the funding is included in the approved\n2018-2022 Capital Works Program (Information Systems Budget).\n\nDECISION HISTORY:\n\nThe current Toronto Zoo parking management system was installed in 2007. It is\nshowing its age with continuing operational issues and requires an increasing amount of\nservice maintenance from year to year.\n\nCOMMENTS:\n\nThe Toronto Zoo issued Parking Management System - RFP #21 (2018-04), inviting\nexperienced and qualified service providers to submit a written proposal to replace the\nexisting parking operation equipment and software with a commercial off-the-shelf\nparking system.\n\nThe RFP was posted on the Toronto Zoo website. Twenty-one interested vendors\nattended the mandatory on-site inspection. Proposals were received from 7 proponents\n(see Appendix I).\n\nThe proposals were reviewed and rated by an evaluation committee consisting of four\nstaff members from Member & Guest Services, Financial Services and Safety &\nSecurity. Proposals were evaluated based on capability, technical merit, methodology,\n\n\n[C:\\Users\\arodrig3\\AppData\\Local\\Microsoft\\Windows\\INetCache\\Content.Outlook\\BMNU2042\\Parking Management System RFP.rev.docx] Page 1 of 3\n",
+            "and cost. This included a detailed review of 99–point general and functional\nrequirement criteria that proponents were asked to complete.\n\nFollowing an initial evaluation of the seven proposals received, a short list of three\nProponents were invited to present and demonstrate their proposal to the evaluation\ncommittee. Subsequent to the interview process, the final results were tabulated and\nPrecise ParkLink Inc. scored the highest with a total of 117.8 (78.5%) out of a total\n150.0 points available in the full evaluation process. Only one other proponent scored\n70.0% or higher in the process which is considered the minimum requirement for award.\n\nPrecise ParkLink Inc. has proposed a replacement parking management system that is\ncustomer-centered and administratively and operationally effective. The system\nrecommended received the highest scoring based on the pre-established evaluation\ncriteria within the RFP submission and interview process, and met all of the\nspecifications. In addition, their proposal was the only solution that integrates\nseamlessly with our existing ADMITS point of sale software.\n\n\n\n____________________\nR. D. Hale\nChief Operating Officer\n\n\nATTACHEMENT:\nAppendix I - Summary of RFP Responses\n\n\n\n\n                                                                               Page 2 of 3\n",
+            "                                                                               Appendix I\n\n                                   TORONTO ZOO\n                             Parking Management System\n                                  RFP #21 (2018-04)\n                         SCHEDULE OF PROPOSALS RECEIVED\n\n\n        PROPONENT                  PROPOSAL                       SCORE\n                                      PRICE                     (OUT OF 150)\n                                    (excluding\n                                 applicable taxes)\n\nBudget Parking Inc.                 $163,335                        38.6\nImperial Parking Canada Corp.       $193,050                        63.7\nLocomobi                            $202,790                        103.1\nLogic Controle Inc (Globatech)      $230,890                        65.7\nPrecise ParkLink Inc.               $307,149                        117.8\nRoyal Parking                       $526,959         Eliminated as cost prohibitive based\n                                                              on terms of RFP\nWPS Canada                          $350,831                        105.7\n\n\n\n\n                                                                                  Page 3 of 3\n"
+          ]
+        }
+      ]
+    },
+    {
+      "corpus": "zoo",
+      "document_sha256": "6dd54ba0f19e2c8402be512ceae4dbf833abaceac698562cd3102e42c2d33099",
+      "extractor_version": "v1-b63aa8c835ae",
+      "result_sha256": "c0714932bfbe9039d47fd0fd1b63546b09ce852b28164e5bdf2c7d9c0504d45b",
+      "contract_index": 2,
+      "contract_sha256": "c34863ee7b5cf328fa4a69ff04162c95ea7595bbde6d72942018ff88fc17eab6",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2019/zb/bgrd/backgroundfile-124291.pdf",
+      "classification": "historical_generator_install_without_published_call",
+      "identity_recovered": false,
+      "native_ref": null,
+      "financial_role": null,
+      "reason": "Source identifies Tri-Unite generator INSTALLATION award, distinct from generator purchased in2017. No installation solicitation ID. Purchase call/master electrician service identifiers cannot alias this installation; source has no complete named bidder table.",
+      "blockers": [
+        "No independently reviewed actual public solicitation ID for this held contract. No report URL surrogate, title/supplier/value key, purchase-order alias or generic framework substitution allowed.",
+        "Source identifies Tri-Unite generator INSTALLATION award, distinct from generator purchased in2017. No installation solicitation ID. Purchase call/master electrician service identifiers cannot alias this installation; source has no complete named bidder table."
+      ],
+      "sources": [
+        {
+          "url": "https://www.toronto.ca/legdocs/mmis/2019/zb/bgrd/backgroundfile-124291.pdf",
+          "sha256": "6dd54ba0f19e2c8402be512ceae4dbf833abaceac698562cd3102e42c2d33099",
+          "passages": [
+            "                                                                         ZB1.11\nSTAFF REPORT\n\n\nTo:           Board of Management\n\nFrom:         Chief Operating Officer\n\nSubject:      CAPITAL PROJECT UPDATE AND VARIANCE REPORT\n              DECEMBER 2018\n\nDate:         2019-01-30\n\n\nSUMMARY\n\nThis report provides an update to the Board on the status of the Capital Projects at the\nZoo as at 2018-12-31.\n\nRECOMMENDATIONS:\n\nIt is recommended that this report be received for information.\n\nDECISION HISTORY:\n\nEach year construction and renovation projects are submitted, revised and approved as\npart of the Capital Budget process. In accordance with Zoo By-law No. 2-2010, the\nprogress of all projects in the approved capital program are reported to the Board on a\nsemi-annual basis to provide the required information on the status of projects through\nthe planning, design and construction/implementation stages.\n\nCOMMENTS:\n\nThe Project Status list is attached for your review (Schedule I). Some of the highlights\nare as follows:\n\n•     Orangutan project delayed. An RFP for design to replace the original Architectural\n      firm was issued in late November. The remaining design work has been awarded to\n      Zeidler Partnership Architects by the Board of Management.\n•     The Amur tiger exhibit opened in October 2018.\n•     Work began on the African Rainforest Pavilion emergency backup generator\n      replacement project in November 2018 and is expected to be completed spring\n      2019.\n•     The Board awarded the new Parking Management System work to Precise ParkLink\n      in November.\n\n\n\nCapital Project Update and Variance Report                                    Page 1 of 2\n\fCapital Budget Variance Report:\n\nThe Capital Budget Variance report for the period-ended 2018-12-31 is attached\n(Schedule II) It is anticipated that full-year spending of 16.3% will be achieved by year-\nend. This percentage is affected significantly by the lack of spending on the Orangutan\nProject due to issues with the consultant. Several other projects have been tendered\nand have either been over budget or we did not receive contractor/consultant\nsubmissions. Several projects have been tendered twice wi"
+          ]
+        }
+      ]
+    },
+    {
+      "corpus": "zoo",
+      "document_sha256": "6dd54ba0f19e2c8402be512ceae4dbf833abaceac698562cd3102e42c2d33099",
+      "extractor_version": "v1-b63aa8c835ae",
+      "result_sha256": "c0714932bfbe9039d47fd0fd1b63546b09ce852b28164e5bdf2c7d9c0504d45b",
+      "contract_index": 3,
+      "contract_sha256": "9725b913ca24b86a88ac8802f1f890201408944cbcc4ed56111898c30005117d",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2019/zb/bgrd/backgroundfile-124291.pdf",
+      "classification": "historical_exhibit_renovation_without_published_call",
+      "identity_recovered": false,
+      "native_ref": null,
+      "financial_role": null,
+      "reason": "DASD amphibian renovation is awarded/substantially complete, but source supplies no public call number. Acronym or project title is not a public procurement identifier. No new legal entity expansion authorized.",
+      "blockers": [
+        "No independently reviewed actual public solicitation ID for this held contract. No report URL surrogate, title/supplier/value key, purchase-order alias or generic framework substitution allowed.",
+        "DASD amphibian renovation is awarded/substantially complete, but source supplies no public call number. Acronym or project title is not a public procurement identifier. No new legal entity expansion authorized."
+      ],
+      "sources": [
+        {
+          "url": "https://www.toronto.ca/legdocs/mmis/2019/zb/bgrd/backgroundfile-124291.pdf",
+          "sha256": "6dd54ba0f19e2c8402be512ceae4dbf833abaceac698562cd3102e42c2d33099",
+          "passages": [
+            "                   integrity of the barriers.\nAfrican Rainforest Roof    The roof vents at the gorilla exhibit are not easily   Expect this will be completed 2019-06\nVents – Gorilla            accessible due to modifications to the Pavilion of     as part of the Energy Retrofit\n                           the years.                                             project.\n\nReplacement of          Renovate outdated amphibian exhibits at the Awarded to DASD.         Work 2018-12\nDeteriorating Amphibian Americas Pavilion.                          substantially completed.\nExhibits\n\nOstrich and Wildebeest     Create a new yard just inside the ostrich exhibit Project was cancelled.\nHolding Yards              and a corridor from the wildebeest exhibit to a\n                           new yard located on the west side of the ostrich\n                           house.\n\n\n\n\n                                                                 -4-\n\f                                                                                                                    Schedule I\n                                              CAPITAL PROJECTS STATUS\n                                                    As at 2018-12-31\n\n\nPROJECT                  DESCRIPTION                                       PROGRESS UPDATE               PROJECTED\n                                                                                                         COMPLETION\n\nAmur Tiger               Modification to the existing Giant Panda holding Project is complete.           2018-09\nModifications            and habitats required to accommodate the return\n                         of the Amur Tigers.\n\n\n\n\nGROUNDS & VISITOR IMPROVEMENTS\n\nWayfinding Signage       On site direction signage must be updated to Tender submissions were 2019-09\nStudy                    improve Zoo visitor site circulation and received from pre-qualified\n                         orientation.                                      contractors November 2018.\n                                                                           This project is an agenda item\n                                                                           for the      February   Board\n                                                                           meeting to award a portion of\n                                                                           the work.\nConversion of Panda      The Panda Interpretive Centre was an Complete                                    2018-09\nInterpretive Centre      interpretive space created as par to the overall\n                         Giant Panda experience. Now that"
+          ]
+        }
+      ]
+    },
+    {
+      "corpus": "zoo",
+      "document_sha256": "6dd54ba0f19e2c8402be512ceae4dbf833abaceac698562cd3102e42c2d33099",
+      "extractor_version": "v1-b63aa8c835ae",
+      "result_sha256": "c0714932bfbe9039d47fd0fd1b63546b09ce852b28164e5bdf2c7d9c0504d45b",
+      "contract_index": 4,
+      "contract_sha256": "c30ee0e51cf97bc0cceb0f70c736bb29e2305d91c78e9e38a7579eed88abba3b",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2019/zb/bgrd/backgroundfile-124291.pdf",
+      "classification": "unnamed_design_award_without_published_call",
+      "identity_recovered": false,
+      "native_ref": null,
+      "financial_role": null,
+      "reason": "Indo-Malaya generator-design RFP said to be awarded, with no winner name or call ID. Raw Not stated award supplier is not a verified party. Distinct from AfricanRainforest generator purchase/installation.",
+      "blockers": [
+        "No independently reviewed actual public solicitation ID for this held contract. No report URL surrogate, title/supplier/value key, purchase-order alias or generic framework substitution allowed.",
+        "Indo-Malaya generator-design RFP said to be awarded, with no winner name or call ID. Raw Not stated award supplier is not a verified party. Distinct from AfricanRainforest generator purchase/installation."
+      ],
+      "sources": [
+        {
+          "url": "https://www.toronto.ca/legdocs/mmis/2019/zb/bgrd/backgroundfile-124291.pdf",
+          "sha256": "6dd54ba0f19e2c8402be512ceae4dbf833abaceac698562cd3102e42c2d33099",
+          "passages": [
+            "                                                                         ZB1.11\nSTAFF REPORT\n\n\nTo:           Board of Management\n\nFrom:         Chief Operating Officer\n\nSubject:      CAPITAL PROJECT UPDATE AND VARIANCE REPORT\n              DECEMBER 2018\n\nDate:         2019-01-30\n\n\nSUMMARY\n\nThis report provides an update to the Board on the status of the Capital Projects at the\nZoo as at 2018-12-31.\n\nRECOMMENDATIONS:\n\nIt is recommended that this report be received for information.\n\nDECISION HISTORY:\n\nEach year construction and renovation projects are submitted, revised and approved as\npart of the Capital Budget process. In accordance with Zoo By-law No. 2-2010, the\nprogress of all projects in the approved capital program are reported to the Board on a\nsemi-annual basis to provide the required information on the status of projects through\nthe planning, design and construction/implementation stages.\n\nCOMMENTS:\n\nThe Project Status list is attached for your review (Schedule I). Some of the highlights\nare as follows:\n\n•     Orangutan project delayed. An RFP for design to replace the original Architectural\n      firm was issued in late November. The remaining design work has been awarded to\n      Zeidler Partnership Architects by the Board of Management.\n•     The Amur tiger exhibit opened in October 2018.\n•     Work began on the African Rainforest Pavilion emergency backup generator\n      replacement project in November 2018 and is expected to be completed spring\n      2019.\n•     The Board awarded the new Parking Management System work to Precise ParkLink\n      in November.\n\n\n\nCapital Project Update and Variance Report                                    Page 1 of 2\n\fCapital Budget Variance Report:\n\nThe Capital Budget Variance report for the period-ended 2018-12-31 is attached\n(Schedule II) It is anticipated that full-year spending of 16.3% will be achieved by year-\nend. This percentage is affected significantly by the lack of spending on the Orangutan\nProject due to issues with the consultant. Several other projects have been tendered\nand have either been over budget or we did not receive contractor/consultant\nsubmissions. Several projects have been tendered twice wi"
+          ]
+        }
+      ]
+    },
+    {
+      "corpus": "zoo",
+      "document_sha256": "6dd54ba0f19e2c8402be512ceae4dbf833abaceac698562cd3102e42c2d33099",
+      "extractor_version": "v1-b63aa8c835ae",
+      "result_sha256": "c0714932bfbe9039d47fd0fd1b63546b09ce852b28164e5bdf2c7d9c0504d45b",
+      "contract_index": 5,
+      "contract_sha256": "853d3f4ef0fc6184758d910380f2e33a0597346ca10436b553932f3fe52b7657",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2019/zb/bgrd/backgroundfile-124291.pdf",
+      "classification": "unnamed_submission_placeholder",
+      "identity_recovered": false,
+      "native_ref": null,
+      "financial_role": null,
+      "reason": "Building-asset software source says prior quotation overbudget and newRFP one submission failed requirements. No named actual proponent or solicitation ID. Raw bidder Not stated is fabricated placeholder and cannot be published as an actual bidder.",
+      "blockers": [
+        "No independently reviewed actual public solicitation ID for this held contract. No report URL surrogate, title/supplier/value key, purchase-order alias or generic framework substitution allowed.",
+        "Building-asset software source says prior quotation overbudget and newRFP one submission failed requirements. No named actual proponent or solicitation ID. Raw bidder Not stated is fabricated placeholder and cannot be published as an actual bidder."
+      ],
+      "sources": [
+        {
+          "url": "https://www.toronto.ca/legdocs/mmis/2019/zb/bgrd/backgroundfile-124291.pdf",
+          "sha256": "6dd54ba0f19e2c8402be512ceae4dbf833abaceac698562cd3102e42c2d33099",
+          "passages": [
+            "                                                                         ZB1.11\nSTAFF REPORT\n\n\nTo:           Board of Management\n\nFrom:         Chief Operating Officer\n\nSubject:      CAPITAL PROJECT UPDATE AND VARIANCE REPORT\n              DECEMBER 2018\n\nDate:         2019-01-30\n\n\nSUMMARY\n\nThis report provides an update to the Board on the status of the Capital Projects at the\nZoo as at 2018-12-31.\n\nRECOMMENDATIONS:\n\nIt is recommended that this report be received for information.\n\nDECISION HISTORY:\n\nEach year construction and renovation projects are submitted, revised and approved as\npart of the Capital Budget process. In accordance with Zoo By-law No. 2-2010, the\nprogress of all projects in the approved capital program are reported to the Board on a\nsemi-annual basis to provide the required information on the status of projects through\nthe planning, design and construction/implementation stages.\n\nCOMMENTS:\n\nThe Project Status list is attached for your review (Schedule I). Some of the highlights\nare as follows:\n\n•     Orangutan project delayed. An RFP for design to replace the original Architectural\n      firm was issued in late November. The remaining design work has been awarded to\n      Zeidler Partnership Architects by the Board of Management.\n•     The Amur tiger exhibit opened in October 2018.\n•     Work began on the African Rainforest Pavilion emergency backup generator\n      replacement project in November 2018 and is expected to be completed spring\n      2019.\n•     The Board awarded the new Parking Management System work to Precise ParkLink\n      in November.\n\n\n\nCapital Project Update and Variance Report                                    Page 1 of 2\n\fCapital Budget Variance Report:\n\nThe Capital Budget Variance report for the period-ended 2018-12-31 is attached\n(Schedule II) It is anticipated that full-year spending of 16.3% will be achieved by year-\nend. This percentage is affected significantly by the lack of spending on the Orangutan\nProject due to issues with the consultant. Several other projects have been tendered\nand have either been over budget or we did not receive contractor/consultant\nsubmissions. Several projects have been tendered twice wi"
+          ]
+        }
+      ]
+    },
+    {
+      "corpus": "zoo",
+      "document_sha256": "6dd54ba0f19e2c8402be512ceae4dbf833abaceac698562cd3102e42c2d33099",
+      "extractor_version": "v1-b63aa8c835ae",
+      "result_sha256": "c0714932bfbe9039d47fd0fd1b63546b09ce852b28164e5bdf2c7d9c0504d45b",
+      "contract_index": 6,
+      "contract_sha256": "a3db852e95bd9be2e04ebc384158bbfc5c8e66ebba83dee710b8a368516023d1",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2019/zb/bgrd/backgroundfile-124291.pdf",
+      "classification": "no_submissions_not_named_no_bid",
+      "identity_recovered": false,
+      "native_ref": null,
+      "financial_role": null,
+      "reason": "SiteServicesStudy had TWO RFPs with no bids received. This is absence of submissions, not an explicit named firm declining a procurement. Raw Not stated/no_bid row is not a source-supported bidder and conflates two rounds; no public call IDs proven.",
+      "blockers": [
+        "No independently reviewed actual public solicitation ID for this held contract. No report URL surrogate, title/supplier/value key, purchase-order alias or generic framework substitution allowed.",
+        "SiteServicesStudy had TWO RFPs with no bids received. This is absence of submissions, not an explicit named firm declining a procurement. Raw Not stated/no_bid row is not a source-supported bidder and conflates two rounds; no public call IDs proven."
+      ],
+      "sources": [
+        {
+          "url": "https://www.toronto.ca/legdocs/mmis/2019/zb/bgrd/backgroundfile-124291.pdf",
+          "sha256": "6dd54ba0f19e2c8402be512ceae4dbf833abaceac698562cd3102e42c2d33099",
+          "passages": [
+            "                                                               COMPLETION\n\nHigh Voltage Cabling      and addition of add-a-phase pumping station.         snow leopard.\nRepairs and\nReplacement\n\nRoad and Site Services    Upgrade and repair roads, sanitary and storm         Watermain and gas valve 2019-07\nRefurbishment             sewers, natural gas and water mains as               replaced outside of Indo-\n                          recommended in site services study.                  Malaya Pavilion\nGenerator Installation-   Replacement of African Rainforest Pavilion           Awarded to Tri-Unite Systems 2019-04\nAfrican Rainforest        generator. The generator was purchased in 2017       Inc. Installation has begun\nPavilion                  and will be installed in 2018.                       and will be completed in\n                                                                               spring 2019\n\nGenerator                 Design and installation will be completed in 2018.\n                                                                          RFP for design was awarded 2019-12\nReplacement- Indo-                                                        and design work will be\nMalaya Pavilion                                                           complete in Jan 2019.\nSite Services Study       Development of updated plans/reports related to Two RFPs have been issued 2019-06\n                          the Zoo grounds in particular Site Services.    for this study however no bids\n                                                                          received.\n\nSite Wide Re-Keying       Review of the existing site wide keying system       Toronto Zoo project staff has 2019-12\nProject                   and establish a new keying system that provides      reviewed   several     keying\n                          more control over key distribution and               systems and are in the\n                          accessibility.                                       process of reviewing the\n                                                                               proposed system with Division\n                                                                               Heads for approval.     Once\n                                                                               approved an RFP will be\n                                                                               issued.\n\n\n\n                                                               -3-\n\f                                                                                                                          Schedule I\n      "
+          ]
+        }
+      ]
+    },
+    {
+      "corpus": "zoo",
+      "document_sha256": "6dd54ba0f19e2c8402be512ceae4dbf833abaceac698562cd3102e42c2d33099",
+      "extractor_version": "v1-b63aa8c835ae",
+      "result_sha256": "c0714932bfbe9039d47fd0fd1b63546b09ce852b28164e5bdf2c7d9c0504d45b",
+      "contract_index": 7,
+      "contract_sha256": "594592f2146ee6bc656c97d857c68f5f520dd6b125d353758bdd81fa65415057",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2019/zb/bgrd/backgroundfile-124291.pdf",
+      "classification": "unpriced_unnamed_tender_stage_placeholder",
+      "identity_recovered": false,
+      "native_ref": null,
+      "financial_role": null,
+      "reason": "Wayfinding tender submissions from prequalified contractors inNovember2018; award is futureFebruary agenda item. No named proponent/call ID in held source; raw Not stated bidder cannot stand for a firm or price quote. Qualification stage and planned award must remain separate.",
+      "blockers": [
+        "No independently reviewed actual public solicitation ID for this held contract. No report URL surrogate, title/supplier/value key, purchase-order alias or generic framework substitution allowed.",
+        "Wayfinding tender submissions from prequalified contractors inNovember2018; award is futureFebruary agenda item. No named proponent/call ID in held source; raw Not stated bidder cannot stand for a firm or price quote. Qualification stage and planned award must remain separate."
+      ],
+      "sources": [
+        {
+          "url": "https://www.toronto.ca/legdocs/mmis/2019/zb/bgrd/backgroundfile-124291.pdf",
+          "sha256": "6dd54ba0f19e2c8402be512ceae4dbf833abaceac698562cd3102e42c2d33099",
+          "passages": [
+            "                                                                         ZB1.11\nSTAFF REPORT\n\n\nTo:           Board of Management\n\nFrom:         Chief Operating Officer\n\nSubject:      CAPITAL PROJECT UPDATE AND VARIANCE REPORT\n              DECEMBER 2018\n\nDate:         2019-01-30\n\n\nSUMMARY\n\nThis report provides an update to the Board on the status of the Capital Projects at the\nZoo as at 2018-12-31.\n\nRECOMMENDATIONS:\n\nIt is recommended that this report be received for information.\n\nDECISION HISTORY:\n\nEach year construction and renovation projects are submitted, revised and approved as\npart of the Capital Budget process. In accordance with Zoo By-law No. 2-2010, the\nprogress of all projects in the approved capital program are reported to the Board on a\nsemi-annual basis to provide the required information on the status of projects through\nthe planning, design and construction/implementation stages.\n\nCOMMENTS:\n\nThe Project Status list is attached for your review (Schedule I). Some of the highlights\nare as follows:\n\n•     Orangutan project delayed. An RFP for design to replace the original Architectural\n      firm was issued in late November. The remaining design work has been awarded to\n      Zeidler Partnership Architects by the Board of Management.\n•     The Amur tiger exhibit opened in October 2018.\n•     Work began on the African Rainforest Pavilion emergency backup generator\n      replacement project in November 2018 and is expected to be completed spring\n      2019.\n•     The Board awarded the new Parking Management System work to Precise ParkLink\n      in November.\n\n\n\nCapital Project Update and Variance Report                                    Page 1 of 2\n\fCapital Budget Variance Report:\n\nThe Capital Budget Variance report for the period-ended 2018-12-31 is attached\n(Schedule II) It is anticipated that full-year spending of 16.3% will be achieved by year-\nend. This percentage is affected significantly by the lack of spending on the Orangutan\nProject due to issues with the consultant. Several other projects have been tendered\nand have either been over budget or we did not receive contractor/consultant\nsubmissions. Several projects have been tendered twice wi"
+          ]
+        }
+      ]
+    },
+    {
+      "corpus": "zoo",
+      "document_sha256": "6dd54ba0f19e2c8402be512ceae4dbf833abaceac698562cd3102e42c2d33099",
+      "extractor_version": "v1-b63aa8c835ae",
+      "result_sha256": "c0714932bfbe9039d47fd0fd1b63546b09ce852b28164e5bdf2c7d9c0504d45b",
+      "contract_index": 8,
+      "contract_sha256": "4c613a9e599d33b6adc7a69db319a8cbfc498784e83cdf556f38375f724fdfab",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2019/zb/bgrd/backgroundfile-124291.pdf",
+      "classification": "unnamed_in_progress_evaluation_placeholder",
+      "identity_recovered": false,
+      "native_ref": null,
+      "financial_role": null,
+      "reason": "Publicwashroom source says bids received and RFP award inprocess, without names, prices or public call ID. Raw Not stated bidder is not an actual named submission; planned/evaluation process is not approved award.",
+      "blockers": [
+        "No independently reviewed actual public solicitation ID for this held contract. No report URL surrogate, title/supplier/value key, purchase-order alias or generic framework substitution allowed.",
+        "Publicwashroom source says bids received and RFP award inprocess, without names, prices or public call ID. Raw Not stated bidder is not an actual named submission; planned/evaluation process is not approved award."
+      ],
+      "sources": [
+        {
+          "url": "https://www.toronto.ca/legdocs/mmis/2019/zb/bgrd/backgroundfile-124291.pdf",
+          "sha256": "6dd54ba0f19e2c8402be512ceae4dbf833abaceac698562cd3102e42c2d33099",
+          "passages": [
+            "                                                                         ZB1.11\nSTAFF REPORT\n\n\nTo:           Board of Management\n\nFrom:         Chief Operating Officer\n\nSubject:      CAPITAL PROJECT UPDATE AND VARIANCE REPORT\n              DECEMBER 2018\n\nDate:         2019-01-30\n\n\nSUMMARY\n\nThis report provides an update to the Board on the status of the Capital Projects at the\nZoo as at 2018-12-31.\n\nRECOMMENDATIONS:\n\nIt is recommended that this report be received for information.\n\nDECISION HISTORY:\n\nEach year construction and renovation projects are submitted, revised and approved as\npart of the Capital Budget process. In accordance with Zoo By-law No. 2-2010, the\nprogress of all projects in the approved capital program are reported to the Board on a\nsemi-annual basis to provide the required information on the status of projects through\nthe planning, design and construction/implementation stages.\n\nCOMMENTS:\n\nThe Project Status list is attached for your review (Schedule I). Some of the highlights\nare as follows:\n\n•     Orangutan project delayed. An RFP for design to replace the original Architectural\n      firm was issued in late November. The remaining design work has been awarded to\n      Zeidler Partnership Architects by the Board of Management.\n•     The Amur tiger exhibit opened in October 2018.\n•     Work began on the African Rainforest Pavilion emergency backup generator\n      replacement project in November 2018 and is expected to be completed spring\n      2019.\n•     The Board awarded the new Parking Management System work to Precise ParkLink\n      in November.\n\n\n\nCapital Project Update and Variance Report                                    Page 1 of 2\n\fCapital Budget Variance Report:\n\nThe Capital Budget Variance report for the period-ended 2018-12-31 is attached\n(Schedule II) It is anticipated that full-year spending of 16.3% will be achieved by year-\nend. This percentage is affected significantly by the lack of spending on the Orangutan\nProject due to issues with the consultant. Several other projects have been tendered\nand have either been over budget or we did not receive contractor/consultant\nsubmissions. Several projects have been tendered twice wi"
+          ]
+        }
+      ]
+    },
+    {
+      "corpus": "zoo",
+      "document_sha256": "6dd54ba0f19e2c8402be512ceae4dbf833abaceac698562cd3102e42c2d33099",
+      "extractor_version": "v1-b63aa8c835ae",
+      "result_sha256": "c0714932bfbe9039d47fd0fd1b63546b09ce852b28164e5bdf2c7d9c0504d45b",
+      "contract_index": 9,
+      "contract_sha256": "e3811dab01a5248c773b6c4f730932744b4f294c66b75755f7e3cc5b4d6409f0",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2019/zb/bgrd/backgroundfile-124291.pdf",
+      "classification": "unnamed_retender_in_progress_placeholder",
+      "identity_recovered": false,
+      "native_ref": null,
+      "financial_role": null,
+      "reason": "Winterizedzoomobile has secondRFP submissions underreview and futureFebruary agenda action. No names/quote prices/call ID; raw Not stated bidder is a placeholder. Budget$1.4m and cashflow$700k are not bids or awards.",
+      "blockers": [
+        "No independently reviewed actual public solicitation ID for this held contract. No report URL surrogate, title/supplier/value key, purchase-order alias or generic framework substitution allowed.",
+        "Winterizedzoomobile has secondRFP submissions underreview and futureFebruary agenda action. No names/quote prices/call ID; raw Not stated bidder is a placeholder. Budget$1.4m and cashflow$700k are not bids or awards."
+      ],
+      "sources": [
+        {
+          "url": "https://www.toronto.ca/legdocs/mmis/2019/zb/bgrd/backgroundfile-124291.pdf",
+          "sha256": "6dd54ba0f19e2c8402be512ceae4dbf833abaceac698562cd3102e42c2d33099",
+          "passages": [
+            "  1,130,417      62,222          5.2%     18,035,000    16,842,260     93.4%    18,035,000         -   2014-01-01   2017-07-01   2017-03-31     5.\nOrangutan II Outdoor                        #######             -       4,000,000     5,063,282         58,677             -        58,677       1.2%         5,004,605      58,677          1.2%      3,530,000       242,553      6.9%     3,530,000         -   2013-01-01   2014-12-31   2018-12-31     6.\nWinterized Zoomobile                                                      700,000       700,000            -               -           -         0.0%           700,000           0          0.0%      1,400,000           -        0.0%     1,400,000         -   2018-01-01   2019-12-31   2019-12-31     7.\n\nTOTAL                                      1,082,006       4,099,161     8,020,000 13,201,167       2,151,666              -     2,151,666     16.3%          11,049,501   2,151,666       16.3%      29,210,246     19,115,580    65.4%    29,210,246         -\n\nNOTES / STATUS:\n1. Awarded tender for replacement of Parking Management System in fall. Life-cycle computer equipment replaced and installation is on-going.\n2. Replacement Member & Guest Services roof was underway to be completed early 2019. African Rainforest generator installation was 30% complete at the end of December.\n3. Award of the Wayfinding RFT for Fabrication and Installation is an agenda item for the February board meeting.\n4. Exterior Aldabra Tortoise exhibit was completed. Amur Tiger modifications were completed in September.\n5. WHC Project completed and opened to the public in Summer 2017.\n6. Contract for the original Architect was terminated. A second RFP was issued for remaining design and has been awarded to Zeidler Partnership Architects.\n\n7. A second RFP was issued for the winterized zoomobile and submissions are curretly being reviewed. This is an agenda item for the February board meeting.\n\n\n\n\n8\n\f"
+          ]
+        }
+      ]
+    },
+    {
+      "corpus": "zoo",
+      "document_sha256": "509ceabe3c44257a9e269fe2d5f6fef7b18e5145196d058d21c1659966ca13d8",
+      "extractor_version": "v1-b63aa8c835ae",
+      "result_sha256": "3588a12aff1bac3398f60f690d4fd66e4e85f76d08d8f099f4385d77598a51f3",
+      "contract_index": 0,
+      "contract_sha256": "c6fb4487598bfea6c8b388c216c351964ee584978115dc6dc86ee96ce0200a1e",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2019/zb/bgrd/backgroundfile-126677.pdf",
+      "classification": "repeated_annual_advertising_cap",
+      "identity_recovered": false,
+      "native_ref": null,
+      "financial_role": null,
+      "reason": "Content is identical to document5 except agenda label; another observation of same2019Grey proposed$200k authority, not a separate competitive award. Raw dateNULL staysNULL. Underlying call unproven and expenditure role remains held.",
+      "blockers": [
+        "No independently reviewed actual public solicitation ID for this held contract. No report URL surrogate, title/supplier/value key, purchase-order alias or generic framework substitution allowed.",
+        "Content is identical to document5 except agenda label; another observation of same2019Grey proposed$200k authority, not a separate competitive award. Raw dateNULL staysNULL. Underlying call unproven and expenditure role remains held."
+      ],
+      "sources": [
+        {
+          "url": "https://www.toronto.ca/legdocs/mmis/2019/zb/bgrd/backgroundfile-126677.pdf",
+          "sha256": "509ceabe3c44257a9e269fe2d5f6fef7b18e5145196d058d21c1659966ca13d8",
+          "passages": [
+            "nes the proposed plan and expenditures related to the 2019 advertising\ncampaign as provided for in the Operating Budget. The paid advertising will complement\nthe public relations, events, corporate/group events, community outreach and digital\nstrategy to ensure we are reaching our target audiences in the Greater Toronto Area and\nbeyond.\n\nRECOMMENDATIONS:\n\nIt is recommended that the Board approve the following:\n\n      1. Expenditures to reimburse Grey Advertising Canada for strategic planning;\n         creative development; and any outsourced production costs related to\n         advertising programs as required for the Toronto Zoo brand, not to exceed\n         $200.0 thousand, plus HST; and,\n\n      2. Expenditures with Zenith Optimedia Canada Inc. for media purchases\n         related to the 2019 advertising campaign, not to exceed $956.0 thousand,\n         plus HST.\n\nFINANCIAL IMPACT:\n\nThere are no financial implications related to approval of these recommendations as the\nrelated advertising expenditures are included in the Operating Budget for 2019.\n\nDECISION HISTORY:\n\nEach year, the Toronto Zoo develops a summer advertising campaign with our agency of\nrecord and implements a paid strategy through our partnership with Zenith Optimedia. In\naddition, we leverage many partnerships to increase our reach across the Greater\nToronto Area (GTA) and beyond.\n\nToronto has one of the most expensive and competitive media and attractions market in\nCanada. While the vast majority of our advertising budget is concentrated on our peak\n\n\nAdvertising Expenditures Report                                               Page 1 of 6\n\fsummer months, in-house campaigns are created each year to ensure the Zoo remains\ntop of mind twelve months of the year and a public relations strategy is implemented to\ncontinuously to remind people of the many reasons to visit the Zoo.\n\nWith the departure of the giant pandas in March 2018, a campaign was developed in-\nhouse to raise awareness to the urgency of seeing them before they left for Calgary. This\ncampaign had a paid and earned media strategy that resulted in exceeding the\nattendance targets during the March Break which was the last opportunity for the public\nto see the pandas. With the departure of the giant pandas, we wanted to build on our past\nconcerted efforts to establish the Toronto Zoo as a leader in wildlife conservation and as\na result, in 2018 we made the recommendation to develop a summer campaign that was\nmore mission based to further promote the Zoo’s critical role in saving and protecting\nspecies.\n\nWhile this campaign was exceptionally well received by staff, volunteers, m"
+          ]
+        }
+      ]
+    },
+    {
+      "corpus": "zoo",
+      "document_sha256": "509ceabe3c44257a9e269fe2d5f6fef7b18e5145196d058d21c1659966ca13d8",
+      "extractor_version": "v1-b63aa8c835ae",
+      "result_sha256": "3588a12aff1bac3398f60f690d4fd66e4e85f76d08d8f099f4385d77598a51f3",
+      "contract_index": 1,
+      "contract_sha256": "4047a42008eca2f9c02917006d43a576519b71c42fa28335acaeb29cb0f26c7c",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2019/zb/bgrd/backgroundfile-126677.pdf",
+      "classification": "repeated_annual_advertising_cap",
+      "identity_recovered": false,
+      "native_ref": null,
+      "financial_role": null,
+      "reason": "Content repeats document5 except agenda label; same2019Zenith proposed$956k annual media ceiling, not a separate award. No originating solicitation identity; retainNULLdate and block annual-cap-as-award role.",
+      "blockers": [
+        "No independently reviewed actual public solicitation ID for this held contract. No report URL surrogate, title/supplier/value key, purchase-order alias or generic framework substitution allowed.",
+        "Content repeats document5 except agenda label; same2019Zenith proposed$956k annual media ceiling, not a separate award. No originating solicitation identity; retainNULLdate and block annual-cap-as-award role."
+      ],
+      "sources": [
+        {
+          "url": "https://www.toronto.ca/legdocs/mmis/2019/zb/bgrd/backgroundfile-126677.pdf",
+          "sha256": "509ceabe3c44257a9e269fe2d5f6fef7b18e5145196d058d21c1659966ca13d8",
+          "passages": [
+            "our target audiences in the Greater Toronto Area and\nbeyond.\n\nRECOMMENDATIONS:\n\nIt is recommended that the Board approve the following:\n\n      1. Expenditures to reimburse Grey Advertising Canada for strategic planning;\n         creative development; and any outsourced production costs related to\n         advertising programs as required for the Toronto Zoo brand, not to exceed\n         $200.0 thousand, plus HST; and,\n\n      2. Expenditures with Zenith Optimedia Canada Inc. for media purchases\n         related to the 2019 advertising campaign, not to exceed $956.0 thousand,\n         plus HST.\n\nFINANCIAL IMPACT:\n\nThere are no financial implications related to approval of these recommendations as the\nrelated advertising expenditures are included in the Operating Budget for 2019.\n\nDECISION HISTORY:\n\nEach year, the Toronto Zoo develops a summer advertising campaign with our agency of\nrecord and implements a paid strategy through our partnership with Zenith Optimedia. In\naddition, we leverage many partnerships to increase our reach across the Greater\nToronto Area (GTA) and beyond.\n\nToronto has one of the most expensive and competitive media and attractions market in\nCanada. While the vast majority of our advertising budget is concentrated on our peak\n\n\nAdvertising Expenditures Report                                               Page 1 of 6\n\fsummer months, in-house campaigns are created each year to ensure the Zoo remains\ntop of mind twelve months of the year and a public relations strategy is implemented to\ncontinuously to remind people of the many reasons to visit the Zoo.\n\nWith the departure of the giant pandas in March 2018, a campaign was developed in-\nhouse to raise awareness to the urgency of seeing them before they left for Calgary. This\ncampaign had a paid and earned media strategy that resulted in exceeding the\nattendance targets during the March Break which was the last opportunity for the public\nto see the pandas. With the departure of the giant pandas, we wanted to build on our past\nconcerted efforts to establish the Toronto Zoo as a leader in wildlife conservation and as\na result, in 2018 we made the recommendation to develop a summer campaign that was\nmore mission based to further promote the Zoo’s critical role in saving and protecting\nspecies.\n\nWhile this campaign was exceptionally well received by staff, volunteers, members and\nour social media community, according to the 2018 On-Site Visitor Survey Results only\n12% of guests indicated it influenced their visit to the Zoo.\n\nApproval by the Board is required for payments to Grey Advertising and Zenith Optimedia.\n\nCOMMENTS:\n\nThe Toronto Zoo s"
+          ]
+        }
+      ]
+    },
+    {
+      "corpus": "zoo",
+      "document_sha256": "9c76da715f9eee5e4eb4fe533bc5b0c5a2ef569fb5c6dad04ea7b5e230f4e0f5",
+      "extractor_version": "v1-b63aa8c835ae",
+      "result_sha256": "1bb0279f3c18a560caabc16f2ddaf3a579e31e87853eb50e723af8096b04c121",
+      "contract_index": 0,
+      "contract_sha256": "1785628384e4d7bda60216ea04911f93bb07673ebfdf9be13dd5445ac4276465",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2019/zb/bgrd/backgroundfile-126705.pdf",
+      "classification": "published_call_repeated_status_deferred",
+      "identity_recovered": false,
+      "native_ref": "RFP 58 (2018-10)",
+      "financial_role": null,
+      "reason": "Same source content as document6 except agenda label. Original RFP58(2018-10) proves replacement design identity; choose document6index0 historical award-only record and defer this duplicate. Raw winning-bid compliant can be corroborated by original requirements statement, but no new original-call rows/prices synthesized.",
+      "blockers": [
+        "Same source content as document6 except agenda label. Original RFP58(2018-10) proves replacement design identity; choose document6index0 historical award-only record and defer this duplicate. Raw winning-bid compliant can be corroborated by original requirements statement, but no new original-call rows/prices synthesized.",
+        "Duplicate held source-label variant of chosen representative; no additional bidder/award observation or party created in this pass.",
+        "The repeated status extraction additionally asserts a compliant bid without a bid table/commercial-compliance outcome. Those bid claims are not approved by this identity-only pass."
+      ],
+      "sources": [
+        {
+          "url": "https://www.toronto.ca/legdocs/mmis/2019/zb/bgrd/backgroundfile-126705.pdf",
+          "sha256": "9c76da715f9eee5e4eb4fe533bc5b0c5a2ef569fb5c6dad04ea7b5e230f4e0f5",
+          "passages": [
+            "a\nsemi-annual basis to provide the required information on the status of projects through\nthe planning, design and construction/implementation stages.\n\nCOMMENTS:\n\nThe Project Status list is attached for your review (Schedule I). Some of the highlights\nare as follows:\n\n•     Orangutan project delayed. An RFP for design to replace the original Architectural\n      firm was issued in late November. The remaining design work has been awarded to\n      Zeidler Partnership Architects by the Board of Management.\n•     The Amur tiger exhibit opened in October 2018.\n•     Work began on the African Rainforest Pavilion emergency backup generator\n      replacement project in November 2018 and is expected to be completed spring\n      2019.\n•     The Board awarded the new Parking Management System work to Precise ParkLink\n      in November.\n\n\n\nCapital Project Update and Variance Report                                    Page 1 of 2\n\fCapital Budget Variance Report:\n\nThe Capital Budget Variance report for the period-ended 2018-12-31 is attached\n(Schedule II) It is anticipated that full-year spending of 16.3% will be achieved by year-\nend. This percentage is affected significantly by the lack of spending on the Orangutan\nProject due to issues with the consultant. Several other projects have been tendered\nand have either been over budget or we did not receive contractor/consultant\nsubmissions. Several projects have been tendered twice with no submissions being\nreceived.\n\nCONTACT:\n\nLeona Mitchell                                            Paul K. Whittam\nDirector, Facilities & Services                           Manager, Financial Services\nlmitchell@torontozoo.ca                                   pwhittam@torontozoo.ca\n416-392-5985                                              (416) 392-5914\n\n\n\n\n____________________\nR. D. Hale\nChief Operating Officer\n\n\nATTACHMENTS:\n\nSchedule I - Capital Project Status at 2018-12-31\nSchedule II – Capital Variance Report for the Period Ended 2018-12-31\n\n\n\n\nCapital Project Update and Variance Report                                      Page 2 of 2\n\f                                                                                                                             Schedule I\n                                                  CAPITAL PROJECTS STATUS\n                                                        As at 2018-12-31\n\n\nPROJECT                    DESCRIPTION                                            PROGRESS UPDATE                  PROJECTED\n                                                                                                                   COMPLETION\n\nORANGUTAN III       "
+          ]
+        },
+        {
+          "url": "https://www.toronto.ca/legdocs/mmis/2018/zb/bgrd/backgroundfile-122143.pdf",
+          "sha256": "9dabf326859f99c50c443f9d54aa72d858d3cd42487240e6b5d4f4ed6492c774",
+          "passages": [
+            "                                                                       ZB24.17\nSTAFF REPORT\n\nTo:              Board of Management\n\nFrom:            Robin D. Hale\n                 Chief Operating Officer\n\nSubject:         CONSULTING SERVICES – OUTDOOR ORANGUTAN EXHIBIT\n\nDate:            2018-11-27\n\n\nSUMMARY:\n\nThis report recommends the award of a contract for consulting services for the Outdoor\nOrangutan Exhibit, RFP 58 (2018-10).\n\nRECOMMENDATIONS:\n\nIt is recommended that the contract for architectural, engineering and project\nmanagement services for RFP 58 (2018-10) Consulting Services – Outdoor\nOrangutan Exhibit be awarded to Zeidler Partnership Architects in the amount of\n$350,075.00, excluding HST.\n\nFINANCIAL IMPACT:\n\nThis is an approved project under the Capital Works Program. Remaining funding\navailable for this project is $5,063,282 for the balance of design, construction and\ncommissioning.\n\nDECISION HISTORY:\n\nCreation of an outdoor exhibit for orangutans was an approved project for 2016-2018.\nDesign for this project was awarded to Balind Architect Inc. in 2016. Work on the\nproject stopped in the fall of 2017, and in spring of 2018, the Zoo learned that the\nprinciple architect was no longer able to complete the project due to personal reasons.\n\nThe Zoo has terminated the agreement with Balind Architect Inc. and are now in a\nposition to award the detailed design and contract administration portion of this project\nbased on the results of RFP 58 (2018-10).\n\nCOMMENTS:\n\nThe Toronto Zoo issued RFP 58 (2018-10) Outdoor Orangutan Exhibit, inviting 15\nexperienced and qualified consultants to submit a written proposal to design an outdoor\norangutan exhibit. The Request for Proposals was posted on the Toronto Zoo internet\nwebsite.\n\nConsulting Services – Outdoor Orangutan Exhibit                                  Page 1 of 2\n",
+            "Four interested vendors attended an on-site inspection or participated in a tele-\nconference review of the project with the Zoo. Proposals were received from three\nproponents (see Appendix I).\n\nThe proposals were reviewed and rated by an evaluation committee comprised of staff\nmembers from Facilities & Services, Project Management and Purchasing & Supply.\nProposals were evaluated based on consulting experience on similar projects,\ncommitment to the schedule, understanding of the scope, proposed methodology and\ncost.\n\nAt the conclusion of the evaluation process, the final results were tabulated and Zeidler\nPartnership Architects scored the highest with a total of 78.9% out of a total 100.0\npoints available in the full evaluation process. No other proponents scored 70.0% or\nhigher in the process which is considered the minimum threshold for award.\n\nZeidler Partnership Architects’ proposal met all of the Zoo’s requirements and received\nthe highest scoring based on the pre-established evaluation criteria within the RFP.\nZeidler Partnership Architects and their assembled team for this project have related\nexperience designing and providing consulting services for orangutan and great ape\nexhibits at other zoological facilities around the world, which will be most desirable for\nthe successful completion of this project. In addition, Zeidler stated that they can meet\nthe Zoo’s proposed schedule of design and construction for an orangutan exhibit\nopening in 2020.\n\n\n\n\nR. D. Hale\nChief Operating Officer\n\n\nATTACHMENTS:\n\nAppendix I – Schedule of Proposals Received\n\n\n\n\nConsulting Services – Outdoor Orangutan Exhibit                                   Page 2 of 2\n",
+            "                                                                   Appendix I\n\n                                TORONTO ZOO\n                           Outdoor Orangutan Exhibit\n                               RFP 58 (2018-10)\n                       SCHEDULE OF PROPOSALS RECEIVED\n\n\n\n          PROPONENT               PROPOSAL PRICE           SCORE\n                                 (excluding applicable   (OUT OF 100)\n                                        taxes)\n\nL.E. Glazer Architect Limited         $273,000              68.7\nWDM Architects P.A.                   $607,602              64.7\nZeidler Partnership Architects        $350,075              78.9\n"
+          ]
+        }
+      ]
+    },
+    {
+      "corpus": "zoo",
+      "document_sha256": "9c76da715f9eee5e4eb4fe533bc5b0c5a2ef569fb5c6dad04ea7b5e230f4e0f5",
+      "extractor_version": "v1-b63aa8c835ae",
+      "result_sha256": "1bb0279f3c18a560caabc16f2ddaf3a579e31e87853eb50e723af8096b04c121",
+      "contract_index": 5,
+      "contract_sha256": "40d83e07d546a1b5af277548343a1ff1f57f3c689494676bc2de58ba90517767",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2019/zb/bgrd/backgroundfile-126705.pdf",
+      "classification": "repeated_generator_install_without_call",
+      "identity_recovered": false,
+      "native_ref": null,
+      "financial_role": null,
+      "reason": "Repeated Tri-Unite installation context, no printed public call ID. Raw compliant bidder outcome is not explicitly established by this status entry alone; original procurement proof and status review needed, not inference from being retained.",
+      "blockers": [
+        "No independently reviewed actual public solicitation ID for this held contract. No report URL surrogate, title/supplier/value key, purchase-order alias or generic framework substitution allowed.",
+        "Repeated Tri-Unite installation context, no printed public call ID. Raw compliant bidder outcome is not explicitly established by this status entry alone; original procurement proof and status review needed, not inference from being retained."
+      ],
+      "sources": [
+        {
+          "url": "https://www.toronto.ca/legdocs/mmis/2019/zb/bgrd/backgroundfile-126705.pdf",
+          "sha256": "9c76da715f9eee5e4eb4fe533bc5b0c5a2ef569fb5c6dad04ea7b5e230f4e0f5",
+          "passages": [
+            "                                                                      ZB2.11\nSTAFF REPORT\n\n\nTo:           Board of Management\n\nFrom:         Chief Operating Officer\n\nSubject:      CAPITAL PROJECT UPDATE AND VARIANCE REPORT\n              DECEMBER 2018\n\nDate:         2019-01-30\n\n\nSUMMARY\n\nThis report provides an update to the Board on the status of the Capital Projects at the\nZoo as at 2018-12-31.\n\nRECOMMENDATIONS:\n\nIt is recommended that this report be received for information.\n\nDECISION HISTORY:\n\nEach year construction and renovation projects are submitted, revised and approved as\npart of the Capital Budget process. In accordance with Zoo By-law No. 2-2010, the\nprogress of all projects in the approved capital program are reported to the Board on a\nsemi-annual basis to provide the required information on the status of projects through\nthe planning, design and construction/implementation stages.\n\nCOMMENTS:\n\nThe Project Status list is attached for your review (Schedule I). Some of the highlights\nare as follows:\n\n•     Orangutan project delayed. An RFP for design to replace the original Architectural\n      firm was issued in late November. The remaining design work has been awarded to\n      Zeidler Partnership Architects by the Board of Management.\n•     The Amur tiger exhibit opened in October 2018.\n•     Work began on the African Rainforest Pavilion emergency backup generator\n      replacement project in November 2018 and is expected to be completed spring\n      2019.\n•     The Board awarded the new Parking Management System work to Precise ParkLink\n      in November.\n\n\n\nCapital Project Update and Variance Report                                    Page 1 of 2\n\fCapital Budget Variance Report:\n\nThe Capital Budget Variance report for the period-ended 2018-12-31 is attached\n(Schedule II) It is anticipated that full-year spending of 16.3% will be achieved by year-\nend. This percentage is affected significantly by the lack of spending on the Orangutan\nProject due to issues with the consultant. Several other projects have been tendered\nand have either been over budget or we did not receive contractor/consultant\nsubmissions. Several projects have been tendered twice with "
+          ]
+        }
+      ]
+    },
+    {
+      "corpus": "zoo",
+      "document_sha256": "9c76da715f9eee5e4eb4fe533bc5b0c5a2ef569fb5c6dad04ea7b5e230f4e0f5",
+      "extractor_version": "v1-b63aa8c835ae",
+      "result_sha256": "1bb0279f3c18a560caabc16f2ddaf3a579e31e87853eb50e723af8096b04c121",
+      "contract_index": 8,
+      "contract_sha256": "a2c5b4cf51a77d50d9a5c8bbefaa0182d80715dc55fe34e16c7cbf38ee31a8ae",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2019/zb/bgrd/backgroundfile-126705.pdf",
+      "classification": "repeated_exhibit_renovation_without_call",
+      "identity_recovered": false,
+      "native_ref": null,
+      "financial_role": null,
+      "reason": "Repeated DASD amphibian work; no public solicitation number and no explicit bid compliance verdict in status source. Raw compliant winning-bid claim is unproved. No title/supplier surrogate or acronym expansion.",
+      "blockers": [
+        "No independently reviewed actual public solicitation ID for this held contract. No report URL surrogate, title/supplier/value key, purchase-order alias or generic framework substitution allowed.",
+        "Repeated DASD amphibian work; no public solicitation number and no explicit bid compliance verdict in status source. Raw compliant winning-bid claim is unproved. No title/supplier surrogate or acronym expansion."
+      ],
+      "sources": [
+        {
+          "url": "https://www.toronto.ca/legdocs/mmis/2019/zb/bgrd/backgroundfile-126705.pdf",
+          "sha256": "9c76da715f9eee5e4eb4fe533bc5b0c5a2ef569fb5c6dad04ea7b5e230f4e0f5",
+          "passages": [
+            "                   integrity of the barriers.\nAfrican Rainforest Roof    The roof vents at the gorilla exhibit are not easily   Expect this will be completed 2019-06\nVents – Gorilla            accessible due to modifications to the Pavilion of     as part of the Energy Retrofit\n                           the years.                                             project.\n\nReplacement of          Renovate outdated amphibian exhibits at the Awarded to DASD.         Work 2018-12\nDeteriorating Amphibian Americas Pavilion.                          substantially completed.\nExhibits\n\nOstrich and Wildebeest     Create a new yard just inside the ostrich exhibit Project was cancelled.\nHolding Yards              and a corridor from the wildebeest exhibit to a\n                           new yard located on the west side of the ostrich\n                           house.\n\n\n\n\n                                                                 -4-\n\f                                                                                                                    Schedule I\n                                              CAPITAL PROJECTS STATUS\n                                                    As at 2018-12-31\n\n\nPROJECT                  DESCRIPTION                                       PROGRESS UPDATE               PROJECTED\n                                                                                                         COMPLETION\n\nAmur Tiger               Modification to the existing Giant Panda holding Project is complete.           2018-09\nModifications            and habitats required to accommodate the return\n                         of the Amur Tigers.\n\n\n\n\nGROUNDS & VISITOR IMPROVEMENTS\n\nWayfinding Signage       On site direction signage must be updated to Tender submissions were 2019-09\nStudy                    improve Zoo visitor site circulation and received from pre-qualified\n                         orientation.                                      contractors November 2018.\n                                                                           This project is an agenda item\n                                                                           for the      February   Board\n                                                                           meeting to award a portion of\n                                                                           the work.\nConversion of Panda      The Panda Interpretive Centre was an Complete                                    2018-09\nInterpretive Centre      interpretive space created as par to the overall\n                         Giant Panda experience. Now that"
+          ]
+        }
+      ]
+    },
+    {
+      "corpus": "zoo",
+      "document_sha256": "9c76da715f9eee5e4eb4fe533bc5b0c5a2ef569fb5c6dad04ea7b5e230f4e0f5",
+      "extractor_version": "v1-b63aa8c835ae",
+      "result_sha256": "1bb0279f3c18a560caabc16f2ddaf3a579e31e87853eb50e723af8096b04c121",
+      "contract_index": 11,
+      "contract_sha256": "a336a2e3400546fa2dd6c12bf148731c9a51eca30717d7988a6d966164608742",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2019/zb/bgrd/backgroundfile-126705.pdf",
+      "classification": "published_call_repeated_status_deferred",
+      "identity_recovered": false,
+      "native_ref": "RFP #21 (2018-04)",
+      "financial_role": null,
+      "reason": "Same historical parking context as document6. RFP#21(2018-04) original public report proves call and winning proposal met specifications. Defer duplicate in favor of document6index1; keep raw cache intact and no inferred identity alias.",
+      "blockers": [
+        "Same historical parking context as document6. RFP#21(2018-04) original public report proves call and winning proposal met specifications. Defer duplicate in favor of document6index1; keep raw cache intact and no inferred identity alias.",
+        "Duplicate held source-label variant of chosen representative; no additional bidder/award observation or party created in this pass.",
+        "The repeated status extraction additionally asserts a compliant bid without a bid table/commercial-compliance outcome. Those bid claims are not approved by this identity-only pass."
+      ],
+      "sources": [
+        {
+          "url": "https://www.toronto.ca/legdocs/mmis/2019/zb/bgrd/backgroundfile-126705.pdf",
+          "sha256": "9c76da715f9eee5e4eb4fe533bc5b0c5a2ef569fb5c6dad04ea7b5e230f4e0f5",
+          "passages": [
+            "ctural\n      firm was issued in late November. The remaining design work has been awarded to\n      Zeidler Partnership Architects by the Board of Management.\n•     The Amur tiger exhibit opened in October 2018.\n•     Work began on the African Rainforest Pavilion emergency backup generator\n      replacement project in November 2018 and is expected to be completed spring\n      2019.\n•     The Board awarded the new Parking Management System work to Precise ParkLink\n      in November.\n\n\n\nCapital Project Update and Variance Report                                    Page 1 of 2\n\fCapital Budget Variance Report:\n\nThe Capital Budget Variance report for the period-ended 2018-12-31 is attached\n(Schedule II) It is anticipated that full-year spending of 16.3% will be achieved by year-\nend. This percentage is affected significantly by the lack of spending on the Orangutan\nProject due to issues with the consultant. Several other projects have been tendered\nand have either been over budget or we did not receive contractor/consultant\nsubmissions. Several projects have been tendered twice with no submissions being\nreceived.\n\nCONTACT:\n\nLeona Mitchell                                            Paul K. Whittam\nDirector, Facilities & Services                           Manager, Financial Services\nlmitchell@torontozoo.ca                                   pwhittam@torontozoo.ca\n416-392-5985                                              (416) 392-5914\n\n\n\n\n____________________\nR. D. Hale\nChief Operating Officer\n\n\nATTACHMENTS:\n\nSchedule I - Capital Project Status at 2018-12-31\nSchedule II – Capital Variance Report for the Period Ended 2018-12-31\n\n\n\n\nCapital Project Update and Variance Report                                      Page 2 of 2\n\f                                                                                                                             Schedule I\n                                                  CAPITAL PROJECTS STATUS\n                                                        As at 2018-12-31\n\n\nPROJECT                    DESCRIPTION                                            PROGRESS UPDATE                  PROJECTED\n                                                                                                                   COMPLETION\n\nORANGUTAN III              Improvements to upgrade the living conditions,         Contract with Balind Architect   2020-05\nOUTDOOR EXHIBIT            animal behaviour enrichment, by providing              Inc. has been terminated due\n                           outside space for the management of the                to inability of Architect to\n                          "
+          ]
+        },
+        {
+          "url": "https://www.toronto.ca/legdocs/mmis/2018/zb/bgrd/backgroundfile-121842.pdf",
+          "sha256": "93f64d8c762cf135c644f0944e2030814426d6426bfab3295264bd307b0cf6ec",
+          "passages": [
+            "                                                                                                       ZB24.10\nSTAFF REPORT\n\nTo:              Board of Management\n\nFrom:            Robin D. Hale\n                 Chief Operating Officer\n\nSubject:         PARKING MANAGEMENT SYSTEM\n\nDate:            2018-11-09\n\n\nSUMMARY:\n\nThis report recommends the award of the request of proposal for a parking\nmanagement system replacement.\n\nRECOMMENDATIONS:\n\nIt is recommended that the tender for the parking management system\nreplacement, RFP #21 (2018-04) – Parking Management System be awarded to\nPrecise ParkLink in the amount of $307,149, excluding Goods and Services Tax.\n\nFINANCIAL IMPACT:\n\nThere is no financial impact to this report, as the funding is included in the approved\n2018-2022 Capital Works Program (Information Systems Budget).\n\nDECISION HISTORY:\n\nThe current Toronto Zoo parking management system was installed in 2007. It is\nshowing its age with continuing operational issues and requires an increasing amount of\nservice maintenance from year to year.\n\nCOMMENTS:\n\nThe Toronto Zoo issued Parking Management System - RFP #21 (2018-04), inviting\nexperienced and qualified service providers to submit a written proposal to replace the\nexisting parking operation equipment and software with a commercial off-the-shelf\nparking system.\n\nThe RFP was posted on the Toronto Zoo website. Twenty-one interested vendors\nattended the mandatory on-site inspection. Proposals were received from 7 proponents\n(see Appendix I).\n\nThe proposals were reviewed and rated by an evaluation committee consisting of four\nstaff members from Member & Guest Services, Financial Services and Safety &\nSecurity. Proposals were evaluated based on capability, technical merit, methodology,\n\n\n[C:\\Users\\arodrig3\\AppData\\Local\\Microsoft\\Windows\\INetCache\\Content.Outlook\\BMNU2042\\Parking Management System RFP.rev.docx] Page 1 of 3\n",
+            "and cost. This included a detailed review of 99–point general and functional\nrequirement criteria that proponents were asked to complete.\n\nFollowing an initial evaluation of the seven proposals received, a short list of three\nProponents were invited to present and demonstrate their proposal to the evaluation\ncommittee. Subsequent to the interview process, the final results were tabulated and\nPrecise ParkLink Inc. scored the highest with a total of 117.8 (78.5%) out of a total\n150.0 points available in the full evaluation process. Only one other proponent scored\n70.0% or higher in the process which is considered the minimum requirement for award.\n\nPrecise ParkLink Inc. has proposed a replacement parking management system that is\ncustomer-centered and administratively and operationally effective. The system\nrecommended received the highest scoring based on the pre-established evaluation\ncriteria within the RFP submission and interview process, and met all of the\nspecifications. In addition, their proposal was the only solution that integrates\nseamlessly with our existing ADMITS point of sale software.\n\n\n\n____________________\nR. D. Hale\nChief Operating Officer\n\n\nATTACHEMENT:\nAppendix I - Summary of RFP Responses\n\n\n\n\n                                                                               Page 2 of 3\n",
+            "                                                                               Appendix I\n\n                                   TORONTO ZOO\n                             Parking Management System\n                                  RFP #21 (2018-04)\n                         SCHEDULE OF PROPOSALS RECEIVED\n\n\n        PROPONENT                  PROPOSAL                       SCORE\n                                      PRICE                     (OUT OF 150)\n                                    (excluding\n                                 applicable taxes)\n\nBudget Parking Inc.                 $163,335                        38.6\nImperial Parking Canada Corp.       $193,050                        63.7\nLocomobi                            $202,790                        103.1\nLogic Controle Inc (Globatech)      $230,890                        65.7\nPrecise ParkLink Inc.               $307,149                        117.8\nRoyal Parking                       $526,959         Eliminated as cost prohibitive based\n                                                              on terms of RFP\nWPS Canada                          $350,831                        105.7\n\n\n\n\n                                                                                  Page 3 of 3\n"
+          ]
+        }
+      ]
+    },
+    {
+      "corpus": "ep",
+      "document_sha256": "868018af806d8e6816118a6f08a93c26a6f7e3f8d7501d13a240b0a453b3343d",
+      "extractor_version": "v1-b63aa8c835ae",
+      "result_sha256": "c2967a73a137defa0861ab0f0847c3704f8a34bc4ee799d345f07bab88114225",
+      "contract_index": 1,
+      "contract_sha256": "3d96fb722dbd7a68f046f27b976bd3df0209237a5fc885abb4be5ef0d61b12a8",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2019/ep/bgrd/backgroundfile-139154.pdf",
+      "classification": "approved_existing_consultancy_amendment_without_public_call_identity",
+      "identity_recovered": false,
+      "native_ref": null,
+      "financial_role": "$161,150 estimated cost of extending NORR engagement / additional scope. $285,450 in April 2019 and $186,515 in 2018 are different engagement phases, not replacement amounts for this row.",
+      "reason": "Board approved amendment on 2019-10-24; amount remains estimated additional fee, not tender bid or original award.",
+      "blockers": [
+        "No published solicitation identifier for the NORR consultancy or amendment is established by the report or its explicitly cited predecessor reports.",
+        "EXP-19-085-98514 is expressly the EllisDon construction contract; do not assign it to NORR.",
+        "The cached decision date 2019-10-22 is report preparation, not Board amendment approval."
+      ],
+      "sources": [
+        {
+          "url": "https://www.toronto.ca/legdocs/mmis/2019/ep/bgrd/backgroundfile-139154.pdf",
+          "sha256": "868018af806d8e6816118a6f08a93c26a6f7e3f8d7501d13a240b0a453b3343d",
+          "passages": [
+            "2. The Board amend the agreement with NORR Architects & Engineers Limited to\nextend their engagement for the construction, administration and project management\nof the final stage of the Pedestrian Walkway Connection under the terms and conditions\ndetailed on page 5 of this report at an estimated cost of $161,150.00.",
+            "NORR Limited Consultant Agreement - Terms and Conditions (As Approved April 10,\n2019 EP2.10)"
+          ]
+        },
+        {
+          "url": "https://www.toronto.ca/legdocs/mmis/2019/ep/bgrd/backgroundfile-131392.pdf",
+          "sha256": "6083e99e51aee8198d0b21d00725e24a27eeb6a1e0cb00cff24e9f12c52ce038",
+          "passages": [
+            "NORR Limited Consultant Agreement - Terms & Conditions",
+            "at a cost of $285,450.00."
+          ]
+        },
+        {
+          "url": "https://www.toronto.ca/legdocs/mmis/2018/ep/bgrd/backgroundfile-111591.pdf",
+          "sha256": "d56dd6eea4c640b7c2e9c14451845bbcae1f8a225a93b141f5935d5b7744d58e",
+          "passages": [
+            "the contract with NORR Limited be extended to include completion of",
+            "the Site Plan Approval process."
+          ]
+        }
+      ],
+      "proposed_date_corrections_not_applied": [
+        {
+          "field": "decision_date",
+          "cached_value": "2019-10-22",
+          "proposed_value": "2019-10-24",
+          "status": "proven",
+          "basis": "TMMIS 2019.EP7.5 directly links backgroundfile-139154.pdf and records adoption and NORR amendment on October 24, 2019.",
+          "source_url": "https://secure.toronto.ca/council/agenda-item.do?item=2019.EP7.5"
+        }
+      ]
+    },
+    {
+      "corpus": "ep",
+      "document_sha256": "035b9d923799294e0da4cb75cd9bc69f044220b6a64ca0c3387a5395d85246eb",
+      "extractor_version": "v1-b63aa8c835ae",
+      "result_sha256": "38c4a053ee80b50fa4060a92f13ee4ea58a80937051522399e7ddc3b5a2d32bd",
+      "contract_index": 1,
+      "contract_sha256": "f28d365895bc62334e0bea41f05d7b461643779aac2aaefc7ab9303c9b57fe70",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2021/ep/bgrd/backgroundfile-167548.pdf",
+      "classification": "historical_authorized_sole_source_consultancy_without_public_call_identity",
+      "identity_recovered": false,
+      "native_ref": null,
+      "financial_role": "$153,300 authorized sole-source design and construction-administration engagement, not UBRL construction bid, not $1.70m construction budget.",
+      "reason": "Actual delegated authorization is expressly reported; no new competitive bid extraction appropriate.",
+      "blockers": [
+        "No public solicitation identifier is stated for this separate emergency sole-source consultant engagement.",
+        "EP101-2021 is the UBRL construction RFT and 21-076-17696 its construction contract; neither identifies the consultancy.",
+        "Exact consultant authorization date is not stated; April 14, 2021 concerns UBRL construction, not this separate consultancy."
+      ],
+      "sources": [
+        {
+          "url": "https://www.toronto.ca/legdocs/mmis/2021/ep/bgrd/backgroundfile-167548.pdf",
+          "sha256": "035b9d923799294e0da4cb75cd9bc69f044220b6a64ca0c3387a5395d85246eb",
+          "passages": [
+            "In order to meet the window of opportunity for this emergency remediation, authorization\nwas given by the Chief Executive Officer and Chief Financial Officer & Corporate\nSecretary to sole source the design and construction administration to the original\nconsultant for $153,300.",
+            "Operations staff decided to have a\nconsulting engineer (Stephenson Engineering) brought in to investigate"
+          ]
+        }
+      ]
+    },
+    {
+      "corpus": "ep",
+      "document_sha256": "c359dbfc9f450ecc9c8cf875669b2b2ca3e938358b68cdbcd0be39fcc0724bb4",
+      "extractor_version": "v1-b63aa8c835ae",
+      "result_sha256": "7303063fb1a1fcfab9c113426369f877a16d27b6cfd4a0cbd5f68fa0c6656ee7",
+      "contract_index": 1,
+      "contract_sha256": "3e4600ee1aed3a824c076456cbdcab65e7770e895e5277d4a6a72d43aaadf852",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2021/ep/bgrd/backgroundfile-172085.pdf",
+      "classification": "historical_authorized_sole_source_additional_consultancy_unnamed_supplier_no_call_identity",
+      "identity_recovered": false,
+      "native_ref": null,
+      "financial_role": "$35,000 additional sole-source contract administration, not Brook construction bid, not $0.8m construction budget.",
+      "reason": "Actual CEO and CFO/Corporate Secretary authorization for additional contract administration is reported; consultant legal identity unresolved.",
+      "blockers": [
+        "No public solicitation identifier is established for the consultant additional engagement.",
+        "Supplier is only original consultant; do not infer Stephenson from a different report or make this placeholder a separate real supplier.",
+        "EP102-2021 and 21-076-17697 belong to Brook Restoration construction, not the consultancy.",
+        "2021-10-14 is report preparation; neither report nor construction concurrence decision establishes the date of consultant authorization."
+      ],
+      "sources": [
+        {
+          "url": "https://www.toronto.ca/legdocs/mmis/2021/ep/bgrd/backgroundfile-172085.pdf",
+          "sha256": "c359dbfc9f450ecc9c8cf875669b2b2ca3e938358b68cdbcd0be39fcc0724bb4",
+          "passages": [
+            "authorization\nwas given by the Chief Executive Officer and Chief Financial Officer and Corporate\nSecretary to sole source the contract administration during construction to the original\nconsultant for an additional $35,000."
+          ]
+        }
+      ],
+      "proposed_date_corrections_not_applied": [
+        {
+          "field": "decision_date",
+          "cached_value": "2021-10-14",
+          "proposed_value": null,
+          "status": "remove_unsupported_date",
+          "basis": "Report dated October 14 describes already-given consultant authorization without its date. TMMIS October 29 concurrence concerns Brook construction, not a dated consultant decision.",
+          "source_url": "https://www.toronto.ca/legdocs/mmis/2021/ep/bgrd/backgroundfile-172085.pdf"
+        }
+      ]
+    },
+    {
+      "corpus": "ep",
+      "document_sha256": "9bae18077183aafc97ed7b54db153226c071d0487a4a12d7e34804929f0e3510",
+      "extractor_version": "v1-b63aa8c835ae",
+      "result_sha256": "170f608928e8ae8d4389c7f09c30047433c56cb7136b5b2f421bfdea26fd540e",
+      "contract_index": 0,
+      "contract_sha256": "bf9855a16c7faff4ccd3b50fa5f2326ee8f71091d11a21a2e24f67cc51936057",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2023/ep/bgrd/backgroundfile-233915.pdf",
+      "classification": "historical_implemented_software_purchase_no_public_call_identity",
+      "identity_recovered": false,
+      "native_ref": null,
+      "financial_role": "$2,000 one-time implementation/professional-services/training cost and $5,500 recurring annual fee. Distinct financial components, not two vendor responses or one published evaluated bid total.",
+      "reason": "Historical actual implementation/partnership, not merely approval of an information-report recommendation.",
+      "blockers": [
+        "No public procurement call or contract identifier established; unknown is not a native reference.",
+        "No aggregate contract duration or evaluated tender total is stated; retain complex cached amount and any existing parsed numeric NULL.",
+        "Fall/winter 2022 implementation does not establish an exact award date."
+      ],
+      "sources": [
+        {
+          "url": "https://www.toronto.ca/legdocs/mmis/2023/ep/bgrd/backgroundfile-233915.pdf",
+          "sha256": "9bae18077183aafc97ed7b54db153226c071d0487a4a12d7e34804929f0e3510",
+          "passages": [
+            "In Fall 2022 Exhibition Place partnered with Bonfire Interactive for a new e-Procurement\nPortal.",
+            "One time cost for Bonfire is $2,000 for professional services, training, and\n\nPurchasing and Procurement System                                                Page 1 of 4\n\fimplementation, and $5,500 for annual fees."
+          ]
+        }
+      ]
+    },
+    {
+      "corpus": "ep",
+      "document_sha256": "9bae18077183aafc97ed7b54db153226c071d0487a4a12d7e34804929f0e3510",
+      "extractor_version": "v1-b63aa8c835ae",
+      "result_sha256": "170f608928e8ae8d4389c7f09c30047433c56cb7136b5b2f421bfdea26fd540e",
+      "contract_index": 1,
+      "contract_sha256": "28b0efcea617448bc89e3a2f6105870249f23ef370a5af2707e3d9888c289294",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2023/ep/bgrd/backgroundfile-233915.pdf",
+      "classification": "historical_signed_software_statement_of_work_no_public_call_identity",
+      "identity_recovered": false,
+      "native_ref": null,
+      "financial_role": "$17,600 one-time implementation/professional-services/training cost and $19,000 recurring annual dues; not a single bid or supported total contract value.",
+      "reason": "Historical signed statement of work in December 2022, not merely a proposed budget.",
+      "blockers": [
+        "No public procurement call or contract identifier established; unknown is not a native reference.",
+        "No supported aggregate contract term/total; retain complex cached amount and any existing parsed numeric NULL.",
+        "December 2022 is month-level signing evidence only; do not invent day or use information-report date."
+      ],
+      "sources": [
+        {
+          "url": "https://www.toronto.ca/legdocs/mmis/2023/ep/bgrd/backgroundfile-233915.pdf",
+          "sha256": "9bae18077183aafc97ed7b54db153226c071d0487a4a12d7e34804929f0e3510",
+          "passages": [
+            "In December 2022, staff signed statement of work with PairSoft for the implementation\nof the fully integrated purchasing and requisition solution.",
+            "One time cost for PairSoft is $17,600 for\nprofessional services, training, and implementation, and $19,000 for annual dues."
+          ]
+        }
+      ]
+    },
+    {
+      "corpus": "ep",
+      "document_sha256": "7e2946ed0e11dfb76916f85dfb080d915c040acb5d50042d9bd5c476aef95178",
+      "extractor_version": "v1-b63aa8c835ae",
+      "result_sha256": "026cf1f75e5df762a99a563c5d96f72d80067ef173b74ac0c0794ba99b27a5f1",
+      "contract_index": 0,
+      "contract_sha256": "da144d33c4518a9dfe3c3036e7b82bba3b4b6afd7f0d61347e22ee09203fbe41",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2025/ep/bgrd/backgroundfile-258335.pdf",
+      "classification": "negotiated_revenue_licence_new_agreement_not_procurement_award",
+      "identity_recovered": false,
+      "native_ref": null,
+      "financial_role": "Approximately $4.35 million projected revenue TO Exhibition Place over the proposed new licence. Not a bid price or procurement expenditure; financial terms partly confidential. Costs are Astral responsibility.",
+      "reason": "Report recommendation is conditional on City authorization. Supplied source does not prove execution or final City approval of this 2025 new licence.",
+      "blockers": [
+        "New Agreement is descriptive contract wording, not a published solicitation identifier.",
+        "This negotiated 2025 revenue licence is distinct from the historic competitive 2009 RFP; no new public call identifier is established.",
+        "Projected $4.35m revenue is wrongly modeled as a procurement award amount; a null-price Astral row is not proof of an actual tender response.",
+        "The reviewed 2025 report recommends Board and subsequent City authorization, not proof of a completed procurement award."
+      ],
+      "sources": [
+        {
+          "url": "https://www.toronto.ca/legdocs/mmis/2025/ep/bgrd/backgroundfile-258335.pdf",
+          "sha256": "7e2946ed0e11dfb76916f85dfb080d915c040acb5d50042d9bd5c476aef95178",
+          "passages": [
+            "Over its term, the New Agreement will provide approximately $4.35 million in revenue.",
+            "The Chief Executive Officer recommends that:",
+            "1. Subject to obtaining the necessary City of Toronto authorization, the Board approve\nan agreement with Astral Media Outdoor, L.P."
+          ]
+        },
+        {
+          "url": "https://www.explace.on.ca/files/file/58c6b9d681d2f/Item-15-Clarity-Outdoor.pdf",
+          "sha256": "9edf8784456b77d28c345297619850f05199bccdccaa45b26aa33f11ff8538b8",
+          "passages": [
+            "Proposals were received from three companies, Clarity Outdoor\nMedia Inc, CBS Outdoor Canada and Pattison Outdoor Advertising."
+          ]
+        }
+      ]
+    }
+  ]
+}

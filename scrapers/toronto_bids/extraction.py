@@ -566,10 +566,15 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
     if corpus in ("trca", "ep", "zoo", "ttc"):
         from toronto_bids.linking.agency_reference import normalize_agency_reference, report_reference
         from toronto_bids.agency_coverage import decision
-        from toronto_bids.linking.agency_identity import reviewed_identity, reviewed_bids, reviewed_decision_date, IdentityReviewRequired
+        from toronto_bids.linking.agency_identity import reviewed_identity, reviewed_bids, reviewed_decision_date, validate_representatives, IdentityReviewRequired
 
         if rows and buyer_id is None:
             raise RuntimeError(f'backfill {corpus}: buyer is not seeded; existing rows kept')
+
+        try:
+            validate_representatives(corpus,rows)
+        except IdentityReviewRequired as exc:
+            raise RuntimeError(f'backfill {corpus}: {exc}; existing rows kept') from exc
 
         refusal_details = []
         for row in rows:
@@ -609,6 +614,8 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
                     refusal_details.append(f"{row['url']}: {withheld_awards_reason}")
                 decisions.append(decision(row, corpus, buyer_id, index, contract, ref, withheld_awards_reason,
                                           len(contracts), identity_evidence))
+                if identity_evidence and identity_evidence.get('representative_source'):
+                    continue  # Ledger-only historical confirmation; original facts and metadata derive normally.
                 has_awards = bool(contract.get("awards"))
                 solicitations.append(
                     AgencySolicitation(

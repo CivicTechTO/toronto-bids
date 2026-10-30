@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "reviewed_on": "2026-10-29",
+  "reviewed_on": "2026-10-30",
   "decisions": [
     {
       "corpus": "trca",
@@ -2831,6 +2831,122 @@
           ]
         }
       ]
+    },
+    {
+      "corpus": "zoo",
+      "document_sha256": "6dd54ba0f19e2c8402be512ceae4dbf833abaceac698562cd3102e42c2d33099",
+      "extractor_version": "v1-b63aa8c835ae",
+      "contract_sha256": "39572fa5d0209fc38af1df9aadfdc8665001fe65814e6c225da4c17baf5e22d3",
+      "native_ref": "RFP 58 (2018-10)",
+      "report_url": "https://www.toronto.ca/legdocs/mmis/2019/zb/bgrd/backgroundfile-124291.pdf",
+      "contract_index": 0,
+      "contract_count": 10,
+      "result_sha256": "c0714932bfbe9039d47fd0fd1b63546b09ce852b28164e5bdf2c7d9c0504d45b",
+      "identifiers": [
+        {
+          "value": "2019.ZB1",
+          "role": "meeting_or_board_item_reference",
+          "authority": "toronto-zoo"
+        },
+        {
+          "value": "RFP 58 (2018-10)",
+          "role": "solicitation",
+          "authority": "toronto-zoo"
+        },
+        {
+          "value": "2018.ZB24.17",
+          "role": "board_item_not_call",
+          "authority": "toronto-zoo"
+        }
+      ],
+      "basis": "The original public procurement report proves the printed solicitation identity, and the later held status report confirms the Board award. The priced original is already published under the same exact native reference. Recover identity only and withhold the duplicate historical award; retain all raw NULLs and empty bids[].",
+      "sources": [
+        {
+          "url": "https://www.toronto.ca/legdocs/mmis/2019/zb/bgrd/backgroundfile-124291.pdf",
+          "sha256": "6dd54ba0f19e2c8402be512ceae4dbf833abaceac698562cd3102e42c2d33099",
+          "passages": [
+            "a\nsemi-annual basis to provide the required information on the status of projects through\nthe planning, design and construction/implementation stages.\n\nCOMMENTS:\n\nThe Project Status list is attached for your review (Schedule I). Some of the highlights\nare as follows:\n\n•     Orangutan project delayed. An RFP for design to replace the original Architectural\n      firm was issued in late November. The remaining design work has been awarded to\n      Zeidler Partnership Architects by the Board of Management.\n•     The Amur tiger exhibit opened in October 2018.\n•     Work began on the African Rainforest Pavilion emergency backup generator\n      replacement project in November 2018 and is expected to be completed spring\n      2019.\n•     The Board awarded the new Parking Management System work to Precise ParkLink\n      in November.\n\n\n\nCapital Project Update and Variance Report                                    Page 1 of 2\n\fCapital Budget Variance Report:\n\nThe Capital Budget Variance report for the period-ended 2018-12-31 is attached\n(Schedule II) It is anticipated that full-year spending of 16.3% will be achieved by year-\nend. This percentage is affected significantly by the lack of spending on the Orangutan\nProject due to issues with the consultant. Several other projects have been tendered\nand have either been over budget or we did not receive contractor/consultant\nsubmissions. Several projects have been tendered twice with no submissions being\nreceived.\n\nCONTACT:\n\nLeona Mitchell                                            Paul K. Whittam\nDirector, Facilities & Services                           Manager, Financial Services\nlmitchell@torontozoo.ca                                   pwhittam@torontozoo.ca\n416-392-5985                                              (416) 392-5914\n\n\n\n\n____________________\nR. D. Hale\nChief Operating Officer\n\n\nATTACHMENTS:\n\nSchedule I - Capital Project Status at 2018-12-31\nSchedule II – Capital Variance Report for the Period Ended 2018-12-31\n\n\n\n\nCapital Project Update and Variance Report                                      Page 2 of 2\n\f                                                                                                                             Schedule I\n                                                  CAPITAL PROJECTS STATUS\n                                                        As at 2018-12-31\n\n\nPROJECT                    DESCRIPTION                                            PROGRESS UPDATE                  PROJECTED\n                                                                                                                   COMPLETION\n\nORANGUTAN III       "
+          ]
+        },
+        {
+          "url": "https://www.toronto.ca/legdocs/mmis/2018/zb/bgrd/backgroundfile-122143.pdf",
+          "sha256": "9dabf326859f99c50c443f9d54aa72d858d3cd42487240e6b5d4f4ed6492c774",
+          "passages": [
+            "                                                                       ZB24.17\nSTAFF REPORT\n\nTo:              Board of Management\n\nFrom:            Robin D. Hale\n                 Chief Operating Officer\n\nSubject:         CONSULTING SERVICES – OUTDOOR ORANGUTAN EXHIBIT\n\nDate:            2018-11-27\n\n\nSUMMARY:\n\nThis report recommends the award of a contract for consulting services for the Outdoor\nOrangutan Exhibit, RFP 58 (2018-10).\n\nRECOMMENDATIONS:\n\nIt is recommended that the contract for architectural, engineering and project\nmanagement services for RFP 58 (2018-10) Consulting Services – Outdoor\nOrangutan Exhibit be awarded to Zeidler Partnership Architects in the amount of\n$350,075.00, excluding HST.\n\nFINANCIAL IMPACT:\n\nThis is an approved project under the Capital Works Program. Remaining funding\navailable for this project is $5,063,282 for the balance of design, construction and\ncommissioning.\n\nDECISION HISTORY:\n\nCreation of an outdoor exhibit for orangutans was an approved project for 2016-2018.\nDesign for this project was awarded to Balind Architect Inc. in 2016. Work on the\nproject stopped in the fall of 2017, and in spring of 2018, the Zoo learned that the\nprinciple architect was no longer able to complete the project due to personal reasons.\n\nThe Zoo has terminated the agreement with Balind Architect Inc. and are now in a\nposition to award the detailed design and contract administration portion of this project\nbased on the results of RFP 58 (2018-10).\n\nCOMMENTS:\n\nThe Toronto Zoo issued RFP 58 (2018-10) Outdoor Orangutan Exhibit, inviting 15\nexperienced and qualified consultants to submit a written proposal to design an outdoor\norangutan exhibit. The Request for Proposals was posted on the Toronto Zoo internet\nwebsite.\n\nConsulting Services – Outdoor Orangutan Exhibit                                  Page 1 of 2\n",
+            "Four interested vendors attended an on-site inspection or participated in a tele-\nconference review of the project with the Zoo. Proposals were received from three\nproponents (see Appendix I).\n\nThe proposals were reviewed and rated by an evaluation committee comprised of staff\nmembers from Facilities & Services, Project Management and Purchasing & Supply.\nProposals were evaluated based on consulting experience on similar projects,\ncommitment to the schedule, understanding of the scope, proposed methodology and\ncost.\n\nAt the conclusion of the evaluation process, the final results were tabulated and Zeidler\nPartnership Architects scored the highest with a total of 78.9% out of a total 100.0\npoints available in the full evaluation process. No other proponents scored 70.0% or\nhigher in the process which is considered the minimum threshold for award.\n\nZeidler Partnership Architects’ proposal met all of the Zoo’s requirements and received\nthe highest scoring based on the pre-established evaluation criteria within the RFP.\nZeidler Partnership Architects and their assembled team for this project have related\nexperience designing and providing consulting services for orangutan and great ape\nexhibits at other zoological facilities around the world, which will be most desirable for\nthe successful completion of this project. In addition, Zeidler stated that they can meet\nthe Zoo’s proposed schedule of design and construction for an orangutan exhibit\nopening in 2020.\n\n\n\n\nR. D. Hale\nChief Operating Officer\n\n\nATTACHMENTS:\n\nAppendix I – Schedule of Proposals Received\n\n\n\n\nConsulting Services – Outdoor Orangutan Exhibit                                   Page 2 of 2\n",
+            "                                                                   Appendix I\n\n                                TORONTO ZOO\n                           Outdoor Orangutan Exhibit\n                               RFP 58 (2018-10)\n                       SCHEDULE OF PROPOSALS RECEIVED\n\n\n\n          PROPONENT               PROPOSAL PRICE           SCORE\n                                 (excluding applicable   (OUT OF 100)\n                                        taxes)\n\nL.E. Glazer Architect Limited         $273,000              68.7\nWDM Architects P.A.                   $607,602              64.7\nZeidler Partnership Architects        $350,075              78.9\n"
+          ]
+        }
+      ],
+      "scope": "Identity-only reconciliation of historical confirmation; the priced original remains the published award. No new award, bid, price, date, alias or solicitation metadata.",
+      "withheld_awards_reason": "Duplicate historical award claim: the exact original public procurement is already represented by a priced published award bound to this canonical native reference and original cached contract context. Bind identity and reconcile the held ledger only; withhold every award from this later historical status report. Do not add an unpriced duplicate, fill source amounts/dates, rekey prior raw names, or modify the original award.",
+      "representative_source": {
+        "extractor_version": "v1-b63aa8c835ae",
+        "report_url": "https://www.toronto.ca/legdocs/mmis/2018/zb/bgrd/backgroundfile-122143.pdf",
+        "result_sha256": "863cc40d08c78a01d328872537a5683400270c5fa11dbfaff69916e2e70bdf13",
+        "contract_index": 0,
+        "contract_count": 1,
+        "contract_sha256": "db174893e82cbb43ae3edaf32ad83cf2cc7d76404f73779dc40cc4b2569a4f36",
+        "document_sha256": "9dabf326859f99c50c443f9d54aa72d858d3cd42487240e6b5d4f4ed6492c774"
+      }
+    },
+    {
+      "corpus": "zoo",
+      "document_sha256": "6dd54ba0f19e2c8402be512ceae4dbf833abaceac698562cd3102e42c2d33099",
+      "extractor_version": "v1-b63aa8c835ae",
+      "contract_sha256": "e3d184309282f8c7ef90d644850ddd0aea4665b0f8f1cb6d0538f0edfdaa948f",
+      "native_ref": "RFP #21 (2018-04)",
+      "report_url": "https://www.toronto.ca/legdocs/mmis/2019/zb/bgrd/backgroundfile-124291.pdf",
+      "contract_index": 1,
+      "contract_count": 10,
+      "result_sha256": "c0714932bfbe9039d47fd0fd1b63546b09ce852b28164e5bdf2c7d9c0504d45b",
+      "identifiers": [
+        {
+          "value": "2019.ZB1",
+          "role": "meeting_or_board_item_reference",
+          "authority": "toronto-zoo"
+        },
+        {
+          "value": "RFP #21 (2018-04)",
+          "role": "solicitation",
+          "authority": "toronto-zoo"
+        },
+        {
+          "value": "2018.ZB24.10",
+          "role": "board_item_not_call",
+          "authority": "toronto-zoo"
+        }
+      ],
+      "basis": "The original public procurement report proves the printed solicitation identity, and the later held status report confirms the Board award. The priced original is already published under the same exact native reference. Recover identity only and withhold the duplicate historical award; retain all raw NULLs and empty bids[].",
+      "sources": [
+        {
+          "url": "https://www.toronto.ca/legdocs/mmis/2019/zb/bgrd/backgroundfile-124291.pdf",
+          "sha256": "6dd54ba0f19e2c8402be512ceae4dbf833abaceac698562cd3102e42c2d33099",
+          "passages": [
+            "ctural\n      firm was issued in late November. The remaining design work has been awarded to\n      Zeidler Partnership Architects by the Board of Management.\n•     The Amur tiger exhibit opened in October 2018.\n•     Work began on the African Rainforest Pavilion emergency backup generator\n      replacement project in November 2018 and is expected to be completed spring\n      2019.\n•     The Board awarded the new Parking Management System work to Precise ParkLink\n      in November.\n\n\n\nCapital Project Update and Variance Report                                    Page 1 of 2\n\fCapital Budget Variance Report:\n\nThe Capital Budget Variance report for the period-ended 2018-12-31 is attached\n(Schedule II) It is anticipated that full-year spending of 16.3% will be achieved by year-\nend. This percentage is affected significantly by the lack of spending on the Orangutan\nProject due to issues with the consultant. Several other projects have been tendered\nand have either been over budget or we did not receive contractor/consultant\nsubmissions. Several projects have been tendered twice with no submissions being\nreceived.\n\nCONTACT:\n\nLeona Mitchell                                            Paul K. Whittam\nDirector, Facilities & Services                           Manager, Financial Services\nlmitchell@torontozoo.ca                                   pwhittam@torontozoo.ca\n416-392-5985                                              (416) 392-5914\n\n\n\n\n____________________\nR. D. Hale\nChief Operating Officer\n\n\nATTACHMENTS:\n\nSchedule I - Capital Project Status at 2018-12-31\nSchedule II – Capital Variance Report for the Period Ended 2018-12-31\n\n\n\n\nCapital Project Update and Variance Report                                      Page 2 of 2\n\f                                                                                                                             Schedule I\n                                                  CAPITAL PROJECTS STATUS\n                                                        As at 2018-12-31\n\n\nPROJECT                    DESCRIPTION                                            PROGRESS UPDATE                  PROJECTED\n                                                                                                                   COMPLETION\n\nORANGUTAN III              Improvements to upgrade the living conditions,         Contract with Balind Architect   2020-05\nOUTDOOR EXHIBIT            animal behaviour enrichment, by providing              Inc. has been terminated due\n                           outside space for the management of the                to inability of Architect to\n                          "
+          ]
+        },
+        {
+          "url": "https://www.toronto.ca/legdocs/mmis/2018/zb/bgrd/backgroundfile-121842.pdf",
+          "sha256": "93f64d8c762cf135c644f0944e2030814426d6426bfab3295264bd307b0cf6ec",
+          "passages": [
+            "                                                                                                       ZB24.10\nSTAFF REPORT\n\nTo:              Board of Management\n\nFrom:            Robin D. Hale\n                 Chief Operating Officer\n\nSubject:         PARKING MANAGEMENT SYSTEM\n\nDate:            2018-11-09\n\n\nSUMMARY:\n\nThis report recommends the award of the request of proposal for a parking\nmanagement system replacement.\n\nRECOMMENDATIONS:\n\nIt is recommended that the tender for the parking management system\nreplacement, RFP #21 (2018-04) – Parking Management System be awarded to\nPrecise ParkLink in the amount of $307,149, excluding Goods and Services Tax.\n\nFINANCIAL IMPACT:\n\nThere is no financial impact to this report, as the funding is included in the approved\n2018-2022 Capital Works Program (Information Systems Budget).\n\nDECISION HISTORY:\n\nThe current Toronto Zoo parking management system was installed in 2007. It is\nshowing its age with continuing operational issues and requires an increasing amount of\nservice maintenance from year to year.\n\nCOMMENTS:\n\nThe Toronto Zoo issued Parking Management System - RFP #21 (2018-04), inviting\nexperienced and qualified service providers to submit a written proposal to replace the\nexisting parking operation equipment and software with a commercial off-the-shelf\nparking system.\n\nThe RFP was posted on the Toronto Zoo website. Twenty-one interested vendors\nattended the mandatory on-site inspection. Proposals were received from 7 proponents\n(see Appendix I).\n\nThe proposals were reviewed and rated by an evaluation committee consisting of four\nstaff members from Member & Guest Services, Financial Services and Safety &\nSecurity. Proposals were evaluated based on capability, technical merit, methodology,\n\n\n[C:\\Users\\arodrig3\\AppData\\Local\\Microsoft\\Windows\\INetCache\\Content.Outlook\\BMNU2042\\Parking Management System RFP.rev.docx] Page 1 of 3\n",
+            "and cost. This included a detailed review of 99–point general and functional\nrequirement criteria that proponents were asked to complete.\n\nFollowing an initial evaluation of the seven proposals received, a short list of three\nProponents were invited to present and demonstrate their proposal to the evaluation\ncommittee. Subsequent to the interview process, the final results were tabulated and\nPrecise ParkLink Inc. scored the highest with a total of 117.8 (78.5%) out of a total\n150.0 points available in the full evaluation process. Only one other proponent scored\n70.0% or higher in the process which is considered the minimum requirement for award.\n\nPrecise ParkLink Inc. has proposed a replacement parking management system that is\ncustomer-centered and administratively and operationally effective. The system\nrecommended received the highest scoring based on the pre-established evaluation\ncriteria within the RFP submission and interview process, and met all of the\nspecifications. In addition, their proposal was the only solution that integrates\nseamlessly with our existing ADMITS point of sale software.\n\n\n\n____________________\nR. D. Hale\nChief Operating Officer\n\n\nATTACHEMENT:\nAppendix I - Summary of RFP Responses\n\n\n\n\n                                                                               Page 2 of 3\n",
+            "                                                                               Appendix I\n\n                                   TORONTO ZOO\n                             Parking Management System\n                                  RFP #21 (2018-04)\n                         SCHEDULE OF PROPOSALS RECEIVED\n\n\n        PROPONENT                  PROPOSAL                       SCORE\n                                      PRICE                     (OUT OF 150)\n                                    (excluding\n                                 applicable taxes)\n\nBudget Parking Inc.                 $163,335                        38.6\nImperial Parking Canada Corp.       $193,050                        63.7\nLocomobi                            $202,790                        103.1\nLogic Controle Inc (Globatech)      $230,890                        65.7\nPrecise ParkLink Inc.               $307,149                        117.8\nRoyal Parking                       $526,959         Eliminated as cost prohibitive based\n                                                              on terms of RFP\nWPS Canada                          $350,831                        105.7\n\n\n\n\n                                                                                  Page 3 of 3\n"
+          ]
+        }
+      ],
+      "scope": "Identity-only reconciliation of historical confirmation; the priced original remains the published award. No new award, bid, price, date, alias or solicitation metadata.",
+      "withheld_awards_reason": "Duplicate historical award claim: the exact original public procurement is already represented by a priced published award bound to this canonical native reference and original cached contract context. Bind identity and reconcile the held ledger only; withhold every award from this later historical status report. Do not add an unpriced duplicate, fill source amounts/dates, rekey prior raw names, or modify the original award.",
+      "representative_source": {
+        "extractor_version": "v1-b63aa8c835ae",
+        "report_url": "https://www.toronto.ca/legdocs/mmis/2018/zb/bgrd/backgroundfile-121842.pdf",
+        "result_sha256": "6c20da31996d2bea4b6da6268af165b2321b0d7ded5d5fbe93b4c11edaea9951",
+        "contract_index": 0,
+        "contract_count": 1,
+        "contract_sha256": "f87db4ba4e3d59d98bb96aa758f05c8c02ce36708d4f53e132ef375113b5bd6f",
+        "document_sha256": "93f64d8c762cf135c644f0944e2030814426d6426bfab3295264bd307b0cf6ec"
+      }
     }
   ]
 }
