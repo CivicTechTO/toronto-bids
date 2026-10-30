@@ -218,7 +218,7 @@ def build_export_document(conn, generated_at: str | None = None) -> dict:
                       "ORDER BY native_ref")],
             "award_publications": [_parse_json(_drop(r, "buyer_id"), "labels") for r in _rows(
                 conn, f"SELECT * FROM award_publication WHERE buyer_id={bid_} ORDER BY publication_month,source_position,source_key")],
-            "published_awards": [_drop(r, "buyer_id") for r in _rows(
+            "published_awards": [_parse_json(_drop(r, "buyer_id"), "evidence_json") for r in _rows(
                 conn, f"SELECT * FROM published_award WHERE buyer_id={bid_} ORDER BY source_key")],
             "publication_extractions": [_parse_json(_drop(r, "buyer_id"), "errors") for r in _rows(
                 conn, f"SELECT * FROM publication_extraction WHERE buyer_id={bid_} ORDER BY publication_month")],

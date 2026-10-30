@@ -139,21 +139,30 @@ def _amount_extent(text, amount):
 
 def verified_claims(rows, result):
     """Map model roles to unambiguous literal source evidence; retain refusals."""
+    from toronto_bids.linking.publication_evidence import reviewed_recipients
+    month=rows[0].get('publication_month') if rows else None
+    reviewed=reviewed_recipients(rows,result,
+        extraction_sha256=_sha(extraction_text(month,rows)) if month else None,
+        extractor_version=EXTRACTOR_VERSION)
     claims, errors, seen = [], [], set()
     mapped = defaultdict(list)
     nonmonetary = defaultdict(list)
-    for contract in result['contracts']:
-        for award in contract.get('awards', []):
+    for contract_index,contract in enumerate(result['contracts']):
+        for award_index,award in enumerate(contract.get('awards', [])):
+            proof=reviewed.get((contract_index,award_index))
             name = award.get('supplier_name')
             amount = award.get('amount_raw')
             if not isinstance(name, str) or not name.strip() or (amount is not None and not isinstance(amount, str)):
                 errors.append('Invalid supplier or amount type')
                 continue
             name, amount = _clean(name), _clean(amount) if amount else None
+            if proof is not None:name=proof['recipient']
             matches = []
             for row in rows:
                 body = ANNOTATION.sub('', row['raw_text'])
-                if name not in body:
+                if proof is not None:
+                    if row['source_key']!=proof['publication_key']:continue
+                elif name not in body:
                     continue
                 extent = _amount_extent(body, amount)
                 if extent is not False:
@@ -182,6 +191,7 @@ def verified_claims(rows, result):
             numeric = float(extent.replace('$', '').replace(',', '').strip()) if extent and NUMBER.fullmatch(extent) else None
             claims.append(dict(source_key=key, publication_key=row['source_key'],
                                supplier_name_raw=name, award_amount=extent,
+                               evidence_json=json.dumps(proof,sort_keys=True,ensure_ascii=False) if proof else None,
                                award_amount_numeric=numeric, title_extracted=contract.get('title')))
     # Every visible money token must be accounted for, including a second award
     # in the same block. Title/context blocks remain visible without invented facts.
@@ -286,11 +296,11 @@ def capture_awards(conn, http, *, data_dir=None, client=None, limit=None, log=pr
                         if held['source_key'] not in live:
                             conn.execute('DELETE FROM published_award WHERE source_key=?', (held['source_key'],))
             for claim in claims:
-                conn.execute('INSERT INTO published_award (source_key,publication_key,buyer_id,supplier_name_raw,award_amount,award_amount_numeric,title_extracted,extraction_sha256,extractor_version) '
-                             'VALUES (?,?,?,?,?,?,?,?,?) ON CONFLICT(source_key) DO UPDATE SET '
-                             "title_extracted=excluded.title_extracted,extraction_sha256=excluded.extraction_sha256,extractor_version=excluded.extractor_version,last_seen=datetime('now')",
+                conn.execute('INSERT INTO published_award (source_key,publication_key,buyer_id,supplier_name_raw,award_amount,award_amount_numeric,title_extracted,extraction_sha256,extractor_version,evidence_json) '
+                             'VALUES (?,?,?,?,?,?,?,?,?,?) ON CONFLICT(source_key) DO UPDATE SET '
+                             "title_extracted=excluded.title_extracted,extraction_sha256=excluded.extraction_sha256,extractor_version=excluded.extractor_version,evidence_json=excluded.evidence_json,last_seen=datetime('now')",
                              (claim['source_key'], claim['publication_key'], buyer_id, claim['supplier_name_raw'], claim['award_amount'],
-                              claim['award_amount_numeric'], claim['title_extracted'], digest, EXTRACTOR_VERSION))
+                              claim['award_amount_numeric'], claim['title_extracted'], digest, EXTRACTOR_VERSION,claim['evidence_json']))
             conn.execute('RELEASE waterfront_month')
             accepted += len(claims)
         except ExtractionPending as exc:

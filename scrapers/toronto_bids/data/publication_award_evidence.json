@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "reviewed_on": "2026-10-29",
+  "decisions": [
+    {
+      "buyer": "waterfront-toronto",
+      "publication_key": "9d1e6afd47834cd33c2730452ecd3bcb4ed36769af63506defd7b1ec8987a203",
+      "publication_month": "2023-03",
+      "primary_url": "https://www.waterfrontoronto.ca/opportunities/procurement/awarded-contracts",
+      "source_text": "Dewatering System for Chamber CC6567 Rebuild Operations for Port Lands Flood Protection ($313,750) (Contract awarded by Ellis Don Civil Ltd on behalf of Waterfront Toronto)",
+      "extraction_sha256": "398fdaf47133f54582203644f8f4735bb517fbcc4ad5a5ec4028be6a1fab537d",
+      "extractor_version": "v1-b63aa8c835ae",
+      "result_sha256": "f47866fad6b494ac93184ace6a8d9abae3766ba143c624af76ad1d6086f8e0e9",
+      "contract_index": 4,
+      "award_index": 0,
+      "model_supplier": "Ellis Don Civil Ltd",
+      "recipient": "WJ Groundwater",
+      "amount_raw": "$313,750",
+      "basis": "The primary March2023 publication omits a recipient and identifies Ellis Don only as awarding construction manager. The same publisher's March2023 PLFP dashboard names WJ Groundwater for TPBR182 / CM#2023-03, Dewaltering System for Chamber CC6567 Rebuild Operations. That explicit work/package/month relationship corroborates the missing recipient. Keep the primary publication amount; the dashboard estimate, approved amount and contingency drawdown are distinct figures and are not substituted or tax-converted.",
+      "sources": [
+        {
+          "url": "https://www.waterfrontoronto.ca/sites/default/files/2023-05/Meeting%20Book%20-%20Finance%2C%20Audit%20%26%20Risk%20Management%20Committee%20-%20May%2029%2C%202023_0.pdf",
+          "sha256": "d0dfeab3bbc5a064eeefd495235227cacd344ad4371132c6bec3009770700e01",
+          "page": 27,
+          "identifier": "CM#2023-03",
+          "passages": [
+            "TPBR182-Dewaltering System for Chamber CC6567 Rebuild Operations (WJ Groundwater) CM#2023-03                                                                 158,550.00      332,261.25         173,711.25"
+          ],
+          "excerpt_sha256": "fb83fbb66377aa5b5064225f17c18a6e6db1dab389bbb3b1f7f8a884a5982221"
+        }
+      ]
+    }
+  ]
+}

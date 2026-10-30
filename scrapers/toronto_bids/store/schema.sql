@@ -576,6 +576,7 @@ CREATE TABLE IF NOT EXISTS published_award (
     award_amount TEXT,
     award_amount_numeric REAL,
     title_extracted TEXT,
+    evidence_json TEXT,
     extraction_sha256 TEXT NOT NULL,
     extractor_version TEXT NOT NULL,
     procurement_id INTEGER REFERENCES procurement(id),

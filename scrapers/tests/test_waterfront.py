@@ -165,7 +165,9 @@ def test_repeated_supplier_values_and_parenthesized_years_are_not_lost(period, c
         assert malformed['award_amount_numeric'] is None
 
 
-def test_missing_published_recipient_cannot_be_filled_from_manager_annotation():
+def test_missing_published_recipient_cannot_be_filled_from_manager_annotation(monkeypatch):
+    from toronto_bids.linking import publication_evidence
+    monkeypatch.setattr(publication_evidence,'_evidence',lambda:{})
     pilot = json.loads((FIXTURES / '2023-03.json').read_text())
     rows = [r for r in wf.parse_publication(HTML) if r['publication_month'] == '2023-03']
     claims, errors = wf.verified_claims(rows, pilot['result'])

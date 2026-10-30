@@ -15,3 +15,9 @@ Months are the extraction unit so nested suppliers retain the title above them. 
 Procurement identity is namespaced to each supported publication claim, without fuzzy merges with portal/board records. Supplier dimension includes the accepted recipient names. JSON publishes `buyers[].award_publications`, `published_awards` and `publication_extractions`; CSV, Parquet and the generated schema include all three tables. These records remain separate from City-spine award totals. Waterfront is a partnered corporation; its Toronto funding share is not inferred from the three-government partnership.
 
 The Bonfire, current-opportunities, vendor-of-record and ACAN portions of #108 remain outside this own-site awarded-contracts slice. In particular, an intended/contestable ACAN is not an awarded contract.
+
+## Independently corroborated recipients
+
+When the primary publication omits a recipient, exact reviewed publisher evidence may corroborate that relationship. `linking/publication_evidence.py` binds the whole monthly input/result and exact award position, preserving the cache and primary amount. The claim exports its proof as `evidence_json`, including independent source URL, PDF hash and page. Source/context changes require fresh review; the normal literal verifier remains responsible for all other claims.
+
+Read [CC6567 recovery](waterfront-cc6567-recovery-2026-10-29.md) before extending this mechanism. The committee-book source is held review evidence; this adds no nightly network request or broader document crawler.
