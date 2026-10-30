@@ -1,5 +1,5 @@
 {
- "recorded_at": "2026-10-29",
+ "recorded_at": "2026-10-30",
  "issue": 282,
  "corpora": {
   "trca": [
@@ -8161,6 +8161,290 @@
     "result_sha256": "2041f8ff027c1a7c22bfa05c35dbaff01b07c44410c299188a894b6c898fa164",
     "contract_index": 2,
     "report_url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=9224",
+    "reason": "ambiguous reference-less multi-contract report"
+   }
+  ],
+  "zoo": [
+   {
+    "sha256": "43842bca76de00e5534fb2d49c2008a06dc1b7ba46666d58a525960fdab7c404",
+    "extractor_version": "v1-b63aa8c835ae",
+    "result_sha256": "19cd84d6350610fc60d1915c736f50be92855da43b9dc714df65dd47385f12bc",
+    "contract_index": 1,
+    "report_url": "https://www.toronto.ca/legdocs/mmis/2015/zb/bgrd/backgroundfile-76755.pdf",
+    "reason": "ambiguous reference-less multi-contract report"
+   },
+   {
+    "sha256": "43842bca76de00e5534fb2d49c2008a06dc1b7ba46666d58a525960fdab7c404",
+    "extractor_version": "v1-b63aa8c835ae",
+    "result_sha256": "19cd84d6350610fc60d1915c736f50be92855da43b9dc714df65dd47385f12bc",
+    "contract_index": 2,
+    "report_url": "https://www.toronto.ca/legdocs/mmis/2015/zb/bgrd/backgroundfile-76755.pdf",
+    "reason": "ambiguous reference-less multi-contract report"
+   },
+   {
+    "sha256": "43842bca76de00e5534fb2d49c2008a06dc1b7ba46666d58a525960fdab7c404",
+    "extractor_version": "v1-b63aa8c835ae",
+    "result_sha256": "19cd84d6350610fc60d1915c736f50be92855da43b9dc714df65dd47385f12bc",
+    "contract_index": 3,
+    "report_url": "https://www.toronto.ca/legdocs/mmis/2015/zb/bgrd/backgroundfile-76755.pdf",
+    "reason": "ambiguous reference-less multi-contract report"
+   },
+   {
+    "sha256": "a566fdb85810f415c9a447832ac3bf5d7738fb4dde7d5c221ca027c90e6ba1c2",
+    "extractor_version": "v1-b63aa8c835ae",
+    "result_sha256": "26aad46d590017dcd04ee849f3b1db7b08ab20464edfd8a7c0233a09001f3989",
+    "contract_index": 0,
+    "report_url": "https://www.toronto.ca/legdocs/mmis/2015/zb/bgrd/backgroundfile-83357.pdf",
+    "reason": "ambiguous reference-less multi-contract report"
+   },
+   {
+    "sha256": "a566fdb85810f415c9a447832ac3bf5d7738fb4dde7d5c221ca027c90e6ba1c2",
+    "extractor_version": "v1-b63aa8c835ae",
+    "result_sha256": "26aad46d590017dcd04ee849f3b1db7b08ab20464edfd8a7c0233a09001f3989",
+    "contract_index": 2,
+    "report_url": "https://www.toronto.ca/legdocs/mmis/2015/zb/bgrd/backgroundfile-83357.pdf",
+    "reason": "ambiguous reference-less multi-contract report"
+   },
+   {
+    "sha256": "a566fdb85810f415c9a447832ac3bf5d7738fb4dde7d5c221ca027c90e6ba1c2",
+    "extractor_version": "v1-b63aa8c835ae",
+    "result_sha256": "26aad46d590017dcd04ee849f3b1db7b08ab20464edfd8a7c0233a09001f3989",
+    "contract_index": 3,
+    "report_url": "https://www.toronto.ca/legdocs/mmis/2015/zb/bgrd/backgroundfile-83357.pdf",
+    "reason": "ambiguous reference-less multi-contract report"
+   },
+   {
+    "sha256": "3e8ca1a190a5c83a2e243715983d1e709501b50912af30acb837a03b8aac9475",
+    "extractor_version": "v1-b63aa8c835ae",
+    "result_sha256": "7b6a3a2ca563bd3dfbc4860abfff5065eba0cd3153d7a60716433bc4773375d2",
+    "contract_index": 0,
+    "report_url": "https://www.toronto.ca/legdocs/mmis/2015/zb/bgrd/backgroundfile-83331.pdf",
+    "reason": "ambiguous reference-less multi-contract report"
+   },
+   {
+    "sha256": "3e8ca1a190a5c83a2e243715983d1e709501b50912af30acb837a03b8aac9475",
+    "extractor_version": "v1-b63aa8c835ae",
+    "result_sha256": "7b6a3a2ca563bd3dfbc4860abfff5065eba0cd3153d7a60716433bc4773375d2",
+    "contract_index": 1,
+    "report_url": "https://www.toronto.ca/legdocs/mmis/2015/zb/bgrd/backgroundfile-83331.pdf",
+    "reason": "ambiguous reference-less multi-contract report"
+   },
+   {
+    "sha256": "3e8ca1a190a5c83a2e243715983d1e709501b50912af30acb837a03b8aac9475",
+    "extractor_version": "v1-b63aa8c835ae",
+    "result_sha256": "7b6a3a2ca563bd3dfbc4860abfff5065eba0cd3153d7a60716433bc4773375d2",
+    "contract_index": 2,
+    "report_url": "https://www.toronto.ca/legdocs/mmis/2015/zb/bgrd/backgroundfile-83331.pdf",
+    "reason": "ambiguous reference-less multi-contract report"
+   },
+   {
+    "sha256": "ac2fada4a0635a9921575a78cf43bb0b6b5fac6372b4d7e64ce5b392d743bae8",
+    "extractor_version": "v1-b63aa8c835ae",
+    "result_sha256": "bf5f771f6bdbadc0e1371eba52079ded9c81d8cad0386fb8f3ab929eb02dbc9b",
+    "contract_index": 0,
+    "report_url": "https://www.toronto.ca/legdocs/mmis/2016/zb/bgrd/backgroundfile-90659.pdf",
+    "reason": "ambiguous reference-less multi-contract report"
+   },
+   {
+    "sha256": "ac2fada4a0635a9921575a78cf43bb0b6b5fac6372b4d7e64ce5b392d743bae8",
+    "extractor_version": "v1-b63aa8c835ae",
+    "result_sha256": "bf5f771f6bdbadc0e1371eba52079ded9c81d8cad0386fb8f3ab929eb02dbc9b",
+    "contract_index": 1,
+    "report_url": "https://www.toronto.ca/legdocs/mmis/2016/zb/bgrd/backgroundfile-90659.pdf",
+    "reason": "ambiguous reference-less multi-contract report"
+   },
+   {
+    "sha256": "b616130fcc0c38005804e2554595814b23cfaae4f2d04e661922429a8959f313",
+    "extractor_version": "v1-b63aa8c835ae",
+    "result_sha256": "f4159ee9a1fb505dd8000a03990c4a1261b5d86acb2c035bd1174fc054a53be0",
+    "contract_index": 0,
+    "report_url": "https://www.toronto.ca/legdocs/mmis/2017/zb/bgrd/backgroundfile-103389.pdf",
+    "reason": "ambiguous reference-less multi-contract report"
+   },
+   {
+    "sha256": "b616130fcc0c38005804e2554595814b23cfaae4f2d04e661922429a8959f313",
+    "extractor_version": "v1-b63aa8c835ae",
+    "result_sha256": "f4159ee9a1fb505dd8000a03990c4a1261b5d86acb2c035bd1174fc054a53be0",
+    "contract_index": 1,
+    "report_url": "https://www.toronto.ca/legdocs/mmis/2017/zb/bgrd/backgroundfile-103389.pdf",
+    "reason": "ambiguous reference-less multi-contract report"
+   },
+   {
+    "sha256": "cfcaf5853739866184b1c294f5d764dbeac5cd47ce1aff067c82dae1334fdf11",
+    "extractor_version": "v1-b63aa8c835ae",
+    "result_sha256": "87608138a996e66d5cda0a836b81327e9f9824af5eec6a3fc5a6da63e19a91ad",
+    "contract_index": 0,
+    "report_url": "https://www.toronto.ca/legdocs/mmis/2019/zb/bgrd/backgroundfile-124311.pdf",
+    "reason": "ambiguous reference-less multi-contract report"
+   },
+   {
+    "sha256": "cfcaf5853739866184b1c294f5d764dbeac5cd47ce1aff067c82dae1334fdf11",
+    "extractor_version": "v1-b63aa8c835ae",
+    "result_sha256": "87608138a996e66d5cda0a836b81327e9f9824af5eec6a3fc5a6da63e19a91ad",
+    "contract_index": 1,
+    "report_url": "https://www.toronto.ca/legdocs/mmis/2019/zb/bgrd/backgroundfile-124311.pdf",
+    "reason": "ambiguous reference-less multi-contract report"
+   },
+   {
+    "sha256": "6dd54ba0f19e2c8402be512ceae4dbf833abaceac698562cd3102e42c2d33099",
+    "extractor_version": "v1-b63aa8c835ae",
+    "result_sha256": "c0714932bfbe9039d47fd0fd1b63546b09ce852b28164e5bdf2c7d9c0504d45b",
+    "contract_index": 2,
+    "report_url": "https://www.toronto.ca/legdocs/mmis/2019/zb/bgrd/backgroundfile-124291.pdf",
+    "reason": "ambiguous reference-less multi-contract report"
+   },
+   {
+    "sha256": "6dd54ba0f19e2c8402be512ceae4dbf833abaceac698562cd3102e42c2d33099",
+    "extractor_version": "v1-b63aa8c835ae",
+    "result_sha256": "c0714932bfbe9039d47fd0fd1b63546b09ce852b28164e5bdf2c7d9c0504d45b",
+    "contract_index": 3,
+    "report_url": "https://www.toronto.ca/legdocs/mmis/2019/zb/bgrd/backgroundfile-124291.pdf",
+    "reason": "ambiguous reference-less multi-contract report"
+   },
+   {
+    "sha256": "6dd54ba0f19e2c8402be512ceae4dbf833abaceac698562cd3102e42c2d33099",
+    "extractor_version": "v1-b63aa8c835ae",
+    "result_sha256": "c0714932bfbe9039d47fd0fd1b63546b09ce852b28164e5bdf2c7d9c0504d45b",
+    "contract_index": 4,
+    "report_url": "https://www.toronto.ca/legdocs/mmis/2019/zb/bgrd/backgroundfile-124291.pdf",
+    "reason": "ambiguous reference-less multi-contract report"
+   },
+   {
+    "sha256": "6dd54ba0f19e2c8402be512ceae4dbf833abaceac698562cd3102e42c2d33099",
+    "extractor_version": "v1-b63aa8c835ae",
+    "result_sha256": "c0714932bfbe9039d47fd0fd1b63546b09ce852b28164e5bdf2c7d9c0504d45b",
+    "contract_index": 5,
+    "report_url": "https://www.toronto.ca/legdocs/mmis/2019/zb/bgrd/backgroundfile-124291.pdf",
+    "reason": "ambiguous reference-less multi-contract report"
+   },
+   {
+    "sha256": "6dd54ba0f19e2c8402be512ceae4dbf833abaceac698562cd3102e42c2d33099",
+    "extractor_version": "v1-b63aa8c835ae",
+    "result_sha256": "c0714932bfbe9039d47fd0fd1b63546b09ce852b28164e5bdf2c7d9c0504d45b",
+    "contract_index": 6,
+    "report_url": "https://www.toronto.ca/legdocs/mmis/2019/zb/bgrd/backgroundfile-124291.pdf",
+    "reason": "ambiguous reference-less multi-contract report"
+   },
+   {
+    "sha256": "6dd54ba0f19e2c8402be512ceae4dbf833abaceac698562cd3102e42c2d33099",
+    "extractor_version": "v1-b63aa8c835ae",
+    "result_sha256": "c0714932bfbe9039d47fd0fd1b63546b09ce852b28164e5bdf2c7d9c0504d45b",
+    "contract_index": 7,
+    "report_url": "https://www.toronto.ca/legdocs/mmis/2019/zb/bgrd/backgroundfile-124291.pdf",
+    "reason": "ambiguous reference-less multi-contract report"
+   },
+   {
+    "sha256": "6dd54ba0f19e2c8402be512ceae4dbf833abaceac698562cd3102e42c2d33099",
+    "extractor_version": "v1-b63aa8c835ae",
+    "result_sha256": "c0714932bfbe9039d47fd0fd1b63546b09ce852b28164e5bdf2c7d9c0504d45b",
+    "contract_index": 8,
+    "report_url": "https://www.toronto.ca/legdocs/mmis/2019/zb/bgrd/backgroundfile-124291.pdf",
+    "reason": "ambiguous reference-less multi-contract report"
+   },
+   {
+    "sha256": "6dd54ba0f19e2c8402be512ceae4dbf833abaceac698562cd3102e42c2d33099",
+    "extractor_version": "v1-b63aa8c835ae",
+    "result_sha256": "c0714932bfbe9039d47fd0fd1b63546b09ce852b28164e5bdf2c7d9c0504d45b",
+    "contract_index": 9,
+    "report_url": "https://www.toronto.ca/legdocs/mmis/2019/zb/bgrd/backgroundfile-124291.pdf",
+    "reason": "ambiguous reference-less multi-contract report"
+   },
+   {
+    "sha256": "509ceabe3c44257a9e269fe2d5f6fef7b18e5145196d058d21c1659966ca13d8",
+    "extractor_version": "v1-b63aa8c835ae",
+    "result_sha256": "3588a12aff1bac3398f60f690d4fd66e4e85f76d08d8f099f4385d77598a51f3",
+    "contract_index": 0,
+    "report_url": "https://www.toronto.ca/legdocs/mmis/2019/zb/bgrd/backgroundfile-126677.pdf",
+    "reason": "ambiguous reference-less multi-contract report"
+   },
+   {
+    "sha256": "509ceabe3c44257a9e269fe2d5f6fef7b18e5145196d058d21c1659966ca13d8",
+    "extractor_version": "v1-b63aa8c835ae",
+    "result_sha256": "3588a12aff1bac3398f60f690d4fd66e4e85f76d08d8f099f4385d77598a51f3",
+    "contract_index": 1,
+    "report_url": "https://www.toronto.ca/legdocs/mmis/2019/zb/bgrd/backgroundfile-126677.pdf",
+    "reason": "ambiguous reference-less multi-contract report"
+   },
+   {
+    "sha256": "9c76da715f9eee5e4eb4fe533bc5b0c5a2ef569fb5c6dad04ea7b5e230f4e0f5",
+    "extractor_version": "v1-b63aa8c835ae",
+    "result_sha256": "1bb0279f3c18a560caabc16f2ddaf3a579e31e87853eb50e723af8096b04c121",
+    "contract_index": 0,
+    "report_url": "https://www.toronto.ca/legdocs/mmis/2019/zb/bgrd/backgroundfile-126705.pdf",
+    "reason": "ambiguous reference-less multi-contract report"
+   },
+   {
+    "sha256": "9c76da715f9eee5e4eb4fe533bc5b0c5a2ef569fb5c6dad04ea7b5e230f4e0f5",
+    "extractor_version": "v1-b63aa8c835ae",
+    "result_sha256": "1bb0279f3c18a560caabc16f2ddaf3a579e31e87853eb50e723af8096b04c121",
+    "contract_index": 5,
+    "report_url": "https://www.toronto.ca/legdocs/mmis/2019/zb/bgrd/backgroundfile-126705.pdf",
+    "reason": "ambiguous reference-less multi-contract report"
+   },
+   {
+    "sha256": "9c76da715f9eee5e4eb4fe533bc5b0c5a2ef569fb5c6dad04ea7b5e230f4e0f5",
+    "extractor_version": "v1-b63aa8c835ae",
+    "result_sha256": "1bb0279f3c18a560caabc16f2ddaf3a579e31e87853eb50e723af8096b04c121",
+    "contract_index": 8,
+    "report_url": "https://www.toronto.ca/legdocs/mmis/2019/zb/bgrd/backgroundfile-126705.pdf",
+    "reason": "ambiguous reference-less multi-contract report"
+   },
+   {
+    "sha256": "9c76da715f9eee5e4eb4fe533bc5b0c5a2ef569fb5c6dad04ea7b5e230f4e0f5",
+    "extractor_version": "v1-b63aa8c835ae",
+    "result_sha256": "1bb0279f3c18a560caabc16f2ddaf3a579e31e87853eb50e723af8096b04c121",
+    "contract_index": 11,
+    "report_url": "https://www.toronto.ca/legdocs/mmis/2019/zb/bgrd/backgroundfile-126705.pdf",
+    "reason": "ambiguous reference-less multi-contract report"
+   }
+  ],
+  "ep": [
+   {
+    "sha256": "868018af806d8e6816118a6f08a93c26a6f7e3f8d7501d13a240b0a453b3343d",
+    "extractor_version": "v1-b63aa8c835ae",
+    "result_sha256": "c2967a73a137defa0861ab0f0847c3704f8a34bc4ee799d345f07bab88114225",
+    "contract_index": 1,
+    "report_url": "https://www.toronto.ca/legdocs/mmis/2019/ep/bgrd/backgroundfile-139154.pdf",
+    "reason": "ambiguous reference-less multi-contract report"
+   },
+   {
+    "sha256": "035b9d923799294e0da4cb75cd9bc69f044220b6a64ca0c3387a5395d85246eb",
+    "extractor_version": "v1-b63aa8c835ae",
+    "result_sha256": "38c4a053ee80b50fa4060a92f13ee4ea58a80937051522399e7ddc3b5a2d32bd",
+    "contract_index": 1,
+    "report_url": "https://www.toronto.ca/legdocs/mmis/2021/ep/bgrd/backgroundfile-167548.pdf",
+    "reason": "ambiguous reference-less multi-contract report"
+   },
+   {
+    "sha256": "c359dbfc9f450ecc9c8cf875669b2b2ca3e938358b68cdbcd0be39fcc0724bb4",
+    "extractor_version": "v1-b63aa8c835ae",
+    "result_sha256": "7303063fb1a1fcfab9c113426369f877a16d27b6cfd4a0cbd5f68fa0c6656ee7",
+    "contract_index": 1,
+    "report_url": "https://www.toronto.ca/legdocs/mmis/2021/ep/bgrd/backgroundfile-172085.pdf",
+    "reason": "ambiguous reference-less multi-contract report"
+   },
+   {
+    "sha256": "9bae18077183aafc97ed7b54db153226c071d0487a4a12d7e34804929f0e3510",
+    "extractor_version": "v1-b63aa8c835ae",
+    "result_sha256": "170f608928e8ae8d4389c7f09c30047433c56cb7136b5b2f421bfdea26fd540e",
+    "contract_index": 0,
+    "report_url": "https://www.toronto.ca/legdocs/mmis/2023/ep/bgrd/backgroundfile-233915.pdf",
+    "reason": "ambiguous reference-less multi-contract report"
+   },
+   {
+    "sha256": "9bae18077183aafc97ed7b54db153226c071d0487a4a12d7e34804929f0e3510",
+    "extractor_version": "v1-b63aa8c835ae",
+    "result_sha256": "170f608928e8ae8d4389c7f09c30047433c56cb7136b5b2f421bfdea26fd540e",
+    "contract_index": 1,
+    "report_url": "https://www.toronto.ca/legdocs/mmis/2023/ep/bgrd/backgroundfile-233915.pdf",
+    "reason": "ambiguous reference-less multi-contract report"
+   },
+   {
+    "sha256": "7e2946ed0e11dfb76916f85dfb080d915c040acb5d50042d9bd5c476aef95178",
+    "extractor_version": "v1-b63aa8c835ae",
+    "result_sha256": "026cf1f75e5df762a99a563c5d96f72d80067ef173b74ac0c0794ba99b27a5f1",
+    "contract_index": 0,
+    "report_url": "https://www.toronto.ca/legdocs/mmis/2025/ep/bgrd/backgroundfile-258335.pdf",
     "reason": "ambiguous reference-less multi-contract report"
    }
   ]
