@@ -1,0 +1,97 @@
+[
+  {
+    "priority": 1,
+    "task": "Review and restore the three held committee submission lists",
+    "issue": 164,
+    "document_numbers": [
+      "2305234907",
+      "3448368603",
+      "4929553192"
+    ],
+    "source_named_submitters": 19,
+    "caveat": "Names/list membership checked against hash-verified PDFs; review cached statuses before any promotion. No new award prices or identities."
+  },
+  {
+    "priority": 2,
+    "task": "Review remaining cached panel-report replay candidates",
+    "issue": 163,
+    "counterfactual_newly_covered_total": 44,
+    "counterfactual_documents": [
+      "1205175043",
+      "1692017000",
+      "1878555097",
+      "2020584183",
+      "2219202727",
+      "2305234907",
+      "2938706981",
+      "3122348800",
+      "3202177127",
+      "3251380249",
+      "3448368603",
+      "3707163238",
+      "3743124423",
+      "3782552477",
+      "3817210853",
+      "3841985700",
+      "3940063088",
+      "3974631288",
+      "3988526049",
+      "3992823329",
+      "4044208417",
+      "4110457678",
+      "4125607314",
+      "4291231363",
+      "4343390536",
+      "4355949486",
+      "4395121516",
+      "4556210399",
+      "4566099607",
+      "4815572097",
+      "4920180000",
+      "4929553192",
+      "6026180062",
+      "6129163181",
+      "8420180000",
+      "9117165089",
+      "9117175085",
+      "9117177105",
+      "9117177253",
+      "9117187018",
+      "9118187175",
+      "9119167124",
+      "9119177205",
+      "9148187135"
+    ],
+    "caveat": "44 includes the three committee targets. Copy-only result, not 44 approved recoveries; mixed call identifiers, prequalification and source attribution remain to check. Replay also changes three prior statuses."
+  },
+  {
+    "priority": 3,
+    "task": "Locate the supplemental ferry award report",
+    "issue": 164,
+    "document_numbers": [
+      "4053424337"
+    ],
+    "caveat": "Held process report does not publish the final bidder list and explicitly points to a later supplemental report."
+  },
+  {
+    "priority": 4,
+    "task": "Investigate remaining source discovery and historical call linkage in one ranked inventory",
+    "issues": [
+      164,
+      167
+    ],
+    "candidate_count": 4072,
+    "caveat": "No held City PDF association or explicit document-number mention identified by this audit. This is not proof of no report, no competition, or permanent inaccessibility. Do not assign bidders from later tenders to their parent RFSQ."
+  },
+  {
+    "priority": 5,
+    "task": "Keep count-only and prequalification cases visibly incomplete",
+    "issue": 163,
+    "document_numbers": [
+      "5425112657",
+      "3512316731",
+      "4906085019"
+    ],
+    "caveat": "The first declares two submissions without bidder names. The latter two are parent/prequalification mentions in later tender reports; these lists do not establish bids on the parent."
+  }
+]

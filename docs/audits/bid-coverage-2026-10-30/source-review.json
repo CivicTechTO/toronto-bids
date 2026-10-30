@@ -1,0 +1,111 @@
+{
+  "reviewed_contexts": [
+    {
+      "document_number": "2305234907",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2021/cc/bgrd/backgroundfile-166407.pdf",
+      "sha256": "fd744df3133d0b37057758be4c7fa5b93b0703ffed74acf7216050ae3baf9b7f",
+      "extractor_version": "v1-b63aa8c835ae",
+      "result_sha256": "dbb2a1352aa970e4614f52682d4260c74d4ae14a60c98eb586683d1a70da9c1e",
+      "classification": "named_submitter_list",
+      "source_excerpt": "sals was May 12, 2020. At the time of closing, proposals were received from the following six (6) Proponents: \u2022 Asplundh Canada ULC \u2022 Davey Tree Expert Co. of Canada, Limited \u2022 Diamond Tree Care & Consulting Inc. \u2022 Ontario Line Clearing & Tree Experts Inc. \u2022 Tree Doctors Inc. \u2022 W.M Weller Tree Service Ltd A formal evaluation committee was established for the purpose of reviewing responses received from the six (6) Proponents. The proposals were evaluated in compliance with the criteria set out in the NRFP. The evaluation process described in the NRFP consisted of four (4) stages and each of the proposals were evaluated against the criteria as follows: Stage 1: Mandatory Submission Requirements Stage 2: Rated Criteria Evaluation (T",
+      "named_submitters": [
+        "Asplundh Canada ULC",
+        "Davey Tree Expert Co. of Canada, Limited",
+        "Diamond Tree Care & Consulting Inc.",
+        "Ontario Line Clearing & Tree Experts Inc.",
+        "Tree Doctors Inc.",
+        "W.M Weller Tree Service Ltd"
+      ],
+      "source_checked_from_held_pdf": true,
+      "financial_or_status_recovery_approved": false
+    },
+    {
+      "document_number": "3448368603",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2023/gg/bgrd/backgroundfile-234562.pdf",
+      "sha256": "4064ee4e66247b3fc58c1809036a7f4719f79ac530188116dc0322ee13e35f7b",
+      "extractor_version": "v1-b63aa8c835ae",
+      "result_sha256": "a8d2b9aaa586be86892c88e242bcd197375a1d41ef689c4135f8f9a69685cb85",
+      "classification": "named_submitter_list",
+      "source_excerpt": " date of September 14, 2022 and an issuance of eight (8) addenda. The following eight (8) Suppliers submitted proposals: 1. AECOM Canada Limited 2. CH2M Hill Canada Limited 3. Hatch Limited 4. TYLin International Canada Incorporated 5. R.V. Anderson Associates Limited 6. Stantec Consulting Limited 7. SNC-Lavalin Inc.* 8. WSP Canada Inc. * Supplier was found non-compliant with the mandatory requirements. The Request for Proposal was structured as a \"two-envelope\" process and the submissions included a detailed Technical Proposal (Envelope 1) and a separate sealed envelope (Envelope 2) with a Cost of Services Proposal (or Proposals). The Award of Ariba Document Number 3448368603 to CH2M Hill Canada Limited and Stantec Consulting Lim",
+      "named_submitters": [
+        "AECOM Canada Limited",
+        "CH2M Hill Canada Limited",
+        "Hatch Limited",
+        "TYLin International Canada Incorporated",
+        "R.V. Anderson Associates Limited",
+        "Stantec Consulting Limited",
+        "SNC-Lavalin Inc.",
+        "WSP Canada Inc."
+      ],
+      "source_checked_from_held_pdf": true,
+      "financial_or_status_recovery_approved": false
+    },
+    {
+      "document_number": "4929553192",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2025/gg/bgrd/backgroundfile-255013.pdf",
+      "sha256": "064fec5a1a1e313d383bca7ed116eae34c18308d0f1d6fb8d1e924f610830674",
+      "extractor_version": "v1-b63aa8c835ae",
+      "result_sha256": "346fc57739d6df7093d1c48c59ea2254715d2cc7605338be1e3a4660b7153dd4",
+      "classification": "named_submitter_list",
+      "source_excerpt": "date of February 28, 2025, and the issuance of eight addenda. This resulted in a total of five submissions received on February 28, 2025, from the following Suppliers: 1. EXP Services Inc.* 2. Hatch Ltd. 3. Parsons Inc.* 4. Stantec Consulting Ltd. 5. WSP Canada Inc. *Supplier did not meet the minimum technical threshold Range of scores: 91.4 to 84.3 Award of Doc4929553192 for Professional Consulting Services for the Bridge Program Management Assignment No. 3 Page 3 of 5 The Request for Proposals was structured as a \"two-envelope\" submission model that included a detailed Technical Proposal (Envelope 1) and a separate sealed envelope with a Cost of Services Proposal (Envelope 2). The selection process stipulated that the envelopes ",
+      "named_submitters": [
+        "EXP Services Inc.",
+        "Hatch Ltd.",
+        "Parsons Inc.",
+        "Stantec Consulting Ltd.",
+        "WSP Canada Inc."
+      ],
+      "source_checked_from_held_pdf": true,
+      "financial_or_status_recovery_approved": false
+    },
+    {
+      "document_number": "4053424337",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2024/gg/bgrd/backgroundfile-247094.pdf",
+      "sha256": "fabdd1068cbf8a56c0018d92d142dd4936197c1eb119b77a98e87fff84e1ae80",
+      "extractor_version": "v1-b63aa8c835ae",
+      "result_sha256": "0efaf2be82039ecbe5ca3f94594ced73464e9a0508856afd861f94fc66639b71",
+      "classification": "process_report_requires_supplemental_award_report",
+      "source_excerpt": "sels, and the intention of staff to continue negotiations with the preferred proponent. A supplemental report, with full details on the recommended contract award, delivery schedule and financial impact, will be submitted to General Government Committee for its meeting of July 2, 2024. Award of Negotiable Request for Proposal Document NO. 4053424337 Page 1 of 8 Consideration of this report at July 2024 City Council is essential to preserve the current planned delivery schedule for the new vessels. RECOMMENDATIONS The General Manager, Parks, Forestry and Recreation and Chief Procurement Officer recommend that: 1. This report be received for information. FINANCIAL IMPACT There is currently no financial impact from the recommendation",
+      "named_submitters": [],
+      "source_checked_from_held_pdf": true,
+      "financial_or_status_recovery_approved": false
+    },
+    {
+      "document_number": "5425112657",
+      "source_url": "https://secure.toronto.ca/c3api_upload/retrieve/pmmd_solicitations/SGT0nTXgOc2V8kHBGf6Pzg",
+      "sha256": "750d009c5a886d8066f9f76e72c51350cc6a31830750eaf0a1d000c1fcb06786",
+      "extractor_version": "v1-b63aa8c835ae",
+      "result_sha256": "df98478daabae12423ac8e8387bc8942ba7d4e1be3291c951d4b052f2b3c69d9",
+      "classification": "declares_two_bids_without_published_bidder_list",
+      "source_excerpt": "Solicitation Closed Date (mmm/dd/yyyy) January 23, 2026 Number of Addenda Issued Five (5) Number of Bids Received two (2) Page 2 of 2",
+      "named_submitters": [],
+      "source_checked_from_held_pdf": true,
+      "financial_or_status_recovery_approved": false
+    },
+    {
+      "document_number": "4906085019",
+      "source_url": "https://secure.toronto.ca/c3api_upload/retrieve/pmmd_solicitations/wxCW353EDCbcriHYwZ9NyA",
+      "sha256": "54ecff46a04482450e221a7076f8d74431bff939d131acf9423b47fc0195005e",
+      "extractor_version": "v1-b63aa8c835ae",
+      "result_sha256": "3254db86b934dd5b8b1d55c44987096ebf4d5237c4037c028b46f16b4c69621d",
+      "classification": "later_tender_mentions_prequalification_not_target_bids",
+      "source_excerpt": "ing Club Refrigeration and Rink Slab Replacement and SOGR Solicitation Title Improvements Open to Suppliers Pre-Qualified under RFSQ Doc4906085019 Ward 19 - Beaches-East York Contract No. (if applicable) 25-PR-024 Ariba Document No. (Ex. DocXXXXXXXXXX) Doc5519898277 East York Curling Club Refrigeration and Rink Slab Replacement and State of Description of Work Good Repair Improvements Term of the Contract (Excluding option periods) 3 Years Number of Optional Renewal Periods N/A 2. Recommended Supplier (s) Supplier Award Value (net of all applicable taxes and charges) FRANK PELLEGRINO GEN CONT LTD $ 3,388,800.00 Total Contract Award Value $ 3,388,800.00 Are the recommended Supplier(s) a Joint Venture (JV)? This is not a Joint Ventu",
+      "named_submitters": [],
+      "source_checked_from_held_pdf": true,
+      "financial_or_status_recovery_approved": false
+    },
+    {
+      "document_number": "3512316731",
+      "source_url": "https://secure.toronto.ca/c3api_upload/retrieve/pmmd_solicitations/78gcUT5S9V5--CjnM08S3g",
+      "sha256": "19e913351c70b57182793740d731fe05e59f4bad2120079bc996d9900c353621",
+      "extractor_version": "v1-b63aa8c835ae",
+      "result_sha256": "34e0e45cc0df126b78009e4b88d77547f39dd332b9602295209458be1d706535",
+      "classification": "later_tender_mentions_prequalification_not_target_bids",
+      "source_excerpt": "lect Division Corporate Real Estate Management Solicitation Type RFT (Request for Tender) Ariba Document No. 5400241558, Mechanical and Lighting System Upgrade at Solicitation Title West Scarborough Community Centre at 313 Pharmacy Avenue, Toronto Ward 20 - Scarborough Southwest Contract No. (if applicable) RFSQ DOC# 3512316731 Ariba Document No. (Ex. DocXXXXXXXXXX) Doc5400241558 Mechanical and Lighting System Upgrade at West Scarborough Community Description of Work Centre Term of the Contract (Excluding option periods) 18 months Number of Optional Renewal Periods 0 2. Recommended Supplier (s) Supplier Award Value (net of all applicable taxes and charges) Anacond Contracting Inc $ 2,145,800.00 Total Contract Award Value $ 2,145,8",
+      "named_submitters": [],
+      "source_checked_from_held_pdf": true,
+      "financial_or_status_recovery_approved": false
+    }
+  ],
+  "scope": "Seven targeted source contexts, not an exhaustive review of the 4,108 missing solicitations"
+}

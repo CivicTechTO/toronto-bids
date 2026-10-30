@@ -1,0 +1,180 @@
+{
+  "scope": "Temporary-copy counterfactual; cached model output is not source approval",
+  "model_requests": 0,
+  "backfill": {
+    "committee": {
+      "corpus": "committee",
+      "docs_processed": 8,
+      "contracts_refused": 0,
+      "contract_observations_refused": 0,
+      "aliases_normalized": 0,
+      "aliases_merged": 0,
+      "solicitations_written": 0,
+      "bids_written": 36,
+      "awards_written": 0,
+      "coverage": null
+    },
+    "ba_report": {
+      "corpus": "ba_report",
+      "docs_processed": 229,
+      "contracts_refused": 0,
+      "contract_observations_refused": 0,
+      "aliases_normalized": 0,
+      "aliases_merged": 0,
+      "solicitations_written": 0,
+      "bids_written": 1109,
+      "awards_written": 0,
+      "coverage": null
+    }
+  },
+  "before": {
+    "fully_labelled_non_award_documents": [],
+    "awarded_city_solicitations": 6444,
+    "with_bids": 2336,
+    "without_bids": 4108,
+    "without_bids_percent": 63.75,
+    "covered_only_through_reference_link": 1009,
+    "groups": {
+      "cached_bid_observations_need_attribution_review": 34,
+      "current_cache_without_named_bids_needs_source_review": 2,
+      "no_report_association_or_explicit_held_mention": 4072
+    },
+    "issue_year_cohorts": {
+      "through_2012": {
+        "awarded": 706,
+        "without_bids": 701
+      },
+      "2013_2018": {
+        "awarded": 3470,
+        "without_bids": 2467
+      },
+      "2019": {
+        "awarded": 479,
+        "without_bids": 424
+      },
+      "2020_onward": {
+        "awarded": 1789,
+        "without_bids": 516
+      },
+      "unknown": {
+        "awarded": 0,
+        "without_bids": 0
+      }
+    },
+    "ambiguous_reference_count": 0,
+    "canonical_bid_attribution_mismatches": [],
+    "missing_with_stored_report": 5,
+    "missing_with_explicit_held_document_mention": 36,
+    "confirmed_zero_bid_solicitations": null
+  },
+  "after": {
+    "fully_labelled_non_award_documents": [],
+    "awarded_city_solicitations": 6444,
+    "with_bids": 2380,
+    "without_bids": 4064,
+    "without_bids_percent": 63.07,
+    "covered_only_through_reference_link": 1026,
+    "groups": {
+      "cached_bid_observations_need_attribution_review": 9,
+      "current_cache_without_named_bids_needs_source_review": 2,
+      "no_report_association_or_explicit_held_mention": 4053
+    },
+    "issue_year_cohorts": {
+      "through_2012": {
+        "awarded": 706,
+        "without_bids": 701
+      },
+      "2013_2018": {
+        "awarded": 3470,
+        "without_bids": 2450
+      },
+      "2019": {
+        "awarded": 479,
+        "without_bids": 422
+      },
+      "2020_onward": {
+        "awarded": 1789,
+        "without_bids": 491
+      },
+      "unknown": {
+        "awarded": 0,
+        "without_bids": 0
+      }
+    },
+    "ambiguous_reference_count": 0,
+    "canonical_bid_attribution_mismatches": [],
+    "missing_with_stored_report": 2,
+    "missing_with_explicit_held_document_mention": 11,
+    "confirmed_zero_bid_solicitations": null
+  },
+  "newly_covered": [
+    "1205175043",
+    "1692017000",
+    "1878555097",
+    "2020584183",
+    "2219202727",
+    "2305234907",
+    "2938706981",
+    "3122348800",
+    "3202177127",
+    "3251380249",
+    "3448368603",
+    "3707163238",
+    "3743124423",
+    "3782552477",
+    "3817210853",
+    "3841985700",
+    "3940063088",
+    "3974631288",
+    "3988526049",
+    "3992823329",
+    "4044208417",
+    "4110457678",
+    "4125607314",
+    "4291231363",
+    "4343390536",
+    "4355949486",
+    "4395121516",
+    "4556210399",
+    "4566099607",
+    "4815572097",
+    "4920180000",
+    "4929553192",
+    "6026180062",
+    "6129163181",
+    "8420180000",
+    "9117165089",
+    "9117175085",
+    "9117177105",
+    "9117177253",
+    "9117187018",
+    "9118187175",
+    "9119167124",
+    "9119177205",
+    "9148187135"
+  ],
+  "newly_uncovered": [],
+  "added_bid_rows": 1010,
+  "removed_bid_ids": [],
+  "changed_prior_bids": [
+    {
+      "id": 297204,
+      "fields": [
+        "status"
+      ]
+    },
+    {
+      "id": 297205,
+      "fields": [
+        "status"
+      ]
+    },
+    {
+      "id": 297206,
+      "fields": [
+        "status"
+      ]
+    }
+  ],
+  "award_solicitation_and_cache_payloads_preserved": true
+}
