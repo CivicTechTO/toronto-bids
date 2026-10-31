@@ -135,3 +135,13 @@ def test_partial_reparse_cannot_sweep_prior_bid_observations(conn,monkeypatch):
  before=[tuple(r) for r in conn.execute('SELECT * FROM bid ORDER BY id')];failures=[]
  assert p.store_bids(conn,{'2015.BD1':'held'},failures=failures)==0
  assert failures and [tuple(r) for r in conn.execute('SELECT * FROM bid ORDER BY id')]==before
+
+
+def test_composite_title_matching_keeps_its_historical_period(conn):
+ from toronto_bids.models import CompositeAward
+ from toronto_bids.sources.bid_award_panel import match_composite_titles
+ put(conn,Solicitation('5000000001',issue_date='2015-01-01'))
+ put(conn,Award('5000000001',supplier_name_raw='Same Firm Limited',award_amount='100',source='odata'))
+ put(conn,CompositeAward('1201-09-5016',reference='2009.BD1.1',title='Historical contract',supplier_name_raw='Same Firm Ltd.',award_value='100',source='bid_committee_composite'))
+ assert match_composite_titles(conn)==0
+ assert conn.execute('SELECT title FROM solicitation').fetchone()[0] is None

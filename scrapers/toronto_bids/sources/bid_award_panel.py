@@ -1107,11 +1107,12 @@ def match_composite_titles(conn) -> int:
     items = [
         {
             "title": r["title"],
+            "reference": r["reference"],
             "winner_raw": r["supplier_name_raw"],
             "award_value": r["award_value_numeric"],
         }
         for r in conn.execute(
-            "SELECT title, supplier_name_raw, award_value_numeric FROM composite_award "
+            "SELECT title, reference, supplier_name_raw, award_value_numeric FROM composite_award "
             "WHERE award_value_numeric IS NOT NULL AND supplier_name_raw IS NOT NULL"
         )
     ]
