@@ -643,6 +643,7 @@ def _cmd_enrich_titles(args) -> int:
     )
     from toronto_bids.sources.legacy_titles import fill_titles_from_legacy
 
+    failures = []
     conn = _open_db()
     try:
         before = conn.execute(
@@ -665,7 +666,7 @@ def _cmd_enrich_titles(args) -> int:
             print(f"  staff reports indexed: {store_background_pdfs(conn, agendas)}")
             # The same pages tabulate every bid, including the losers that spec
             # §2.5.2 calls unrecoverable (#84).
-            print(f"  bids extracted       : {store_bids(conn, agendas)}")
+            print(f"  bids extracted       : {store_bids(conn, agendas, failures=failures, log=print)}")
             print(f"  titles from council : {fill_titles_from_council(conn)}")
             # Pre-Ariba items name no document number, so they are matched on
             # (supplier, award value) instead (#77).
@@ -732,7 +733,7 @@ def _cmd_enrich_titles(args) -> int:
             print(f"  {source:<20} {n:>5}")
     finally:
         conn.close()
-    return 0
+    return 1 if failures else 0
 
 
 def _bid_count(conn, source: str) -> int:

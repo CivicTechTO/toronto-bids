@@ -140,3 +140,53 @@ def test_a_ba_agenda_is_untouched_by_the_bd_path():
     seen = [(b["reference"], b["bidder_name_raw"], b["bid_price"]) for b in bids]
     assert len(seen) == len(set(seen)), "a bid was parsed twice"
     assert len(bids) == 25
+
+
+def test_real_bd_header_continuation_and_footer_preserve_every_relation():
+    """BD25.1 had eight shifted pairs despite equal column lengths after one header."""
+    bids = parse_bid_tables(_fixture('2015.BD25.1'), '2015.BD25')
+    assert [(b['bidder_name_raw'], b['bid_price']) for b in bids] == [
+        ('Bond Paving and Construction Inc.', '$ 286,536.36'),
+        ('Serve Construction. Ltd.', '$359,463.32'),
+        ('D. L. Bros (2014) Ltd.', '$456,747.13+'),
+        ('Tony Battista Paving Inc.', '$485,388.00'),
+        ('Mopal Construction Ltd.', '$584,181.75'),
+        ('Four Seasons Site Development Ltd.', '$598,227.65'),
+        ('CSBI Group Ltd.', '$787,719.61'),
+        ('Dig-Con International Ltd.', '$995,617.27'),
+    ]
+    assert all(b['hst_basis'] == 'including' for b in bids)
+    assert all(b['price_header'] == 'Bid Price (including HST)' for b in bids)
+
+
+def _column_fixture(names, prices):
+    return ('<html><h3>BD5.1 - Award of Tender 5-2015</h3><table><tr>'
+            '<td>Number of Bids:</td><td>'
+            + ''.join('<p>'+line+'</p>' for line in ['Firm Name', *names])
+            + '</td><td>'
+            + ''.join('<p>'+line+'</p>' for line in ['Bid Price', *prices])
+            + '</td></tr></table></html>')
+
+
+def test_unknown_price_header_line_cannot_shift_pairs_with_balancing_footer():
+    page = _column_fixture(['Acme Inc.', 'Beta Ltd.', '+ Bidder was found non-compliant.'],
+                           ['unknown price heading', '$100.00+', '$200.00'])
+    assert parse_bid_tables(page, '2015.BD5') == []
+
+
+def test_only_a_referenced_marked_trailing_footnote_can_be_separated():
+    page = _column_fixture(['Acme Inc.', 'Beta Ltd.', '+ Bidder was found non-compliant.'],
+                           ['(including HST)', '$100.00*', '$200.00'])
+    assert parse_bid_tables(page, '2015.BD5') == []
+
+
+def test_unpaired_wrapped_supplier_line_remains_refused():
+    page = _column_fixture(['Acme Inc.', 'Beta', 'Construction Ltd.'],
+                           ['(including HST)', '$100.00', '$200.00'])
+    assert parse_bid_tables(page, '2015.BD5') == []
+
+
+def test_a_marked_footnote_in_the_middle_is_not_silently_removed():
+    page = _column_fixture(['Acme Inc.', '+ Bidder was found non-compliant.', 'Beta Ltd.'],
+                           ['(including HST)', '$100.00+', '$200.00'])
+    assert parse_bid_tables(page, '2015.BD5') == []
