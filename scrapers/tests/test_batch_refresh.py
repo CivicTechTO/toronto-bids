@@ -149,3 +149,12 @@ def test_budget_blocked_outbox_does_not_block_publication_of_completed_work(read
     assert result['ready_documents'] and path.exists()
     assert any('budget' in error for error in result['errors'])
     assert len(api.posts) == 1 and queue.status()['jobs']['queued'] == 1
+
+
+def test_bd_report_refusal_is_visible_in_batch_refresh(ready, conn):
+    queue,api,path=ready
+    conn.execute("UPDATE background_pdf SET kind='bgrd',reference='2014.BD1.1' WHERE sha256='pdf-sha'")
+    conn.commit()
+    result=refresh(queue,conn,export=lambda:None,manifest_path=path)
+    assert any('coverage:bd_report: 1 report(s) refused' in e for e in result['errors'])
+    assert conn.execute("SELECT COUNT(*) FROM bid WHERE source='bd_report'").fetchone()[0]==0

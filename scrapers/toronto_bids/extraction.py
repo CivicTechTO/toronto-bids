@@ -28,9 +28,9 @@ CORPORA = {
     # Bid Award Panel (2017-2025) staff reports, fetched for the BA items whose agenda
     # tabulates no bids (`_BA_REPORTS_WITHOUT_BIDS`). Their bids go to `bid`; their awards
     # are already on the OData spine, so none are stored (#216). 2013-2016 Bid Committee
-    # reports have a separate bd_reports capture inventory. Their extraction admission
-    # and native Call Number attribution are pending; captured bytes alone add no bids.
+    # reports are admitted separately below; never encode a printed Call Number as an Ariba ID.
     "ba_report": "kind='bgrd' AND reference LIKE '%.BA%'",
+    "bd_report": "kind='bgrd' AND reference LIKE '%.BD%' AND substr(reference,1,4) BETWEEN '2013' AND '2016'",
 }
 
 
@@ -116,7 +116,7 @@ def _skip_reason(text, url, labels, classifier=None) -> str | None:
     `classifier` (#229), which skips only a CONFIDENTLY non-procurement document — the
     gate can only reduce extraction, never add to it.
     """
-    if not text:
+    if not text or not text.strip():
         return "no_text"
     if url in labels:
         return None if labels[url] else "skipped_classification"
@@ -441,6 +441,7 @@ _CORPUS_SOURCE = {
     "committee": "committee_award",
     "composite": "bid_committee_composite",
     "ba_report": "ba_report",
+    "bd_report": "bd_report",
 }
 
 _CORPUS_BUYER_SLUG = {
@@ -564,6 +565,7 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
     contracts_refused = 0
     decisions = []
     coverage = None
+    admission = []
     if corpus in ("trca", "ep", "zoo", "ttc"):
         from toronto_bids.linking.agency_reference import normalize_agency_reference, report_reference
         from toronto_bids.agency_coverage import decision
@@ -671,6 +673,26 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
                 + "; ".join(refusal_details[:10])
                 + (" ..." if len(refusal_details) > 10 else ""))
         rebuilt = [("agency_bid", bids), ("agency_award", awards)]
+
+    elif corpus == "bd_report":
+        from toronto_bids.bd_admission import admit_report
+
+        for row in rows:
+            context = conn.execute(
+                "SELECT bp.text, ci.title FROM background_pdf bp "
+                "LEFT JOIN council_item ci ON ci.reference=bp.reference WHERE bp.url=?",
+                (row['url'],),
+            ).fetchone()
+            derived, decision = admit_report(
+                reference=row['reference'], title=context['title'], text=context['text'],
+                result=json.loads(row['result_json']),
+            )
+            decision.update(url=row['url'], sha256=row['sha256'])
+            admission.append(decision)
+            bids.extend(derived)
+            contracts_refused += int(not decision['accepted'])
+            log(f"  bd_report {row['reference']}: {decision['reason']}")
+        rebuilt = [("bid", bids)]
 
     elif corpus == "ba_report":
         for row in rows:
@@ -783,7 +805,18 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
             if not derived:
                 log(f"  backfill {corpus}: nothing derived for {table}, existing rows kept")
                 continue
-            rebuild_rows(conn, derived, scope="source = ?", params=(source,))
+            if corpus == 'bd_report':
+                # Refused/incomplete reports keep any earlier supported facts. Only
+                # admitted item contexts participate in this historical source's sweep.
+                accepted = sorted({d['reference'] for d in admission if d['accepted']})
+                refused = {d['reference'] for d in admission if not d['accepted']}
+                if refused & set(accepted):
+                    raise RuntimeError('bd_report: mixed accepted/refused reports for an item; existing rows kept')
+                placeholders = ','.join('?' for _ in accepted)
+                rebuild_rows(conn, derived, scope=f"source = ? AND reference IN ({placeholders})",
+                             params=(source, *accepted))
+            else:
+                rebuild_rows(conn, derived, scope="source = ?", params=(source,))
         # agency_solicitation is backfill-only (fills NULLs, never deleted), so no swap.
         for r in solicitations:
             upsert_row(conn, r, overwrite=False)
@@ -813,6 +846,9 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
         "bids_written": len(bids),
         "awards_written": len(awards),
         "coverage": coverage,
+        "admission": admission,
+        "prices_withheld": sum(d["prices_withheld"] for d in admission),
+        "statuses_withheld": sum(d["statuses_withheld"] for d in admission),
     }
 
 
@@ -867,6 +903,11 @@ def extract_and_backfill(
 
     result = backfill_from_extraction(conn, corpus, log=log)
     coverage = result.get('coverage')
+    if corpus == 'bd_report' and failures is not None and (result['contracts_refused'] or result['prices_withheld'] or result['statuses_withheld']):
+        failures.append(('coverage:bd_report',
+                         f"{result['contracts_refused']} report(s) refused; "
+                         f"{result['prices_withheld']} qualified price(s) and {result['statuses_withheld']} status claim(s) withheld; "
+                         "raw evidence retained; inspect admission decisions"))
     if coverage and failures is not None:
         withheld = coverage.get('contracts_withheld', 0)
         identity_refusals = coverage['contracts_refused'] - withheld
