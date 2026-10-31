@@ -73,6 +73,8 @@ def resolve_procurements(conn):
 
 
 def _resolve(conn):
+    from toronto_bids.linking.city_identity_repairs import repair_city_identities
+    repair_city_identities(conn)
     ids = _Identities(conn)
     # Derive all approved links before assigning FKs, so a late join cannot leave a fact
     # pointing at an alias. A conflicting reference stays unjoined to document identities.
@@ -98,6 +100,9 @@ def _resolve(conn):
 
     # Resolving new keys below never merges IDs, so the in-memory assignment is stable.
     ref_ids = defaultdict(set)
+    for (namespace, value), pid in ids.keys.items():
+        if namespace == 'city_council_bid':
+            ref_ids[value].add(pid)
     document_ids = defaultdict(set)
     for table in FACT_TABLES:
         if table == 'background_pdf':

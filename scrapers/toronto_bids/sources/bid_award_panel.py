@@ -694,6 +694,32 @@ _BD_BIDDER_HDR = re.compile(
 _BD_PRICEY = re.compile(
     r"\$|\d[\d,]*\.\d{2}|non.?compliant|no bid|withdrawn|informal", re.IGNORECASE
 )
+_BD_HST_LINE = re.compile(
+    r"^\(?\s*(?:incl(?:uding)?\.?|excl(?:uding)?\.?)\s+H\.?S\.?T\.?\s*\)?$",
+    re.IGNORECASE,
+)
+_BD_BIDDER_NOTE = re.compile(
+    r"^\s*([*^+†‡§]+)?\s*Bidders?\s+(?:was|were|is|are)\b", re.IGNORECASE
+)
+
+
+def _bd_column_pairs(names, prices):
+    """Separate only source-marked trailing notes, then validate the whole alignment.
+
+    A footnote is distinguishable from a firm only when its explicit marker is referenced
+    by a price. Unknown/wrapped lines remain ambiguous. Never skip one non-price pair after
+    zipping: a leftover header can shift every later bidder while preserving equal counts.
+    """
+    names = list(names)
+    while names and (note := _BD_BIDDER_NOTE.match(names[-1])):
+        marker = note.group(1)
+        if not marker or not any(marker in price for price in prices):
+            return []
+        names.pop()
+    if (len(names) != len(prices) or any(_BD_BIDDER_NOTE.match(name) for name in names)
+            or not all(_BD_PRICEY.search(price) for price in prices)):
+        return []
+    return list(zip(names, prices))
 
 
 def _parse_bd_bid_table(table, reference: str, docs: list) -> list[dict]:
@@ -727,11 +753,14 @@ def _parse_bd_bid_table(table, reference: str, docs: list) -> list[dict]:
         )
         if price_col is None:
             continue
-        price_header = columns[price_col][0]
+        price_lines = list(columns[price_col])
+        price_header = price_lines.pop(0)
+        while price_lines and _BD_HST_LINE.fullmatch(price_lines[0]):
+            price_header += " " + price_lines.pop(0)
 
         pairs = []
         if len(columns[bidder_col]) > 1:  # the column's values share its header cell
-            pairs.append((columns[bidder_col][1:], columns[price_col][1:]))
+            pairs.append((columns[bidder_col][1:], price_lines))
         for later in rows[index + 1 :]:  # ...or sit in the rows below it
             cells = [_cell_lines(c) for c in later.xpath("./td|./th")]
             if not cells:
@@ -749,9 +778,7 @@ def _parse_bd_bid_table(table, reference: str, docs: list) -> list[dict]:
             pairs.append((names, prices))
 
         for names, prices in pairs:
-            if len(names) != len(prices):
-                continue  # cannot pair positionally; refuse
-            for name, price in zip(names, prices):
+            for name, price in _bd_column_pairs(names, prices):
                 name = _NAME_MARKERS.sub(
                     "", _ROW_NUMBER_PREFIX.sub("", _NAME_MARKERS.sub("", name))
                 )
@@ -854,18 +881,35 @@ def parse_bid_tables(html: str, meeting: str) -> list[dict]:
     return out
 
 
-def store_bids(conn, agendas: dict) -> int:
-    """Extract and store every bid the agendas tabulate. Idempotent. Returns rows stored.
+def store_bids(conn, agendas: dict, *, failures=None, log=lambda _m: None) -> int:
+    """Re-derive successful item tables, preserving unrelated facts and archive timestamps.
 
-    This is the data rewrite spec §2.5.2 calls unrecoverable (#84).
+    Key changes must replace stale positional pairs, rather than append corrected rows
+    beside them. An unreadable item keeps prior observations and reports a review gap.
     """
-    n = 0
+    by_ref = {}
+    seen = set()
     for meeting, html in agendas.items():
+        seen.update(item['reference'] for item in parse_agenda(html, meeting))
         for bid in parse_bid_tables(html, meeting):
-            db.upsert_row(conn, Bid(source="bid_award_panel", **bid), overwrite=True)
-            n += 1
-    conn.commit()
-    return n
+            by_ref.setdefault(bid['reference'], []).append(Bid(source='bid_award_panel', **bid))
+    prior_counts = {r['reference']: r['n'] for r in conn.execute(
+        "SELECT reference,COUNT(*) n FROM bid WHERE source='bid_award_panel' GROUP BY reference")}
+    missing = set(prior_counts) & (seen-set(by_ref))
+    for ref, rows in list(by_ref.items()):
+        keys = {(r.reference, r.document_number, r.bidder_name_raw, r.bid_price, r.source) for r in rows}
+        if len(keys) < prior_counts.get(ref, 0):
+            missing.add(ref)
+            del by_ref[ref]
+    for ref in sorted(missing):
+        message = 'held agenda no longer yields a complete unambiguous table; prior observations retained for review'
+        log(f'{ref}: {message}')
+        if failures is not None:
+            failures.append(('bid_table:'+ref, message))
+    with conn:
+        for ref, rows in by_ref.items():
+            db.rebuild_rows(conn, rows, scope="source='bid_award_panel' AND reference=?", params=(ref,))
+    return sum(len(rows) for rows in by_ref.values())
 
 
 # "Award of Tender Call No. 14-2017 to Ontario Excavac Inc. for Replacement of ..."
@@ -935,35 +979,21 @@ _LEADING_THE = re.compile(r"^the\s+", re.IGNORECASE)
 
 
 def supplier_tokens(name: str | None) -> set:
-    """Significant words in a supplier name, with legal form and '&'/'and' variance removed.
+    """Legacy supplier comparison tokens, not an independent identity proof.
 
-    Deliberately looser than linking/supplier.py's supplier_key, and that is safe *here* for a
-    reason that does not apply there: supplier_key must not MERGE two firms into one dimension
-    row, so it keeps legal suffixes on purpose. This only has to CONFIRM a match the exact
-    award value already pinned — and the value is nearly a unique key (4,725 of 4,861 title-less
-    amounts occur exactly once).
+    The caller also requires full-name/meaningful-word corroboration, period compatibility
+    and an already-unique legacy candidate. Generic-word/value collisions exist in the
+    historical corpus; old positive-only calibration did not establish zero false joins.
     """
     text = _LEADING_THE.sub("", (name or "").lower().replace("&", " and "))
     return {t for t in supplier_key(_LEGAL_NOISE.sub(" ", text)).split() if len(t) > 2}
 
 
 def match_pre_ariba_titles(conn, agendas: dict) -> int:
-    """Name title-less pre-Ariba solicitations by matching (supplier, award value). Idempotent.
+    """Fill missing legacy titles with the shared guarded supplier/value matcher.
 
-    The award value carries the match; the supplier only confirms it. Measured against 777
-    Ariba-era items, where the document number gives ground truth — matching them on
-    (supplier, value) while ignoring that number, then checking the answer:
-
-        exact supplier_key   488 matched, 0 wrong, recall 62.8%
-        one shared token     759 matched, 0 wrong, recall 97.7%   <- this
-        no supplier check    768 matched, 0 wrong, recall 98.8%
-
-    Zero false positives at every level, so the supplier check buys no precision on that
-    sample — but the sample is biased: every item in it IS an award we hold. A pre-Ariba item
-    whose award we do NOT hold could coincidentally match an unrelated value, and this is the
-    only guard against it. 1.1% recall is a cheap premium.
-
-    Only a UNIQUE match is taken. A wrong title is worse than none.
+    This is a conservative legacy fallback. Native publisher identifier crosswalks
+    require independent source review; current derived titles are not new evidence.
     """
     items = []
     for meeting, html in agendas.items():
@@ -973,19 +1003,50 @@ def match_pre_ariba_titles(conn, agendas: dict) -> int:
     return match_on_supplier_and_value(conn, items, "council_pre_ariba")
 
 
-def _awards_by_value(conn):
-    """ALL odata awards indexed by rounded value -> [(supplier_tokens, document_number)].
-    Unlike _title_less_awards_by_value, this includes titled solicitations: a solicitation with
-    a title still needs its bids linked."""
+# Generic industry/legal words cannot independently establish supplier identity.
+_GENERIC_SUPPLIER = {'and', 'construction', 'services', 'service', 'contracting',
+                     'general', 'group', 'canada', 'international', 'company', 'engineering'}
+
+
+def _supplier_core(name):
+    text = _LEADING_THE.sub('', (name or '').lower().replace('&', ' and '))
+    text = re.sub(r'\bcontractors\b', 'contractor', text)
+    return re.sub(r'[^a-z0-9]', '', _LEGAL_NOISE.sub(' ', text))
+
+
+def _legacy_supplier_matches(left, right):
+    # Preserve punctuation/legal-form variants of the full name, including short names
+    # such as Co-X-Co. Otherwise require a shared identifying word, not just an industry.
+    core = _supplier_core(left)
+    return bool(core and core == _supplier_core(right)) or bool(
+        (supplier_tokens(left) & supplier_tokens(right)) - _GENERIC_SUPPLIER)
+
+
+def _awards_by_value(conn, *, titleless=False):
     by_value = {}
-    for row in conn.execute(
-        "SELECT document_number d, supplier_name_raw s, award_amount_numeric v FROM award "
-        "WHERE source='odata' AND award_amount_numeric IS NOT NULL AND supplier_name_raw IS NOT NULL"
-    ):
-        by_value.setdefault(round(row["v"]), []).append(
-            (supplier_tokens(row["s"]), row["d"])
-        )
+    sql = ("SELECT a.document_number d,a.supplier_name_raw s,a.award_amount_numeric v,sol.issue_date "
+           "FROM award a JOIN solicitation sol ON sol.document_number=a.document_number "
+           "WHERE a.source='odata' AND a.award_amount_numeric IS NOT NULL "
+           "AND a.supplier_name_raw IS NOT NULL")
+    if titleless:
+        sql += " AND sol.title IS NULL"
+    for row in conn.execute(sql):
+        by_value.setdefault(round(row['v']), []).append((row['s'], row['d'], row['issue_date']))
     return by_value
+
+
+def _legacy_documents(item, by_value):
+    reference = item.get('reference') or ''
+    year = int(reference[:4]) if reference[:4].isdigit() else None
+    candidates = [(name, doc, issued) for name, doc, issued in by_value.get(round(item['award_value']), [])
+                  if supplier_tokens(item['winner_raw']) & supplier_tokens(name)]
+    # New guards may reject a former unique match. They must not promote a formerly
+    # ambiguous price/token match into a new identity without native identifier proof.
+    if len({doc for _, doc, _ in candidates}) != 1:
+        return set()
+    return {doc for name, doc, issued in candidates
+            if _legacy_supplier_matches(item['winner_raw'], name)
+            and not (year and issued and issued[:4].isdigit() and int(issued[:4]) > year)}
 
 
 def match_pre_ariba_solicitations(conn, agendas: dict) -> int:
@@ -1004,12 +1065,7 @@ def match_pre_ariba_solicitations(conn, agendas: dict) -> int:
         for item in parse_pre_ariba_awards(html, meeting):
             if not item["reference"]:
                 continue
-            want = supplier_tokens(item["winner_raw"])
-            docs = {
-                doc
-                for toks, doc in by_value.get(round(item["award_value"]), [])
-                if want & toks
-            }
+            docs = _legacy_documents(item, by_value)
             if len(docs) == 1:
                 links[item["reference"]] = docs.pop()
     conn.execute("DELETE FROM solicitation_link")
@@ -1063,15 +1119,9 @@ def match_composite_titles(conn) -> int:
 
 
 
-# The staff reports of BA items whose agenda tabulates no bids (#83). Everything else the
-# panel handled already has its bids from the agenda itself (#84/#94), and the reports of
-# title-less solicitations do not exist at all — the panel only sees awards above the
-# delegation threshold, so a solicitation is never both title-less and panel-handled (0 of
-# them, measured). These ~229 are the whole of what the PDFs can still add.
-# `sha256 IS NULL`, not `text IS NULL`, is what "not yet fetched" means. 16 of the composite
-# reports are image-only scans with no embedded fonts, so pdftotext yields nothing and their
-# text stays NULL forever — keyed on text, every run re-downloaded those 16 in perpetuity.
-# The hash records that we have the bytes, whether or not anything could read them.
+# BA reports whose agendas lack bids. The separate bd_reports capture inventory covers
+# the omitted 2013–2016 BD reports; this BA query is not a whole-archive coverage ceiling.
+# A held hash, rather than readable text, records captured bytes (including scanned PDFs).
 _BA_REPORTS_WITHOUT_BIDS = """
     SELECT p.url, p.reference FROM background_pdf p
     JOIN council_item ci ON ci.reference = p.reference
@@ -1133,19 +1183,8 @@ def download_reports(
     return stored
 
 
-def _title_less_awards_by_value(conn) -> dict:
-    """Title-less awards indexed by rounded value — the left side of the (value, supplier) join."""
-    by_value = {}
-    for row in conn.execute(
-        "SELECT a.document_number d, a.supplier_name_raw s, a.award_amount_numeric v "
-        "FROM award a JOIN solicitation sol ON sol.document_number = a.document_number "
-        "WHERE a.source='odata' AND a.award_amount_numeric IS NOT NULL "
-        "AND a.supplier_name_raw IS NOT NULL AND sol.title IS NULL"
-    ):
-        by_value.setdefault(round(row["v"]), []).append(
-            (supplier_tokens(row["s"]), row["d"])
-        )
-    return by_value
+def _title_less_awards_by_value(conn):
+    return _awards_by_value(conn, titleless=True)
 
 
 def match_on_supplier_and_value(conn, items, title_source: str) -> int:
@@ -1166,12 +1205,7 @@ def match_on_supplier_and_value(conn, items, title_source: str) -> int:
     for item in items:
         if not (item["title"] or "").strip():
             continue
-        want = supplier_tokens(item["winner_raw"])
-        docs = {
-            doc
-            for toks, doc in by_value.get(round(item["award_value"]), [])
-            if want & toks
-        }
+        docs = _legacy_documents(item, by_value)
         if len(docs) == 1:
             filled.setdefault(docs.pop(), item["title"])
     conn.executemany(

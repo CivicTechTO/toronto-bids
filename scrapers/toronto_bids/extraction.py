@@ -28,7 +28,8 @@ CORPORA = {
     # Bid Award Panel (2017-2025) staff reports, fetched for the BA items whose agenda
     # tabulates no bids (`_BA_REPORTS_WITHOUT_BIDS`). Their bids go to `bid`; their awards
     # are already on the OData spine, so none are stored (#216). 2013-2016 Bid Committee
-    # reports are in neither corpus: those agendas tabulate their own bids.
+    # reports have a separate bd_reports capture inventory. Their extraction admission
+    # and native Call Number attribution are pending; captured bytes alone add no bids.
     "ba_report": "kind='bgrd' AND reference LIKE '%.BA%'",
 }
 

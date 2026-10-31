@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "repairs": [
+    {
+      "reference": "2014.BD174.2",
+      "rejected_document_number": "5092408869",
+      "source_title": "Award of Tender No.12-2014 to Integrated Building and Design Corporation for Completing Upgrades to the McGregor Arena Facility",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2014/bd/bgrd/backgroundfile-68240.pdf",
+      "source_sha256": "699276db05eb9ce2dbfc2383628b85a7676fb75d177dfeea8239acb6f8321d67",
+      "target_issue_date": "2025-04-01",
+      "reason": "Primary report identifies a different call, supplier, scope and period; rounded-value/generic-token match rejected."
+    },
+    {
+      "reference": "2015.BD25.1",
+      "rejected_document_number": "2962047194",
+      "source_title": "Award of Request for Tender No. 14-2015 to Bond Paving and Construction Inc. for Asphalt and Concrete Reconstruction of Pavements and Curbs at Various Facilities Management Properties Throughout the City of Toronto",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2015/bd/bgrd/backgroundfile-79745.pdf",
+      "source_sha256": "cb560f0a9be23fc165db44b37cefd1d3b3332c8635cefdbc7c56b4329567b65e",
+      "target_issue_date": "2021-05-07",
+      "reason": "Primary report identifies a different call, supplier, scope and period; rounded-value/generic-token match rejected."
+    },
+    {
+      "reference": "2014.BD184.7",
+      "rejected_document_number": "1292014000",
+      "source_title": "Award of Tender 129-2014 to Lima's Garden & Construction Inc. for Permanent Repairs to Utility Cuts, Wards 25 and 26 - North York District",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2014/bd/bgrd/backgroundfile-70266.pdf",
+      "source_sha256": "806507cb385b812984ae77d9654b0fbd8a8249a1a76dca4de9066eeabdc0f08a",
+      "target_issue_date": "2014-04-14",
+      "reason": "Supplier spelling/joint-venture identity is not independently established; generic construction-token match is withheld pending reviewed publisher identity evidence. This does not declare the two procurements different."
+    },
+    {
+      "reference": "2017.BA55.8",
+      "rejected_document_number": "2912017000",
+      "source_title": "Award of Tender Call No. 291-2017 to Grascan Construction Ltd./Torbridge Construction Ltd. for Bathurst Street Bridges Rehabilitation and Replacement, South of Front Street",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2017/ba/bgrd/backgroundfile-109958.pdf",
+      "source_sha256": "683cfe406e07eac54f40689e35197d228ee191d4f4531c0c2750f9ca60540988",
+      "target_issue_date": "2017-10-13",
+      "reason": "Supplier spelling/joint-venture identity is not independently established; generic construction-token match is withheld pending reviewed publisher identity evidence. This does not declare the two procurements different."
+    }
+  ]
+}
