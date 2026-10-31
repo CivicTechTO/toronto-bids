@@ -145,7 +145,7 @@ def _capture(conn, directory, *, resume=False, limit=None, http=None, log=lambda
                     _validate_pdf(path)
                     if row.get('sha256') not in (None,held['sha256']):
                         raise ValueError('Manifest hash disagrees with held bytes')
-                    row.update(state='held',sha256=held['sha256'],error=None)
+                    row.update(state='held',sha256=held['sha256'],text_available=bool((held['text'] or '').strip()),error=None)
                 else:
                     if row.get('sha256'):
                         raise ValueError('Previously held source metadata was removed')
@@ -162,7 +162,7 @@ def _capture(conn, directory, *, resume=False, limit=None, http=None, log=lambda
                         db.upsert_row(conn,BackgroundPdf(row['url'],reference=row['reference'],kind='bgrd',
                             local_path=str(target.resolve()),sha256=info['sha256'],text=info['text']),overwrite=True)
                         conn.commit()
-                    row.update(state='held',sha256=info['sha256'],error=None)
+                    row.update(state='held',sha256=info['sha256'],text_available=bool((info['text'] or '').strip()),error=None)
                 log(row['reference']+': held')
             except Exception as exc:
                 conn.rollback()
@@ -177,6 +177,7 @@ def _capture(conn, directory, *, resume=False, limit=None, http=None, log=lambda
     _save(manifest_path,manifest)
     held = sum(r['state']=='held' for r in entries)
     return dict(total=len(entries),held=held,pending=len(entries)-held,attempted=attempted,
+                held_without_text=sum(r['state']=='held' and not r.get('text_available') for r in entries),
                 failures=[dict(url=r['url'],reference=r['reference'],error=r['error']) for r in entries if r.get('error')],
                 inventory=str(manifest_path))
 

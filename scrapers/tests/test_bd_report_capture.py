@@ -99,3 +99,13 @@ def test_cli_dry_run_creates_no_output_or_lock_files(conn,tmp_path,monkeypatch):
  monkeypatch.setattr(sys,'argv',['bd_reports','--database',str(path),'--directory',str(directory),'--dry-run'])
  assert b.main()==0
  assert not directory.exists() and not (tmp_path/'.pipeline.lock').exists()
+
+
+def test_valid_scanned_pdf_is_held_with_visible_text_gap(conn,tmp_path,downloads,monkeypatch):
+ seed(conn);original=b.download_pdf
+ def scanned(*args,**kwargs):
+  result=original(*args,**kwargs);result['text']=None;return result
+ monkeypatch.setattr(b,'download_pdf',scanned)
+ result=b.capture(conn,tmp_path,limit=1,http=object())
+ assert result['held']==1 and result['held_without_text']==1 and result['pending']==1
+ assert conn.execute('SELECT COUNT(sha256) FROM background_pdf').fetchone()[0]==1
