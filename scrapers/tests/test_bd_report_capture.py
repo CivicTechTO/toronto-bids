@@ -109,3 +109,15 @@ def test_valid_scanned_pdf_is_held_with_visible_text_gap(conn,tmp_path,downloads
  result=b.capture(conn,tmp_path,limit=1,http=object())
  assert result['held']==1 and result['held_without_text']==1 and result['pending']==1
  assert conn.execute('SELECT COUNT(sha256) FROM background_pdf').fetchone()[0]==1
+
+
+def test_interrupted_atomic_promotion_leaves_source_queued(conn,tmp_path,downloads,monkeypatch):
+ seed(conn);original=Path.replace
+ def interrupted(path,target):
+  if path.name=='report.pdf':raise OSError('interrupted promotion')
+  return original(path,target)
+ monkeypatch.setattr(Path,'replace',interrupted)
+ result=b.capture(conn,tmp_path,limit=1,http=object())
+ assert result['held']==0 and result['pending']==2
+ assert conn.execute('SELECT COUNT(sha256) FROM background_pdf').fetchone()[0]==0
+ assert list(tmp_path.glob('*.pdf'))==[]

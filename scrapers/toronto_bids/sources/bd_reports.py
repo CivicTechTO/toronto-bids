@@ -11,7 +11,6 @@ import hashlib
 import json
 from pathlib import Path
 import re
-import shutil
 import sqlite3
 import subprocess
 import tempfile
@@ -158,7 +157,7 @@ def _capture(conn, directory, *, resume=False, limit=None, http=None, log=lambda
                         if target.exists() and hashlib.sha256(target.read_bytes()).hexdigest() != info['sha256']:
                             raise ValueError('Existing content-addressed file changed')
                         if not target.exists():
-                            shutil.copy2(source,target)
+                            source.replace(target)
                         db.upsert_row(conn,BackgroundPdf(row['url'],reference=row['reference'],kind='bgrd',
                             local_path=str(target.resolve()),sha256=info['sha256'],text=info['text']),overwrite=True)
                         conn.commit()
