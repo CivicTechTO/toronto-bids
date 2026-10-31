@@ -1,0 +1,9 @@
+{
+  "snapshot_at": "2026-10-30T23:40:28.060058+00:00",
+  "snapshot_sha256": "d04d7459c21c5756dba59fe38b2194c471e05ece8c91c83c2dbdd0abe3bfb4fd",
+  "snapshot_bytes": 354918400,
+  "backend_base_commit": "740908ee89bf9728afb811f3af4b8988a238992a",
+  "extractor_version": "v1-b63aa8c835ae",
+  "model_requests": 0,
+  "production_modified": false
+}
