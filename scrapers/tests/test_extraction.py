@@ -67,6 +67,7 @@ def test_all_corpora_are_defined():
         "committee",
         "composite",
         "ba_report",
+        "bd_report",
         "ttc",
     }
 

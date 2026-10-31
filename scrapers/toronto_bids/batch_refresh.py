@@ -38,6 +38,10 @@ def refresh(queue, archive, *, export, manifest_path, log=print):
             coverage = derived.get('coverage') or {}
             if coverage.get('contracts_refused', 0):
                 result['errors'].append(f"coverage:{corpus}: {coverage['contracts_refused']} contract(s) refused or withheld; inspect tb agency-coverage")
+            if corpus == 'bd_report' and (derived['contracts_refused'] or derived['prices_withheld'] or derived['statuses_withheld']):
+                result['errors'].append(
+                    f"coverage:bd_report: {derived['contracts_refused']} report(s) refused; "
+                    f"{derived['prices_withheld']} qualified price(s) and {derived['statuses_withheld']} status claim(s) withheld; raw evidence retained")
             applied.update(matches)
         except Exception as exc:
             failed.update(matches)

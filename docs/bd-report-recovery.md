@@ -1,6 +1,6 @@
 # Systematic historical City bid recovery
 
-The first implementation provides correctness repairs and a resumable evidence-capture job. It does not yet admit the captured 2013–2016 reports into model extraction or approve encoded Call Number aliases. The full plan and primary-source research are in [the investigation](research/systematic-city-bid-recovery-2026-10-31.md).
+The historical path provides correctness repairs, resumable evidence capture, and guarded admission of 2013–2016 reports through the shared extraction cache. It does not approve encoded Call Number aliases. The full plan and primary-source research are in [the investigation](research/systematic-city-bid-recovery-2026-10-31.md).
 
 ## Correctness gates
 
@@ -36,8 +36,22 @@ Downloads use existing PDF capture/text facilities in a temporary directory. PDF
 
 This is a standalone historical job, not a new large nightly crawl. The command also holds the database directory’s `.pipeline.lock` while writing, coordinating with the existing nightly. Library callers own writer coordination; the inventory lock alone does not coordinate unrelated database workflows. The initial live capture runs on a private copy under `.validation-systematic-bids-2026-10-31/implementation/`, so production remains unchanged until reviewed deployment/promotion.
 
+## Guarded extraction admission
+
+`tb extract --batch --corpus bd_report --limit 8` queues a bounded group through the shared Sonnet request builder, prompt version, cache, billing ledger and monthly cap. It does not add a new source crawl to the nightly. Set `TB_DATA_DIR` to the deployment data directory when running from a worktree; the credentials file alone does not configure the ledger location. An existing batch must be collected rather than submitted again.
+
+`bd_admission.admit_report` separates cached model observations from supported stored bids. It requires exactly one contract and one printed native Call Number, agreement with the original council agenda title and held report text, literal bidder/price evidence, no supplier-name role annotations or no-bid outcomes, no repeated bidder observations, and no shortfall against a declared submission count. A labelled part/lot is held because the bid schema cannot represent its scope. Wrapped names interleaved with other table columns may also refuse: that is an evidence gap, not a licence to guess a supplier identity.
+
+Supported bids use their council item reference with source `bd_report` and **no document number**. A Call Number is not digit-stripped or padded into an Ariba identifier. This stage adds no award facts. Proposals with named proponents and undisclosed prices can add participation without fabricated amounts. Miscellaneous, prompt-payment or unit-price/rate wording triggers a conservative price hold; this does not qualify every possible price scope. These prices are retained in the raw cache; supported participation can derive with NULL price/tax basis. Compliance/status claims are also withheld in this participation admission stage: the pilot assigned compliance to firms the source merely listed. Even source-supported negative statuses stay in the raw cache until a separate status admission policy is qualified. The raw model results are never edited by admission.
+
+Backfill returns per-report admission decisions with PDF hash, URL, native call and refusal/withholding reason. Standalone backfill and collector results surface incomplete coverage. Swaps cover only admitted council items; refused, absent or textless reports retain earlier facts. Mixed admitted/refused PDFs for one item abort before replacement. Existing non-`bd_report` sources are outside the swap.
+
+The first pilot uses eight frozen reports, two per year; its independently read source expectations are in [the pilot inventory](research/bd-report-pilot-2026-10-31.json). One contains three parts and intentionally tests refusal. The completed batch used Sonnet/high, reserved at most USD 1.503810 and settled at USD 0.060809 under the existing USD 20 local guard. Results were collected and rehearsed on a private database; raw model completion is not approval to publish facts or expand across the inventory. No production bid/award facts are changed by the pilot. [The source review](research/bd-report-pilot-review-2026-10-31.md) records 14 admitted observations across five reports and three held reports.
+
+The all-years capture holds 586 verified PDFs: 568 with text and 18 without readable text. Textless documents remain visible gaps and are never sent as empty requests. The pilot does not establish coverage or accuracy across all 568 reports.
+
 ## Following stages
 
-Admit historical BD reports to the shared batched Sonnet/cache path with contract-level source and partial-disclosure checks, then validate native Call Number crosswalks from independent source facts. Preserve lot/stage/JV structure and keep unsupported identities unresolved. The 669 held-bid candidates and 389 queued-report candidates from research are a planning inventory, not approved joins. Do not infer identity from digit stripping, right-padding, derived titles or equal prices.
+Review the pilot against the original tables before expanding the batch. Then validate native Call Number crosswalks from independent source facts. Preserve lot/stage/JV structure and keep unsupported identities unresolved. The 669 held-bid candidates and 389 queued-report candidates from research are a planning inventory, not approved joins. Do not infer identity from digit stripping, right-padding, derived titles or equal prices.
 
 After the historical path is validated, add complete committee agenda indexing and attachment-aware search against the demonstrated modern source set. Measure correctly identified newly covered solicitations and repaired relationships; file/name counts alone are not recovery metrics.

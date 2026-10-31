@@ -1,0 +1,98 @@
+{
+  "basis": "Independently read held PDF Call Summary tables before pilot results arrived",
+  "reports": {
+    "2013.BD115.4": {
+      "call_number": "3-2013",
+      "names": [
+        "Sanscon Construction Ltd.",
+        "Trisan Construction",
+        "Furfari Paving Co. Ltd.",
+        "Drainstar Contracting Ltd.",
+        "Il Duca Contracting Inc.",
+        "North Rock Group Ltd.",
+        "New-Alliance Ltd.",
+        "Miwel Construction Limited",
+        "Four Seasons Site Development Ltd.",
+        "Domti Engineering & Construction Ltd.",
+        "Harvie Construction Inc.",
+        "Grascan Construction Ltd.",
+        "KAPP Contracting Inc."
+      ],
+      "notes": "Eight priced tenders; five separately marked Informal submissions. Do not infer prices or normalize informal into an unsupported formal status.",
+      "url": "https://www.toronto.ca/legdocs/mmis/2013/bd/bgrd/backgroundfile-56609.pdf",
+      "sha256": "717b3e8f8d02dc6e72aa67e514200ba5b5da7bb82c879ac8f0c3a91c98e22f32"
+    },
+    "2013.BD136.9": {
+      "call_number": "3405-13-3008",
+      "names": [
+        "Auxilllium",
+        "Cornerstone on Demand",
+        "Desire2Learn",
+        "IBM",
+        "SuccessFactors",
+        "YouAchieve"
+      ],
+      "notes": "Six named proponents; Call Summary publishes no losing proposal prices.",
+      "url": "https://www.toronto.ca/legdocs/mmis/2013/bd/bgrd/backgroundfile-60506.pdf",
+      "sha256": "17a630ebdbc934c56d82739b4defc188c1e0430c94d27f10d2aa73f0ed8fe285"
+    },
+    "2014.BD198.1": {
+      "call_number": "0202-14-0081",
+      "names": [
+        "The Better Deal Trading",
+        "GFS Ontario Inc."
+      ],
+      "notes": "Better Deal non-compliant. GFS $209,637.08 including HST; $272,528.20 is a separate price including an additional 30% miscellaneous.",
+      "url": "https://www.toronto.ca/legdocs/mmis/2014/bd/bgrd/backgroundfile-73230.pdf",
+      "sha256": "a1b2474adb3cbbe05d65542ee3b3009ed569c3874f7d6c3c65a58e05181e55ac"
+    },
+    "2014.BD209.1": {
+      "call_number": "9105-14-7144",
+      "names": [
+        "AON Reed Stenhouse Inc.",
+        "Marsh Canada Limited"
+      ],
+      "notes": "Both proposals met the mandatory technical threshold. No losing price disclosed in Call Summary.",
+      "url": "https://www.toronto.ca/legdocs/mmis/2014/bd/bgrd/backgroundfile-73808.pdf",
+      "sha256": "9b3da11fa3465112887c88e6748e773855ae52df1854221857cfa65b59458184"
+    },
+    "2015.BD6.3": {
+      "call_number": "1212-14-0182",
+      "hold": true,
+      "notes": "24 bidder/part cells over Parts A/B/C, including no-bid and non-compliant outcomes. Current schema lacks lot scope; do not derive flat bid rows.",
+      "url": "https://www.toronto.ca/legdocs/mmis/2015/bd/bgrd/backgroundfile-74551.pdf",
+      "sha256": "907121449796a43d8f3ed01dda8864159b2098c0732fa53b9c422b974bb872d3"
+    },
+    "2015.BD44.16": {
+      "call_number": "6619-15-3080",
+      "names": [
+        "Compass Minerals Canada Corp.",
+        "Cargill Deicing Technology, A Division of Cargiel Limited.",
+        "K & S Windsor Salt Ltd."
+      ],
+      "notes": "Three priced salt suppliers. Price footnote limits total to Etobicoke District and Parks, Forestry and Recreation. PDF text interleaves wrapped names with prices.",
+      "url": "https://www.toronto.ca/legdocs/mmis/2015/bd/bgrd/backgroundfile-82901.pdf",
+      "sha256": "5edb8c74eed190aee59a4feecafcdfe2d06c9345ad145f764a7b6fa59e2e0b04"
+    },
+    "2016.BD84.12": {
+      "call_number": "100-2016",
+      "names": [
+        "Stevens & Black Electrical",
+        "Kudlak-Baird (1982) Ltd.",
+        "The State Group Inc."
+      ],
+      "notes": "All three priced including HST. Lowest priced Stevens & Black is explicitly non-compliant.",
+      "url": "https://www.toronto.ca/legdocs/mmis/2016/bd/bgrd/backgroundfile-93223.pdf",
+      "sha256": "84ac11de7ef9d403af7bfa3c224476bc9b017343b7510ae392e6880e0e7ac01b"
+    },
+    "2016.BD115.8": {
+      "call_number": "0306-16-3186",
+      "names": [
+        "Francis Restaurant Industry Equipment Services Inc."
+      ],
+      "notes": "$348,156 excludes HST, includes 7.3% miscellaneous and 5% Net 30 prompt payment discount. Wrapped name interleaved with price annotation.",
+      "url": "https://www.toronto.ca/legdocs/mmis/2016/bd/bgrd/backgroundfile-99320.pdf",
+      "sha256": "568ffb652a4f9c1895511287e985f554efdb3022fe8df6ddf733a8357e760a83"
+    }
+  }
+}

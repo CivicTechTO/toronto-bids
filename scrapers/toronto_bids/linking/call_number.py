@@ -43,3 +43,11 @@ def normalize_call_number(raw: str | None) -> str | None:
     text = _SPACED_DASH.sub("-", _DASHES.sub("-", str(raw)))
     match = _CALL_CORE.search(text)
     return match.group(1) if match else None
+
+
+def find_call_numbers(raw: str | None) -> set[str]:
+    """All distinct printed calls, without matching a Tender substring inside an RFQ."""
+    if not raw:
+        return set()
+    text = _SPACED_DASH.sub("-", _DASHES.sub("-", str(raw)))
+    return {match.group(1) for match in _CALL_CORE.finditer(text)}

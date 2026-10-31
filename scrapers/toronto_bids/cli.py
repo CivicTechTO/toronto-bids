@@ -253,6 +253,7 @@ def build_parser() -> argparse.ArgumentParser:
             "committee",
             "composite",
             "ba_report",
+            "bd_report",
         ],
         help="Extract all qualifying documents in a corpus",
     )
@@ -1689,7 +1690,9 @@ def _cmd_extract_corpus(args) -> int:
             for key, val in result.items():
                 print(f"  {key}: {val}")
 
-        return 1 if stats['errors'] else 2 if stats['pending'] else 0
+        incomplete = (args.backfill and args.corpus == 'bd_report' and
+                      (result['contracts_refused'] or result['prices_withheld'] or result['statuses_withheld'] or stats['no_text']))
+        return 1 if stats['errors'] or incomplete else 2 if stats['pending'] else 0
     finally:
         conn.close()
 
