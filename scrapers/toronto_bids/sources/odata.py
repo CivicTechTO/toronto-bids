@@ -1,3 +1,4 @@
+import json
 from typing import Iterable, Iterator
 
 from toronto_bids import config
@@ -36,6 +37,26 @@ def fetch_entityset(http, entityset: str, page_size: int = 1000) -> Iterator[dic
         skip += len(records)
 
 
+def identity_record(raw: dict) -> dict:
+    """Current publisher fields used for identity, preserving supplier/value pairs.
+
+    Capture removals too: an empty current supplier array must replace the prior
+    projection even though the independent award archive retains its older rows.
+    Source bookkeeping and contract-execution dates are not identity evidence.
+    """
+    awards=[{'Successful_Bidder':a.get('Successful_Bidder'),'Award_Amount':a.get('Award_Amount')}
+            for a in raw.get('Awarded_Suppliers') or []]
+    return {
+        'id':raw.get('id'),
+        'Solicitation_Document_Number':raw.get('Solicitation_Document_Number'),
+        'Issue_Date':raw.get('Issue_Date'),
+        'Closing_Date':raw.get('Closing_Date'),
+        'Solicitation_Document_Type':raw.get('Solicitation_Document_Type'),
+        'Solicitation_Award_Details':raw.get('Solicitation_Award_Details'),
+        'Awarded_Suppliers':sorted(awards,key=lambda a:json.dumps(a,sort_keys=True,ensure_ascii=False)),
+    }
+
+
 def normalize_solicitation(raw: dict) -> Iterable[Row]:
     doc = normalize_document_number(raw.get("Solicitation_Document_Number"))
     if doc is None:
@@ -59,6 +80,7 @@ def normalize_solicitation(raw: dict) -> Iterable[Row]:
         wards=_clean(raw.get("Wards")),
         ariba_posting_link=_clean(raw.get("Ariba_Discovery_Posting_Link")),
         odata_id=_clean(raw.get("id")),
+        publisher_identity_json=json.dumps(identity_record(raw),ensure_ascii=False,sort_keys=True,separators=(',',':')),
         source="odata",
     )
     for supplier in raw.get("Awarded_Suppliers") or []:

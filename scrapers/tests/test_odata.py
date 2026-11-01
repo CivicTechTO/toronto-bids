@@ -87,3 +87,24 @@ def test_normalize_noncompetitive_uses_workspace_number():
 def test_sources_are_spine_overwrite_true():
     assert odata.ODataSolicitationSource().overwrite is True
     assert odata.ODataNonCompetitiveSource().overwrite is True
+
+
+def test_identity_snapshot_tracks_current_awards_and_ignores_bookkeeping():
+    from toronto_bids.sources.odata import identity_record
+    original=_value('odata_solicitation.json')
+    same=dict(original,__ModifiedOn='later',Parent_Id='unrelated-parent')
+    same['Awarded_Suppliers']=list(reversed(original['Awarded_Suppliers']))
+    assert identity_record(original)==identity_record(same)
+    removed=dict(original,Awarded_Suppliers=[])
+    assert identity_record(removed)['Awarded_Suppliers']==[]
+    assert identity_record(removed)!=identity_record(original)
+
+
+def test_ingest_current_empty_award_set_preserves_archive_but_updates_identity(conn):
+    from toronto_bids.store.db import upsert_row
+    original=_value('odata_solicitation.json')
+    for raw in [original,dict(original,Awarded_Suppliers=[])]:
+        for row in odata.normalize_solicitation(raw):upsert_row(conn,row,overwrite=True)
+    assert conn.execute('select count(*) from award').fetchone()[0]==2
+    current=json.loads(conn.execute('select publisher_identity_json from solicitation').fetchone()[0])
+    assert current['Awarded_Suppliers']==[]

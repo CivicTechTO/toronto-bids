@@ -75,6 +75,8 @@ def resolve_procurements(conn):
 def _resolve(conn):
     from toronto_bids.linking.city_identity_repairs import repair_city_identities
     repair_city_identities(conn)
+    from toronto_bids.linking.city_crosswalk import reviewed_links
+    crosswalks = reviewed_links(conn)
     ids = _Identities(conn)
     # Derive all approved links before assigning FKs, so a late join cannot leave a fact
     # pointing at an alias. A conflicting reference stays unjoined to document identities.
@@ -93,7 +95,7 @@ def _resolve(conn):
         if len(docs) == 1:
             doc = next(iter(docs))
             ids.join(ids.get('city_council_bid', ref), ids.get('city_document', doc),
-                     json.dumps(dict(rule='held_bid_or_solicitation_link', reference=ref, document_number=doc)))
+                     json.dumps(crosswalks.get(ref) or dict(rule='held_bid_or_solicitation_link', reference=ref, document_number=doc)))
     for row in conn.execute('SELECT rfx_id,document_number FROM ariba_posting WHERE document_number IS NOT NULL'):
         ids.join(ids.get('ariba_event', row['rfx_id']), ids.get('city_document', row['document_number']),
                  json.dumps(dict(rule='published_ariba_document_number', rfx_id=row['rfx_id'], document_number=row['document_number'])))

@@ -22,6 +22,7 @@ ODATA_SOLICITATION = {
         "Successful_Bidder": "Acme", "Award_Amount": "100", "Date_Awarded": "2025-02-02",
         "AwardedDate": "2025-02-02", "street": "1 Main St",
     }],
+    "Solicitation_Award_Details": "",
     "Staff_Notes": "unused field the feed happens to carry",
 }
 ODATA_NONCOMP = {
@@ -177,14 +178,21 @@ def test_declared_schema_matches_what_the_normalizers_actually_read():
     src_dir = pathlib.Path(schema_check.__file__).parent
     for (module, func_name), feed in reads.items():
         tree = ast.parse((src_dir / module).read_text())
-        func = next(n for n in ast.walk(tree)
-                    if isinstance(n, ast.FunctionDef) and n.name == func_name)
-        # every string literal passed to a .get(...) inside the normalizer
-        actually_read = {
-            n.args[0].value for n in ast.walk(func)
-            if isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute)
-            and n.func.attr == "get" and n.args and isinstance(n.args[0], ast.Constant)
-        }
+        functions = {n.name:n for n in tree.body if isinstance(n,ast.FunctionDef)}
+        pending,visited,actually_read = [func_name],set(),set()
+        # Follow local helpers too: moving a field read into identity_record must
+        # not hide a newly used publisher field from the drift contract.
+        while pending:
+            name=pending.pop()
+            if name in visited:continue
+            visited.add(name)
+            for n in ast.walk(functions[name]):
+                if not isinstance(n,ast.Call):continue
+                if isinstance(n.func,ast.Name) and n.func.id in functions:
+                    pending.append(n.func.id)
+                if (isinstance(n.func,ast.Attribute) and n.func.attr=='get' and n.args
+                        and isinstance(n.args[0],ast.Constant)):
+                    actually_read.add(n.args[0].value)
         if feed in schema_check._ODATA:
             _, top, supplier = schema_check._ODATA[feed]
             declared = top | supplier

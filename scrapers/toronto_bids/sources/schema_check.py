@@ -36,7 +36,7 @@ _ODATA = {
         "Solicitation_Form_Type", "Posting_Title", "Solicitation_Document_Description",
         "Issue_Date", "Closing_Date", "High_Level_Category", "Client_Division",
         "Buyer_Name", "Buyer_Email", "Buyer_Phone_Number", "Wards",
-        "Ariba_Discovery_Posting_Link", "id", "Awarded_Suppliers",
+        "Ariba_Discovery_Posting_Link", "id", "Awarded_Suppliers", "Solicitation_Award_Details",
     }, {"Successful_Bidder", "Award_Amount", "Date_Awarded", "AwardedDate"}),
     "odata_noncompetitive": (config.ODATA_NONCOMPETITIVE, {
         "Non_Competitive_Reference_Number", "Non_Competitive_Reason", "Client_Division",

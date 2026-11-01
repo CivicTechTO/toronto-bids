@@ -181,3 +181,25 @@ description = "Portal adapter that captured the public listing (bids_tenders or 
 description = "Named public listing status. Bonfire follows the anonymous UI's Open/Closed/Awarded/Cancelled rules; Awarded alone supplies no recipient/value fact."
 ["portal_listing.closing_date"]
 description = "Published closing timestamp; Bonfire's UTC date strings are emitted with an explicit +00:00 offset. Cancelled Bonfire listings retain their published scheduled close."
+
+
+["city_crosswalk_evidence.proof_sha256"]
+description = "SHA-256 of the canonical immutable reviewed equivalence proof."
+
+["city_crosswalk_evidence.reference"]
+description = "Council item whose single native procurement is linked to the City document."
+
+["city_crosswalk_evidence.document_number"]
+description = "City publisher document identifier; never created by Call Number encoding."
+
+["city_crosswalk_evidence.call_number"]
+description = "Printed native Call Number in the original council agenda."
+
+["city_crosswalk_evidence.proof_class"]
+description = "publisher_native_call asserts an explicit publisher cross-reference; corroborated_compound records exact independent dates, supplier, scoped award value and solicitation type with global uniqueness."
+
+["city_crosswalk_evidence.proof_json"]
+description = "Original source witnesses, agenda and publisher hashes, source row ID and proof class; retained unchanged after acceptance."
+
+["solicitation.publisher_identity_json"]
+description = "Latest original OData identity-field snapshot: document/row IDs, issue/closing dates, type, publisher call details and current supplier/value pairs. Distinguishes source corrections/removals from retained historical award rows; reviewed crosswalks compare this snapshot before reusing proof."
