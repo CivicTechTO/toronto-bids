@@ -72,6 +72,10 @@ The same lesson recurs at every level of the nightly, and the pattern is fixed:
 
 Normalizers read feed fields with `raw.get(...)`, so a field the City renames silently NULLs a column forever. `schema_check.py` declares exactly the fields the OData and CKAN normalizers read and samples those feeds on each sync, failing loudly on missing keys. When a normalizer starts reading a new field, add it to the declared sets in the same change. Ariba and suspended-firms are outside its coverage (suspended-firms parsing raises on header drift itself; Ariba field drift is unguarded).
 
+### Reviewed City identity crosswalks
+
+`linking/city_crosswalk.py` applies committed source proofs during procurement resolution. Direct publisher Call Number assertions and corroborated compound source facts are separate proof classes. Numeric encodings discover candidates only; derived titles and generic supplier/value matches cannot approve a crosswalk. Reviewed links and their immutable exported evidence survive legacy matcher rebuilds. The OData normalizer retains `publisher_identity_json` so corrected/removed current award fields cannot hide behind archived award rows. When adding proofs, deploying the first crosswalk, or handling changed source context, read `docs/city-call-crosswalk.md` before resolving/exporting. A changed proof context requires review; never delete a registry entry or weaken a gate to bypass the failure.
+
 ### Document extraction (`extraction.py`, `extract.py`, #205/#213)
 
 Bids and awards inside PDFs — Award Summary Forms, committee staff reports, composite reports, TRCA/EP/Zoo board reports — are read by **one LLM prompt**, not per-source parsers. The incumbent regex/pdfplumber parsers were measured against the model and deleted (#205, e936004); don't rebuild them.

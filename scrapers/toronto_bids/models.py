@@ -22,6 +22,7 @@ class Solicitation:
     wards: str | None = None
     ariba_posting_link: str | None = None
     odata_id: str | None = None
+    publisher_identity_json: str | None = None  # latest original OData identity fields, separate from archived award lines
     source: str = ""
 
 

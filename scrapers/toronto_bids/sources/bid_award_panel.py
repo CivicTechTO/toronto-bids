@@ -7,12 +7,11 @@ exactly one accessible place: the Bid Award Panel agenda that approved the award
     BA189.1 - Award of Ariba Document Number 3234668279 to GHD Limited for the Aeration
               Blower System Upgrades at the Humber Treatment Plant
 
-Reach is bounded by history, not effort. Toronto adopted Ariba around 2019; before that the
-same agendas identify awards by Call Number (2017-01-04, BA1.2: "Award of Call Number
-6032-16-3114 to MeteoGroup..."), and our spine is keyed on the 10-digit Ariba number that was
-backfilled later. `Contract_Number_Purchase_Order` is empty on all 7,592 feed records, so
-there is no join key in either direction for 2012-2018. Those ~4,100 title-less solicitations
-are unreachable from here, and no amount of scraping changes that.
+Before Ariba, agendas use native Call Numbers while the current feed publishes numeric
+competitive identifiers. Numeric encoding is discovery evidence only. The guarded legacy
+supplier/value fallback covers some items; linking.city_crosswalk validates separately
+reviewed equivalences against exact original publisher and agenda facts. Neither path
+makes a derived solicitation title independent identity evidence.
 
 Rather than hardcode a cutoff year, this reads every agenda and extracts whatever 10-digit
 numbers it finds. Pre-Ariba meetings simply yield nothing, so the data draws the boundary
@@ -928,12 +927,9 @@ _ITEM_SPLIT_CAP = re.compile(
 def parse_pre_ariba_awards(html: str, meeting: str | None = None) -> list[dict]:
     """Items that name no document number, with the winner and value needed to match them.
 
-    Toronto adopted Ariba around 2019, so a 2017-2018 agenda identifies its award by Call
-    Number ("Award of Call Number 6032-16-3114 to MeteoGroup...") and our spine is keyed on a
-    10-digit Ariba number backfilled later. There is no identifier in common (#77), and
-    `Contract_Number_Purchase_Order` is empty on all 7,592 feed records.
-
-    But the item names its winner and its value, and `award` holds both. That is the join.
+    These are inputs to the guarded legacy supplier/value fallback, not proof of a
+    native identifier crosswalk. Reviewed crosswalks separately compare original
+    publisher and agenda contexts, including later meetings still using native calls.
 
     When `meeting` is given, each item carries a full council `reference` (e.g. '2016.BD106.3')
     built from the meeting's year prefix and the item's 'BD106.3' token — so a match can be
@@ -1055,26 +1051,29 @@ def match_pre_ariba_solicitations(conn, agendas: dict) -> int:
     Same join as #77's title match — a council item's (winner, award value net-of-taxes) to a
     solicitation's award — but keyed on the item's REFERENCE, and matched against ALL awards
     (a titled solicitation still needs its bids linked). Unique match only; a wrong merge is
-    worse than none. Idempotent: the table is rebuilt from the current match each run.
+    worse than none. Only this fallback method is rebuilt; reviewed crosswalk links and
+    their immutable proof survive every replay.
     """
     by_value = _awards_by_value(conn)
     links = {}
     for meeting, html in agendas.items():
         if meeting.split(".")[0] >= "2019":
-            continue  # 2019+ names a document number directly
+            continue  # Legacy fallback cutoff; reviewed crosswalks handle later native-call items.
         for item in parse_pre_ariba_awards(html, meeting):
             if not item["reference"]:
                 continue
             docs = _legacy_documents(item, by_value)
             if len(docs) == 1:
                 links[item["reference"]] = docs.pop()
-    conn.execute("DELETE FROM solicitation_link")
+    # Reviewed crosswalks carry independent immutable proof. Rebuilding the
+    # weaker supplier/value fallback must not delete or overwrite those links.
+    conn.execute("DELETE FROM solicitation_link WHERE method='council_pre_ariba'")
     conn.executemany(
-        "INSERT INTO solicitation_link (reference, document_number, method) VALUES (?, ?, 'council_pre_ariba')",
+        "INSERT INTO solicitation_link (reference, document_number, method) VALUES (?, ?, 'council_pre_ariba') ON CONFLICT(reference) DO NOTHING",
         list(links.items()),
     )
     conn.commit()
-    return len(links)
+    return conn.execute("SELECT COUNT(*) FROM solicitation_link").fetchone()[0]
 
 
 def store_composite_awards(conn, log=lambda _m: None, failures=None) -> int:

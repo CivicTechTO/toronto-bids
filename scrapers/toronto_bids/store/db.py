@@ -98,6 +98,7 @@ EXPORT_TABLES = [
     "agency_bid",
     "ariba_attachment",
     "solicitation_link",
+    "city_crosswalk_evidence",
     "portal_listing",
     "procurement",
     "procurement_key",

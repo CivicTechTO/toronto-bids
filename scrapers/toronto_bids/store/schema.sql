@@ -55,6 +55,7 @@ CREATE TABLE IF NOT EXISTS solicitation (
     buyer_phone          TEXT,
     wards                TEXT,
     ariba_posting_link   TEXT,
+    publisher_identity_json TEXT, -- latest OData identity projection; archive awards alone cannot detect source corrections
     odata_id             TEXT,
     source               TEXT,
     -- Where the TITLE came from, when the City did not publish one:
@@ -313,11 +314,10 @@ CREATE UNIQUE INDEX IF NOT EXISTS bid_key ON bid (
     COALESCE(bid_price, ''), source
 );
 
--- Pre-Ariba reference <-> document_number equivalence (#124, the first slice). A 2013-2018
--- council item and a spine solicitation are the SAME procurement; the City gives no shared
--- identifier (Call Number vs the 10-digit Ariba number backfilled later, #77), so the match
--- is (winner, award value) and lives here. Rebuilt each run; a wrong merge is worse than none,
--- so only a unique match is recorded.
+-- Council item <-> City competitive identifier equivalence. The legacy
+-- council_pre_ariba fallback is rebuilt independently. city_call_crosswalk links
+-- carry immutable reviewed source proof in city_crosswalk_evidence, and survive
+-- fallback rebuilds. A numeric encoding alone never approves an equivalence.
 CREATE TABLE IF NOT EXISTS solicitation_link (
     reference        TEXT PRIMARY KEY,
     document_number  TEXT NOT NULL,
@@ -609,4 +609,16 @@ CREATE TABLE IF NOT EXISTS merx_capture (
     mode TEXT NOT NULL,
     complete INTEGER NOT NULL,
     report_json TEXT NOT NULL
+);
+
+-- Immutable reviewed equivalence proof. Direct publisher assertions and independent
+-- compound source facts remain distinguishable; no numeric encoding approves a link.
+CREATE TABLE IF NOT EXISTS city_crosswalk_evidence (
+    proof_sha256 TEXT PRIMARY KEY,
+    reference TEXT NOT NULL,
+    document_number TEXT NOT NULL,
+    call_number TEXT NOT NULL,
+    proof_class TEXT NOT NULL,
+    proof_json TEXT NOT NULL,
+    first_seen TEXT NOT NULL DEFAULT (datetime('now'))
 );
