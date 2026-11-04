@@ -55,7 +55,10 @@ def refused_contracts(conn, corpus):
             'SELECT * FROM agency_derivation WHERE corpus=? AND active=1 AND reason IS NOT NULL '
             'ORDER BY id', (corpus,)):
         proof = json.loads(row['identity_evidence_json'] or 'null')
-        if proof and proof.get('withheld_awards_reason'):
+        # A verified native identity with individual award admissions is an award
+        # evidence gap, just like the older contract-wide withholding format.
+        if proof and (proof.get('withheld_awards_reason') or
+                      (row['native_ref'] and proof.get('award_admission'))):
             continue
         out.setdefault(_key(row), row)
     return out
