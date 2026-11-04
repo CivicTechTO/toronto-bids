@@ -118,7 +118,7 @@ PARQUET_FILES=("$EXPORT_DIR"/*.parquet)
   "$JSON" "$GZ" "$SQLITE" "$CSV_ZIP" "${PARQUET_FILES[@]}" --out "$MANIFEST" \
   || fail "could not generate manifest.json"
 
-ASSETS=("$JSON" "$GZ" "$SQLITE" "$SCHEMA" "$MANIFEST" "$CSV_ZIP" "${PARQUET_FILES[@]}")
+ASSETS=("$JSON" "$GZ" "$SQLITE" "$SCHEMA" "$CSV_ZIP" "${PARQUET_FILES[@]}")
 
 # 5. Ensure the rolling `latest` release exists, then clobber its assets.
 if ! gh_run release view latest -R "$DATA_REPO" >/dev/null 2>&1; then
@@ -127,8 +127,12 @@ if ! gh_run release view latest -R "$DATA_REPO" >/dev/null 2>&1; then
     --notes "Rolling nightly export, overwritten every night. See snapshot-* releases for point-in-time copies." \
     || fail "could not create the 'latest' release on $DATA_REPO"
 fi
-gh_run release upload latest "${ASSETS[@]}" --clobber -R "$DATA_REPO" \
+upload_release_assets latest "${ASSETS[@]}" --clobber -R "$DATA_REPO" \
   || fail "upload to the 'latest' release on $DATA_REPO failed"
+# The rolling release is not atomic, but a failed data upload must not advertise a
+# new manifest. Publish it after all data assets finish uploading.
+upload_release_assets latest "$MANIFEST" --clobber -R "$DATA_REPO" \
+  || fail "manifest upload to the 'latest' release on $DATA_REPO failed"
 
 # 5b. Preserve the FINAL Bid Award Panel agenda corpus as an immutable data asset (#unified-
 #     nightly). The Panel is abolished; these 891 pages never change, so upload once and skip
@@ -208,7 +212,7 @@ if [ "$DAY" = 01 ]; then
     gh_run release create "$TAG" -R "$DATA_REPO" \
       --title "Snapshot $SNAPSHOT_DATE" \
       --notes "Point-in-time export, generated_at=$GENERATED_AT." \
-      "${ASSETS[@]}" \
+      "${ASSETS[@]}" "$MANIFEST" \
       || fail "could not create snapshot release $TAG on $DATA_REPO"
   fi
 fi

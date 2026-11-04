@@ -1890,6 +1890,30 @@ class AribaFileSource:
     # missing when none are. See CLAUDE.md's Ariba attachments section for the measurement.
 
 
+def _capture_with_session_recovery(browser, page, event, dest_dir, log):
+    """Retry one explicit denial in a fresh authenticated context, then preserve the result.
+
+    A denial can be session state rather than an event restriction. Closed events and
+    other errors still follow the normal failure/training paths without another login.
+    """
+    try:
+        return capture_event(page, event, dest_dir, log=log), page
+    except EventUnavailable as exc:
+        if exc.reason != "denied":
+            raise
+    log(f"  Doc{event['document_number']}: denied; retrying once with a fresh login")
+    context = browser.new_context(accept_downloads=True)
+    try:
+        fresh = context.new_page()
+        login(fresh, config.ARIBA_USERNAME, config.ARIBA_PASSWORD, log=log)
+        saved = capture_event(fresh, event, dest_dir, log=log)
+    except Exception:
+        context.close()
+        raise
+    page.context.close()
+    return saved, fresh
+
+
 def capture_attachments(conn, dest_dir=None, log=lambda _m: None, headless=False,
                         virtual_display=False, failures: list | None = None,
                         training_restrictions: list | None = None) -> int:
@@ -1953,7 +1977,8 @@ def capture_attachments(conn, dest_dir=None, log=lambda _m: None, headless=False
 
                         restriction = None
                         try:
-                            saved = capture_event(page, event, dest_dir, log=event_log)
+                            saved, page = _capture_with_session_recovery(
+                                browser, page, event, dest_dir, event_log)
                         except EventUnavailable as exc:
                             if (VERIFIED_TRAINING_EVENTS.get(event["document_number"]) != str(event["rfx_id"])
                                     or exc.reason not in _EVENT_REJECTIONS):

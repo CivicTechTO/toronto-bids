@@ -17,7 +17,7 @@ pytestmark = pytest.mark.skipif(
 )
 
 
-def _publish(tmp_path, error="", dry_run=False, r2=False, r2_error=""):
+def _publish(tmp_path, error="", dry_run=False, r2=False, r2_error="", upload_errors=()):
     data = tmp_path / "data"
     export = data / "export"
     export.mkdir(parents=True)
@@ -37,6 +37,15 @@ def _publish(tmp_path, error="", dry_run=False, r2=False, r2_error=""):
 import json,os,sys
 with open(os.environ['COMMANDS'], 'a') as f:
     f.write(json.dumps(['gh', *sys.argv[1:]])+'\\n')
+if sys.argv[1:3] == ['release','upload']:
+    path=os.path.join(os.environ['TB_DATA_DIR'],'upload_attempts')
+    try: n=int(open(path).read())
+    except FileNotFoundError: n=0
+    open(path,'w').write(str(n+1))
+    errors=json.loads(os.environ.get('UPLOAD_ERRORS','[]'))
+    if n<len(errors) and errors[n]:
+        print(errors[n],file=sys.stderr)
+        sys.exit(1)
 if sys.argv[1:3] == ['workflow','run']:
     error=os.environ.get('DISPATCH_ERROR','')
     if error:
@@ -74,6 +83,9 @@ real={shutil.which('uv')!r}
 os.execv(real,[real,*sys.argv[1:]])
 ''')
     uv.chmod(0o755)
+    sleeper=bin_dir/'sleep'
+    sleeper.write_text('#!/bin/sh\nexit 0\n')
+    sleeper.chmod(0o755)
     env = dict(os.environ)
     env.update({
         "PATH": str(bin_dir) + os.pathsep + os.environ["PATH"],
@@ -85,6 +97,7 @@ os.execv(real,[real,*sys.argv[1:]])
         "NOTIFICATIONS": str(tmp_path / "notifications.jsonl"),
         "DISPATCH_ERROR": error,
         "R2_ERROR": r2_error,
+        "UPLOAD_ERRORS": json.dumps(upload_errors),
     })
     result = subprocess.run([BASH, str(DEPLOY / "publish-data.sh")],
                             env=env, text=True, capture_output=True)
@@ -164,3 +177,40 @@ def test_configured_r2_dry_run_never_authenticates_or_uploads(tmp_path):
     assert result.returncode==0
     assert 'DRY-RUN python -m toronto_bids.r2_mirror' in result.stdout
     assert rows==[] and notifications==[] and commands==[]
+
+
+def test_transient_asset_502_retries_complete_upload_before_manifest_and_frontend(tmp_path):
+    result,rows,notifications,commands=_publish(tmp_path,upload_errors=['HTTP 502: Server Error',''])
+    assert result.returncode==0,result.stdout+result.stderr
+    uploads=[c for c in commands if c[:3]==['gh','release','upload']]
+    assert len(uploads)==3
+    assert uploads[0]==uploads[1], 'retry must re-clobber the same complete artifact set'
+    assert not any('manifest.json' in arg for arg in uploads[0])
+    assert any('manifest.json' in arg for arg in uploads[2])
+    assert commands.index(uploads[2])<next(i for i,c in enumerate(commands) if c[:3]==['gh','workflow','run'])
+
+
+@pytest.mark.parametrize('error,attempts', [
+    ('HTTP 503: Service Unavailable',3),
+    ('HTTP 403: Forbidden',1),
+    ('HTTP 429: Too Many Requests',1),
+    ('network connection failed',1),
+])
+def test_failed_data_upload_is_bounded_and_does_not_publish_manifest_or_dispatch(tmp_path,error,attempts):
+    result,rows,_,commands=_publish(tmp_path,upload_errors=[error]*3)
+    assert result.returncode==1
+    uploads=[c for c in commands if c[:3]==['gh','release','upload']]
+    assert len(uploads)==attempts
+    assert not any('manifest.json' in arg for c in uploads for arg in c)
+    assert not any(c[:3]==['gh','workflow','run'] for c in commands)
+    assert ('publish','failed',"upload to the 'latest' release on CivicTechTO/toronto-bids-data failed") in rows
+
+
+def test_manifest_upload_failure_does_not_dispatch_frontend(tmp_path):
+    result,rows,_,commands=_publish(tmp_path,upload_errors=['','HTTP 403: Forbidden'])
+    assert result.returncode==1
+    uploads=[c for c in commands if c[:3]==['gh','release','upload']]
+    assert len(uploads)==2
+    assert any('manifest.json' in arg for arg in uploads[1])
+    assert not any(c[:3]==['gh','workflow','run'] for c in commands)
+    assert rows[-1][0:2]==('publish','failed')

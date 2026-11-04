@@ -1,5 +1,7 @@
 """TRCA download gaps must survive per-document isolation into operational status (#244)."""
 
+from contextlib import contextmanager
+
 import httpx
 import pytest
 
@@ -10,6 +12,10 @@ BASE = "https://pub-trca.escribemeetings.com/"
 
 
 def prepare_capture(conn, monkeypatch, tmp_path, replies):
+    @contextmanager
+    def blocked_browser():
+        yield lambda url: {"status": 403, "url": url, "body": b"Forbidden"}
+    monkeypatch.setattr(trca, "_browser_fetch", blocked_browser)
     monkeypatch.setattr(config, "TRCA_ESCRIBE_YEARS", [])
     monkeypatch.setattr(config, "TRCA_REPORTS_DIR", tmp_path / "reports")
     extraction_calls = []

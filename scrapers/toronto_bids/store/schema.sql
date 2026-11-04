@@ -232,6 +232,7 @@ CREATE TABLE IF NOT EXISTS background_pdf (
     local_path  TEXT,
     sha256      TEXT,
     text        TEXT,
+    award_review_context_json TEXT, -- source agenda context requiring independent award decision review
     procurement_id INTEGER REFERENCES procurement(id),
     first_seen  TEXT NOT NULL DEFAULT (datetime('now')),
     last_seen   TEXT NOT NULL DEFAULT (datetime('now'))

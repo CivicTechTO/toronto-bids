@@ -82,7 +82,8 @@ def browser_fetch():
                         for (let i = 0; i < bytes.length; i += 32768)
                             binary += String.fromCharCode(...bytes.subarray(i, i + 32768));
                         return {status: r.status, url: r.url,
-                                content_type: r.headers.get('content-type'), body: btoa(binary)};
+                                content_type: r.headers.get('content-type'),
+                                retry_after: r.headers.get('retry-after'), body: btoa(binary)};
                     } finally { clearTimeout(timer); }
                 }''', {'url': url, 'maximum': MAX_BYTES})
                 result['body'] = base64.b64decode(result['body'], validate=True)

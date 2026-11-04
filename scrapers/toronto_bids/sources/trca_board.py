@@ -6,9 +6,12 @@ handled by LLM extraction (#205); this module provides the infrastructure
 """
 
 import hashlib
+import json
+from contextlib import ExitStack
 import pathlib
 import re
 import subprocess
+from urllib.parse import parse_qs, urlsplit
 from html import unescape
 
 import httpx
@@ -133,7 +136,14 @@ def download_reports(conn, http, log=lambda _m: None, *, failures=None) -> int:
             continue
         detail_urls = meeting_detail_urls(calendar)
         log(f"  trca {year}: {len(detail_urls)} meetings")
+        meetings = {str(m.get("ID")): m for m in calendar.get("d", [])}
         for murl in detail_urls:
+            meeting = meetings[parse_qs(urlsplit(murl).query)["Id"][0]]
+            # Preserve the publisher's not-yet-held decision context even after the date
+            # passes. Calendar passage alone cannot establish an adopted recommendation.
+            review_context = (json.dumps({"calendar_url": config.TRCA_CALENDAR_URL,
+                "meeting_url": murl, "meeting": meeting}, sort_keys=True)
+                if meeting.get("MeetingPassed") is False else None)
             try:
                 mhtml = http.get_text(murl)
             except httpx.HTTPError as exc:
@@ -143,7 +153,8 @@ def download_reports(conn, http, log=lambda _m: None, *, failures=None) -> int:
                 if "ashx" in durl.lower():
                     db.upsert_row(
                         conn,
-                        BackgroundPdf(url=durl, kind="agency_board"),
+                        BackgroundPdf(url=durl, kind="agency_board",
+                                      award_review_context_json=review_context),
                         overwrite=False,
                     )
             assets.update(escribe_asset_urls(mhtml))
@@ -188,6 +199,55 @@ def _prune_page_assets(conn, assets: set[str], log) -> int:
     return len(ids)
 
 
+class _DeferredDownloads(RuntimeError):
+    """The source requested backoff; leave the rest queued for a later run."""
+
+
+def _browser_fetch():
+    # Local import: the reviewed recovery tool shares our PDF text infrastructure.
+    from toronto_bids.sources.trca_document_recovery import browser_fetch
+    return browser_fetch()
+
+
+def _fetch_report(http, url, prefix, stack, session, reports_dir, log):
+    """Use one ordinary anonymous browser only for an observed eSCRIBE interstitial."""
+    try:
+        blob = http.get_bytes(url)
+    except httpx.HTTPStatusError as exc:
+        if prefix == "trca" and (exc.response.status_code == 429
+                or exc.response.headers.get("retry-after")):
+            raise _DeferredDownloads(f"source requested backoff; remaining downloads deferred: {exc}") from exc
+        if prefix != "trca" or exc.response.status_code != 403:
+            raise
+        blob = exc.response.content
+        if b"verifying your browser" not in blob.lower():
+            raise
+    if prefix != "trca" or b"verifying your browser" not in blob.lower():
+        return blob
+    from toronto_bids.sources.trca_document_recovery import document_id, _validated
+    expected_id = document_id(url)  # exact public TRCA FileStream URLs only
+    if session.get("unavailable"):
+        raise RuntimeError("ordinary browser unavailable earlier in this pass; left queued")
+    if "fetch" not in session:
+        try:
+            session["fetch"] = stack.enter_context(_browser_fetch())
+        except Exception:
+            session["unavailable"] = True
+            raise
+    log(f"  trca: eSCRIBE verification page; ordinary browser fallback for {url}")
+    response = session["fetch"](url)
+    if response["status"] == 429 or response.get("retry_after"):
+        raise _DeferredDownloads("browser requested backoff; remaining downloads deferred")
+    if response["status"] != 200:
+        raise ValueError(f"browser HTTP {response['status']}; availability cause unverified")
+    if document_id(response["url"]) != expected_id:
+        raise ValueError("browser response changed the document identity")
+    blob = response["body"]
+    _, temp = _validated(blob, reports_dir)
+    temp.unlink()
+    return blob
+
+
 def _store_pending_pdfs(
     conn, http, reports_dir, url_like: str, log, prefix: str, *, failures=None
 ) -> int:
@@ -204,41 +264,46 @@ def _store_pending_pdfs(
     """
     reports_dir.mkdir(parents=True, exist_ok=True)
     n = 0
-    for row in conn.execute(
-        "SELECT id, url FROM background_pdf WHERE kind='agency_board' "
-        "AND url LIKE ? AND sha256 IS NULL ORDER BY id",
-        (url_like,),
-    ).fetchall():
-        try:
-            blob = http.get_bytes(row["url"])
-        except Exception as exc:  # noqa: BLE001 — 404/5xx/transport OR a malformed
-            # URL (an entity that slipped decoding): one bad URL among thousands must never
-            # abort the batch. Scoped to the single fetch call, so real bugs still surface.
-            _download_failure(
-                prefix, f"skip {row['url']}: {exc}; left queued (cause unverified)",
-                log, failures,
+    session = {}
+    with ExitStack() as stack:
+        for row in conn.execute(
+            "SELECT id, url FROM background_pdf WHERE kind='agency_board' "
+            "AND url LIKE ? AND sha256 IS NULL ORDER BY id",
+            (url_like,),
+        ).fetchall():
+            try:
+                blob = _fetch_report(http, row["url"], prefix, stack, session, reports_dir, log)
+            except _DeferredDownloads as exc:
+                _download_failure(prefix, f"{row['url']}: {exc}; left queued", log, failures)
+                break
+            except Exception as exc:  # noqa: BLE001 — 404/5xx/transport OR a malformed
+                # URL (an entity that slipped decoding): one bad URL among thousands must never
+                # abort the batch. Scoped to the single fetch call, so real bugs still surface.
+                _download_failure(
+                    prefix, f"skip {row['url']}: {exc}; left queued (cause unverified)",
+                    log, failures,
+                )
+                continue
+            if not blob.startswith(b"%PDF"):
+                # Left queued — an interstitial or a transient error page may serve the real
+                # PDF next run. But SAY SO: this branch was silent, and #175 hid 460 wasted
+                # fetches a night behind it, making an 11-line 404 list look like the whole
+                # problem. A skip nobody can see is a skip nobody fixes.
+                _download_failure(
+                    prefix, f"not a PDF ({blob[:4]!r}, {len(blob)} bytes), left queued: {row['url']}",
+                    log, failures,
+                )
+                continue
+            sha = hashlib.sha256(blob).hexdigest()
+            path = reports_dir / f"{sha}.pdf"
+            path.write_bytes(blob)
+            conn.execute(
+                "UPDATE background_pdf SET sha256=?, local_path=?, text=? WHERE id=?",
+                (sha, str(path), _pdftotext(path), row["id"]),
             )
-            continue
-        if not blob.startswith(b"%PDF"):
-            # Left queued — an interstitial or a transient error page may serve the real
-            # PDF next run. But SAY SO: this branch was silent, and #175 hid 460 wasted
-            # fetches a night behind it, making an 11-line 404 list look like the whole
-            # problem. A skip nobody can see is a skip nobody fixes.
-            _download_failure(
-                prefix, f"not a PDF ({blob[:4]!r}, {len(blob)} bytes), left queued: {row['url']}",
-                log, failures,
-            )
-            continue
-        sha = hashlib.sha256(blob).hexdigest()
-        path = reports_dir / f"{sha}.pdf"
-        path.write_bytes(blob)
-        conn.execute(
-            "UPDATE background_pdf SET sha256=?, local_path=?, text=? WHERE id=?",
-            (sha, str(path), _pdftotext(path), row["id"]),
-        )
-        conn.commit()
-        n += 1
-        log(f"  {prefix} report {n}: {row['url']}")
+            conn.commit()
+            n += 1
+            log(f"  {prefix} report {n}: {row['url']}")
     return n
 
 

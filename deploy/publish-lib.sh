@@ -52,3 +52,21 @@ verify_artifact_size() {
   record_step "$label" ok
   return 0
 }
+
+# Retry the identical clobber after an explicit server error, including partial uploads.
+# Authentication failures and rate limits remain visible without automatic retries.
+upload_release_assets() {
+  local attempt output
+  for attempt in 1 2 3; do
+    if output="$(gh_run release upload "$@" 2>&1)"; then
+      [ -z "$output" ] || printf '%s\n' "$output"
+      return 0
+    fi
+    printf '%s\n' "$output" >&2
+    if [ "$attempt" = 3 ] || ! [[ "$output" =~ HTTP[[:space:]]5[0-9][0-9]([^0-9]|$) ]]; then
+      return 1
+    fi
+    echo "publish-data: server error uploading assets; retry $attempt/2" >&2
+    sleep "$((attempt * 5))"
+  done
+}

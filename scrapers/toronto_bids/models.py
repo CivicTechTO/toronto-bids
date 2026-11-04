@@ -168,6 +168,7 @@ class BackgroundPdf:
     local_path: str | None = None
     sha256: str | None = None
     text: str | None = None
+    award_review_context_json: str | None = None
 
 
 @dataclass(frozen=True)
