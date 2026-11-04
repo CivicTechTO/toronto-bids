@@ -16,6 +16,8 @@ COUNTING = (
     'Bid facts include explicit no_bid declarations; submitted_bid_facts excludes those '
     'and is not an audited source receipt count. Withheld bid metadata counts exact reviewed '
     'tax/compliance fields omitted from derived bids; original contract_json retains those claims. '
+    'withheld_award_amounts counts approved named recipients whose shared published limit is not '
+    'an individual allocation; their award fact remains accepted with an unknown amount. '
     'Alias counts describe stored rows normalized/merged in this rebuild, across '
     'solicitations, bids and awards; they are not lost facts.'
 )
@@ -64,7 +66,17 @@ def summarize(decisions):
         key = tuple(item[k] for k in ('sha256', 'extractor_version', 'result_sha256', 'contract_index'))
         contract = json.loads(item['contract_json'])
         proof = json.loads(item.get('identity_evidence_json') or 'null')
-        if proof and proof.get('withheld_awards_reason'):
+        admission = (proof or {}).get('award_admission')
+        if admission is not None:
+            accepted = [a['award'] for a in admission['accepted']]
+            withheld = [contract['awards'][a['award_index']] for a in admission['withheld']]
+            if contract.get('bids') or accepted:
+                groups['accepted'][key] = contract | {'awards': accepted}
+                groups['recovered'][key] = contract | {'awards': accepted}
+            if withheld:
+                groups['refused'][key] = contract | {'bids': [], 'awards': withheld}
+                groups['withheld'][key] = contract | {'bids': [], 'awards': withheld}
+        elif proof and proof.get('withheld_awards_reason'):
             groups['refused'][key] = contract | {'bids': []}
             groups['withheld'][key] = contract | {'bids': []}
             groups['accepted'][key] = contract | {'awards': []}
@@ -75,7 +87,8 @@ def summarize(decisions):
                 groups['recovered'][key] = contract
     metadata = {tuple(d[k] for k in ('sha256', 'extractor_version', 'result_sha256', 'contract_index')):
                 json.loads(d.get('identity_evidence_json') or 'null') or {} for d in decisions}
-    result = {'withheld_bid_metadata_fields': sum(len(p.get('withheld_bid_fields', [])) for p in metadata.values()),
+    result = {'withheld_award_amounts': sum(len(p.get('award_admission', {}).get('amounts_withheld', [])) for p in metadata.values()),
+              'withheld_bid_metadata_fields': sum(len(p.get('withheld_bid_fields', [])) for p in metadata.values()),
               'source_observations': len(decisions),
               'unique_documents_with_facts': len({d['sha256'] for d in decisions}), 'counting': COUNTING}
     for status, contracts in groups.items():
@@ -176,14 +189,24 @@ def reconcile(conn, baseline, agencies):
             matches = [d for d in by_url.get((corpus, row['report_url']), [])
                        if any(f.get('supplier_name') == row[name] and f.get('amount_raw') == row[amount]
                               for f in d['contract'].get(kind, []))]
+            def source_withholds(d):
+                proof = d.get('identity_evidence') or {}
+                if proof.get('withheld_awards_reason'):
+                    return True
+                admission = proof.get('award_admission')
+                if not admission:
+                    return False
+                indices = set(admission['amounts_withheld']) | {a['award_index'] for a in admission['withheld']}
+                return any(i in indices and a.get('supplier_name') == row[name] and a.get('amount_raw') == row[amount]
+                           for i, a in enumerate(d['contract'].get('awards', [])))
             if any(d['native_ref'] and identity(d['native_ref']) in identities and
                    (not d['reason'] or (kind == 'bids' and d.get('identity_evidence') and
-                                        d['identity_evidence'].get('withheld_awards_reason')))
+                                        (d['identity_evidence'].get('withheld_awards_reason') or d['identity_evidence'].get('award_admission'))))
                    for d in matches):
                 counts['represented_by_accepted_evidence'] += 1
                 continue
             disposition = ('refused_source_facts' if kind == 'awards' and any(
-                               d.get('identity_evidence') and d['identity_evidence'].get('withheld_awards_reason') for d in matches)
+                               source_withholds(d) for d in matches)
                            else 'refused_identity' if any(d['reason'] for d in matches)
                            else 'accepted_evidence_not_stored' if matches else 'no_matching_current_evidence')
             counts[disposition] += 1
