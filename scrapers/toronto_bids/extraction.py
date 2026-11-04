@@ -579,6 +579,11 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
         except IdentityReviewRequired as exc:
             raise RuntimeError(f'backfill {corpus}: {exc}; existing rows kept') from exc
 
+        # Holds follow exact source bytes across duplicate indexed URLs. Preserve the
+        # original agenda context; a later calendar date is not decision evidence.
+        award_review_contexts = {r["sha256"]: r["award_review_context_json"]
+            for r in conn.execute("SELECT sha256, award_review_context_json FROM background_pdf "
+                "WHERE sha256 IS NOT NULL AND award_review_context_json IS NOT NULL")}
         refusal_details = []
         for row in rows:
             result = json.loads(row["result_json"])
@@ -612,6 +617,11 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
                     # minutes/decision must be reviewed separately before an award fact.
                     withheld_awards_reason = 'TTC report award recommendation requires independent decision verification'
                     identity_evidence = dict(identity_evidence or {}, withheld_awards_reason=withheld_awards_reason)
+                if corpus == 'trca' and contract.get('awards') and row['sha256'] in award_review_contexts:
+                    withheld_awards_reason = 'TRCA agenda recommendation requires independent decision verification'
+                    identity_evidence = dict(identity_evidence or {},
+                        withheld_awards_reason=withheld_awards_reason,
+                        award_review_context=json.loads(award_review_contexts[row['sha256']]))
                 if withheld_awards_reason:
                     contracts_refused += 1
                     refusal_details.append(f"{row['url']}: {withheld_awards_reason}")

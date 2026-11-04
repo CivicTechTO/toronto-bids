@@ -384,3 +384,50 @@ def test_near_close_and_capture_share_the_archived_predicate(tmp_path):
     assert not aa.bundle_archived(tmp_path, "1111111111")
     _make_zip(tmp_path / "Doc1111111111.zip", {"a.pdf": b"a"})
     assert aa.bundle_archived(tmp_path, "1111111111")
+
+
+def test_denied_event_gets_one_fresh_login_and_reuses_recovered_session(monkeypatch,tmp_path):
+    from types import SimpleNamespace
+    closed=[]
+    old=SimpleNamespace(context=SimpleNamespace(close=lambda:closed.append('old')))
+    fresh=SimpleNamespace(context=SimpleNamespace(close=lambda:closed.append('fresh')))
+    browser=SimpleNamespace(new_context=lambda **kw:SimpleNamespace(new_page=lambda:fresh,close=fresh.context.close))
+    calls=[]
+    def capture(page,event,dest_dir,**kw):
+        calls.append(page)
+        if page is old:
+            raise aa.EventUnavailable('denied','denied')
+        return 'bundle'
+    logins=[]
+    monkeypatch.setattr(aa,'capture_event',capture)
+    monkeypatch.setattr(aa,'login',lambda page,*a,**kw:logins.append(page))
+    saved,page=aa._capture_with_session_recovery(browser,old,{'document_number':'1'},tmp_path,lambda m:None)
+    assert saved=='bundle' and page is fresh
+    assert calls==[old,fresh] and logins==[fresh] and closed==['old']
+
+
+def test_repeated_denial_is_bounded_and_failed_context_is_closed(monkeypatch,tmp_path):
+    import pytest
+    from types import SimpleNamespace
+    closed=[]
+    old=SimpleNamespace()
+    fresh=SimpleNamespace()
+    browser=SimpleNamespace(new_context=lambda **kw:SimpleNamespace(new_page=lambda:fresh,close=lambda:closed.append(True)))
+    calls=[]
+    def capture(page,*a,**kw):
+        calls.append(page)
+        raise aa.EventUnavailable('denied','still denied')
+    monkeypatch.setattr(aa,'capture_event',capture)
+    monkeypatch.setattr(aa,'login',lambda *a,**kw:None)
+    with pytest.raises(aa.EventUnavailable,match='still denied'):
+        aa._capture_with_session_recovery(browser,old,{'document_number':'1'},tmp_path,lambda m:None)
+    assert calls==[old,fresh] and closed==[True]
+
+
+def test_closed_event_does_not_retry_authentication(monkeypatch,tmp_path):
+    import pytest
+    def capture(*a,**kw):
+        raise aa.EventUnavailable('closed','closed')
+    monkeypatch.setattr(aa,'capture_event',capture)
+    with pytest.raises(aa.EventUnavailable,match='closed'):
+        aa._capture_with_session_recovery(None,None,{},tmp_path,lambda m:None)

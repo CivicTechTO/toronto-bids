@@ -203,3 +203,6 @@ description = "Original source witnesses, agenda and publisher hashes, source ro
 
 ["solicitation.publisher_identity_json"]
 description = "Latest original OData identity-field snapshot: document/row IDs, issue/closing dates, type, publisher call details and current supplier/value pairs. Distinguishes source corrections/removals from retained historical award rows; reviewed crosswalks compare this snapshot before reusing proof."
+
+["background_pdf.award_review_context_json"]
+description = "Original publisher agenda/calendar context for a report captured before its meeting occurred. Requires independent decision review before deriving awards; supported bids remain eligible. Preserved across calendar passage and URL aliases of the same bytes."
