@@ -158,3 +158,21 @@ def test_an_unreadable_registry_recognizes_nothing(nightly, monkeypatch, conn, b
 def test_resolved_waterfront_gap_is_no_longer_an_active_exception(conn):
     unknown,known=known_gaps.classify(conn,[('waterfront:2023-03',WATERFRONT_2023_03)])
     assert unknown==[('waterfront:2023-03',WATERFRONT_2023_03)] and known==[]
+
+
+def test_claim_level_award_reviews_do_not_enter_identity_refusal_baseline(conn,baseline):
+    from tests.test_trca_stage_decisions import hold
+    hold(conn)
+    backfill_from_extraction(conn,'trca')
+    assert not known_gaps.refused_contracts(conn,'trca')
+    assert known_gaps.record_refusals(conn,['trca'],baseline)=={'trca':0}
+    # Real, previously reviewed identity failures remain known alongside the new award reviews.
+    _refuse(conn,'known-identity')
+    assert known_gaps.record_refusals(conn,['trca'],baseline)=={'trca':1}
+    backfill_from_extraction(conn,'trca')
+    unknown,known=known_gaps.classify(conn,[_identity(conn)])
+    assert not unknown and known[0]['name']=='identity:trca'
+    # A genuinely new identity problem must still fail.
+    _refuse(conn,'unreviewed-identity')
+    unknown,known=known_gaps.classify(conn,[_identity(conn)])
+    assert unknown==[_identity(conn)] and not known
