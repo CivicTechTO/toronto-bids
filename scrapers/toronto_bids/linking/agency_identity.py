@@ -115,6 +115,8 @@ def _evidence():
             for key in ('document_sha256','result_sha256','contract_sha256'):
                 if not re.fullmatch('[a-f0-9]{64}',representative[key]):
                     raise ValueError('representative source requires exact fingerprints')
+        from toronto_bids.linking.agency_claim_review import validate_review
+        validate_review(item)
         key = (corpus, item['document_sha256'], item['extractor_version'], item['contract_sha256'])
         if key in result:
             raise ValueError('duplicate agency identity decision')

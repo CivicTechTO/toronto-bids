@@ -597,6 +597,12 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
                         result_sha256=hashlib.sha256(row['result_json'].encode()).hexdigest())
                     derived_date = reviewed_decision_date(contract, identity_evidence)
                     derived_bids = reviewed_bids(contract, identity_evidence)
+                    claim_admission = None
+                    if identity_evidence and {'award_review', 'participation_review'}.intersection(identity_evidence):
+                        from toronto_bids.linking.agency_claim_review import admit_claims
+                        claim_admission = admit_claims(conn, contract, identity_evidence)
+                        if claim_admission is not None:
+                            identity_evidence = dict(identity_evidence, award_admission=claim_admission)
                     ref = (identity_evidence['native_ref'] if identity_evidence is not None else
                            normalize_agency_reference(_CORPUS_BUYER_SLUG[corpus], contract.get("reference")))
                     if not ref:
@@ -617,11 +623,13 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
                     # minutes/decision must be reviewed separately before an award fact.
                     withheld_awards_reason = 'TTC report award recommendation requires independent decision verification'
                     identity_evidence = dict(identity_evidence or {}, withheld_awards_reason=withheld_awards_reason)
-                if corpus == 'trca' and contract.get('awards') and row['sha256'] in award_review_contexts:
+                if corpus == 'trca' and contract.get('awards') and row['sha256'] in award_review_contexts and claim_admission is None:
                     withheld_awards_reason = 'TRCA agenda recommendation requires independent decision verification'
                     identity_evidence = dict(identity_evidence or {},
                         withheld_awards_reason=withheld_awards_reason,
                         award_review_context=json.loads(award_review_contexts[row['sha256']]))
+                if claim_admission and claim_admission['withheld']:
+                    withheld_awards_reason = '; '.join(dict.fromkeys(c['reason'] for c in claim_admission['withheld']))
                 if withheld_awards_reason:
                     contracts_refused += 1
                     refusal_details.append(f"{row['url']}: {withheld_awards_reason}")
@@ -629,13 +637,15 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
                                           len(contracts), identity_evidence))
                 if identity_evidence and identity_evidence.get('representative_source'):
                     continue  # Ledger-only historical confirmation; original facts and metadata derive normally.
-                has_awards = bool(contract.get("awards"))
+                admitted_awards = (claim_admission['accepted'] if claim_admission is not None else
+                    [] if withheld_awards_reason else [{'award': a, 'award_date': derived_date} for a in contract.get('awards', [])])
+                has_awards = bool(admitted_awards)
                 solicitations.append(
                     AgencySolicitation(
                         buyer_id=buyer_id,
                         native_ref=ref,
                         title=contract.get("title"),
-                        status="awarded" if has_awards and not withheld_awards_reason else None,
+                        status="awarded" if has_awards else None,
                         posted_date=contract.get("posted_date"),
                         closing_date=contract.get("closed_date"),
                         portal_url=None,
@@ -655,12 +665,14 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
                             hst_basis=_hst_basis(bid),
                             price_header=bid.get("price_header"),
                             status=bid.get("status"),
-                            result_stage="Board report" if corpus == "ttc" else None,
+                            result_stage=("Tender submissions" if identity_evidence and identity_evidence.get("participation_review")
+                                          else "Board report" if corpus == "ttc" else None),
                             report_url=row["url"],
                             source=source,
                         )
                     )
-                for award in ([] if withheld_awards_reason else contract.get("awards", [])):
+                for admitted in admitted_awards:
+                    award = admitted['award']
                     name = award.get("supplier_name")
                     if not name:
                         continue
@@ -673,7 +685,7 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
                             value_confidential=1
                             if award.get("value_confidential")
                             else 0,
-                            award_date=derived_date,
+                            award_date=admitted['award_date'],
                             report_url=row["url"],
                             source=source,
                         )
@@ -827,9 +839,38 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
                              params=(source, *accepted))
             else:
                 rebuild_rows(conn, derived, scope="source = ?", params=(source,))
+        if corpus == 'trca':
+            # Empty derivation normally preserves the archive. An explicit, source-bound
+            # claim review may still withdraw that exact unsupported prior observation.
+            accepted = {(a.buyer_id, a.native_ref, a.supplier_name_raw, a.award_amount) for a in awards}
+            for d in decisions:
+                proof = json.loads(d['identity_evidence_json'] or 'null') or {}
+                review = proof.get('award_admission')
+                if review is None:
+                    continue
+                raw = json.loads(d['contract_json'])['awards']
+                indices = set(review['amounts_withheld']) | {a['award_index'] for a in review['withheld']}
+                for index in indices:
+                    a = raw[index]
+                    key = (buyer_id, d['native_ref'], a.get('supplier_name'), a.get('amount_raw'))
+                    if key not in accepted:
+                        conn.execute("DELETE FROM agency_award WHERE buyer_id=? AND native_ref=? "
+                            "AND supplier_name_raw IS ? AND award_amount IS ? AND source=? AND report_url=?",
+                            (*key, source, d['report_url']))
         # agency_solicitation is backfill-only (fills NULLs, never deleted), so no swap.
         for r in solicitations:
             upsert_row(conn, r, overwrite=False)
+        if corpus == 'trca':
+            # Board-derived status is not independent evidence. Withdraw stale awarded
+            # labels for reviewed/held claims only when no accepted award survives.
+            held_refs = {d['native_ref'] for d in decisions if d['native_ref'] and d['reason']
+                and d['identity_evidence_json'] and any(k in json.loads(d['identity_evidence_json'])
+                    for k in ('award_admission', 'withheld_awards_reason'))}
+            for ref in held_refs:
+                conn.execute("UPDATE agency_solicitation SET status=NULL WHERE buyer_id=? "
+                    "AND native_ref=? AND source=? AND status='awarded' AND NOT EXISTS "
+                    "(SELECT 1 FROM agency_award a WHERE a.buyer_id=agency_solicitation.buyer_id "
+                    "AND a.native_ref=agency_solicitation.native_ref)", (buyer_id, ref, source))
         if corpus in _CORPUS_BUYER_SLUG:
             from toronto_bids.agency_coverage import persist
             coverage = persist(conn, corpus, decisions, aliases, len(rows))

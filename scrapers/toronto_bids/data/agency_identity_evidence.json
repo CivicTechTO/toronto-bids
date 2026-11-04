@@ -2947,6 +2947,461 @@
         "contract_sha256": "f87db4ba4e3d59d98bb96aa758f05c8c02ce36708d4f53e132ef375113b5bd6f",
         "document_sha256": "93f64d8c762cf135c644f0944e2030814426d6426bfab3295264bd307b0cf6ec"
       }
+    },
+    {
+      "corpus": "trca",
+      "document_sha256": "6cbe5f59a1204104b4f7fca5c62ffeb37dfd7eb30e5752d58fe8da76e64a35f5",
+      "extractor_version": "v1-b63aa8c835ae",
+      "contract_sha256": "ad816ef0077526078615baaff6ad0c741b29f7f2575f267eab914efde3ff9210",
+      "native_ref": "10042138",
+      "report_url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=21022",
+      "contract_count": 3,
+      "contract_index": 0,
+      "result_sha256": "0025295add97b99c1eb30dbfbb2bf32b4168c8e57f1ce6115f35c5699f1b2e7b",
+      "identifiers": [
+        {
+          "role": "solicitation",
+          "value": "10042138",
+          "authority": "trca"
+        }
+      ],
+      "basis": "Claim-level source review: retain actual participation, distinguish carried awards, shared limits, historical assertions and future recommendations; raw extraction remains unchanged.",
+      "sources": [
+        {
+          "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=21022",
+          "sha256": "6cbe5f59a1204104b4f7fca5c62ffeb37dfd7eb30e5752d58fe8da76e64a35f5",
+          "passages": [
+            "Board of Directors Meeting #7/26 was held via videoconference, on October 2, 2026. The Chair, Dave Barton, called the meeting to order at 9:37 a.m. 2. ACKNOWLEDGEMENT OF INDIGENOUS TERRITORY The Chair recited the Acknowledgement of Indigenous Territo",
+            "RES.#A 130/26 Moved By: Linda Jackson Seconded By: Paula Fletcher WHEREAS Toronto and Region Conservation Authority (TRCA) is engaged in a variety of programs/projects that require construction waste disposal services; WHEREAS G & L Group Ltd. (O/A Draglam Waste), GFL Environmental Inc., and Public Disposal and Recycling Inc. (Vendors of Record) were the successful Proponents for the Request for Quotation (RFQ) Contract No. 10042138 for Construction Waste Disposal; THEREFORE LET IT BE RESOLVED THAT TRCA staff be authorized to exercise their option to extend the VOR arrangement from January 1, 2027 to December 31, 2027, at a total cost not exceeding $130,000, plus applicable taxes; to be expended as authorized by TRCA staff, subject to annual budget approvals; AND FURTHER THAT authorized TRCA signing officers be directed to take whatever action may be required to implement these extensions, including the obtaining of necessary approvals and the signing and execution of any documents. Carried"
+          ],
+          "role": "decision",
+          "decision_date": "2026-10-02"
+        }
+      ],
+      "award_review": [
+        {
+          "award_index": 0,
+          "disposition": "shared_limit",
+          "reason": "A130/26 carries one $130,000 VOR extension ceiling across three recipients; no individual supplier allocation is published.",
+          "decision_source": 0,
+          "decision_date": "2026-10-02"
+        },
+        {
+          "award_index": 1,
+          "disposition": "shared_limit",
+          "reason": "A130/26 carries one $130,000 VOR extension ceiling across three recipients; no individual supplier allocation is published.",
+          "decision_source": 0,
+          "decision_date": "2026-10-02"
+        },
+        {
+          "award_index": 2,
+          "disposition": "shared_limit",
+          "reason": "A130/26 carries one $130,000 VOR extension ceiling across three recipients; no individual supplier allocation is published.",
+          "decision_source": 0,
+          "decision_date": "2026-10-02"
+        }
+      ]
+    },
+    {
+      "corpus": "trca",
+      "document_sha256": "6cbe5f59a1204104b4f7fca5c62ffeb37dfd7eb30e5752d58fe8da76e64a35f5",
+      "extractor_version": "v1-b63aa8c835ae",
+      "contract_sha256": "dc8fbd2e1aa3bf873b383113563a765042d69e890a0c1a741b6bfb1f126cb450",
+      "native_ref": "10045025",
+      "report_url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=21022",
+      "contract_count": 3,
+      "contract_index": 1,
+      "result_sha256": "0025295add97b99c1eb30dbfbb2bf32b4168c8e57f1ce6115f35c5699f1b2e7b",
+      "identifiers": [
+        {
+          "role": "solicitation",
+          "value": "10045025",
+          "authority": "trca"
+        }
+      ],
+      "basis": "Claim-level source review: retain actual participation, distinguish carried awards, shared limits, historical assertions and future recommendations; raw extraction remains unchanged.",
+      "sources": [
+        {
+          "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=21022",
+          "sha256": "6cbe5f59a1204104b4f7fca5c62ffeb37dfd7eb30e5752d58fe8da76e64a35f5",
+          "passages": [
+            "OF BRAMPTON RFT No. 10045025 RES.#A 139/26 Moved By: Linda Jackson Seconded By: Paula Fletcher WHEREAS Toronto and Region Conservation Authority (TRCA) has entered into a Letter Agreement (“Agreement”"
+          ]
+        },
+        {
+          "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=20908",
+          "sha256": "a74291bcb9a078d0c12724997a9459a2d84fc2bbcf5a1dac4ac1589905d996f5",
+          "passages": [
+            "Executive Committee Meeting #6/26 was held via videoconference, on September 18, 2026 pursuant to section c.12 of the Toronto and Region Conservation Authority Board of Directors Administrative By- Law. The Chair, Dave Barton, called the meeting to o",
+            "RES.#B 43/26 Moved By: Steve Pellegrini WHEREAS Toronto and Region Conservation Authority (TRCA) has entered into a Letter Agreement (“Agreement”) with the City of Brampton executed on October 11, 2023, to provide erosion hazard inspection and remediation works; AND WHEREAS TRCA is engaged in a project that requires a general contractor to supply all labour, equipment and materials necessary to implement bank stabilization, infrastructure protection and restoration works for the Sandalwood Park Erosion Control and Infrastructure Protection Project, City of Brampton; AND WHEREAS TRCA solicited tenders through a publicly advertised process resulting in the award of RFT #10045025 to Hohol One Enterprises Limited with funding approved by the City of Brampton under the Agreement; THEREFORE LET IT BE RESOLVED THAT RFT No. 10045025 for the Sandalwood Park Erosion Control and Infrastructure Protection Project be awarded to Hohol One Enterprises Limited 3 at a total cost not to exceed $279,451.00, plus applicable taxes, to be expended as authorized by TRCA staff; THAT TRCA staff be authorized to approve additional expenditures to a maximum of $55,890.00 (approximately 20% of the project cost), plus applicable taxes, in excess of the contract cost as a contingency allowance if deemed necessary; THAT should TRCA staff be unable to negotiate a contract with the above-mentioned proponent, staff be authorized to enter into and conclude contract negotiations with other Proponents that submitted quotations, beginning with the next lowest bid meeting TRCA specifications; AND FURTHER THAT authorized TRCA officials be directed to take whatever action may be required to implement the contract, including the obtaining of necessary approvals and the signing and execution of any documents. Carried"
+          ],
+          "role": "decision",
+          "decision_date": "2026-09-18"
+        }
+      ],
+      "award_review": [
+        {
+          "award_index": 0,
+          "disposition": "adopted",
+          "reason": "Carried September 18 Executive Committee resolution; October 2 Board minutes confirm it without changing the original decision date.",
+          "decision_source": 1,
+          "decision_date": "2026-09-18"
+        }
+      ]
+    },
+    {
+      "corpus": "trca",
+      "document_sha256": "6cbe5f59a1204104b4f7fca5c62ffeb37dfd7eb30e5752d58fe8da76e64a35f5",
+      "extractor_version": "v1-b63aa8c835ae",
+      "contract_sha256": "fe087c20426d4fbb35bd449f49c2a37293cd934499c543b64066cf1fe700bbff",
+      "native_ref": "10045514",
+      "report_url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=21022",
+      "contract_count": 3,
+      "contract_index": 2,
+      "result_sha256": "0025295add97b99c1eb30dbfbb2bf32b4168c8e57f1ce6115f35c5699f1b2e7b",
+      "identifiers": [
+        {
+          "role": "solicitation",
+          "value": "10045514",
+          "authority": "trca"
+        }
+      ],
+      "basis": "Claim-level source review: retain actual participation, distinguish carried awards, shared limits, historical assertions and future recommendations; raw extraction remains unchanged.",
+      "sources": [
+        {
+          "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=21022",
+          "sha256": "6cbe5f59a1204104b4f7fca5c62ffeb37dfd7eb30e5752d58fe8da76e64a35f5",
+          "passages": [
+            "OF BRAMPTON RFT No. 10045514 RES.#A 140/26 Moved By: Linda Jackson Seconded By: Paula Fletcher WHEREAS Toronto and Region Conservation Authority (TRCA) has entered into a Letter Agreement (“Agreement”"
+          ]
+        },
+        {
+          "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=20908",
+          "sha256": "a74291bcb9a078d0c12724997a9459a2d84fc2bbcf5a1dac4ac1589905d996f5",
+          "passages": [
+            "Executive Committee Meeting #6/26 was held via videoconference, on September 18, 2026 pursuant to section c.12 of the Toronto and Region Conservation Authority Board of Directors Administrative By- Law. The Chair, Dave Barton, called the meeting to o",
+            "RES.#B 44/26 Moved By: Steve Pellegrini WHEREAS Toronto and Region Conservation Authority (TRCA) has entered into a Letter Agreement (“Agreement”) with the City of Brampton executed on October 11, 2023, to provide erosion hazard inspection and remediation services by implementing erosion control and remediation works for the Loafer's Lake Park Erosion Control and Infrastructure Protection Project, City of Brampton; THEREFORE, LET IT BE RESOLVED THAT RFT No. 10045514 for the Loafer's Lake Park Erosion Control and Infrastructure Protection Project, City of Brampton be awarded to Dynex Construction Inc. at a total cost not to exceed $234,386.00, plus applicable taxes, to be expended as authorized by TRCA staff; 4 THAT TRCA staff also be authorized to approve additional expenditures to a maximum of $35,200.00 (approximately 15% of the project cost), plus applicable taxes, in excess of the contract cost as a contingency allowance if deemed necessary; AND THAT should TRCA staff be unable to negotiate a contract with the above-mentioned Bidder, staff be authorized to enter into and conclude contract negotiations with other Bidders that submitted quotations, beginning with the next lowest compliant bid meeting TRCA specifications; AND FURTHER THAT authorized TRCA officials be directed to take whatever action may be required to implement the contract, including the obtaining of necessary approvals and the signing and execution of any documents. Carried"
+          ],
+          "role": "decision",
+          "decision_date": "2026-09-18"
+        }
+      ],
+      "award_review": [
+        {
+          "award_index": 0,
+          "disposition": "adopted",
+          "reason": "Carried September 18 Executive Committee resolution; October 2 Board minutes confirm it without changing the original decision date.",
+          "decision_source": 1,
+          "decision_date": "2026-09-18"
+        }
+      ]
+    },
+    {
+      "corpus": "trca",
+      "document_sha256": "2b414f743a078d9b20b1b57018d603604669aac6b7ccb8b94523eac63b7dda3c",
+      "extractor_version": "v1-b63aa8c835ae",
+      "contract_sha256": "ce0e8295678165ca495f1bea22212fafe4c456227fde68683ef27822fc48eecb",
+      "native_ref": "10042420",
+      "report_url": "https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=21030",
+      "contract_count": 1,
+      "contract_index": 0,
+      "result_sha256": "0ae1de22a6c9011cd88e7c66865a3ca289c5c741ad857a871c7a907cda7531bd",
+      "identifiers": [
+        {
+          "role": "solicitation",
+          "value": "10042420",
+          "authority": "trca"
+        }
+      ],
+      "basis": "Claim-level source review: retain actual participation, distinguish carried awards, shared limits, historical assertions and future recommendations; raw extraction remains unchanged.",
+      "sources": [
+        {
+          "url": "https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=21030",
+          "sha256": "2b414f743a078d9b20b1b57018d603604669aac6b7ccb8b94523eac63b7dda3c",
+          "passages": [
+            "O YEARS PER RFP No. 10042420 KEY ISSUE Authorization to extend the term and increase the value of Contract No. 10042420: Vendors of Record (VOR) for Rental of Operated Construction Equipment for an ad"
+          ]
+        }
+      ],
+      "award_review": [
+        {
+          "award_index": 0,
+          "disposition": "withheld",
+          "reason": "Proposed November 6 extension: $35,700,000 is a shared four-vendor ceiling, not an adopted individual allocation.",
+          "decision_source": null,
+          "decision_date": null
+        },
+        {
+          "award_index": 1,
+          "disposition": "withheld",
+          "reason": "Proposed November 6 extension: $35,700,000 is a shared four-vendor ceiling, not an adopted individual allocation.",
+          "decision_source": null,
+          "decision_date": null
+        },
+        {
+          "award_index": 2,
+          "disposition": "withheld",
+          "reason": "Proposed November 6 extension: $35,700,000 is a shared four-vendor ceiling, not an adopted individual allocation.",
+          "decision_source": null,
+          "decision_date": null
+        },
+        {
+          "award_index": 3,
+          "disposition": "withheld",
+          "reason": "Proposed November 6 extension: $35,700,000 is a shared four-vendor ceiling, not an adopted individual allocation.",
+          "decision_source": null,
+          "decision_date": null
+        }
+      ]
+    },
+    {
+      "corpus": "trca",
+      "document_sha256": "91ed8f0c021b268fa78b5710364d52757a04a9d533ff091ff5d76214160160c2",
+      "extractor_version": "v1-b63aa8c835ae",
+      "contract_sha256": "de2be2b687bf74ecb911246eb86049db8a375cae6e2e4df1a595c68853e2c441",
+      "native_ref": "10009966",
+      "report_url": "https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=21037",
+      "contract_count": 1,
+      "contract_index": 0,
+      "result_sha256": "61180af4f34a64c129d995d5450d077f334eb362365d03f74af10afbb5399efb",
+      "identifiers": [
+        {
+          "role": "solicitation",
+          "value": "10009966",
+          "authority": "trca"
+        }
+      ],
+      "basis": "Claim-level source review: retain actual participation, distinguish carried awards, shared limits, historical assertions and future recommendations; raw extraction remains unchanged.",
+      "sources": [
+        {
+          "url": "https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=21037",
+          "sha256": "91ed8f0c021b268fa78b5710364d52757a04a9d533ff091ff5d76214160160c2",
+          "passages": [
+            "r Proposal (RFP) No.10009966 for Highland Creek Markham Branch (Corporate Drive) Flood Remediation Class Environmental Assessment to Morrison Hershfield Limited at a total cost of $412,667.50, plus ap"
+          ]
+        },
+        {
+          "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=4833",
+          "sha256": "ce28927dacadf3bb4a9f9cf3f6bb2cb51d88098cb92ef7666f8c8537efa0b461",
+          "passages": [
+            "Executive Committee Meeting #5/19 was held at Black Creek Pioneer Village, 1000 Murray Ross Parkway, on Friday, June 7, 2019. The Chair, Jennifer Innis, called the meeting to order at 10:20 a.m. PRESENT Jennifer Innis Chair Ronald Chopowick Member Vi",
+            "RES.#B67/19 - REQUEST FOR PROPOSAL FOR FLOOD REMEDIATION FEASIBILITY STUDY AND MUNICIPAL CLASS ENVIRONMENTAL ASSESSMENT FOR HIGHLAND CREEK – MARKHAM BRANCH CORPORATE DRIVE – CITY OF TORONTO Award of Request for Proposal (RFP) No. 10009966 for engineering consulting services to undertake a feasibility study to examine flood remediation options for a section of Highland Creek - Markham Branch by Corporate Drive as part of a Municipal Class Environmental Assessment. Moved by: Jack Heath Seconded by: Vincent Crisanti WHEREAS Toronto and Region Conservation Authority (TRCA) is engaged in a project that requires engineering consulting services. AND WHEREAS TRCA solicited proposals through a publicly advertised process and evaluated the proposals based on pre-established RFP criteria; THEREFORE LET IT BE RESOLVED THAT Request for Proposal (RFP) No.10009966 for Highland Creek Markham Branch (Corporate Drive) Flood Remediation Class Environmental Assessment be awarded to Morrison Hershfield Limited at a total cost not to exceed $299,007.50, plus applicable taxes, to be expended as authorized by TRCA staff; THAT TRCA staff be authorized to approve additional expenditures to a maximum of $68,150.50, plus applicable taxes in the event that the Technical Study determines the Municipal Engineers Class Environmental Assessment process should be completed as a Schedule C project; THAT TRCA staff be authorized to approve a contingency for the project to a maximum of $55,000 (approximately 15% of the total maximum cost), plus applicable taxes, if deemed necessary; THAT should TRCA staff be unable to negotiate a contract with the above-mentioned proponent, staff be authorized to enter into and conclude contract negotiations with other Proponents that submitted proposals, beginning with the next highest ranked Proponent meeting TRCA specifications; AND FURTHER THAT authorized TRCA officials be directed to take whatever action may be required to implement the contract, including the obtaining of necessary approvals and the signing and execution of any documents. CARRIED"
+          ],
+          "role": "decision",
+          "decision_date": "2019-06-07"
+        }
+      ],
+      "award_review": [
+        {
+          "award_index": 0,
+          "disposition": "withheld",
+          "reason": "Uncorroborated $412,667.50 historical total; original carried B67/19 authorizes $299,007.50 on June 7, 2019 with separate conditional and contingency amounts. Do not invent a subsequent approval.",
+          "decision_source": null,
+          "decision_date": null
+        },
+        {
+          "award_index": 1,
+          "disposition": "withheld",
+          "reason": "Proposed November 6 Stantec change order, without a reviewed carried decision.",
+          "decision_source": null,
+          "decision_date": null
+        }
+      ]
+    },
+    {
+      "corpus": "trca",
+      "document_sha256": "370007633a3cee37c6551a3a6db15c3e35a09e4efb5c382b269b20a637ac3081",
+      "extractor_version": "v1-b63aa8c835ae",
+      "contract_sha256": "c6a1a69b85e1be4521009b4e5b82f76cea66ba4e9679e8ad5345aac23b9cf864",
+      "native_ref": "10045642",
+      "report_url": "https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=21044",
+      "contract_count": 1,
+      "contract_index": 0,
+      "result_sha256": "3daeef0be391e348f12989a481eb84fd848656430b95a894064e44eb9802a982",
+      "identifiers": [
+        {
+          "role": "solicitation",
+          "value": "10045642",
+          "authority": "trca"
+        }
+      ],
+      "basis": "Claim-level source review: retain actual participation, distinguish carried awards, shared limits, historical assertions and future recommendations; raw extraction remains unchanged.",
+      "sources": [
+        {
+          "url": "https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=21044",
+          "sha256": "370007633a3cee37c6551a3a6db15c3e35a09e4efb5c382b269b20a637ac3081",
+          "passages": [
+            "O-YEAR TERM RFP No. 10045642 KEY ISSUE Award of Request for Proposal (RFP) No. 10045642 for External Audit Services to Doane Grant Thornton LLP for a two-year term covering the 2026 and 2027 fiscal ye"
+          ]
+        }
+      ],
+      "award_review": [
+        {
+          "award_index": 0,
+          "disposition": "withheld",
+          "reason": "Proposed November 6 audit award includes a Foundation share requiring separate approval; the source also conflicts on contingency. No reviewed carried award decision.",
+          "decision_source": null,
+          "decision_date": null
+        }
+      ]
+    },
+    {
+      "corpus": "trca",
+      "document_sha256": "8e123370af86f6a97b90b30ad0ae03d6fc8c432f7bc0d7fc1f6a1d0b3ffe7632",
+      "extractor_version": "v1-b63aa8c835ae",
+      "contract_sha256": "7b1a8e98c961111688ea818a89e119ef55ef07c8d6d667aca9960921e1232e79",
+      "native_ref": "10044924",
+      "report_url": "https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=21060",
+      "contract_count": 1,
+      "contract_index": 0,
+      "result_sha256": "030a9ea7dcef421388b7bcb7ece77d7d693da6688c2ffeef608279b7ad521230",
+      "identifiers": [
+        {
+          "role": "solicitation",
+          "value": "10044924",
+          "authority": "trca"
+        }
+      ],
+      "basis": "Claim-level source review: retain actual participation, distinguish carried awards, shared limits, historical assertions and future recommendations; raw extraction remains unchanged.",
+      "sources": [
+        {
+          "url": "https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=21060",
+          "sha256": "8e123370af86f6a97b90b30ad0ae03d6fc8c432f7bc0d7fc1f6a1d0b3ffe7632",
+          "passages": [
+            "ION PROJECT RFT No. 10044924 KEY ISSUE Award of contract for Request for Tender (RFT) No. 10044924 for construction implementation of erosion control structures and bank stabilization of the slope beh",
+            "The RFT was issued on TRCA’s Electronic Bidding System (Bids and Tenders) to the following thirteen (13) pre-qualified Bidders, and the bid results are summarized as follows: Pre-qualified Bidders 1 560789 Ontario Limited o/a R&M Construction 2 614128 Ontario Ltd o/a Trisan Construction 3 Cambridge Landscaping & Construction Ltd. 4 Canada Construction Limited Item 8.10 5 Clearway Construction Inc. 6 Dynex Construction Inc. 7 Elirpa Construction & Materials Ltd. 8 GRASCAN CONSTRUCTION LTD. 9 Greenspace Construction Inc. 10 Hawkins Contracting Services Limited 11 Lyncon Construction Inc. 12 Norpac Construction Inc. 13 Rutherford Contracting Ltd. Bid Published on: September 22, 2026 Mandatory Site Visit: September 28, 2026 Bid Closed on: October 23, 2026 No. of Bid Registration 8 No. of Bid Submission 6 No. of Addenda 3 The Procurement Opening Committee opened the Tenders on October 26, 2026 with the following results: Bidders Fee (Excl. HST) Dynex Construction Inc. $1,118,988.00 614128 Ontario Ltd o/a Trisan Construction $1,684,008.00 560789 Ontario Limited o/a R&M Construction $1,705,232.00 Hawkings Contracting Services Limited $2,086,514.02 Rutherford Contracting Ltd. Non-compliant Canada Construction Limited Non-compliant The tenders from Canada Construction Limited and Rutherford Contracting Ltd. were disqualified due to non-compliance with mandatory requirements. Staff reviewed the bid received from Dynex Construction Inc. against its Item 8.10 own cost estimate and has de"
+          ]
+        }
+      ],
+      "award_review": [
+        {
+          "award_index": 0,
+          "disposition": "withheld",
+          "reason": "Proposed November 6 construction award; submitted tenders are supported, adoption is not established.",
+          "decision_source": null,
+          "decision_date": null
+        }
+      ],
+      "participation_review": {
+        "prequalification_submissions": null,
+        "qualified_for_tender": [
+          "560789 Ontario Limited o/a R&M Construction",
+          "614128 Ontario Ltd o/a Trisan Construction",
+          "Cambridge Landscaping & Construction Ltd.",
+          "Canada Construction Limited",
+          "Clearway Construction Inc.",
+          "Dynex Construction Inc.",
+          "Elirpa Construction & Materials Ltd.",
+          "GRASCAN CONSTRUCTION LTD.",
+          "Greenspace Construction Inc.",
+          "Hawkins Contracting Services Limited",
+          "Lyncon Construction Inc.",
+          "Norpac Construction Inc.",
+          "Rutherford Contracting Ltd."
+        ],
+        "invited_to_tender": [
+          "560789 Ontario Limited o/a R&M Construction",
+          "614128 Ontario Ltd o/a Trisan Construction",
+          "Cambridge Landscaping & Construction Ltd.",
+          "Canada Construction Limited",
+          "Clearway Construction Inc.",
+          "Dynex Construction Inc.",
+          "Elirpa Construction & Materials Ltd.",
+          "GRASCAN CONSTRUCTION LTD.",
+          "Greenspace Construction Inc.",
+          "Hawkins Contracting Services Limited",
+          "Lyncon Construction Inc.",
+          "Norpac Construction Inc.",
+          "Rutherford Contracting Ltd."
+        ],
+        "tender_submissions": [
+          "Dynex Construction Inc.",
+          "614128 Ontario Ltd o/a Trisan Construction",
+          "560789 Ontario Limited o/a R&M Construction",
+          "Hawkings Contracting Services Limited",
+          "Rutherford Contracting Ltd.",
+          "Canada Construction Limited"
+        ]
+      }
+    },
+    {
+      "corpus": "trca",
+      "document_sha256": "5dd0510d4611b1f2fe9957eada35cc8c6a14a5c71cdd139cbdf22d006fd6ed0f",
+      "extractor_version": "v1-b63aa8c835ae",
+      "contract_sha256": "0790bb1f52b6d3e60e13aa6ea174a55d38c3dd199f8f06cbc6d010876d2128bd",
+      "native_ref": "10045110",
+      "report_url": "https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=21063",
+      "contract_count": 1,
+      "contract_index": 0,
+      "result_sha256": "92c3f69c105d6bc0ac093b158a2e9b229a678a0e8b7eb9837be5285c8c3cf5ba",
+      "identifiers": [
+        {
+          "role": "solicitation",
+          "value": "10045110",
+          "authority": "trca"
+        }
+      ],
+      "basis": "Claim-level source review: retain actual participation, distinguish carried awards, shared limits, historical assertions and future recommendations; raw extraction remains unchanged.",
+      "sources": [
+        {
+          "url": "https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=21063",
+          "sha256": "5dd0510d4611b1f2fe9957eada35cc8c6a14a5c71cdd139cbdf22d006fd6ed0f",
+          "passages": [
+            "NTROL PROJECT – RFT#10045110 KEY ISSUE Award of Request for Tender (RFT) No #10045110 for erosion control, slope stabilization, and infrastructure construction works to 614128 Ontario Ltd o/a Trisan C",
+            "Through the evaluation process, the five (5) highest scoring compliant proponents were pre-qualified to proceed to the subsequent Request for Tender stage. Item 8.11 RFPQ Highest Ranked Proponent Submission Pre-qualified Bronte Construction Ltd. Yes Yes Cambridge Landscape & Yes No Construction Ltd. Dynex Construction Inc. Yes No Forest Ridge Landscaping Yes No Hawkins Contracting Services Yes Yes Hohol Enterprises One Ltd. Yes No Kapp Infrastructure Inc. Yes No Lancoa Contracting Inc. Yes No LocPave Construction Yes No Lyncon Construction Inc. Yes No McPherson-Andrews contracting Yes No Ltd. Metric Contracting Services Yes Yes Corp. R&M Construction Yes Yes Rutherford Contracting Yes No Sanscon Construction Yes No QPS Landscape Professionals Yes No Trisan Construction Yes Yes York 1 Remediation Yes No A Request for Tender (RFT) The RFT (#10045110) was publicly posted on TRCA’s Electronic Bidding System (Bids & Tenders) and the bid results are summarized as follows: Bid Published on: September 18, 2026 Bid Closed on: October 6, 2026 No. of Bid Registration 5 No. of Bid Submission 3 No. of Addendums 2 Bidders Tender Amount Excl. HST Trisan Construction $761,536.00 R&M Construction $977,562.50 Hawkins Contracting Services $1,296,237.43 Item 8.11 Staff reviewed the lowest price bid received and have determined that the amount is of reasonable value and meets the requirements as outlined in the RFT documents. Therefore, it is recommended that contract #10045110 for East Highland "
+          ]
+        }
+      ],
+      "award_review": [
+        {
+          "award_index": 0,
+          "disposition": "withheld",
+          "reason": "Proposed November 6 construction award; submitted tenders are supported, adoption is not established.",
+          "decision_source": null,
+          "decision_date": null
+        }
+      ],
+      "participation_review": {
+        "prequalification_submissions": [
+          "Cambridge Landscape & Construction Ltd.",
+          "Dynex Construction Inc.",
+          "Forest Ridge Landscaping",
+          "Hohol Enterprises One Ltd.",
+          "Kapp Infrastructure Inc.",
+          "Lancoa Contracting Inc.",
+          "LocPave Construction",
+          "Lyncon Construction Inc.",
+          "McPherson-Andrews contracting Ltd.",
+          "Rutherford Contracting",
+          "Sanscon Construction",
+          "QPS Landscape Professionals",
+          "York 1 Remediation",
+          "Bronte Construction Ltd.",
+          "Hawkins Contracting Services",
+          "Metric Contracting Services Corp.",
+          "R&M Construction",
+          "Trisan Construction"
+        ],
+        "qualified_for_tender": [
+          "Bronte Construction Ltd.",
+          "Hawkins Contracting Services",
+          "Metric Contracting Services Corp.",
+          "R&M Construction",
+          "Trisan Construction"
+        ],
+        "invited_to_tender": [
+          "Bronte Construction Ltd.",
+          "Hawkins Contracting Services",
+          "Metric Contracting Services Corp.",
+          "R&M Construction",
+          "Trisan Construction"
+        ],
+        "tender_submissions": [
+          "Trisan Construction",
+          "R&M Construction",
+          "Hawkins Contracting Services"
+        ]
+      }
     }
   ]
 }
