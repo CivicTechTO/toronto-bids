@@ -206,3 +206,12 @@ description = "Latest original OData identity-field snapshot: document/row IDs, 
 
 ["background_pdf.award_review_context_json"]
 description = "Original publisher agenda/calendar context for a report captured before its meeting occurred. Requires independent decision review before deriving awards; supported bids remain eligible. Preserved across calendar passage and URL aliases of the same bytes."
+
+["city_bid_evidence.proof_sha256"]
+description = "Immutable digest of the committed source/cache/identity review for a City BA/BD bid projection."
+["city_bid_evidence.proof_json"]
+description = "Original report, whole extraction context, identity proof and bounded submission-table/row quotations; raw model cache is preserved separately."
+["city_bid_evidence.source_role"]
+description = "Reviewed receipt role, distinguishing submissions to this event from qualified/invited firms or an ancestor procurement."
+["city_bid_evidence.bid_count"]
+description = "Source-reviewed observations projected by this proof; not a claim of complete competition coverage beyond its report scope."

@@ -623,3 +623,18 @@ CREATE TABLE IF NOT EXISTS city_crosswalk_evidence (
     proof_json TEXT NOT NULL,
     first_seen TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+-- Immutable source/cache/identity witnesses for reviewed BA/BD bid projections.
+CREATE TABLE IF NOT EXISTS city_bid_evidence (
+    proof_sha256 TEXT PRIMARY KEY,
+    document_number TEXT NOT NULL,
+    reference TEXT NOT NULL,
+    source TEXT NOT NULL,
+    report_url TEXT NOT NULL,
+    report_sha256 TEXT NOT NULL,
+    result_sha256 TEXT NOT NULL,
+    source_role TEXT NOT NULL,
+    bid_count INTEGER NOT NULL,
+    proof_json TEXT NOT NULL,
+    first_seen TEXT NOT NULL DEFAULT (datetime('now'))
+);

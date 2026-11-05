@@ -76,6 +76,8 @@ Normalizers read feed fields with `raw.get(...)`, so a field the City renames si
 
 `linking/city_crosswalk.py` applies committed source proofs during procurement resolution. Direct publisher Call Number assertions and corroborated compound source facts are separate proof classes. Numeric encodings discover candidates only; derived titles and generic supplier/value matches cannot approve a crosswalk. Reviewed links and their immutable exported evidence survive legacy matcher rebuilds. The OData normalizer retains `publisher_identity_json` so corrected/removed current award fields cannot hide behind archived award rows. When adding proofs, deploying the first crosswalk, or handling changed source context, read `docs/city-call-crosswalk.md` before resolving/exporting. A changed proof context requires review; never delete a registry entry or weaken a gate to bypass the failure.
 
+`linking/city_cached_bids.py` replays source-reviewed BA/BD projections during canonical resolution and explicit backfills, binding the immutable cache to literal submission evidence and an independently proven identity. When extending these reviews or repairing changed contexts, read the reviewed cached bids section of `docs/city-call-crosswalk.md`.
+
 ### Document extraction (`extraction.py`, `extract.py`, #205/#213)
 
 Bids and awards inside PDFs — Award Summary Forms, committee staff reports, composite reports, TRCA/EP/Zoo board reports — are read by **one LLM prompt**, not per-source parsers. The incumbent regex/pdfplumber parsers were measured against the model and deleted (#205, e936004); don't rebuild them.

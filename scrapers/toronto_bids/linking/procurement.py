@@ -75,6 +75,8 @@ def resolve_procurements(conn):
 def _resolve(conn):
     from toronto_bids.linking.city_identity_repairs import repair_city_identities
     repair_city_identities(conn)
+    from toronto_bids.linking.city_cached_bids import replay_reviewed_bids
+    replay_reviewed_bids(conn)
     from toronto_bids.linking.city_crosswalk import reviewed_links
     crosswalks = reviewed_links(conn)
     ids = _Identities(conn)
