@@ -144,11 +144,13 @@ def test_committed_review_accounts_for_the_entire_frozen_inventory():
     assert len(inventory['cases'])==len(report['cases'])==106
     assert report['summary']['outcomes']=={'recovered':50,'identity_unresolved':43,'ancestor_event_only':2,'scope_or_source_hold':11}
     recovered={c['document_number'] for c in report['cases'] if c['outcome']=='recovered'}
-    assert recovered=={p['document_number'] for p in registry['reviews']}
-    for p in registry['reviews']:
+    # This frozen report is historical: later reviews may append recoveries.
+    original=[p for p in registry['reviews'] if p['document_number'] in recovered]
+    assert recovered=={p['document_number'] for p in original}
+    for p in original:
         case=next(c for c in inventory['cases'] if c['document_number']==p['document_number'])
         assert any(r['url']==p['report_url'] and r['sha256']==p['report_sha256'] and r['result_sha256']==p['result_sha256'] for r in case['reports'])
-    assert sum(len(p['bids']) for p in registry['reviews'])==300
+    assert sum(len(p['bids']) for p in original)==300
     # Ancestor qualifications, conflicting table identity and unsupported lot/submission scopes stay held.
     assert not recovered & {'3512316731','4906085019','4566099607','1205175043','4815572097','3782552477'}
     roof=next(p for p in registry['reviews'] if p['document_number']=='3122348800')
@@ -179,3 +181,49 @@ def test_json_export_includes_portable_review_and_source_quotation(conn,tmp_path
     evidence=json.loads(target.read_text())['city_bid_evidence']
     assert len(evidence)==1 and evidence[0]['bid_count']==2
     assert evidence[0]['proof_json']==proof
+
+
+@pytest.mark.parametrize('keep_unit',[True,False])
+def test_reviewed_hourly_rate_retains_its_unit_instead_of_becoming_a_total(conn,tmp_path,keep_unit):
+    from toronto_bids.linking.city_cached_bids import replay_reviewed_bids
+    proof,path=setup_review(conn,tmp_path)
+    source=TEXT.replace('$120.00*','$120.00/Hour')
+    conn.execute('UPDATE background_pdf SET text=?',(source,));conn.commit()
+    proof['text_sha256']=hashlib.sha256(source.encode()).hexdigest()
+    proof['table_quotation']=TABLE.replace('$120.00*','$120.00/Hour')
+    proof['bids'][0]['row_quotation']='Alpha Services Ltd. $120.00/Hour'
+    proof['bids'][0]['bid_price']='$120.00/Hour' if keep_unit else '$120.00'
+    path.write_text(json.dumps(dict(version=1,extractor_version=EXTRACTOR_VERSION,reviews=[proof])))
+    if keep_unit:
+        replay_reviewed_bids(conn,registry=path)
+        row=conn.execute('SELECT bid_price,bid_price_numeric FROM bid WHERE bidder_name_raw=?',('Alpha Services Ltd.',)).fetchone()
+        assert tuple(row)==('$120.00/Hour',None)
+    else:
+        with pytest.raises(ValueError,match='price absent'):replay_reviewed_bids(conn,registry=path)
+
+
+def test_followup_review_accounts_for_all_43_identity_holds_and_source_completeness():
+    from pathlib import Path
+    from toronto_bids.linking.city_cached_bids import PATH
+    from toronto_bids.linking.city_crosswalk import PROOFS,digest
+    report=json.loads((Path(__file__).resolve().parents[2]/'docs/research/city-identity-holds-review-2026-11-05.json').read_text())
+    registry=json.loads(PATH.read_text());crosswalk=json.loads(PROOFS.read_text())
+    assert hashlib.sha256((json.dumps(report['frozen_inventory'],indent=2)+'\n').encode()).hexdigest()==report['frozen_inventory_sha256']
+    assert registry['followup_review']['inventory_sha256']==report['frozen_inventory_sha256']
+    assert len(report['cases'])==43
+    assert report['summary']['outcomes']=={'held':33,'identity_proven_bid_scope_hold':1,'recovered':9}
+    assert {r['document_number'] for r in report['cases']}=={r['document_number'] for r in report['frozen_inventory']}
+    new={r['document_number']:r for r in report['cases'] if r['outcome']=='recovered'}
+    reviews={p['document_number']:p for p in registry['reviews'] if p['document_number'] in new}
+    assert len(reviews)==9 and sum(len(p['bids']) for p in reviews.values())==39
+    assert sum(b['bid_price'] is not None for p in reviews.values() for b in p['bids'])==23
+    for d,p in reviews.items():assert digest(p)==new[d]['bid_review_sha256']
+    asco=reviews['1201155002']
+    assert asco['declared_coverage']=={'declared_submissions':8,'printed_named_submissions':4,'unidentified_declared_submissions':4}
+    assert len(asco['bids'])==4  # No invented bidders fill the source's declared-count gap.
+    assert all(b['bid_price'] is None for b in reviews['9117167066']['bids'])
+    hourly=[b['bid_price'] for b in reviews['3701150197']['bids'] if b['bid_price']]
+    assert len(hourly)==4 and all(p.endswith('/Hour') for p in hourly)
+    original_proof_hashes={r['identity_proof_sha256'] for r in report['cases'] if r.get('identity_proof_sha256')}
+    type_proofs=[p for p in crosswalk['proofs'] if digest(p) in original_proof_hashes and p['proof_class']=='reviewed_type_discrepancy']
+    assert len(type_proofs)==7 and all(p['review']['source_type']!=p['review']['publisher_type'] for p in type_proofs)

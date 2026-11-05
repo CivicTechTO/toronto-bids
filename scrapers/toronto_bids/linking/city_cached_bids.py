@@ -129,7 +129,7 @@ def reviewed_reports(conn,*,registry=None,corpus=None):
                 _fail(proof,'no-bid outcome cannot establish submitted participation')
             price,basis,header=review['bid_price'],review['hst_basis'],review['price_header']
             if price is not None:
-                amounts=re.findall(r'\$[ \t]*\d[\d,]*(?:\.\d+)?[ \t]*[*+]*',quote)
+                amounts=re.findall(r'\$[ \t]*\d[\d,]*(?:\.\d+)?[ \t]*[*+]*(?:/Hour)?',quote)
                 if not isinstance(price,str) or len(amounts)!=1 or _text(price)!=_text(amounts[0]):
                     _fail(proof,'price absent from one unambiguous reviewed row')
             if price is None and (basis is not None or header is not None):_fail(proof,'unpriced row cannot carry tax/price metadata')

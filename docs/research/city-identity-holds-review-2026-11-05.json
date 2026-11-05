@@ -1,0 +1,2416 @@
+{
+  "frozen_inventory_sha256": "f4044d21aad747fa55903ec7aee2226caa9f0a1c9cdfbbd48ab1e333cb44cf5e",
+  "frozen_inventory": [
+    {
+      "document_number": "0105160062",
+      "title": "Award of Request for Quotation No. 0105-16-0062 to Sani Gear Incorporated for the Provision of Care and Maintenance Program for Firefighting Structural Bunker Suits",
+      "issue_year": 2016,
+      "outcome": "identity_unresolved",
+      "bid_observations": 0,
+      "reports": [
+        {
+          "document_number": "0105160062",
+          "reference": "2016.BD115.7",
+          "report_url": "https://www.toronto.ca/legdocs/mmis/2016/bd/bgrd/backgroundfile-99294.pdf",
+          "sha256": "edff5f22739b521be666863eef7b5354285be14851aa49083b07f6d53df8e991",
+          "classification": "unresolved_source_context",
+          "reason": "exact issued/closed source witnesses absent",
+          "outcome": "identity_unresolved"
+        }
+      ]
+    },
+    {
+      "document_number": "1002133108",
+      "title": "Award of Request for Proposal No. 1002-13-3108 to SCI Interiors Ltd., for the non-exclusive supply, delivery, installation and warranty of various type chairs and tables",
+      "issue_year": 2013,
+      "outcome": "identity_unresolved",
+      "bid_observations": 0,
+      "reports": [
+        {
+          "document_number": "1002133108",
+          "reference": "2013.BD139.8",
+          "report_url": "https://www.toronto.ca/legdocs/mmis/2013/bd/bgrd/backgroundfile-60989.pdf",
+          "sha256": "a596f41d40762dea96958227d888750d56e09ecfa74342e0cba9a604990196ca",
+          "classification": "unresolved_source_context",
+          "reason": "source solicitation types disagree",
+          "outcome": "identity_unresolved"
+        }
+      ]
+    },
+    {
+      "document_number": "1101155017",
+      "title": "Award of Request for Quotation No. 1101-15-5017 to Inter-Provincial Painting Limited for Painting Services at Various City of Toronto's Children’s Services locations",
+      "issue_year": 2015,
+      "outcome": "identity_unresolved",
+      "bid_observations": 0,
+      "reports": [
+        {
+          "document_number": "1101155017",
+          "reference": "2015.BD44.14",
+          "report_url": "https://www.toronto.ca/legdocs/mmis/2015/bd/bgrd/backgroundfile-82921.pdf",
+          "sha256": "fc5665119224648526ec0d8ca438cab865d8842f7e10c262b391235a01b62b01",
+          "classification": "unresolved_source_context",
+          "reason": "source solicitation types disagree",
+          "outcome": "identity_unresolved"
+        }
+      ]
+    },
+    {
+      "document_number": "1201125097",
+      "title": "Award of Request for Quotation No. 1201-12-5097 to F. Hams Electric Inc. for the Non-exclusive Supply of All Labour, Equipment and Material Necessary for Electrical Services at Various Locations Within the City of Toronto for Municipal Child Care Centres",
+      "issue_year": 2013,
+      "outcome": "identity_unresolved",
+      "bid_observations": 0,
+      "reports": [
+        {
+          "document_number": "1201125097",
+          "reference": "2013.BD123.2",
+          "report_url": "https://www.toronto.ca/legdocs/mmis/2013/bd/bgrd/backgroundfile-58161.pdf",
+          "sha256": "21eb06fd9392174cace581617010a4f78e3d60181ca5fccdadcf9fbd2e37ed66",
+          "classification": "unresolved_source_context",
+          "reason": "source solicitation types disagree",
+          "outcome": "identity_unresolved"
+        }
+      ]
+    },
+    {
+      "document_number": "1201155002",
+      "title": "Award of Request for Quotation No. 1201-15-5002 to Asco Power Technologies Canada for Preventative, Predictive and Demand Repair Services for Automatic Transfer Switches for Facilities Management",
+      "issue_year": 2015,
+      "outcome": "identity_unresolved",
+      "bid_observations": 0,
+      "reports": [
+        {
+          "document_number": "1201155002",
+          "reference": "2015.BD25.16",
+          "report_url": "https://www.toronto.ca/legdocs/mmis/2015/bd/bgrd/backgroundfile-79751.pdf",
+          "sha256": "db6df2e1cd51ae29152a525c4e33699b0d899ae6b4e83ae0e15c3a5ef76c361f",
+          "classification": "unresolved_source_context",
+          "reason": "source solicitation types disagree",
+          "outcome": "identity_unresolved"
+        }
+      ]
+    },
+    {
+      "document_number": "1205175043",
+      "title": "Award of Request to Prequalify (RTP) Call Number 1205-17-5043 to TransCore ITS, LLC and Black and McDonald Limited for Adaptive Traffic Signal Control System (Smart Signals) Pilot",
+      "issue_year": 2017,
+      "outcome": "identity_unresolved",
+      "bid_observations": 0,
+      "reports": [
+        {
+          "document_number": "1205175043",
+          "reference": "2017.BA45.2",
+          "report_url": "https://www.toronto.ca/legdocs/mmis/2017/ba/bgrd/backgroundfile-107644.pdf",
+          "sha256": "07c08d4071c27b0783bf36dd3020b766037c3ad3df30050c38bd0bb4a0a06678",
+          "classification": "unresolved_source_context",
+          "reason": "source solicitation types disagree",
+          "outcome": "identity_unresolved"
+        }
+      ]
+    },
+    {
+      "document_number": "1212160101",
+      "title": "Award of Request for Quotation No. 1212-16-0101 to Accara Services, Tacel Ltd. and Econolite Canada Inc. for the Supply and Delivery of Traffic Cameras and Uninterruptable Power Supply",
+      "issue_year": 2016,
+      "outcome": "identity_unresolved",
+      "bid_observations": 0,
+      "reports": [
+        {
+          "document_number": "1212160101",
+          "reference": "2016.BD97.1",
+          "report_url": "https://www.toronto.ca/legdocs/mmis/2016/bd/bgrd/backgroundfile-95398.pdf",
+          "sha256": "c698cd6c87fd57ea0f6a250dc84f9f86cc8ac6a431321477a3390bad2c7f0c26",
+          "classification": "unresolved_source_context",
+          "reason": "compound facts do not identify one global publisher record",
+          "outcome": "identity_unresolved"
+        }
+      ]
+    },
+    {
+      "document_number": "3401133097",
+      "title": "Award of Request for Quotation No. 3401-13-3097 to Compugen Inc. for the Non-exclusive Supply of Desktops, Notebooks, Tablets, and Related Products and Services",
+      "issue_year": 2013,
+      "outcome": "identity_unresolved",
+      "bid_observations": 0,
+      "reports": [
+        {
+          "document_number": "3401133097",
+          "reference": "2013.BD131.9",
+          "report_url": "https://www.toronto.ca/legdocs/mmis/2013/bd/bgrd/backgroundfile-59992.pdf",
+          "sha256": "ad3c8358c38c029d3fd5508504385eeafc95ee9beb1aed8eb12658e76f40fdd0",
+          "classification": "unresolved_source_context",
+          "reason": "exact issued/closed source witnesses absent",
+          "outcome": "identity_unresolved"
+        }
+      ]
+    },
+    {
+      "document_number": "3405153133",
+      "title": "Award of Request for Quotation No. 3405-15-3133 to ONX Enterprise Solutions Ltd for the Purchase and Renewal of Various Types of IBM Licenses",
+      "issue_year": 2015,
+      "outcome": "identity_unresolved",
+      "bid_observations": 0,
+      "reports": [
+        {
+          "document_number": "3405153133",
+          "reference": "2015.BD62.9",
+          "report_url": "https://www.toronto.ca/legdocs/mmis/2015/bd/bgrd/backgroundfile-87063.pdf",
+          "sha256": "8c56045bfe0f99502d3a24f48bcab8c34c6676d8c891af3bdf28c67e12e58859",
+          "classification": "unresolved_source_context",
+          "reason": "compound facts do not identify one global publisher record",
+          "outcome": "identity_unresolved"
+        }
+      ]
+    },
+    {
+      "document_number": "3701150197",
+      "title": "Award of Request for Quotation No. 3701-15-0197 to W.M. Weller Tree Service Limited, Ontario Line Clearing & Tree Services 2010 Limited and Davey Tree Expert Co. Of Canada Limited for Tree Pruning and Removal",
+      "issue_year": 2015,
+      "outcome": "identity_unresolved",
+      "bid_observations": 0,
+      "reports": [
+        {
+          "document_number": "3701150197",
+          "reference": "2015.BD62.6",
+          "report_url": "https://www.toronto.ca/legdocs/mmis/2015/bd/bgrd/backgroundfile-87062.pdf",
+          "sha256": "09a9fa250626389a7dae82c256ce3ce9adc8b2221746fde2911f3c703ae3c480",
+          "classification": "unresolved_source_context",
+          "reason": "compound facts do not identify one global publisher record",
+          "outcome": "identity_unresolved"
+        }
+      ]
+    },
+    {
+      "document_number": "3905140125",
+      "title": "Award of Request for Quotation No. 3905-14-0125 to Coco Paving Limited and D. Crupi and Sons Limited for the Supply and Loading of Hot Mix Asphalt and Performance Grade Asphalt Cement",
+      "issue_year": 2014,
+      "outcome": "identity_unresolved",
+      "bid_observations": 0,
+      "reports": [
+        {
+          "document_number": "3905140125",
+          "reference": "2015.BD9.3",
+          "report_url": "https://www.toronto.ca/legdocs/mmis/2015/bd/bgrd/backgroundfile-74999.pdf",
+          "sha256": "955fedc08a3bf4017b44c7c0309de51aa0e6370af8e6c0011733085f49ffeaf6",
+          "classification": "unresolved_source_context",
+          "reason": "compound facts do not identify one global publisher record",
+          "outcome": "identity_unresolved"
+        }
+      ]
+    },
+    {
+      "document_number": "4102130037",
+      "title": "Award of Request for Quotation (RFQ) No. 4102-13-0037 to Corix Water Productions and Emco Corporation for the Non-Exclusive Supply and Delivery of Water Fittings to Various Purchasing and Materials Management (Stores) Locations",
+      "issue_year": 2013,
+      "outcome": "identity_unresolved",
+      "bid_observations": 0,
+      "reports": [
+        {
+          "document_number": "4102130037",
+          "reference": "2013.BD124.3",
+          "report_url": "https://www.toronto.ca/legdocs/mmis/2013/bd/bgrd/backgroundfile-58279.pdf",
+          "sha256": "753eb2fcd703adf950b11ca54da730cb450e63bd45b3d1d4759b07725cf7ae3d",
+          "classification": "unresolved_source_context",
+          "reason": "compound facts do not identify one global publisher record",
+          "outcome": "identity_unresolved"
+        }
+      ]
+    },
+    {
+      "document_number": "4305145033",
+      "title": "Award of Request for Quotation No. 4305-14-5033 to",
+      "issue_year": 2014,
+      "outcome": "identity_unresolved",
+      "bid_observations": 0,
+      "reports": [
+        {
+          "document_number": "4305145033",
+          "reference": "2014.BD183.3",
+          "report_url": "https://www.toronto.ca/legdocs/mmis/2014/bd/bgrd/backgroundfile-69757.pdf",
+          "sha256": "e6aaadc2ea66512b720c52ba9e9eb538e45c30709a0182b18a847afecc323cc3",
+          "classification": "unresolved_source_context",
+          "reason": "source solicitation types disagree",
+          "outcome": "identity_unresolved"
+        }
+      ]
+    },
+    {
+      "document_number": "4305155039",
+      "title": "Award of Request for Quotation No. 4305-15-5039 to Superior Air Systems Limited for Preventative Maintenance, Emergency Repairs, and Replacement of HVAC Systems, Boilers, Hot Water Tanks, and Sheet Metal Fabrication and Installations",
+      "issue_year": 2015,
+      "outcome": "identity_unresolved",
+      "bid_observations": 0,
+      "reports": [
+        {
+          "document_number": "4305155039",
+          "reference": "2015.BD52.4",
+          "report_url": "https://www.toronto.ca/legdocs/mmis/2015/bd/bgrd/backgroundfile-84578.pdf",
+          "sha256": "e0b04725d10e0ffde2da400398220f6b76a2f3d435c4d293a95c697b7edbcf07",
+          "classification": "unresolved_source_context",
+          "reason": "source solicitation types disagree",
+          "outcome": "identity_unresolved"
+        }
+      ]
+    },
+    {
+      "document_number": "4306140111",
+      "title": "Award of Request for Quotation No. 4306-14-0111 to Cimco Refrigeration for the Supply of all Labour, Delivery, Material, Equipment and Supervision to Service and Repair Commercial Refrigeration for the City's North York District, Parks, Forestry and Recreation Division",
+      "issue_year": 2014,
+      "outcome": "identity_unresolved",
+      "bid_observations": 0,
+      "reports": [
+        {
+          "document_number": "4306140111",
+          "reference": "2014.BD201.4",
+          "report_url": "https://www.toronto.ca/legdocs/mmis/2014/bd/bgrd/backgroundfile-73381.pdf",
+          "sha256": "2d93e33e8221b943e887a58573121ac47c5fc86b6666abeaa2ccccdd6ab446f2",
+          "classification": "unresolved_source_context",
+          "reason": "compound facts do not identify one global publisher record",
+          "outcome": "identity_unresolved"
+        }
+      ]
+    },
+    {
+      "document_number": "4920180000",
+      "title": "Award of Tender Call No. 49-2018 to Maple-Crete Inc. for Permanent Repairs to Utility Cuts on Arterial Roads",
+      "issue_year": 2018,
+      "outcome": "identity_unresolved",
+      "bid_observations": 0,
+      "reports": [
+        {
+          "document_number": "4920180000",
+          "reference": "2018.BA77.7",
+          "report_url": "https://www.toronto.ca/legdocs/mmis/2018/ba/bgrd/backgroundfile-115011.pdf",
+          "sha256": "f900e600e7861c4647fe8288fc1602935a0919cc1b4f52dd956c40fe2c116062",
+          "classification": "unresolved_source_context",
+          "reason": "exact issued/closed source witnesses absent",
+          "outcome": "identity_unresolved"
+        }
+      ]
+    },
+    {
+      "document_number": "6026133006",
+      "title": "Award of Request for Quotation (RFQ) 6026-13-3006 to Strongco Limited Partnership for Non-exclusive Supply of All Labour, Materials and Equipment Necessary to Provide Warranty and Non-warranty, O.E.M. Authorized Parts and Service on Heavy Duty O.E.M. VOLVO Equipment",
+      "issue_year": 2013,
+      "outcome": "identity_unresolved",
+      "bid_observations": 0,
+      "reports": [
+        {
+          "document_number": "6026133006",
+          "reference": "2013.BD118.2",
+          "report_url": "https://www.toronto.ca/legdocs/mmis/2013/bd/bgrd/backgroundfile-57206.pdf",
+          "sha256": "82066e847df268205afa3e3d9aae6f627014eea75c1d44f3eb6c8e6901ef4026",
+          "classification": "unresolved_source_context",
+          "reason": "compound facts do not identify one global publisher record",
+          "outcome": "identity_unresolved"
+        }
+      ]
+    },
+    {
+      "document_number": "6026180062",
+      "title": "Award of Request for Quotation No. 6026-18-0062 to Strongco Corporation and Strongco L.P. for the Supply and Delivery of Warranty and Non-warranty Services, and Parts on Off-Road OEM Construction Equipment",
+      "issue_year": 2018,
+      "outcome": "identity_unresolved",
+      "bid_observations": 0,
+      "reports": [
+        {
+          "document_number": "6026180062",
+          "reference": "2018.BA107.2",
+          "report_url": "https://www.toronto.ca/legdocs/mmis/2018/ba/bgrd/backgroundfile-121529.pdf",
+          "sha256": "c757b4378276fe467b25cfebb649957d4fef90f944ada8eb53bbd976d1348dc5",
+          "classification": "unresolved_source_context",
+          "reason": "compound facts do not identify one global publisher record",
+          "outcome": "identity_unresolved"
+        }
+      ]
+    },
+    {
+      "document_number": "6033127227",
+      "title": "Award of Request for Quotation No. 6033-12-7227 to Rafat General Contractors Inc. for Provision of all Labour, Materials and Equipment Necessary to Load, Remove, Transport and Dispose of Fill, Concrete, and Asphalt Material from Various Locations for Toronto Water Division",
+      "issue_year": 2012,
+      "outcome": "identity_unresolved",
+      "bid_observations": 0,
+      "reports": [
+        {
+          "document_number": "6033127227",
+          "reference": "2013.BD109.2",
+          "report_url": "https://www.toronto.ca/legdocs/mmis/2013/bd/bgrd/backgroundfile-55486.pdf",
+          "sha256": "5ff6bf0bbd94804d9cb8949fd2a1c65e1b4a1e8629cdd30f792265f76162ae13",
+          "classification": "unresolved_source_context",
+          "reason": "exact issued/closed source witnesses absent",
+          "outcome": "identity_unresolved"
+        }
+      ]
+    },
+    {
+      "document_number": "6033163118",
+      "title": "Award of Request for Quotation No. 6033-16-3118 to Municipal Maintenance Inc. for Mechanical Litter Removal Service",
+      "issue_year": 2016,
+      "outcome": "identity_unresolved",
+      "bid_observations": 0,
+      "reports": [
+        {
+          "document_number": "6033163118",
+          "reference": "2016.BD104.3",
+          "report_url": "https://www.toronto.ca/legdocs/mmis/2016/bd/bgrd/backgroundfile-96959.pdf",
+          "sha256": "2e406c2b8469dc2f3396c0ff803afb7a5f6b890ba330d487c92b1721031c09b4",
+          "classification": "unresolved_source_context",
+          "reason": "compound facts do not identify one global publisher record",
+          "outcome": "identity_unresolved"
+        }
+      ]
+    },
+    {
+      "document_number": "6038147100",
+      "title": "Award of Request for Quotation No. 6038-14-7100 to Aquatech Solutions Inc. for the Hired Vacuum Excavation Services Complete with Operator, as When Required by Toronto Water, District Operations (Emergency and Planned Work) on Lands and Road Allowances - North & West District, South & East Districts",
+      "issue_year": 2014,
+      "outcome": "identity_unresolved",
+      "bid_observations": 0,
+      "reports": [
+        {
+          "document_number": "6038147100",
+          "reference": "2014.BD201.2",
+          "report_url": "https://www.toronto.ca/legdocs/mmis/2014/bd/bgrd/backgroundfile-73350.pdf",
+          "sha256": "b99328fddc7d3e331ac1d6abcefd1bb97e002e6ec786de5edf16375a11ee52dc",
+          "classification": "unresolved_source_context",
+          "reason": "exact issued/closed source witnesses absent",
+          "outcome": "identity_unresolved"
+        }
+      ]
+    },
+    {
+      "document_number": "6102153095",
+      "title": "Award of Request for Quotation No. 6102-15-3095 to Dependable Emergency Vehicles for the Supply and Delivery of Spartan Original Equipment Manufacturer (OEM), Fire Truck Parts",
+      "issue_year": 2015,
+      "outcome": "identity_unresolved",
+      "bid_observations": 0,
+      "reports": [
+        {
+          "document_number": "6102153095",
+          "reference": "2015.BD44.10",
+          "report_url": "https://www.toronto.ca/legdocs/mmis/2015/bd/bgrd/backgroundfile-82866.pdf",
+          "sha256": "c206eb96382418c6028a7fc2c4e74c822463780833ae0a83a3faceb566ca79c2",
+          "classification": "unresolved_source_context",
+          "reason": "exact issued/closed source witnesses absent",
+          "outcome": "identity_unresolved"
+        }
+      ]
+    },
+    {
+      "document_number": "6102153139",
+      "title": "Award of Request for Quotation No. 6102-15-3139 to Action Hydraulics Ltd. for Labour, Materials and Parts to Perform Maintenance and Repairs to Various Hydraulic Equipment",
+      "issue_year": 2015,
+      "outcome": "identity_unresolved",
+      "bid_observations": 0,
+      "reports": [
+        {
+          "document_number": "6102153139",
+          "reference": "2015.BD62.7",
+          "report_url": "https://www.toronto.ca/legdocs/mmis/2015/bd/bgrd/backgroundfile-87058.pdf",
+          "sha256": "c517d2e370204fc327c0f4fd1d9c60af27cfbbadba9a4b6183d1491b3cff7d4e",
+          "classification": "unresolved_source_context",
+          "reason": "compound facts do not identify one global publisher record",
+          "outcome": "identity_unresolved"
+        }
+      ]
+    },
+    {
+      "document_number": "6125133054",
+      "title": "Award of Request for Quotation No. 6125-13-3054 to Benson Group Inc. for Inspection and Recapping of Solid Rubber Tires",
+      "issue_year": 2013,
+      "outcome": "identity_unresolved",
+      "bid_observations": 0,
+      "reports": [
+        {
+          "document_number": "6125133054",
+          "reference": "2013.BD127.2",
+          "report_url": "https://www.toronto.ca/legdocs/mmis/2013/bd/bgrd/backgroundfile-58775.pdf",
+          "sha256": "5572a85cf6b8aecb0408f6773a6403f617fb60cb37fff79cd8f1c6e37c0863f7",
+          "classification": "unresolved_source_context",
+          "reason": "compound facts do not identify one global publisher record",
+          "outcome": "identity_unresolved"
+        }
+      ]
+    },
+    {
+      "document_number": "6129163181",
+      "title": "Award of Request for Quotation No. 6129-16-3181 to Green Clean Mobile Wash Inc. for the Non-exclusive Provision of Auto Detailing and Mobile Auto Detailing Services",
+      "issue_year": 2017,
+      "outcome": "identity_unresolved",
+      "bid_observations": 0,
+      "reports": [
+        {
+          "document_number": "6129163181",
+          "reference": "2017.BA21.9",
+          "report_url": "https://www.toronto.ca/legdocs/mmis/2017/ba/bgrd/backgroundfile-103596.pdf",
+          "sha256": "43132f7cbc118a56cc17e02f621f1b3efdb31d952397141978b157f5a3b2b93d",
+          "classification": "unresolved_source_context",
+          "reason": "compound facts do not identify one global publisher record",
+          "outcome": "identity_unresolved"
+        }
+      ]
+    },
+    {
+      "document_number": "6141133082",
+      "title": "Award of Request for Quotation No. 6141-13-3082 to Wheelchair Accessible Transit Inc., for the Provision of Bus Services",
+      "issue_year": 2013,
+      "outcome": "identity_unresolved",
+      "bid_observations": 0,
+      "reports": [
+        {
+          "document_number": "6141133082",
+          "reference": "2013.BD131.6",
+          "report_url": "https://www.toronto.ca/legdocs/mmis/2013/bd/bgrd/backgroundfile-60016.pdf",
+          "sha256": "90801f1c86a631d753f0714ad7ea78f173f9f63de30362b02df0c786bb5ece41",
+          "classification": "unresolved_source_context",
+          "reason": "native call role is not unambiguous in agenda item",
+          "outcome": "identity_unresolved"
+        }
+      ]
+    },
+    {
+      "document_number": "6145133057",
+      "title": "Award of 6145-13-3057 to Green Box Services and Supplies Inc. for the Non-exclusive Supply and Delivery of Various Crestline Parts to Various Purchasing and Materials Management (Stores) Locations",
+      "issue_year": 2013,
+      "outcome": "identity_unresolved",
+      "bid_observations": 0,
+      "reports": [
+        {
+          "document_number": "6145133057",
+          "reference": "2013.BD131.5",
+          "report_url": "https://www.toronto.ca/legdocs/mmis/2013/bd/bgrd/backgroundfile-60015.pdf",
+          "sha256": "1c0b801e31cd7b3d81d54919f286cfe867fc0f890e1e3381518e393938ff4bbf",
+          "classification": "unresolved_source_context",
+          "reason": "source solicitation types disagree",
+          "outcome": "identity_unresolved"
+        }
+      ]
+    },
+    {
+      "document_number": "6606137147",
+      "title": "Award of Request of Quotation No. 6606-13-7147 to UBA Inc. for Supply and Delivery of Sodium Hypochlorite",
+      "issue_year": 2013,
+      "outcome": "identity_unresolved",
+      "bid_observations": 0,
+      "reports": [
+        {
+          "document_number": "6606137147",
+          "reference": "2013.BD141.2",
+          "report_url": "https://www.toronto.ca/legdocs/mmis/2013/bd/bgrd/backgroundfile-61311.pdf",
+          "sha256": "537b3a1924ac9817f6f1d6e7c0a03ff177904f1c9e55b92f02a285abba15e294",
+          "classification": "unresolved_source_context",
+          "reason": "source solicitation types disagree",
+          "outcome": "identity_unresolved"
+        }
+      ]
+    },
+    {
+      "document_number": "6627137102",
+      "title": "Award of Request of Quotation No. 6627-13-7102 to Sulco Chemicals Limited for the Supply and Delivery of Sodium Bisulphite",
+      "issue_year": 2013,
+      "outcome": "identity_unresolved",
+      "bid_observations": 0,
+      "reports": [
+        {
+          "document_number": "6627137102",
+          "reference": "2013.BD145.2",
+          "report_url": "https://www.toronto.ca/legdocs/mmis/2013/bd/bgrd/backgroundfile-61927.pdf",
+          "sha256": "c3331b02f81b5f765033976ef2e5215834e98940e8980343683dab40f17c5940",
+          "classification": "unresolved_source_context",
+          "reason": "source solicitation types disagree",
+          "outcome": "identity_unresolved"
+        }
+      ]
+    },
+    {
+      "document_number": "6701133083",
+      "title": "Award of Request for Quotation No. 6701-13-3083 to Gal Power Systems Toronto Ltd., for the Maintenance, Repairs and Testing of Emergency Generators for Union Station",
+      "issue_year": 2013,
+      "outcome": "identity_unresolved",
+      "bid_observations": 0,
+      "reports": [
+        {
+          "document_number": "6701133083",
+          "reference": "2013.BD130.10",
+          "report_url": "https://www.toronto.ca/legdocs/mmis/2013/bd/bgrd/backgroundfile-59807.pdf",
+          "sha256": "11640289aac5d8a96915cc6cfcc3bf5ab983499d04592610c262223ba7ffc1c5",
+          "classification": "unresolved_source_context",
+          "reason": "native call also appears in another council context",
+          "outcome": "identity_unresolved"
+        }
+      ]
+    },
+    {
+      "document_number": "7201300000",
+      "title": "Award of Tender No. 7-2013 to Dufferin Roofing Ltd., for all materials, equipment labour and supervision required to complete roof replacement work at Etobicoke Olympium",
+      "issue_year": 2013,
+      "outcome": "identity_unresolved",
+      "bid_observations": 0,
+      "reports": [
+        {
+          "document_number": "7201300000",
+          "reference": "2013.BD117.4",
+          "report_url": "https://www.toronto.ca/legdocs/mmis/2013/bd/bgrd/backgroundfile-57006.pdf",
+          "sha256": "476beca4cc0db6407b65aefa39cc2a79d768358d6a5ef9c4b60212d6049371d8",
+          "classification": "unresolved_source_context",
+          "reason": "native call role is not unambiguous in agenda item",
+          "outcome": "identity_unresolved"
+        }
+      ]
+    },
+    {
+      "document_number": "8420180000",
+      "title": "Award of Tender Call No. 84-2018 to A & F DiCarlo Construction Inc. for Permanent Repairs to Utility Cuts on Arterial, Collector and Local Roads, Builders Files",
+      "issue_year": 2018,
+      "outcome": "identity_unresolved",
+      "bid_observations": 0,
+      "reports": [
+        {
+          "document_number": "8420180000",
+          "reference": "2018.BA78.11",
+          "report_url": "https://www.toronto.ca/legdocs/mmis/2018/ba/bgrd/backgroundfile-115280.pdf",
+          "sha256": "dc09aa9ec609eddb6f0b66555e80c36b561f0dc04a5fb0a9e503c26a45b20528",
+          "classification": "unresolved_source_context",
+          "reason": "compound facts do not identify one global publisher record",
+          "outcome": "identity_unresolved"
+        }
+      ]
+    },
+    {
+      "document_number": "9115167234",
+      "title": "Award of Request for Quotation 9115-16-7234 to SNC-Lavalin GEM Ontario Inc. for the Material Specification Compliance Tests and Project Quality Assurance Services for Capital Works Projects in the City of Toronto Delivered by Engineering and Construction Services Division",
+      "issue_year": 2016,
+      "outcome": "identity_unresolved",
+      "bid_observations": 0,
+      "reports": [
+        {
+          "document_number": "9115167234",
+          "reference": "2016.BD115.13",
+          "report_url": "https://www.toronto.ca/legdocs/mmis/2016/bd/bgrd/backgroundfile-99324.pdf",
+          "sha256": "6c3dc3ec960a6383f2b375ca84c5973355bcc187bd03fcf5769f819c4b75a7c7",
+          "classification": "unresolved_source_context",
+          "reason": "source solicitation types disagree",
+          "outcome": "identity_unresolved"
+        }
+      ]
+    },
+    {
+      "document_number": "9117165089",
+      "title": "Award of Request for Proposal No. 9117-16-5089 to Morrison Hershfield Limited for Professional Engineering Services to complete Preliminary and Detailed Design Services",
+      "issue_year": 2016,
+      "outcome": "identity_unresolved",
+      "bid_observations": 0,
+      "reports": [
+        {
+          "document_number": "9117165089",
+          "reference": "2017.BA8.5",
+          "report_url": "https://www.toronto.ca/legdocs/mmis/2017/ba/bgrd/backgroundfile-101326.pdf",
+          "sha256": "deef27e5db362853f0394a602f13115d5ce3f3bd038972862389dee01e88cf45",
+          "classification": "unresolved_source_context",
+          "reason": "compound facts do not identify one global publisher record",
+          "outcome": "identity_unresolved"
+        }
+      ]
+    },
+    {
+      "document_number": "9117167066",
+      "title": null,
+      "issue_year": 2016,
+      "outcome": "identity_unresolved",
+      "bid_observations": 0,
+      "reports": [
+        {
+          "document_number": "9117167066",
+          "reference": "2016.BD93.10",
+          "report_url": "https://www.toronto.ca/legdocs/mmis/2016/bd/bgrd/backgroundfile-95135.pdf",
+          "sha256": "f32e14168351b703bc3485703cb6b6a94c0d1249da43cff0f6b4d2767f905cf6",
+          "classification": "unresolved_source_context",
+          "reason": "title does not identify one native call",
+          "outcome": "identity_unresolved"
+        }
+      ]
+    },
+    {
+      "document_number": "9117175085",
+      "title": "Award of Request for Proposal No. 9117-17-5085 to R.V. Anderson Associates Limited for Local Roads Resurfacing Program Management",
+      "issue_year": 2017,
+      "outcome": "identity_unresolved",
+      "bid_observations": 0,
+      "reports": [
+        {
+          "document_number": "9117175085",
+          "reference": "2018.BA63.1",
+          "report_url": "https://www.toronto.ca/legdocs/mmis/2018/ba/bgrd/backgroundfile-112672.pdf",
+          "sha256": "bd46a60a2137925887cce0b3240e11e40dccb72a43cb0d71db3b60342c148080",
+          "classification": "unresolved_source_context",
+          "reason": "compound facts do not identify one global publisher record",
+          "outcome": "identity_unresolved"
+        }
+      ]
+    },
+    {
+      "document_number": "9117177105",
+      "title": "Award of Request for Proposal No. 9117-17-7105 to AECOM Canada Ltd. for the Water Distribution Study for Pressure Districts 3 and 3E",
+      "issue_year": 2017,
+      "outcome": "identity_unresolved",
+      "bid_observations": 0,
+      "reports": [
+        {
+          "document_number": "9117177105",
+          "reference": "2017.BA23.12",
+          "report_url": "https://www.toronto.ca/legdocs/mmis/2017/ba/bgrd/backgroundfile-104025.pdf",
+          "sha256": "9f9970c090a84fd42a8c3f497d2fd3d54ecdc9e977b03be2c441c80711d338cb",
+          "classification": "unresolved_source_context",
+          "reason": "compound facts do not identify one global publisher record",
+          "outcome": "identity_unresolved"
+        }
+      ]
+    },
+    {
+      "document_number": "9118187175",
+      "title": "Award of Request for Proposal No. 9118-18-7175 to Gensler Architecture & Design Canada, Inc. for Architectural and Consulting Services for Office Modernization Renovations to 100 Queen Street West, 55 John Street, 850 Coxwell Avenue",
+      "issue_year": 2018,
+      "outcome": "identity_unresolved",
+      "bid_observations": 0,
+      "reports": [
+        {
+          "document_number": "9118187175",
+          "reference": "2018.BA109.1",
+          "report_url": "https://www.toronto.ca/legdocs/mmis/2018/ba/bgrd/backgroundfile-121843.pdf",
+          "sha256": "a09f3ca3f69694387f66c6613bfe3c500780a0339a8a41f759347caeb4e1ff92",
+          "classification": "unresolved_source_context",
+          "reason": "compound facts do not identify one global publisher record",
+          "outcome": "identity_unresolved"
+        }
+      ]
+    },
+    {
+      "document_number": "9119167124",
+      "title": "Award of Request for Proposal No. 9119-16-7124 to Miya Water Projects Netherlands B.V. for Professional Engineering Services for Non-Revenue Water Assessment and Leak Detection Study",
+      "issue_year": 2016,
+      "outcome": "identity_unresolved",
+      "bid_observations": 0,
+      "reports": [
+        {
+          "document_number": "9119167124",
+          "reference": "2017.BA13.4",
+          "report_url": "https://www.toronto.ca/legdocs/mmis/2017/ba/bgrd/backgroundfile-101978.pdf",
+          "sha256": "0a075946ea4bd36f168e1ac0439e1f97bb41044c8a3bc606f0308815fa14c5f3",
+          "classification": "unresolved_source_context",
+          "reason": "compound facts do not identify one global publisher record",
+          "outcome": "identity_unresolved"
+        }
+      ]
+    },
+    {
+      "document_number": "9119177205",
+      "title": "Award of Request for Proposal No. 9119-17-7205 to Mott McDonald Canada Ltd. for Electrical System Resiliency Project at City Hall",
+      "issue_year": 2017,
+      "outcome": "identity_unresolved",
+      "bid_observations": 0,
+      "reports": [
+        {
+          "document_number": "9119177205",
+          "reference": "2017.BA33.4",
+          "report_url": "https://www.toronto.ca/legdocs/mmis/2017/ba/bgrd/backgroundfile-105803.pdf",
+          "sha256": "41a1bcef3f2e43ec9c409db73fe8490e2bf01e2fe44ed97ea5f6a791094634e5",
+          "classification": "unresolved_source_context",
+          "reason": "compound facts do not identify one global publisher record",
+          "outcome": "identity_unresolved"
+        }
+      ]
+    },
+    {
+      "document_number": "9135157185",
+      "title": "Award of Request for Proposal No. 9135-15-7185 to Royal Life Saving Society Canada, Ontario Branch for Aquatic Leadership Course Management Services and Materials and Certification Fees",
+      "issue_year": 2015,
+      "outcome": "identity_unresolved",
+      "bid_observations": 0,
+      "reports": [
+        {
+          "document_number": "9135157185",
+          "reference": "2015.BD58.1",
+          "report_url": "https://www.toronto.ca/legdocs/mmis/2015/bd/bgrd/backgroundfile-86006.pdf",
+          "sha256": "43b616f1c9d314e2ce7f78d5cd1181d65aa289b26b8df6392a023ce599b58767",
+          "classification": "unresolved_source_context",
+          "reason": "compound facts do not identify one global publisher record",
+          "outcome": "identity_unresolved"
+        }
+      ]
+    },
+    {
+      "document_number": "9148157311",
+      "title": "Award of Request for Proposal No. 9148-15-7311 for Group A to IBI Group Professional Services (Canada) Inc. and Group B to Parsons Inc. for the Provision of Consulting Services for Signal Coordination Studies",
+      "issue_year": 2015,
+      "outcome": "identity_unresolved",
+      "bid_observations": 0,
+      "reports": [
+        {
+          "document_number": "9148157311",
+          "reference": "2016.BD77.4",
+          "report_url": "https://www.toronto.ca/legdocs/mmis/2016/bd/bgrd/backgroundfile-91716.pdf",
+          "sha256": "3de7c178f09761d319b3e4ba9a618a6367f38fcfb487457eaea54e67e94787ed",
+          "classification": "unresolved_source_context",
+          "reason": "compound facts do not identify one global publisher record",
+          "outcome": "identity_unresolved"
+        }
+      ]
+    },
+    {
+      "document_number": "9148187135",
+      "title": "Award of Request For Quotation 9148-18-7135 to Ontario Traffic Inc. for the Non-Exclusive Supply of Traffic Data Collection Services at various requested locations throughout the City of Toronto",
+      "issue_year": 2018,
+      "outcome": "identity_unresolved",
+      "bid_observations": 0,
+      "reports": [
+        {
+          "document_number": "9148187135",
+          "reference": "2018.BA110.6",
+          "report_url": "https://www.toronto.ca/legdocs/mmis/2018/ba/bgrd/backgroundfile-121994.pdf",
+          "sha256": "6065518f165eff3f36451c62416d218b046b080a1f48fcd753f5cab5dec18793",
+          "classification": "unresolved_source_context",
+          "reason": "source solicitation types disagree",
+          "outcome": "identity_unresolved"
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "cases": 43,
+    "outcomes": {
+      "held": 33,
+      "identity_proven_bid_scope_hold": 1,
+      "recovered": 9
+    },
+    "new_identity_proofs": 10,
+    "new_bid_reviews": 9,
+    "new_bid_observations": 39,
+    "new_priced_observations": 23,
+    "model_requests": 0
+  },
+  "cases": [
+    {
+      "document_number": "0105160062",
+      "reference": "2016.BD115.7",
+      "original_refusal": "exact issued/closed source witnesses absent",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2016/bd/bgrd/backgroundfile-99294.pdf",
+      "report_sha256": "edff5f22739b521be666863eef7b5354285be14851aa49083b07f6d53df8e991",
+      "agenda_sha256": "84a9add76cbdce017e8bd34d4383ff975981bad50f36f1db30a60822d8661d7e",
+      "publisher_record_id": "524d3163-4b7a-409a-aeb6-d2f207bf4252",
+      "publisher_type": "RFQ",
+      "issued_date": "2016-10-25",
+      "closed_date": "2016-11-29",
+      "outcome": "held",
+      "reason": "Source closes November 9, 2016; publisher closes November 29, 2016. Also the value block carries a stray Total Suspension Inc. label despite Sani Gear recommendation; no silent repair.",
+      "bid_observations": 0,
+      "priced_observations": 0,
+      "independent_source_review": {
+        "document_number": "0105160062",
+        "reference": "2016.BD115.7",
+        "original_refusal": "exact issued/closed source witnesses absent",
+        "reproduced_refusal": "exact issued/closed source witnesses absent",
+        "disposition": "date_contradiction",
+        "reason": "Source closes November 9, 2016; publisher closes November 29, 2016. Also the value block carries a stray Total Suspension Inc. label despite Sani Gear recommendation; no silent repair.",
+        "source_url": "https://www.toronto.ca/legdocs/mmis/2016/bd/bgrd/backgroundfile-99294.pdf",
+        "source_sha256": "edff5f22739b521be666863eef7b5354285be14851aa49083b07f6d53df8e991",
+        "agenda_sha256": "84a9add76cbdce017e8bd34d4383ff975981bad50f36f1db30a60822d8661d7e",
+        "publisher_record_id": "524d3163-4b7a-409a-aeb6-d2f207bf4252",
+        "publisher_kind": "RFQ",
+        "publisher_issued": "2016-10-25",
+        "publisher_closed": "2016-11-29",
+        "source_call_fields": [
+          "RFQ No. 0105-16-0062"
+        ],
+        "source_date_witnesses": {
+          "issued": "Issued: October 25, 2016",
+          "closed": null
+        },
+        "supplier": "Sani Gear Incorporated",
+        "initial_net": "214,154",
+        "diagnostic_matches_ignoring_type": [
+          [
+            "524d3163-4b7a-409a-aeb6-d2f207bf4252",
+            "0105160062"
+          ]
+        ]
+      }
+    },
+    {
+      "document_number": "1002133108",
+      "reference": "2013.BD139.8",
+      "original_refusal": "source solicitation types disagree",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2013/bd/bgrd/backgroundfile-60989.pdf",
+      "report_sha256": "a596f41d40762dea96958227d888750d56e09ecfa74342e0cba9a604990196ca",
+      "agenda_sha256": "8db53799705d9096afae6213efc6dffa14eec7e70a2c3f04f6edd4b9129bfc03",
+      "publisher_record_id": "f8babe51-d7ae-42c9-bccf-b922073a0b63",
+      "publisher_type": "RFQ",
+      "issued_date": "2013-07-04",
+      "closed_date": "2013-07-22",
+      "outcome": "identity_proven_bid_scope_hold",
+      "reason": "Source RFP; publisher RFQ. Exact two dates, SCI Interiors name and initial $165,002.75 uniquely identify one publisher record across all types. Bid table has eight separately evaluated categories and three Amovo option submissions; keep bid projection held.",
+      "identity_proof_class": "reviewed_type_discrepancy",
+      "identity_proof_sha256": "8bb01bf5d884e64a9d901fd5634915b28cab8f4e7a8634231ce19ce0ba1e266d",
+      "bid_observations": 0,
+      "priced_observations": 0,
+      "independent_source_review": {
+        "document_number": "1002133108",
+        "reference": "2013.BD139.8",
+        "original_refusal": "source solicitation types disagree",
+        "reproduced_refusal": "source solicitation types disagree",
+        "disposition": "reviewed_type_discrepancy_identity_candidate_bid_scope_hold",
+        "reason": "Source RFP; publisher RFQ. Exact two dates, SCI Interiors name and initial $165,002.75 uniquely identify one publisher record across all types. Bid table has eight separately evaluated categories and three Amovo option submissions; keep bid projection held.",
+        "source_url": "https://www.toronto.ca/legdocs/mmis/2013/bd/bgrd/backgroundfile-60989.pdf",
+        "source_sha256": "a596f41d40762dea96958227d888750d56e09ecfa74342e0cba9a604990196ca",
+        "agenda_sha256": "8db53799705d9096afae6213efc6dffa14eec7e70a2c3f04f6edd4b9129bfc03",
+        "publisher_record_id": "f8babe51-d7ae-42c9-bccf-b922073a0b63",
+        "publisher_kind": "RFQ",
+        "publisher_issued": "2013-07-04",
+        "publisher_closed": "2013-07-22",
+        "source_call_fields": [
+          "RFP # 1002-13-3108"
+        ],
+        "source_date_witnesses": {
+          "issued": "Issued: July 4, 2013",
+          "closed": "Closed: July 22, 2013"
+        },
+        "supplier": "SCI Interiors Ltd.,",
+        "initial_net": "165,002.75",
+        "diagnostic_matches_ignoring_type": [
+          [
+            "f8babe51-d7ae-42c9-bccf-b922073a0b63",
+            "1002133108"
+          ]
+        ]
+      }
+    },
+    {
+      "document_number": "1101155017",
+      "reference": "2015.BD44.14",
+      "original_refusal": "source solicitation types disagree",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2015/bd/bgrd/backgroundfile-82921.pdf",
+      "report_sha256": "fc5665119224648526ec0d8ca438cab865d8842f7e10c262b391235a01b62b01",
+      "agenda_sha256": "ce22e9fc6a9a6ad2c5abb4bc6aa592cc6f6fcfb45a7faf59d2d4529a1c48e0d6",
+      "publisher_record_id": "fcf05203-5c38-497f-9bb1-abb312496a76",
+      "publisher_type": "RFT",
+      "issued_date": "2015-06-04",
+      "closed_date": "2015-06-19",
+      "outcome": "recovered",
+      "reason": "Four submitted bidders; first two prices include prompt-payment discounts and are withheld; retain the two unqualified prices with correction footnote. Compliance is withheld.",
+      "identity_proof_class": "reviewed_type_discrepancy",
+      "identity_proof_sha256": "127555e5d312d5bf4b43e656bf5c7caae43086251e0070932dfe97bcea5c1722",
+      "bid_review_sha256": "7d5c40e7601f380ec2e47a315505d01ed4b58c5ca65f3bfb88226f82dceb9bbf",
+      "bid_observations": 4,
+      "priced_observations": 2,
+      "independent_source_review": {
+        "document_number": "1101155017",
+        "reference": "2015.BD44.14",
+        "original_refusal": "source solicitation types disagree",
+        "reproduced_refusal": "source solicitation types disagree",
+        "disposition": "reviewed_type_discrepancy_identity_candidate",
+        "reason": "Source RFQ; publisher RFT. Exact two dates, full Inter-Provincial name and initial $263,500 uniquely identify one publisher record across all types. Four participants; first two prices include 5%/2% prompt-payment discounts. Prefer name-only or withhold those qualified prices.",
+        "source_url": "https://www.toronto.ca/legdocs/mmis/2015/bd/bgrd/backgroundfile-82921.pdf",
+        "source_sha256": "fc5665119224648526ec0d8ca438cab865d8842f7e10c262b391235a01b62b01",
+        "agenda_sha256": "ce22e9fc6a9a6ad2c5abb4bc6aa592cc6f6fcfb45a7faf59d2d4529a1c48e0d6",
+        "publisher_record_id": "fcf05203-5c38-497f-9bb1-abb312496a76",
+        "publisher_kind": "RFT",
+        "publisher_issued": "2015-06-04",
+        "publisher_closed": "2015-06-19",
+        "source_call_fields": [
+          "RFQ No. 1101-15-5017"
+        ],
+        "source_date_witnesses": {
+          "issued": "Issued: June 4, 2015",
+          "closed": "Closed: June 19, 2015"
+        },
+        "supplier": "Inter-Provincial Painting Limited",
+        "initial_net": "263,500.00",
+        "diagnostic_matches_ignoring_type": [
+          [
+            "fcf05203-5c38-497f-9bb1-abb312496a76",
+            "1101155017"
+          ]
+        ]
+      }
+    },
+    {
+      "document_number": "1201125097",
+      "reference": "2013.BD123.2",
+      "original_refusal": "source solicitation types disagree",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2013/bd/bgrd/backgroundfile-58161.pdf",
+      "report_sha256": "21eb06fd9392174cace581617010a4f78e3d60181ca5fccdadcf9fbd2e37ed66",
+      "agenda_sha256": "0110ebb7e90f6733e98b746ef0aa80f35ac26a02588ebf5a13ab304f61d8dee7",
+      "publisher_record_id": "5704c1df-ca18-45d0-af39-a60360a641bb",
+      "publisher_type": "RFT",
+      "issued_date": "2013-02-19",
+      "closed_date": "2013-03-06",
+      "outcome": "recovered",
+      "reason": "Nine named receipts, including two explicitly informal submissions; the two prompt-payment price columns are withheld. Compliance is withheld.",
+      "identity_proof_class": "reviewed_type_discrepancy",
+      "identity_proof_sha256": "112bdd0f52f0e34f14f0f265d7a6a79ce0f80bf2157944e2fe711135a02df21c",
+      "bid_review_sha256": "a5b8276e439782eff8d482e633e38cf9dadaf11ab2cd98bc125323d71d6bfc1e",
+      "bid_observations": 9,
+      "priced_observations": 0,
+      "independent_source_review": {
+        "document_number": "1201125097",
+        "reference": "2013.BD123.2",
+        "original_refusal": "source solicitation types disagree",
+        "reproduced_refusal": "source solicitation types disagree",
+        "disposition": "reviewed_type_discrepancy_identity_candidate",
+        "reason": "Source RFQ; publisher RFT. Exact two dates, F. Hams name and initial $482,599.90 uniquely identify one publisher record across all types. Nine submissions including two informal receipts. Two price columns differ for Vantage; name-only projection avoids selecting a conditional price.",
+        "source_url": "https://www.toronto.ca/legdocs/mmis/2013/bd/bgrd/backgroundfile-58161.pdf",
+        "source_sha256": "21eb06fd9392174cace581617010a4f78e3d60181ca5fccdadcf9fbd2e37ed66",
+        "agenda_sha256": "0110ebb7e90f6733e98b746ef0aa80f35ac26a02588ebf5a13ab304f61d8dee7",
+        "publisher_record_id": "5704c1df-ca18-45d0-af39-a60360a641bb",
+        "publisher_kind": "RFT",
+        "publisher_issued": "2013-02-19",
+        "publisher_closed": "2013-03-06",
+        "source_call_fields": [
+          "RFQ# 1201-12-5097"
+        ],
+        "source_date_witnesses": {
+          "issued": "Issued: February 19, 2013",
+          "closed": "Closed: March 6, 2013"
+        },
+        "supplier": "F. Hams Electric Inc.",
+        "initial_net": "482,599.90",
+        "diagnostic_matches_ignoring_type": [
+          [
+            "5704c1df-ca18-45d0-af39-a60360a641bb",
+            "1201125097"
+          ]
+        ]
+      }
+    },
+    {
+      "document_number": "1201155002",
+      "reference": "2015.BD25.16",
+      "original_refusal": "source solicitation types disagree",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2015/bd/bgrd/backgroundfile-79751.pdf",
+      "report_sha256": "db6df2e1cd51ae29152a525c4e33699b0d899ae6b4e83ae0e15c3a5ef76c361f",
+      "agenda_sha256": "f94be883925bcd855f05ed6780355a19e195a6fe94dbc542c07bd5408004afde",
+      "publisher_record_id": "93128c2d-945f-41ab-8639-b13c413d5ab5",
+      "publisher_type": "RFT",
+      "issued_date": "2015-02-09",
+      "closed_date": "2015-02-23",
+      "outcome": "recovered",
+      "reason": "Source declares eight bids but prints only four named rows. Retain only those four source-supported observations and literal prices; this is incomplete competition coverage, with four declared bids unnamed by this report. Compliance is withheld.",
+      "identity_proof_class": "reviewed_type_discrepancy",
+      "identity_proof_sha256": "a9e59e878d6c82298f8619c8d0929fbc4d8477f0b4f1d736f8e48c6d396c7aa8",
+      "bid_review_sha256": "83e936cd34f536d5699f5a578cd1ed326bb370de0a8fea11177445979f15f12f",
+      "bid_observations": 4,
+      "priced_observations": 4,
+      "independent_source_review": {
+        "document_number": "1201155002",
+        "reference": "2015.BD25.16",
+        "original_refusal": "source solicitation types disagree",
+        "reproduced_refusal": "source solicitation types disagree",
+        "disposition": "reviewed_type_discrepancy_identity_candidate",
+        "reason": "Source RFQ; publisher RFT. Exact two dates, full Asco name and initial $119,760 uniquely identify one publisher record across all types. Table declares eight bids but prints four named rows; only those four are supported. Record the count discrepancy rather than claiming a complete list of eight.",
+        "source_url": "https://www.toronto.ca/legdocs/mmis/2015/bd/bgrd/backgroundfile-79751.pdf",
+        "source_sha256": "db6df2e1cd51ae29152a525c4e33699b0d899ae6b4e83ae0e15c3a5ef76c361f",
+        "agenda_sha256": "f94be883925bcd855f05ed6780355a19e195a6fe94dbc542c07bd5408004afde",
+        "publisher_record_id": "93128c2d-945f-41ab-8639-b13c413d5ab5",
+        "publisher_kind": "RFT",
+        "publisher_issued": "2015-02-09",
+        "publisher_closed": "2015-02-23",
+        "source_call_fields": [
+          "RFQ No. 1201-15-5002"
+        ],
+        "source_date_witnesses": {
+          "issued": "Issued: February 9, 2015",
+          "closed": "Closed: February 23, 2015"
+        },
+        "supplier": "Asco Power Technologies Canada",
+        "initial_net": "119,760.00",
+        "diagnostic_matches_ignoring_type": [
+          [
+            "93128c2d-945f-41ab-8639-b13c413d5ab5",
+            "1201155002"
+          ]
+        ]
+      }
+    },
+    {
+      "document_number": "1205175043",
+      "reference": "2017.BA45.2",
+      "original_refusal": "source solicitation types disagree",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2017/ba/bgrd/backgroundfile-107644.pdf",
+      "report_sha256": "07c08d4071c27b0783bf36dd3020b766037c3ad3df30050c38bd0bb4a0a06678",
+      "agenda_sha256": "ae4285cd48631e2bcf809903f4247d93922473945437a031a9bc2b7bdf5e2813",
+      "publisher_record_id": "41909f94-c484-497b-be60-24877fceffbd",
+      "publisher_type": "RFT",
+      "issued_date": "2017-04-27",
+      "closed_date": "2017-06-22",
+      "outcome": "held",
+      "reason": "Source RTP, publisher RFT. Two winners and two Black & McDonald technology submissions. No single-source-kind match; seven entries represent six firms, and cached priced observations take award values. Requires scoped participation/submission evidence.",
+      "bid_observations": 0,
+      "priced_observations": 0,
+      "independent_source_review": {
+        "document_number": "1205175043",
+        "reference": "2017.BA45.2",
+        "original_refusal": "source solicitation types disagree",
+        "reproduced_refusal": "source solicitation types disagree",
+        "disposition": "type_contradiction_and_submission_scope_hold",
+        "reason": "Source RTP, publisher RFT. Two winners and two Black & McDonald technology submissions. No single-source-kind match; seven entries represent six firms, and cached priced observations take award values. Requires scoped participation/submission evidence.",
+        "source_url": "https://www.toronto.ca/legdocs/mmis/2017/ba/bgrd/backgroundfile-107644.pdf",
+        "source_sha256": "07c08d4071c27b0783bf36dd3020b766037c3ad3df30050c38bd0bb4a0a06678",
+        "agenda_sha256": "ae4285cd48631e2bcf809903f4247d93922473945437a031a9bc2b7bdf5e2813",
+        "publisher_record_id": "41909f94-c484-497b-be60-24877fceffbd",
+        "publisher_kind": "RFT",
+        "publisher_issued": "2017-04-27",
+        "publisher_closed": "2017-06-22",
+        "source_call_fields": [
+          "Request to Prequalify No. 1205-17-5043"
+        ],
+        "source_date_witnesses": {
+          "issued": "Issued: April 27, 2017",
+          "closed": "Closed: June 22, 2017"
+        },
+        "supplier": "Prequalify (RTP) Call Number 1205-17-5043 to TransCore ITS, LLC and Black and McDonald Limited",
+        "initial_net": "1,750,023",
+        "diagnostic_matches_ignoring_type": []
+      }
+    },
+    {
+      "document_number": "1212160101",
+      "reference": "2016.BD97.1",
+      "original_refusal": "compound facts do not identify one global publisher record",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2016/bd/bgrd/backgroundfile-95398.pdf",
+      "report_sha256": "c698cd6c87fd57ea0f6a250dc84f9f86cc8ac6a431321477a3390bad2c7f0c26",
+      "agenda_sha256": "77a671cc4963c277355e448b9f17a9a4de299dd4c196900156937f87e3beec0b",
+      "publisher_record_id": "6a18a696-19e1-42c1-ae12-2d44d2eb6326",
+      "publisher_type": "RFQ",
+      "issued_date": "2016-07-11",
+      "closed_date": "2016-07-27",
+      "outcome": "held",
+      "reason": "Three recommended award firms and rounded source values differ from the exact publisher amounts. Accara also has a non-typographic full-name difference (Accara Services vs ACCARA IT SERVICES). No amount rounding or name substitution admitted.",
+      "bid_observations": 0,
+      "priced_observations": 0,
+      "original_compound_witnesses": {
+        "recommended_title_supplier": "Accara Services, Tacel Ltd. and Econolite Canada Inc.",
+        "initial_net": "$138,656 net of all applicable taxes and charges",
+        "publisher_awards": [
+          {
+            "supplier": "ACCARA IT SERVICES",
+            "amount": "138656.25"
+          },
+          {
+            "supplier": "ECONOLITE CANADA INC.",
+            "amount": "181922.50"
+          },
+          {
+            "supplier": "TACEL LTD.",
+            "amount": "239720.25"
+          }
+        ]
+      }
+    },
+    {
+      "document_number": "3401133097",
+      "reference": "2013.BD131.9",
+      "original_refusal": "exact issued/closed source witnesses absent",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2013/bd/bgrd/backgroundfile-59992.pdf",
+      "report_sha256": "ad3c8358c38c029d3fd5508504385eeafc95ee9beb1aed8eb12658e76f40fdd0",
+      "agenda_sha256": "bd41ab71072f028a43c9646b6fe3af716e0ee7f631980e6c238bc44a72be660b",
+      "publisher_record_id": "b3477907-f0ab-42a2-95a9-ca0f377263b2",
+      "publisher_type": "RFQ",
+      "issued_date": "2013-05-15",
+      "closed_date": "2013-06-06",
+      "outcome": "held",
+      "reason": "Source closes June 3, 2013; publisher closes June 6. Alternative proposals from Metafore and Softchoice also require a submission dimension.",
+      "bid_observations": 0,
+      "priced_observations": 0,
+      "independent_source_review": {
+        "document_number": "3401133097",
+        "reference": "2013.BD131.9",
+        "original_refusal": "exact issued/closed source witnesses absent",
+        "reproduced_refusal": "exact issued/closed source witnesses absent",
+        "disposition": "date_contradiction_and_submission_scope_hold",
+        "reason": "Source closes June 3, 2013; publisher closes June 6. Alternative proposals from Metafore and Softchoice also require a submission dimension.",
+        "source_url": "https://www.toronto.ca/legdocs/mmis/2013/bd/bgrd/backgroundfile-59992.pdf",
+        "source_sha256": "ad3c8358c38c029d3fd5508504385eeafc95ee9beb1aed8eb12658e76f40fdd0",
+        "agenda_sha256": "bd41ab71072f028a43c9646b6fe3af716e0ee7f631980e6c238bc44a72be660b",
+        "publisher_record_id": "b3477907-f0ab-42a2-95a9-ca0f377263b2",
+        "publisher_kind": "RFQ",
+        "publisher_issued": "2013-05-15",
+        "publisher_closed": "2013-06-06",
+        "source_call_fields": [
+          "RFQ No. 3401-13-3097"
+        ],
+        "source_date_witnesses": {
+          "issued": "Issued: May 15, 2013",
+          "closed": null
+        },
+        "supplier": "Compugen Inc.",
+        "initial_net": "14,936,403.57",
+        "diagnostic_matches_ignoring_type": [
+          [
+            "b3477907-f0ab-42a2-95a9-ca0f377263b2",
+            "3401133097"
+          ]
+        ]
+      }
+    },
+    {
+      "document_number": "3405153133",
+      "reference": "2015.BD62.9",
+      "original_refusal": "compound facts do not identify one global publisher record",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2015/bd/bgrd/backgroundfile-87063.pdf",
+      "report_sha256": "8c56045bfe0f99502d3a24f48bcab8c34c6676d8c891af3bdf28c67e12e58859",
+      "agenda_sha256": "36c03af31de1e62eeea84b9d117f0b6d5d9f56b338ac805762e8c4ec4ab20974",
+      "publisher_record_id": "84effbd3-f320-4ae7-854b-203e5b27d8c8",
+      "publisher_type": "RFQ",
+      "issued_date": "2015-10-09",
+      "closed_date": "2015-11-03",
+      "outcome": "held",
+      "reason": "Original initial net award is $2,947,251; publisher records $2,947,251.45. No exact-value bridge in held original report.",
+      "bid_observations": 0,
+      "priced_observations": 0,
+      "original_compound_witnesses": {
+        "recommended_title_supplier": "ONX Enterprise Solutions Ltd",
+        "initial_net": "$ 2,947,251 net of all applicable taxes and charges",
+        "publisher_awards": [
+          {
+            "supplier": "ONX Enterprise Solutions Ltd",
+            "amount": "2947251.45"
+          }
+        ]
+      }
+    },
+    {
+      "document_number": "3701150197",
+      "reference": "2015.BD62.6",
+      "original_refusal": "compound facts do not identify one global publisher record",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2015/bd/bgrd/backgroundfile-87062.pdf",
+      "report_sha256": "09a9fa250626389a7dae82c256ce3ce9adc8b2221746fde2911f3c703ae3c480",
+      "agenda_sha256": "36c03af31de1e62eeea84b9d117f0b6d5d9f56b338ac805762e8c4ec4ab20974",
+      "publisher_record_id": "b4a9e1a3-8df4-4495-abfe-602eded3e421",
+      "publisher_type": "RFQ",
+      "issued_date": "2015-11-20",
+      "closed_date": "2015-12-04",
+      "outcome": "recovered",
+      "reason": "Five submitted bids under one common hourly-rate schedule. Preserve /Hour on four prices; these are unit rates, not total contract bid values. Compliance is withheld.",
+      "identity_proof_class": "reviewed_initial_award",
+      "identity_proof_sha256": "f3f013afa4290867634bd42b10ac02f018fa95755fc3014ee346328cae36ad1f",
+      "bid_review_sha256": "eaccb203167105a57a4b91943dd8dffe0177141ee77b3b11bdc30d9f9bd484b2",
+      "bid_observations": 5,
+      "priced_observations": 4,
+      "original_compound_witnesses": {
+        "recommended_title_supplier": "W.M. Weller Tree Service Limited, Ontario Line Clearing & Tree Services 2010 Limited and Davey Tree Expert Co. Of Canada Limited",
+        "initial_net": "$10,782,989 net of all applicable taxes and charges",
+        "publisher_awards": [
+          {
+            "supplier": "WM Weller Tree Service Ltd.",
+            "amount": "10782989.00"
+          },
+          {
+            "supplier": "Ontario Line Clearing & Tree Services 2010 Ltd.",
+            "amount": "6868337.00"
+          },
+          {
+            "supplier": "Davey Tree Expert Co of Canada",
+            "amount": "6498491.00"
+          }
+        ]
+      }
+    },
+    {
+      "document_number": "3905140125",
+      "reference": "2015.BD9.3",
+      "original_refusal": "compound facts do not identify one global publisher record",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2015/bd/bgrd/backgroundfile-74999.pdf",
+      "report_sha256": "955fedc08a3bf4017b44c7c0309de51aa0e6370af8e6c0011733085f49ffeaf6",
+      "agenda_sha256": "b87ec826afc005a38ea63d65b8a8aa0e62b2c40c62dfec13dd042ea5749d3124",
+      "publisher_record_id": "44b12356-f464-42ed-83d5-5f55a3053a20",
+      "publisher_type": "RFQ",
+      "issued_date": "2014-10-17",
+      "closed_date": "2014-11-06",
+      "outcome": "held",
+      "reason": "Separately named Coco Paving initial award is an exact identity candidate, but the report has eight part tables with repeated firms (17 cached observations for four declared bidders). Identity candidate remains unapplied with bid scope held.",
+      "bid_observations": 0,
+      "priced_observations": 0,
+      "original_compound_witnesses": {
+        "recommended_title_supplier": "Coco Paving Limited and D. Crupi and Sons Limited",
+        "initial_net": "$1,130,050.00 net of all applicable taxes and charges",
+        "publisher_awards": [
+          {
+            "supplier": "Coco Paving Inc.",
+            "amount": "1130050.000"
+          },
+          {
+            "supplier": "D Crupi And Sons Limited",
+            "amount": "528475.00"
+          },
+          {
+            "supplier": "Fermar Paving Ltd.",
+            "amount": "225816.50"
+          }
+        ]
+      }
+    },
+    {
+      "document_number": "4102130037",
+      "reference": "2013.BD124.3",
+      "original_refusal": "compound facts do not identify one global publisher record",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2013/bd/bgrd/backgroundfile-58279.pdf",
+      "report_sha256": "753eb2fcd703adf950b11ca54da730cb450e63bd45b3d1d4759b07725cf7ae3d",
+      "agenda_sha256": "bfa2a0d0aaeb14fb5d226c2e299fcab7f52617fa709d86688cda1e7cf26b9f6d",
+      "publisher_record_id": "f59e2f01-e035-4b6d-9447-5d7c7a0634b9",
+      "publisher_type": "RFQ",
+      "issued_date": "2013-02-06",
+      "closed_date": "2013-03-01",
+      "outcome": "held",
+      "reason": "Emco Part C has an exact scoped award identity candidate, but the report has three bid-part tables and repeated firms with conditional miscellaneous amounts. Corix also differs in the source winner spelling. Keep scope held; no flattened rows.",
+      "bid_observations": 0,
+      "priced_observations": 0,
+      "original_compound_witnesses": {
+        "recommended_title_supplier": "Corix Water Productions and Emco Corporation",
+        "initial_net": "$257,712.18 net of all applicable taxes and charges",
+        "publisher_awards": [
+          {
+            "supplier": "Emco Corporation",
+            "amount": "269279.38"
+          },
+          {
+            "supplier": "Corix Water Products",
+            "amount": "257712.18"
+          },
+          {
+            "supplier": "Wamco Supply Inc,",
+            "amount": "48162.50"
+          }
+        ]
+      }
+    },
+    {
+      "document_number": "4305145033",
+      "reference": "2014.BD183.3",
+      "original_refusal": "source solicitation types disagree",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2014/bd/bgrd/backgroundfile-69757.pdf",
+      "report_sha256": "e6aaadc2ea66512b720c52ba9e9eb538e45c30709a0182b18a847afecc323cc3",
+      "agenda_sha256": "ab7771a8e99a591e3242d190bdb2733a7766b81a9b8b11b1afd190f0c9ab3b61",
+      "publisher_record_id": "01aace31-7844-4f4d-89e5-0a2e95023e2b",
+      "publisher_type": "RFT",
+      "issued_date": "2014-04-22",
+      "closed_date": "2014-05-08",
+      "outcome": "recovered",
+      "reason": "Five source-supported bid rows with literal including-HST prices and correction footnotes. Wrapped supplier name reassembled from its own row; compliance withheld.",
+      "identity_proof_class": "reviewed_type_discrepancy",
+      "identity_proof_sha256": "fb57b2f67b912b0bb0b06b5c301df4694a891a5a3af4f4115ca304439da8f0ad",
+      "bid_review_sha256": "7f4d0602ce303b7939834a075e2f543820d9af1cc7f9743534486b3d7f0fe510",
+      "bid_observations": 5,
+      "priced_observations": 5,
+      "independent_source_review": {
+        "document_number": "4305145033",
+        "reference": "2014.BD183.3",
+        "original_refusal": "source solicitation types disagree",
+        "reproduced_refusal": "source solicitation types disagree",
+        "disposition": "reviewed_type_discrepancy_identity_candidate",
+        "reason": "Source RFQ; publisher RFT. Exact two dates, Carmichael name and initial $672,206 uniquely identify one publisher record across all types. Five clean priced submissions including HST; preserve wrapped Direct Energy name and mathematical-correction footnotes.",
+        "source_url": "https://www.toronto.ca/legdocs/mmis/2014/bd/bgrd/backgroundfile-69757.pdf",
+        "source_sha256": "e6aaadc2ea66512b720c52ba9e9eb538e45c30709a0182b18a847afecc323cc3",
+        "agenda_sha256": "ab7771a8e99a591e3242d190bdb2733a7766b81a9b8b11b1afd190f0c9ab3b61",
+        "publisher_record_id": "01aace31-7844-4f4d-89e5-0a2e95023e2b",
+        "publisher_kind": "RFT",
+        "publisher_issued": "2014-04-22",
+        "publisher_closed": "2014-05-08",
+        "source_call_fields": [
+          "RFQ # 4305-14-5033"
+        ],
+        "source_date_witnesses": {
+          "issued": "Issued: April 22, 2014",
+          "closed": "Closed: May 08, 2014"
+        },
+        "supplier": "Carmichael Engineering Ltd",
+        "initial_net": "672,206.00",
+        "diagnostic_matches_ignoring_type": [
+          [
+            "01aace31-7844-4f4d-89e5-0a2e95023e2b",
+            "4305145033"
+          ]
+        ]
+      }
+    },
+    {
+      "document_number": "4305155039",
+      "reference": "2015.BD52.4",
+      "original_refusal": "source solicitation types disagree",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2015/bd/bgrd/backgroundfile-84578.pdf",
+      "report_sha256": "e0b04725d10e0ffde2da400398220f6b76a2f3d435c4d293a95c697b7edbcf07",
+      "agenda_sha256": "8e52aca9d2ecade1268241ff8114f96295a5e03e61b394da039aa933f8bff88a",
+      "publisher_record_id": "c40e956d-9148-4ff6-8973-bb572ab607d8",
+      "publisher_type": "RFT",
+      "issued_date": "2015-07-13",
+      "closed_date": "2015-07-30",
+      "outcome": "recovered",
+      "reason": "Four source-supported bid rows with literal including-HST prices and correction/non-compliance footnotes; compliance withheld.",
+      "identity_proof_class": "reviewed_type_discrepancy",
+      "identity_proof_sha256": "119d25f7eb579aa4191b04220c227da5f3bc01b8c597d3dd79ca8fbd9b270d30",
+      "bid_review_sha256": "ba51a91c761f50a5f57b7b4d3d053b9b6797f8eef930405f767d196f616a010e",
+      "bid_observations": 4,
+      "priced_observations": 4,
+      "independent_source_review": {
+        "document_number": "4305155039",
+        "reference": "2015.BD52.4",
+        "original_refusal": "source solicitation types disagree",
+        "reproduced_refusal": "source solicitation types disagree",
+        "disposition": "reviewed_type_discrepancy_identity_candidate",
+        "reason": "Source RFQ; publisher RFT. Exact two dates, Superior Air name and initial $258,485 uniquely identify one publisher record across all types. Four clean priced submissions including HST; preserve wrapped Active Mechanical name and footnotes; withhold inferred compliance.",
+        "source_url": "https://www.toronto.ca/legdocs/mmis/2015/bd/bgrd/backgroundfile-84578.pdf",
+        "source_sha256": "e0b04725d10e0ffde2da400398220f6b76a2f3d435c4d293a95c697b7edbcf07",
+        "agenda_sha256": "8e52aca9d2ecade1268241ff8114f96295a5e03e61b394da039aa933f8bff88a",
+        "publisher_record_id": "c40e956d-9148-4ff6-8973-bb572ab607d8",
+        "publisher_kind": "RFT",
+        "publisher_issued": "2015-07-13",
+        "publisher_closed": "2015-07-30",
+        "source_call_fields": [
+          "RFQ No. 4305-15-5039"
+        ],
+        "source_date_witnesses": {
+          "issued": "Issued: July 13, 2015",
+          "closed": "Closed: July 30, 2015"
+        },
+        "supplier": "Superior Air Systems Limited",
+        "initial_net": "258,485.00",
+        "diagnostic_matches_ignoring_type": [
+          [
+            "c40e956d-9148-4ff6-8973-bb572ab607d8",
+            "4305155039"
+          ]
+        ]
+      }
+    },
+    {
+      "document_number": "4306140111",
+      "reference": "2014.BD201.4",
+      "original_refusal": "compound facts do not identify one global publisher record",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2014/bd/bgrd/backgroundfile-73381.pdf",
+      "report_sha256": "2d93e33e8221b943e887a58573121ac47c5fc86b6666abeaa2ccccdd6ab446f2",
+      "agenda_sha256": "73e1661e0c07d5034a400298c9ee52a23bcaf3f7aec5acdc2c405d3281c57970",
+      "publisher_record_id": "bbe140cc-2d94-4028-a8b5-806ff42287cd",
+      "publisher_type": "RFQ",
+      "issued_date": "2014-07-11",
+      "closed_date": "2014-07-31",
+      "outcome": "held",
+      "reason": "Source names Cimco Refrigeration; publisher names Cimco Refrigeration, Division Of Toromont Industries Inc. Full identity requires independently evidenced corporate-name mapping; no generic token match admitted.",
+      "bid_observations": 0,
+      "priced_observations": 0,
+      "original_compound_witnesses": {
+        "recommended_title_supplier": "Cimco Refrigeration",
+        "initial_net": "$338,600.00 net of all applicable taxes and charges",
+        "publisher_awards": [
+          {
+            "supplier": "Cimco Refrigeration, Division Of Toromont Industries Inc.",
+            "amount": "338600.00"
+          }
+        ]
+      }
+    },
+    {
+      "document_number": "4920180000",
+      "reference": "2018.BA77.7",
+      "original_refusal": "exact issued/closed source witnesses absent",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2018/ba/bgrd/backgroundfile-115011.pdf",
+      "report_sha256": "f900e600e7861c4647fe8288fc1602935a0919cc1b4f52dd956c40fe2c116062",
+      "agenda_sha256": "8d806c8614cafaf70c9ba07f799f3f662e5b1c9fb0579f89a5102048974baa68",
+      "publisher_record_id": "e93e55c7-28f3-4a34-a295-cca66e256f26",
+      "publisher_type": "RFT",
+      "issued_date": "2018-02-23",
+      "closed_date": "2018-03-28",
+      "outcome": "held",
+      "reason": "Source closes March 12, 2018; publisher closes March 28. Abbreviated month spelling itself is already supported by the date recognizer; this is not a parser formatting error.",
+      "bid_observations": 0,
+      "priced_observations": 0,
+      "independent_source_review": {
+        "document_number": "4920180000",
+        "reference": "2018.BA77.7",
+        "original_refusal": "exact issued/closed source witnesses absent",
+        "reproduced_refusal": "exact issued/closed source witnesses absent",
+        "disposition": "date_contradiction",
+        "reason": "Source closes March 12, 2018; publisher closes March 28. Abbreviated month spelling itself is already supported by the date recognizer; this is not a parser formatting error.",
+        "source_url": "https://www.toronto.ca/legdocs/mmis/2018/ba/bgrd/backgroundfile-115011.pdf",
+        "source_sha256": "f900e600e7861c4647fe8288fc1602935a0919cc1b4f52dd956c40fe2c116062",
+        "agenda_sha256": "8d806c8614cafaf70c9ba07f799f3f662e5b1c9fb0579f89a5102048974baa68",
+        "publisher_record_id": "e93e55c7-28f3-4a34-a295-cca66e256f26",
+        "publisher_kind": "RFT",
+        "publisher_issued": "2018-02-23",
+        "publisher_closed": "2018-03-28",
+        "source_call_fields": [
+          "Tender No. 49-2018, Contract No. 18NY-106TU"
+        ],
+        "source_date_witnesses": {
+          "issued": "Issued: Feb 23, 2018",
+          "closed": null
+        },
+        "supplier": "Maple-Crete Inc.",
+        "initial_net": "3,689,302",
+        "diagnostic_matches_ignoring_type": [
+          [
+            "e93e55c7-28f3-4a34-a295-cca66e256f26",
+            "4920180000"
+          ]
+        ]
+      }
+    },
+    {
+      "document_number": "6026133006",
+      "reference": "2013.BD118.2",
+      "original_refusal": "compound facts do not identify one global publisher record",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2013/bd/bgrd/backgroundfile-57206.pdf",
+      "report_sha256": "82066e847df268205afa3e3d9aae6f627014eea75c1d44f3eb6c8e6901ef4026",
+      "agenda_sha256": "46c9aa89fdb7d40476fd57bbb1ce22570df19f080b4c72441dc645d710ab49dc",
+      "publisher_record_id": "ee56d800-ad1a-46a8-a786-d91c5f7e7c25",
+      "publisher_type": "RFQ",
+      "issued_date": "2013-02-07",
+      "closed_date": "2013-03-01",
+      "outcome": "held",
+      "reason": "Source names Strongco Limited Partnership; publisher spells Strongo Limited Partnership. Exact price and dates do not authorize silently correcting a supplier spelling.",
+      "bid_observations": 0,
+      "priced_observations": 0,
+      "original_compound_witnesses": {
+        "recommended_title_supplier": "Strongco Limited Partnership",
+        "initial_net": "$ 398,354.58 net of all applicable taxes and charges",
+        "publisher_awards": [
+          {
+            "supplier": "Strongo Limited Partnership",
+            "amount": "398354.58"
+          }
+        ]
+      }
+    },
+    {
+      "document_number": "6026180062",
+      "reference": "2018.BA107.2",
+      "original_refusal": "compound facts do not identify one global publisher record",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2018/ba/bgrd/backgroundfile-121529.pdf",
+      "report_sha256": "c757b4378276fe467b25cfebb649957d4fef90f944ada8eb53bbd976d1348dc5",
+      "agenda_sha256": "61f1c2c234941e9569ec320f74f1f3ee36596306620d183181f6f8b46f961161",
+      "publisher_record_id": "535553ff-cc35-4e6b-b171-9a10ea973e7f",
+      "publisher_type": "RFQ",
+      "issued_date": "2018-05-31",
+      "closed_date": "2018-07-03",
+      "outcome": "held",
+      "reason": "Report recommends Strongco Corporation and Strongco L.P.; publisher uses Strongco LP and Strongco Limited Partnership. Current exact full-name gate does not establish both identities, and the two price forms include optional/miscellaneous qualifications. Held for explicit legal-entity/scope evidence.",
+      "bid_observations": 0,
+      "priced_observations": 0,
+      "original_compound_witnesses": {
+        "recommended_title_supplier": "Strongco Corporation and Strongco L.P.",
+        "initial_net": "$941,656 net of all applicable taxes and charges",
+        "publisher_awards": [
+          {
+            "supplier": "Strongco LP",
+            "amount": "915225.00"
+          },
+          {
+            "supplier": "Strongco Limited Partnership",
+            "amount": "941656.00"
+          }
+        ]
+      }
+    },
+    {
+      "document_number": "6033127227",
+      "reference": "2013.BD109.2",
+      "original_refusal": "exact issued/closed source witnesses absent",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2013/bd/bgrd/backgroundfile-55486.pdf",
+      "report_sha256": "5ff6bf0bbd94804d9cb8949fd2a1c65e1b4a1e8629cdd30f792265f76162ae13",
+      "agenda_sha256": "f81ac77cd0b674b38a7f4c75b547456d7591b471bda12974a0d39fc911f20284",
+      "publisher_record_id": "6d3a51d9-5ba6-4b54-a490-04345f3d97bf",
+      "publisher_type": "RFQ",
+      "issued_date": "2012-09-27",
+      "closed_date": "2012-10-18",
+      "outcome": "held",
+      "reason": "Source date fields omit colons but dates equal publisher September 27/October 18, 2012. Source Rafat General Contractors differs from publisher Rafat General Contractor, beyond allowed legal/punctuation changes. Four district price tables repeat the same three firms. Fixing date syntax alone does not prove identity or flatten lots.",
+      "bid_observations": 0,
+      "priced_observations": 0,
+      "independent_source_review": {
+        "document_number": "6033127227",
+        "reference": "2013.BD109.2",
+        "original_refusal": "exact issued/closed source witnesses absent",
+        "reproduced_refusal": "exact issued/closed source witnesses absent",
+        "disposition": "syntax_gap_with_additional_supplier_and_lot_holds",
+        "reason": "Source date fields omit colons but dates equal publisher September 27/October 18, 2012. Source Rafat General Contractors differs from publisher Rafat General Contractor, beyond allowed legal/punctuation changes. Four district price tables repeat the same three firms. Fixing date syntax alone does not prove identity or flatten lots.",
+        "source_url": "https://www.toronto.ca/legdocs/mmis/2013/bd/bgrd/backgroundfile-55486.pdf",
+        "source_sha256": "5ff6bf0bbd94804d9cb8949fd2a1c65e1b4a1e8629cdd30f792265f76162ae13",
+        "agenda_sha256": "f81ac77cd0b674b38a7f4c75b547456d7591b471bda12974a0d39fc911f20284",
+        "publisher_record_id": "6d3a51d9-5ba6-4b54-a490-04345f3d97bf",
+        "publisher_kind": "RFQ",
+        "publisher_issued": "2012-09-27",
+        "publisher_closed": "2012-10-18",
+        "source_call_fields": [
+          "RFQ 6033-12-7227"
+        ],
+        "source_date_witnesses": {
+          "issued": null,
+          "closed": null
+        },
+        "supplier": "Rafat General Contractors Inc.",
+        "initial_net": "3,000,000.00",
+        "diagnostic_matches_ignoring_type": []
+      }
+    },
+    {
+      "document_number": "6033163118",
+      "reference": "2016.BD104.3",
+      "original_refusal": "compound facts do not identify one global publisher record",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2016/bd/bgrd/backgroundfile-96959.pdf",
+      "report_sha256": "2e406c2b8469dc2f3396c0ff803afb7a5f6b890ba330d487c92b1721031c09b4",
+      "agenda_sha256": "ff1d9b34318907708681bd939e91e2c31a0aaf10feb0b1d55cb087463b371c9b",
+      "publisher_record_id": "6a54a521-4a6e-4092-94fe-1c57600f4a54",
+      "publisher_type": "RFQ",
+      "issued_date": "2016-07-15",
+      "closed_date": "2016-08-12",
+      "outcome": "held",
+      "reason": "Source initial net $8,268,979 differs from publisher $8,268,979.02; no exact scoped amount witness found.",
+      "bid_observations": 0,
+      "priced_observations": 0,
+      "original_compound_witnesses": {
+        "recommended_title_supplier": "Municipal Maintenance Inc.",
+        "initial_net": "$ 8,268,979 net of all applicable taxes and charges",
+        "publisher_awards": [
+          {
+            "supplier": "MUNICIPAL MAINTENANCE INC.",
+            "amount": "8268979.02"
+          }
+        ]
+      }
+    },
+    {
+      "document_number": "6038147100",
+      "reference": "2014.BD201.2",
+      "original_refusal": "exact issued/closed source witnesses absent",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2014/bd/bgrd/backgroundfile-73350.pdf",
+      "report_sha256": "b99328fddc7d3e331ac1d6abcefd1bb97e002e6ec786de5edf16375a11ee52dc",
+      "agenda_sha256": "73e1661e0c07d5034a400298c9ee52a23bcaf3f7aec5acdc2c405d3281c57970",
+      "publisher_record_id": "4374807e-fad7-492a-8e40-f1035881d704",
+      "publisher_type": "RFQ",
+      "issued_date": "2014-07-02",
+      "closed_date": "2014-07-15",
+      "outcome": "held",
+      "reason": "Source June 30/July 14, 2014 vs publisher July 2/July 15. Seven firms repeat across North/West and South/East district price tables.",
+      "bid_observations": 0,
+      "priced_observations": 0,
+      "independent_source_review": {
+        "document_number": "6038147100",
+        "reference": "2014.BD201.2",
+        "original_refusal": "exact issued/closed source witnesses absent",
+        "reproduced_refusal": "exact issued/closed source witnesses absent",
+        "disposition": "date_contradiction_and_lot_scope_hold",
+        "reason": "Source June 30/July 14, 2014 vs publisher July 2/July 15. Seven firms repeat across North/West and South/East district price tables.",
+        "source_url": "https://www.toronto.ca/legdocs/mmis/2014/bd/bgrd/backgroundfile-73350.pdf",
+        "source_sha256": "b99328fddc7d3e331ac1d6abcefd1bb97e002e6ec786de5edf16375a11ee52dc",
+        "agenda_sha256": "73e1661e0c07d5034a400298c9ee52a23bcaf3f7aec5acdc2c405d3281c57970",
+        "publisher_record_id": "4374807e-fad7-492a-8e40-f1035881d704",
+        "publisher_kind": "RFQ",
+        "publisher_issued": "2014-07-02",
+        "publisher_closed": "2014-07-15",
+        "source_call_fields": [
+          "Request for Quotation No. 6038-14-7100"
+        ],
+        "source_date_witnesses": {
+          "issued": null,
+          "closed": null
+        },
+        "supplier": "Aquatech Solutions Inc.",
+        "initial_net": "1,519,000.00",
+        "diagnostic_matches_ignoring_type": [
+          [
+            "4374807e-fad7-492a-8e40-f1035881d704",
+            "6038147100"
+          ]
+        ]
+      }
+    },
+    {
+      "document_number": "6102153095",
+      "reference": "2015.BD44.10",
+      "original_refusal": "exact issued/closed source witnesses absent",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2015/bd/bgrd/backgroundfile-82866.pdf",
+      "report_sha256": "c206eb96382418c6028a7fc2c4e74c822463780833ae0a83a3faceb566ca79c2",
+      "agenda_sha256": "ce22e9fc6a9a6ad2c5abb4bc6aa592cc6f6fcfb45a7faf59d2d4529a1c48e0d6",
+      "publisher_record_id": "11a85183-ccc7-4824-90a6-54a46564735c",
+      "publisher_type": "RFQ",
+      "issued_date": "2015-07-02",
+      "closed_date": "2015-07-20",
+      "outcome": "held",
+      "reason": "Source issued July 10, 2015; publisher July 2. Both bid prices also explicitly include 20% miscellaneous items and should not become unqualified amounts.",
+      "bid_observations": 0,
+      "priced_observations": 0,
+      "independent_source_review": {
+        "document_number": "6102153095",
+        "reference": "2015.BD44.10",
+        "original_refusal": "exact issued/closed source witnesses absent",
+        "reproduced_refusal": "exact issued/closed source witnesses absent",
+        "disposition": "date_contradiction_and_price_qualification_hold",
+        "reason": "Source issued July 10, 2015; publisher July 2. Both bid prices also explicitly include 20% miscellaneous items and should not become unqualified amounts.",
+        "source_url": "https://www.toronto.ca/legdocs/mmis/2015/bd/bgrd/backgroundfile-82866.pdf",
+        "source_sha256": "c206eb96382418c6028a7fc2c4e74c822463780833ae0a83a3faceb566ca79c2",
+        "agenda_sha256": "ce22e9fc6a9a6ad2c5abb4bc6aa592cc6f6fcfb45a7faf59d2d4529a1c48e0d6",
+        "publisher_record_id": "11a85183-ccc7-4824-90a6-54a46564735c",
+        "publisher_kind": "RFQ",
+        "publisher_issued": "2015-07-02",
+        "publisher_closed": "2015-07-20",
+        "source_call_fields": [
+          "RFQ No. 6102-15-3095"
+        ],
+        "source_date_witnesses": {
+          "issued": null,
+          "closed": "Closed: July 20, 2015"
+        },
+        "supplier": "Dependable Emergency Vehicles",
+        "initial_net": "349,243.20",
+        "diagnostic_matches_ignoring_type": [
+          [
+            "11a85183-ccc7-4824-90a6-54a46564735c",
+            "6102153095"
+          ]
+        ]
+      }
+    },
+    {
+      "document_number": "6102153139",
+      "reference": "2015.BD62.7",
+      "original_refusal": "compound facts do not identify one global publisher record",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2015/bd/bgrd/backgroundfile-87058.pdf",
+      "report_sha256": "c517d2e370204fc327c0f4fd1d9c60af27cfbbadba9a4b6183d1491b3cff7d4e",
+      "agenda_sha256": "36c03af31de1e62eeea84b9d117f0b6d5d9f56b338ac805762e8c4ec4ab20974",
+      "publisher_record_id": "3ca9aed4-0c1b-43b7-80b0-403f848bd24f",
+      "publisher_type": "RFQ",
+      "issued_date": "2015-10-09",
+      "closed_date": "2015-11-13",
+      "outcome": "held",
+      "reason": "Source initial net $3,332,283 differs from publisher $3,332,282.70; another award line also exists. No rounded or aggregated amount admission.",
+      "bid_observations": 0,
+      "priced_observations": 0,
+      "original_compound_witnesses": {
+        "recommended_title_supplier": "Action Hydraulics Ltd.",
+        "initial_net": "$3,332,283 net of all applicable taxes and charges",
+        "publisher_awards": [
+          {
+            "supplier": "ICGT Distribution Ltd",
+            "amount": "96753.39"
+          },
+          {
+            "supplier": "Action Hydraulics Ltd",
+            "amount": "3332282.70"
+          }
+        ]
+      }
+    },
+    {
+      "document_number": "6125133054",
+      "reference": "2013.BD127.2",
+      "original_refusal": "compound facts do not identify one global publisher record",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2013/bd/bgrd/backgroundfile-58775.pdf",
+      "report_sha256": "5572a85cf6b8aecb0408f6773a6403f617fb60cb37fff79cd8f1c6e37c0863f7",
+      "agenda_sha256": "2f8a81f1a58c469300f85cf1d663d45affd4a1f83b1e03b633b5e440f66ba42e",
+      "publisher_record_id": "370cdd48-b196-48f8-a73c-a16a21726408",
+      "publisher_type": "RFQ",
+      "issued_date": "2013-03-21",
+      "closed_date": "2013-04-11",
+      "outcome": "held",
+      "reason": "Source names Benson Group Inc.; publisher names Benson Tire. Exact dates and amount cannot establish an undocumented trading-name equivalence.",
+      "bid_observations": 0,
+      "priced_observations": 0,
+      "original_compound_witnesses": {
+        "recommended_title_supplier": "Benson Group Inc.",
+        "initial_net": "$319,054.00 net of all applicable taxes and charges",
+        "publisher_awards": [
+          {
+            "supplier": "Benson Tire",
+            "amount": "319054.00"
+          }
+        ]
+      }
+    },
+    {
+      "document_number": "6129163181",
+      "reference": "2017.BA21.9",
+      "original_refusal": "compound facts do not identify one global publisher record",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2017/ba/bgrd/backgroundfile-103596.pdf",
+      "report_sha256": "43132f7cbc118a56cc17e02f621f1b3efdb31d952397141978b157f5a3b2b93d",
+      "agenda_sha256": "3eb89349cefda1a50295efe7c55348d1bebf2ff4c3b14867eecb731d8f284215",
+      "publisher_record_id": "fdb07bc4-50c4-45f6-bf55-22272e0ea97e",
+      "publisher_type": "RFQ",
+      "issued_date": "2017-01-24",
+      "closed_date": "2017-02-13",
+      "outcome": "held",
+      "reason": "Source Green Clean Mobile Wash Inc. differs from publisher Green Clean Mobile Inc.; other named multi-award firms and conditional price tables do not justify dropping name tokens or flattening scope.",
+      "bid_observations": 0,
+      "priced_observations": 0,
+      "original_compound_witnesses": {
+        "recommended_title_supplier": "Green Clean Mobile Wash Inc.",
+        "initial_net": "$345,230 net of all applicable taxes and charges",
+        "publisher_awards": [
+          {
+            "supplier": "Green Clean Mobile Inc",
+            "amount": "345230.00"
+          },
+          {
+            "supplier": "Canadian Tire Associate Store",
+            "amount": "58220.00"
+          },
+          {
+            "supplier": "Canadian Tire Associate Store",
+            "amount": "31650.00"
+          },
+          {
+            "supplier": "Royfoss Chevrolet Buick",
+            "amount": "37437.12"
+          },
+          {
+            "supplier": "Empire Auto Detailing",
+            "amount": "12500.00"
+          }
+        ]
+      }
+    },
+    {
+      "document_number": "6141133082",
+      "reference": "2013.BD131.6",
+      "original_refusal": "native call role is not unambiguous in agenda item",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2013/bd/bgrd/backgroundfile-60016.pdf",
+      "report_sha256": "90801f1c86a631d753f0714ad7ea78f173f9f63de30362b02df0c786bb5ece41",
+      "agenda_sha256": "bd41ab71072f028a43c9646b6fe3af716e0ee7f631980e6c238bc44a72be660b",
+      "publisher_record_id": "384c5ebe-9890-4ba2-bfd0-791ee742a1eb",
+      "publisher_type": "RFQ",
+      "issued_date": "2013-05-16",
+      "closed_date": "2013-06-03",
+      "outcome": "held",
+      "reason": "Title says 6141-13-3082 while labelled Call No says 6701-13-3082. Publisher details contain only its numeric Doc, not an independent native call. Exact dates and Wheelchair/143000 support a candidate but do not resolve conflicting source roles.",
+      "bid_observations": 0,
+      "priced_observations": 0,
+      "independent_source_review": {
+        "document_number": "6141133082",
+        "reference": "2013.BD131.6",
+        "original_refusal": "native call role is not unambiguous in agenda item",
+        "reproduced_refusal": "native call role is not unambiguous in agenda item",
+        "disposition": "internally_conflicting_native_call_hold",
+        "reason": "Title says 6141-13-3082 while labelled Call No says 6701-13-3082. Publisher details contain only its numeric Doc, not an independent native call. Exact dates and Wheelchair/143000 support a candidate but do not resolve conflicting source roles.",
+        "source_url": "https://www.toronto.ca/legdocs/mmis/2013/bd/bgrd/backgroundfile-60016.pdf",
+        "source_sha256": "90801f1c86a631d753f0714ad7ea78f173f9f63de30362b02df0c786bb5ece41",
+        "agenda_sha256": "bd41ab71072f028a43c9646b6fe3af716e0ee7f631980e6c238bc44a72be660b",
+        "publisher_record_id": "384c5ebe-9890-4ba2-bfd0-791ee742a1eb",
+        "publisher_kind": "RFQ",
+        "publisher_issued": "2013-05-16",
+        "publisher_closed": "2013-06-03",
+        "source_call_fields": [
+          "RFQ No. 6701-13-3082"
+        ],
+        "source_date_witnesses": {
+          "issued": "Issued: May 16, 2013",
+          "closed": "Closed: June 3, 2013"
+        },
+        "supplier": "Wheelchair Accessible Transit Inc.,",
+        "initial_net": "143,000.00",
+        "diagnostic_matches_ignoring_type": [
+          [
+            "384c5ebe-9890-4ba2-bfd0-791ee742a1eb",
+            "6141133082"
+          ]
+        ]
+      }
+    },
+    {
+      "document_number": "6145133057",
+      "reference": "2013.BD131.5",
+      "original_refusal": "source solicitation types disagree",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2013/bd/bgrd/backgroundfile-60015.pdf",
+      "report_sha256": "1c0b801e31cd7b3d81d54919f286cfe867fc0f890e1e3381518e393938ff4bbf",
+      "agenda_sha256": "bd41ab71072f028a43c9646b6fe3af716e0ee7f631980e6c238bc44a72be660b",
+      "publisher_record_id": "5e6abf31-ded0-4a64-a525-d13a9309f2f0",
+      "publisher_type": "RFQ",
+      "issued_date": "2013-03-22",
+      "closed_date": "2013-04-12",
+      "outcome": "held",
+      "reason": "Title omits type, but labelled Call No explicitly says RFQ. Source dates March 13/April 5, 2013 vs publisher March 22/April 12. A typed-field fallback would expose, not resolve, the substantive date contradiction.",
+      "bid_observations": 0,
+      "priced_observations": 0,
+      "independent_source_review": {
+        "document_number": "6145133057",
+        "reference": "2013.BD131.5",
+        "original_refusal": "source solicitation types disagree",
+        "reproduced_refusal": "source solicitation types disagree",
+        "disposition": "title_type_gap_with_additional_date_hold",
+        "reason": "Title omits type, but labelled Call No explicitly says RFQ. Source dates March 13/April 5, 2013 vs publisher March 22/April 12. A typed-field fallback would expose, not resolve, the substantive date contradiction.",
+        "source_url": "https://www.toronto.ca/legdocs/mmis/2013/bd/bgrd/backgroundfile-60015.pdf",
+        "source_sha256": "1c0b801e31cd7b3d81d54919f286cfe867fc0f890e1e3381518e393938ff4bbf",
+        "agenda_sha256": "bd41ab71072f028a43c9646b6fe3af716e0ee7f631980e6c238bc44a72be660b",
+        "publisher_record_id": "5e6abf31-ded0-4a64-a525-d13a9309f2f0",
+        "publisher_kind": "RFQ",
+        "publisher_issued": "2013-03-22",
+        "publisher_closed": "2013-04-12",
+        "source_call_fields": [
+          "RFQ No. 6145-13-3057"
+        ],
+        "source_date_witnesses": {
+          "issued": null,
+          "closed": null
+        },
+        "supplier": "Green Box Services and Supplies Inc.",
+        "initial_net": "449,207.19",
+        "diagnostic_matches_ignoring_type": [
+          [
+            "5e6abf31-ded0-4a64-a525-d13a9309f2f0",
+            "6145133057"
+          ]
+        ]
+      }
+    },
+    {
+      "document_number": "6606137147",
+      "reference": "2013.BD141.2",
+      "original_refusal": "source solicitation types disagree",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2013/bd/bgrd/backgroundfile-61311.pdf",
+      "report_sha256": "537b3a1924ac9817f6f1d6e7c0a03ff177904f1c9e55b92f02a285abba15e294",
+      "agenda_sha256": "19fc3327ff4647a2faacbbe2fd8cc8d59bc1430345a57f0e40ab20c2881a8543",
+      "publisher_record_id": "0e873182-5be4-4eb7-ac53-f63f243ff0e4",
+      "publisher_type": "RFQ",
+      "issued_date": "2013-05-27",
+      "closed_date": "2013-06-12",
+      "outcome": "recovered",
+      "reason": "Three submitted bid rows with literal including-HST prices; wrapped supplier name reassembled from its own row, compliance withheld.",
+      "identity_proof_class": "corroborated_compound",
+      "identity_proof_sha256": "944ad2c4f6a5ce61f8779d270e1fec80150ef96f54600328f187480931a9f3c3",
+      "bid_review_sha256": "877d4cb296282ec31a38d4b69f3bf94b80c21be9989ed7abb358692603076072",
+      "bid_observations": 3,
+      "priced_observations": 3,
+      "independent_source_review": {
+        "document_number": "6606137147",
+        "reference": "2013.BD141.2",
+        "original_refusal": "source solicitation types disagree",
+        "reproduced_refusal": "source solicitation types disagree",
+        "disposition": "literal_type_syntax_recovery_candidate",
+        "reason": "Literal source title Request of Quotation was not recognized, while source labelled field says RFQ and publisher says RFQ. Recognizing that spelling produces the existing full compound proof unchanged. Three clean priced rows, including HST; third supplier name wraps around the price column.",
+        "source_url": "https://www.toronto.ca/legdocs/mmis/2013/bd/bgrd/backgroundfile-61311.pdf",
+        "source_sha256": "537b3a1924ac9817f6f1d6e7c0a03ff177904f1c9e55b92f02a285abba15e294",
+        "agenda_sha256": "19fc3327ff4647a2faacbbe2fd8cc8d59bc1430345a57f0e40ab20c2881a8543",
+        "publisher_record_id": "0e873182-5be4-4eb7-ac53-f63f243ff0e4",
+        "publisher_kind": "RFQ",
+        "publisher_issued": "2013-05-27",
+        "publisher_closed": "2013-06-12",
+        "source_call_fields": [
+          "RFQ 6606-13-7147"
+        ],
+        "source_date_witnesses": {
+          "issued": "Issued: May 27, 2013",
+          "closed": "Closed: June 12, 2013"
+        },
+        "supplier": "UBA Inc.",
+        "initial_net": "1,194,930.00",
+        "diagnostic_matches_ignoring_type": [
+          [
+            "0e873182-5be4-4eb7-ac53-f63f243ff0e4",
+            "6606137147"
+          ]
+        ]
+      }
+    },
+    {
+      "document_number": "6627137102",
+      "reference": "2013.BD145.2",
+      "original_refusal": "source solicitation types disagree",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2013/bd/bgrd/backgroundfile-61927.pdf",
+      "report_sha256": "c3331b02f81b5f765033976ef2e5215834e98940e8980343683dab40f17c5940",
+      "agenda_sha256": "cdedf6317a71f090cd64db392d4200988cd4c1eda4d6d122d5b921093316512c",
+      "publisher_record_id": "bef5faff-eb2c-4861-8bd2-e6d39ab0fda3",
+      "publisher_type": "RFQ",
+      "issued_date": "2013-04-12",
+      "closed_date": "2013-05-08",
+      "outcome": "held",
+      "reason": "Literal Request of Quotation syntax also occurs here. After recognizing it, strict gate still refuses source Sulco Chemicals Limited versus publisher Sulco Chemicals Ltd Subsidiary. Table first bidder is printed only Chemicals Limited.; cannot invent omitted Sulco in a bid projection.",
+      "bid_observations": 0,
+      "priced_observations": 0,
+      "independent_source_review": {
+        "document_number": "6627137102",
+        "reference": "2013.BD145.2",
+        "original_refusal": "source solicitation types disagree",
+        "reproduced_refusal": "source solicitation types disagree",
+        "disposition": "literal_type_syntax_gap_with_additional_supplier_hold",
+        "reason": "Literal Request of Quotation syntax also occurs here. After recognizing it, strict gate still refuses source Sulco Chemicals Limited versus publisher Sulco Chemicals Ltd Subsidiary. Table first bidder is printed only Chemicals Limited.; cannot invent omitted Sulco in a bid projection.",
+        "source_url": "https://www.toronto.ca/legdocs/mmis/2013/bd/bgrd/backgroundfile-61927.pdf",
+        "source_sha256": "c3331b02f81b5f765033976ef2e5215834e98940e8980343683dab40f17c5940",
+        "agenda_sha256": "cdedf6317a71f090cd64db392d4200988cd4c1eda4d6d122d5b921093316512c",
+        "publisher_record_id": "bef5faff-eb2c-4861-8bd2-e6d39ab0fda3",
+        "publisher_kind": "RFQ",
+        "publisher_issued": "2013-04-12",
+        "publisher_closed": "2013-05-08",
+        "source_call_fields": [
+          "RFQ #6627-13-7102"
+        ],
+        "source_date_witnesses": {
+          "issued": "Issued: April 12, 2013",
+          "closed": "Closed: May 8, 2013"
+        },
+        "supplier": "Sulco Chemicals Limited",
+        "initial_net": "891,530.00",
+        "diagnostic_matches_ignoring_type": []
+      }
+    },
+    {
+      "document_number": "6701133083",
+      "reference": "2013.BD130.10",
+      "original_refusal": "native call also appears in another council context",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2013/bd/bgrd/backgroundfile-59807.pdf",
+      "report_sha256": "11640289aac5d8a96915cc6cfcc3bf5ab983499d04592610c262223ba7ffc1c5",
+      "agenda_sha256": "80a370126772589fbda1f58788eb89115fe8fb7c2f2400c8c59ca64cd46bf77f",
+      "publisher_record_id": "b5104cab-9bcd-4246-ab6d-ac38e18b3d5a",
+      "publisher_type": "RFQ",
+      "issued_date": "2013-05-16",
+      "closed_date": "2013-06-03",
+      "outcome": "held",
+      "reason": "BD130.10 awards Gal Power Union Station; BD130.11 awards Northern Generator other locations under same native call. Publisher has both initial values 246746.50 and 897918.00. A single-context gate properly refuses, but evidence points to two award parts, not a bad duplicate. A new scoped many-reference proof and table-specific projection are needed.",
+      "bid_observations": 0,
+      "priced_observations": 0,
+      "independent_source_review": {
+        "document_number": "6701133083",
+        "reference": "2013.BD130.10",
+        "original_refusal": "native call also appears in another council context",
+        "reproduced_refusal": null,
+        "disposition": "legitimate_multiple_council_contexts_need_scoped_proof",
+        "reason": "BD130.10 awards Gal Power Union Station; BD130.11 awards Northern Generator other locations under same native call. Publisher has both initial values 246746.50 and 897918.00. A single-context gate properly refuses, but evidence points to two award parts, not a bad duplicate. A new scoped many-reference proof and table-specific projection are needed.",
+        "source_url": "https://www.toronto.ca/legdocs/mmis/2013/bd/bgrd/backgroundfile-59807.pdf",
+        "source_sha256": "11640289aac5d8a96915cc6cfcc3bf5ab983499d04592610c262223ba7ffc1c5",
+        "agenda_sha256": "80a370126772589fbda1f58788eb89115fe8fb7c2f2400c8c59ca64cd46bf77f",
+        "publisher_record_id": "b5104cab-9bcd-4246-ab6d-ac38e18b3d5a",
+        "publisher_kind": "RFQ",
+        "publisher_issued": "2013-05-16",
+        "publisher_closed": "2013-06-03",
+        "source_call_fields": [
+          "RFQ # 6701-13-3083 – Union Station"
+        ],
+        "source_date_witnesses": {
+          "issued": "Issued: May 16, 2013",
+          "closed": "Closed: June 3, 2013"
+        },
+        "supplier": "Gal Power Systems Toronto Ltd.,",
+        "initial_net": "246,746.50",
+        "diagnostic_matches_ignoring_type": [
+          [
+            "b5104cab-9bcd-4246-ab6d-ac38e18b3d5a",
+            "6701133083"
+          ]
+        ]
+      }
+    },
+    {
+      "document_number": "7201300000",
+      "reference": "2013.BD117.4",
+      "original_refusal": "native call role is not unambiguous in agenda item",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2013/bd/bgrd/backgroundfile-57006.pdf",
+      "report_sha256": "476beca4cc0db6407b65aefa39cc2a79d768358d6a5ef9c4b60212d6049371d8",
+      "agenda_sha256": "cc294c3d27f35bbf9c959c09852e76aa4c8e98ea9d06e085a29186c7d7d3fce1",
+      "publisher_record_id": "53a5f1e1-5a4e-4dda-967e-39431b24f8f0",
+      "publisher_type": "RFT",
+      "issued_date": "2013-01-29",
+      "closed_date": "2013-03-12",
+      "outcome": "held",
+      "reason": "Title 7-2013 and labelled field 07-2013 differ only by printed leading zero; source dates omit colons. Publisher closes March 12, 2013 while source closes March 8. Normalizing call typography cannot resolve date contradiction.",
+      "bid_observations": 0,
+      "priced_observations": 0,
+      "independent_source_review": {
+        "document_number": "7201300000",
+        "reference": "2013.BD117.4",
+        "original_refusal": "native call role is not unambiguous in agenda item",
+        "reproduced_refusal": "native call role is not unambiguous in agenda item",
+        "disposition": "call_typography_gap_with_additional_date_hold",
+        "reason": "Title 7-2013 and labelled field 07-2013 differ only by printed leading zero; source dates omit colons. Publisher closes March 12, 2013 while source closes March 8. Normalizing call typography cannot resolve date contradiction.",
+        "source_url": "https://www.toronto.ca/legdocs/mmis/2013/bd/bgrd/backgroundfile-57006.pdf",
+        "source_sha256": "476beca4cc0db6407b65aefa39cc2a79d768358d6a5ef9c4b60212d6049371d8",
+        "agenda_sha256": "cc294c3d27f35bbf9c959c09852e76aa4c8e98ea9d06e085a29186c7d7d3fce1",
+        "publisher_record_id": "53a5f1e1-5a4e-4dda-967e-39431b24f8f0",
+        "publisher_kind": "RFT",
+        "publisher_issued": "2013-01-29",
+        "publisher_closed": "2013-03-12",
+        "source_call_fields": [
+          "Tender #07-2013"
+        ],
+        "source_date_witnesses": {
+          "issued": null,
+          "closed": null
+        },
+        "supplier": "Dufferin Roofing Ltd.,",
+        "initial_net": "1,179,000.00",
+        "diagnostic_matches_ignoring_type": [
+          [
+            "53a5f1e1-5a4e-4dda-967e-39431b24f8f0",
+            "7201300000"
+          ]
+        ]
+      }
+    },
+    {
+      "document_number": "8420180000",
+      "reference": "2018.BA78.11",
+      "original_refusal": "compound facts do not identify one global publisher record",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2018/ba/bgrd/backgroundfile-115280.pdf",
+      "report_sha256": "dc09aa9ec609eddb6f0b66555e80c36b561f0dc04a5fb0a9e503c26a45b20528",
+      "agenda_sha256": "a5a8d3d1314d93fda31775490e08ffcbb17e7590d92cc98f54d8f99c05d6102b",
+      "publisher_record_id": "c934c972-0dcc-4fe3-a0d3-51f66f89550b",
+      "publisher_type": "RFT",
+      "issued_date": "2018-04-12",
+      "closed_date": "2018-04-27",
+      "outcome": "held",
+      "reason": "Source A & F DiCarlo Construction Inc. and rounded $3,062,832 differ from publisher A&F DiCarlo Constrction Inc. and $3,062,832.37. Both name spelling and amount lack exact witnesses.",
+      "bid_observations": 0,
+      "priced_observations": 0,
+      "original_compound_witnesses": {
+        "recommended_title_supplier": "A & F DiCarlo Construction Inc.",
+        "initial_net": "$3,062,832 net of all applicable taxes and charges",
+        "publisher_awards": [
+          {
+            "supplier": "A&F DiCarlo Constrction Inc.",
+            "amount": "3062832.37"
+          }
+        ]
+      }
+    },
+    {
+      "document_number": "9115167234",
+      "reference": "2016.BD115.13",
+      "original_refusal": "source solicitation types disagree",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2016/bd/bgrd/backgroundfile-99324.pdf",
+      "report_sha256": "6c3dc3ec960a6383f2b375ca84c5973355bcc187bd03fcf5769f819c4b75a7c7",
+      "agenda_sha256": "84a9add76cbdce017e8bd34d4383ff975981bad50f36f1db30a60822d8661d7e",
+      "publisher_record_id": "2699cb48-59a4-470b-be9b-d9fcc241f29d",
+      "publisher_type": "RFP",
+      "issued_date": "2016-11-09",
+      "closed_date": "2016-11-25",
+      "outcome": "held",
+      "reason": "Source RFQ vs publisher RFP. Publisher supplier is SNC - Lavlin Gem Ontario Inc., source SNC-Lavalin GEM Ontario Inc.; this spelling difference exceeds legal/punctuation normalization. Nine source submissions alone do not prove the numeric target.",
+      "bid_observations": 0,
+      "priced_observations": 0,
+      "independent_source_review": {
+        "document_number": "9115167234",
+        "reference": "2016.BD115.13",
+        "original_refusal": "source solicitation types disagree",
+        "reproduced_refusal": "source solicitation types disagree",
+        "disposition": "type_contradiction_and_supplier_spelling_hold",
+        "reason": "Source RFQ vs publisher RFP. Publisher supplier is SNC - Lavlin Gem Ontario Inc., source SNC-Lavalin GEM Ontario Inc.; this spelling difference exceeds legal/punctuation normalization. Nine source submissions alone do not prove the numeric target.",
+        "source_url": "https://www.toronto.ca/legdocs/mmis/2016/bd/bgrd/backgroundfile-99324.pdf",
+        "source_sha256": "6c3dc3ec960a6383f2b375ca84c5973355bcc187bd03fcf5769f819c4b75a7c7",
+        "agenda_sha256": "84a9add76cbdce017e8bd34d4383ff975981bad50f36f1db30a60822d8661d7e",
+        "publisher_record_id": "2699cb48-59a4-470b-be9b-d9fcc241f29d",
+        "publisher_kind": "RFP",
+        "publisher_issued": "2016-11-09",
+        "publisher_closed": "2016-11-25",
+        "source_call_fields": [
+          "RFQ No. 9115-16-7234"
+        ],
+        "source_date_witnesses": {
+          "issued": "Issued: November 9, 2016",
+          "closed": "Closed: November 25, 2016"
+        },
+        "supplier": "SNC-Lavalin GEM Ontario Inc.",
+        "initial_net": "1,249,392",
+        "diagnostic_matches_ignoring_type": []
+      }
+    },
+    {
+      "document_number": "9117165089",
+      "reference": "2017.BA8.5",
+      "original_refusal": "compound facts do not identify one global publisher record",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2017/ba/bgrd/backgroundfile-101326.pdf",
+      "report_sha256": "deef27e5db362853f0394a602f13115d5ce3f3bd038972862389dee01e88cf45",
+      "agenda_sha256": "953556b7339f635e9f1683f503ebaa30595beb63b33c39f15764fa730e16aab9",
+      "publisher_record_id": "81d5e804-9832-49a6-bc52-e4268cc5b62a",
+      "publisher_type": "RFP",
+      "issued_date": "2016-11-22",
+      "closed_date": "2017-01-10",
+      "outcome": "held",
+      "reason": "Source initial net $606,219 differs from publisher $606,218.51. No rounding tolerance admitted.",
+      "bid_observations": 0,
+      "priced_observations": 0,
+      "original_compound_witnesses": {
+        "recommended_title_supplier": "Morrison Hershfield Limited",
+        "initial_net": "$606,219 net of all applicable taxes and charges",
+        "publisher_awards": [
+          {
+            "supplier": "Morrison Hershfield Ltd.",
+            "amount": "606218.51"
+          }
+        ]
+      }
+    },
+    {
+      "document_number": "9117167066",
+      "reference": "2016.BD93.10",
+      "original_refusal": "title does not identify one native call",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2016/bd/bgrd/backgroundfile-95135.pdf",
+      "report_sha256": "f32e14168351b703bc3485703cb6b6a94c0d1249da43cff0f6b4d2767f905cf6",
+      "agenda_sha256": "eeb068476dd76510b2a43d77e1c549100e38c8ea8d9c40144614903b5ec9e1bc",
+      "publisher_record_id": "6e752f66-b0c8-4eed-b17f-792421fa4e90",
+      "publisher_type": "RFP",
+      "issued_date": "2016-03-11",
+      "closed_date": "2016-04-18",
+      "outcome": "recovered",
+      "reason": "Four submitted proposals, with no bid prices printed. Three cached amounts are award values and are withheld, as are inferred compliance statuses.",
+      "identity_proof_class": "reviewed_initial_award",
+      "identity_proof_sha256": "1c16e77bd1fd274ff64504db6af98745c836a60537ed906a4019b7b6a125d58b",
+      "bid_review_sha256": "ad1d95acaf436a9014bd70b74058d5e8a4abd001699292b0c06ffae0002ffdee",
+      "bid_observations": 4,
+      "priced_observations": 0,
+      "independent_source_review": {
+        "document_number": "9117167066",
+        "reference": "2016.BD93.10",
+        "original_refusal": "title does not identify one native call",
+        "reproduced_refusal": "title does not identify one native call",
+        "disposition": "typed_native_field_or_multiwinner_recovery_candidate",
+        "reason": "Title spaces the call as 9117 16 7066; labelled source field explicitly prints 9117-16-7066. Original publisher Posting_Title is literally the same native call and globally unique. Exact dates/RFP and three separately labelled initial awards also agree. Four source proponents are unpriced; cached amounts are award-section ceilings and must be withheld.",
+        "source_url": "https://www.toronto.ca/legdocs/mmis/2016/bd/bgrd/backgroundfile-95135.pdf",
+        "source_sha256": "f32e14168351b703bc3485703cb6b6a94c0d1249da43cff0f6b4d2767f905cf6",
+        "agenda_sha256": "eeb068476dd76510b2a43d77e1c549100e38c8ea8d9c40144614903b5ec9e1bc",
+        "publisher_record_id": "6e752f66-b0c8-4eed-b17f-792421fa4e90",
+        "publisher_kind": "RFP",
+        "publisher_issued": "2016-03-11",
+        "publisher_closed": "2016-04-18",
+        "source_call_fields": [
+          "Request for Proposal No. 9117‑16‑7066"
+        ],
+        "source_date_witnesses": {
+          "issued": "Issued: March 11, 2016",
+          "closed": "Closed: April 18, 2016"
+        },
+        "supplier": "CIMA Canada Inc., Parsons Inc. and WSP Canada Inc.",
+        "initial_net": "5,101,350",
+        "diagnostic_matches_ignoring_type": []
+      }
+    },
+    {
+      "document_number": "9117175085",
+      "reference": "2018.BA63.1",
+      "original_refusal": "compound facts do not identify one global publisher record",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2018/ba/bgrd/backgroundfile-112672.pdf",
+      "report_sha256": "bd46a60a2137925887cce0b3240e11e40dccb72a43cb0d71db3b60342c148080",
+      "agenda_sha256": "ee51bccef06ae43fc0cfe940378ffbf54cbc05586c133111b4c39e2b7ddceca7",
+      "publisher_record_id": "518cd46f-beff-4d1f-8514-3c9dc1ea9308",
+      "publisher_type": "RFP",
+      "issued_date": "2017-11-29",
+      "closed_date": "2018-01-04",
+      "outcome": "held",
+      "reason": "Source initial net $18,363,472 differs from publisher $18,363,471.50. Later contingency/financial amounts are separate scopes, not an exact initial witness.",
+      "bid_observations": 0,
+      "priced_observations": 0,
+      "original_compound_witnesses": {
+        "recommended_title_supplier": "R.V. Anderson Associates Limited",
+        "initial_net": "$18,363,472 net of all applicable taxes and charges",
+        "publisher_awards": [
+          {
+            "supplier": "RV Anderson Associates Ltd",
+            "amount": "18363471.50"
+          }
+        ]
+      }
+    },
+    {
+      "document_number": "9117177105",
+      "reference": "2017.BA23.12",
+      "original_refusal": "compound facts do not identify one global publisher record",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2017/ba/bgrd/backgroundfile-104025.pdf",
+      "report_sha256": "9f9970c090a84fd42a8c3f497d2fd3d54ecdc9e977b03be2c441c80711d338cb",
+      "agenda_sha256": "756a4165cbde964a0201b7e83239fc083155882e7784f2fba85ef81232326bfb",
+      "publisher_record_id": "70fb2b03-3b39-4d96-9358-5f3f09eb56f4",
+      "publisher_type": "RFP",
+      "issued_date": "2017-03-14",
+      "closed_date": "2017-04-12",
+      "outcome": "held",
+      "reason": "Source initial net $739,217 differs from publisher $739,216.98. No rounding tolerance admitted.",
+      "bid_observations": 0,
+      "priced_observations": 0,
+      "original_compound_witnesses": {
+        "recommended_title_supplier": "AECOM Canada Ltd.",
+        "initial_net": "$739,217 net of all applicable taxes and charges",
+        "publisher_awards": [
+          {
+            "supplier": "AECOM CANADA LTD.",
+            "amount": "739216.98"
+          }
+        ]
+      }
+    },
+    {
+      "document_number": "9118187175",
+      "reference": "2018.BA109.1",
+      "original_refusal": "compound facts do not identify one global publisher record",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2018/ba/bgrd/backgroundfile-121843.pdf",
+      "report_sha256": "a09f3ca3f69694387f66c6613bfe3c500780a0339a8a41f759347caeb4e1ff92",
+      "agenda_sha256": "38455efb3565f550c8e73c40e1cb2e723616015d910167d04fc6474b7e811f61",
+      "publisher_record_id": "5b4977eb-3238-4603-b663-446da8db700b",
+      "publisher_type": "RFP",
+      "issued_date": "2018-09-05",
+      "closed_date": "2018-10-11",
+      "outcome": "held",
+      "reason": "Source Gensler Architecture & Design Canada, Inc. differs from publisher Gensler Architecture Design Inc.; source net $1,075,076 differs from $1,075,076.28. No dropped geography or rounded amount admitted.",
+      "bid_observations": 0,
+      "priced_observations": 0,
+      "original_compound_witnesses": {
+        "recommended_title_supplier": "Gensler Architecture & Design Canada, Inc.",
+        "initial_net": "$1,075,076 net of all applicable taxes and charges",
+        "publisher_awards": [
+          {
+            "supplier": "Gensler Architecture Design Inc.",
+            "amount": "1075076.28"
+          }
+        ]
+      }
+    },
+    {
+      "document_number": "9119167124",
+      "reference": "2017.BA13.4",
+      "original_refusal": "compound facts do not identify one global publisher record",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2017/ba/bgrd/backgroundfile-101978.pdf",
+      "report_sha256": "0a075946ea4bd36f168e1ac0439e1f97bb41044c8a3bc606f0308815fa14c5f3",
+      "agenda_sha256": "12d508d5c17e9ac1ff29d79f228afcc9f786a484be077d686b390fbec8309350",
+      "publisher_record_id": "1fd024e4-c7d2-46a4-b535-3abdc4fe9eeb",
+      "publisher_type": "RFP",
+      "issued_date": "2016-11-09",
+      "closed_date": "2016-12-16",
+      "outcome": "held",
+      "reason": "Source Miya Water Projects Netherlands B.V. differs from publisher Miya Water Projects Netherlands; source net $1,557,377 differs from $1,557,376.80. No new legal-form or rounding rule admitted.",
+      "bid_observations": 0,
+      "priced_observations": 0,
+      "original_compound_witnesses": {
+        "recommended_title_supplier": "Miya Water Projects Netherlands B.V.",
+        "initial_net": "$1,557,377 net of all applicable taxes and charges",
+        "publisher_awards": [
+          {
+            "supplier": "Miya Water Projects Netherlands",
+            "amount": "1557376.80"
+          }
+        ]
+      }
+    },
+    {
+      "document_number": "9119177205",
+      "reference": "2017.BA33.4",
+      "original_refusal": "compound facts do not identify one global publisher record",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2017/ba/bgrd/backgroundfile-105803.pdf",
+      "report_sha256": "41a1bcef3f2e43ec9c409db73fe8490e2bf01e2fe44ed97ea5f6a791094634e5",
+      "agenda_sha256": "a3a0b209bd7e4e8e030e1cb0613cbd118661d6db4258cb58c1bff12dda467eeb",
+      "publisher_record_id": "a1808ffd-0739-4672-8565-83f5be406425",
+      "publisher_type": "RFP",
+      "issued_date": "2017-05-30",
+      "closed_date": "2017-06-21",
+      "outcome": "held",
+      "reason": "Source Mott McDonald Canada Ltd. differs from publisher Mott MacDonald Canada Ltd. Even exact amount and dates do not prove this spelling correction.",
+      "bid_observations": 0,
+      "priced_observations": 0,
+      "original_compound_witnesses": {
+        "recommended_title_supplier": "Mott McDonald Canada Ltd.",
+        "initial_net": "$748,140 net of all applicable taxes and charges",
+        "publisher_awards": [
+          {
+            "supplier": "Mott MacDonald Canada Ltd.",
+            "amount": "748140.00"
+          }
+        ]
+      }
+    },
+    {
+      "document_number": "9135157185",
+      "reference": "2015.BD58.1",
+      "original_refusal": "compound facts do not identify one global publisher record",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2015/bd/bgrd/backgroundfile-86006.pdf",
+      "report_sha256": "43b616f1c9d314e2ce7f78d5cd1181d65aa289b26b8df6392a023ce599b58767",
+      "agenda_sha256": "a5a87ed43a8952c7ef729626ab073af7afb3a78537b735724d2f1580e7175cc3",
+      "publisher_record_id": "00555868-ffe2-40ac-83f7-cb9abd640c22",
+      "publisher_type": "RFP",
+      "issued_date": "2015-09-24",
+      "closed_date": "2015-10-22",
+      "outcome": "held",
+      "reason": "Source Royal Life Saving Society Canada, Ontario Branch differs from publisher The Royal Lifesaving Society Canada O/A Lifesaving Society; source net $7,352,646 differs from $7,352,646.05. Independent organization-name/initial-value evidence is still needed.",
+      "bid_observations": 0,
+      "priced_observations": 0,
+      "original_compound_witnesses": {
+        "recommended_title_supplier": "Royal Life Saving Society Canada, Ontario Branch",
+        "initial_net": "$7,352,646 net of all applicable taxes and charges",
+        "publisher_awards": [
+          {
+            "supplier": "The Royal Lifesaving Society Canada O/A Lifesaving Society",
+            "amount": "7352646.05"
+          }
+        ]
+      }
+    },
+    {
+      "document_number": "9148157311",
+      "reference": "2016.BD77.4",
+      "original_refusal": "compound facts do not identify one global publisher record",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2016/bd/bgrd/backgroundfile-91716.pdf",
+      "report_sha256": "3de7c178f09761d319b3e4ba9a618a6367f38fcfb487457eaea54e67e94787ed",
+      "agenda_sha256": "48e9ab1a25c029755c6c69b69fa7a48b6d51b74e65117b478f526596cdf61107",
+      "publisher_record_id": "a1662d48-6cac-4b20-a0ab-0d40956db164",
+      "publisher_type": "RFP",
+      "issued_date": "2015-12-18",
+      "closed_date": "2016-02-01",
+      "outcome": "held",
+      "reason": "Parsons Group B has an exact scoped identity candidate, but the report/cache has two distinct contracts, six submissions per group, repeated firms and separate technical outcomes. Bid model/review currently does not represent both groups under the same council reference; held.",
+      "bid_observations": 0,
+      "priced_observations": 0,
+      "original_compound_witnesses": {
+        "recommended_title_supplier": "IBI Group Professional Services (Canada) Inc. and Group B to Parsons Inc.",
+        "initial_net": "$700,796.00 net of all applicable taxes and charges",
+        "publisher_awards": [
+          {
+            "supplier": "IBI Group",
+            "amount": "700796.00"
+          },
+          {
+            "supplier": "Parsons Inc.",
+            "amount": "550000.00"
+          }
+        ]
+      }
+    },
+    {
+      "document_number": "9148187135",
+      "reference": "2018.BA110.6",
+      "original_refusal": "source solicitation types disagree",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2018/ba/bgrd/backgroundfile-121994.pdf",
+      "report_sha256": "6065518f165eff3f36451c62416d218b046b080a1f48fcd753f5cab5dec18793",
+      "agenda_sha256": "a99881e3f0d2398a016d461ea6b8d570d004d9d1c82cf413eac7b89e4f2be343",
+      "publisher_record_id": "dd297610-25a8-4f20-8016-e4580ec1a348",
+      "publisher_type": "RFP",
+      "issued_date": "2018-08-03",
+      "closed_date": "2018-09-04",
+      "outcome": "recovered",
+      "reason": "One explicitly submitted quotation and its literal including-HST price; compliance withheld.",
+      "identity_proof_class": "reviewed_type_discrepancy",
+      "identity_proof_sha256": "43da5d1c2bc6610d8a4e8dd344bcc170ba9670cf8c2eee66c2a14a6fcdd2f403",
+      "bid_review_sha256": "00bfe8ccd99eba4d4120c859de706bcfa4436dd83826f68ff9695f9f2b900cb3",
+      "bid_observations": 1,
+      "priced_observations": 1,
+      "independent_source_review": {
+        "document_number": "9148187135",
+        "reference": "2018.BA110.6",
+        "original_refusal": "source solicitation types disagree",
+        "reproduced_refusal": "source solicitation types disagree",
+        "disposition": "reviewed_type_discrepancy_identity_candidate",
+        "reason": "Source RFQ; publisher RFP. Exact two dates, Ontario Traffic name and initial $639,760 uniquely identify one publisher record across all types. One explicit bid $722,928.80 including HST; award recommendation rounds its including-HST value, so use the bid-table literal.",
+        "source_url": "https://www.toronto.ca/legdocs/mmis/2018/ba/bgrd/backgroundfile-121994.pdf",
+        "source_sha256": "6065518f165eff3f36451c62416d218b046b080a1f48fcd753f5cab5dec18793",
+        "agenda_sha256": "a99881e3f0d2398a016d461ea6b8d570d004d9d1c82cf413eac7b89e4f2be343",
+        "publisher_record_id": "dd297610-25a8-4f20-8016-e4580ec1a348",
+        "publisher_kind": "RFP",
+        "publisher_issued": "2018-08-03",
+        "publisher_closed": "2018-09-04",
+        "source_call_fields": [
+          "Request for Quotation 9148-18-7135"
+        ],
+        "source_date_witnesses": {
+          "issued": "Issued: August 3, 2018",
+          "closed": "Closed: September 4, 2018"
+        },
+        "supplier": "Ontario Traffic Inc.",
+        "initial_net": "639,760",
+        "diagnostic_matches_ignoring_type": [
+          [
+            "dd297610-25a8-4f20-8016-e4580ec1a348",
+            "9148187135"
+          ]
+        ]
+      }
+    }
+  ]
+}

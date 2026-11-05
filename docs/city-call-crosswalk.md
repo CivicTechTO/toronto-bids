@@ -4,10 +4,17 @@ A historical council item and a numeric City solicitation key can describe the s
 
 ## Evidence boundary
 
-Two proof classes remain distinct:
+Source assertions, ordinary compound proofs and explicit reviewed contexts remain distinct:
 
 - `publisher_native_call`: an original publisher record explicitly names the same native call in its award-details Call Number field. The typed call must be unique and the source agenda, solicitation type and issued/closed dates must agree.
 - `corroborated_compound`: the original agenda has one unambiguous native call and a named winner. Exact issued/closed dates, solicitation type, the full supplier name and the initial award's explicitly net-of-tax value identify one record in the complete original publisher population. Punctuation/legal-form variants are allowed; spelling, geography, joint-venture components, generic token overlap, date tolerances and rounded prices are not.
+
+Two additional compound proof classes require committed review annotations; discovery keeps the ordinary gates:
+
+- `reviewed_type_discrepancy`: the annotation records both conflicting original methods and why identity is still established. Exact issued/closed dates, full supplier identity and the initial net award must identify one record across **all** publisher methods, in both the original population and current held facts. The raw types remain unchanged. A method disagreement alone never authorizes a match.
+- `reviewed_initial_award`: a combined title names several winners, while a separately named first initial award identifies one full supplier and its exact amount. Literal recommendation, supplier heading and net award quotations keep the relation in one scope; later options, other winners and combined totals cannot substitute for it. All ordinary date, method, global uniqueness and competing-call checks still apply.
+
+Literal `Request of Quotation`, colonless labelled dates and a typed native call printed with spaces are source wording/typography variants. They still require the exact date values and agreement with the labelled Call Number field. These recognizers do not map a numeric document key from a call.
 
 The net award witness is bounded to the labelled initial award section. A later option value cannot be selected to match the feed. No tax conversion or contract-period aggregation is performed. The publisher's contract-execution/award-authority date is not a council-decision date and is not used as that proof.
 
@@ -52,3 +59,5 @@ This is a reviewed projection over immutable cache payloads, not another extract
 A new approval requires the held original PDF. Moved archives may use the conventional council download path only after matching its pinned hash. Applied `city_bid_evidence` proofs travel with the public database, allowing portable replay without local PDFs. A changed source, cache, identity, applied proof or conflicting link aborts before replacing bids; the canonical resolver also rolls back the projections and evidence if later resolution fails. Surviving bid IDs and `first_seen` values are preserved. Re-review and explicit repair are required to amend an applied proof.
 
 When extending this registry, freeze the entire target inventory, review identity independently of submission/price scope, and account for every case, including holds. Rehearse against a fresh production copy and compare original facts, canonical identities, immutable caches and exports before deploying. The [November 5 review and validation](research/city-cached-bid-validation-2026-11-05.md) links the complete case inventory and source investigation.
+
+The [43-case identity-hold follow-up](research/city-identity-holds-validation-2026-11-05.md) records the reviewed discrepancy and named-award decisions, all remaining holds, and the production-copy rehearsal. Reviewed hourly prices retain `/Hour` and have no parsed numeric total; a report declaring more bids than it names retains an explicit completeness discrepancy in its exported proof.
