@@ -226,3 +226,13 @@ def test_second_labelled_call_cannot_hide_behind_the_first_match():
     with pytest.raises(ValueError,match='not unambiguous'):proposal(source=source)
     with pytest.raises(ValueError,match='multiple publisher'):
         proposal(record(Solicitation_Award_Details='Call number: 3905-14-0097\nCall number: 3905-14-0098'))
+
+
+def test_crosswalk_preflight_validates_without_persisting_links_or_evidence(conn,tmp_path,monkeypatch):
+    proof,path=setup(conn,tmp_path,monkeypatch)
+    before=conn.total_changes
+    result=cw.reviewed_links(conn,persist=False)
+    assert result[REF]['document_number']==DOC
+    assert conn.total_changes==before
+    assert conn.execute('SELECT COUNT(*) FROM city_crosswalk_evidence').fetchone()[0]==0
+    assert conn.execute('SELECT COUNT(*) FROM solicitation_link').fetchone()[0]==0

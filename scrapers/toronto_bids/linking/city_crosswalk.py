@@ -161,7 +161,7 @@ def propose(*, reference,title,source,publisher,index,source_sha256,snapshot_sha
                 witnesses=dict(shared['witnesses'],supplier=supplier,net_award=value.group()))
 
 
-def reviewed_links(conn, *, registry=None, agendas=None):
+def reviewed_links(conn, *, registry=None, agendas=None, persist=True):
     """Validate every applicable committed proof before writing any link or ledger row.
 
     A previously accepted immutable proof can travel with a released database
@@ -234,7 +234,7 @@ def reviewed_links(conn, *, registry=None, agendas=None):
         if conn.execute('SELECT 1 FROM bid WHERE reference=? AND document_number IS NOT NULL AND document_number!=?',(ref,doc)).fetchone():
             raise ValueError('Reviewed City crosswalk conflicts with explicit bid identity: '+ref)
         approved.append((proof,ph))
-    for proof,ph in approved:
+    for proof,ph in (approved if persist else []):
         conn.execute('INSERT OR IGNORE INTO city_crosswalk_evidence (proof_sha256,reference,document_number,call_number,proof_class,proof_json) VALUES (?,?,?,?,?,?)',
                      (ph,proof['reference'],proof['document_number'],proof['call_number'],proof['proof_class'],canonical(proof)))
         conn.execute("INSERT INTO solicitation_link (reference,document_number,method) VALUES (?,?,'city_call_crosswalk') ON CONFLICT(reference) DO UPDATE SET method=excluded.method",

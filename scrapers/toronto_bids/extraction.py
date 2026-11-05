@@ -559,6 +559,14 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
         if buyer_row:
             buyer_id = buyer_row["id"]
 
+    city_reviews = {}
+    if corpus in ('ba_report','bd_report'):
+        from toronto_bids.linking.city_cached_bids import reviewed_reports
+        try:
+            city_reviews = reviewed_reports(conn,corpus=corpus)
+        except ValueError as exc:
+            raise RuntimeError(f'backfill {corpus}: {exc}; existing rows kept') from exc
+
     # ── derive: build every row before touching any table ──
     solicitations, bids, awards = [], [], []
 
@@ -566,6 +574,20 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
     decisions = []
     coverage = None
     admission = []
+
+    def use_city_review(row):
+        reviewed = city_reviews.get(row['url'])
+        if reviewed is None:
+            return False
+        proof,derived = reviewed
+        raw = json.loads(row['result_json'])['contracts'][proof['contract_index']]['bids']
+        bids.extend(derived)
+        admission.append(dict(reference=row['reference'],accepted=True,call_number=None,
+            reason='source-reviewed cached bid projection',url=row['url'],sha256=row['sha256'],
+            prices_withheld=sum(bool(b.get('amount_raw')) and d.bid_price is None for b,d in zip(raw,derived)),
+            statuses_withheld=sum(b.get('status') not in (None,'not_stated') for b in raw)))
+        return True
+
     if corpus in ("trca", "ep", "zoo", "ttc"):
         from toronto_bids.linking.agency_reference import normalize_agency_reference, report_reference
         from toronto_bids.agency_coverage import decision
@@ -700,6 +722,8 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
         from toronto_bids.bd_admission import admit_report
 
         for row in rows:
+            if use_city_review(row):
+                continue
             context = conn.execute(
                 "SELECT bp.text, ci.title FROM background_pdf bp "
                 "LEFT JOIN council_item ci ON ci.reference=bp.reference WHERE bp.url=?",
@@ -718,6 +742,8 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
 
     elif corpus == "ba_report":
         for row in rows:
+            if use_city_review(row):
+                continue
             result = json.loads(row["result_json"])
             for contract in result.get("contracts", []):
                 # The council reference always keys the bid (bid_key COALESCEs it); a document
@@ -839,6 +865,9 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
                              params=(source, *accepted))
             else:
                 rebuild_rows(conn, derived, scope="source = ?", params=(source,))
+        if city_reviews:
+            from toronto_bids.linking.city_cached_bids import persist_evidence
+            persist_evidence(conn,city_reviews)
         if corpus == 'trca':
             # Empty derivation normally preserves the archive. An explicit, source-bound
             # claim review may still withdraw that exact unsupported prior observation.

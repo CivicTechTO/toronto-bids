@@ -42,3 +42,13 @@ The resolver revalidates current source fields, global ambiguity, agenda title/c
 Accepted links use `solicitation_link.method='city_call_crosswalk'`. `city_crosswalk_evidence` is an immutable history table included in SQLite, CSV and Parquet exports; `procurement.merge_evidence` names the proof class and hash when an identity is merged. Legacy supplier/value rebuilds replace only their own rows. An existing canonical ID and its redirects remain archive history; removing a link does not undo a merge, so rejected identities need an explicit repair.
 
 The reviewed first-pass measurements and negative controls are in [the validation report](research/city-call-crosswalk-validation-2026-11-01.md).
+
+## Reviewed cached City bids
+
+`linking/city_cached_bids.py` applies `data/city_cached_bid_reviews.json` during ordinary procurement resolution, including nightly export. Explicit BA/BD backfills use the same projections. Each approval binds the original PDF and text hashes, whole extraction result, contract position, council title, independent procurement identity and literal submission table/row quotations. Historical identities pass the crosswalk gate above; modern identities require a primary Doc assertion. Participation in a prequalification belongs to that event, not a later tender.
+
+This is a reviewed projection over immutable cache payloads, not another extractor. Wrapped names and price footnotes come from bounded source rows; inferred compliance and unsupported tax/price claims are withheld. Duplicate submissions, lots and contradictory document roles remain held until their scope can be represented and proved. The shared extraction prompt/version stays unchanged.
+
+A new approval requires the held original PDF. Moved archives may use the conventional council download path only after matching its pinned hash. Applied `city_bid_evidence` proofs travel with the public database, allowing portable replay without local PDFs. A changed source, cache, identity, applied proof or conflicting link aborts before replacing bids; the canonical resolver also rolls back the projections and evidence if later resolution fails. Surviving bid IDs and `first_seen` values are preserved. Re-review and explicit repair are required to amend an applied proof.
+
+When extending this registry, freeze the entire target inventory, review identity independently of submission/price scope, and account for every case, including holds. Rehearse against a fresh production copy and compare original facts, canonical identities, immutable caches and exports before deploying. The [November 5 review and validation](research/city-cached-bid-validation-2026-11-05.md) links the complete case inventory and source investigation.
