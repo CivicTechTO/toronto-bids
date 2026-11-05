@@ -236,3 +236,118 @@ def test_crosswalk_preflight_validates_without_persisting_links_or_evidence(conn
     assert conn.total_changes==before
     assert conn.execute('SELECT COUNT(*) FROM city_crosswalk_evidence').fetchone()[0]==0
     assert conn.execute('SELECT COUNT(*) FROM solicitation_link').fetchone()[0]==0
+
+
+def test_literal_request_of_quotation_uses_the_existing_full_compound_gate():
+    title=TITLE.replace('Request for Quotation','Request of Quotation')
+    source=HTML.replace(TITLE.encode(),title.encode())
+    result=cw.propose(reference=REF,title=title,source=source,publisher=record(),index=cw.publisher_index([record()]),
+        source_sha256=hashlib.sha256(source).hexdigest(),snapshot_sha256='snapshot')
+    assert result['proof_class']=='corroborated_compound'
+
+
+def type_review():
+    return dict(kind='type_discrepancy',source_type='RFQ',publisher_type='RFT',
+        justification='The original sources disagree on method; exact dates, full supplier and initial net award identify one record across all types.')
+
+
+def test_explicit_type_discrepancy_retains_both_sources_and_requires_global_uniqueness():
+    row=record(Solicitation_Document_Type='RFT')
+    args=dict(reference=REF,title=TITLE,source=HTML,publisher=row,index=cw.publisher_index([row]),
+        source_sha256=hashlib.sha256(HTML).hexdigest(),snapshot_sha256='snapshot',review=type_review())
+    p=cw.propose(**args)
+    assert p['proof_class']=='reviewed_type_discrepancy' and p['review']==type_review()
+    assert p['solicitation_type']=='RFT'
+    # An equally matching record of a different type must also block the review.
+    args['index']=cw.publisher_index([row,record(id='other',Solicitation_Document_Number='9999999999')])
+    with pytest.raises(ValueError,match='global publisher'):cw.propose(**args)
+
+
+@pytest.mark.parametrize('change',['source_type','publisher_type','date','supplier','amount'])
+def test_explicit_type_discrepancy_cannot_ignore_other_contradictions(change):
+    row=record(Solicitation_Document_Type='RFT');review=type_review()
+    if change in ('source_type','publisher_type'):review[change]='RFP'
+    if change=='date':row['Issue_Date']='2014-03-02'
+    if change=='supplier':row['Awarded_Suppliers'][0]['Successful_Bidder']='Alpha Ontario Construction'
+    if change=='amount':row['Awarded_Suppliers'][0]['Award_Amount']='100000.56'
+    with pytest.raises(ValueError):
+        cw.propose(reference=REF,title=TITLE,source=HTML,publisher=row,index=cw.publisher_index([row]),
+            source_sha256=hashlib.sha256(HTML).hexdigest(),snapshot_sha256='snapshot',review=review)
+
+
+def scoped_fixture():
+    title=TITLE.replace('Alpha Construction Ltd.','Alpha Construction Ltd. and Beta Construction Inc.')
+    source=HTML.replace(TITLE.encode(),title.encode()).replace(b'Recommended Bidder: Alpha Construction Ltd.',
+        b'Recommended Bidders: Firm A) Alpha Construction Ltd. Firm B) Beta Construction Inc.').replace(
+        b'Contract Award Value: $100,000.55 net of all applicable taxes and charges',
+        b'Contract Award Value: Firm A) Alpha Construction Ltd: $100,000.55 net of all applicable taxes and charges '
+        b'Firm B) Beta Construction Inc: $80,000.00 net of all applicable taxes and charges')
+    review=dict(kind='initial_award_scope',supplier='Alpha Construction Ltd',
+        recommendation='Recommended Bidders: Firm A) Alpha Construction Ltd. Firm B) Beta Construction Inc.',
+        award_heading='Firm A) Alpha Construction Ltd:',
+        award_quotation='Firm A) Alpha Construction Ltd: $100,000.55 net of all applicable taxes and charges',
+        justification='Separately named initial award, rather than a combined title or option.')
+    return title,source,review
+
+
+def test_separately_named_initial_award_keeps_supplier_and_amount_in_one_scope():
+    title,source,review=scoped_fixture();row=record()
+    proof=cw.propose(reference=REF,title=title,source=source,publisher=row,index=cw.publisher_index([row]),
+        source_sha256=hashlib.sha256(source).hexdigest(),snapshot_sha256='snapshot',review=review)
+    assert proof['proof_class']=='reviewed_initial_award' and proof['award_amount']=='100000.55'
+
+
+@pytest.mark.parametrize('change',['crossed_supplier','option','combined','partial_quote'])
+def test_scoped_award_review_refuses_crossed_suppliers_and_later_values(change):
+    title,source,review=scoped_fixture();row=record()
+    if change=='crossed_supplier':review['supplier']='Beta Construction Inc'
+    if change=='option':
+        source=source.replace(b'Firm A) Alpha Construction Ltd: $100,000.55',b'Firm A) Alpha Construction Ltd: Option Year 1 $100,000.55')
+        review['award_quotation']=review['award_quotation'].replace(': $',': Option Year 1 $')
+    if change=='combined':review['award_heading']='Combined total';review['award_quotation']='Combined total $100,000.55 net of all applicable taxes and charges'
+    if change=='partial_quote':review['award_quotation']='$100,000.55 net of all applicable taxes and charges'
+    with pytest.raises(ValueError):
+        cw.propose(reference=REF,title=title,source=source,publisher=row,index=cw.publisher_index([row]),
+            source_sha256=hashlib.sha256(source).hexdigest(),snapshot_sha256='snapshot',review=review)
+
+
+def test_exact_date_witness_can_omit_colon_without_tolerating_a_different_date():
+    source=HTML.replace(b'Issued:',b'Issued').replace(b'Closed:',b'Closed')
+    assert proposal(source=source)['issued_date']=='2014-03-01'
+    with pytest.raises(ValueError,match='issued/closed'):proposal(source=source.replace(b'Issued March',b'IssuedMarch'))
+    with pytest.raises(ValueError,match='issued/closed'):proposal(record(Closing_Date='2014-03-21'),source=source)
+
+
+def test_spaced_native_call_in_typed_title_must_agree_with_labelled_call():
+    title,source,review=scoped_fixture()
+    spaced=title.replace('3905-14-0097','3905 14 0097')
+    source=source.replace(title.encode(),spaced.encode());row=record()
+    args=dict(reference=REF,title=spaced,source=source,publisher=row,index=cw.publisher_index([row]),
+        source_sha256=hashlib.sha256(source).hexdigest(),snapshot_sha256='snapshot',review=review)
+    assert cw.propose(**args)['call_number']=='3905-14-0097'
+    wrong=source.replace(b'Quotation 3905-14-0097',b'Quotation 3905-14-0098')
+    args.update(source=wrong,source_sha256=hashlib.sha256(wrong).hexdigest())
+    with pytest.raises(ValueError,match='call role'):cw.propose(**args)
+
+
+def test_type_discrepancy_rechecks_current_ambiguity_across_other_methods(conn,tmp_path,monkeypatch):
+    proof,path=setup(conn,tmp_path,monkeypatch)
+    bundle=json.loads(path.read_text());row=record(Solicitation_Document_Type='RFT')
+    bundle['publisher_records']=[row]
+    bundle['proofs']=[cw.propose(reference=REF,title=TITLE,source=HTML,publisher=row,index=cw.publisher_index([row]),
+        source_sha256=hashlib.sha256(HTML).hexdigest(),snapshot_sha256='snapshot',review=type_review())]
+    population=[row];bundle.update(publisher_population_sha256=cw.digest(population))
+    path.write_text(json.dumps(bundle));(tmp_path/'population.gz').write_bytes(gzip.compress(cw.canonical(population).encode()))
+    from toronto_bids.sources.odata import identity_record
+    conn.execute('UPDATE solicitation SET rfx_type=?,publisher_identity_json=?',('RFT',cw.canonical(identity_record(row))))
+    db.upsert_row(conn,Solicitation('9999999999',issue_date='2014-03-01',submission_deadline='2014-03-20',rfx_type='RFQ'),overwrite=True)
+    db.upsert_row(conn,Award('9999999999',supplier_name_raw='Alpha Construction Ltd',award_amount='100000.55',source='odata'),overwrite=True)
+    with pytest.raises(ValueError,match='compound facts changed or ambiguous'):cw.reviewed_links(conn)
+    assert conn.execute('SELECT COUNT(*) FROM city_crosswalk_evidence').fetchone()[0]==0
+
+
+def test_compound_review_cannot_discard_a_direct_publisher_assertion():
+    row=record(Solicitation_Award_Details='Call number: 3905-14-0097',Solicitation_Document_Type='RFT')
+    with pytest.raises(ValueError,match='direct publisher assertion'):
+        cw.propose(reference=REF,title=TITLE,source=HTML,publisher=row,index=cw.publisher_index([row]),
+            source_sha256=hashlib.sha256(HTML).hexdigest(),snapshot_sha256='snapshot',review=type_review())

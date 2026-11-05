@@ -4446,6 +4446,661 @@
           "role": "submitted_bid"
         }
       ]
+    },
+    {
+      "document_number": "1101155017",
+      "reference": "2015.BD44.14",
+      "source": "bd_report",
+      "report_url": "https://www.toronto.ca/legdocs/mmis/2015/bd/bgrd/backgroundfile-82921.pdf",
+      "report_sha256": "fc5665119224648526ec0d8ca438cab865d8842f7e10c262b391235a01b62b01",
+      "text_sha256": "b5e9e4e6d2fab8d14f7a0bfe406b1a2813e85dcda63d3fbfcb1d83227b4cdc54",
+      "extractor_version": "v1-b63aa8c835ae",
+      "result_sha256": "cfaae0b04b0dd2f4a9d1594d5c35c83c9a47b6e0d68eaba413b8cf5341b6f30e",
+      "contract_sha256": "25b18a78101ca48a9c2472d425bf7c33ba2484df3c29d7bb09c47f3e4c0578fc",
+      "contract_index": 0,
+      "contract_count": 1,
+      "agenda_title": "Award of Request for Quotation No. 1101-15-5017 to Inter-Provincial Painting Limited for Painting Services at Various City of Toronto's Children’s Services locations",
+      "identity": {
+        "kind": "city_crosswalk",
+        "proof_sha256": "127555e5d312d5bf4b43e656bf5c7caae43086251e0070932dfe97bcea5c1722"
+      },
+      "source_role": "submitted tender/proposal",
+      "scope_justification": "Four submitted bidders; first two prices include prompt-payment discounts and are withheld; retain the two unqualified prices with correction footnote. Compliance is withheld.",
+      "table_quotation": "CALL SUMMARY Ward No: All Call Dates: Issued: June 4, 2015; Closed: June 19, 2015 # of Addenda Issued: One (1) Number of Bids: Firm Name Bid Price (Including HST) Four (4) 1. Inter-Provincial Painting $282,867.25 (including 5% Limited prompt payment discount) 2. Calverley Painting & $297,436.01 (including 2% Decorating Ltd. prompt payment discount) 3. P.S. Painting Limited $353,382.64 4. Canadian Restorations $1,636,502.25 * GTA, Inc. * Bid prices were corrected for mathematical errors. Purchasing and Materials Management has verified that the mathematical errors were corrected.",
+      "bids": [
+        {
+          "raw_bid_index": 0,
+          "name_parts": [
+            "Inter-Provincial Painting",
+            "Limited"
+          ],
+          "row_quotation": "1. Inter-Provincial Painting $282,867.25 (including 5% Limited prompt payment discount)",
+          "bid_price": null,
+          "hst_basis": null,
+          "price_header": null,
+          "role": "submitted_bid"
+        },
+        {
+          "raw_bid_index": 1,
+          "name_parts": [
+            "Calverley Painting &",
+            "Decorating Ltd."
+          ],
+          "row_quotation": "2. Calverley Painting & $297,436.01 (including 2% Decorating Ltd. prompt payment discount)",
+          "bid_price": null,
+          "hst_basis": null,
+          "price_header": null,
+          "role": "submitted_bid"
+        },
+        {
+          "raw_bid_index": 2,
+          "name_parts": [
+            "P.S. Painting Limited"
+          ],
+          "row_quotation": "3. P.S. Painting Limited $353,382.64",
+          "bid_price": "$353,382.64",
+          "hst_basis": "including",
+          "price_header": "Bid Price (Including HST)",
+          "role": "submitted_bid"
+        },
+        {
+          "raw_bid_index": 3,
+          "name_parts": [
+            "Canadian Restorations",
+            "GTA, Inc."
+          ],
+          "row_quotation": "4. Canadian Restorations $1,636,502.25 * GTA, Inc.",
+          "bid_price": "$1,636,502.25 *",
+          "hst_basis": "including",
+          "price_header": "Bid Price (Including HST)",
+          "role": "submitted_bid"
+        }
+      ]
+    },
+    {
+      "document_number": "1201125097",
+      "reference": "2013.BD123.2",
+      "source": "bd_report",
+      "report_url": "https://www.toronto.ca/legdocs/mmis/2013/bd/bgrd/backgroundfile-58161.pdf",
+      "report_sha256": "21eb06fd9392174cace581617010a4f78e3d60181ca5fccdadcf9fbd2e37ed66",
+      "text_sha256": "ec700ae7614b432c2870bba0b382c08e5c856b356c286a35b40f3104cdd4ad24",
+      "extractor_version": "v1-b63aa8c835ae",
+      "result_sha256": "2ad6b54cce7865d6c1a1d1ad32a2c7a47a7464c866af84051b12fea4921bf654",
+      "contract_sha256": "e87708bf91c0f89b24fed76cc9b3e5c10780c5f7fe5bd1368f26a9c514e426df",
+      "contract_index": 0,
+      "contract_count": 1,
+      "agenda_title": "Award of Request for Quotation No. 1201-12-5097 to F. Hams Electric Inc. for the Non-exclusive Supply of All Labour, Equipment and Material Necessary for Electrical Services at Various Locations Within the City of Toronto for Municipal Child Care Centres",
+      "identity": {
+        "kind": "city_crosswalk",
+        "proof_sha256": "112bdd0f52f0e34f14f0f265d7a6a79ce0f80bf2157944e2fe711135a02df21c"
+      },
+      "source_role": "submitted tender/proposal",
+      "scope_justification": "Nine named receipts, including two explicitly informal submissions; the two prompt-payment price columns are withheld. Compliance is withheld.",
+      "table_quotation": "CALL SUMMARY Ward No: All Call Dates: Issued: February 19, 2013 Closed: March 6, 2013 # of Addenda Issued: None Number of Firm Name Bid Price Bid Price Bids/Proposals: (Incl. HST) (Incl. HST) (with prompt payment) (w/o prompt payment) F. Hams Electric Inc. $ 545,337.89 * $ 545,337.89 * United Contracting Inc. $ 568,085.35 $ 568,085.35 Vantage Electrical Services Inc. $ 770,951.32 * $ 778,738.71 * R. E. Cavanagh Electric Co. Ltd. $ 815,705.87 $ 815,705.87 Kudlak-Baird (1982) Ltd. $ 833,940.00 $ 833,940.00 OZZ Electric Inc. $ 851,765.75 $ 851,765.75 The State Group Inc. $1,035,430.30 * $1,035,430.30 * Zerem Electrical Services Ltd. - Informal Alltrade Industrial Contractor Inc. - Informal *Bid prices were corrected for mathematical errors. Purchasing and Materials Management has verified that the mathematical errors were corrected.",
+      "bids": [
+        {
+          "raw_bid_index": 0,
+          "name_parts": [
+            "F. Hams Electric Inc."
+          ],
+          "row_quotation": "F. Hams Electric Inc. $ 545,337.89 * $ 545,337.89 *",
+          "bid_price": null,
+          "hst_basis": null,
+          "price_header": null,
+          "role": "submitted_bid"
+        },
+        {
+          "raw_bid_index": 1,
+          "name_parts": [
+            "United Contracting Inc."
+          ],
+          "row_quotation": "United Contracting Inc. $ 568,085.35 $ 568,085.35",
+          "bid_price": null,
+          "hst_basis": null,
+          "price_header": null,
+          "role": "submitted_bid"
+        },
+        {
+          "raw_bid_index": 2,
+          "name_parts": [
+            "Vantage Electrical Services Inc."
+          ],
+          "row_quotation": "Vantage Electrical Services Inc. $ 770,951.32 * $ 778,738.71 *",
+          "bid_price": null,
+          "hst_basis": null,
+          "price_header": null,
+          "role": "submitted_bid"
+        },
+        {
+          "raw_bid_index": 3,
+          "name_parts": [
+            "R. E. Cavanagh Electric Co. Ltd."
+          ],
+          "row_quotation": "R. E. Cavanagh Electric Co. Ltd. $ 815,705.87 $ 815,705.87",
+          "bid_price": null,
+          "hst_basis": null,
+          "price_header": null,
+          "role": "submitted_bid"
+        },
+        {
+          "raw_bid_index": 4,
+          "name_parts": [
+            "Kudlak-Baird (1982) Ltd."
+          ],
+          "row_quotation": "Kudlak-Baird (1982) Ltd. $ 833,940.00 $ 833,940.00",
+          "bid_price": null,
+          "hst_basis": null,
+          "price_header": null,
+          "role": "submitted_bid"
+        },
+        {
+          "raw_bid_index": 5,
+          "name_parts": [
+            "OZZ Electric Inc."
+          ],
+          "row_quotation": "OZZ Electric Inc. $ 851,765.75 $ 851,765.75",
+          "bid_price": null,
+          "hst_basis": null,
+          "price_header": null,
+          "role": "submitted_bid"
+        },
+        {
+          "raw_bid_index": 6,
+          "name_parts": [
+            "The State Group Inc."
+          ],
+          "row_quotation": "The State Group Inc. $1,035,430.30 * $1,035,430.30 *",
+          "bid_price": null,
+          "hst_basis": null,
+          "price_header": null,
+          "role": "submitted_bid"
+        },
+        {
+          "raw_bid_index": 7,
+          "name_parts": [
+            "Zerem Electrical Services Ltd."
+          ],
+          "row_quotation": "Zerem Electrical Services Ltd. - Informal",
+          "bid_price": null,
+          "hst_basis": null,
+          "price_header": null,
+          "role": "informal_submission"
+        },
+        {
+          "raw_bid_index": 8,
+          "name_parts": [
+            "Alltrade Industrial Contractor Inc."
+          ],
+          "row_quotation": "Alltrade Industrial Contractor Inc. - Informal",
+          "bid_price": null,
+          "hst_basis": null,
+          "price_header": null,
+          "role": "informal_submission"
+        }
+      ]
+    },
+    {
+      "document_number": "1201155002",
+      "reference": "2015.BD25.16",
+      "source": "bd_report",
+      "report_url": "https://www.toronto.ca/legdocs/mmis/2015/bd/bgrd/backgroundfile-79751.pdf",
+      "report_sha256": "db6df2e1cd51ae29152a525c4e33699b0d899ae6b4e83ae0e15c3a5ef76c361f",
+      "text_sha256": "ec34bf5ecd450b4cbff0c7e4b8670090fc22f062ce2355b2ca57c1cbefb2522f",
+      "extractor_version": "v1-b63aa8c835ae",
+      "result_sha256": "1ec6f36f096f461f781808ace7caa0b9f7e0ecc8f1b3b204a7ade33c9f6c0ab2",
+      "contract_sha256": "182d9d120d161b5d05e1729037a8a5f1adb38073432ca2cb5e6125468a06240f",
+      "contract_index": 0,
+      "contract_count": 1,
+      "agenda_title": "Award of Request for Quotation No. 1201-15-5002 to Asco Power Technologies Canada for Preventative, Predictive and Demand Repair Services for Automatic Transfer Switches for Facilities Management",
+      "identity": {
+        "kind": "city_crosswalk",
+        "proof_sha256": "a9e59e878d6c82298f8619c8d0929fbc4d8477f0b4f1d736f8e48c6d396c7aa8"
+      },
+      "source_role": "submitted tender/proposal",
+      "scope_justification": "Source declares eight bids but prints only four named rows. Retain only those four source-supported observations and literal prices; this is incomplete competition coverage, with four declared bids unnamed by this report. Compliance is withheld.",
+      "table_quotation": "CALL SUMMARY Ward No: All Call Dates: Issued: February 9, 2015; Closed: February 23, 2015 # of Addenda Issued: 1 Number of Bids: 8 Firm Name Bid Price (including HST) McGaw Technical Services Inc. $ 121,701.00*+ Asco Power Technologies Canada $ 135,328.80 d/o Emerson Electric Canada Enkompass Power and Energy Corp. $ 155,365.96* Toromont Cat, d/o Toromont Industries Ltd. $ 203,377.40 * RFQ prices were corrected for mathematical errors. Purchasing and Materials Management has verified that the mathematical errors were corrected. + Bidder was found non-compliant with mandatory requirements.",
+      "bids": [
+        {
+          "raw_bid_index": 0,
+          "name_parts": [
+            "McGaw Technical Services Inc."
+          ],
+          "row_quotation": "McGaw Technical Services Inc. $ 121,701.00*+",
+          "bid_price": "$ 121,701.00*+",
+          "hst_basis": "including",
+          "price_header": "(including HST)",
+          "role": "submitted_bid"
+        },
+        {
+          "raw_bid_index": 1,
+          "name_parts": [
+            "Asco Power Technologies Canada",
+            "d/o Emerson Electric Canada"
+          ],
+          "row_quotation": "Asco Power Technologies Canada $ 135,328.80 d/o Emerson Electric Canada",
+          "bid_price": "$ 135,328.80",
+          "hst_basis": "including",
+          "price_header": "(including HST)",
+          "role": "submitted_bid"
+        },
+        {
+          "raw_bid_index": 2,
+          "name_parts": [
+            "Enkompass Power and Energy Corp."
+          ],
+          "row_quotation": "Enkompass Power and Energy Corp. $ 155,365.96*",
+          "bid_price": "$ 155,365.96*",
+          "hst_basis": "including",
+          "price_header": "(including HST)",
+          "role": "submitted_bid"
+        },
+        {
+          "raw_bid_index": 3,
+          "name_parts": [
+            "Toromont Cat, d/o Toromont Industries Ltd."
+          ],
+          "row_quotation": "Toromont Cat, d/o Toromont Industries Ltd. $ 203,377.40",
+          "bid_price": "$ 203,377.40",
+          "hst_basis": "including",
+          "price_header": "(including HST)",
+          "role": "submitted_bid"
+        }
+      ],
+      "declared_coverage": {
+        "declared_submissions": 8,
+        "printed_named_submissions": 4,
+        "unidentified_declared_submissions": 4
+      }
+    },
+    {
+      "document_number": "3701150197",
+      "reference": "2015.BD62.6",
+      "source": "bd_report",
+      "report_url": "https://www.toronto.ca/legdocs/mmis/2015/bd/bgrd/backgroundfile-87062.pdf",
+      "report_sha256": "09a9fa250626389a7dae82c256ce3ce9adc8b2221746fde2911f3c703ae3c480",
+      "text_sha256": "daaab7ea309b6abf76dc3a3b381cafeb4c0496efcf2a40d21b4352be18a43e1b",
+      "extractor_version": "v1-b63aa8c835ae",
+      "result_sha256": "20c56f5d5f6111ee5820bc49ef1d4b4305151100a022b1c0e14ba4f1d5f66267",
+      "contract_sha256": "1dca2c170530e99d30d5360d45670b8cdbb175b2ac2f93623279eba945b6adaf",
+      "contract_index": 0,
+      "contract_count": 1,
+      "agenda_title": "Award of Request for Quotation No. 3701-15-0197 to W.M. Weller Tree Service Limited, Ontario Line Clearing & Tree Services 2010 Limited and Davey Tree Expert Co. Of Canada Limited for Tree Pruning and Removal",
+      "identity": {
+        "kind": "city_crosswalk",
+        "proof_sha256": "f3f013afa4290867634bd42b10ac02f018fa95755fc3014ee346328cae36ad1f"
+      },
+      "source_role": "submitted tender/proposal",
+      "scope_justification": "Five submitted bids under one common hourly-rate schedule. Preserve /Hour on four prices; these are unit rates, not total contract bid values. Compliance is withheld.",
+      "table_quotation": "CALL SUMMARY Ward No: All Call Dates: Issued: November 20, 2015, Closed: December 4, 2015 # of Addenda Issued: None Number of Firm Name Bid Price (Incl. HST) Bids/Proposals: Total of Five (5) bids received 1) W.M. Weller Tree Service Ltd $106.98/Hour 2) Ontario Line Clearing & Tree $110.40/Hour Service 2010 Ltd. 3) Davey Tree Expert Co. Of $112.25/Hour Canada Limited 4) Darlington Tree Service INC. $119.50/Hour 5) Asplundh Canada ULC. Non-compliant",
+      "bids": [
+        {
+          "raw_bid_index": 0,
+          "name_parts": [
+            "W.M. Weller Tree Service Ltd"
+          ],
+          "row_quotation": "1) W.M. Weller Tree Service Ltd $106.98/Hour",
+          "bid_price": "$106.98/Hour",
+          "hst_basis": "including",
+          "price_header": "Bid Price (Incl. HST)",
+          "role": "submitted_bid"
+        },
+        {
+          "raw_bid_index": 1,
+          "name_parts": [
+            "Ontario Line Clearing & Tree",
+            "Service 2010 Ltd."
+          ],
+          "row_quotation": "2) Ontario Line Clearing & Tree $110.40/Hour Service 2010 Ltd.",
+          "bid_price": "$110.40/Hour",
+          "hst_basis": "including",
+          "price_header": "Bid Price (Incl. HST)",
+          "role": "submitted_bid"
+        },
+        {
+          "raw_bid_index": 2,
+          "name_parts": [
+            "Davey Tree Expert Co. Of",
+            "Canada Limited"
+          ],
+          "row_quotation": "3) Davey Tree Expert Co. Of $112.25/Hour Canada Limited",
+          "bid_price": "$112.25/Hour",
+          "hst_basis": "including",
+          "price_header": "Bid Price (Incl. HST)",
+          "role": "submitted_bid"
+        },
+        {
+          "raw_bid_index": 3,
+          "name_parts": [
+            "Darlington Tree Service INC."
+          ],
+          "row_quotation": "4) Darlington Tree Service INC. $119.50/Hour",
+          "bid_price": "$119.50/Hour",
+          "hst_basis": "including",
+          "price_header": "Bid Price (Incl. HST)",
+          "role": "submitted_bid"
+        },
+        {
+          "raw_bid_index": 4,
+          "name_parts": [
+            "Asplundh Canada ULC."
+          ],
+          "row_quotation": "5) Asplundh Canada ULC. Non-compliant",
+          "bid_price": null,
+          "hst_basis": null,
+          "price_header": null,
+          "role": "submitted_bid"
+        }
+      ]
+    },
+    {
+      "document_number": "4305145033",
+      "reference": "2014.BD183.3",
+      "source": "bd_report",
+      "report_url": "https://www.toronto.ca/legdocs/mmis/2014/bd/bgrd/backgroundfile-69757.pdf",
+      "report_sha256": "e6aaadc2ea66512b720c52ba9e9eb538e45c30709a0182b18a847afecc323cc3",
+      "text_sha256": "41c102baec41d38429f570319ae5ec8ba4a6e8a4323245165446fedce4f3c37e",
+      "extractor_version": "v1-b63aa8c835ae",
+      "result_sha256": "b35c5441b2d16f8dd4ef9d0aa872aa8ee1a370997268b7a1950e2472eaa73213",
+      "contract_sha256": "dc39daa0d0d867176ef1f7d90dd0359dcce5cd73a3921322354646c3493b8318",
+      "contract_index": 0,
+      "contract_count": 1,
+      "agenda_title": "Award of Request for Quotation No. 4305-14-5033 to Carmichael Engineering Ltd for Maintenance of Water Chillers and Cooling Towers for Facilities Management Division",
+      "identity": {
+        "kind": "city_crosswalk",
+        "proof_sha256": "fb57b2f67b912b0bb0b06b5c301df4694a891a5a3af4f4115ca304439da8f0ad"
+      },
+      "source_role": "submitted tender/proposal",
+      "scope_justification": "Five source-supported bid rows with literal including-HST prices and correction footnotes. Wrapped supplier name reassembled from its own row; compliance withheld.",
+      "table_quotation": "CALL SUMMARY Ward No: All Call Dates: Issued: April 22, 2014 Closed: May 08, 2014 # of Addenda Issued: Five (5) Number of Bids: Firm Name Bid Price (Incl. HST) 5 1. Carmichael Engineering Ltd. $759,592.78* 2. Direct Energy Business Services $832,394.68* Ltd. d/b/a Airtron Canada 3. Superior Air Systems Canada $859,704.00 4. Ambient Mechanical Ltd. $895,011.79* 5. Honeywell Building Solutions $959,437.80* * Bid prices were corrected for mathematical errors. Purchasing and Materials Management has verified that the mathematical errors were corrected.",
+      "bids": [
+        {
+          "raw_bid_index": 0,
+          "name_parts": [
+            "Carmichael Engineering Ltd."
+          ],
+          "row_quotation": "1. Carmichael Engineering Ltd. $759,592.78*",
+          "bid_price": "$759,592.78*",
+          "hst_basis": "including",
+          "price_header": "Bid Price (Incl. HST)",
+          "role": "submitted_bid"
+        },
+        {
+          "raw_bid_index": 1,
+          "name_parts": [
+            "Direct Energy Business Services",
+            "Ltd. d/b/a Airtron Canada"
+          ],
+          "row_quotation": "2. Direct Energy Business Services $832,394.68* Ltd. d/b/a Airtron Canada",
+          "bid_price": "$832,394.68*",
+          "hst_basis": "including",
+          "price_header": "Bid Price (Incl. HST)",
+          "role": "submitted_bid"
+        },
+        {
+          "raw_bid_index": 2,
+          "name_parts": [
+            "Superior Air Systems Canada"
+          ],
+          "row_quotation": "3. Superior Air Systems Canada $859,704.00",
+          "bid_price": "$859,704.00",
+          "hst_basis": "including",
+          "price_header": "Bid Price (Incl. HST)",
+          "role": "submitted_bid"
+        },
+        {
+          "raw_bid_index": 3,
+          "name_parts": [
+            "Ambient Mechanical Ltd."
+          ],
+          "row_quotation": "4. Ambient Mechanical Ltd. $895,011.79*",
+          "bid_price": "$895,011.79*",
+          "hst_basis": "including",
+          "price_header": "Bid Price (Incl. HST)",
+          "role": "submitted_bid"
+        },
+        {
+          "raw_bid_index": 4,
+          "name_parts": [
+            "Honeywell Building Solutions"
+          ],
+          "row_quotation": "5. Honeywell Building Solutions $959,437.80*",
+          "bid_price": "$959,437.80*",
+          "hst_basis": "including",
+          "price_header": "Bid Price (Incl. HST)",
+          "role": "submitted_bid"
+        }
+      ]
+    },
+    {
+      "document_number": "4305155039",
+      "reference": "2015.BD52.4",
+      "source": "bd_report",
+      "report_url": "https://www.toronto.ca/legdocs/mmis/2015/bd/bgrd/backgroundfile-84578.pdf",
+      "report_sha256": "e0b04725d10e0ffde2da400398220f6b76a2f3d435c4d293a95c697b7edbcf07",
+      "text_sha256": "b1a73031632a628fa89d4168e53758dea73212fb100286df05e309358e21b128",
+      "extractor_version": "v1-b63aa8c835ae",
+      "result_sha256": "e93c70ff45e6a7b30d4afc75852035735dd8a882d8e71a266726c993f2426cca",
+      "contract_sha256": "fdc086fc7ce1bd21d5546a25ace76d90ee2c1add37574d814d41c868aca26bdb",
+      "contract_index": 0,
+      "contract_count": 1,
+      "agenda_title": "Award of Request for Quotation No. 4305-15-5039 to Superior Air Systems Limited for Preventative Maintenance, Emergency Repairs, and Replacement of HVAC Systems, Boilers, Hot Water Tanks, and Sheet Metal Fabrication and Installations",
+      "identity": {
+        "kind": "city_crosswalk",
+        "proof_sha256": "119d25f7eb579aa4191b04220c227da5f3bc01b8c597d3dd79ca8fbd9b270d30"
+      },
+      "source_role": "submitted tender/proposal",
+      "scope_justification": "Four source-supported bid rows with literal including-HST prices and correction/non-compliance footnotes; compliance withheld.",
+      "table_quotation": "CALL SUMMARY Ward No: All Call Dates: Issued: July 13, 2015; Closed: July 30, 2015 # of Addenda Issued: One (1) Number of Bids: Firm Name Bid Price (Incl. HST) Four (4) 1. Air Heat Mechanical Services Inc $185,885.00+ 2. Superior Air Systems Ltd $292,088.05* 3. Active Mechanical o/b $294,818.70* 1246175 Ontario Ltd 4. Servocraft Ltd $306,146.38* * RFQ prices were corrected for mathematical errors. Purchasing and Materials Management has verified that the mathematical errors were corrected. + Bidder was found non-compliant with mandatory requirements. Report to Bid Committee on award of Request for Quotation No. 4305-15-5039 3",
+      "bids": [
+        {
+          "raw_bid_index": 0,
+          "name_parts": [
+            "Air Heat Mechanical Services Inc"
+          ],
+          "row_quotation": "1. Air Heat Mechanical Services Inc $185,885.00+",
+          "bid_price": "$185,885.00+",
+          "hst_basis": "including",
+          "price_header": "Bid Price (Incl. HST)",
+          "role": "submitted_bid"
+        },
+        {
+          "raw_bid_index": 1,
+          "name_parts": [
+            "Superior Air Systems Ltd"
+          ],
+          "row_quotation": "2. Superior Air Systems Ltd $292,088.05*",
+          "bid_price": "$292,088.05*",
+          "hst_basis": "including",
+          "price_header": "Bid Price (Incl. HST)",
+          "role": "submitted_bid"
+        },
+        {
+          "raw_bid_index": 2,
+          "name_parts": [
+            "Active Mechanical o/b",
+            "1246175 Ontario Ltd"
+          ],
+          "row_quotation": "3. Active Mechanical o/b $294,818.70* 1246175 Ontario Ltd",
+          "bid_price": "$294,818.70*",
+          "hst_basis": "including",
+          "price_header": "Bid Price (Incl. HST)",
+          "role": "submitted_bid"
+        },
+        {
+          "raw_bid_index": 3,
+          "name_parts": [
+            "Servocraft Ltd"
+          ],
+          "row_quotation": "4. Servocraft Ltd $306,146.38*",
+          "bid_price": "$306,146.38*",
+          "hst_basis": "including",
+          "price_header": "Bid Price (Incl. HST)",
+          "role": "submitted_bid"
+        }
+      ]
+    },
+    {
+      "document_number": "6606137147",
+      "reference": "2013.BD141.2",
+      "source": "bd_report",
+      "report_url": "https://www.toronto.ca/legdocs/mmis/2013/bd/bgrd/backgroundfile-61311.pdf",
+      "report_sha256": "537b3a1924ac9817f6f1d6e7c0a03ff177904f1c9e55b92f02a285abba15e294",
+      "text_sha256": "02c7bce45cd43b0e1feda250a169aad7e559fc8dc78b53afdd8f9caae5969de9",
+      "extractor_version": "v1-b63aa8c835ae",
+      "result_sha256": "0ddd8724453b2ec2367f5b2ae2bbaddf45d53a9b61bac840815a555a6c8fbe8d",
+      "contract_sha256": "e2c4da660be144357980b068b28880e59d09fab148e762d38443093efe6e82b9",
+      "contract_index": 0,
+      "contract_count": 1,
+      "agenda_title": "Award of Request of Quotation No. 6606-13-7147 to UBA Inc. for Supply and Delivery of Sodium Hypochlorite",
+      "identity": {
+        "kind": "city_crosswalk",
+        "proof_sha256": "944ad2c4f6a5ce61f8779d270e1fec80150ef96f54600328f187480931a9f3c3"
+      },
+      "source_role": "submitted tender/proposal",
+      "scope_justification": "Three submitted bid rows with literal including-HST prices; wrapped supplier name reassembled from its own row, compliance withheld.",
+      "table_quotation": "CALL SUMMARY Ward No: All Call Dates: Issued: May 27, 2013 Closed: June 12, 2013 # of Addenda Issued: None Number of Bids: Bidder Name Bid Total Price (incl. HST) 1. UBA Inc. $1,552,770.00 2. Flochem Ltd. $1,748,385.00 3. Appropriate Chemical $2,267,190.00 International Ltd. O/A Anchem Sales",
+      "bids": [
+        {
+          "raw_bid_index": 0,
+          "name_parts": [
+            "UBA Inc."
+          ],
+          "row_quotation": "1. UBA Inc. $1,552,770.00",
+          "bid_price": "$1,552,770.00",
+          "hst_basis": "including",
+          "price_header": "Bid Total Price (incl. HST)",
+          "role": "submitted_bid"
+        },
+        {
+          "raw_bid_index": 1,
+          "name_parts": [
+            "Flochem Ltd."
+          ],
+          "row_quotation": "2. Flochem Ltd. $1,748,385.00",
+          "bid_price": "$1,748,385.00",
+          "hst_basis": "including",
+          "price_header": "Bid Total Price (incl. HST)",
+          "role": "submitted_bid"
+        },
+        {
+          "raw_bid_index": 2,
+          "name_parts": [
+            "Appropriate Chemical",
+            "International Ltd.\n                                 O/A Anchem Sales"
+          ],
+          "row_quotation": "3. Appropriate Chemical $2,267,190.00 International Ltd. O/A Anchem Sales",
+          "bid_price": "$2,267,190.00",
+          "hst_basis": "including",
+          "price_header": "Bid Total Price (incl. HST)",
+          "role": "submitted_bid"
+        }
+      ]
+    },
+    {
+      "document_number": "9117167066",
+      "reference": "2016.BD93.10",
+      "source": "bd_report",
+      "report_url": "https://www.toronto.ca/legdocs/mmis/2016/bd/bgrd/backgroundfile-95135.pdf",
+      "report_sha256": "f32e14168351b703bc3485703cb6b6a94c0d1249da43cff0f6b4d2767f905cf6",
+      "text_sha256": "b0208c6678c74e2bf10dc82b8fed23ba242f28daca836673898d2bb51ddb4d97",
+      "extractor_version": "v1-b63aa8c835ae",
+      "result_sha256": "d0a74a223272043b914431bb0fd57a5424a497c353925598a875988470686565",
+      "contract_sha256": "4f79500522214fc8fdd90dca11cd39fe6e89fc683a866c8e06f68038cad487e4",
+      "contract_index": 0,
+      "contract_count": 1,
+      "agenda_title": "Award of Request for Proposal No. 9117 16 7066 to CIMA Canada Inc., Parsons Inc. and WSP Canada Inc. for Detailed Design and Construction Administration Engineering Services for the BFPP Phase 4",
+      "identity": {
+        "kind": "city_crosswalk",
+        "proof_sha256": "1c16e77bd1fd274ff64504db6af98745c836a60537ed906a4019b7b6a125d58b"
+      },
+      "source_role": "submitted tender/proposal",
+      "scope_justification": "Four submitted proposals, with no bid prices printed. Three cached amounts are award values and are withheld, as are inferred compliance statuses.",
+      "table_quotation": "CALL SUMMARY Ward No: 8,9,10,12,15,16,23 Call Dates: Issued: March 11, 2016, Closed: April 18, 2016 # of Addenda Issued: Six (6) Number of Proposals: Four (4) proposals were received. Three (3) proposals met the 75% minimum technical threshold and had their cost proposals reviewed and evaluated. 1. CIMA Canada Inc. 2. Candevcon Ltd.* 3. Parsons Inc. 4. WSP Canada Inc. *Proponent did not meet the minimum technical threshold score Range of Scores: Highest Score: 83.9 Lowest Score: 78.6 Report to Bid Committee on a contract award of RFP 9117-16-7066 2",
+      "bids": [
+        {
+          "raw_bid_index": 0,
+          "name_parts": [
+            "CIMA Canada Inc."
+          ],
+          "row_quotation": "1. CIMA Canada Inc.",
+          "bid_price": null,
+          "hst_basis": null,
+          "price_header": null,
+          "role": "submitted_bid"
+        },
+        {
+          "raw_bid_index": 1,
+          "name_parts": [
+            "Candevcon Ltd."
+          ],
+          "row_quotation": "2. Candevcon Ltd.*",
+          "bid_price": null,
+          "hst_basis": null,
+          "price_header": null,
+          "role": "submitted_bid"
+        },
+        {
+          "raw_bid_index": 2,
+          "name_parts": [
+            "Parsons Inc."
+          ],
+          "row_quotation": "3. Parsons Inc.",
+          "bid_price": null,
+          "hst_basis": null,
+          "price_header": null,
+          "role": "submitted_bid"
+        },
+        {
+          "raw_bid_index": 3,
+          "name_parts": [
+            "WSP Canada Inc."
+          ],
+          "row_quotation": "4. WSP Canada Inc.",
+          "bid_price": null,
+          "hst_basis": null,
+          "price_header": null,
+          "role": "submitted_bid"
+        }
+      ]
+    },
+    {
+      "document_number": "9148187135",
+      "reference": "2018.BA110.6",
+      "source": "ba_report",
+      "report_url": "https://www.toronto.ca/legdocs/mmis/2018/ba/bgrd/backgroundfile-121994.pdf",
+      "report_sha256": "6065518f165eff3f36451c62416d218b046b080a1f48fcd753f5cab5dec18793",
+      "text_sha256": "4f2658458be70616d341331ec52778a766bf0e652d2d3d1d75e8ef70f232a6c4",
+      "extractor_version": "v1-b63aa8c835ae",
+      "result_sha256": "550efbea8ed382443649bc1d8d424c9f08d75838f74af8858e7b5a43c02e4c35",
+      "contract_sha256": "9208522771d2def8cffe7a98e9eec7504b482dc224e82de7fd71d18e0528b6b2",
+      "contract_index": 0,
+      "contract_count": 1,
+      "agenda_title": "Award of Request For Quotation 9148-18-7135 to Ontario Traffic Inc. for the Non-Exclusive Supply of Traffic Data Collection Services at various requested locations throughout the City of Toronto",
+      "identity": {
+        "kind": "city_crosswalk",
+        "proof_sha256": "43da5d1c2bc6610d8a4e8dd344bcc170ba9670cf8c2eee66c2a14a6fcdd2f403"
+      },
+      "source_role": "submitted tender/proposal",
+      "scope_justification": "One explicitly submitted quotation and its literal including-HST price; compliance withheld.",
+      "table_quotation": "CALL SUMMARY Call Issued: August 3, 2018 Call Closed: September 4, 2018 Number of Addenda Issued: One (1) Number of Bids: One (1) Table 2: Summary of Bids Received for RFQ No. 9148-18-7135 including bid price Ontario Traffic Inc. $722,928.80 (including HST)",
+      "bids": [
+        {
+          "raw_bid_index": 0,
+          "name_parts": [
+            "Ontario Traffic Inc."
+          ],
+          "row_quotation": "Ontario Traffic Inc. $722,928.80",
+          "bid_price": "$722,928.80",
+          "hst_basis": "including",
+          "price_header": "(including HST)",
+          "role": "submitted_bid"
+        }
+      ]
     }
-  ]
+  ],
+  "followup_review": {
+    "inventory_sha256": "f4044d21aad747fa55903ec7aee2226caa9f0a1c9cdfbbd48ab1e333cb44cf5e",
+    "inventory_cases": 43,
+    "recovered_cases": 9
+  }
 }

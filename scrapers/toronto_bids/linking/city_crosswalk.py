@@ -66,7 +66,10 @@ def publisher_index(records):
         for award in record.get('Awarded_Suppliers') or []:
             key=fingerprint(record.get('Issue_Date'),record.get('Closing_Date'),record.get('Solicitation_Document_Type'),
                             award.get('Successful_Bidder'),award.get('Award_Amount'))
-            index[key].add((record.get('id'),record.get('Solicitation_Document_Number')))
+            target=(record.get('id'),record.get('Solicitation_Document_Number'))
+            index[key].add(target)
+            # Reviewed type discrepancies must be unique across every method.
+            index[(key[0],key[1],None,key[3],key[4])].add(target)
     return index
 
 
@@ -84,18 +87,48 @@ def sections(source,meeting):
 def _date_witness(text,role,value):
     try:d=date.fromisoformat(value)
     except (ValueError,TypeError):return None
-    m=re.search(rf'\b{role}\s*:\s*(?:{d:%B}|{d:%b})\.?\s+0?{d.day}\s*,?\s*{d.year}\b',text,re.I)
+    m=re.search(rf'\b{role}(?:\s*:\s*|\s+)(?:{d:%B}|{d:%b})\.?\s+0?{d.day}\s*,?\s*{d.year}\b',text,re.I)
     return m.group() if m else None
 
 
 def _source_type(title):
-    m=re.search(r'\b(Request for Quotation|RFQ|Request for Proposal|RFP|Request for Tender|Tender(?: Call)?|RFT)\b',title,re.I)
+    m=re.search(r'\b(Request (?:for|of) Quotation|RFQ|Request for Proposal|RFP|Request for Tender|Tender(?: Call)?|RFT)\b',title,re.I)
     if not m:return None
     value=m.group().casefold()
-    return 'RFQ' if value in ('request for quotation','rfq') else 'RFP' if value in ('request for proposal','rfp') else 'RFT'
+    return 'RFQ' if value in ('request for quotation','request of quotation','rfq') else 'RFP' if value in ('request for proposal','rfp') else 'RFT'
 
 
-def propose(*, reference,title,source,publisher,index,source_sha256,snapshot_sha256):
+def _title_calls(title):
+    calls=find_call_numbers(title)
+    # A typed call in an original title can use spaces between its three groups.
+    # Keep this local to identity review; arbitrary spaced digits are not calls.
+    for match in re.finditer(r'\b(?:Request (?:for|of) (?:Proposal|Quotation)|RF[QP])\s+(?:No\.?\s*)?(\d{4})[ \t]+(\d{2})[ \t]+(\d{4})\b',title or '',re.I):
+        calls.add('-'.join(match.groups()))
+    return calls
+
+
+def _reviewed_initial_award(text,review):
+    """A first, separately named initial award; every relation stays in one scope."""
+    recommendation=clean(review.get('recommendation'))
+    heading=clean(review.get('award_heading'));quote=clean(review.get('award_quotation'))
+    supplier=clean(review.get('supplier'))
+    label=re.search(r'\bContract Award Value\s*:',text,re.I)
+    if not label or not recommendation.startswith('Recommended') or recommendation not in text[:label.start()]:
+        raise ValueError('reviewed recommended supplier role absent')
+    if not supplier or not re.search(re.escape(supplier),recommendation,re.I):
+        raise ValueError('reviewed supplier absent from recommendation')
+    named=re.sub(r'^Firm\s+[A-Z]\)\s*','',heading,flags=re.I).rstrip(':').strip()
+    if supplier_identity(named)!=supplier_identity(supplier):
+        raise ValueError('reviewed award heading names a different supplier')
+    scoped=text[label.end():].strip()
+    if not quote.startswith(heading) or not scoped.startswith(quote):
+        raise ValueError('reviewed award is not the first separately named initial scope')
+    net=_NET.fullmatch(quote[len(heading):].strip())
+    if not net:raise ValueError('reviewed initial amount is qualified or not literal net award')
+    return supplier,net
+
+
+def propose(*, reference,title,source,publisher,index,source_sha256,snapshot_sha256,review=None):
     """One auditable proposal or ValueError; this function never writes identities."""
     encoded=source.encode('utf-8') if isinstance(source,str) else source
     if hashlib.sha256(encoded).hexdigest()!=source_sha256:raise ValueError('source bytes disagree with supplied digest')
@@ -105,15 +138,25 @@ def propose(*, reference,title,source,publisher,index,source_sha256,snapshot_sha
     if len(chunks)!=1:raise ValueError('agenda item missing or repeated')
     chunk=chunks[0];text=clean(chunk)
     if not text.startswith(clean(title)):raise ValueError('original agenda title disagrees with stored item')
-    calls=find_call_numbers(title)
+    calls=_title_calls(title)
     if len(calls)!=1:raise ValueError('title does not identify one native call')
     call=next(iter(calls))
     fields=list(re.finditer(r'\bCall\s+(?:Number|No\.?)\s*:\s*(.+?)(?=\s+(?:Description|Recommended (?:Bidder|Proponent)|Contract Award Value)\s*:|$)',text,re.I))
     if not fields or any(find_call_numbers(f.group(1))!={call} for f in fields):raise ValueError('native call role is not unambiguous in agenda item')
     field=fields[0]
     kind=_source_type(title)
-    if (kind is None or kind!=publisher.get('Solicitation_Document_Type')
-            or any(_source_type(f.group(1)) not in (None,kind) for f in fields)):
+    review_kind=review.get('kind') if review else None
+    if review_kind not in (None,'type_discrepancy','initial_award_scope'):
+        raise ValueError('unknown City identity review class')
+    if review is not None and not clean(review.get('justification')):
+        raise ValueError('explicit source review justification required')
+    if kind is None or any(_source_type(f.group(1)) not in (None,kind) for f in fields):
+        raise ValueError('source solicitation types disagree')
+    if review_kind=='type_discrepancy':
+        if (kind!=review.get('source_type') or publisher.get('Solicitation_Document_Type')!=review.get('publisher_type')
+                or kind==publisher.get('Solicitation_Document_Type')):
+            raise ValueError('reviewed source/publisher type discrepancy changed')
+    elif kind!=publisher.get('Solicitation_Document_Type'):
         raise ValueError('source solicitation types disagree')
     issued,closed=publisher.get('Issue_Date'),publisher.get('Closing_Date')
     try:
@@ -131,6 +174,7 @@ def propose(*, reference,title,source,publisher,index,source_sha256,snapshot_sha
     details=publisher.get('Solicitation_Award_Details') or ''
     directs=list(re.finditer(r'\bCall number\s*:\s*([^\n]+)',details,re.I))
     if directs:
+        if review is not None:raise ValueError('compound review cannot replace a direct publisher assertion')
         if len(directs)!=1:raise ValueError('multiple publisher native call assertions')
         direct=directs[0]
         if find_call_numbers(direct.group(1))!={call}:raise ValueError('publisher native call contradicts agenda')
@@ -150,13 +194,18 @@ def propose(*, reference,title,source,publisher,index,source_sha256,snapshot_sha
     if (not first or re.search(r'\bOption Year\b',scoped[:first.start()],re.I)
             or amount(first.group(1))!=amount(value.group(1))):raise ValueError('initial award scope disagrees')
     supplier=clean(winner.group(1));net=value.group(1)
-    key=fingerprint(issued,closed,shared['solicitation_type'],supplier,net)
+    if review_kind=='initial_award_scope':
+        supplier,value=_reviewed_initial_award(text,review);net=value.group(1)
+    compared_kind=None if review_kind=='type_discrepancy' else shared['solicitation_type']
+    key=fingerprint(issued,closed,compared_kind,supplier,net)
     if not key[3] or key[4] is None or index.get(key)!={(publisher.get('id'),publisher.get('Solicitation_Document_Number'))}:
         raise ValueError('compound facts do not identify one global publisher record')
     matches=[a for a in publisher.get('Awarded_Suppliers') or [] if
              supplier_identity(a.get('Successful_Bidder'))==key[3] and amount(a.get('Award_Amount'))==key[4]]
     if not matches:raise ValueError('publisher supplier / exact scoped amount mismatch')
-    return dict(shared,proof_class='corroborated_compound',supplier_name=matches[0]['Successful_Bidder'],
+    reviewed=dict(review=review) if review else {}
+    proof_class={'type_discrepancy':'reviewed_type_discrepancy','initial_award_scope':'reviewed_initial_award'}.get(review_kind,'corroborated_compound')
+    return dict(shared,**reviewed,proof_class=proof_class,supplier_name=matches[0]['Successful_Bidder'],
                 award_amount=matches[0]['Award_Amount'],report_supplier=supplier,
                 witnesses=dict(shared['witnesses'],supplier=supplier,net_award=value.group()))
 
@@ -193,11 +242,13 @@ def reviewed_links(conn, *, registry=None, agendas=None, persist=True):
     # reject ambiguity introduced by any currently held (including archived) award.
     current=defaultdict(set)
     for r in conn.execute("SELECT s.document_number,s.issue_date,s.submission_deadline,s.rfx_type,a.supplier_name_raw,a.award_amount FROM solicitation s JOIN award a ON a.document_number=s.document_number WHERE a.source='odata'"):
-        current[fingerprint(r['issue_date'],r['submission_deadline'],r['rfx_type'],r['supplier_name_raw'],r['award_amount'])].add(r['document_number'])
+        key=fingerprint(r['issue_date'],r['submission_deadline'],r['rfx_type'],r['supplier_name_raw'],r['award_amount'])
+        current[key].add(r['document_number'])
+        current[(key[0],key[1],None,key[3],key[4])].add(r['document_number'])
     by_record={r['id']:r for r in records}
     call_refs=defaultdict(set)
     for item in conn.execute('SELECT reference,title FROM council_item'):
-        calls=find_call_numbers(item['title'])
+        calls=_title_calls(item['title'])
         for call in calls:call_refs[call].add(item['reference'])
     directory=Path(agendas or config.COUNCIL_AGENDAS_DIR)
     for proof in applicable:
@@ -213,8 +264,9 @@ def reviewed_links(conn, *, registry=None, agendas=None, persist=True):
         if not latest or json.loads(latest)!=identity_record(by_record[proof['publisher_record_id']]):
             raise ValueError('Reviewed City publisher identity snapshot changed or missing: '+ref)
         if call_refs[proof['call_number']]!={ref}:raise ValueError('Reviewed City call now has multiple council contexts: '+ref)
-        if proof['proof_class']=='corroborated_compound':
-            key=fingerprint(proof['issued_date'],proof['closed_date'],proof['solicitation_type'],proof['supplier_name'],proof['award_amount'])
+        if proof['proof_class'] in ('corroborated_compound','reviewed_type_discrepancy','reviewed_initial_award'):
+            compared_kind=None if proof['proof_class']=='reviewed_type_discrepancy' else proof['solicitation_type']
+            key=fingerprint(proof['issued_date'],proof['closed_date'],compared_kind,proof['supplier_name'],proof['award_amount'])
             if current.get(key)!={doc}:raise ValueError('Reviewed City crosswalk compound facts changed or ambiguous: '+ref)
         elif proof['proof_class']!='publisher_native_call':raise ValueError('Unknown City crosswalk proof class')
         ph=digest(proof)
@@ -225,7 +277,7 @@ def reviewed_links(conn, *, registry=None, agendas=None, persist=True):
             if hashlib.sha256(source).hexdigest()!=proof['source_sha256']:raise ValueError('Reviewed City crosswalk source changed: '+ref)
             original=by_record[proof['publisher_record_id']]
             actual=propose(reference=ref,title=item['title'],source=source,publisher=original,index=index,
-                           source_sha256=proof['source_sha256'],snapshot_sha256=bundle['snapshot_sha256'])
+                           source_sha256=proof['source_sha256'],snapshot_sha256=bundle['snapshot_sha256'],review=proof.get('review'))
             if actual!=proof:raise ValueError('Reviewed City crosswalk proof mismatch: '+ref)
         elif not prior:raise ValueError('New City crosswalk needs held original agenda: '+ref)
         if prior and prior['proof_json']!=canonical(proof):raise ValueError('Stored City crosswalk evidence changed: '+ref)
