@@ -12,6 +12,9 @@ from toronto_bids.models import (
     Award,
     BackgroundPdf,
     Bid,
+    BidScope,
+    BidResponse,
+    BidResponsePrice,
     Buyer,
     CapitalProject,
     CompositeAward,
@@ -26,6 +29,9 @@ from toronto_bids.models import (
 # columns, in INSERT order; auto/default columns (id, first_seen, last_seen, supplier_id)
 # are DB-side only and deliberately absent from the models.
 _TABLES = {
+    BidScope: ("bid_scope", ["reference", "source", "scope_key"]),
+    BidResponse: ("bid_response", ["scope_id", "response_key"]),
+    BidResponsePrice: ("bid_response_price", ["response_id", "price_key"]),
     Solicitation: ("solicitation", ["document_number"]),
     NonCompetitive: ("noncompetitive", ["workspace_number"]),
     Award: (
@@ -100,6 +106,10 @@ EXPORT_TABLES = [
     "solicitation_link",
     "city_crosswalk_evidence",
     "city_bid_evidence",
+    "city_scoped_bid_evidence",
+    "bid_scope",
+    "bid_response",
+    "bid_response_price",
     "portal_listing",
     "procurement",
     "procurement_key",

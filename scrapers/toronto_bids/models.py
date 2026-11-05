@@ -153,6 +153,50 @@ class Bid:
 
 
 @dataclass(frozen=True)
+class BidScope:
+    reference: str
+    source: str
+    scope_key: str
+    scope_kind: str
+    proof_sha256: str
+    document_number: str | None = None
+    scope_label: str | None = None
+    scope_status: str | None = None
+
+
+@dataclass(frozen=True)
+class BidResponse:
+    scope_id: int
+    response_key: str
+    bidder_name_raw: str
+    identity_status: str
+    response_kind: str
+    row_quotation: str
+    bid_id: int | None = None
+    alternative_label: str | None = None
+    status: str | None = None
+
+
+@dataclass(frozen=True)
+class BidResponsePrice:
+    response_id: int
+    price_key: str
+    value_raw: str
+    value_kind: str
+    price_header: str
+    quotation: str
+    unit: str | None = None
+    price_basis: str | None = None
+    hst_basis: str | None = None
+    value_numeric: float | None = field(init=False,default=None)
+
+    def __post_init__(self):
+        # A percentage or unit rate is never a currency total.
+        if self.value_kind=='money' and self.unit in (None,'total','CAD'):
+            object.__setattr__(self,'value_numeric',parse_bid_price(self.value_raw))
+
+
+@dataclass(frozen=True)
 class CouncilItem:
     reference: str
     title: str | None = None

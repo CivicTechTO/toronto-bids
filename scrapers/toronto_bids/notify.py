@@ -30,6 +30,10 @@ _LABELS = {
     "composite_award": "composite awards", "agency_solicitation": "agency solicitations",
     "agency_award": "agency awards", "agency_bid": "agency bids",
     "ariba_attachment": "ariba files",
+    "bid_scope": "bid scopes",
+    "bid_response": "scoped response cells",
+    "bid_response_price": "scoped price values",
+    "city_scoped_bid_evidence": "scoped source reviews",
 }
 # Housekeeping tables whose growth is noise in a report about the archive.
 _GROWTH_SKIP = {"sync_run", "buyer"}

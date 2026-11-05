@@ -560,10 +560,13 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
             buyer_id = buyer_row["id"]
 
     city_reviews = {}
+    scoped_reviews = {}
     if corpus in ('ba_report','bd_report'):
         from toronto_bids.linking.city_cached_bids import reviewed_reports
         try:
             city_reviews = reviewed_reports(conn,corpus=corpus)
+            from toronto_bids.linking.city_scoped_bids import reviewed_scoped_reports
+            scoped_reviews = reviewed_scoped_reports(conn,corpus=corpus)
         except ValueError as exc:
             raise RuntimeError(f'backfill {corpus}: {exc}; existing rows kept') from exc
 
@@ -576,6 +579,12 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
     admission = []
 
     def use_city_review(row):
+        scoped = scoped_reviews.get(row['url'])
+        if scoped is not None:
+            proof,derived = scoped
+            bids.extend(derived)
+            admission.append(dict(reference=row['reference'],accepted=True,call_number=None,reason='source-reviewed scoped responses',url=row['url'],sha256=row['sha256'],prices_withheld=0,statuses_withheld=0,scoped_responses=len(proof['responses'])))
+            return True
         reviewed = city_reviews.get(row['url'])
         if reviewed is None:
             return False
@@ -865,6 +874,9 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
                              params=(source, *accepted))
             else:
                 rebuild_rows(conn, derived, scope="source = ?", params=(source,))
+        if scoped_reviews:
+            from toronto_bids.linking.city_scoped_bids import persist_scoped_reviews
+            persist_scoped_reviews(conn,scoped_reviews)
         if city_reviews:
             from toronto_bids.linking.city_cached_bids import persist_evidence
             persist_evidence(conn,city_reviews)

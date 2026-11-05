@@ -215,3 +215,30 @@ description = "Original report, whole extraction context, identity proof and bou
 description = "Reviewed receipt role, distinguishing submissions to this event from qualified/invited firms or an ancestor procurement."
 ["city_bid_evidence.bid_count"]
 description = "Source-reviewed observations projected by this proof; not a claim of complete competition coverage beyond its report scope."
+
+["bid_scope.scope_key"]
+description = "Stable, reviewed source scope key within a report/source; names a part, lot, category or region rather than a new procurement."
+["bid_scope.scope_status"]
+description = "Literal source outcome for this scope, such as cancellation or non-award; does not erase submitted responses or imply bidder noncompliance."
+["bid_scope.proof_sha256"]
+description = "Source/cache/identity review binding original PDF rectangles, source names, scopes, alternatives and price cells."
+["bid_response.response_kind"]
+description = "A submitted response cell, explicit No Bid cell, unscoped outcome or unresolved source observation. Only submitted cells with a proven participation link count as resolved scoped submissions."
+["bid_response.bid_id"]
+description = "Participation summary for a proven firm that submitted at least one offer. NULL retains an unresolved party or an explicit nonparticipation observation without inventing a firm/bid."
+["bid_response.identity_status"]
+description = "Whether the literal source party is linked to proven participation, unresolved, or an unlinked explicit nonparticipant."
+["bid_response.alternative_label"]
+description = "Literal source-labelled alternative offer, separate from the supplier and bid scope. Several price variants of one offer do not create alternatives."
+["bid_response.status"]
+description = "Literal, source-supported outcome for this response only; an unstated outcome remains NULL and does not inherit another scope's status."
+["bid_response_price.value_raw"]
+description = "Complete original value cell, including correction markers and units. Source extremes and spelling are preserved."
+["bid_response_price.value_kind"]
+description = "Currency amount, percentage discount, or other source value. A percentage is not a currency bid total."
+["bid_response_price.value_numeric"]
+description = "Parsed currency total only; percentage discounts and unit rates remain NULL. Compare only values with compatible scope, unit, tax and price basis."
+["bid_response_price.price_basis"]
+description = "Literal qualifications, including option years, miscellaneous allowances or supplier-specific prompt-payment discounts; never silently removed from comparison."
+["city_scoped_bid_evidence.proof_json"]
+description = "Immutable reviewed source context, PDF rectangle quotations, source-cell relationships, raw cache accounting and explicit unresolved party/completeness findings."
