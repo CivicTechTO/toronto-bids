@@ -638,3 +638,65 @@ CREATE TABLE IF NOT EXISTS city_bid_evidence (
     proof_json TEXT NOT NULL,
     first_seen TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+-- Source-reviewed scoped responses. Legacy bid rows remain participation summaries.
+CREATE TABLE IF NOT EXISTS city_scoped_bid_evidence (
+    proof_sha256 TEXT PRIMARY KEY,
+    document_number TEXT NOT NULL,
+    reference TEXT NOT NULL,
+    source TEXT NOT NULL,
+    report_url TEXT NOT NULL,
+    report_sha256 TEXT NOT NULL,
+    result_sha256 TEXT NOT NULL,
+    participant_count INTEGER NOT NULL,
+    response_count INTEGER NOT NULL,
+    price_count INTEGER NOT NULL,
+    proof_json TEXT NOT NULL,
+    first_seen TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE TABLE IF NOT EXISTS bid_scope (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    reference TEXT NOT NULL,
+    document_number TEXT,
+    source TEXT NOT NULL,
+    scope_key TEXT NOT NULL,
+    scope_kind TEXT NOT NULL,
+    scope_label TEXT,
+    scope_status TEXT,
+    proof_sha256 TEXT NOT NULL REFERENCES city_scoped_bid_evidence(proof_sha256),
+    procurement_id INTEGER REFERENCES procurement(id),
+    first_seen TEXT NOT NULL DEFAULT (datetime('now')),
+    last_seen TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE(reference,source,scope_key)
+);
+CREATE TABLE IF NOT EXISTS bid_response (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    scope_id INTEGER NOT NULL REFERENCES bid_scope(id) ON DELETE CASCADE,
+    response_key TEXT NOT NULL,
+    bid_id INTEGER REFERENCES bid(id),
+    bidder_name_raw TEXT NOT NULL,
+    identity_status TEXT NOT NULL,
+    response_kind TEXT NOT NULL,
+    alternative_label TEXT,
+    status TEXT,
+    row_quotation TEXT NOT NULL,
+    first_seen TEXT NOT NULL DEFAULT (datetime('now')),
+    last_seen TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE(scope_id,response_key)
+);
+CREATE TABLE IF NOT EXISTS bid_response_price (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    response_id INTEGER NOT NULL REFERENCES bid_response(id) ON DELETE CASCADE,
+    price_key TEXT NOT NULL,
+    value_raw TEXT NOT NULL,
+    value_kind TEXT NOT NULL,
+    unit TEXT,
+    value_numeric REAL,
+    price_header TEXT NOT NULL,
+    price_basis TEXT,
+    hst_basis TEXT,
+    quotation TEXT NOT NULL,
+    first_seen TEXT NOT NULL DEFAULT (datetime('now')),
+    last_seen TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE(response_id,price_key)
+);

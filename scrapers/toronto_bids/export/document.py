@@ -137,6 +137,7 @@ def build_export_document(conn, generated_at: str | None = None) -> dict:
     # the post-panel successor #145) has no council item — it nests under its solicitation by
     # document_number, or, matching no solicitation, lands in unlinked_bids. Same
     # nested-or-unlinked contract as awards/postings — nothing is dropped.
+    scoped_participation_ids = {r[0] for r in conn.execute("SELECT DISTINCT bid_id FROM bid_response WHERE bid_id IS NOT NULL")}
     bids_by_ref: dict = {}
     bids_by_doc: dict[str, list] = {}
     unlinked_bids: list = []
@@ -144,7 +145,9 @@ def build_export_document(conn, generated_at: str | None = None) -> dict:
         cleaned = _drop(bid, "id")
         ref, doc = bid["reference"], bid["document_number"]
         bridged = bridge.get(ref) if ref is not None else None          # pre-Ariba: ref -> sol
-        if ref is not None and doc is None and bridged in sol_docs:
+        if bid['id'] in scoped_participation_ids and doc in sol_docs:
+            bids_by_doc.setdefault(doc, []).append(_drop(cleaned, 'document_number'))
+        elif ref is not None and doc is None and bridged in sol_docs:
             bids_by_doc.setdefault(bridged, []).append(_drop(cleaned, "document_number"))   # under solicitation
         elif ref is not None:
             bids_by_ref.setdefault(ref, []).append(cleaned)             # under council item (unchanged)
@@ -153,6 +156,8 @@ def build_export_document(conn, generated_at: str | None = None) -> dict:
         else:
             unlinked_bids.append(cleaned)
 
+    from toronto_bids.export.scoped_bids import build_scoped_export
+    scoped_by_doc = build_scoped_export(conn)
     solicitations = []
     for sol in _rows(conn, "SELECT * FROM solicitation ORDER BY document_number"):
         sol = _drop(sol, "odata_id")
@@ -161,6 +166,9 @@ def build_export_document(conn, generated_at: str | None = None) -> dict:
         sol["ariba_postings"] = postings_by_doc.get(doc, [])
         sol["documents"] = documents_by_doc.get(doc, [])
         sol["bids"] = bids_by_doc.get(doc, [])
+        if doc in scoped_by_doc:
+            sol['bid_scopes'] = scoped_by_doc[doc]['scopes']
+            sol['bid_scope_summary'] = scoped_by_doc[doc]['summary']
         solicitations.append(sol)
 
     noncompetitive = [
@@ -256,6 +264,8 @@ def build_export_document(conn, generated_at: str | None = None) -> dict:
         "procurement_keys": _rows(conn, "SELECT * FROM procurement_key ORDER BY namespace,value"),
         "procurement_documents": _rows(conn, "SELECT * FROM procurement_document ORDER BY procurement_id,url"),
         "procurement_council_items": _rows(conn, "SELECT * FROM procurement_council_item ORDER BY procurement_id,reference"),
+        "city_scoped_bid_evidence": [_parse_json(row, "proof_json") for row in _rows(
+            conn, "SELECT * FROM city_scoped_bid_evidence ORDER BY proof_sha256")],
         "city_bid_evidence": [_parse_json(row, "proof_json") for row in _rows(
             conn, "SELECT * FROM city_bid_evidence ORDER BY proof_sha256")],
     }

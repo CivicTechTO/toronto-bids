@@ -8,7 +8,7 @@ from collections import defaultdict
 from contextlib import contextmanager
 
 FACT_TABLES = ('solicitation', 'award', 'noncompetitive', 'ariba_posting', 'bid',
-               'background_pdf', 'composite_award', 'ariba_attachment', 'capital_project',
+               'background_pdf', 'composite_award', 'ariba_attachment', 'capital_project', 'bid_scope',
                'agency_solicitation', 'agency_award', 'agency_bid', 'portal_listing', 'published_award')
 
 
@@ -77,6 +77,8 @@ def _resolve(conn):
     repair_city_identities(conn)
     from toronto_bids.linking.city_cached_bids import replay_reviewed_bids
     replay_reviewed_bids(conn)
+    from toronto_bids.linking.city_scoped_bids import replay_scoped_bids
+    replay_scoped_bids(conn)
     from toronto_bids.linking.city_crosswalk import reviewed_links
     crosswalks = reviewed_links(conn)
     ids = _Identities(conn)
@@ -114,7 +116,7 @@ def _resolve(conn):
         updates = []
         for row in conn.execute(f'SELECT rowid AS _rowid,* FROM {table} ORDER BY rowid'):
             pid = None
-            if table in ('solicitation', 'award', 'ariba_attachment'):
+            if table in ('solicitation', 'award', 'ariba_attachment', 'bid_scope'):
                 pid = ids.get('city_document', row['document_number'])
             elif table == 'noncompetitive':
                 pid = ids.get('city_workspace', row['workspace_number'])

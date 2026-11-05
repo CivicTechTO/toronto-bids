@@ -10,6 +10,13 @@ from toronto_bids.store import db
 # is never mistaken for one. Enums are OBSERVED (SELECT DISTINCT), so a new City value
 # appears automatically (the drift #168 exists to prevent).
 _ENUM_COLUMNS = {
+    ("bid_scope", "scope_kind"),
+    ("bid_scope", "scope_status"),
+    ("bid_response", "response_kind"),
+    ("bid_response", "identity_status"),
+    ("bid_response_price", "value_kind"),
+    ("bid_response_price", "unit"),
+    ("bid_response_price", "hst_basis"),
     ("solicitation", "status"),
     ("solicitation", "rfx_type"),
     ("solicitation", "form_type"),

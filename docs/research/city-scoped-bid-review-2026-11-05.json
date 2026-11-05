@@ -1,0 +1,514 @@
+{
+  "frozen_inventory_sha256": "06b838e439244a5a89c4107238785d3b52e92157e2a3028acf3457794a0ddd64",
+  "frozen_inventory": [
+    {
+      "document_number": "0902130156",
+      "title": "Award of Request for Quotation No. 0902-13-0156 to Nunu Educational Products (Inc.) for the Supply, Delivery, Assembly, Disposal of Packaging and Warranty of Toys and Creative Supplies for the City of Toronto's Children's Services Division, As and When Required",
+      "issue_year": 2013,
+      "outcome": "scope_or_source_hold",
+      "bid_observations": 0,
+      "reports": [
+        {
+          "document_number": "0902130156",
+          "reference": "2014.BD163.6",
+          "report_url": "https://www.toronto.ca/legdocs/mmis/2014/bd/bgrd/backgroundfile-66394.pdf",
+          "sha256": "0fd3f3bc181e9f616ba065c9d9a364cb8cc281c446da8ff3572fcd6532d71c74",
+          "classification": "historical_compound_source_proposal",
+          "reason": "Two category tables repeat suppliers with different scopes and prices.",
+          "outcome": "scope_or_source_hold"
+        }
+      ]
+    },
+    {
+      "document_number": "1003133051",
+      "title": "Award of Request for Quotation No. 1003-13-3051 to SCI Interiors Limited, for the Supply and Delivery of Lateral Filing Cabinets",
+      "issue_year": 2013,
+      "outcome": "scope_or_source_hold",
+      "bid_observations": 0,
+      "reports": [
+        {
+          "document_number": "1003133051",
+          "reference": "2013.BD131.8",
+          "report_url": "https://www.toronto.ca/legdocs/mmis/2013/bd/bgrd/backgroundfile-59993.pdf",
+          "sha256": "a6cc230ee0f1d8a5168a4019f27e47657b8d82657aa1631f5f51b4a0a6b8686a",
+          "classification": "historical_compound_source_proposal",
+          "reason": "Alternative submissions by the same firm and all-option-year totals require an unrepresented submission dimension.",
+          "outcome": "scope_or_source_hold"
+        }
+      ]
+    },
+    {
+      "document_number": "2104163095",
+      "title": "Award of Request for Quotation 2104-16-3095 to Met-Scan Canada Ltd. for the Non-Exclusive Supply, Delivery, Corrective Maintenance, and Warranty of Access Control, Intercom, and Video Surveillance Equipment",
+      "issue_year": 2016,
+      "outcome": "scope_or_source_hold",
+      "bid_observations": 0,
+      "reports": [
+        {
+          "document_number": "2104163095",
+          "reference": "2016.BD110.1",
+          "report_url": "https://www.toronto.ca/legdocs/mmis/2016/bd/bgrd/backgroundfile-98278.pdf",
+          "sha256": "b164f707c5fa152dccebee963e59598fcdd9ed86820f12d88e74d53760c879be",
+          "classification": "historical_compound_source_proposal",
+          "reason": "Distinct Part A percentage discounts and Part B prices cannot be flattened.",
+          "outcome": "scope_or_source_hold"
+        }
+      ]
+    },
+    {
+      "document_number": "3405163142",
+      "title": "Award of Request for Quotation No. 3405-16-3142 to Onx Enterprise Solutions Ltd. for Veritas Licenses and Maintenance Support Services",
+      "issue_year": 2016,
+      "outcome": "scope_or_source_hold",
+      "bid_observations": 0,
+      "reports": [
+        {
+          "document_number": "3405163142",
+          "reference": "2016.BD110.5",
+          "report_url": "https://www.toronto.ca/legdocs/mmis/2016/bd/bgrd/backgroundfile-98282.pdf",
+          "sha256": "6f6e5ddd8b4e401539de1e851033ce6550c4e76a220e9b1346509ca79ecb3129",
+          "classification": "historical_compound_source_proposal",
+          "reason": "Distinct Part A and Part B prices cannot be flattened.",
+          "outcome": "scope_or_source_hold"
+        }
+      ]
+    },
+    {
+      "document_number": "3707163238",
+      "title": "Award of Request for Quotation No. 3707-16-3238 to Hank Deenen Landscaping Limited for the Non-Exclusive Supply of all Labour, Materials and Equipment necessary to provide Grounds Maintenance Services",
+      "issue_year": 2016,
+      "outcome": "scope_or_source_hold",
+      "bid_observations": 0,
+      "reports": [
+        {
+          "document_number": "3707163238",
+          "reference": "2017.BA15.5",
+          "report_url": "https://www.toronto.ca/legdocs/mmis/2017/ba/bgrd/backgroundfile-102278.pdf",
+          "sha256": "a16c8edf24f792aaa0b9bb9918624b3aa13bb8df754986624b972836c06af2e8",
+          "classification": "historical_compound_source_proposal",
+          "reason": "Parts A-D, prompt-payment-qualified evaluated amounts and different compliance by part; flat bid row cannot represent those scopes.",
+          "outcome": "scope_or_source_hold"
+        }
+      ]
+    },
+    {
+      "document_number": "3782552477",
+      "title": "Overflow of OEM Heavy-Duty",
+      "issue_year": 2022,
+      "outcome": "scope_or_source_hold",
+      "bid_observations": 0,
+      "reports": [
+        {
+          "document_number": "3782552477",
+          "reference": "2023.BA17.6",
+          "report_url": "https://www.toronto.ca/legdocs/mmis/2023/ba/bgrd/backgroundfile-234755.pdf",
+          "sha256": "0b8f9a1e3cd62a129e59f1c39b5450b379708eddae9126fabfe78c224242d585",
+          "classification": "primary_document_identity_explicit",
+          "reason": "Ten lot-specific cached observations belong to three submitting firms; repeated firm names, amounts and outcomes differ by lot.",
+          "outcome": "scope_or_source_hold"
+        }
+      ]
+    },
+    {
+      "document_number": "3974631288",
+      "title": "Wander Alert and Nurse Call Bell and Paging Systems",
+      "issue_year": 2023,
+      "outcome": "scope_or_source_hold",
+      "bid_observations": 0,
+      "reports": [
+        {
+          "document_number": "3974631288",
+          "reference": "2023.BA42.4",
+          "report_url": "https://www.toronto.ca/legdocs/mmis/2023/ba/bgrd/backgroundfile-238662.pdf",
+          "sha256": "fe961c9c8f7a1b3f0fd98c4ff13731c5e771e00a621ed0bd64447be7605b3ad7",
+          "classification": "primary_document_identity_explicit",
+          "reason": "Category A/B amounts flattened into compound price strings; supplier-level price/status projection needs separate reviewed scope.",
+          "outcome": "scope_or_source_hold"
+        }
+      ]
+    },
+    {
+      "document_number": "4044208417",
+      "title": "Request for Proposals for the Provision of Professional Recruitment Services",
+      "issue_year": 2023,
+      "outcome": "scope_or_source_hold",
+      "bid_observations": 0,
+      "reports": [
+        {
+          "document_number": "4044208417",
+          "reference": "2024.BA61.3",
+          "report_url": "https://www.toronto.ca/legdocs/mmis/2024/ba/bgrd/backgroundfile-241829.pdf",
+          "sha256": "b9a1cc0298e37f552008ee90b7c0b1d92c66397cc8b5d7c5b4793142650a6324",
+          "classification": "primary_document_identity_explicit",
+          "reason": "Source declares seventy category submissions; cache has thirty-three flattened names and two names are not literal in bounded source table. Whole report needs category review.",
+          "outcome": "scope_or_source_hold"
+        }
+      ]
+    },
+    {
+      "document_number": "4355949486",
+      "title": "RFQ - Minor Building Repairs and Alterations for Child Care Centres",
+      "issue_year": 2024,
+      "outcome": "scope_or_source_hold",
+      "bid_observations": 0,
+      "reports": [
+        {
+          "document_number": "4355949486",
+          "reference": "2024.BA85.2",
+          "report_url": "https://www.toronto.ca/legdocs/mmis/2024/ba/bgrd/backgroundfile-246969.pdf",
+          "sha256": "89bc9876065f6cf5527cb2ca7632bdaaa65e152da0313312062e49f1d7f6f727",
+          "classification": "primary_document_identity_explicit",
+          "reason": "Regional four-area table, seven suppliers; cache concatenates four prices per supplier. No single global bid price is supported.",
+          "outcome": "scope_or_source_hold"
+        }
+      ]
+    },
+    {
+      "document_number": "4815572097",
+      "title": "Request for Proposals for Equity Learning and Training Services",
+      "issue_year": 2024,
+      "outcome": "scope_or_source_hold",
+      "bid_observations": 0,
+      "reports": [
+        {
+          "document_number": "4815572097",
+          "reference": "2025.BA133.2",
+          "report_url": "https://www.toronto.ca/legdocs/mmis/2025/ba/bgrd/backgroundfile-255420.pdf",
+          "sha256": "8f8416c0594177482ee36daf86fda4b5136665a8d80dc6b2e8e481c03722c06c",
+          "classification": "primary_document_identity_explicit",
+          "reason": "124 category/subcategory observations repeat only28literal names with category-dependent statuses; cannot publish124distinctbidders or collapse statuses silently.",
+          "outcome": "scope_or_source_hold"
+        }
+      ]
+    },
+    {
+      "document_number": "1002133108",
+      "reference": "2013.BD139.8",
+      "original_refusal": "source solicitation types disagree",
+      "source_url": "https://www.toronto.ca/legdocs/mmis/2013/bd/bgrd/backgroundfile-60989.pdf",
+      "report_sha256": "a596f41d40762dea96958227d888750d56e09ecfa74342e0cba9a604990196ca",
+      "agenda_sha256": "8db53799705d9096afae6213efc6dffa14eec7e70a2c3f04f6edd4b9129bfc03",
+      "publisher_record_id": "f8babe51-d7ae-42c9-bccf-b922073a0b63",
+      "publisher_type": "RFQ",
+      "issued_date": "2013-07-04",
+      "closed_date": "2013-07-22",
+      "outcome": "identity_proven_bid_scope_hold",
+      "reason": "Source RFP; publisher RFQ. Exact two dates, SCI Interiors name and initial $165,002.75 uniquely identify one publisher record across all types. Bid table has eight separately evaluated categories and three Amovo option submissions; keep bid projection held.",
+      "identity_proof_class": "reviewed_type_discrepancy",
+      "identity_proof_sha256": "8bb01bf5d884e64a9d901fd5634915b28cab8f4e7a8634231ce19ce0ba1e266d",
+      "bid_observations": 0,
+      "priced_observations": 0,
+      "independent_source_review": {
+        "document_number": "1002133108",
+        "reference": "2013.BD139.8",
+        "original_refusal": "source solicitation types disagree",
+        "reproduced_refusal": "source solicitation types disagree",
+        "disposition": "reviewed_type_discrepancy_identity_candidate_bid_scope_hold",
+        "reason": "Source RFP; publisher RFQ. Exact two dates, SCI Interiors name and initial $165,002.75 uniquely identify one publisher record across all types. Bid table has eight separately evaluated categories and three Amovo option submissions; keep bid projection held.",
+        "source_url": "https://www.toronto.ca/legdocs/mmis/2013/bd/bgrd/backgroundfile-60989.pdf",
+        "source_sha256": "a596f41d40762dea96958227d888750d56e09ecfa74342e0cba9a604990196ca",
+        "agenda_sha256": "8db53799705d9096afae6213efc6dffa14eec7e70a2c3f04f6edd4b9129bfc03",
+        "publisher_record_id": "f8babe51-d7ae-42c9-bccf-b922073a0b63",
+        "publisher_kind": "RFQ",
+        "publisher_issued": "2013-07-04",
+        "publisher_closed": "2013-07-22",
+        "source_call_fields": [
+          "RFP # 1002-13-3108"
+        ],
+        "source_date_witnesses": {
+          "issued": "Issued: July 4, 2013",
+          "closed": "Closed: July 22, 2013"
+        },
+        "supplier": "SCI Interiors Ltd.,",
+        "initial_net": "165,002.75",
+        "diagnostic_matches_ignoring_type": [
+          [
+            "f8babe51-d7ae-42c9-bccf-b922073a0b63",
+            "1002133108"
+          ]
+        ]
+      }
+    }
+  ],
+  "summary": {
+    "cases": 11,
+    "recovered_solicitations": 11,
+    "participations": 93,
+    "scopes": 49,
+    "response_observations": 321,
+    "submitted_response_cells": 300,
+    "no_bid_cells": 20,
+    "unscoped_outcomes": 1,
+    "price_variants": 104,
+    "percentage_values": 2,
+    "unresolved_party_cells": 4,
+    "model_requests": 0
+  },
+  "cases": [
+    {
+      "document_number": "0902130156",
+      "reference": "2014.BD163.6",
+      "report_url": "https://www.toronto.ca/legdocs/mmis/2014/bd/bgrd/backgroundfile-66394.pdf",
+      "report_sha256": "0fd3f3bc181e9f616ba065c9d9a364cb8cc281c446da8ff3572fcd6532d71c74",
+      "result_sha256": "dc801a5afc6726886f0e1652e1b3baef35404c9f7ce2154304358b93a0fac78d",
+      "proof_sha256": "fa11b2947e6677dd20eaeff7875d9071553c6d2d2b013e230f57ec36182d22ae",
+      "outcome": "recovered_with_scoped_source_evidence",
+      "participants": 7,
+      "scopes": 2,
+      "response_observations": 13,
+      "submitted_response_cells": 13,
+      "no_bid_cells": 0,
+      "unscoped_outcomes": 0,
+      "price_variants": 13,
+      "percentage_values": 0,
+      "unresolved_parties": [
+        {
+          "name": "Five Start Enterprise of Canada",
+          "scope": "category 2 (creative supplies)",
+          "reason": "Source spelling may refer to Five Star, but no independent identity bridge authorizes merging or counting a separate firm."
+        }
+      ],
+      "source_notes": [
+        "13 priced category responses; seven nominal firms but Eight distinct literal name forms because Five Star versus Five Start is unresolved source spelling. Do not merge those identities automatically.",
+        "Header includes HST AND 30% miscellaneous. Spectrum is explicitly non-compliant in both categories; other outcomes not stated."
+      ]
+    },
+    {
+      "document_number": "1003133051",
+      "reference": "2013.BD131.8",
+      "report_url": "https://www.toronto.ca/legdocs/mmis/2013/bd/bgrd/backgroundfile-59993.pdf",
+      "report_sha256": "a6cc230ee0f1d8a5168a4019f27e47657b8d82657aa1631f5f51b4a0a6b8686a",
+      "result_sha256": "2af6bcccafc9099bcd3e919b52726e5134f700a2b4b8a2b0f5c5edd646ced4a4",
+      "proof_sha256": "4eebc9920a921b48130e981351bb6287286845cf938774cd09bf6f10006fc154",
+      "outcome": "recovered_with_scoped_source_evidence",
+      "participants": 6,
+      "scopes": 1,
+      "response_observations": 7,
+      "submitted_response_cells": 7,
+      "no_bid_cells": 0,
+      "unscoped_outcomes": 0,
+      "price_variants": 7,
+      "percentage_values": 0,
+      "unresolved_parties": [],
+      "source_notes": [
+        "7 submitted alternative/ordinary offers from6 firms. Bid1/Bid2 belong to POI supplier, not two distinct firms.",
+        "Prices include all option years; preserve original net-of-all-tax header. SCI alone has no printed noncompliance qualifier; do not infer compliant."
+      ]
+    },
+    {
+      "document_number": "2104163095",
+      "reference": "2016.BD110.1",
+      "report_url": "https://www.toronto.ca/legdocs/mmis/2016/bd/bgrd/backgroundfile-98278.pdf",
+      "report_sha256": "b164f707c5fa152dccebee963e59598fcdd9ed86820f12d88e74d53760c879be",
+      "result_sha256": "f32a5e8fd32cec68ec5f01e18a55974fcf8379a0d1e0529e30d48b2d18295117",
+      "proof_sha256": "e2291836b511bd1d76e2149473b6517e786b6811c122104e07a0bc9bdcf12c40",
+      "outcome": "recovered_with_scoped_source_evidence",
+      "participants": 3,
+      "scopes": 2,
+      "response_observations": 6,
+      "submitted_response_cells": 6,
+      "no_bid_cells": 0,
+      "unscoped_outcomes": 0,
+      "price_variants": 5,
+      "percentage_values": 2,
+      "unresolved_parties": [],
+      "source_notes": [
+        "6 scoped responses from3 firms;5 price cells:2 discounts and3 one-year currency amounts. PartA Tyco noncompliance must not propagate toPartB.",
+        "Met-Scan asterisk explains a coin toss on October18,2016 to break a tie; not a price-correction or compliance marker."
+      ]
+    },
+    {
+      "document_number": "3405163142",
+      "reference": "2016.BD110.5",
+      "report_url": "https://www.toronto.ca/legdocs/mmis/2016/bd/bgrd/backgroundfile-98282.pdf",
+      "report_sha256": "6f6e5ddd8b4e401539de1e851033ce6550c4e76a220e9b1346509ca79ecb3129",
+      "result_sha256": "a9207883b6a46fd6220d573232c600df3540c80f4fb8f06dcb78115b85105f52",
+      "proof_sha256": "eb91f3d18f1380f9bf59152a3e64ebefdb696e2f04061958e3bc6985377b531b",
+      "outcome": "recovered_with_scoped_source_evidence",
+      "participants": 2,
+      "scopes": 3,
+      "response_observations": 3,
+      "submitted_response_cells": 2,
+      "no_bid_cells": 0,
+      "unscoped_outcomes": 1,
+      "price_variants": 2,
+      "percentage_values": 0,
+      "unresolved_parties": [],
+      "source_notes": [
+        "2 scoped price responses plus1 unscoped supplier outcome;2 firms. Do not invent a separate KTI response in each part."
+      ]
+    },
+    {
+      "document_number": "3707163238",
+      "reference": "2017.BA15.5",
+      "report_url": "https://www.toronto.ca/legdocs/mmis/2017/ba/bgrd/backgroundfile-102278.pdf",
+      "report_sha256": "a16c8edf24f792aaa0b9bb9918624b3aa13bb8df754986624b972836c06af2e8",
+      "result_sha256": "b154e134b06279b5324597ff3a133e69683ca71398fbfffcb8cea6ce2e07c595",
+      "proof_sha256": "0728e10f55877dabb2fdf09610c2b5eaab22c119efa7356d153988a84150f218",
+      "outcome": "recovered_with_scoped_source_evidence",
+      "participants": 2,
+      "scopes": 4,
+      "response_observations": 8,
+      "submitted_response_cells": 8,
+      "no_bid_cells": 0,
+      "unscoped_outcomes": 0,
+      "price_variants": 7,
+      "percentage_values": 0,
+      "unresolved_parties": [],
+      "source_notes": [
+        "8 scoped responses from2 firms;7 prices. All4Hank prices include5% promptpayment/net15days; retain condition.",
+        "Lima is explicitly noncompliant onlyPartA. PartC was not awarded duebudgetaryconstraints: scopeoutcome, not bid noncompliance or no-bid."
+      ]
+    },
+    {
+      "document_number": "3782552477",
+      "reference": "2023.BA17.6",
+      "report_url": "https://www.toronto.ca/legdocs/mmis/2023/ba/bgrd/backgroundfile-234755.pdf",
+      "report_sha256": "0b8f9a1e3cd62a129e59f1c39b5450b379708eddae9126fabfe78c224242d585",
+      "result_sha256": "c2b8e7e09931fb388899849288fb3bb3e3f3d4ee56373cbcab4fd1ae7093123f",
+      "proof_sha256": "a8db03752443c359199120ccbc1fce15bf97fa661ff096e191c7cf32a5eea77c",
+      "outcome": "recovered_with_scoped_source_evidence",
+      "participants": 3,
+      "scopes": 7,
+      "response_observations": 10,
+      "submitted_response_cells": 10,
+      "no_bid_cells": 0,
+      "unscoped_outcomes": 0,
+      "price_variants": 10,
+      "percentage_values": 0,
+      "unresolved_parties": [],
+      "source_notes": [
+        "10 populated lot-price cells from3firms; blankmatrixcells are not explicitNoBid observations. CAD explicit, taxbasisnotstated.",
+        "NC appliesPremierLot5 andRushLots1,2,4,5,7 ONLY. Preserve source typoElodrado, not Eldorado."
+      ]
+    },
+    {
+      "document_number": "3974631288",
+      "reference": "2023.BA42.4",
+      "report_url": "https://www.toronto.ca/legdocs/mmis/2023/ba/bgrd/backgroundfile-238662.pdf",
+      "report_sha256": "fe961c9c8f7a1b3f0fd98c4ff13731c5e771e00a621ed0bd64447be7605b3ad7",
+      "result_sha256": "681aee06b4f80ed7742bbce1f0e08b7cf7c3dc4f5c3327c643ba563d4612a515",
+      "proof_sha256": "e07f2bdb128c9c5d1d7fa7dc7a1b236c5c8a3c293f68600aca651f286a36752c",
+      "outcome": "recovered_with_scoped_source_evidence",
+      "participants": 2,
+      "scopes": 2,
+      "response_observations": 4,
+      "submitted_response_cells": 4,
+      "no_bid_cells": 0,
+      "unscoped_outcomes": 0,
+      "price_variants": 4,
+      "percentage_values": 0,
+      "unresolved_parties": [],
+      "source_notes": [
+        "4 scoped price cells from2firms. The2enormousApindsvalues are literally printed; preserve source values, do not removezeros. Asterisk sourcewrites non-complaint, an explicit noncompliance qualifier onApindsfirmrow coveringbothcolumns."
+      ]
+    },
+    {
+      "document_number": "4044208417",
+      "reference": "2024.BA61.3",
+      "report_url": "https://www.toronto.ca/legdocs/mmis/2024/ba/bgrd/backgroundfile-241829.pdf",
+      "report_sha256": "b9a1cc0298e37f552008ee90b7c0b1d92c66397cc8b5d7c5b4793142650a6324",
+      "result_sha256": "bc30cf3e2a404da406c842459b21bec51f45a47a5d6e5805bb9769e2e0279ab6",
+      "proof_sha256": "c8ca5c406b74e58a882b39b2601c13a96e09525fa199fac647154f88539c5481",
+      "outcome": "recovered_with_scoped_source_evidence",
+      "participants": 31,
+      "scopes": 5,
+      "response_observations": 70,
+      "submitted_response_cells": 70,
+      "no_bid_cells": 0,
+      "unscoped_outcomes": 0,
+      "price_variants": 0,
+      "percentage_values": 0,
+      "unresolved_parties": [
+        {
+          "name": "Consulting LLC",
+          "scope": "category b",
+          "reason": "Truncated supplier name; Cincotek prefix is absent from original PDF cell."
+        },
+        {
+          "name": "IAN Martin Information Technology",
+          "scope": "category b",
+          "reason": "Printed name is truncated; cached Consulting Inc suffix is absent."
+        },
+        {
+          "name": "2302726 Ontario Inc. Enqueue Staffing",
+          "scope": "others",
+          "reason": "One physical cell contains2302726 Ontario Inc. andEnqueueStaffing*. Legal/trading-name/joint-party relation notestablished; do not split into twofirms."
+        }
+      ],
+      "source_notes": [
+        "70physicalcells: CategoryA17/B26/C20/D6/Others1. Source declares70; do not splitcompoundOtherscelltomake71.",
+        "37literalnameforms/35supplier_keyforms before resolving3 incomplete/compoundparty contexts;32knownsupplier_key identities after excluding3unresolvedcells.",
+        "Cincotek noncomplianceinA/C/D is explicit. B orphanConsultingLLC* cannot be assigned toCincotek. I4C andIANMartin lackasterisks; cachednoncompliance isunsupported.",
+        "Source A namesMandrakeManagementConsultantCorp; cacheinventedMandrakeDesignGroup. BCanadianExecutiveSearchGroupInc omittedfromcache."
+      ]
+    },
+    {
+      "document_number": "4355949486",
+      "reference": "2024.BA85.2",
+      "report_url": "https://www.toronto.ca/legdocs/mmis/2024/ba/bgrd/backgroundfile-246969.pdf",
+      "report_sha256": "89bc9876065f6cf5527cb2ca7632bdaaa65e152da0313312062e49f1d7f6f727",
+      "result_sha256": "26306c1fcfd5e7236bcb8072b05c79ff35cd62fa1ee4035258c76a648eeff66a",
+      "proof_sha256": "6fd4d537480c7d3c78e4949f63d78daece1f8babc0777389187684afbd8ca162",
+      "outcome": "recovered_with_scoped_source_evidence",
+      "participants": 7,
+      "scopes": 4,
+      "response_observations": 28,
+      "submitted_response_cells": 28,
+      "no_bid_cells": 0,
+      "unscoped_outcomes": 0,
+      "price_variants": 28,
+      "percentage_values": 0,
+      "unresolved_parties": [],
+      "source_notes": [
+        "28 priced geographic response cells from7firms; no overallsinglebidprice is supported. HeaderdoesnotstateHSTbasis; leaveunknown.",
+        "RecordbindingrequiresrowareaANDfirmcolumn; rawcacheconcatenates4pricesperfirm, notonefinancialamount."
+      ]
+    },
+    {
+      "document_number": "4815572097",
+      "reference": "2025.BA133.2",
+      "report_url": "https://www.toronto.ca/legdocs/mmis/2025/ba/bgrd/backgroundfile-255420.pdf",
+      "report_sha256": "8f8416c0594177482ee36daf86fda4b5136665a8d80dc6b2e8e481c03722c06c",
+      "result_sha256": "09f9e4f499ba89aba8ade773a0703b4fe79e41777cdc14e6400df1c7573b2678",
+      "proof_sha256": "40116208e6079efcbf870267efdcb11be16ef20fd3b964078cf7ecd68ec838c4",
+      "outcome": "recovered_with_scoped_source_evidence",
+      "participants": 26,
+      "scopes": 11,
+      "response_observations": 124,
+      "submitted_response_cells": 124,
+      "no_bid_cells": 0,
+      "unscoped_outcomes": 0,
+      "price_variants": 0,
+      "percentage_values": 0,
+      "unresolved_parties": [],
+      "source_notes": [
+        "124categoryresponses across11leafscopes;27literalnames afterfootnoteremoval,26supplier_keyidentities(ConcentricInc[.]punctuationvariant).",
+        "Nonstarrowsare notstated, NOT source-compliant. CuratedLeadershipNC only2SLGBTQ+scope.",
+        "CategoryB12responsesretainactualparticipation; categorycancelledbyPurchasingByLawfootnote, notabsenceofbids."
+      ]
+    },
+    {
+      "document_number": "1002133108",
+      "reference": "2013.BD139.8",
+      "report_url": "https://www.toronto.ca/legdocs/mmis/2013/bd/bgrd/backgroundfile-60989.pdf",
+      "report_sha256": "a596f41d40762dea96958227d888750d56e09ecfa74342e0cba9a604990196ca",
+      "result_sha256": "dd73ea633c677b55412c4f3cb35c4adddd5d0b537f1045aad77735a7f0061ba7",
+      "proof_sha256": "fda77893bd50800ad67c03f99ed11a60f371260ea2c08bb7db39fca10faf1c70",
+      "outcome": "recovered_with_scoped_source_evidence",
+      "participants": 4,
+      "scopes": 8,
+      "response_observations": 48,
+      "submitted_response_cells": 28,
+      "no_bid_cells": 20,
+      "unscoped_outcomes": 0,
+      "price_variants": 28,
+      "percentage_values": 0,
+      "unresolved_parties": [],
+      "source_notes": [
+        "48explicitcells:28pricedsubmittedresponses and20NoBidoutcomes;4firms,6offerblocks becauseAmovosubmits3labelledalternatives. NoBid must notinflatebidresponsecounts.",
+        "Source finalPriceCorrectionsnetofHST paragraph saysSCITable1from$50,073.56to$52,476.08, differentfrominitialyearincludingHSTtable$108,762.47. Preservecorrectionas separateannotation; do not overwritebidcell or infercurrency/taxconversion."
+      ]
+    }
+  ]
+}

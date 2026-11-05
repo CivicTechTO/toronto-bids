@@ -29,6 +29,57 @@ def _fail(proof,reason):
     raise ValueError(f"Reviewed City bid context changed for {proof['reference']}: {reason}; re-review required")
 
 
+def reviewed_context(conn,proof,historical,*,previously_approved=False):
+    """Validate shared source/cache/identity context for scalar and scoped reviews."""
+    item=conn.execute('SELECT title FROM council_item WHERE reference=?',(proof['reference'],)).fetchone()
+    if not item or item['title']!=proof['agenda_title']:_fail(proof,'council title missing/changed')
+    row=conn.execute('SELECT b.*,e.result_json FROM background_pdf b LEFT JOIN extraction_cache e '
+        'ON e.sha256=b.sha256 AND e.extractor_version=? WHERE b.url=?',(EXTRACTOR_VERSION,proof['report_url'])).fetchone()
+    if (row is None or row['reference']!=proof['reference'] or row['kind']!='bgrd'
+            or row['sha256']!=proof['report_sha256'] or not row['text'] or not row['result_json']
+            or hashlib.sha256(row['text'].encode()).hexdigest()!=proof['text_sha256']
+            or hashlib.sha256(row['result_json'].encode()).hexdigest()!=proof['result_sha256']):
+        _fail(proof,'held report/text/cache missing or changed')
+    path=Path(row['local_path']) if row['local_path'] else None
+    if path is None or not path.exists():
+        # Old captures can retain a workstation path after the archive moves.
+        # A conventional local file is usable only if its bytes match the pinned hash.
+        path=config.DATA_DIR/'documents'/'council'/Path(proof['report_url']).name
+    if path is not None and path.exists():
+        if hashlib.sha256(path.read_bytes()).hexdigest()!=proof['report_sha256']:_fail(proof,'held PDF bytes changed')
+    elif not previously_approved:_fail(proof,'new approval requires held original PDF')
+    contracts=json.loads(row['result_json']).get('contracts',[])
+    if proof.get('contracts_sha256'):
+        if len(contracts)!=proof['contract_count'] or digest(contracts)!=proof['contracts_sha256']:
+            _fail(proof,'contract collection changed')
+    elif proof['contract_count']!=1 or len(contracts)!=1 or proof['contract_index']!=0 or digest(contracts[0])!=proof['contract_sha256']:
+        _fail(proof,'contract collection/position changed')
+    if not contracts:_fail(proof,'empty contract collection')
+    contract=contracts[0];doc=proof['document_number'];ref=proof['reference'];identity=proof['identity']
+    if identity['kind']=='city_crosswalk':
+        link=historical.get(ref)
+        if not link or link['document_number']!=doc or link['proof_sha256']!=identity['proof_sha256']:
+            _fail(proof,'independent historical crosswalk missing or changed')
+        if any(find_call_numbers(c.get('reference'))!={link['call_number']} for c in contracts) or link['call_number'] not in find_call_numbers(row['text']):
+            _fail(proof,'native Call Number does not agree with reviewed identity')
+        document_number=None
+    elif identity['kind']=='primary_document':
+        native=_DOC.findall(contract.get('reference') or '')
+        direct=next(iter(native)) if len(set(native))==1 else (normalize_document_number(contract.get('reference')) if not find_call_numbers(contract.get('reference')) else None)
+        alias=_text(identity.get('reference_quotation'))
+        alias_bound=(alias.startswith('Solicitation Number:') and alias in _text(row['text'])
+                     and set(_DOC.findall(alias))=={doc} and _text(contract.get('reference')) in alias)
+        if set(_DOC.findall(proof['agenda_title']))!={doc} or (direct!=doc and not alias_bound) or doc not in _DOC.findall(row['text']):
+            _fail(proof,'primary document role is not established by title/contract/source')
+        if any(set(_DOC.findall(c.get('reference') or ''))!={doc} for c in contracts[1:]):
+            _fail(proof,'another contract names a different primary document')
+        document_number=doc
+    else:_fail(proof,'unknown identity proof class')
+    if conn.execute('SELECT 1 FROM solicitation_link WHERE reference=? AND document_number!=?',(ref,doc)).fetchone():
+        _fail(proof,'conflicting stored council link')
+    return row,contracts,document_number,path
+
+
 def reviewed_reports(conn,*,registry=None,corpus=None):
     """Return validated URL -> (proof, Bid rows), without changing the archive."""
     bundle=json.loads(Path(registry or PATH).read_text())
@@ -65,45 +116,9 @@ def reviewed_reports(conn,*,registry=None,corpus=None):
     for proof in selected:
         if proof['source'] not in ('ba_report','bd_report') or proof['extractor_version']!=EXTRACTOR_VERSION:
             _fail(proof,'source/version unsupported')
-        row=conn.execute('SELECT b.*,e.result_json FROM background_pdf b LEFT JOIN extraction_cache e '
-            'ON e.sha256=b.sha256 AND e.extractor_version=? WHERE b.url=?',(EXTRACTOR_VERSION,proof['report_url'])).fetchone()
-        if (row is None or row['reference']!=proof['reference'] or row['kind']!='bgrd'
-                or row['sha256']!=proof['report_sha256'] or not row['text'] or not row['result_json']
-                or hashlib.sha256(row['text'].encode()).hexdigest()!=proof['text_sha256']
-                or hashlib.sha256(row['result_json'].encode()).hexdigest()!=proof['result_sha256']):
-            _fail(proof,'held report/text/cache missing or changed')
-        path=Path(row['local_path']) if row['local_path'] else None
-        if path is None or not path.exists():
-            # Old captures can retain a workstation path after the archive moves.
-            # A conventional local file is usable only if its bytes match the pinned hash.
-            path=config.DATA_DIR/'documents'/'council'/Path(proof['report_url']).name
         prior=conn.execute('SELECT 1 FROM city_bid_evidence WHERE proof_sha256=?',(digest(proof),)).fetchone()
-        if path is not None and path.exists():
-            if hashlib.sha256(path.read_bytes()).hexdigest()!=proof['report_sha256']:_fail(proof,'held PDF bytes changed')
-        elif not prior:_fail(proof,'new approval requires held original PDF')
-        contracts=json.loads(row['result_json']).get('contracts',[])
-        if proof['contract_count']!=1 or len(contracts)!=1 or proof['contract_index']!=0 or digest(contracts[0])!=proof['contract_sha256']:
-            _fail(proof,'contract collection/position changed')
-        contract=contracts[0];doc=proof['document_number'];ref=proof['reference'];identity=proof['identity']
-        if identity['kind']=='city_crosswalk':
-            link=historical.get(ref)
-            if not link or link['document_number']!=doc or link['proof_sha256']!=identity['proof_sha256']:
-                _fail(proof,'independent historical crosswalk missing or changed')
-            if find_call_numbers(contract.get('reference'))!={link['call_number']} or link['call_number'] not in find_call_numbers(row['text']):
-                _fail(proof,'native Call Number does not agree with reviewed identity')
-            document_number=None
-        elif identity['kind']=='primary_document':
-            native=_DOC.findall(contract.get('reference') or '')
-            direct=next(iter(native)) if len(set(native))==1 else (normalize_document_number(contract.get('reference')) if not find_call_numbers(contract.get('reference')) else None)
-            alias=_text(identity.get('reference_quotation'))
-            alias_bound=(alias.startswith('Solicitation Number:') and alias in _text(row['text'])
-                         and set(_DOC.findall(alias))=={doc} and _text(contract.get('reference')) in alias)
-            if set(_DOC.findall(proof['agenda_title']))!={doc} or (direct!=doc and not alias_bound) or doc not in _DOC.findall(row['text']):
-                _fail(proof,'primary document role is not established by title/contract/source')
-            document_number=doc
-        else:_fail(proof,'unknown identity proof class')
-        if conn.execute('SELECT 1 FROM solicitation_link WHERE reference=? AND document_number!=?',(ref,doc)).fetchone():
-            _fail(proof,'conflicting stored council link')
+        row,contracts,document_number,_path=reviewed_context(conn,proof,historical,previously_approved=bool(prior))
+        contract=contracts[0];doc=proof['document_number'];ref=proof['reference']
         table=_text(proof['table_quotation']);body=_text(row['text'])
         if not table or table not in body:_fail(proof,'reviewed submission table changed')
         if set(_DOC.findall(table))-{doc}:_fail(proof,'bid table names a different document')
