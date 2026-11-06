@@ -80,6 +80,8 @@ Normalizers read feed fields with `raw.get(...)`, so a field the City renames si
 
 For lots, categories, alternative submissions, or scoped price/outcome reviews, read `docs/scoped-city-bids.md` before changing admission, replay or exports.
 
+For image-only BD reports, OCR provenance or recognition corrections, read `docs/image-pdf-text.md` before changing preparation or admission.
+
 ### Document extraction (`extraction.py`, `extract.py`, #205/#213)
 
 Bids and awards inside PDFs — Award Summary Forms, committee staff reports, composite reports, TRCA/EP/Zoo board reports — are read by **one LLM prompt**, not per-source parsers. The incumbent regex/pdfplumber parsers were measured against the model and deleted (#205, e936004); don't rebuild them.

@@ -700,3 +700,14 @@ CREATE TABLE IF NOT EXISTS bid_response_price (
     last_seen TEXT NOT NULL DEFAULT (datetime('now')),
     UNIQUE(response_id,price_key)
 );
+
+-- Locally derived OCR/native recovery text; raw PDF bytes and capture text stay intact.
+CREATE TABLE IF NOT EXISTS pdf_text (
+    sha256 TEXT PRIMARY KEY,
+    method TEXT NOT NULL,
+    text TEXT NOT NULL,
+    text_sha256 TEXT NOT NULL,
+    provenance_json TEXT NOT NULL,
+    proof_sha256 TEXT NOT NULL,
+    first_seen TEXT NOT NULL DEFAULT (datetime('now'))
+);

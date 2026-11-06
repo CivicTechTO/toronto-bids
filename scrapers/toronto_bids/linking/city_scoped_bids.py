@@ -166,7 +166,27 @@ def reviewed_scoped_reports(conn,*,registry=None,corpus=None):
     for p,prior in selected:
         row,contracts,document_number,path=reviewed_context(conn,p,historical,previously_approved=prior)
         if p['cache_contract_bid_counts']!=[len(c.get('bids',[])) for c in contracts]:_fail(p,'cache collection/count changed')
-        if path.exists():quotes=pdf_witness.verify(p['witnesses'],path,p['report_sha256'])
+        if p.get('ocr_text_proof_sha256'):
+            from toronto_bids import config
+            from toronto_bids.linking.city_crosswalk import sections
+            from toronto_bids.pdf_text import record_for
+            stored=record_for(conn,p['report_sha256'])
+            if not stored or stored['method']!='tesseract' or stored['proof_sha256']!=p['ocr_text_proof_sha256']:
+                _fail(p,'OCR text provenance missing or changed')
+            agenda=config.COUNCIL_AGENDAS_DIR/(p['reference'].rsplit('.',1)[0]+'.html')
+            if agenda.exists():
+                import hashlib
+                source=agenda.read_bytes()
+                chunks=sections(source,p['reference'].rsplit('.',1)[0]).get(p['reference'],[])
+                if hashlib.sha256(source).hexdigest()!=p['corroborating_agenda_sha256'] or chunks!=[p['corroborating_transcription']]:
+                    _fail(p,'independent City transcription changed')
+            elif not prior:_fail(p,'new image review requires original City agenda')
+            if path.exists():quotes=pdf_witness.verify_ocr(p['witnesses'],path,p['report_sha256'],json.loads(stored['provenance_json']))
+            elif prior:quotes={k:pdf_witness.normalized(v['text']) for k,v in p['witnesses'].items()}
+            else:_fail(p,'new image review requires original PDF')
+            quotes=pdf_witness.corroborated_quotes(p,quotes,p['corroborating_transcription'])
+        elif p.get('ocr_corrections'):_fail(p,'native PDF review cannot alter source quotations')
+        elif path.exists():quotes=pdf_witness.verify(p['witnesses'],path,p['report_sha256'])
         elif prior:quotes={k:pdf_witness.normalized(v['text']) for k,v in p['witnesses'].items()}
         else:_fail(p,'new scoped review requires original PDF')
         bids=projection(p,quotes,document_number)
@@ -178,6 +198,9 @@ def persist_scoped_reviews(conn,reviews):
     """Persist validated proofs and child rows after participation rows are rebuilt."""
     for p,bids in reviews.values():
         ph=digest(p);ref=p['reference'];source=p['source'];doc=p['document_number']
+        if p.get('ocr_text_proof_sha256'):
+            from toronto_bids.pdf_text import record_for,persist_record
+            persist_record(conn,record_for(conn,p['report_sha256']))
         conn.execute('INSERT OR IGNORE INTO city_scoped_bid_evidence (proof_sha256,document_number,reference,source,report_url,report_sha256,result_sha256,participant_count,response_count,price_count,proof_json) VALUES (?,?,?,?,?,?,?,?,?,?,?)',
             (ph,doc,ref,source,p['report_url'],p['report_sha256'],p['result_sha256'],len(bids),len(p['responses']),sum(len(r['prices']) for r in p['responses']),canonical(p)))
         scope_rows=[BidScope(ref,source,s['key'],s['kind'],ph,document_number=doc,scope_label=s.get('label'),scope_status=s.get('status')) for s in p['scopes']]
@@ -188,7 +211,7 @@ def persist_scoped_reviews(conn,reviews):
             row=conn.execute('SELECT id FROM bid WHERE reference=? AND document_number IS ? AND bidder_name_raw=? AND source=? AND bid_price IS NULL',(ref,bid.document_number,bid.bidder_name_raw,source)).fetchone()
             if not row:raise ValueError('Scoped review participation row missing')
             bid_ids[participant['key']]=row['id']
-        response_rows=[BidResponse(scope_ids[r['scope']],r['key'],r['name'],'resolved' if r.get('participant') else ('unlinked' if r['kind']=='no_bid' else 'unresolved'),r['kind'],pdf_witness.normalized(p['witnesses'][r['row_witness']]['text']),bid_id=bid_ids.get(r.get('participant')),alternative_label=r.get('alternative_label'),status=r.get('status')) for r in p['responses']]
+        response_rows=[BidResponse(scope_ids[r['scope']],r['key'],r['name'],'resolved' if r.get('participant') else ('unlinked' if r['kind']=='no_bid' else 'unresolved'),r['kind'],pdf_witness.reviewed_quote(p,r['row_witness']),bid_id=bid_ids.get(r.get('participant')),alternative_label=r.get('alternative_label'),status=r.get('status')) for r in p['responses']]
         marks=','.join('?' for _ in scope_ids)
         db.rebuild_rows(conn,response_rows,scope=f'scope_id IN ({marks})',params=tuple(scope_ids.values()))
         response_ids={(r['scope_id'],r['response_key']):r['id'] for r in conn.execute(f'SELECT scope_id,response_key,id FROM bid_response WHERE scope_id IN ({marks})',tuple(scope_ids.values()))}
@@ -196,7 +219,7 @@ def persist_scoped_reviews(conn,reviews):
         for r in p['responses']:
             rid=response_ids[(scope_ids[r['scope']],r['key'])]
             for v in r['prices']:
-                prices.append(BidResponsePrice(rid,v['key'],v['raw'],v['kind'],pdf_witness.normalized(p['witnesses'][v['header_witness']]['text']),pdf_witness.normalized(p['witnesses'][v['value_witness']]['text']),unit=v.get('unit'),price_basis='; '.join(pdf_witness.normalized(p['witnesses'][k]['text']) for k in v.get('basis_witnesses',[])) or None,hst_basis=v.get('hst_basis')))
+                prices.append(BidResponsePrice(rid,v['key'],v['raw'],v['kind'],pdf_witness.reviewed_quote(p,v['header_witness']),pdf_witness.reviewed_quote(p,v['value_witness']),unit=v.get('unit'),price_basis='; '.join(pdf_witness.reviewed_quote(p,k) for k in v.get('basis_witnesses',[])) or None,hst_basis=v.get('hst_basis')))
         ids=tuple(response_ids.values());marks=','.join('?' for _ in ids)
         if prices:db.rebuild_rows(conn,prices,scope=f'response_id IN ({marks})',params=ids)
         else:conn.execute(f'DELETE FROM bid_response_price WHERE response_id IN ({marks})',ids)

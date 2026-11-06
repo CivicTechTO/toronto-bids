@@ -35,6 +35,10 @@ def reviewed_context(conn,proof,historical,*,previously_approved=False):
     if not item or item['title']!=proof['agenda_title']:_fail(proof,'council title missing/changed')
     row=conn.execute('SELECT b.*,e.result_json FROM background_pdf b LEFT JOIN extraction_cache e '
         'ON e.sha256=b.sha256 AND e.extractor_version=? WHERE b.url=?',(EXTRACTOR_VERSION,proof['report_url'])).fetchone()
+    if row is not None:
+        from toronto_bids.pdf_text import source_text
+        row=dict(row)
+        row['text']=source_text(conn,row)
     if (row is None or row['reference']!=proof['reference'] or row['kind']!='bgrd'
             or row['sha256']!=proof['report_sha256'] or not row['text'] or not row['result_json']
             or hashlib.sha256(row['text'].encode()).hexdigest()!=proof['text_sha256']

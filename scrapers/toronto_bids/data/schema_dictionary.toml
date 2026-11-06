@@ -242,3 +242,16 @@ description = "Parsed currency total only; percentage discounts and unit rates r
 description = "Literal qualifications, including option years, miscellaneous allowances or supplier-specific prompt-payment discounts; never silently removed from comparison."
 ["city_scoped_bid_evidence.proof_json"]
 description = "Immutable reviewed source context, PDF rectangle quotations, source-cell relationships, raw cache accounting and explicit unresolved party/completeness findings."
+
+["pdf_text.sha256"]
+description = "SHA-256 of the original held PDF bytes."
+["pdf_text.text"]
+description = "Derived native recovery or OCR input to the unchanged extraction prompt; not a verbatim assertion about printed names or prices."
+["pdf_text.text_sha256"]
+description = "Digest of the exact derived text."
+["pdf_text.method"]
+description = "pdftotext or tesseract, selected native-first."
+["pdf_text.provenance_json"]
+description = "Versioned OCR settings, engine/language model fingerprint, page text and word coordinates/confidences for visual source review."
+["pdf_text.proof_sha256"]
+description = "Digest binding original hash, derived text hash, method and provenance; changed evidence requires explicit review."

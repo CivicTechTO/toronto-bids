@@ -14,7 +14,7 @@ A literal No Bid cell records nonparticipation in that scope. An empty cell esta
 
 ## Source review and extension
 
-`linking/city_scoped_bids.py` is the admission boundary. `data/city_scoped_bid_reviews.json` holds immutable reviews; `pdf_witness.py` verifies literal rectangular quotations against original PDF words using Poppler. The shared extraction prompt and cached model results stay unchanged.
+`linking/city_scoped_bids.py` is the admission boundary. `data/city_scoped_bid_reviews.json` holds immutable reviews; `pdf_witness.py` verifies literal rectangular quotations against original PDF words using Poppler. The shared extraction prompt and cached model results stay unchanged. For image-space witnesses and corroborated OCR corrections, read [image-pdf-text.md](image-pdf-text.md).
 
 For another review, first establish procurement identity independently through an existing accepted crosswalk or the source's primary document number. Review the entire source table and every raw cached observation. Commit the report/text/cache/contract-collection hashes, original source rectangles, supplier identities and unresolved fragments, leaf scopes, alternatives, prices, qualifiers and explicitly bound outcomes. Supplier columns and scope rows must geometrically contain their own response cells. Keep all literal aliases even when existing legal-form normalization proves one firm. Record a reason for every cached observation that is replaced or withheld.
 

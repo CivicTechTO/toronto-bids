@@ -1,0 +1,638 @@
+{
+  "cohort": "Eleven awarded City solicitations whose held reports have no native text, frozen 2026-11-06",
+  "case_count": 11,
+  "model": "batched Sonnet/high",
+  "model_requests": 11,
+  "charged_usd": 0.092381,
+  "maximum_reserved_usd": 2.031233,
+  "cases": [
+    {
+      "document_number": "0208130047",
+      "public_url": "https://www.toronto.ca/legdocs/mmis/2013/bd/bgrd/backgroundfile-59545.pdf",
+      "anonymous_http_status": 200,
+      "sha256": "f472047f7491f2bbeaed7ad546738566e50104ad1f54076697fb76af4420032d",
+      "bytes": 2060842,
+      "reference": "2013.BD129.6",
+      "source_expectations": {
+        "page": 3,
+        "declared": 6,
+        "bids": [
+          [
+            "Goodbye Graffiti",
+            null
+          ],
+          [
+            "Sparkleen Mobile Wash Inc.",
+            null
+          ]
+        ],
+        "note": "Only two technically evaluated proponents named. Four other submissions unnamed. Fairness consultant is a separate contract, not a bidder."
+      },
+      "identity_proof_sha256": "1383dd92624f5a072c8e2034ae810787675a71c6418722bcfbb1a6a7b3f8b0cd",
+      "scoped_review_sha256": "251e7f2e360cc84d0617e9e4270a8183ea55a3f9960d6494b21de9aa9427858e",
+      "ocr_proof_sha256": "464e0edd57c047bf30f0f8ac4c07236254b42182ac6d89ff29627163b8fd52ee",
+      "raw_model_result_sha256": "f24814e7dd4621f9b81b2c22b81ff5e9e534cff6c950a9fe3b245b7685fb9a03",
+      "participants": 2,
+      "scopes": 1,
+      "responses": 2,
+      "price_values": 0,
+      "explicit_corrections": {},
+      "outcome": "recovered_in_production_copy"
+    },
+    {
+      "document_number": "1212160057",
+      "public_url": "https://www.toronto.ca/legdocs/mmis/2016/bd/bgrd/backgroundfile-96549.pdf",
+      "anonymous_http_status": 200,
+      "sha256": "11c21e7ad104961b76db332eb5bb715b2eefd0b16ce7dc28764070e62e4753c9",
+      "bytes": 135666,
+      "reference": "2016.BD103.1",
+      "source_expectations": {
+        "page": 4,
+        "declared": 8,
+        "bids": [
+          [
+            "Tacel Ltd",
+            "$ 741,935.40*"
+          ],
+          [
+            "Fortran Traffic Systems Ltd.",
+            "$ 812,244.00"
+          ],
+          [
+            "Peek Traffic Corp.",
+            "$ 864,337.00"
+          ],
+          [
+            "Orange Traffic Inc.",
+            "$ 937,787.00"
+          ],
+          [
+            "Electromega Ltd.",
+            "$ 959,729.34"
+          ],
+          [
+            "Innovative Traffic Solutions",
+            "$ 986,490.00**"
+          ],
+          [
+            "Econolite Canada Inc",
+            "$1,541,452.21"
+          ],
+          [
+            "Novax Industries Corp.",
+            null
+          ]
+        ],
+        "note": "All prices including HST and 25% miscellaneous; Tacel 3.5% prompt-payment and Innovative 4%. Novax noncompliant. All price qualifiers must remain visible or prices withheld."
+      },
+      "identity_proof_sha256": "efef72936bd512efab011286cb78ea9537886690b1a18fd5977bc7d7630ed192",
+      "scoped_review_sha256": "81094f3beed638389b31142558f2470f6491ed5d9dd1fce3e8ca4d912451c3b5",
+      "ocr_proof_sha256": "07bab09e67b5ab568548aa91ba62bfe158634c307f76c3be3a63e3ccc988d649",
+      "raw_model_result_sha256": "61dfec79d45c851ac52dc0cdc63fbc4552ee71ab470737aa3f4275495d7833ec",
+      "participants": 8,
+      "scopes": 1,
+      "responses": 8,
+      "price_values": 7,
+      "explicit_corrections": {
+        "r1-value": {
+          "before": "$ 741,935.40\"",
+          "after": "$ 741,935.40*",
+          "reason": "Original scan visually checked; exact printed wording/value corroborated by the City-authored agenda item. Raw OCR is retained unchanged."
+        },
+        "prompt-35": {
+          "before": "“Bidder provided 3.5% prompt payment",
+          "after": "*Bidder provided 3.5% prompt payment",
+          "reason": "Original scan visually checked; exact printed wording/value corroborated by the City-authored agenda item. Raw OCR is retained unchanged."
+        },
+        "r6-name": {
+          "before": "innovative Traffic Solutions",
+          "after": "Innovative Traffic Solutions",
+          "reason": "Original scan visually checked; exact printed wording/value corroborated by the City-authored agenda item. Raw OCR is retained unchanged."
+        },
+        "r6-value": {
+          "before": "$ 986,490.00\"*",
+          "after": "$ 986,490.00**",
+          "reason": "Original scan visually checked; exact printed wording/value corroborated by the City-authored agenda item. Raw OCR is retained unchanged."
+        },
+        "prompt-4": {
+          "before": "“Bidder provided 4% prompt payment",
+          "after": "**Bidder provided 4% prompt payment",
+          "reason": "Original scan visually checked; exact printed wording/value corroborated by the City-authored agenda item. Raw OCR is retained unchanged."
+        }
+      },
+      "outcome": "recovered_in_production_copy"
+    },
+    {
+      "document_number": "3714130002",
+      "public_url": "https://www.toronto.ca/legdocs/mmis/2013/bd/bgrd/backgroundfile-57522.pdf",
+      "anonymous_http_status": 200,
+      "sha256": "2ea5517e07987fcc3048d86b3026c1f486d86d98d21a6fc19fbc8a0b1f0cb707",
+      "bytes": 244754,
+      "reference": "2013.BD120.10",
+      "source_expectations": {
+        "pages": [
+          3,
+          4
+        ],
+        "bids": [
+          [
+            "Davey Tree Expert Company of Canada Ltd.",
+            null
+          ],
+          [
+            "Greenlawn Ltd.",
+            null
+          ],
+          [
+            "Treescape Tree Care Professionals Ltd.",
+            null
+          ],
+          [
+            "Shady Lane Expert Tree Care",
+            null
+          ]
+        ],
+        "schedules": {
+          "A": [
+            646400,
+            652800,
+            779200
+          ],
+          "B": [
+            530400,
+            531700,
+            682500
+          ],
+          "C": [
+            408000,
+            409000
+          ],
+          "D": [
+            285600,
+            286300,
+            340900,
+            385000
+          ],
+          "E": [
+            612000,
+            613500,
+            730500
+          ],
+          "F": [
+            5640,
+            6200
+          ],
+          "G": [
+            5640,
+            6800
+          ]
+        },
+        "note": "Four firms, nineteen scoped price cells across seven schedules; net of all applicable taxes and charges."
+      },
+      "identity_proof_sha256": "c397522d73c9df67e8b2f288fa95722e2bce0044d9226428d4f66691a399e09d",
+      "scoped_review_sha256": "b50cb2efa651ed46e237c856dd1a3a73814b4ceeba74474b21e60b2610d2b804",
+      "ocr_proof_sha256": "30059bb001a5e08355da15bc6221d8a459b8b12d4f61c2f55dbf46e6238cf8ea",
+      "raw_model_result_sha256": "6eb1c9dc213c4ba2fc10c57ded9c33eef66432445bb0074c83a3ce7105f9a04a",
+      "participants": 4,
+      "scopes": 7,
+      "responses": 19,
+      "price_values": 19,
+      "explicit_corrections": {
+        "r8-tax": {
+          "before": "Davey Tree Expert Company of Canada Ltd. - $409,000.00 net of ail applicable taxes and charges.",
+          "after": "Davey Tree Expert Company of Canada Ltd. - $409,000.00 net of all applicable taxes and charges.",
+          "reason": "Scan and official City transcription both print all applicable taxes; OCR letter recognition corrected explicitly."
+        },
+        "r10-tax": {
+          "before": "Davey Tree Expert Company of Canada Ltd. - $286,300.00 net of all applicabie taxes and charges.",
+          "after": "Davey Tree Expert Company of Canada Ltd. - $286,300.00 net of all applicable taxes and charges.",
+          "reason": "Scan and official City transcription both print all applicable taxes; OCR letter recognition corrected explicitly."
+        }
+      },
+      "outcome": "recovered_in_production_copy"
+    },
+    {
+      "document_number": "3717137042",
+      "public_url": "https://www.toronto.ca/legdocs/mmis/2013/bd/bgrd/backgroundfile-57518.pdf",
+      "anonymous_http_status": 200,
+      "sha256": "39f88d6168bd9b08bbf6fc5eb200b4a6721987feb0791192a95e4e728dda5269",
+      "bytes": 252303,
+      "reference": "2013.BD120.1",
+      "source_expectations": {
+        "page": 3,
+        "declared": 9,
+        "bids": [
+          [
+            "Kuntz Forestry Consulting Inc.",
+            "$370,781.25"
+          ],
+          [
+            "Bruce Tree Expert Company Ltd.",
+            "$383,493.75"
+          ],
+          [
+            "Dougan & Associates",
+            "$383,917.50"
+          ],
+          [
+            "Urban Forest Innovations Inc.",
+            "$425,586.25"
+          ],
+          [
+            "Beacon Environmental Ltd.",
+            "$460,616.25"
+          ],
+          [
+            "Davey Resource Group",
+            "$466,852.44"
+          ],
+          [
+            "Aboud & Associates",
+            "$488,018.75"
+          ],
+          [
+            "LGL Ltd.",
+            "$544,660.00"
+          ],
+          [
+            "AECOM",
+            "$607,375.00"
+          ]
+        ],
+        "note": "Header includes all applicable taxes and charges, not explicitly HST."
+      },
+      "identity_proof_sha256": "26c67b8c009e42971475936d64868cdba5118de8b95d0724125cfdb859452b18",
+      "scoped_review_sha256": "3cddc4f91ff5ba7a753126e73fedf34b0c4cf21e1b88a11cc73dfdcf23878518",
+      "ocr_proof_sha256": "ec2fadb4a6cdb1c18c72347a58fbeecb8f59e4f36574b24de9509b1352d45803",
+      "raw_model_result_sha256": "af7bce1b6768a1f1bea6efc6cb342da8c9f3ccd9348a381fc69e0e7cab859aea",
+      "participants": 9,
+      "scopes": 1,
+      "responses": 9,
+      "price_values": 9,
+      "explicit_corrections": {},
+      "outcome": "recovered_in_production_copy"
+    },
+    {
+      "document_number": "4620130000",
+      "public_url": "https://www.toronto.ca/legdocs/mmis/2013/bd/bgrd/backgroundfile-57513.pdf",
+      "anonymous_http_status": 200,
+      "sha256": "df668b1c90e9adf25ff5297850bdf03b6f8c556f142721a3c006d39ed9746252",
+      "bytes": 176420,
+      "reference": "2013.BD120.7",
+      "source_expectations": {
+        "page": 2,
+        "bids": [
+          [
+            "Tony Battista Paving",
+            "$697,726.41"
+          ],
+          [
+            "Mopal Construction",
+            "$721,505.00"
+          ],
+          [
+            "Lincoln Paving Inc.",
+            "$746,116.81"
+          ],
+          [
+            "Ashland Paving Ltd.",
+            "$762,582.69"
+          ],
+          [
+            "Il Duca Construction Inc.",
+            "$782,073.00"
+          ],
+          [
+            "Pave-1 Construction Ltd.",
+            "$783,090.00"
+          ],
+          [
+            "Bond Paving & Construction",
+            "$814,580.84"
+          ],
+          [
+            "Dig–Con International Ltd.",
+            "$918,389.42"
+          ],
+          [
+            "MTM Landscaping Contractors Inc.",
+            "$938,956.55"
+          ],
+          [
+            "Serve Construction Ltd.",
+            "$979,823.00"
+          ],
+          [
+            "Alpeza Contracting Inc.",
+            "$1,019,881.50"
+          ],
+          [
+            "Brown Daniels Associates Inc.",
+            "$1,379,391.00"
+          ]
+        ],
+        "note": "Header Incl. HST. Source states bid amounts adjusted as allowed by RFT. Preserve exact source company text; not award-title suffixes."
+      },
+      "identity_proof_sha256": "aa24cd49dd5caf5308ef8af05f1cba141d9735dddeb34481c047f8b9901e29c7",
+      "scoped_review_sha256": "eb445327dcbb9d6c7feaaa1007a34b3a1449c39eb05d3011120424a5b09b0b82",
+      "ocr_proof_sha256": "3c524c4dd2a14c1f919464983afde8e873dd6c637b5ecba803070f0f258440aa",
+      "raw_model_result_sha256": "cb2b2e6c99e9a2bf1038c3a775be7970137a38aec7d6ecb8d058bd9051a1b922",
+      "participants": 12,
+      "scopes": 1,
+      "responses": 12,
+      "price_values": 12,
+      "explicit_corrections": {
+        "r8-name": {
+          "before": "Dig—Con International Ltd.",
+          "after": "Dig–Con International Ltd.",
+          "reason": "Original scan visually checked; exact printed wording/value corroborated by the City-authored agenda item. Raw OCR is retained unchanged."
+        }
+      },
+      "outcome": "recovered_in_production_copy"
+    },
+    {
+      "document_number": "4820130000",
+      "public_url": "https://www.toronto.ca/legdocs/mmis/2013/bd/bgrd/backgroundfile-57508.pdf",
+      "anonymous_http_status": 200,
+      "sha256": "ba6c0fbe0a8bc774f2ac22be297000b29592aae12e62b84446c2c776296a8d7e",
+      "bytes": 186132,
+      "reference": "2013.BD120.2",
+      "source_expectations": {
+        "page": 2,
+        "declared": 2,
+        "bids": [
+          [
+            "Capital Sewer Services Inc.",
+            "$6,641,856.37"
+          ],
+          [
+            "Insituform Technologies Limited",
+            "$6,976,695.71"
+          ]
+        ],
+        "note": "Including HST. OCR inserted a space in the first value; original has none."
+      },
+      "identity_proof_sha256": "aba9abffe0bd50bc38c0751312dc956c58215a44b625634156ac255880c0811c",
+      "scoped_review_sha256": "e1ef7d2c0d39c81d60e5aa563ea4853ed4c9387dd03e12b3a35d7a74a2e9d179",
+      "ocr_proof_sha256": "7425d3cb7c9a4fd2f53a227e458082ddfcfb44e1b9532f46516a80806235bf43",
+      "raw_model_result_sha256": "858d3c5278149e4aaaccf91e9363d9f54ff9070c480187c6fab278daa4f04974",
+      "participants": 2,
+      "scopes": 1,
+      "responses": 2,
+      "price_values": 2,
+      "explicit_corrections": {
+        "r1-value": {
+          "before": "$6,641 ,856.37",
+          "after": "$6,641,856.37",
+          "reason": "Original scan visually checked; exact printed wording/value corroborated by the City-authored agenda item. Raw OCR is retained unchanged."
+        }
+      },
+      "outcome": "recovered_in_production_copy"
+    },
+    {
+      "document_number": "6011143016",
+      "public_url": "https://www.toronto.ca/legdocs/mmis/2014/bd/bgrd/backgroundfile-69031.pdf",
+      "anonymous_http_status": 200,
+      "sha256": "7db4c4028cb9b20e4a8c66d07774c9fe6038059568a557a97a6efe9f404ca817",
+      "bytes": 191416,
+      "reference": "2014.BD179.6",
+      "source_expectations": {
+        "page": 3,
+        "declared": 1,
+        "bids": [
+          [
+            "Zamboni Company Ltd",
+            "$882,288.24"
+          ]
+        ],
+        "note": "Including HST."
+      },
+      "identity_proof_sha256": "b906ac89c75e4b1cd09d2e344d72a7c59209f4b774e21cffe2df2ee477fe4ab6",
+      "scoped_review_sha256": "6b1a62adaf614c3eb584b525fbea2434607f80df991c8187b1fc32b8c75d4c64",
+      "ocr_proof_sha256": "4a3e0c51a9c64cf35a670fb64a62ec6cc31569a802454ecef3cba05844861a57",
+      "raw_model_result_sha256": "b88fb9ac5cebb37d6d58b51a8ea4e45eca65e6de89b3713e0c979aff41edfa1b",
+      "participants": 1,
+      "scopes": 1,
+      "responses": 1,
+      "price_values": 1,
+      "explicit_corrections": {},
+      "outcome": "recovered_in_production_copy"
+    },
+    {
+      "document_number": "6220130000",
+      "public_url": "https://www.toronto.ca/legdocs/mmis/2013/bd/bgrd/backgroundfile-57512.pdf",
+      "anonymous_http_status": 200,
+      "sha256": "5e96d6ae06657e27c3556801c77ca2d8550ed37d60e86034cb67f0bebfffb6df",
+      "bytes": 165697,
+      "reference": "2013.BD120.6",
+      "source_expectations": {
+        "page": 2,
+        "declared": 10,
+        "bids": [
+          [
+            "Serve Construction Ltd.",
+            "$612,644.83"
+          ],
+          [
+            "Rafat General Contractor Inc.",
+            "$685,315.62"
+          ],
+          [
+            "Maple-Crete Inc.",
+            "$693,674.23"
+          ],
+          [
+            "Ferpac Paving Inc.",
+            "$742,505.58"
+          ],
+          [
+            "Sunrise Contracting Inc.",
+            "$746,656.54"
+          ],
+          [
+            "Pave-Tar Construction",
+            "$801,675.71"
+          ],
+          [
+            "Trisan Construction",
+            "$839,159.47"
+          ],
+          [
+            "Lima's Gardens & Construction Inc.",
+            "$840,837.52"
+          ],
+          [
+            "Edgeway Paving Inc.",
+            "$843,044.41"
+          ],
+          [
+            "Gazzola Paving Ltd.",
+            "$929,076.96"
+          ]
+        ],
+        "note": "Bid Price incl. HST."
+      },
+      "identity_proof_sha256": "ccf2bc57a316137c20d423184739af479eb4ce4a69d90781969c965a11ca75cb",
+      "scoped_review_sha256": "46efb95537b173f2eb116170d7f20a873375d6cd6e809b345ba2e1cf0ef32070",
+      "ocr_proof_sha256": "37780707f4e46788280a48e20b1c5b94adeb6f1c91e611182f0b8f7391863de4",
+      "raw_model_result_sha256": "e979eb34bebc8a5f7e1aabc71b7abd531dfe4b5a2e0ea5c40628d033fa3d82a7",
+      "participants": 10,
+      "scopes": 1,
+      "responses": 10,
+      "price_values": 10,
+      "explicit_corrections": {
+        "price-header": {
+          "before": "ers, Bid Price (incl. HST",
+          "after": "Bid Price (incl. HST)",
+          "reason": "Original scan visually checked; exact printed wording/value corroborated by the City-authored agenda item. Raw OCR is retained unchanged."
+        }
+      },
+      "outcome": "recovered_in_production_copy"
+    },
+    {
+      "document_number": "6920130000",
+      "public_url": "https://www.toronto.ca/legdocs/mmis/2013/bd/bgrd/backgroundfile-57510.pdf",
+      "anonymous_http_status": 200,
+      "sha256": "91f4bfb96bbf8f7ca32dd0a636db134df61186c2d70db2ef5bedbe9c7ec994c2",
+      "bytes": 187437,
+      "reference": "2013.BD120.4",
+      "source_expectations": {
+        "page": 2,
+        "bids": [
+          [
+            "Utility Force Inc.",
+            "$1,414,059.40"
+          ],
+          [
+            "Vipe Construction",
+            "$1,784,868.90"
+          ],
+          [
+            "Rabcon Contractors Ltd.",
+            "$1,925,384.40 *"
+          ],
+          [
+            "Sam Rabito Construction Ltd.",
+            "$2,117,766.90"
+          ],
+          [
+            "614128 Ontario Ltd O/A Trisan Construction",
+            "$2,260,022.60"
+          ]
+        ],
+        "note": "Including HST. Rabcon price corrected for mathematical errors. Multiline legal/trading-name cell is one bidder."
+      },
+      "identity_proof_sha256": "243353cda50afe172f18525b0464183c450c80fc19aaef2995ac73ccdf560a2b",
+      "scoped_review_sha256": "d4fbc051168bd30bb17a6033a117616f35259b90e2111f4c2bc75dd861a122e8",
+      "ocr_proof_sha256": "5a44f83eb0859e729a854e974fcd05460ba40834cb7d87cb239d32aa1d6254aa",
+      "raw_model_result_sha256": "62b9439b3b7cd9ebd77f5ddc8051670be23d2249627189d21a88b37f259bb779",
+      "participants": 5,
+      "scopes": 1,
+      "responses": 5,
+      "price_values": 5,
+      "explicit_corrections": {
+        "r3-value": {
+          "before": "$1,925,384.40",
+          "after": "$1,925,384.40 *",
+          "reason": "Original scan visually checked; exact printed wording/value corroborated by the City-authored agenda item. Raw OCR is retained unchanged."
+        }
+      },
+      "outcome": "recovered_in_production_copy"
+    },
+    {
+      "document_number": "7720130000",
+      "public_url": "https://www.toronto.ca/legdocs/mmis/2013/bd/bgrd/backgroundfile-57509.pdf",
+      "anonymous_http_status": 200,
+      "sha256": "cfc27d1914661b5efe519abc79415d42a5f6b3405f3ad546849df9976967966e",
+      "bytes": 183336,
+      "reference": "2013.BD120.3",
+      "source_expectations": {
+        "page": 2,
+        "declared": 1,
+        "bids": [
+          [
+            "DM Robichaud Associates Ltd.",
+            "$1,922,005.70"
+          ]
+        ],
+        "note": "Including HST."
+      },
+      "identity_proof_sha256": "43b08a5bc4bc07d9e20a9c550edd4bd0d53ae2fbbf339447559d86c73bacd0c2",
+      "scoped_review_sha256": "20a6989998d0f89b04751ae1c030651ff93efdbb38913d8063d0d2a0a880920a",
+      "ocr_proof_sha256": "de2dbbdb10e7dfe9bc999a3638f7c4b22ee3e8966fa7b70b537815a6952aae5c",
+      "raw_model_result_sha256": "d4ad7dffe8574d3add43881501ccecd97e4517476172ef5dd87c1785adf854b0",
+      "participants": 1,
+      "scopes": 1,
+      "responses": 1,
+      "price_values": 1,
+      "explicit_corrections": {},
+      "outcome": "recovered_in_production_copy"
+    },
+    {
+      "document_number": "9144137033",
+      "public_url": "https://www.toronto.ca/legdocs/mmis/2013/bd/bgrd/backgroundfile-59538.pdf",
+      "anonymous_http_status": 200,
+      "sha256": "e3f29df06cb5a4c56d6d11a665ef2003bb42e2f2755dafca7238c5bd639779fa",
+      "bytes": 1834061,
+      "reference": "2013.BD129.3",
+      "source_expectations": {
+        "page": 3,
+        "declared": 10,
+        "bids": [
+          [
+            "Canada Post Corporation",
+            null
+          ],
+          [
+            "CDS Global Inc.",
+            null
+          ],
+          [
+            "Cover-All Computer Services Corp.",
+            null
+          ],
+          [
+            "Data Direct Group Inc.",
+            null
+          ],
+          [
+            "DATA Group Ltd.",
+            null
+          ],
+          [
+            "DT&P Inc.",
+            null
+          ],
+          [
+            "Formost Data Products Inc.",
+            null
+          ],
+          [
+            "Lowe-Martin Company Inc.",
+            null
+          ],
+          [
+            "RICOH Canada Inc.",
+            null
+          ],
+          [
+            "Yvelo Mailng Services Inc.",
+            null
+          ]
+        ],
+        "note": "No prices published. Six starred firms below technical threshold; four cost-evaluated. High-resolution source crop and independent City agenda both print Mailng; retain that publisher spelling rather than inventing Mailing."
+      },
+      "identity_proof_sha256": "53eefe34b3d8f5eb8d8e7b865d99b311b2410714d189c277cbe89cfac3f3eddf",
+      "scoped_review_sha256": "11b28569245aa7990a2c9fd2486ca51fac095fc6cf4d0841e3d219d3132cc2f7",
+      "ocr_proof_sha256": "4c7c8f3ecb8caa5e6c8c0bdb43c2cd479c9db75d6f0b335c3013cb1fcc0d57b8",
+      "raw_model_result_sha256": "221fe8c7f981d9e80f3a3ee0a1dae7c49b5fe91004e8d95d48beb02293e37352",
+      "participants": 10,
+      "scopes": 1,
+      "responses": 10,
+      "price_values": 0,
+      "explicit_corrections": {},
+      "outcome": "recovered_in_production_copy"
+    }
+  ],
+  "production_fact_publication": "pending merge; only retained raw extraction cache results have been handed off operationally"
+}
