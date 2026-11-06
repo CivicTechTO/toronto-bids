@@ -264,6 +264,8 @@ def build_export_document(conn, generated_at: str | None = None) -> dict:
         "procurement_keys": _rows(conn, "SELECT * FROM procurement_key ORDER BY namespace,value"),
         "procurement_documents": _rows(conn, "SELECT * FROM procurement_document ORDER BY procurement_id,url"),
         "procurement_council_items": _rows(conn, "SELECT * FROM procurement_council_item ORDER BY procurement_id,reference"),
+        "pdf_text": [_parse_json(row, "provenance_json") for row in _rows(
+            conn, "SELECT * FROM pdf_text ORDER BY sha256")],
         "city_scoped_bid_evidence": [_parse_json(row, "proof_json") for row in _rows(
             conn, "SELECT * FROM city_scoped_bid_evidence ORDER BY proof_sha256")],
         "city_bid_evidence": [_parse_json(row, "proof_json") for row in _rows(

@@ -351,3 +351,17 @@ def test_compound_review_cannot_discard_a_direct_publisher_assertion():
     with pytest.raises(ValueError,match='direct publisher assertion'):
         cw.propose(reference=REF,title=TITLE,source=HTML,publisher=row,index=cw.publisher_index([row]),
             source_sha256=hashlib.sha256(HTML).hexdigest(),snapshot_sha256='snapshot',review=type_review())
+
+
+@pytest.mark.parametrize('change', ['valid','different_schedule','different_supplier','later_award'])
+def test_separately_recommended_schedule_binds_only_its_first_initial_award(change):
+    text='Recommended Bidder: Price Schedule “A” - Alpha Construction Ltd Price Schedule “B” - Beta Inc. Contract Award Value: Price Schedule “A”: $100,000.55 net of all applicable taxes and charges.'
+    review=dict(supplier='Alpha Construction Ltd',recommendation='Recommended Bidder: Price Schedule “A” - Alpha Construction Ltd Price Schedule “B” - Beta Inc.',recommendation_heading='Price Schedule “A” - Alpha Construction Ltd',award_heading='Price Schedule “A”:',award_quotation='Price Schedule “A”: $100,000.55 net of all applicable taxes and charges')
+    if change=='different_schedule':review['recommendation_heading']='Price Schedule “B” - Alpha Construction Ltd'
+    if change=='different_supplier':review['supplier']='Beta Inc.'
+    if change=='later_award':review.update(award_heading='Price Schedule “B”:',recommendation_heading='Price Schedule “B” - Beta Inc.',supplier='Beta Inc.',award_quotation='Price Schedule “B”: $100,000.55 net of all applicable taxes and charges.')
+    if change=='valid':
+        supplier,value=cw._reviewed_initial_award(text,review)
+        assert supplier=='Alpha Construction Ltd' and value.group(1)=='100,000.55'
+    else:
+        with pytest.raises(ValueError):cw._reviewed_initial_award(text,review)

@@ -119,7 +119,15 @@ def _reviewed_initial_award(text,review):
         raise ValueError('reviewed supplier absent from recommendation')
     named=re.sub(r'^Firm\s+[A-Z]\)\s*','',heading,flags=re.I).rstrip(':').strip()
     if supplier_identity(named)!=supplier_identity(supplier):
-        raise ValueError('reviewed award heading names a different supplier')
+        # A schedule heading names its scope; the recommendation separately binds
+        # that exact schedule to its supplier. Neither whole-event totals nor an
+        # adjacent schedule establish this initial amount.
+        schedule=re.fullmatch(r'Price Schedule [“"\']([A-Z])[”"\']:',heading)
+        binding=clean(review.get('recommendation_heading'))
+        expected=rf'Price Schedule [“"\']{schedule[1]}[”"\']\s*[-–]\s*(.+)' if schedule else None
+        match=re.fullmatch(expected,binding) if expected else None
+        if not match or binding not in recommendation or supplier_identity(match[1])!=supplier_identity(supplier):
+            raise ValueError('reviewed award heading names a different supplier')
     scoped=text[label.end():].strip()
     if not quote.startswith(heading) or not scoped.startswith(quote):
         raise ValueError('reviewed award is not the first separately named initial scope')

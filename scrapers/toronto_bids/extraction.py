@@ -151,7 +151,7 @@ def extract_corpus(
             f"Unknown corpus {corpus!r}, expected one of: {', '.join(sorted(CORPORA))}"
         )
     query = (
-        f"SELECT sha256, text, url FROM background_pdf "
+        f"SELECT * FROM background_pdf "
         f"WHERE {sql_where} AND sha256 IS NOT NULL "
         f"ORDER BY url"
     )
@@ -176,7 +176,15 @@ def extract_corpus(
         if limit is not None and extracted_count >= limit:
             break
 
-        sha256, text, url = row["sha256"], row["text"], row["url"]
+        sha256, url = row["sha256"], row["url"]
+        from toronto_bids.pdf_text import source_text
+        try:
+            text = source_text(conn, row, recover=corpus == 'bd_report')
+            conn.commit()
+        except ValueError as exc:
+            stats['errors'] += 1
+            log(f"  FAILED text preparation {url}: {exc}")
+            continue
 
         skip = _skip_reason(text, url, labels, classifier)
         if skip is not None:
@@ -520,6 +528,7 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
         CompositeAward,
     )
     from toronto_bids.store.db import rebuild_rows, upsert_row
+    from toronto_bids.pdf_text import source_text, record_for
 
     sql_where = CORPORA.get(corpus)
     if sql_where is None:
@@ -733,13 +742,20 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
         for row in rows:
             if use_city_review(row):
                 continue
+            text_record=record_for(conn,row['sha256'])
+            if text_record and text_record['method']=='tesseract':
+                admission.append(dict(reference=row['reference'], accepted=False, call_number=None,
+                    reason='OCR-derived facts require an original-image source review', url=row['url'],
+                    sha256=row['sha256'], prices_withheld=0, statuses_withheld=0))
+                contracts_refused += 1
+                continue
             context = conn.execute(
-                "SELECT bp.text, ci.title FROM background_pdf bp "
+                "SELECT bp.*, ci.title FROM background_pdf bp "
                 "LEFT JOIN council_item ci ON ci.reference=bp.reference WHERE bp.url=?",
                 (row['url'],),
             ).fetchone()
             derived, decision = admit_report(
-                reference=row['reference'], title=context['title'], text=context['text'],
+                reference=row['reference'], title=context['title'], text=source_text(conn, context),
                 result=json.loads(row['result_json']),
             )
             decision.update(url=row['url'], sha256=row['sha256'])
@@ -1025,12 +1041,15 @@ def _count_uncached(conn, corpus, labels, classifier=_DEFAULT_CLASSIFIER) -> int
     classifier = _resolve_classifier(corpus, classifier)
     sql_where = CORPORA[corpus]
     rows = conn.execute(
-        f"SELECT sha256, text, url FROM background_pdf "
+        f"SELECT * FROM background_pdf "
         f"WHERE {sql_where} AND sha256 IS NOT NULL",
     ).fetchall()
     count = 0
     for row in rows:
-        if _skip_reason(row["text"], row["url"], labels, classifier) is not None:
+        from toronto_bids.pdf_text import source_text
+        text = source_text(conn, row, recover=corpus == 'bd_report')
+        conn.commit()
+        if _skip_reason(text, row["url"], labels, classifier) is not None:
             continue
         if not is_extracted(conn, row["sha256"], EXTRACTOR_VERSION):
             count += 1

@@ -57,9 +57,14 @@ def audit(conn):
     cache = {(r['sha256'], r['extractor_version']): r['result_json']
              for r in conn.execute('SELECT * FROM extraction_cache')}
     reports = defaultdict(list)
+    has_derived_text=bool(conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='pdf_text'").fetchone())
     for r in conn.execute('SELECT * FROM background_pdf ORDER BY url'):
         if r['kind'] not in _CITY_KINDS:
             continue
+        if has_derived_text:
+            from toronto_bids.pdf_text import source_text
+            r=dict(r)
+            r['text']=source_text(conn,r)
         targets = associations[r['url']] & missing
         if r['document_number'] in missing:
             targets.add(r['document_number'])

@@ -86,6 +86,7 @@ _CONFLICT_TARGETS = {
 # The published table set — the export dictionary (#168) and counts() share this so they
 # cannot drift. Ordered for a deterministic schema document.
 EXPORT_TABLES = [
+    "pdf_text",
     "solicitation",
     "award",
     "noncompetitive",

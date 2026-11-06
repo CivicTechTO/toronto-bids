@@ -21,7 +21,7 @@ jobs:
       # without it; install it so they actually run here.
       - run: |
           sudo apt-get update
-          sudo apt-get install -y poppler-utils
+          sudo apt-get install -y poppler-utils tesseract-ocr tesseract-ocr-eng
       # --locked fails if pyproject.toml changed without re-locking.
       - run: uv sync --locked
       - run: uv run pytest
