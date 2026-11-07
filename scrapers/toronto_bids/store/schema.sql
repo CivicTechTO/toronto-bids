@@ -639,6 +639,17 @@ CREATE TABLE IF NOT EXISTS city_bid_evidence (
     first_seen TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- Programmatic whole-report participation admission from the bulk City index.
+-- This is separate from human-reviewed cache projections and their registry.
+CREATE TABLE IF NOT EXISTS city_bulk_bid_evidence (
+    proof_sha256 TEXT PRIMARY KEY,
+    document_number TEXT NOT NULL,
+    report_url TEXT NOT NULL,
+    report_sha256 TEXT NOT NULL,
+    proof_json TEXT NOT NULL,
+    first_seen TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 -- Source-reviewed scoped responses. Legacy bid rows remain participation summaries.
 CREATE TABLE IF NOT EXISTS city_scoped_bid_evidence (
     proof_sha256 TEXT PRIMARY KEY,

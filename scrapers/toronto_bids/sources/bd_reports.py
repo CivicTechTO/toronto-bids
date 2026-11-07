@@ -47,7 +47,9 @@ def _save(path, manifest):
 
 
 class CaptureDeferred(RuntimeError):
-    pass
+    def __init__(self, message, retry_after=120):
+        super().__init__(message)
+        self.retry_after=retry_after
 
 
 class PacedHttp:
@@ -79,7 +81,7 @@ class PacedHttp:
                                 raise CaptureDeferred('Unusable Retry-After; defer the capture') from error
                         delay = max(delay, retry)
                 if delay > 60:
-                    raise CaptureDeferred(f'Server requests at least {delay:g}s; resume later') from exc
+                    raise CaptureDeferred(f'Server requests at least {delay:g}s; resume later',retry_after=delay) from exc
                 if attempt == 2:
                     raise CaptureDeferred('Server/transport failure persists; resume later') from exc
                 self.sleep(delay)
