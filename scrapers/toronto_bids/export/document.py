@@ -268,6 +268,8 @@ def build_export_document(conn, generated_at: str | None = None) -> dict:
             conn, "SELECT * FROM pdf_text ORDER BY sha256")],
         "city_scoped_bid_evidence": [_parse_json(row, "proof_json") for row in _rows(
             conn, "SELECT * FROM city_scoped_bid_evidence ORDER BY proof_sha256")],
+        "city_bulk_bid_evidence": [_parse_json(row, "proof_json") for row in _rows(
+            conn, "SELECT * FROM city_bulk_bid_evidence ORDER BY proof_sha256")],
         "city_bid_evidence": [_parse_json(row, "proof_json") for row in _rows(
             conn, "SELECT * FROM city_bid_evidence ORDER BY proof_sha256")],
     }
