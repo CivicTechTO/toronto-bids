@@ -6,6 +6,15 @@ from toronto_bids.sources.bid_award_panel import match_on_supplier_and_value
 from toronto_bids.linking.procurement import resolve_procurements
 
 
+@pytest.fixture(autouse=True)
+def isolated_crosswalk_registry(tmp_path,monkeypatch):
+ # Partial publisher fixtures exercise rejected joins independently of later approvals.
+ from toronto_bids.linking import city_crosswalk
+ registry=tmp_path/'crosswalk.json'
+ registry.write_text('{"proofs": []}')
+ monkeypatch.setattr(city_crosswalk,'PROOFS',registry)
+
+
 def put(conn,row):
  db.upsert_row(conn,row,overwrite=True)
 

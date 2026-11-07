@@ -9,12 +9,16 @@ Source assertions, ordinary compound proofs and explicit reviewed contexts remai
 - `publisher_native_call`: an original publisher record explicitly names the same native call in its award-details Call Number field. The typed call must be unique and the source agenda, solicitation type and issued/closed dates must agree.
 - `corroborated_compound`: the original agenda has one unambiguous native call and a named winner. Exact issued/closed dates, solicitation type, the full supplier name and the initial award's explicitly net-of-tax value identify one record in the complete original publisher population. Punctuation/legal-form variants are allowed; spelling, geography, joint-venture components, generic token overlap, date tolerances and rounded prices are not.
 
-Two additional compound proof classes require committed review annotations; discovery keeps the ordinary gates:
+Additional compound proof classes require committed review annotations; discovery keeps the ordinary gates:
 
 - `reviewed_type_discrepancy`: the annotation records both conflicting original methods and why identity is still established. Exact issued/closed dates, full supplier identity and the initial net award must identify one record across **all** publisher methods, in both the original population and current held facts. The raw types remain unchanged. A method disagreement alone never authorizes a match.
 - `reviewed_initial_award`: a combined title names several winners, while a separately named first initial award identifies one full supplier and its exact amount. Literal recommendation, supplier heading and net award quotations keep the relation in one scope; later options, other winners and combined totals cannot substitute for it. All ordinary date, method, global uniqueness and competing-call checks still apply.
 
-Literal `Request of Quotation`, colonless labelled dates and a typed native call printed with spaces are source wording/typography variants. They still require the exact date values and agreement with the labelled Call Number field. These recognizers do not map a numeric document key from a call.
+`reviewed_recommended_supplier` uses one literal `Recommended Bidder`, `Recommended Bidder or Proponent`, or `Recommended Proponent` field immediately before the first initial award. This handles abbreviated or long titles without guessing supplier aliases. The committed annotation pins that whole field and the initial net award quotation, including following miscellaneous or allowance qualifications. Exact supplier, amount, issued/closed dates and global uniqueness still apply; conflicting methods must be explicitly recorded and uniqueness checked across all methods. Recommendation amounts establish identity only; they never overwrite submitted bid prices.
+
+Literal `Request of Quotation`, colonless labelled dates, ordinal day suffixes, labelled `Closed on` dates, `Sept` abbreviations and a typed native call printed with spaces are source wording/typography variants. They still require the exact date values and agreement with the labelled Call Number field. These recognizers do not map a numeric document key from a call.
+
+Literal `net of applicable taxes` and `excluding all applicable taxes` are equivalent explicit net roles. `Net of HST recoveries`, tax-inclusive amounts and unlabeled prices remain different roles. No rounding tolerance is introduced.
 
 The net award witness is bounded to the labelled initial award section. A later option value cannot be selected to match the feed. No tax conversion or contract-period aggregation is performed. The publisher's contract-execution/award-authority date is not a council-decision date and is not used as that proof.
 
