@@ -14,6 +14,21 @@ def repair_city_identities(conn):
     repaired = 0
     for proof in json.loads(PATH.read_text())['repairs']:
         ref, doc = proof['reference'], proof['rejected_document_number']
+        superseded=proof.get('superseded_by_crosswalk_sha256')
+        if superseded:
+            applied=conn.execute('SELECT proof_json FROM city_crosswalk_evidence WHERE proof_sha256=? AND reference=? AND document_number=?',
+                                 (superseded,ref,doc)).fetchone()
+            if applied:
+                from toronto_bids.linking import city_crosswalk
+                evidence=json.loads(applied['proof_json'])
+                registered=json.loads(city_crosswalk.PROOFS.read_text())['proofs']
+                if (city_crosswalk.digest(evidence)!=superseded or not any(
+                        p['reference']==ref and p['document_number']==doc and city_crosswalk.digest(p)==superseded for p in registered)):
+                    raise ValueError('City hold supersession proof changed: '+ref)
+                # The enclosing resolver revalidates this registered proof before
+                # any merge commits. Do not split an already reviewed identity
+                # afresh on every replay; retain the original hold as history.
+                continue
         link = conn.execute('SELECT document_number FROM solicitation_link WHERE reference=?', (ref,)).fetchone()
         keys = {(r['namespace'], r['value']): r['procurement_id']
                 for r in conn.execute("SELECT * FROM procurement_key WHERE namespace IN ('city_document','city_council_bid')")}

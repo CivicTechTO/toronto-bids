@@ -57,6 +57,19 @@ def identity_record(raw: dict) -> dict:
     }
 
 
+def award_identity_record(raw: dict) -> dict:
+    """Current award publication facts; never interpreted as council decision dates.
+
+    Keep both date fields, including removals, so archived award rows cannot hide
+    a correction. Ordinary source proofs retain their established projection.
+    """
+    record=identity_record(raw)
+    awards=[{k:a.get(k) for k in ('Successful_Bidder','Award_Amount','Date_Awarded','AwardedDate')}
+            for a in raw.get('Awarded_Suppliers') or []]
+    record['Awarded_Suppliers']=sorted(awards,key=lambda a:json.dumps(a,sort_keys=True,ensure_ascii=False))
+    return record
+
+
 def normalize_solicitation(raw: dict) -> Iterable[Row]:
     doc = normalize_document_number(raw.get("Solicitation_Document_Number"))
     if doc is None:
@@ -81,6 +94,7 @@ def normalize_solicitation(raw: dict) -> Iterable[Row]:
         ariba_posting_link=_clean(raw.get("Ariba_Discovery_Posting_Link")),
         odata_id=_clean(raw.get("id")),
         publisher_identity_json=json.dumps(identity_record(raw),ensure_ascii=False,sort_keys=True,separators=(',',':')),
+        publisher_award_identity_json=json.dumps(award_identity_record(raw),ensure_ascii=False,sort_keys=True,separators=(',',':')),
         source="odata",
     )
     for supplier in raw.get("Awarded_Suppliers") or []:

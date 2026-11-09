@@ -26,7 +26,9 @@
       "source_url": "https://www.toronto.ca/legdocs/mmis/2014/bd/bgrd/backgroundfile-70266.pdf",
       "source_sha256": "806507cb385b812984ae77d9654b0fbd8a8249a1a76dca4de9066eeabdc0f08a",
       "target_issue_date": "2014-04-14",
-      "reason": "Supplier spelling/joint-venture identity is not independently established; generic construction-token match is withheld pending reviewed publisher identity evidence. This does not declare the two procurements different."
+      "reason": "Supplier spelling/joint-venture identity is not independently established; generic construction-token match is withheld pending reviewed publisher identity evidence. This does not declare the two procurements different.",
+      "superseded_by_crosswalk_sha256": "3fcc88d209fc9e074eeff88879cd2897f383cb731df6af0eea5dd0e0917b0cd2",
+      "supersession_reason": "The original hold did not assert distinct procurements. The committed independent publisher proof now establishes this identity; retain the hold and split history without repeatedly recreating a split."
     },
     {
       "reference": "2017.BA55.8",
@@ -35,7 +37,9 @@
       "source_url": "https://www.toronto.ca/legdocs/mmis/2017/ba/bgrd/backgroundfile-109958.pdf",
       "source_sha256": "683cfe406e07eac54f40689e35197d228ee191d4f4531c0c2750f9ca60540988",
       "target_issue_date": "2017-10-13",
-      "reason": "Supplier spelling/joint-venture identity is not independently established; generic construction-token match is withheld pending reviewed publisher identity evidence. This does not declare the two procurements different."
+      "reason": "Supplier spelling/joint-venture identity is not independently established; generic construction-token match is withheld pending reviewed publisher identity evidence. This does not declare the two procurements different.",
+      "superseded_by_crosswalk_sha256": "516bd5a7a68b4025db3c5e96655b83c3a0def2b03a91e0b3bfa3f3d8336346bc",
+      "supersession_reason": "The original hold did not assert distinct procurements. The committed independent publisher proof now establishes this identity; retain the hold and split history without repeatedly recreating a split."
     }
   ]
 }

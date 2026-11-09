@@ -23,6 +23,7 @@ class Solicitation:
     ariba_posting_link: str | None = None
     odata_id: str | None = None
     publisher_identity_json: str | None = None  # latest original OData identity fields, separate from archived award lines
+    publisher_award_identity_json: str | None = None  # current publisher award publication dates and pairs
     source: str = ""
 
 

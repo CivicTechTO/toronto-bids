@@ -276,8 +276,19 @@ def reviewed_links(conn, *, registry=None, agendas=None, persist=True):
         calls=_title_calls(item['title'])
         for call in calls:call_refs[call].add(item['reference'])
     directory=Path(agendas or config.COUNCIL_AGENDAS_DIR)
+    archived=None
+    if any(p['proof_class']=='archived_publisher_award' for p in applicable):
+        from toronto_bids.linking import city_archived_awards
+        archived=city_archived_awards.load_evidence(bundle,registry or PROOFS)
+        archived_current=city_archived_awards.current_index(conn)
     for proof in applicable:
         ref,doc=proof['reference'],proof['document_number']
+        if proof['proof_class']=='archived_publisher_award':
+            ph=digest(proof)
+            prior=conn.execute('SELECT proof_json FROM city_crosswalk_evidence WHERE proof_sha256=?',(ph,)).fetchone()
+            city_archived_awards.validate(proof,conn,archived,agendas=directory,index=archived_current,call_refs=call_refs,prior=prior)
+            approved.append((proof,ph))
+            continue
         item=conn.execute('SELECT title FROM council_item WHERE reference=?',(ref,)).fetchone()
         sol=conn.execute('SELECT * FROM solicitation WHERE document_number=?',(doc,)).fetchone()
         if not item or not sol:continue
