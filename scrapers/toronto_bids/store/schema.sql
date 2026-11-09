@@ -55,6 +55,7 @@ CREATE TABLE IF NOT EXISTS solicitation (
     buyer_phone          TEXT,
     wards                TEXT,
     ariba_posting_link   TEXT,
+    publisher_award_identity_json TEXT, -- separate latest award-publication date projection; ordinary proofs unchanged
     publisher_identity_json TEXT, -- latest OData identity projection; archive awards alone cannot detect source corrections
     odata_id             TEXT,
     source               TEXT,

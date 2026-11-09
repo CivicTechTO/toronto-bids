@@ -365,3 +365,95 @@ def test_separately_recommended_schedule_binds_only_its_first_initial_award(chan
         assert supplier=='Alpha Construction Ltd' and value.group(1)=='100,000.55'
     else:
         with pytest.raises(ValueError):cw._reviewed_initial_award(text,review)
+
+
+def recommended_proposal(source=HTML,row=None,extra=(),**changes):
+    row=row or record()
+    text=cw.sections(source,REF.rsplit('.',1)[0])[REF][0]
+    recommendation=cw._RECOMMENDED.search(text)
+    review=dict(kind='recommended_supplier',recommendation=recommendation.group() if recommendation else '',
+                award_quotation=changes.pop('award_quotation','$100,000.55 net of all applicable taxes and charges'),
+                justification='Original labeled recommendation supplies the full supplier; exact dates, method and initial net award remain required.',**changes)
+    return cw.propose(reference=REF,title=TITLE,source=source,publisher=row,index=cw.publisher_index([row,*extra]),
+                      source_sha256=hashlib.sha256(source).hexdigest(),snapshot_sha256='snapshot',review=review)
+
+
+def test_reviewed_recommendation_preserves_full_name_instead_of_abbreviated_title():
+    row=record(Awarded_Suppliers=[dict(Successful_Bidder='Alpha Construction Canada Limited',Award_Amount='100000.55')])
+    source=HTML.replace(b'Recommended Bidder: Alpha Construction Ltd.',b'Recommended Bidder: Alpha Construction Canada Ltd.')
+    with pytest.raises(ValueError,match='global publisher'):proposal(row,source)
+    proof=recommended_proposal(source,row)
+    assert proof['proof_class']=='reviewed_recommended_supplier'
+    assert proof['report_supplier']=='Alpha Construction Canada Ltd.'
+    assert proof['source_title']==TITLE
+
+
+@pytest.mark.parametrize('text',[b'Alpha Construction Ltd. and Beta Ltd.',b'Alpha Construction Ltd. for Lot A',b'Alpha Construction Ontario Ltd.'])
+def test_recommended_role_does_not_strip_scopes_or_fuzz_names(text):
+    source=HTML.replace(b'Recommended Bidder: Alpha Construction Ltd.',b'Recommended Bidder: '+text)
+    with pytest.raises(ValueError,match='global publisher'):recommended_proposal(source)
+
+
+def test_recommended_role_retains_global_ambiguity_and_explicit_method_review():
+    row=record(Solicitation_Document_Type='RFT')
+    with pytest.raises(ValueError,match='discrepancy changed'):recommended_proposal(row=row)
+    proof=recommended_proposal(row=row,source_type='RFQ',publisher_type='RFT')
+    assert proof['solicitation_type']=='RFT'
+    other=record(id='other',Solicitation_Document_Number='9999999999')
+    with pytest.raises(ValueError,match='global publisher'):
+        recommended_proposal(row=row,extra=[other],source_type='RFQ',publisher_type='RFT')
+
+
+@pytest.mark.parametrize('wording',[b'excluding all applicable taxes and charges',b'net of applicable taxes and charges'])
+def test_equivalent_explicit_net_tax_roles(wording):
+    source=HTML.replace(b'net of all applicable taxes and charges',wording)
+    assert proposal(source=source)['award_amount']=='100000.55'
+
+
+@pytest.mark.parametrize('wording',[b'including all applicable taxes',b'net of HST recoveries',b'excluding HST'])
+def test_different_tax_roles_do_not_supply_initial_net_award(wording):
+    source=HTML.replace(b'net of all applicable taxes and charges',wording)
+    with pytest.raises(ValueError):proposal(source=source)
+
+
+def test_exact_labeled_dates_accept_typography_but_not_different_calendar_values():
+    source=HTML.replace(b'Issued: March 1, 2014 Call Closed: March 20, 2014',b'Issued March 1st, 2014; Closed on March 20th, 2014')
+    assert proposal(source=source)['issued_date']=='2014-03-01'
+    with pytest.raises(ValueError,match='issued/closed'):proposal(record(Closing_Date='2014-03-21'),source)
+    assert cw._date_witness('Closed: Sept. 20, 2014','Closed','2014-09-20')
+    assert cw._date_witness('Closed: Sept. 20, 2014','Closed','2014-03-20') is None
+
+
+ROLE_REVIEW=json.loads((Path(__file__).parent/'fixtures/city_source_role_review.json').read_text())['cases']
+
+
+@pytest.mark.parametrize('case',ROLE_REVIEW,ids=lambda c:c['reference'])
+def test_bulk_source_role_review(case):
+    from html import escape
+    registry=json.loads(cw.PROOFS.read_text())
+    population=json.loads(gzip.decompress((cw.PROOFS.parent/registry['publisher_population_file']).read_bytes()))
+    source=('<div>'+escape(case['reference'].split('.',1)[1]+' - '+case['source_text'])+'</div>').encode()
+    proof=cw.propose(reference=case['reference'],title=case['source_title'],source=source,
+                     publisher=case['publisher_record'],index=cw.publisher_index(population),
+                     source_sha256=hashlib.sha256(source).hexdigest(),snapshot_sha256=registry['snapshot_sha256'],review=case['review'])
+    assert proof['proof_class']==case['expected_proof_class']
+    assert proof['document_number']==case['document_number']
+
+
+
+def test_reviewed_role_preserves_literal_initial_award_qualifications():
+    source=HTML.replace(b'taxes and charges</p>',b'taxes and charges including additional 1 percent for miscellaneous</p>')
+    with pytest.raises(ValueError,match='qualification changed'):recommended_proposal(source)
+    proof=recommended_proposal(source,award_quotation='$100,000.55 net of all applicable taxes and charges including additional 1 percent for miscellaneous')
+    assert proof['witnesses']['initial_award_scope'].endswith('including additional 1 percent for miscellaneous')
+
+
+def test_recommended_role_replay_checks_current_ambiguity(conn,tmp_path,monkeypatch):
+    _,registry=setup(conn,tmp_path,monkeypatch)
+    bundle=json.loads(registry.read_text());bundle['proofs']=[recommended_proposal()]
+    registry.write_text(json.dumps(bundle))
+    resolve_procurements(conn)
+    assert conn.execute('SELECT proof_class FROM city_crosswalk_evidence').fetchone()[0]=='reviewed_recommended_supplier'
+    db.upsert_row(conn,Solicitation('9999999999',issue_date='2014-03-01',submission_deadline='2014-03-20',rfx_type='RFQ'),overwrite=True)
+    db.upsert_row(conn,Award('9999999999',supplier_name_raw='Alpha Construction Limited',award_amount='100000.55',source='odata'),overwrite=True)
+    with pytest.raises(ValueError,match='ambiguous'):resolve_procurements(conn)
