@@ -132,6 +132,14 @@ def build_export_document(conn, generated_at: str | None = None) -> dict:
                 "url": report["url"],
             })
 
+    # A composite item may contain several independently identified contracts.
+    # Attach its source to the reviewed child without creating an item-wide bridge.
+    for receipt in _rows(conn, "SELECT document_number,report_url FROM city_native_bid_evidence ORDER BY document_number,report_url"):
+        doc=receipt['document_number'];url=receipt['report_url']
+        if doc in sol_docs and not any(d.get('url')==url for d in documents_by_doc.get(doc,[])):
+            name=url.rsplit('/',1)[-1]
+            documents_by_doc.setdefault(doc,[]).append(dict(source='staff_report',name=name,path=name,type='pdf',size_bytes=None,url=url))
+
     # Bids split by which identifier they carry. A bid with a council `reference` (Bid Award
     # Panel era) nests under its council item, below. A reference-null bid (Award Summary Form,
     # the post-panel successor #145) has no council item — it nests under its solicitation by
@@ -272,4 +280,6 @@ def build_export_document(conn, generated_at: str | None = None) -> dict:
             conn, "SELECT * FROM city_bulk_bid_evidence ORDER BY proof_sha256")],
         "city_bid_evidence": [_parse_json(row, "proof_json") for row in _rows(
             conn, "SELECT * FROM city_bid_evidence ORDER BY proof_sha256")],
+        "city_native_bid_evidence": [_parse_json(row, "proof_json") for row in _rows(
+            conn, "SELECT * FROM city_native_bid_evidence ORDER BY proof_sha256")],
     }

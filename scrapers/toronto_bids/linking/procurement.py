@@ -81,7 +81,13 @@ def _resolve(conn):
     replay_scoped_bids(conn)
     from toronto_bids.linking.city_crosswalk import reviewed_links
     crosswalks = reviewed_links(conn)
+    from toronto_bids.linking.city_native_participation import replay as replay_native_participation
+    native_participation = replay_native_participation(conn)
     ids = _Identities(conn)
+    for proof in native_participation:
+        ids.join(ids.get('city_call', proof['call_number']), ids.get('city_document', proof['document_number']),
+                 json.dumps(dict(rule='reviewed_native_call_participation', call_number=proof['call_number'],
+                                 document_number=proof['document_number'], reference=proof['reference'])))
     # Derive all approved links before assigning FKs, so a late join cannot leave a fact
     # pointing at an alias. A conflicting reference stays unjoined to document identities.
     ref_docs = defaultdict(set)
@@ -152,6 +158,10 @@ def _resolve(conn):
         conn.executemany(f'UPDATE {table} SET procurement_id=? WHERE rowid=? AND procurement_id IS NOT ?',
                          [(pid, rowid, pid) for pid, rowid in updates])
 
+    for proof in native_participation:
+        pid = ids.get('city_document', proof['document_number'])
+        ref_ids[proof['reference']].add(pid)
+        document_ids[proof['report_url']].add(pid)
     conn.execute('DELETE FROM procurement_document')
     for row in conn.execute('SELECT id,url,reference,document_number FROM background_pdf ORDER BY id'):
         candidates = set(document_ids[row['url']])

@@ -80,6 +80,8 @@ Normalizers read feed fields with `raw.get(...)`, so a field the City renames si
 
 For lots, categories, alternative submissions, or scoped price/outcome reviews, read `docs/scoped-city-bids.md` before changing admission, replay or exports.
 
+For native-call participation inside multi-contract composite reports, read `docs/city-native-participation.md` before changing review admission, canonical links or export.
+
 For image-only BD reports, OCR provenance or recognition corrections, read `docs/image-pdf-text.md` before changing preparation or admission.
 
 ### Document extraction (`extraction.py`, `extract.py`, #205/#213)

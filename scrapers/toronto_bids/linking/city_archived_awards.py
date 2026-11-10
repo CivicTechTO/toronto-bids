@@ -166,25 +166,34 @@ def current_index(conn):
     return index
 
 
-def validate(proof,conn,evidence,*,agendas,index,call_refs,prior):
-    doc=proof['document_number'];ref=proof['reference'];publisher=evidence.by_document.get(doc)
+def validate_current_award(conn,evidence,doc,source_sha256,row_ordinal,index):
+    """Check an original award against current facts without assuming item scope."""
+    publisher=evidence.by_document.get(doc)
     if publisher is None:raise ValueError('archived award publisher record absent')
-    arc=proof['archived_award'];row,projected,key=evidence.assertion(arc['source']['sha256'],arc['row_ordinal'],publisher)
+    row,projected,key=evidence.assertion(source_sha256,row_ordinal,publisher)
+    sol=conn.execute('SELECT * FROM solicitation WHERE document_number=?',(doc,)).fetchone()
+    if (not sol or sol['odata_id']!=projected['id']
+            or sol['issue_date']!=projected.get('Issue_Date') or sol['submission_deadline']!=projected.get('Closing_Date')
+            or sol['rfx_type']!=projected.get('Solicitation_Document_Type')):
+        raise ValueError('archived award source context changed: '+doc)
+    latest=sol['publisher_award_identity_json']
+    if not latest or json.loads(latest)!=projected:raise ValueError('current publisher award dates / pairs changed or missing: '+doc)
+    base=sol['publisher_identity_json']
+    if not base or json.loads(base)!=identity_record(projected):
+        raise ValueError('current publisher projections disagree: '+doc)
+    if index.get(key)!={(projected['id'],doc)}:raise ValueError('current published award facts changed or ambiguous: '+doc)
+    return row,projected,key
+
+
+def validate(proof,conn,evidence,*,agendas,index,call_refs,prior):
+    doc=proof['document_number'];ref=proof['reference'];arc=proof['archived_award']
+    row,projected,key=validate_current_award(conn,evidence,doc,arc['source']['sha256'],arc['row_ordinal'],index)
+    publisher=evidence.by_document[doc]
     if (proof['call_number']!=row['call_number'] or proof['publisher_record_sha256']!=cw.digest(projected)
             or proof['snapshot_sha256']!=evidence.snapshot_sha256 or arc['row_sha256']!=row['row_sha256']):
         raise ValueError('archived award proof changed')
-    sol=conn.execute('SELECT * FROM solicitation WHERE document_number=?',(doc,)).fetchone()
     item=conn.execute('SELECT title FROM council_item WHERE reference=?',(ref,)).fetchone()
-    if (not sol or not item or item['title']!=proof['source_title'] or sol['odata_id']!=projected['id']
-            or sol['issue_date']!=projected.get('Issue_Date') or sol['submission_deadline']!=projected.get('Closing_Date')
-            or sol['rfx_type']!=projected.get('Solicitation_Document_Type')):
-        raise ValueError('archived award source context changed: '+ref)
-    latest=sol['publisher_award_identity_json']
-    if not latest or json.loads(latest)!=projected:raise ValueError('current publisher award dates / pairs changed or missing: '+ref)
-    base=sol['publisher_identity_json']
-    if not base or json.loads(base)!=identity_record(projected):
-        raise ValueError('current publisher projections disagree: '+ref)
-    if index.get(key)!={(projected['id'],doc)}:raise ValueError('current published award facts changed or ambiguous: '+ref)
+    if not item or item['title']!=proof['source_title']:raise ValueError('archived award source context changed: '+ref)
     if call_refs[proof['call_number']]!={ref}:raise ValueError('archived award call has multiple council contexts: '+ref)
     path=Path(agendas)/(ref.rsplit('.',1)[0]+'.html')
     if path.exists():

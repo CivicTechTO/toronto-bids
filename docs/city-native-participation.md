@@ -1,0 +1,15 @@
+# Native-call participation inside composite City reports
+
+A pre-2013 Bid Committee report can contain several contracts. `linking/city_native_participation.py` replays source-reviewed participation for an individual printed Call Number without treating its council item as one procurement.
+
+The shared extraction cache supplies the candidate observation. A new review requires the original PDF bytes and pins the whole report/text/cache, the selected contract indices and the complete original block from its labelled Call Number to the next contract. Every cached contract naming that call must be accounted for. The literal count field must establish exactly one submission, and the same block must explicitly name one recommended bidder/proponent matching the cached party. Mixed, informal/additional submissions, No Bid outcomes and stage conflicts remain held. Source heading typography is recognized; another recommended firm cannot be discarded as a scope qualifier.
+
+A single party may have repeated cached observations for separately labelled price schedules. Its source name and complete schedule qualification are retained. Those observations support one event participant, not extra firms, assumed submissions in other schedules or a combined price. All model prices and compliance claims remain in immutable source/cache evidence and are withheld from the new unpriced participation row.
+
+Identity is independently established by the original City's archived award publication. Exact full supplier, printed award date and amount must remain unique against the complete frozen and current publisher populations and the held original portal views. These are award facts, not submitted prices. The source call in the reviewed PDF block must be the same printed native call. No numeric Call Number conversion or fuzzy supplier match approves an identity.
+
+`data/city_native_bid_reviews.json` holds the reviewed proposals. `city_native_bid_evidence` preserves their immutable JSON/hash. Removed or changed applied reviews, changed current publisher facts, altered source/cache bytes, unaccounted observations and changed participation rows refuse replay before canonical changes commit. A moved archive may locate the original PDF at the conventional local path only after matching its hash; accepted evidence can travel with a release lacking local PDFs.
+
+The `bid` projection has an explicit City document and no broad council reference. The proof retains the original reference, PDF and call. Canonical resolution joins only that native-call key to its independently proven City document; sibling calls keep their identities. The source PDF and council item retain their many-procurement associations. JSON nests the unpriced bid and original PDF under the City solicitation and exports the proof ledger; CSV/Parquet include the new evidence table.
+
+The exhaustive recovery work remains open. The initial 19-case batch is a component of that workload, not a standalone PR or proof that other records are unavailable. See the dated validation note for the actual production-copy outcome.

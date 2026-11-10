@@ -1,0 +1,890 @@
+{
+  "version": 1,
+  "extractor_version": "v1-b63aa8c835ae",
+  "reviews": [
+    {
+      "version": 1,
+      "source": "city_native_review",
+      "source_role": "single_scoped_submission",
+      "document_number": "6036113201",
+      "call_number": "6036-11-3201",
+      "reference": "2011.BD50.1",
+      "agenda_title": "Contract Awards - November 23, 2011 - Composite Report",
+      "report_url": "https://www.toronto.ca/legdocs/mmis/2011/bd/bgrd/backgroundfile-42418.pdf",
+      "report_sha256": "68bf582bd055b82947b00ee92bc406f6f17d0e9620d723de2d73622aef1dde07",
+      "text_sha256": "9937cd1f3ca571d0565e122ea3837e1ed6530a3fec2fb30b9e66c4b5f868e04b",
+      "result_sha256": "72b518b1bc2d1648c66c0966e9827d4abc84bfee1fb756c860e3fe86b34ce1c9",
+      "extractor_version": "v1-b63aa8c835ae",
+      "contract_indices": [
+        2
+      ],
+      "scope_start": 7425,
+      "scope_end": 10579,
+      "scope_sha256": "aa35653ed7cc73dd7af0219043e0563dea2eeacb940d1b055488011c0a7636c3",
+      "supplier_name": "Almon Equipment Ltd.",
+      "submission_count_quotation": "One (1)",
+      "recommendation_quotation": "Recommended Bidder: Almon Equipment Ltd.",
+      "recommendation_scope_qualification": null,
+      "withheld_model_price": null,
+      "withheld_model_status": "compliant",
+      "withheld_model_observations": [
+        {
+          "contract_index": 2,
+          "raw_bid_index": 0,
+          "supplier_name": "Almon Equipment Ltd.",
+          "amount_raw": null,
+          "amount_basis": null,
+          "status": "compliant",
+          "rank": null
+        }
+      ],
+      "publisher_record_sha256": "e5c98036184fe1619a0f9cac09f91907d5195529ce61ffb1000dd6a6428271f4",
+      "snapshot_sha256": "11abaf3c42763717bcc9d490992c2076b85eeb17a09144ef94913db72b359005",
+      "archived_award": {
+        "source_sha256": "89aa4bb61dce4d4479972e1d44824517e8e0202e6549802bb6cf13c8d2934b12",
+        "row_ordinal": 530,
+        "row_sha256": "9de29f81fa1e42b19a43059642d98cc559175f9309bb965cb54748519c6200b1",
+        "source_url": "https://web.archive.org/web/20121025001805id_/https://wx.toronto.ca/inter/pmmd/callawards.nsf/posted+awards?openview",
+        "printed_award_date": "2012-01-01"
+      }
+    },
+    {
+      "version": 1,
+      "source": "city_native_review",
+      "source_role": "single_scoped_submission",
+      "document_number": "9172117309",
+      "call_number": "9172-11-7309",
+      "reference": "2011.BD52.1",
+      "agenda_title": "Contract Awards - December 7, 2011 - Composite Report",
+      "report_url": "https://www.toronto.ca/legdocs/mmis/2011/bd/bgrd/backgroundfile-42776.pdf",
+      "report_sha256": "84ffec0408fb87836db10fbb8d37427d65f619917d3d6976528862aa3163f471",
+      "text_sha256": "acadfc83cae453fdb2102579099d0634a93e55754797e105240e7de95091a345",
+      "result_sha256": "d9f8490b3c04114cb07a03139855d4d8317741283e1e46b0321a81da1ebe6142",
+      "extractor_version": "v1-b63aa8c835ae",
+      "contract_indices": [
+        0
+      ],
+      "scope_start": 2693,
+      "scope_end": 7163,
+      "scope_sha256": "df319a7cc704a22293be208663fd956b4075b8ebd24ab09928c25dcc33a31615",
+      "supplier_name": "SelectCore Ltd.",
+      "submission_count_quotation": "One (1)",
+      "recommendation_quotation": "Recommended Proponent: SelectCore Ltd.",
+      "recommendation_scope_qualification": null,
+      "withheld_model_price": null,
+      "withheld_model_status": "compliant",
+      "withheld_model_observations": [
+        {
+          "contract_index": 0,
+          "raw_bid_index": 0,
+          "supplier_name": "SelectCore Ltd.",
+          "amount_raw": null,
+          "amount_basis": null,
+          "status": "compliant",
+          "rank": 1
+        }
+      ],
+      "publisher_record_sha256": "5a2b5d674cab47512b96496a8f9fc915a1011666a9cb1bdb593408829c6d5b86",
+      "snapshot_sha256": "11abaf3c42763717bcc9d490992c2076b85eeb17a09144ef94913db72b359005",
+      "archived_award": {
+        "source_sha256": "89aa4bb61dce4d4479972e1d44824517e8e0202e6549802bb6cf13c8d2934b12",
+        "row_ordinal": 639,
+        "row_sha256": "2f999f87657b866cd8788118ce03900be446eed8065007e3f9ccaa136b4f6052",
+        "source_url": "https://web.archive.org/web/20121025001805id_/https://wx.toronto.ca/inter/pmmd/callawards.nsf/posted+awards?openview",
+        "printed_award_date": "2011-11-30"
+      }
+    },
+    {
+      "version": 1,
+      "source": "city_native_review",
+      "source_role": "single_scoped_submission",
+      "document_number": "6001113192",
+      "call_number": "6001-11-3192",
+      "reference": "2011.BD54.1",
+      "agenda_title": "Contract Awards - December 22, 2011 - Composite Report",
+      "report_url": "https://www.toronto.ca/legdocs/mmis/2011/bd/bgrd/backgroundfile-43368.pdf",
+      "report_sha256": "eff5262c4759d16d9585c77fd11e1ad25115f514c5c3392f61639a43c9fdd747",
+      "text_sha256": "b56947ed0f773e3541161ac264a7916d223e5d6247722280c9fac532e54e46f0",
+      "result_sha256": "8123ca0a0543e4a9e65c5496a81ca3ef251ed44d1462781040832662efba99cf",
+      "extractor_version": "v1-b63aa8c835ae",
+      "contract_indices": [
+        3
+      ],
+      "scope_start": 12776,
+      "scope_end": 15849,
+      "scope_sha256": "d04a04f514228b02f2136e2d6438a56dd7f7ba84d0ce81287573da4424c51879",
+      "supplier_name": "Turf Care Products",
+      "submission_count_quotation": "One (1)",
+      "recommendation_quotation": "Recommended Bidder: Turf Care Products",
+      "recommendation_scope_qualification": null,
+      "withheld_model_price": "$1,341,152.47 net of HST recoveries",
+      "withheld_model_status": "compliant",
+      "withheld_model_observations": [
+        {
+          "contract_index": 3,
+          "raw_bid_index": 0,
+          "supplier_name": "Turf Care Products",
+          "amount_raw": "$1,341,152.47 net of HST recoveries",
+          "amount_basis": "net_of_taxes",
+          "status": "compliant",
+          "rank": 1
+        }
+      ],
+      "publisher_record_sha256": "faf95e6f6fcc500992a07c738fe17f88f920d4c38ff4332d4c11251e0d63e015",
+      "snapshot_sha256": "11abaf3c42763717bcc9d490992c2076b85eeb17a09144ef94913db72b359005",
+      "archived_award": {
+        "source_sha256": "89aa4bb61dce4d4479972e1d44824517e8e0202e6549802bb6cf13c8d2934b12",
+        "row_ordinal": 425,
+        "row_sha256": "4ce00871ec4fb6758b84bd61575c557a4227e5623686c0d303b8f5b574c681dc",
+        "source_url": "https://web.archive.org/web/20121025001805id_/https://wx.toronto.ca/inter/pmmd/callawards.nsf/posted+awards?openview",
+        "printed_award_date": "2012-01-04"
+      }
+    },
+    {
+      "version": 1,
+      "source": "city_native_review",
+      "source_role": "single_scoped_submission",
+      "document_number": "6001113194",
+      "call_number": "6001-11-3194",
+      "reference": "2011.BD54.1",
+      "agenda_title": "Contract Awards - December 22, 2011 - Composite Report",
+      "report_url": "https://www.toronto.ca/legdocs/mmis/2011/bd/bgrd/backgroundfile-43368.pdf",
+      "report_sha256": "eff5262c4759d16d9585c77fd11e1ad25115f514c5c3392f61639a43c9fdd747",
+      "text_sha256": "b56947ed0f773e3541161ac264a7916d223e5d6247722280c9fac532e54e46f0",
+      "result_sha256": "8123ca0a0543e4a9e65c5496a81ca3ef251ed44d1462781040832662efba99cf",
+      "extractor_version": "v1-b63aa8c835ae",
+      "contract_indices": [
+        4
+      ],
+      "scope_start": 15849,
+      "scope_end": 19495,
+      "scope_sha256": "89df99ad2b1056c1179b0ce9565ff5dac260e9e635dd0c7ae4247cd16b0c09ca",
+      "supplier_name": "York Region Equipment Centre",
+      "submission_count_quotation": "One (1)",
+      "recommendation_quotation": "Recommended Bidder: York Region Equipment Centre",
+      "recommendation_scope_qualification": null,
+      "withheld_model_price": "$653,383.83 net of HST recoveries",
+      "withheld_model_status": "compliant",
+      "withheld_model_observations": [
+        {
+          "contract_index": 4,
+          "raw_bid_index": 0,
+          "supplier_name": "York Region Equipment Centre",
+          "amount_raw": "$653,383.83 net of HST recoveries",
+          "amount_basis": "net_of_taxes",
+          "status": "compliant",
+          "rank": 1
+        }
+      ],
+      "publisher_record_sha256": "5bfa762f2ee2114947a03b3deb10c9cddc832aa427abb8e5a8a11e932fc7525a",
+      "snapshot_sha256": "11abaf3c42763717bcc9d490992c2076b85eeb17a09144ef94913db72b359005",
+      "archived_award": {
+        "source_sha256": "89aa4bb61dce4d4479972e1d44824517e8e0202e6549802bb6cf13c8d2934b12",
+        "row_ordinal": 426,
+        "row_sha256": "33df947adfa05b903ee104f27900edc9b399a8460b66be6abfa24edf6924a083",
+        "source_url": "https://web.archive.org/web/20121025001805id_/https://wx.toronto.ca/inter/pmmd/callawards.nsf/posted+awards?openview",
+        "printed_award_date": "2012-01-04"
+      }
+    },
+    {
+      "version": 1,
+      "source": "city_native_review",
+      "source_role": "single_scoped_submission",
+      "document_number": "0505110206",
+      "call_number": "0505-11-0206",
+      "reference": "2012.BD57.1",
+      "agenda_title": "Contract Awards - January 18, 2012 - Composite Report",
+      "report_url": "https://www.toronto.ca/legdocs/mmis/2012/bd/bgrd/backgroundfile-44326.pdf",
+      "report_sha256": "70d584729fae5d7a0e97414da26c08f5b0a8511aa769d6a6d5ad633f83cc8d45",
+      "text_sha256": "97fced9a0b1bb01cb0b7123870bbf94a88103b02f72642d1c5c41706b5f3c570",
+      "result_sha256": "08c2b95867a3d49dd7f7d66051cea2a8aa13d5421ad99f8670fd61fd438c9bad",
+      "extractor_version": "v1-b63aa8c835ae",
+      "contract_indices": [
+        1
+      ],
+      "scope_start": 5214,
+      "scope_end": 8530,
+      "scope_sha256": "e906c8bd2dbf93a1417361874eb574baa0e6ab462cb3498c3028ab075489309c",
+      "supplier_name": "Zoll Medical Canada Inc.",
+      "submission_count_quotation": "One (1)",
+      "recommendation_quotation": "Recommended Bidder: Zoll Medical Canada Inc.",
+      "recommendation_scope_qualification": null,
+      "withheld_model_price": "$216,540.00",
+      "withheld_model_status": "compliant",
+      "withheld_model_observations": [
+        {
+          "contract_index": 1,
+          "raw_bid_index": 0,
+          "supplier_name": "Zoll Medical Canada Inc.",
+          "amount_raw": "$216,540.00",
+          "amount_basis": "net_of_taxes",
+          "status": "compliant",
+          "rank": 1
+        }
+      ],
+      "publisher_record_sha256": "561c316de8cc3f89c064cc5ec2ae31c90a0c07f21984ccf3da67c715d2e2c9ee",
+      "snapshot_sha256": "11abaf3c42763717bcc9d490992c2076b85eeb17a09144ef94913db72b359005",
+      "archived_award": {
+        "source_sha256": "89aa4bb61dce4d4479972e1d44824517e8e0202e6549802bb6cf13c8d2934b12",
+        "row_ordinal": 365,
+        "row_sha256": "4411ce06f4bec83756baaafef1a34bdf9355e447146ef94d26e5c827e1ba9abd",
+        "source_url": "https://web.archive.org/web/20121025001805id_/https://wx.toronto.ca/inter/pmmd/callawards.nsf/posted+awards?openview",
+        "printed_award_date": "2012-01-19"
+      }
+    },
+    {
+      "version": 1,
+      "source": "city_native_review",
+      "source_role": "single_scoped_submission",
+      "document_number": "3913110190",
+      "call_number": "3913-11-0190",
+      "reference": "2012.BD59.1",
+      "agenda_title": "Contract Awards - February 1, 2012 - Composite Report",
+      "report_url": "https://www.toronto.ca/legdocs/mmis/2012/bd/bgrd/backgroundfile-44741.pdf",
+      "report_sha256": "77555945e9b55679a9226d5531091b6e8ff690e117c4a0d5aaa6e448c1ff2f5b",
+      "text_sha256": "4481b90041375d5acffb516408bce34a10b6c7013238f95ecb2f253dde2c496b",
+      "result_sha256": "79650ba4c33453b6f2a824185ed31781490807b8c5ecbfe307b7561c7bfe2390",
+      "extractor_version": "v1-b63aa8c835ae",
+      "contract_indices": [
+        0
+      ],
+      "scope_start": 3511,
+      "scope_end": 7352,
+      "scope_sha256": "834f1e476f578ad76c49ceefd70e163500d046b15fdf5b287937e51516c31685",
+      "supplier_name": "4536631 Canada Inc./Rona Ontario",
+      "submission_count_quotation": "One (1)",
+      "recommendation_quotation": "Recommended Bidder: 4536631 Canada Inc./Rona Ontario",
+      "recommendation_scope_qualification": null,
+      "withheld_model_price": "$257,727.88",
+      "withheld_model_status": "compliant",
+      "withheld_model_observations": [
+        {
+          "contract_index": 0,
+          "raw_bid_index": 0,
+          "supplier_name": "4536631 Canada Inc./Rona Ontario",
+          "amount_raw": "$257,727.88",
+          "amount_basis": "net_of_taxes",
+          "status": "compliant",
+          "rank": 1
+        }
+      ],
+      "publisher_record_sha256": "fbb8134898748ad025e324b4e0f0cd96fb4344fa82f6403c13e3e60716135296",
+      "snapshot_sha256": "11abaf3c42763717bcc9d490992c2076b85eeb17a09144ef94913db72b359005",
+      "archived_award": {
+        "source_sha256": "89aa4bb61dce4d4479972e1d44824517e8e0202e6549802bb6cf13c8d2934b12",
+        "row_ordinal": 341,
+        "row_sha256": "65ab20db2fbe614e12982f4ce9e85104a35d7a80298219eaa148393831fab7e1",
+        "source_url": "https://web.archive.org/web/20121025001805id_/https://wx.toronto.ca/inter/pmmd/callawards.nsf/posted+awards?openview",
+        "printed_award_date": "2012-02-28"
+      }
+    },
+    {
+      "version": 1,
+      "source": "city_native_review",
+      "source_role": "single_scoped_submission",
+      "document_number": "6321113003",
+      "call_number": "6321-11-3003",
+      "reference": "2012.BD61.1",
+      "agenda_title": "Contract Awards - February 15, 2012 - Composite Report",
+      "report_url": "https://www.toronto.ca/legdocs/mmis/2012/bd/bgrd/backgroundfile-45151.pdf",
+      "report_sha256": "4c392f2c39166f41ee032dadaaf56523ada29fa5fa8291212e6b27df6540bfe8",
+      "text_sha256": "6e2523bbb5e922e9454254418cdb4641c594ab8cd5309125eaae14ff7ec9ec86",
+      "result_sha256": "82f63af2d2067ac6d71071e8ac01b094778c4a8968f1914d06bd24d7f37e0753",
+      "extractor_version": "v1-b63aa8c835ae",
+      "contract_indices": [
+        3
+      ],
+      "scope_start": 9180,
+      "scope_end": 11313,
+      "scope_sha256": "fc90d7f2c6f9ab9c910b365980214d214fbb80811ca557e0ee6d160c12777459",
+      "supplier_name": "Action Locksmith Inc.",
+      "submission_count_quotation": "One (1) bid",
+      "recommendation_quotation": "Recommended Bidder: Action Locksmith Inc.",
+      "recommendation_scope_qualification": null,
+      "withheld_model_price": "$1,371,711.90",
+      "withheld_model_status": "compliant",
+      "withheld_model_observations": [
+        {
+          "contract_index": 3,
+          "raw_bid_index": 0,
+          "supplier_name": "Action Locksmith Inc.",
+          "amount_raw": "$1,371,711.90",
+          "amount_basis": "net_of_taxes",
+          "status": "compliant",
+          "rank": null
+        }
+      ],
+      "publisher_record_sha256": "94576db45e59a181579ba3a9a76de0fcfe991d8fed12a31470f1dffdd8c2cd33",
+      "snapshot_sha256": "11abaf3c42763717bcc9d490992c2076b85eeb17a09144ef94913db72b359005",
+      "archived_award": {
+        "source_sha256": "89aa4bb61dce4d4479972e1d44824517e8e0202e6549802bb6cf13c8d2934b12",
+        "row_ordinal": 430,
+        "row_sha256": "bfdf3368b6c0c8b3e1d647bf0e10afa011188222b9c459ce0d587daff34e50d9",
+        "source_url": "https://web.archive.org/web/20121025001805id_/https://wx.toronto.ca/inter/pmmd/callawards.nsf/posted+awards?openview",
+        "printed_award_date": "2012-03-02"
+      }
+    },
+    {
+      "version": 1,
+      "source": "city_native_review",
+      "source_role": "single_scoped_submission",
+      "document_number": "6133123011",
+      "call_number": "6133-12-3011",
+      "reference": "2012.BD62.1",
+      "agenda_title": "Contract Awards - February 22, 2012 - Composite Report",
+      "report_url": "https://www.toronto.ca/legdocs/mmis/2012/bd/bgrd/backgroundfile-45288.pdf",
+      "report_sha256": "91541a1cb1e067790b615d1bf7f8ec0d43469731cf243267a79e7ed8300378dd",
+      "text_sha256": "61e6297bb01e54b2c7bf7491dd48e9de8a5095528aef34109ef170e0bfc8eb90",
+      "result_sha256": "08ffbbd37b5570563d20964be7bc2f6a97b97b3667f5194454a518d1df659a66",
+      "extractor_version": "v1-b63aa8c835ae",
+      "contract_indices": [
+        3,
+        4
+      ],
+      "scope_start": 10788,
+      "scope_end": 15705,
+      "scope_sha256": "3a5ebbc4b22a4f33ef4306aa910b5e095a061df7d21c7697be1a2ce46ec03001",
+      "supplier_name": "S.A.S. Petroleum Technologies Inc.",
+      "submission_count_quotation": "One (1)",
+      "recommendation_quotation": "Recommended Bidder: S.A.S. Petroleum Technologies Inc. (Price Schedule A: Fleet Services), (Price Schedule B – Facilities Management Division, Facilities Operations)",
+      "recommendation_scope_qualification": "(Price Schedule A: Fleet Services), (Price Schedule B – Facilities Management Division, Facilities Operations)",
+      "withheld_model_price": null,
+      "withheld_model_status": null,
+      "withheld_model_observations": [
+        {
+          "contract_index": 3,
+          "raw_bid_index": 0,
+          "supplier_name": "S.A.S. Petroleum Technologies Inc.",
+          "amount_raw": "$299,479.11",
+          "amount_basis": "net_of_taxes",
+          "status": "compliant",
+          "rank": 1
+        },
+        {
+          "contract_index": 4,
+          "raw_bid_index": 0,
+          "supplier_name": "SAS Petroleum Technologies Inc.",
+          "amount_raw": null,
+          "amount_basis": null,
+          "status": "compliant",
+          "rank": 1
+        }
+      ],
+      "publisher_record_sha256": "bffd117072d126dfbfeebfd20522576c3a48128aca37fcdd9a3c564ca8cab690",
+      "snapshot_sha256": "11abaf3c42763717bcc9d490992c2076b85eeb17a09144ef94913db72b359005",
+      "archived_award": {
+        "source_sha256": "89aa4bb61dce4d4479972e1d44824517e8e0202e6549802bb6cf13c8d2934b12",
+        "row_ordinal": 489,
+        "row_sha256": "e9fbdb084c8ba5dabbb4ae8513729d71b7b6ba17c9fcee2649101acfc2172c35",
+        "source_url": "https://web.archive.org/web/20121025001805id_/https://wx.toronto.ca/inter/pmmd/callawards.nsf/posted+awards?openview",
+        "printed_award_date": "2012-02-27"
+      }
+    },
+    {
+      "version": 1,
+      "source": "city_native_review",
+      "source_role": "single_scoped_submission",
+      "document_number": "6038127025",
+      "call_number": "6038-12-7025",
+      "reference": "2012.BD66.1",
+      "agenda_title": "Contract Awards - March 21, 2012 - Composite Report",
+      "report_url": "https://www.toronto.ca/legdocs/mmis/2012/bd/bgrd/backgroundfile-45898.pdf",
+      "report_sha256": "944cc6d52f8637a89b4cee6e4de979fb99c61f947905929f53dcd64f381baed6",
+      "text_sha256": "20494d9d3caa233ecf2cfb8ac1b3e3f70aaf29315907434b8d912da0525ee85a",
+      "result_sha256": "042d5632fadc2d29c3f7df6fb5d2605fb6d2898f40e8c790d2d1cc386502c800",
+      "extractor_version": "v1-b63aa8c835ae",
+      "contract_indices": [
+        5
+      ],
+      "scope_start": 16753,
+      "scope_end": 20515,
+      "scope_sha256": "6c801e6550b938fe805a377d7bb4f468e7b30bb2d3c57a2a3b8be2492acc2cfd",
+      "supplier_name": "Hertz Equipment Rental",
+      "submission_count_quotation": "One (1)",
+      "recommendation_quotation": "Recommended Bidder: Hertz Equipment Rental",
+      "recommendation_scope_qualification": null,
+      "withheld_model_price": "$431,145.60 net of all applicable taxes and charges",
+      "withheld_model_status": "compliant",
+      "withheld_model_observations": [
+        {
+          "contract_index": 5,
+          "raw_bid_index": 0,
+          "supplier_name": "Hertz Equipment Rental",
+          "amount_raw": "$431,145.60 net of all applicable taxes and charges",
+          "amount_basis": "net_of_taxes",
+          "status": "compliant",
+          "rank": 1
+        }
+      ],
+      "publisher_record_sha256": "4de62581bea2b6252cb9a022e2a57ed27634831baca69f4539209c424722ccaa",
+      "snapshot_sha256": "11abaf3c42763717bcc9d490992c2076b85eeb17a09144ef94913db72b359005",
+      "archived_award": {
+        "source_sha256": "89aa4bb61dce4d4479972e1d44824517e8e0202e6549802bb6cf13c8d2934b12",
+        "row_ordinal": 570,
+        "row_sha256": "910d15275d76876d76e07fa1ec2544776cedc02dd34555fa8efa246685297e2d",
+        "source_url": "https://web.archive.org/web/20121025001805id_/https://wx.toronto.ca/inter/pmmd/callawards.nsf/posted+awards?openview",
+        "printed_award_date": "2012-04-25"
+      }
+    },
+    {
+      "version": 1,
+      "source": "city_native_review",
+      "source_role": "single_scoped_submission",
+      "document_number": "9214123037",
+      "call_number": "9214-12-3037",
+      "reference": "2012.BD70.1",
+      "agenda_title": "Contract Awards - April 18, 2012 - Composite Report",
+      "report_url": "https://www.toronto.ca/legdocs/mmis/2012/bd/bgrd/backgroundfile-46447.pdf",
+      "report_sha256": "8f8ea054b287f8b836d0914777aabd705e49eb1132a96afcf005759bfff095de",
+      "text_sha256": "a4966236adfd73786d6dfb9c7e16060fb4325a90d3309c0b440d93122d9a652f",
+      "result_sha256": "28b1ed65f245517b3e1a7ea4862d82d42678776ef94259d13ad740a8039ec339",
+      "extractor_version": "v1-b63aa8c835ae",
+      "contract_indices": [
+        1
+      ],
+      "scope_start": 7455,
+      "scope_end": 10839,
+      "scope_sha256": "a081e5e42ae5c29a4a3318b47c0d6e6673cbbb64aa0be9eb3bc75a9635a5c570",
+      "supplier_name": "NexCycle Industries Ltd",
+      "submission_count_quotation": "One (1) Bid",
+      "recommendation_quotation": "Recommended Bidder NexCycle Industries Ltd",
+      "recommendation_scope_qualification": null,
+      "withheld_model_price": "$525,504.00",
+      "withheld_model_status": "compliant",
+      "withheld_model_observations": [
+        {
+          "contract_index": 1,
+          "raw_bid_index": 0,
+          "supplier_name": "NexCycle Industries Ltd",
+          "amount_raw": "$525,504.00",
+          "amount_basis": "net_of_taxes",
+          "status": "compliant",
+          "rank": null
+        }
+      ],
+      "publisher_record_sha256": "d88371469ab7edb33d746b71d12aa9057eb951d41e9ebac8cc911600c2add13d",
+      "snapshot_sha256": "11abaf3c42763717bcc9d490992c2076b85eeb17a09144ef94913db72b359005",
+      "archived_award": {
+        "source_sha256": "89aa4bb61dce4d4479972e1d44824517e8e0202e6549802bb6cf13c8d2934b12",
+        "row_ordinal": 702,
+        "row_sha256": "c16dcf5f81496afcd39081b1e4439037674006e5313cddbe3b5e8b56b6aeeadb",
+        "source_url": "https://web.archive.org/web/20121025001805id_/https://wx.toronto.ca/inter/pmmd/callawards.nsf/posted+awards?openview",
+        "printed_award_date": "2012-05-22"
+      }
+    },
+    {
+      "version": 1,
+      "source": "city_native_review",
+      "source_role": "single_scoped_submission",
+      "document_number": "1004123041",
+      "call_number": "1004-12-3041",
+      "reference": "2012.BD71.1",
+      "agenda_title": "Contract Awards - April 25, 2012 - Composite Report",
+      "report_url": "https://www.toronto.ca/legdocs/mmis/2012/bd/bgrd/backgroundfile-46544.pdf",
+      "report_sha256": "a26389d8bb813df82a0e7cc5db2adb59c56b90189a5bc999e7b872ac51023bd2",
+      "text_sha256": "497f48c319e8143c4132b414ffcecb8fc53258b13b382cc38113603cb02906e6",
+      "result_sha256": "75284d560504df6364a2bb71ccaf3020ba3d09284c0a40f788952590c5a81c1a",
+      "extractor_version": "v1-b63aa8c835ae",
+      "contract_indices": [
+        3
+      ],
+      "scope_start": 13478,
+      "scope_end": 17324,
+      "scope_sha256": "a74d2579fb539e7be26a1659b97e5e54cd377277ec670093098b4e7d59a157c8",
+      "supplier_name": "Workplace Resource Group",
+      "submission_count_quotation": "One (1)",
+      "recommendation_quotation": "Recommended Bidder: Workplace Resource Group",
+      "recommendation_scope_qualification": null,
+      "withheld_model_price": "$941,611.05",
+      "withheld_model_status": "compliant",
+      "withheld_model_observations": [
+        {
+          "contract_index": 3,
+          "raw_bid_index": 0,
+          "supplier_name": "Workplace Resource Group",
+          "amount_raw": "$941,611.05",
+          "amount_basis": "net_of_taxes",
+          "status": "compliant",
+          "rank": 1
+        }
+      ],
+      "publisher_record_sha256": "573fe37277fff2a3abdbfa671b9e0850aad1428b7aa58513adb88a4b33ba1989",
+      "snapshot_sha256": "11abaf3c42763717bcc9d490992c2076b85eeb17a09144ef94913db72b359005",
+      "archived_award": {
+        "source_sha256": "89aa4bb61dce4d4479972e1d44824517e8e0202e6549802bb6cf13c8d2934b12",
+        "row_ordinal": 336,
+        "row_sha256": "6187dc6c47ac71739cc3caa061b42bdd4ff510cd809078022f9149fb88bcea57",
+        "source_url": "https://web.archive.org/web/20121025001805id_/https://wx.toronto.ca/inter/pmmd/callawards.nsf/posted+awards?openview",
+        "printed_award_date": "2012-04-27"
+      }
+    },
+    {
+      "version": 1,
+      "source": "city_native_review",
+      "source_role": "single_scoped_submission",
+      "document_number": "1004123034",
+      "call_number": "1004-12-3034",
+      "reference": "2012.BD72.1",
+      "agenda_title": "Contract Awards - May 2, 2012 - Composite Report",
+      "report_url": "https://www.toronto.ca/legdocs/mmis/2012/bd/bgrd/backgroundfile-46688.pdf",
+      "report_sha256": "ef6263e20de40bed4add585316e57e30f6ced00266c8ac01afdf8bc0241460f4",
+      "text_sha256": "c112e1528028172166d471841fa85e8b32e5a982044488f13494087fbb0d8895",
+      "result_sha256": "9ae20788abf4810102e98c92a1a51ff56c4de1b72815cbf219bff7dea3b568e9",
+      "extractor_version": "v1-b63aa8c835ae",
+      "contract_indices": [
+        0
+      ],
+      "scope_start": 3185,
+      "scope_end": 7096,
+      "scope_sha256": "85af6844777f70665f6e84a285f8bc27ed2cd14bc12fc2cf3c1c10d29608795c",
+      "supplier_name": "CTI Working Environment",
+      "submission_count_quotation": "One (1)",
+      "recommendation_quotation": "Recommended Bidder: CTI Working Environment",
+      "recommendation_scope_qualification": null,
+      "withheld_model_price": null,
+      "withheld_model_status": "compliant",
+      "withheld_model_observations": [
+        {
+          "contract_index": 0,
+          "raw_bid_index": 0,
+          "supplier_name": "CTI Working Environment",
+          "amount_raw": null,
+          "amount_basis": null,
+          "status": "compliant",
+          "rank": 1
+        }
+      ],
+      "publisher_record_sha256": "e2ca62ac091385783b8e9f6bbe117cd0728ff0f960a18d8de7dddbbc9b090b95",
+      "snapshot_sha256": "11abaf3c42763717bcc9d490992c2076b85eeb17a09144ef94913db72b359005",
+      "archived_award": {
+        "source_sha256": "89aa4bb61dce4d4479972e1d44824517e8e0202e6549802bb6cf13c8d2934b12",
+        "row_ordinal": 333,
+        "row_sha256": "1d238ec1eaee392c88a079f14fc77ff28ad8faeda4c183c767394af0ab519394",
+        "source_url": "https://web.archive.org/web/20121025001805id_/https://wx.toronto.ca/inter/pmmd/callawards.nsf/posted+awards?openview",
+        "printed_award_date": "2012-05-03"
+      }
+    },
+    {
+      "version": 1,
+      "source": "city_native_review",
+      "source_role": "single_scoped_submission",
+      "document_number": "1004123035",
+      "call_number": "1004-12-3035",
+      "reference": "2012.BD72.1",
+      "agenda_title": "Contract Awards - May 2, 2012 - Composite Report",
+      "report_url": "https://www.toronto.ca/legdocs/mmis/2012/bd/bgrd/backgroundfile-46688.pdf",
+      "report_sha256": "ef6263e20de40bed4add585316e57e30f6ced00266c8ac01afdf8bc0241460f4",
+      "text_sha256": "c112e1528028172166d471841fa85e8b32e5a982044488f13494087fbb0d8895",
+      "result_sha256": "9ae20788abf4810102e98c92a1a51ff56c4de1b72815cbf219bff7dea3b568e9",
+      "extractor_version": "v1-b63aa8c835ae",
+      "contract_indices": [
+        1
+      ],
+      "scope_start": 7096,
+      "scope_end": 10988,
+      "scope_sha256": "0b3ba6c9a4db3465aedada36e27af47aff7aa8b8dc27743006204f6cf753e2bd",
+      "supplier_name": "The Office Source Inc.",
+      "submission_count_quotation": "One (1)",
+      "recommendation_quotation": "Recommended Bidder: The Office Source Inc.",
+      "recommendation_scope_qualification": null,
+      "withheld_model_price": null,
+      "withheld_model_status": "compliant",
+      "withheld_model_observations": [
+        {
+          "contract_index": 1,
+          "raw_bid_index": 0,
+          "supplier_name": "The Office Source Inc.",
+          "amount_raw": null,
+          "amount_basis": null,
+          "status": "compliant",
+          "rank": 1
+        }
+      ],
+      "publisher_record_sha256": "3a5cff42d3562b0cd69541a691a2baa755ba0f2f2f0a0dbbaba4ab87d11a5bc3",
+      "snapshot_sha256": "11abaf3c42763717bcc9d490992c2076b85eeb17a09144ef94913db72b359005",
+      "archived_award": {
+        "source_sha256": "89aa4bb61dce4d4479972e1d44824517e8e0202e6549802bb6cf13c8d2934b12",
+        "row_ordinal": 334,
+        "row_sha256": "ba00a1be3e5604a714fb16d84d0b67ed8cf7d6aee77f1514dfa8ec40aad99eae",
+        "source_url": "https://web.archive.org/web/20121025001805id_/https://wx.toronto.ca/inter/pmmd/callawards.nsf/posted+awards?openview",
+        "printed_award_date": "2012-05-03"
+      }
+    },
+    {
+      "version": 1,
+      "source": "city_native_review",
+      "source_role": "single_scoped_submission",
+      "document_number": "1004123040",
+      "call_number": "1004-12-3040",
+      "reference": "2012.BD72.1",
+      "agenda_title": "Contract Awards - May 2, 2012 - Composite Report",
+      "report_url": "https://www.toronto.ca/legdocs/mmis/2012/bd/bgrd/backgroundfile-46688.pdf",
+      "report_sha256": "ef6263e20de40bed4add585316e57e30f6ced00266c8ac01afdf8bc0241460f4",
+      "text_sha256": "c112e1528028172166d471841fa85e8b32e5a982044488f13494087fbb0d8895",
+      "result_sha256": "9ae20788abf4810102e98c92a1a51ff56c4de1b72815cbf219bff7dea3b568e9",
+      "extractor_version": "v1-b63aa8c835ae",
+      "contract_indices": [
+        2
+      ],
+      "scope_start": 10988,
+      "scope_end": 14859,
+      "scope_sha256": "43c279cf30665e122fad723ded85cb6a732801d57fd28e647c08e7f8bc908ffd",
+      "supplier_name": "Mayhew",
+      "submission_count_quotation": "One (1)",
+      "recommendation_quotation": "Recommended Bidder: Mayhew",
+      "recommendation_scope_qualification": null,
+      "withheld_model_price": null,
+      "withheld_model_status": "compliant",
+      "withheld_model_observations": [
+        {
+          "contract_index": 2,
+          "raw_bid_index": 0,
+          "supplier_name": "Mayhew",
+          "amount_raw": null,
+          "amount_basis": null,
+          "status": "compliant",
+          "rank": 1
+        }
+      ],
+      "publisher_record_sha256": "7daf7fe9b0e74c0d1c8b034ab62a25ccd48092fc626c84766ad314e3b0bcae9d",
+      "snapshot_sha256": "11abaf3c42763717bcc9d490992c2076b85eeb17a09144ef94913db72b359005",
+      "archived_award": {
+        "source_sha256": "89aa4bb61dce4d4479972e1d44824517e8e0202e6549802bb6cf13c8d2934b12",
+        "row_ordinal": 335,
+        "row_sha256": "93a34541f3ff75b80d4684bd1a29129236fbf356c687b7c19224f44a2bc4174e",
+        "source_url": "https://web.archive.org/web/20121025001805id_/https://wx.toronto.ca/inter/pmmd/callawards.nsf/posted+awards?openview",
+        "printed_award_date": "2012-05-03"
+      }
+    },
+    {
+      "version": 1,
+      "source": "city_native_review",
+      "source_role": "single_scoped_submission",
+      "document_number": "3302123038",
+      "call_number": "3302-12-3038",
+      "reference": "2012.BD80.1",
+      "agenda_title": "Contract Awards - June 27, 2012 - Composite Report",
+      "report_url": "https://www.toronto.ca/legdocs/mmis/2012/bd/bgrd/backgroundfile-48700.pdf",
+      "report_sha256": "9963a64c67d8546c06ecd7c1197094b5481f184f2d2c0af0da9ad3a7345544df",
+      "text_sha256": "e3ba26a4df2155dcc430af4329e1947c664702ad44848841ee413fa0e786d4a2",
+      "result_sha256": "185e8b150b9e7a152a29cdb9c0cc269d6d4289df20d77236e0509512ee4af1b7",
+      "extractor_version": "v1-b63aa8c835ae",
+      "contract_indices": [
+        6
+      ],
+      "scope_start": 22987,
+      "scope_end": 26140,
+      "scope_sha256": "929e8a26d0b3000a1c0a4cb991f9950ef194fd6aea31a5427ec629c9b205cc09",
+      "supplier_name": "Tab Products of Canada",
+      "submission_count_quotation": "One (1)",
+      "recommendation_quotation": "Recommended Bidder: Tab Products of Canada",
+      "recommendation_scope_qualification": null,
+      "withheld_model_price": "$828,642.51",
+      "withheld_model_status": "compliant",
+      "withheld_model_observations": [
+        {
+          "contract_index": 6,
+          "raw_bid_index": 0,
+          "supplier_name": "Tab Products of Canada",
+          "amount_raw": "$828,642.51",
+          "amount_basis": "net_of_taxes",
+          "status": "compliant",
+          "rank": 1
+        }
+      ],
+      "publisher_record_sha256": "c54e290a8516211a2dc9c3a43712e6b96ac69c33ddcc0ab418f8bb5020652ed1",
+      "snapshot_sha256": "11abaf3c42763717bcc9d490992c2076b85eeb17a09144ef94913db72b359005",
+      "archived_award": {
+        "source_sha256": "89aa4bb61dce4d4479972e1d44824517e8e0202e6549802bb6cf13c8d2934b12",
+        "row_ordinal": 493,
+        "row_sha256": "390520485ddeea675809bea71ea9a4433174d305762929b58de6795877f5b8fc",
+        "source_url": "https://web.archive.org/web/20121025001805id_/https://wx.toronto.ca/inter/pmmd/callawards.nsf/posted+awards?openview",
+        "printed_award_date": "2012-06-03"
+      }
+    },
+    {
+      "version": 1,
+      "source": "city_native_review",
+      "source_role": "single_scoped_submission",
+      "document_number": "6813120140",
+      "call_number": "6813-12-0140",
+      "reference": "2012.BD83.1",
+      "agenda_title": "Contract Awards - July 18, 2012 - Composite Report",
+      "report_url": "https://www.toronto.ca/legdocs/mmis/2012/bd/bgrd/backgroundfile-49077.pdf",
+      "report_sha256": "f34f384b4773be6cf93bc36af5c4ebc5c2baa109e11f568e1b946b85b336e52d",
+      "text_sha256": "c13aa9ae05be204cc15bccfc6d57ad8b6f8a4435e5741be211c340f963aead45",
+      "result_sha256": "5641902b0eabc62c39b85096f76ff7d0fc7ccdc1b3e3b30ede9302c675c4b65b",
+      "extractor_version": "v1-b63aa8c835ae",
+      "contract_indices": [
+        0
+      ],
+      "scope_start": 4329,
+      "scope_end": 8117,
+      "scope_sha256": "9b657df111568a7320d348557d3e14429272ef4ec1f6b946e7e170199ea50c39",
+      "supplier_name": "Lecol Incorporated",
+      "submission_count_quotation": "One (1)",
+      "recommendation_quotation": "Recommended Bidder: Lecol Incorporated",
+      "recommendation_scope_qualification": null,
+      "withheld_model_price": "$3,312,287.82",
+      "withheld_model_status": "compliant",
+      "withheld_model_observations": [
+        {
+          "contract_index": 0,
+          "raw_bid_index": 0,
+          "supplier_name": "Lecol Incorporated",
+          "amount_raw": "$3,312,287.82",
+          "amount_basis": "net_of_taxes",
+          "status": "compliant",
+          "rank": 1
+        }
+      ],
+      "publisher_record_sha256": "403f2a1c914006f469887917f43d49a91168caa00d924a23aafd4933242ffffc",
+      "snapshot_sha256": "11abaf3c42763717bcc9d490992c2076b85eeb17a09144ef94913db72b359005",
+      "archived_award": {
+        "source_sha256": "89aa4bb61dce4d4479972e1d44824517e8e0202e6549802bb6cf13c8d2934b12",
+        "row_ordinal": 535,
+        "row_sha256": "022c6c77c2797723e9df1c4cccf6111034d1f171ca310533f395ed0e50aad36a",
+        "source_url": "https://web.archive.org/web/20121025001805id_/https://wx.toronto.ca/inter/pmmd/callawards.nsf/posted+awards?openview",
+        "printed_award_date": "2012-07-20"
+      }
+    },
+    {
+      "version": 1,
+      "source": "city_native_review",
+      "source_role": "single_scoped_submission",
+      "document_number": "0501120158",
+      "call_number": "0501-12-0158",
+      "reference": "2012.BD89.1",
+      "agenda_title": "Contract Awards - August 29, 2012 - Composite Report",
+      "report_url": "https://www.toronto.ca/legdocs/mmis/2012/bd/bgrd/backgroundfile-49399.pdf",
+      "report_sha256": "206e6ae49006d29420488bb7b47f299a7f69c29288ab68cf6783092508ebe82f",
+      "text_sha256": "7a20fa18d7066686c625afa9262df6a62bd8e0d85adf8f959eb6061e30a6a7a9",
+      "result_sha256": "49760c3683f1a1fede6e6c7ca0f64f54f0d0a39f4797df548c42c919685adf35",
+      "extractor_version": "v1-b63aa8c835ae",
+      "contract_indices": [
+        4
+      ],
+      "scope_start": 11324,
+      "scope_end": 14940,
+      "scope_sha256": "0a424c17fcd6cfa4813d2479bcff3ffe921a68f1d42fcc75ae95b6ae0fd4e01c",
+      "supplier_name": "City Dispensers Inc.",
+      "submission_count_quotation": "One (1)",
+      "recommendation_quotation": "Recommended Bidder: City Dispensers Inc.",
+      "recommendation_scope_qualification": null,
+      "withheld_model_price": null,
+      "withheld_model_status": "compliant",
+      "withheld_model_observations": [
+        {
+          "contract_index": 4,
+          "raw_bid_index": 0,
+          "supplier_name": "City Dispensers Inc.",
+          "amount_raw": null,
+          "amount_basis": null,
+          "status": "compliant",
+          "rank": 1
+        }
+      ],
+      "publisher_record_sha256": "6396610e3f30f8e1a3c39df9159bbdd9274a754fe4887b40e5593e391f11586a",
+      "snapshot_sha256": "11abaf3c42763717bcc9d490992c2076b85eeb17a09144ef94913db72b359005",
+      "archived_award": {
+        "source_sha256": "89aa4bb61dce4d4479972e1d44824517e8e0202e6549802bb6cf13c8d2934b12",
+        "row_ordinal": 357,
+        "row_sha256": "1ba19cd379091a396f16f6eac1a8c8613be6fb8e11a5f8855fefd961963e7b68",
+        "source_url": "https://web.archive.org/web/20121025001805id_/https://wx.toronto.ca/inter/pmmd/callawards.nsf/posted+awards?openview",
+        "printed_award_date": "2012-09-01"
+      }
+    },
+    {
+      "version": 1,
+      "source": "city_native_review",
+      "source_role": "single_scoped_submission",
+      "document_number": "0801120137",
+      "call_number": "0801-12-0137",
+      "reference": "2012.BD92.1",
+      "agenda_title": "Contract Awards - September 27, 2012 - Composite Report",
+      "report_url": "https://www.toronto.ca/legdocs/mmis/2012/bd/bgrd/backgroundfile-50254.pdf",
+      "report_sha256": "ad3e6a80f164058f5e8095646240fd125ce3d9815b093de205990a145a5ccdbe",
+      "text_sha256": "43aff38cf28971f76d9b1419f21ce6f90bcc41afb199dd7eb78afcec6448d4ce",
+      "result_sha256": "dd49f786412e57c41023c7f0874175c99b2901e8460014c6870e71333b9953d4",
+      "extractor_version": "v1-b63aa8c835ae",
+      "contract_indices": [
+        4
+      ],
+      "scope_start": 18158,
+      "scope_end": 20128,
+      "scope_sha256": "b1af698598e3758e5bd55ae7f613c325b9b85586c842c3c4d75c7e64903d73f1",
+      "supplier_name": "3M Canada Company",
+      "submission_count_quotation": "One (1)",
+      "recommendation_quotation": "Recommended Bidders: 3M Canada Company",
+      "recommendation_scope_qualification": null,
+      "withheld_model_price": "$716,509.20",
+      "withheld_model_status": "compliant",
+      "withheld_model_observations": [
+        {
+          "contract_index": 4,
+          "raw_bid_index": 0,
+          "supplier_name": "3M Canada Company",
+          "amount_raw": "$716,509.20",
+          "amount_basis": "net_of_taxes",
+          "status": "compliant",
+          "rank": null
+        }
+      ],
+      "publisher_record_sha256": "1cfaddfc1c98c029cd89c15558fce4f1df3f69a1c8b631491d82ac1a31010f75",
+      "snapshot_sha256": "11abaf3c42763717bcc9d490992c2076b85eeb17a09144ef94913db72b359005",
+      "archived_award": {
+        "source_sha256": "89aa4bb61dce4d4479972e1d44824517e8e0202e6549802bb6cf13c8d2934b12",
+        "row_ordinal": 498,
+        "row_sha256": "e18861417ef90835c9f3210cd605cb0c9450a83e3928d637465bc800b45c8ded",
+        "source_url": "https://web.archive.org/web/20121025001805id_/https://wx.toronto.ca/inter/pmmd/callawards.nsf/posted+awards?openview",
+        "printed_award_date": "2012-10-01"
+      }
+    },
+    {
+      "version": 1,
+      "source": "city_native_review",
+      "source_role": "single_scoped_submission",
+      "document_number": "2105123168",
+      "call_number": "2105-12-3168",
+      "reference": "2012.BD93.1",
+      "agenda_title": "Contract Awards - October 3, 2012- Composite Report",
+      "report_url": "https://www.toronto.ca/legdocs/mmis/2012/bd/bgrd/backgroundfile-50589.pdf",
+      "report_sha256": "b72516ddfc3611ed34df29e51f3f60180dfcb9246a698ec9d62880e9391033e8",
+      "text_sha256": "21d3bba10d4a43e99d4c60b1542738f826efc0b9d05b861650763d5a6f38d073",
+      "result_sha256": "9cb63d27749a055803fdb243b1a2cda767d78d7190e26febd889515e9a9c9546",
+      "extractor_version": "v1-b63aa8c835ae",
+      "contract_indices": [
+        1
+      ],
+      "scope_start": 6339,
+      "scope_end": 12032,
+      "scope_sha256": "5f5f990330a1d3339a1a118046480c890f0c900a9ff674b86a5ae7a72ac8b67c",
+      "supplier_name": "Motorola Solutions Canada Inc.",
+      "submission_count_quotation": "One (1)",
+      "recommendation_quotation": "Recommended Bidder: Motorola Solutions Canada Inc.",
+      "recommendation_scope_qualification": null,
+      "withheld_model_price": null,
+      "withheld_model_status": "compliant",
+      "withheld_model_observations": [
+        {
+          "contract_index": 1,
+          "raw_bid_index": 0,
+          "supplier_name": "Motorola Solutions Canada Inc.",
+          "amount_raw": null,
+          "amount_basis": null,
+          "status": "compliant",
+          "rank": 1
+        }
+      ],
+      "publisher_record_sha256": "e2f1c57b820b6d48d5b8d9e12db291e54d897472ca7a8d9ef5775003bf612596",
+      "snapshot_sha256": "11abaf3c42763717bcc9d490992c2076b85eeb17a09144ef94913db72b359005",
+      "archived_award": {
+        "source_sha256": "89aa4bb61dce4d4479972e1d44824517e8e0202e6549802bb6cf13c8d2934b12",
+        "row_ordinal": 270,
+        "row_sha256": "5392176c0e986c815eef4290794808df5f37e4a395b849e40aa52e6b09c94699",
+        "source_url": "https://web.archive.org/web/20121025001805id_/https://wx.toronto.ca/inter/pmmd/callawards.nsf/posted+awards?openview",
+        "printed_award_date": "2012-10-16"
+      }
+    }
+  ]
+}
