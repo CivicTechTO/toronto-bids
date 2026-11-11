@@ -26,6 +26,12 @@ _COUNT=re.compile(r'\bNumber\s+of\s+(?:Bids|Proposals|Submissions)(?:\s+Received
 def _flat(text):return ' '.join((text or '').split())
 
 
+def _participants(proof):
+    if proof['source_role']=='single_scoped_submission':return [proof['supplier_name']]
+    if proof['source_role']=='reviewed_received_submissions':return proof['participant_names']
+    raise ValueError('unsupported native participation source role')
+
+
 def propose(conn,*,evidence,document_number,archive_source_sha256,archive_row_ordinal,
             report_url,scope_start,scope_end,contract_index=None,contract_indices=None,current=None,previously_approved=False):
     """Return a source-bound review proposal; never write facts or run a model."""
@@ -110,7 +116,7 @@ def replay(conn,*,registry=None):
         proof=json.loads(row['proof_json'])
         if cw.digest(proof)!=sha or sha not in expected or any(row[k]!=proof[k] for k in ('document_number','call_number','reference','report_url','report_sha256')):
             raise ValueError('applied native-call participation evidence changed or removed')
-    pairs={(p['document_number'],p['supplier_name']) for p in reviews}
+    pairs={(p['document_number'],name) for p in reviews for name in _participants(p)}
     for row in conn.execute('SELECT * FROM bid WHERE source=?',(SOURCE,)):
         if ((row['document_number'],row['bidder_name_raw']) not in pairs or row['reference'] is not None
                 or any(row[k] is not None for k in ('bid_price','bid_price_numeric','hst_basis','price_header','status'))):
@@ -132,13 +138,18 @@ def replay(conn,*,registry=None):
         sha=cw.digest(proof)
         if proof['document_number'] in documents:raise ValueError('multiple native participation reviews for one City event')
         documents.add(proof['document_number']);arc=proof['archived_award']
-        actual=propose(conn,evidence=evidence,document_number=proof['document_number'],archive_source_sha256=arc['source_sha256'],
-            archive_row_ordinal=arc['row_ordinal'],report_url=proof['report_url'],contract_indices=proof['contract_indices'],
-            scope_start=proof['scope_start'],scope_end=proof['scope_end'],current=index,previously_approved=sha in prior)
+        common=dict(evidence=evidence,document_number=proof['document_number'],archive_source_sha256=arc['source_sha256'],
+                    archive_row_ordinal=arc['row_ordinal'],report_url=proof['report_url'],current=index,previously_approved=sha in prior)
+        if proof['source_role']=='reviewed_received_submissions':
+            from toronto_bids.linking.city_received_participation import propose as propose_received
+            actual=propose_received(conn,review=proof['receipt_review'],**common)
+        else:
+            actual=propose(conn,contract_indices=proof['contract_indices'],scope_start=proof['scope_start'],scope_end=proof['scope_end'],**common)
         if actual!=proof:raise ValueError('native participation source / cache / proof changed')
         selected.append((sha,proof))
     for sha,proof in selected:
-        db.upsert_row(conn,Bid(proof['supplier_name'],document_number=proof['document_number'],source=SOURCE),overwrite=True)
+        for name in _participants(proof):
+            db.upsert_row(conn,Bid(name,document_number=proof['document_number'],source=SOURCE),overwrite=True)
         conn.execute('INSERT OR IGNORE INTO city_native_bid_evidence(proof_sha256,document_number,call_number,reference,report_url,report_sha256,proof_json) VALUES (?,?,?,?,?,?,?)',
             (sha,proof['document_number'],proof['call_number'],proof['reference'],proof['report_url'],proof['report_sha256'],cw.canonical(proof)))
     return [p for _,p in selected]
