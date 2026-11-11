@@ -42896,7 +42896,7 @@
     "population_count": 7817,
     "snapshot_sha256": "11abaf3c42763717bcc9d490992c2076b85eeb17a09144ef94913db72b359005",
     "sources_file": "city_archived_award_sources.zip",
-    "sources_sha256": "fd607ed437a74113e70424641ada9a117f469a5ce7d2588f43c44cb09320eb30",
+    "sources_sha256": "c6fa832d8ce76848eb253952ad88f83c6ea81a8baf787265c2b3e07d33a56093",
     "sources": [
       {
         "url": "https://web.archive.org/web/20160129203250id_/https://wx.toronto.ca/inter/pmmd/callawards.nsf/postedawards?OpenView",
@@ -42993,6 +42993,17 @@
         "bytes": 209367,
         "sha256": "2ef9c0facffc9ac82f61e0870e108cb58869aa9289939fa312e0f57363b64430",
         "file": "wayback-20220709221534-awards.body"
+      },
+      {
+        "url": "https://web.archive.org/web/20121025001805id_/https://wx.toronto.ca/inter/pmmd/callawards.nsf/posted+awards?openview",
+        "retrieved_at": "2026-11-10T19:23:36.154938+00:00",
+        "status": 200,
+        "final_url": "https://web.archive.org/web/20121025001805id_/https://wx.toronto.ca/inter/pmmd/callawards.nsf/posted+awards?openview",
+        "bytes": 390511,
+        "sha256": "89aa4bb61dce4d4479972e1d44824517e8e0202e6549802bb6cf13c8d2934b12",
+        "archive_timestamp": "20121025001805",
+        "source_url": "https://wx.toronto.ca/inter/pmmd/callawards.nsf/posted+awards?openview",
+        "file": "awards-2012.body"
       }
     ]
   }

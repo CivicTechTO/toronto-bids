@@ -29,12 +29,14 @@ def audit(conn):
     for r in conn.execute("SELECT * FROM award WHERE source='odata' ORDER BY id"):
         awards[r['document_number']].append(dict(r))
     bids = [dict(r) for r in conn.execute('SELECT * FROM bid ORDER BY id')]
+    from toronto_bids.linking.city_document_aliases import applied_targets
+    aliases = applied_targets(conn)
     candidates = defaultdict(set)
     for b in bids:
         if b['reference'] and b['document_number']:
-            candidates[b['reference']].add(b['document_number'])
+            candidates[b['reference']].add(aliases.get(b['document_number'], b['document_number']))
     for r in conn.execute('SELECT * FROM solicitation_link'):
-        candidates[r['reference']].add(r['document_number'])
+        candidates[r['reference']].add(aliases.get(r['document_number'], r['document_number']))
     bridge = {ref: next(iter(docs)) for ref, docs in candidates.items() if len(docs) == 1}
     by_doc = defaultdict(set)
     canonical = defaultdict(set)
@@ -42,6 +44,7 @@ def audit(conn):
     for b in bids:
         # An explicit document wins. A broad reference never distributes sibling bids.
         doc = b['document_number'] or bridge.get(b['reference'])
+        doc = aliases.get(doc, doc)
         if doc in sols:
             by_doc[doc].add(b['id'])
         if b['procurement_id'] in pid_doc:
@@ -109,7 +112,7 @@ def audit(conn):
     for name, test in [('through_2012',lambda y:y is not None and y<=2012),('2013_2018',lambda y:y is not None and 2013<=y<=2018),('2019',lambda y:y==2019),('2020_onward',lambda y:y is not None and y>=2020),('unknown',lambda y:y is None)]:
         cohort = [doc for doc,s in sols.items() if test(int(s['issue_date'][:4]) if s['issue_date'] and s['issue_date'][:4].isdigit() else None)]
         cohorts[name] = dict(awarded=len(cohort),without_bids=len(set(cohort)&missing))
-    direct_docs = {b['document_number'] for b in bids if b['document_number']}
+    direct_docs = {aliases.get(b['document_number'], b['document_number']) for b in bids if b['document_number']}
     linked_only = sum(bool(by_doc[doc]) and doc not in direct_docs for doc in sols)
     excluded = [doc for doc in sols if all(a['award_amount_verdict']=='not_an_award' for a in awards[doc])]
     summary = dict(fully_labelled_non_award_documents=excluded,awarded_city_solicitations=len(sols),with_bids=len(sols)-len(missing),without_bids=len(missing),

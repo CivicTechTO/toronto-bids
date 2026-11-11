@@ -651,6 +651,27 @@ CREATE TABLE IF NOT EXISTS city_bulk_bid_evidence (
     first_seen TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- A source-specific native call inside a multi-contract report, never an item-wide join.
+CREATE TABLE IF NOT EXISTS city_document_alias_evidence (
+    proof_sha256 TEXT PRIMARY KEY,
+    document_number TEXT NOT NULL,
+    alias_document_number TEXT NOT NULL,
+    call_number TEXT NOT NULL,
+    proof_json TEXT NOT NULL,
+    first_seen TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS city_native_bid_evidence (
+    proof_sha256 TEXT PRIMARY KEY,
+    document_number TEXT NOT NULL,
+    call_number TEXT NOT NULL,
+    reference TEXT NOT NULL,
+    report_url TEXT NOT NULL,
+    report_sha256 TEXT NOT NULL,
+    proof_json TEXT NOT NULL,
+    first_seen TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 -- Source-reviewed scoped responses. Legacy bid rows remain participation summaries.
 CREATE TABLE IF NOT EXISTS city_scoped_bid_evidence (
     proof_sha256 TEXT PRIMARY KEY,
