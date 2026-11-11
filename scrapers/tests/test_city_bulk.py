@@ -417,3 +417,25 @@ def test_native_received_list_is_distinct_from_later_negotiation_invitation(conn
     setup_archive(conn,tmp_path,monkeypatch);row=native_report()
     row['text']=row['text'].replace('The RFP','Proponents would later be invited to enter negotiations. The RFP')
     assert city_bulk.propose(conn,row)[0]
+
+
+def test_native_tender_cannot_borrow_an_omitted_partys_price(conn,tmp_path,monkeypatch):
+    from tests.test_city_archived_awards import setup_archive
+    setup_archive(conn,tmp_path,monkeypatch);row=tender_report()
+    row['text']=row['text'].replace('Alberici Constructors Ltd.\n$10','Alberici Constructors Ltd.\nResponse pending\nOmitted Firm\n$10')
+    assert not city_bulk.propose(conn,row)[0]
+
+
+def test_native_tender_cannot_borrow_an_omitted_partys_no_bid(conn,tmp_path,monkeypatch):
+    from tests.test_city_archived_awards import setup_archive
+    setup_archive(conn,tmp_path,monkeypatch);row=tender_report()
+    row['text']=row['text'].replace('Other Firm\nDid not bid','Other Firm\nResponse pending\nOmitted Firm\nDid not bid')
+    assert not city_bulk.propose(conn,row)[0]
+
+
+@pytest.mark.parametrize('receipt',['One (1) proposal was received','A total of 1 submission was received','This resulted in receipt of one (1) submission'])
+def test_original_native_list_receipt_count_limits_names_without_model_count(conn,tmp_path,monkeypatch,receipt):
+    from tests.test_city_archived_awards import setup_archive
+    setup_archive(conn,tmp_path,monkeypatch);row=native_report()
+    row['text']='Award of RFP 3905-14-0097\n'+receipt+' from the following firms:\nAlberici Constructors Ltd.\nMaple Reinders Limited\n'
+    assert not city_bulk.propose(conn,row)[0]

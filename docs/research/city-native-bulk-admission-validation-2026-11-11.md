@@ -74,7 +74,7 @@ excluded. Existing approved alias bids retain their original source Doc keys and
 export under the established City canonical event. All changed runtime modules
 are present byte-for-byte in the built wheel.
 
-Full offline suite: **1,827 passed, one skipped**. The shared bulk suite has 54
+Full offline suite: **1,832 passed, one skipped**. The shared bulk suite has 59
 cases. Private reproducible artifacts are under
 `.validation-city-exhaustive-2026-11-10/`: `measure_native_bulk.py`,
 `compare_bulk_modern_proofs.py`, `rehearse_native_bulk.py`,
@@ -88,3 +88,7 @@ paid discovery still requires bounded source-qualified research; automatic queue
 priority remains modern-Doc-based. Further shared source classes, unresolved
 identity cohorts and uncaptured reports remain available work. The prepared City
 export/crosswalk request remains unsent pending explicit authorization.
+
+The final predeployment review tightened native tender row boundaries and native
+received-list count checks. See [the deployment review](city-recovery-deployment-review-2026-11-11.md)
+for independent findings, corrections and the preserved modern-list limitation.

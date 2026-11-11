@@ -43,13 +43,18 @@ def tender_witness(text,call,contract):
         positions.sort(key=lambda p:p[0].start());names=[];excluded=[];rows=[]
         for index,(match,name,bid) in enumerate(positions):
             end=positions[index+1][0].start() if index+1<len(positions) else len(section)
-            outcome=section[match.end():end]
-            no_bid=_NO_BID.search(outcome)
+            response=re.search(r'\S[^\r\n]*',section[match.end():end])
+            if response is None:break
+            # An omitted model party is still a source row boundary. Only the
+            # immediately following nonempty line can be this party's response.
+            outcome=response[0]
+            end=match.end()+response.end()
+            no_bid=_NO_BID.fullmatch(outcome.strip())
             if no_bid:
                 if bid.get('status')!='no_bid' or re.search(r'\$\s*\d',outcome):break
                 excluded.append(dict(name=name,quotation=clean(section[match.start():end])))
             else:
-                if bid.get('status')=='no_bid' or not re.search(r'\$\s*\d',outcome):break
+                if bid.get('status')=='no_bid' or not re.match(r'\$\s*\d',outcome):break
                 names.append(name)
             rows.append(dict(name=name,quotation=clean(section[match.start():end])))
         else:

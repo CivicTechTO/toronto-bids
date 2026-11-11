@@ -102,7 +102,7 @@ Doc instead. Mixed-event reports additionally require an explicit local Doc in t
 submission context and consistent current-event footers. An incidental historical
 mention does not establish a current event. The source quotation is retained.
 
-Received-table headings may include an explicit numeric count, such as `Summary of two (2) Bids Received`. A `Suppliers and Fixed Bid Prices` table needs an immediately preceding statement that a counted set of bidders responded, naming that exact table number, and the table heading must name the same current Doc. A price or recommended-supplier table alone is insufficient. An original receipt count cannot be smaller than the admitted named participants, even when the model omitted its count. These are shared source-role recognizers; the extraction prompt and cached results stay unchanged.
+Received-table headings may include an explicit numeric count, such as `Summary of two (2) Bids Received`. A `Suppliers and Fixed Bid Prices` table needs an immediately preceding statement that a counted set of bidders responded, naming that exact table number, and the table heading must name the same current Doc. A price or recommended-supplier table alone is insufficient. An original table receipt count cannot be smaller than the admitted named participants, even when the model omitted its count. These are shared source-role recognizers; the extraction prompt and cached results stay unchanged.
 
 Historical Call Numbers use a separate identity proof, never numeric conversion.
 The original archived award's printed award date, full legal supplier and exact
@@ -118,12 +118,18 @@ whole procurement included prequalification. The original source must explicitly
 say bids/submissions were opened or identify the same Tender in a received-bid
 table. Every model party must occur as a full literal table row with either a
 printed monetary response or an explicit No Bid outcome matching the model.
-No Bid rows remain in the evidence and are excluded from participation. An
+No Bid rows remain in the evidence and are excluded from participation. Each
+response must be the first nonempty original line after its supplier name, so a
+party omitted by the model cannot lend its outcome to another name. An
 invitation or qualification list alone is insufficient; a qualification event
 cannot use this final-tender admission. Monetary columns are witnesses of actual
 response only and are not projected as bid prices. Received-firm lists can retain
 a publisher's parenthetical abbreviation after the full literal legal name.
-Later negotiation invitations do not erase an explicitly received list.
+Later negotiation invitations do not erase an explicitly received list. Native
+received-list lead counts independently bound admitted names even when the model
+omits its count. Previously approved modern received-list proofs retain their
+existing behavior: independent lead-count validation for modern lists remains
+deferred. Modern table receipt counts continue to be checked.
 
 Derived participation carries no price or compliance status. Standalone literal
 supplier rows can preserve wrapped names and footnote markers without interpreting

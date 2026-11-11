@@ -23,6 +23,7 @@ _NATIVE_PARTICIPATION=re.compile(r'\breceipt\b.{0,100}\b(?:bids?|proposals?|subm
 _DOC=re.compile(r'\b(?:Doc(?:ument)?\.?(?:\s+(?:Number|No\.?))?|RFP|RFQ|RFT)\s*[:#]?\s*(\d{10})(?!\d)',re.I)
 _LIST=re.compile(r'\bfollowing\b(?=[^:]{0,160}\b(?:firms?|bidders?|proponents?|suppliers?|submissions?)\b)[^:]{0,160}:\s*\n',re.I)
 _SOURCE_COUNT=r'(?:[A-Za-z]+(?:-[A-Za-z]+)?\s*\(\d+\)|\d+)'
+_RECEIVED_LIST_COUNT=re.compile(r'\b(?P<count>'+_SOURCE_COUNT+r')\s+(?:bids?|proposals?|submissions?|responses?)\b.{0,100}\breceived\b|\breceipt\s+of\s+(?:a\s+total\s+of\s+)?(?P<receipt>'+_SOURCE_COUNT+r')\s+(?:bids?|proposals?|submissions?)\b',re.I)
 _TABLE=re.compile(r'\bTable\s+\d+\s*:\s*Summary\s+(?:of\s+)?(?:(?P<count>'+_SOURCE_COUNT+r')\s+)?(?:Bids|Proposals|Submissions)\s+Received\b[^\n]*(?:\n|$)',re.I)
 _RESPONDED_TABLE=re.compile(r'\bTable\s+(?P<table>\d+)\s*:\s*Suppliers\s+and\s+Fixed\s+Bid\s+Prices\b[^\n]*(?:\n|$)',re.I)
 _RESPONDED_LEAD=re.compile(r'\b(?:A\s+total\s+of\s+)?(?P<count>'+_SOURCE_COUNT+r')\s+bidders?\s+responded\s+as\s+listed\s+in\s+Table\s+(?P<table>\d+)\s+below\s*:\s*$',re.I)
@@ -120,7 +121,10 @@ def propose(archive, row, native_identities=None):
                     if not response or response['table']!=marker['table'] or set(_DOC.findall(marker[0]))!={doc}:continue
                     count_quotation=response['count']
                 elif not (_PARTICIPATION.search(lead) or (call and _NATIVE_PARTICIPATION.search(lead))):continue
-                if count_quotation and len(names)>int(re.search(r'\d+',count_quotation)[0]):continue
+                counts=[count_quotation] if count_quotation else []
+                if call and marker.re is _LIST:
+                    counts.extend(m['count'] or m['receipt'] for m in _RECEIVED_LIST_COUNT.finditer(lead))
+                if any(len(names)>int(re.search(r'\d+',q)[0]) for q in counts):continue
                 if re.search(r'pre[- ]?qualif|invited to',marker[0] if call else context,re.I):continue
                 # The complete report and primary agenda title already agree
                 # on one Doc. A list need not repeat it on the same page, but
