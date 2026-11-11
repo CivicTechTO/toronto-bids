@@ -109,6 +109,7 @@ EXPORT_TABLES = [
     "city_bid_evidence",
     "city_bulk_bid_evidence",
     "city_native_bid_evidence",
+    "city_document_alias_evidence",
     "city_scoped_bid_evidence",
     "bid_scope",
     "bid_response",

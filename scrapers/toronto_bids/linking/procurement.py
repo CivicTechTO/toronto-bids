@@ -25,8 +25,9 @@ def _transaction(conn):
 
 
 class _Identities:
-    def __init__(self, conn):
+    def __init__(self, conn, city_aliases=()):
         self.conn = conn
+        self.city_aliases = {frozenset((p['document_number'], p['alias_document_number'])) for p in city_aliases}
         self.keys = {(r['namespace'], r['value']): r['procurement_id']
                      for r in conn.execute('SELECT * FROM procurement_key')}
 
@@ -38,19 +39,23 @@ class _Identities:
             self.keys[key] = pid
         return self.keys[key]
 
-    def join(self, left, right, evidence):
+    def join(self, left, right, evidence, *, prefer=None):
         if left == right:
             return left
-        # Singular publisher identities may not be fused through a broad council item,
-        # a changed source link, or a newly conflicting legacy reference.
+        # Singular publisher identities cannot fuse through a broad council item.
+        # Only independently validated same-page document aliases are an exception;
+        # other namespaces and unrelated document anchors keep the strict guard.
         groups = defaultdict(set)
         for (namespace, value), pid in self.keys.items():
             if pid in (left, right) and (namespace in ('city_document', 'city_workspace', 'city_call')
                                          or namespace.startswith('agency_contract:')):
                 groups[namespace].add(value)
-        if any(len(values) > 1 for values in groups.values()):
+        if any(len(values) > 1 and not (namespace == 'city_document' and frozenset(values) in self.city_aliases)
+               for namespace, values in groups.items()):
             raise ValueError('Conflicting procurement anchors; refusing identity merge: ' + evidence)
-        winner, loser = sorted((left, right))
+        winner, loser = sorted((left, right)) if prefer is None else (prefer, right if prefer == left else left)
+        if prefer is not None and prefer not in (left, right):
+            raise ValueError('preferred canonical identity must be an existing merge participant')
         self.conn.execute('UPDATE procurement SET merged_into=?,merge_evidence=? WHERE id=?',
                           (winner, evidence, loser))
         # Flatten older redirects so every published alias points at a current identity.
@@ -83,7 +88,17 @@ def _resolve(conn):
     crosswalks = reviewed_links(conn)
     from toronto_bids.linking.city_native_participation import replay as replay_native_participation
     native_participation = replay_native_participation(conn)
-    ids = _Identities(conn)
+    from toronto_bids.linking.city_document_aliases import replay as replay_city_aliases
+    from toronto_bids.linking.city_crosswalk import digest as proof_digest
+    city_aliases = replay_city_aliases(conn)
+    alias_targets = {p['alias_document_number']: p['document_number'] for p in city_aliases}
+    ids = _Identities(conn, city_aliases)
+    for proof in city_aliases:
+        target = ids.get('city_document', proof['document_number'])
+        evidence = json.dumps(dict(rule='published_city_ariba_alias', proof_sha256=proof_digest(proof)))
+        ids.join(target, ids.get('city_call', proof['call_number']), evidence, prefer=target)
+        ids.join(target, ids.get('city_document', proof['alias_document_number']),
+                 evidence, prefer=target)
     for proof in native_participation:
         ids.join(ids.get('city_call', proof['call_number']), ids.get('city_document', proof['document_number']),
                  json.dumps(dict(rule='reviewed_native_call_participation', call_number=proof['call_number'],
@@ -93,9 +108,9 @@ def _resolve(conn):
     ref_docs = defaultdict(set)
     for row in conn.execute('SELECT DISTINCT reference,document_number FROM bid '
                             'WHERE reference IS NOT NULL AND document_number IS NOT NULL'):
-        ref_docs[row['reference']].add(row['document_number'])
+        ref_docs[row['reference']].add(alias_targets.get(row['document_number'], row['document_number']))
     for row in conn.execute('SELECT * FROM solicitation_link'):
-        ref_docs[row['reference']].add(row['document_number'])
+        ref_docs[row['reference']].add(alias_targets.get(row['document_number'], row['document_number']))
     for ref, docs in sorted(ref_docs.items()):
         if len(docs) > 1:
             existing = ids.keys.get(('city_council_bid', ref))

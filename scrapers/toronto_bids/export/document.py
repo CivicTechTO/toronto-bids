@@ -65,6 +65,8 @@ def build_export_document(conn, generated_at: str | None = None) -> dict:
         generated_at = datetime.now(timezone.utc).isoformat()
 
     sol_docs = {r["document_number"] for r in _rows(conn, "SELECT document_number FROM solicitation")}
+    from toronto_bids.linking.city_document_aliases import applied_targets
+    city_alias_targets = applied_targets(conn)
 
     awards_by_doc: dict[str, list] = {}
     unlinked_awards: list = []
@@ -114,9 +116,9 @@ def build_export_document(conn, generated_at: str | None = None) -> dict:
     for row in _rows(conn, "SELECT DISTINCT reference, document_number FROM bid "
                            "WHERE reference IS NOT NULL AND document_number IS NOT NULL "
                            "ORDER BY reference, document_number"):
-        bridge_candidates.setdefault(row["reference"], set()).add(row["document_number"])
+        bridge_candidates.setdefault(row["reference"], set()).add(city_alias_targets.get(row['document_number'], row['document_number']))
     for row in _rows(conn, "SELECT reference, document_number FROM solicitation_link ORDER BY reference"):
-        bridge_candidates.setdefault(row["reference"], set()).add(row["document_number"])
+        bridge_candidates.setdefault(row["reference"], set()).add(city_alias_targets.get(row['document_number'], row['document_number']))
     bridge = {ref: next(iter(docs)) for ref, docs in bridge_candidates.items() if len(docs) == 1}
     for report in _rows(conn, "SELECT reference, url FROM background_pdf "
                               "WHERE kind='bgrd' ORDER BY reference, url"):
@@ -153,7 +155,10 @@ def build_export_document(conn, generated_at: str | None = None) -> dict:
         cleaned = _drop(bid, "id")
         ref, doc = bid["reference"], bid["document_number"]
         bridged = bridge.get(ref) if ref is not None else None          # pre-Ariba: ref -> sol
-        if bid['id'] in scoped_participation_ids and doc in sol_docs:
+        alias_target = city_alias_targets.get(doc)
+        if alias_target in sol_docs:
+            bids_by_doc.setdefault(alias_target, []).append(cleaned)  # retain the original published Doc identifier
+        elif bid['id'] in scoped_participation_ids and doc in sol_docs:
             bids_by_doc.setdefault(doc, []).append(_drop(cleaned, 'document_number'))
         elif ref is not None and doc is None and bridged in sol_docs:
             bids_by_doc.setdefault(bridged, []).append(_drop(cleaned, "document_number"))   # under solicitation
@@ -282,4 +287,6 @@ def build_export_document(conn, generated_at: str | None = None) -> dict:
             conn, "SELECT * FROM city_bid_evidence ORDER BY proof_sha256")],
         "city_native_bid_evidence": [_parse_json(row, "proof_json") for row in _rows(
             conn, "SELECT * FROM city_native_bid_evidence ORDER BY proof_sha256")],
+        "city_document_alias_evidence": [_parse_json(row, "proof_json") for row in _rows(
+            conn, "SELECT * FROM city_document_alias_evidence ORDER BY proof_sha256")],
     }

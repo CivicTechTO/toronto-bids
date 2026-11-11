@@ -1,0 +1,15 @@
+# Published City document aliases
+
+During the transition to Ariba, an original City call page can explicitly relate a native Call Number to an Ariba Doc identifier. `linking/city_document_aliases.py` admits reviewed same-page assertions. The original bytes and exact original/archive URLs travel in `data/city_document_aliases.json`; no network or model call occurs during resolution.
+
+The labelled Call number must agree with an independently validated original City award publication. Its exact full supplier, printed award date and amount must identify one current record against the complete frozen and current publisher populations. The call page must separately say `See ARIBA Doc` with one unambiguous alternate identifier; a filename, digit conversion or mention elsewhere does not establish this relation. Labelled issue and closing dates must equal the current publisher dates. A second current City solicitation for the alternate identifier requires further review rather than automatic fusion.
+
+`city_document_alias_evidence` retains the immutable approval and its digest. Changed or removed applied proofs, source bytes, current publisher identity or competing identifiers fail visibly. All aliases are validated before any merge. Resolution's savepoint rolls back both evidence and canonical changes if a later conflict fails.
+
+Only the exact validated pair can cross the resolver's singular City-document anchor guard. Unrelated document, workspace, call and agency anchors retain their protections. The real City solicitation keeps its existing canonical ID; the alternate source identity redirects to it. Original bid IDs, document numbers, council references, prices, status fields and first-seen values are retained. This path creates no new submitted-bid claims and infers no supplier equivalence or price equality.
+
+Independent coverage attribution reads the immutable source alias proof rather than trusting assigned canonical IDs. Incorrect canonical attribution still fails the audit. Reference comparisons recognize the exact approved aliases as one document; unrelated sibling calls remain ambiguous. JSON nests the original bids and report under the City record while preserving each bid's original alternate document identifier. The full approval is exported, including CSV/Parquet table exports.
+
+The first reviewed page is [the original call 3721-19-0159](https://web.archive.org/web/20190615041306id_/https://wx.toronto.ca/inter/pmmd/calls.nsf/0/A82A07B374C7DA89852583F6006A9D14?OpenDocument). It explicitly prints both `Call number: 3721-19-0159` and `See ARIBA Doc 1745310659`. [BA40.8's original report](https://www.toronto.ca/legdocs/mmis/2019/ba/bgrd/backgroundfile-136556.pdf) supplies the three already stored submitted bidders. Its second award value is rounded relative to the feed; that value and the supplier-name variants are not used to establish identity or alter source facts.
+
+This is a component of the cumulative exhaustive recovery workload. It does not establish that other records are unrecoverable. The dated validation note records actual rehearsed coverage and preservation outcomes.
