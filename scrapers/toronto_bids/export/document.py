@@ -134,9 +134,10 @@ def build_export_document(conn, generated_at: str | None = None) -> dict:
                 "url": report["url"],
             })
 
-    # A composite item may contain several independently identified contracts.
-    # Attach its source to the reviewed child without creating an item-wide bridge.
-    for receipt in _rows(conn, "SELECT document_number,report_url FROM city_native_bid_evidence ORDER BY document_number,report_url"):
+    # Attach approved report sources directly to their proven City documents.
+    # Composite and bulk reports need no broad item/reference bridge.
+    for receipt in _rows(conn, "SELECT document_number,report_url FROM city_native_bid_evidence UNION "
+                              "SELECT document_number,report_url FROM city_bulk_bid_evidence ORDER BY document_number,report_url"):
         doc=receipt['document_number'];url=receipt['report_url']
         if doc in sol_docs and not any(d.get('url')==url for d in documents_by_doc.get(doc,[])):
             name=url.rsplit('/',1)[-1]

@@ -37,6 +37,51 @@ def test_bulk_participation_requires_literal_current_event_and_submitted_firm_li
     assert 'Alberici' in accepted[0]['witness']['list_quotation']
 
 
+@pytest.mark.parametrize('heading', [
+    'Table 2: Summary of two (2) Bids Received for Doc3987477359',
+    'Table 2: Summary of 2 Bids Received for Doc3987477359',
+])
+def test_counted_received_table_keeps_unpriced_named_participation(heading):
+    row=report();row['text']='Award of Doc3987477359\n'+heading+'\nSupplier Name\nAlberici Constructors Ltd.\n$10\nMaple Reinders Limited\n$20\n'
+    accepted,held=city_bulk.propose(archive(),row)
+    assert not held and accepted[0]['names']==['Alberici Constructors Ltd.','Maple Reinders Limited']
+    assert accepted[0]['prices_withheld'] and accepted[0]['statuses_withheld']
+
+
+@pytest.mark.parametrize('count',['zero (0)','1'])
+def test_original_received_count_limits_model_names_even_without_model_count(count):
+    row=report();row['text']='Award of Doc3987477359\nTable 2: Summary of '+count+' Bids Received for Doc3987477359\nAlberici Constructors Ltd.\nMaple Reinders Limited\n'
+    assert not city_bulk.propose(archive(),row)[0]
+
+
+@pytest.mark.parametrize('change', [None,'missing_receipt','wrong_table','wrong_doc'])
+def test_fixed_price_table_requires_its_explicit_local_responded_statement(change):
+    row=report();lead='A total of two (2) bidders responded as listed in Table 3 below:'
+    heading='Table 3: Suppliers and Fixed Bid Prices for Doc3987477359'
+    if change=='missing_receipt':lead='The recommended suppliers are listed in Table 3 below:'
+    elif change=='wrong_table':lead=lead.replace('Table 3','Table 2')
+    elif change=='wrong_doc':heading=heading.replace('3987477359','9999999999')
+    row['text']='Award of Doc3987477359\nSUMMARY\n'+lead+'\n'+heading+'\nSupplier Name\nAlberici Constructors Ltd.\n$10\nMaple Reinders Limited\n$20\n'
+    accepted,held=city_bulk.propose(archive(),row)
+    if change is None:assert not held and len(accepted[0]['names'])==2
+    else:assert not accepted
+
+
+def test_export_attaches_bulk_provenance_to_only_the_proven_city_document(conn):
+    from toronto_bids.models import Solicitation,BackgroundPdf
+    from toronto_bids.store import db
+    from toronto_bids.export.document import build_export_document
+    for doc in ('3987477359','9999999999'):
+        db.upsert_row(conn,Solicitation(doc,source='odata'),overwrite=True)
+    url='https://www.toronto.ca/legdocs/mmis/2024/gg/bgrd/backgroundfile-1.pdf'
+    db.upsert_row(conn,BackgroundPdf(url,kind='city_bulk',document_number='3987477359'),overwrite=True)
+    conn.execute('INSERT INTO city_bulk_bid_evidence(proof_sha256,document_number,report_url,report_sha256,proof_json) VALUES (?,?,?,?,?)',
+                 ('a'*64,'3987477359',url,'b'*64,json.dumps(dict(document_number='3987477359',report_url=url))))
+    sols={s['document_number']:s for s in build_export_document(conn)['solicitations']}
+    assert [d['url'] for d in sols['3987477359']['documents']]==[url]
+    assert sols['9999999999']['documents']==[]
+
+
 def test_multiple_lot_observations_collapse_only_to_unpriced_event_participation():
     row=report();raw=row['result']['contracts'][0]['bids']
     row['result']['contracts'][0]['declared_submissions']=2

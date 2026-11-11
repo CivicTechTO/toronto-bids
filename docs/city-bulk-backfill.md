@@ -102,6 +102,8 @@ Doc instead. Mixed-event reports additionally require an explicit local Doc in t
 submission context and consistent current-event footers. An incidental historical
 mention does not establish a current event. The source quotation is retained.
 
+Received-table headings may include an explicit numeric count, such as `Summary of two (2) Bids Received`. A `Suppliers and Fixed Bid Prices` table needs an immediately preceding statement that a counted set of bidders responded, naming that exact table number, and the table heading must name the same current Doc. A price or recommended-supplier table alone is insufficient. An original receipt count cannot be smaller than the admitted named participants, even when the model omitted its count. These are shared source-role recognizers; the extraction prompt and cached results stay unchanged.
+
 Derived participation carries no price or compliance status. Standalone literal
 supplier rows can preserve wrapped names and footnote markers without interpreting
 financial columns. Prequalification, invitations and sole winner descriptions do
@@ -128,6 +130,8 @@ participation proposals and exceptions. `run.json` records the phase scoreboard.
 Historical native calls, complex tables, joint-venture typography and contradictory
 publisher fields still require shared admission classes or independent reviewed
 identity proofs. They do not become Doc identities through numeric encodings.
+
+JSON attaches each approved bulk report directly to its proven City solicitation through `city_bulk_bid_evidence`. This also works when the captured PDF has no council reference. A broad item/reference never distributes the source report across sibling procurements.
 
 The coverage outcome is the difference in **awarded City solicitations without
 bids**, together with canonical attribution parity. Report and name counts are

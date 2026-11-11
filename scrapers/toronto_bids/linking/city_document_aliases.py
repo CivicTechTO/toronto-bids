@@ -14,6 +14,9 @@ from lxml import html
 from toronto_bids.linking import city_crosswalk as cw, city_archived_awards as archived
 
 PATH = Path(__file__).resolve().parents[1]/'data/city_document_aliases.json'
+_DOCUMENT = r'Doc(?:ument)?\.?(?:\s+(?:Number|No\.?))?\s*[:#]?\s*(\d{10})(?!\d)'
+_DOC = re.compile(r'\b'+_DOCUMENT, re.I)
+_ARIBA = re.compile(r'\b(?:See\s+)?ARIBA\s+(?:Reference\s+No\.?\s*)?'+_DOCUMENT, re.I)
 
 
 def applied_targets(conn):
@@ -62,7 +65,7 @@ def propose(conn, *, evidence, document_number, archive_source_sha256,
     stamp = page['archive_timestamp']; original = urlsplit(page['source_url'])
     if (hashlib.sha256(body).hexdigest() != page['sha256'] or page['http_status'] != 200
             or original.scheme not in ('http', 'https') or original.hostname != 'wx.toronto.ca'
-            or not re.fullmatch(r'/inter/pmmd/calls\.nsf/(?:0/)?[a-f0-9]{32}', original.path, re.I)
+            or not re.fullmatch(r'/inter/pmmd/calls\.nsf/(?:(?:0|[a-f0-9]{32})/)?[a-f0-9]{32}', original.path, re.I)
             or original.query.lower() != 'opendocument' or not re.fullmatch(r'\d{14}', stamp)
             or page['archive_url'] != 'https://web.archive.org/web/'+stamp+'id_/'+page['source_url']):
         raise ValueError('original identifier assertion provenance changed')
@@ -71,10 +74,13 @@ def propose(conn, *, evidence, document_number, archive_source_sha256,
     if cw.find_call_numbers(call_quote) != {award['call_number']}:
         raise ValueError('original page names a different native call')
     description = _field(root, 'Description:')
-    identifiers = re.findall(r'\bSee\s+ARIBA\s+Doc\s+(\d{10})\b', description, re.I)
-    all_ids = set(re.findall(r'\bDoc\s*(\d{10})\b', description, re.I))
-    if len(identifiers) != 1 or all_ids != set(identifiers) or identifiers[0] == document_number:
-        raise ValueError('one explicit same-page alternate document assertion required')
+    if re.search(r'\b(?:cancelled|canceled|superseded)\b', description, re.I):
+        raise ValueError('cancelled or superseded original call requires further review')
+    assertions = list(_ARIBA.finditer(description))
+    identifiers = [m[1] for m in assertions]
+    all_ids = set(_DOC.findall(description))
+    if len(set(identifiers)) != 1 or all_ids != set(identifiers) or identifiers[0] == document_number:
+        raise ValueError('one unambiguous explicit same-page alternate document required')
     alias = identifiers[0]
     if conn.execute('SELECT 1 FROM solicitation WHERE document_number=?', (alias,)).fetchone():
         raise ValueError('alias competes with another current publisher record; further review required')
@@ -84,7 +90,7 @@ def propose(conn, *, evidence, document_number, archive_source_sha256,
         raise ValueError('original alias call dates disagree with current publisher')
     return dict(version=1, proof_class='published_city_ariba_alias', document_number=document_number,
                 alias_document_number=alias, call_number=award['call_number'], page=page,
-                call_number_quotation=call_quote, alias_quotation=re.search(r'\bSee\s+ARIBA\s+Doc\s+\d{10}\b', description, re.I)[0],
+                call_number_quotation=call_quote, alias_quotation=assertions[0][0],
                 issue_date_quotation=issued, closing_date_quotation=closed,
                 publisher_record_sha256=cw.digest(publisher), snapshot_sha256=evidence.snapshot_sha256,
                 archived_award=dict(source_sha256=archive_source_sha256, row_ordinal=archive_row_ordinal,

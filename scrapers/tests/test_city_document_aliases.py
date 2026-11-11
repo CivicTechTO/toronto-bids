@@ -133,3 +133,37 @@ def test_one_reference_naming_both_published_aliases_is_not_a_sibling_conflict(c
                  ('2014.BD1.1', proof['document_number'], 'test_existing_link'))
     resolve_procurements(conn)
     assert conn.execute('SELECT procurement_id FROM bid').fetchone()[0] == conn.execute('SELECT procurement_id FROM solicitation').fetchone()[0]
+
+
+@pytest.mark.parametrize('quotation',[
+    'Ariba Doc.1745310659',
+    'Ariba Doc No. 1745310659',
+    'Ariba Reference No. Doc1745310659',
+    'Ariba Document Number 1745310659',
+    'Ariba Doc No. 1745310659 Ariba Doc No. 1745310659',
+])
+def test_published_ariba_identifier_spelling_and_equal_repetitions(conn, tmp_path, monkeypatch, quotation):
+    from toronto_bids.linking import city_document_aliases as aliases,city_crosswalk as cw
+    from toronto_bids.linking.city_archived_awards import load_evidence
+    proof,_=setup_alias(conn,tmp_path,monkeypatch);page=dict(proof['page'])
+    page['html']=page['html'].replace('See ARIBA Doc 1745310659',quotation)
+    page['sha256']=hashlib.sha256(page['html'].encode()).hexdigest()
+    source=page['source_url'].replace('/0/','/'+'b'*32+'/');page['source_url']=source
+    page['archive_url']='https://web.archive.org/web/'+page['archive_timestamp']+'id_/'+source
+    arc=proof['archived_award']
+    result=aliases.propose(conn,evidence=load_evidence(json.loads(cw.PROOFS.read_text()),cw.PROOFS),
+                           document_number=proof['document_number'],archive_source_sha256=arc['source_sha256'],
+                           archive_row_ordinal=arc['row_ordinal'],page=page)
+    assert result['alias_document_number']=='1745310659'
+
+
+def test_cancelled_original_call_cannot_silently_become_a_published_alias(conn,tmp_path,monkeypatch):
+    from toronto_bids.linking import city_document_aliases as aliases,city_crosswalk as cw
+    from toronto_bids.linking.city_archived_awards import load_evidence
+    proof,_=setup_alias(conn,tmp_path,monkeypatch);page=dict(proof['page'])
+    page['html']=page['html'].replace('See ARIBA Doc','This call is cancelled. See ARIBA Doc')
+    page['sha256']=hashlib.sha256(page['html'].encode()).hexdigest();arc=proof['archived_award']
+    with pytest.raises(ValueError):
+        aliases.propose(conn,evidence=load_evidence(json.loads(cw.PROOFS.read_text()),cw.PROOFS),
+                        document_number=proof['document_number'],archive_source_sha256=arc['source_sha256'],
+                        archive_row_ordinal=arc['row_ordinal'],page=page)

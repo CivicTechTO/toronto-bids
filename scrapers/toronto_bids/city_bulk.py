@@ -21,7 +21,10 @@ from toronto_bids.linking.call_number import find_call_numbers
 _PARTICIPATION=re.compile(r'\b(?:bids?|proposals?|submissions?|tenders?)\b.{0,100}\b(?:received|submitted)\b|\b(?:received|submitted)\b.{0,100}\b(?:bids?|proposals?|submissions?|tenders?)\b',re.I)
 _DOC=re.compile(r'\b(?:Doc(?:ument)?\.?(?:\s+(?:Number|No\.?))?|RFP|RFQ|RFT)\s*[:#]?\s*(\d{10})(?!\d)',re.I)
 _LIST=re.compile(r'\bfollowing\b(?=[^:]{0,160}\b(?:firms?|bidders?|proponents?|suppliers?|submissions?)\b)[^:]{0,160}:\s*\n',re.I)
-_TABLE=re.compile(r'\bTable\s+\d+\s*:\s*Summary\s+(?:of\s+)?(?:Bids|Proposals|Submissions)\s+Received\b[^\n]*(?:\n|$)',re.I)
+_SOURCE_COUNT=r'(?:[A-Za-z]+(?:-[A-Za-z]+)?\s*\(\d+\)|\d+)'
+_TABLE=re.compile(r'\bTable\s+\d+\s*:\s*Summary\s+(?:of\s+)?(?:(?P<count>'+_SOURCE_COUNT+r')\s+)?(?:Bids|Proposals|Submissions)\s+Received\b[^\n]*(?:\n|$)',re.I)
+_RESPONDED_TABLE=re.compile(r'\bTable\s+(?P<table>\d+)\s*:\s*Suppliers\s+and\s+Fixed\s+Bid\s+Prices\b[^\n]*(?:\n|$)',re.I)
+_RESPONDED_LEAD=re.compile(r'\b(?:A\s+total\s+of\s+)?(?P<count>'+_SOURCE_COUNT+r')\s+bidders?\s+responded\s+as\s+listed\s+in\s+Table\s+(?P<table>\d+)\s+below\s*:\s*$',re.I)
 
 
 def _primary_heading(text):
@@ -84,11 +87,19 @@ def propose(archive, row):
             if any(b.get('status')=='no_bid' for b in raw):raise ValueError('no_bid_outcome_requires_review')
             witness=None
             markers=sorted([(m,'submitted_firm_list') for m in _LIST.finditer(text)]+
-                           [(m,'submitted_bid_table') for m in _TABLE.finditer(text)],key=lambda pair:pair[0].start())
+                           [(m,'submitted_bid_table') for m in _TABLE.finditer(text)]+
+                           [(m,'submitted_bid_table') for m in _RESPONDED_TABLE.finditer(text)],key=lambda pair:pair[0].start())
             for marker,kind in markers:
                 context=clean(text[max(0,marker.start()-1200):marker.end()])
                 lead=clean(text[max(0,marker.start()-250):marker.end()])
-                if not _PARTICIPATION.search(lead) or re.search(r'pre[- ]?qualif|invited to',context,re.I):continue
+                count_quotation=marker.groupdict().get('count')
+                if marker.re is _RESPONDED_TABLE:
+                    response=_RESPONDED_LEAD.search(clean(text[max(0,marker.start()-350):marker.start()]))
+                    if not response or response['table']!=marker['table'] or set(_DOC.findall(marker[0]))!={doc}:continue
+                    count_quotation=response['count']
+                elif not _PARTICIPATION.search(lead):continue
+                if count_quotation and len(names)>int(re.search(r'\d+',count_quotation)[0]):continue
+                if re.search(r'pre[- ]?qualif|invited to',context,re.I):continue
                 # The complete report and primary agenda title already agree
                 # on one Doc. A list need not repeat it on the same page, but
                 # a nearby historical native call is a competing event role.
