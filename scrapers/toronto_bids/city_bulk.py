@@ -19,6 +19,7 @@ from toronto_bids.sources.city_agendas import connect, clean
 from toronto_bids.linking.call_number import find_call_numbers
 
 _PARTICIPATION=re.compile(r'\b(?:bids?|proposals?|submissions?|tenders?)\b.{0,100}\b(?:received|submitted)\b|\b(?:received|submitted)\b.{0,100}\b(?:bids?|proposals?|submissions?|tenders?)\b',re.I)
+_NATIVE_PARTICIPATION=re.compile(r'\breceipt\b.{0,100}\b(?:bids?|proposals?|submissions?)\b|\bresponses?\b.{0,80}\breceived\b',re.I)
 _DOC=re.compile(r'\b(?:Doc(?:ument)?\.?(?:\s+(?:Number|No\.?))?|RFP|RFQ|RFT)\s*[:#]?\s*(\d{10})(?!\d)',re.I)
 _LIST=re.compile(r'\bfollowing\b(?=[^:]{0,160}\b(?:firms?|bidders?|proponents?|suppliers?|submissions?)\b)[^:]{0,160}:\s*\n',re.I)
 _SOURCE_COUNT=r'(?:[A-Za-z]+(?:-[A-Za-z]+)?\s*\(\d+\)|\d+)'
@@ -45,14 +46,17 @@ def _identity_role(doc,text):
     return 'primary_subject_and_local_document'
 
 
-def propose(archive, row):
+def propose(archive, row, native_identities=None):
     """Conservative programmatic participation admission; no handwritten report rules.
 
-    Supported projections bind one modern primary Doc to a literal received-firm
-    list or named received-bid table. Historical calls, stage conflicts and complex tables
+    Supported projections bind one independently proven City event to a literal
+    received-firm list or named received-bid table. Stage conflicts and complex tables
     remain explicit exceptions. No price, compliance or award is inferred.
     """
     proposals=[];exceptions=[]
+    if native_identities is None:
+        from toronto_bids.linking.city_bulk_identity import NativeCallIdentities
+        native_identities=NativeCallIdentities(archive)
     if not row['result']:return proposals,[dict(reason=row.get('screen','extraction_pending'))]
     text=row['text'] or '';flat=clean(text)
     for index,contract in enumerate(row['result'].get('contracts',[])):
@@ -60,36 +64,54 @@ def propose(archive, row):
             reference=clean(contract.get('reference'))
             docs=set(_DOC.findall(reference))
             if not docs and re.fullmatch(r'\d{10}',reference):docs={reference}
-            if len(docs)!=1:raise ValueError('historical_or_unresolved_contract_identity')
-            doc=next(iter(docs))
-            # Conflicting footer/header event IDs (including copied report text)
-            # cannot be repaired by frequency or the model's preferred identifier.
-            identity_role=_identity_role(doc,text)
-            items=[i for i in row['items'] if set(_DOC.findall(i['title']))=={doc}]
-            identity_anchor='agenda_title'
-            if not items:
-                items=[i for i in row['items'] if not _DOC.findall(i['title'])]
-                if not items or set(_DOC.findall(_primary_heading(text)))!={doc}:
-                    raise ValueError('primary_document_absent_from_agenda_title_or_report_subject')
-                identity_anchor='report_subject'
-            if not archive.execute('SELECT 1 FROM solicitation WHERE document_number=?',(doc,)).fetchone():
-                raise ValueError('document_absent_from_publisher_spine')
-            if (contract.get('stage')!='single_stage' or contract.get('solicitation_type')=='RFSQ'
+            native_identity=None;call=None
+            if not docs and len(find_call_numbers(reference))==1:
+                call=next(iter(find_call_numbers(reference)))
+                if _DOC.findall(text) or find_call_numbers(_primary_heading(text))!={call}:
+                    raise ValueError('native_call_not_unique_primary_report_subject')
+                items=[i for i in row['items'] if find_call_numbers(i['title'])=={call} and not _DOC.findall(i['title'])]
+                if not items:raise ValueError('native_call_not_unique_agenda_subject')
+                for page in text.split('\f'):
+                    tail='\n'.join([line for line in page.splitlines() if line.strip()][-2:])
+                    if re.search(r'\bPage\s+\d+\s+of\s+\d+\b',tail,re.I) and find_call_numbers(tail)-{call}:
+                        raise ValueError('conflicting_native_source_footer')
+                doc,native_identity=native_identities.resolve(call)
+                identity_role='archived_award_and_primary_native_call'
+                identity_anchor='agenda_title_and_report_subject'
+            else:
+                if len(docs)!=1:raise ValueError('historical_or_unresolved_contract_identity')
+                doc=next(iter(docs))
+                # Conflicting footer/header IDs cannot be repaired by frequency.
+                identity_role=_identity_role(doc,text)
+                items=[i for i in row['items'] if set(_DOC.findall(i['title']))=={doc}]
+                identity_anchor='agenda_title'
+                if not items:
+                    items=[i for i in row['items'] if not _DOC.findall(i['title'])]
+                    if not items or set(_DOC.findall(_primary_heading(text)))!={doc}:
+                        raise ValueError('primary_document_absent_from_agenda_title_or_report_subject')
+                    identity_anchor='report_subject'
+                if not archive.execute('SELECT 1 FROM solicitation WHERE document_number=?',(doc,)).fetchone():
+                    raise ValueError('document_absent_from_publisher_spine')
+            tender=None
+            if native_identity is not None:
+                from toronto_bids.linking.city_bulk_receipts import tender_witness
+                tender=tender_witness(text,call,contract)
+            if not tender and (contract.get('stage')!='single_stage' or contract.get('solicitation_type')=='RFSQ'
                     or contract.get('prequalified') or contract.get('invited_to_tender')):
                 raise ValueError('participation_stage_requires_review')
             raw=contract.get('bids',[])
-            names=list(dict.fromkeys(clean(b.get('supplier_name')) for b in raw))
+            names=tender[0] if tender else list(dict.fromkeys(clean(b.get('supplier_name')) for b in raw))
             if not names:raise ValueError('no_named_submitted_bids')
             if any(not name for name in names):raise ValueError('unnamed_supplier_observation')
             declared=contract.get('declared_submissions')
             if type(declared) is int and len(names)>declared:
                 raise ValueError('named_participation_exceeds_declared_submissions')
-            if any(b.get('status')=='no_bid' for b in raw):raise ValueError('no_bid_outcome_requires_review')
-            witness=None
+            if not tender and any(b.get('status')=='no_bid' for b in raw):raise ValueError('no_bid_outcome_requires_review')
+            witness=tender[1] if tender else None
             markers=sorted([(m,'submitted_firm_list') for m in _LIST.finditer(text)]+
                            [(m,'submitted_bid_table') for m in _TABLE.finditer(text)]+
                            [(m,'submitted_bid_table') for m in _RESPONDED_TABLE.finditer(text)],key=lambda pair:pair[0].start())
-            for marker,kind in markers:
+            for marker,kind in ([] if tender else markers):
                 context=clean(text[max(0,marker.start()-1200):marker.end()])
                 lead=clean(text[max(0,marker.start()-250):marker.end()])
                 count_quotation=marker.groupdict().get('count')
@@ -97,13 +119,13 @@ def propose(archive, row):
                     response=_RESPONDED_LEAD.search(clean(text[max(0,marker.start()-350):marker.start()]))
                     if not response or response['table']!=marker['table'] or set(_DOC.findall(marker[0]))!={doc}:continue
                     count_quotation=response['count']
-                elif not _PARTICIPATION.search(lead):continue
+                elif not (_PARTICIPATION.search(lead) or (call and _NATIVE_PARTICIPATION.search(lead))):continue
                 if count_quotation and len(names)>int(re.search(r'\d+',count_quotation)[0]):continue
-                if re.search(r'pre[- ]?qualif|invited to',context,re.I):continue
+                if re.search(r'pre[- ]?qualif|invited to',marker[0] if call else context,re.I):continue
                 # The complete report and primary agenda title already agree
                 # on one Doc. A list need not repeat it on the same page, but
                 # a nearby historical native call is a competing event role.
-                if find_call_numbers(context):continue
+                if find_call_numbers(context)-({call} if call else set()):continue
                 if identity_role=='primary_subject_and_local_document' and set(_DOC.findall(context))!={doc}:continue
                 section=text[marker.end():marker.end()+1800]
                 # Keep the literal list separate from subsequent evaluation,
@@ -114,12 +136,13 @@ def propose(archive, row):
                 quote=clean(section)
                 def literal_list_row(name):
                     pattern=re.escape(name).replace(r'\ ',r'\s+')
-                    return re.search(r'(?:^|\n)[ \t]*(?:[•●▪][ \t]*|\d+\.[ \t]+)?'+pattern+r'[ \t]*[*†‡]*(?=\r?\n|$)',section)
+                    suffix=r'(?:\s+\([A-Z][A-Za-z0-9]{1,30}\))?' if call else ''
+                    return re.search(r'(?:^|\n)[ \t]*(?:[•●▪][ \t]*|\d+\.[ \t]+)?'+pattern+suffix+r'[ \t]*[*†‡]*(?=\r?\n|$)',section)
                 if all(name in quote and literal_list_row(name) for name in names):
                     witness=dict(kind=kind,context=context,list_quotation=quote);break
             if witness is None:raise ValueError('literal_submitted_firm_list_not_established')
             if any(name not in flat for name in names):raise ValueError('supplier_not_literal')
-            proposals.append(dict(admission_version='city-list-v1',document_number=doc,contract_index=index,names=names,
+            proposal=dict(admission_version='city-list-v1',document_number=doc,contract_index=index,names=names,
                 identity_role=identity_role,
                 identity_anchor=identity_anchor,
                 primary_subject_quotation=clean(_primary_heading(text)) if identity_anchor=='report_subject' or identity_role=='primary_subject_and_local_document' else None,
@@ -130,7 +153,12 @@ def propose(archive, row):
                 items=[dict(reference=i['reference'],title=i['title'],meeting=i['meeting'],
                             agenda_url='https://secure.toronto.ca/council/report.do?meeting='+i['meeting']+'&type=agenda',
                             agenda_sha256=i['source_sha256']) for i in items],
-                witness=witness,prices_withheld=True,statuses_withheld=True))
+                witness=witness,prices_withheld=True,statuses_withheld=True)
+            if native_identity is not None:
+                proposal['admission_version']='city-native-list-v1'
+                proposal['native_call_identity']=native_identity
+                proposal['primary_subject_quotation']=clean(_primary_heading(text))
+            proposals.append(proposal)
         except ValueError as exc:exceptions.append(dict(contract_index=index,reference=contract.get('reference'),reason=str(exc)))
     return proposals,exceptions
 
@@ -203,8 +231,10 @@ def write_inventory(directory, archive, output):
     """One resumable-workload scoreboard, including unresolved and screened reports."""
     rows=inventory(directory,archive)
     proposals=[];exceptions=[]
+    from toronto_bids.linking.city_bulk_identity import NativeCallIdentities
+    native_identities=NativeCallIdentities(archive)
     for row in rows:
-        accepted,held=propose(archive,row)
+        accepted,held=propose(archive,row,native_identities)
         proposals.extend(accepted);exceptions.extend(dict(report_url=row['url'],**hold) for hold in held)
     result=dict(extractor_version=EXTRACTOR_VERSION,states=dict(Counter(r['screen'] for r in rows)),
         participation_proposals=proposals,exceptions=exceptions,reports=[
@@ -226,8 +256,10 @@ def backfill(directory, archive):
     from toronto_bids.store import db
     from toronto_bids.linking.city_crosswalk import canonical,digest
     rows=inventory(directory,archive);accepted=[];exceptions=[]
+    from toronto_bids.linking.city_bulk_identity import NativeCallIdentities
+    native_identities=NativeCallIdentities(archive)
     for row in rows:
-        proposals,held=propose(archive,row)
+        proposals,held=propose(archive,row,native_identities)
         exceptions.extend(dict(report_url=row['url'],**h) for h in held)
         for proof in proposals:
             path=Path(row['local_path'])

@@ -162,7 +162,7 @@ def test_explicit_received_bid_table_admits_names_with_wrapping_and_footnotes_bu
 
 @pytest.mark.parametrize('change,reason',[
     ('copied_footer','conflicting_source_document_roles'),
-    ('historical','historical_or_unresolved_contract_identity'),
+    ('historical','native_call_not_unique_primary_report_subject'),
     ('wrong_title','primary_document_absent_from_agenda_title_or_report_subject'),
     ('prequalified','participation_stage_requires_review'),
     ('qualification_method','participation_stage_requires_review'),
@@ -310,7 +310,7 @@ def test_backfill_uses_one_coherent_list_and_keeps_it_when_more_supplements_arri
     rows=[dict(row,url='https://www.toronto.ca/first.pdf',names=['Short Name']),
           dict(row,url='https://www.toronto.ca/second.pdf',names=['Full Legal Name','Other Bidder'])]
     monkeypatch.setattr(city_bulk,'inventory',lambda *a:rows)
-    def proposals(_archive,r):return [dict(document_number='3987477359',contract_index=0,names=r['names'],report_url=r['url'],report_sha256=r['sha256'],items=[])],[]
+    def proposals(_archive,r,*context):return [dict(document_number='3987477359',contract_index=0,names=r['names'],report_url=r['url'],report_sha256=r['sha256'],items=[])],[]
     monkeypatch.setattr(city_bulk,'propose',proposals)
     monkeypatch.setattr(city_bulk.subprocess,'run',lambda *a,**k:SimpleNamespace(returncode=0,stdout=row['text']))
     db.upsert_row(conn,Solicitation('3987477359',source='odata'),overwrite=True);conn.commit()
@@ -321,3 +321,99 @@ def test_backfill_uses_one_coherent_list_and_keeps_it_when_more_supplements_arri
     result=city_bulk.backfill(tmp_path,conn);conn.commit()
     assert result['accepted_reports']==1 and len(result['exceptions'])==2
     assert {r[0] for r in conn.execute("SELECT bidder_name_raw FROM bid WHERE source='city_bulk'")}=={'Full Legal Name','Other Bidder'}
+
+
+def native_report():
+    row=report()
+    row['text']=row['text'].replace('Doc3987477359','RFP 3905-14-0097')
+    row['items'][0]['title']='Award of RFP 3905-14-0097'
+    row['result']['contracts'][0]['reference']='RFP 3905-14-0097'
+    return row
+
+
+def test_native_bulk_uses_exact_archived_award_not_call_digits(conn,tmp_path,monkeypatch):
+    from tests.test_city_archived_awards import setup_archive
+    setup_archive(conn,tmp_path,monkeypatch)
+    accepted,held=city_bulk.propose(conn,native_report())
+    assert not held
+    assert accepted[0]['document_number']=='9000000042'
+    proof=accepted[0]['native_call_identity']
+    assert proof['call_number']=='3905-14-0097'
+    assert proof['archived_award']['printed_award_date']=='2014-04-10'
+    assert proof['publisher_record_sha256']
+
+
+@pytest.mark.parametrize('change', ['current_award','agenda_call','report_call','local_call','unmapped'])
+def test_native_bulk_refuses_unproven_or_conflicting_source_roles(conn,tmp_path,monkeypatch,change):
+    from tests.test_city_archived_awards import setup_archive
+    setup_archive(conn,tmp_path,monkeypatch);row=native_report()
+    if change=='current_award':conn.execute('UPDATE solicitation SET publisher_award_identity_json=NULL')
+    elif change=='agenda_call':row['items'][0]['title']='Award of RFP 3905-14-0098'
+    elif change=='report_call':row['text']=row['text'].replace('3905-14-0097','3905-14-0098')
+    elif change=='local_call':row['text']=row['text'].replace('The RFP','SUMMARY\nEarlier call 3905-14-0098. The RFP')
+    elif change=='unmapped':row['result']['contracts'][0]['reference']='RFP 3905-14-0098'
+    assert not city_bulk.propose(conn,row)[0]
+
+
+def tender_report():
+    row=native_report();c=row['result']['contracts'][0]
+    c.update(stage='prequalification_then_tender',solicitation_type='RFT',invited_to_tender=['Other Firm'])
+    c['bids'].append(dict(supplier_name='Other Firm',status='no_bid',amount_raw=None))
+    row['text']='Award of Tender 3905-14-0097\nSUMMARY\nTender 3905-14-0097 was issued. At its Public Opening the City opened the following two (2) Tender submissions:\nBidders\nBid Price including HST\nAlberici Constructors Ltd.\n$10\nMaple Reinders Limited\n$20\nOther Firm\nDid not bid\nCOMMENTS\n'
+    return row
+
+
+def test_native_tender_opening_is_distinct_from_invitation_and_excludes_no_bid(conn,tmp_path,monkeypatch):
+    from tests.test_city_archived_awards import setup_archive
+    setup_archive(conn,tmp_path,monkeypatch)
+    accepted,held=city_bulk.propose(conn,tender_report())
+    assert not held
+    assert accepted[0]['names']==['Alberici Constructors Ltd.','Maple Reinders Limited']
+    assert accepted[0]['witness']['excluded_no_bid'][0]['name']=='Other Firm'
+    assert accepted[0]['prices_withheld'] and accepted[0]['statuses_withheld']
+
+
+@pytest.mark.parametrize('change',['invited_only','missing_no_bid','model_no_bid_conflict','other_call','qualification_event'])
+def test_native_tender_requires_actual_opened_rows_and_source_supported_no_bid(conn,tmp_path,monkeypatch,change):
+    from tests.test_city_archived_awards import setup_archive
+    setup_archive(conn,tmp_path,monkeypatch);row=tender_report()
+    if change=='invited_only':row['text']=row['text'].replace('opened the following two (2) Tender submissions','invited the following contractors')
+    elif change=='missing_no_bid':row['text']=row['text'].replace('Did not bid','$30')
+    elif change=='model_no_bid_conflict':row['result']['contracts'][0]['bids'][0]['status']='no_bid'
+    elif change=='other_call':row['text']=row['text'].replace('At its Public','Tender 3905-14-0098. At its Public')
+    elif change=='qualification_event':row['result']['contracts'][0]['solicitation_type']='RFSQ'
+    assert not city_bulk.propose(conn,row)[0]
+
+
+@pytest.mark.parametrize('abbreviation',['ACL','Alberici'])
+@pytest.mark.parametrize('phrase',['This resulted in receipt of four submissions from the following firms:', 'Responses were received from the following firms:'])
+def test_native_receipt_wording_and_publisher_abbreviation_are_source_roles(conn,tmp_path,monkeypatch,phrase,abbreviation):
+    from tests.test_city_archived_awards import setup_archive
+    setup_archive(conn,tmp_path,monkeypatch);row=native_report()
+    row['text']='Award of RFP 3905-14-0097\nSUMMARY\n'+phrase+'\nAlberici Constructors Ltd. ('+abbreviation+')\nMaple Reinders Limited\n'
+    accepted,held=city_bulk.propose(conn,row)
+    assert not held and accepted[0]['names']==['Alberici Constructors Ltd.','Maple Reinders Limited']
+    row['text']=row['text'].replace('('+abbreviation+')','submitted No Bid')
+    assert not city_bulk.propose(conn,row)[0]
+
+
+def test_native_copied_footer_is_a_conflicting_event_even_outside_receipt_context(conn,tmp_path,monkeypatch):
+    from tests.test_city_archived_awards import setup_archive
+    setup_archive(conn,tmp_path,monkeypatch);row=native_report()
+    row['text']+='\n'+('Unrelated background. '*100)+'\nAward of RFP 3905-14-0098\nPage 1 of 1\n'
+    assert not city_bulk.propose(conn,row)[0]
+
+
+def test_native_report_calendar_range_is_not_a_conflicting_footer_call(conn,tmp_path,monkeypatch):
+    from tests.test_city_archived_awards import setup_archive
+    setup_archive(conn,tmp_path,monkeypatch);row=native_report()
+    row['text']=row['text'].replace('The RFP','SUMMARY\nThe RFP')
+    row['text']+='\nFunding in the 2019-2027 Capital Budgets and Plans\nAward of RFP 3905-14-0097\nPage 1 of 1\n'
+    assert city_bulk.propose(conn,row)[0]
+
+
+def test_native_received_list_is_distinct_from_later_negotiation_invitation(conn,tmp_path,monkeypatch):
+    from tests.test_city_archived_awards import setup_archive
+    setup_archive(conn,tmp_path,monkeypatch);row=native_report()
+    row['text']=row['text'].replace('The RFP','Proponents would later be invited to enter negotiations. The RFP')
+    assert city_bulk.propose(conn,row)[0]

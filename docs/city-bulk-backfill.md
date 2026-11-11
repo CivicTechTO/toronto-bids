@@ -93,16 +93,37 @@ python -m toronto_bids.bid_coverage \
   --database /path/to/validation/bids.sqlite --out /path/to/coverage-after
 ```
 
-Automated admission requires a modern Doc agreed by the model contract and
-published source roles, literal named firms in a received-firm list or explicitly
-labelled received-bid table, and no unsupported participation stage or no-bid
-outcome. The primary agenda title can establish the event; when it names only a
+Automated admission requires an independently proven City event, literal named
+firms in a received-firm list or explicitly labelled received-bid table, and no
+unsupported participation stage or no-bid outcome. Modern Doc identities must
+agree between the model contract and published source roles. The primary agenda title can establish the event; when it names only a
 native call or project, a unique printed primary report subject must establish the
 Doc instead. Mixed-event reports additionally require an explicit local Doc in the
 submission context and consistent current-event footers. An incidental historical
 mention does not establish a current event. The source quotation is retained.
 
 Received-table headings may include an explicit numeric count, such as `Summary of two (2) Bids Received`. A `Suppliers and Fixed Bid Prices` table needs an immediately preceding statement that a counted set of bidders responded, naming that exact table number, and the table heading must name the same current Doc. A price or recommended-supplier table alone is insufficient. An original receipt count cannot be smaller than the admitted named participants, even when the model omitted its count. These are shared source-role recognizers; the extraction prompt and cached results stay unchanged.
+
+Historical Call Numbers use a separate identity proof, never numeric conversion.
+The original archived award's printed award date, full legal supplier and exact
+amount must identify one record across the complete frozen publisher population,
+all retained archive views and current publisher projections. Both the original
+report subject and the agenda title must name the same unique call. Each proof
+pins the archive row, population snapshot and current publisher projection.
+Conflicting event footers remain held; a budget calendar range in the report body
+is not itself an event footer.
+
+Final tender-opening tables can establish actual participation even when the
+whole procurement included prequalification. The original source must explicitly
+say bids/submissions were opened or identify the same Tender in a received-bid
+table. Every model party must occur as a full literal table row with either a
+printed monetary response or an explicit No Bid outcome matching the model.
+No Bid rows remain in the evidence and are excluded from participation. An
+invitation or qualification list alone is insufficient; a qualification event
+cannot use this final-tender admission. Monetary columns are witnesses of actual
+response only and are not projected as bid prices. Received-firm lists can retain
+a publisher's parenthetical abbreviation after the full literal legal name.
+Later negotiation invitations do not erase an explicitly received list.
 
 Derived participation carries no price or compliance status. Standalone literal
 supplier rows can preserve wrapped names and footnote markers without interpreting
@@ -127,9 +148,9 @@ not silently invent supplier aliases or replace earlier facts.
 
 `extraction-inventory.json` records every report's screen, contract results,
 participation proposals and exceptions. `run.json` records the phase scoreboard.
-Historical native calls, complex tables, joint-venture typography and contradictory
-publisher fields still require shared admission classes or independent reviewed
-identity proofs. They do not become Doc identities through numeric encodings.
+Native calls without independent archived-award identity, complex tables,
+joint-venture typography and contradictory publisher fields remain held for
+shared admission classes or independent reviewed identity proofs. They do not become Doc identities through numeric encodings.
 
 JSON attaches each approved bulk report directly to its proven City solicitation through `city_bulk_bid_evidence`. This also works when the captured PDF has no council reference. A broad item/reference never distributes the source report across sibling procurements.
 
