@@ -44,6 +44,7 @@ import json
 import re
 import shutil
 import zipfile
+from datetime import UTC, datetime
 from pathlib import Path
 
 from toronto_bids import config
@@ -486,7 +487,9 @@ def capture_event(page, event: dict, dest_dir, log=lambda _m: None) -> Path | No
             f"Doc{document_number}: Ariba served the anonymous view (Register/Login modal); "
             f"the session did not carry to the preview.")
     if outcome != "event":
-        raise RuntimeError(f"Doc{document_number}: the Sourcing event never loaded after Respond.")
+        evidence = _respond_timeout_evidence(page, rfx_id, document_number, dest_dir)
+        raise RuntimeError(
+            f"Doc{document_number}: the Sourcing event never loaded after Respond. {evidence}")
     _dismiss_cookie_banner(page)
 
     # Per-file capture (#174). The bundle path is retired here: it server-zips a SELECTION and
@@ -501,6 +504,69 @@ def capture_event(page, event: dict, dest_dir, log=lambda _m: None) -> Path | No
     # asserted a few lines up); this side has no such flag and is guarded only structurally, by
     # every path that reaches this call having already failed to prove the posting is closed.
     return ariba_files.capture_files(source, document_number, dest_dir, log=log)
+
+
+# Under the attachments dir but outside the `Doc*.zip` glob that ingest/reindex read.
+RESPOND_TIMEOUT_DIRNAME = "respond-timeouts"
+_EXCERPT_CHARS = 400
+_EVIDENCE_TIMEOUT_MS = 5000     # the page may already be hung; never add minutes to a failure
+
+
+def _best_effort(fn, default="?"):
+    try:
+        return fn()
+    except Exception:  # noqa: BLE001 — evidence is best effort
+        return default
+
+
+def _save_tab(tab, out: Path, stem: str) -> list[str]:
+    """Write one tab's HTML and screenshot; each independently, so one failure keeps the other."""
+    saved = []
+    if _best_effort(lambda: (out / f"{stem}.html").write_text(tab.content(), encoding="utf-8"),
+                    None) is not None:
+        saved.append(f"{stem}.html")
+    if _best_effort(lambda: tab.screenshot(path=str(out / f"{stem}.png"), full_page=True,
+                                           timeout=_EVIDENCE_TIMEOUT_MS), False) is not False:
+        saved.append(f"{stem}.png")
+    return saved
+
+
+def _respond_timeout_evidence(page, rfx_id: str, document_number: str, dest_dir: Path) -> str:
+    """Say what the browser showed when Respond led nowhere recognisable (#304).
+
+    A bare timeout cannot tell "Discovery stayed put", "Sourcing opened in another tab" and
+    "Sourcing showed an unrecognised error" apart. Record the page's URL and title, whether
+    the preview's identity marker is still VISIBLE, a bounded text excerpt, and every other
+    open tab's URL and title; keep each tab's HTML + screenshot beside the bundles (local only,
+    never published: the HTML can hold session tokens). Best-effort throughout: gathering
+    evidence must never replace, or noticeably delay, the failure it describes.
+    """
+    url = _best_effort(lambda: page.url)
+    title = _best_effort(lambda: page.title())
+    visible = _best_effort(
+        lambda: page.locator(f"text=ID - {rfx_id}").first.is_visible(), None)
+    if visible is None:
+        preview = "preview unknown"
+    else:
+        preview = "preview still visible" if visible else "preview not visible"
+    text = _best_effort(lambda: " ".join(
+        (page.inner_text("body", timeout=_EVIDENCE_TIMEOUT_MS) or "").split()), "")
+    excerpt = text[:_EXCERPT_CHARS] + ("…" if len(text) > _EXCERPT_CHARS else "")
+    tabs = _best_effort(lambda: list(page.context.pages), [])
+    others = [t for t in tabs if t is not page]
+
+    out = Path(dest_dir) / RESPOND_TIMEOUT_DIRNAME
+    stem = f"Doc{document_number}-{datetime.now(UTC).strftime('%Y%m%dT%H%M%SZ')}"
+    saved = []
+    if _best_effort(lambda: out.mkdir(parents=True, exist_ok=True), False) is not False:
+        saved += _save_tab(page, out, stem)
+        for i, tab in enumerate(others, 1):
+            saved += _save_tab(tab, out, f"{stem}-tab{i}")
+    described = [(_best_effort(lambda t=t: t.url), _best_effort(lambda t=t: t.title()))
+                 for t in others]
+    other_tabs = f"other tabs={described!r}" if described else "no other tabs"
+    return (f"After Respond: url={url!r} title={title!r} {preview}; {other_tabs}; "
+            f"text={excerpt!r}; evidence={saved or 'not saved'}")
 
 
 def _open_authed_preview(page, rfx_id: str, attempts: int = 3) -> bool:
@@ -1916,7 +1982,8 @@ def _capture_with_session_recovery(browser, page, event, dest_dir, log):
 
 def capture_attachments(conn, dest_dir=None, log=lambda _m: None, headless=False,
                         virtual_display=False, failures: list | None = None,
-                        training_restrictions: list | None = None) -> int:
+                        training_restrictions: list | None = None,
+                        only: list[str] | None = None) -> int:
     """Log in, walk every open solicitation, capture and index each bundle. Resumable.
 
     A complete bundle is skipped; recorded gaps keep an open event eligible for retry.
@@ -1935,6 +2002,9 @@ def capture_attachments(conn, dest_dir=None, log=lambda _m: None, headless=False
     document/posting pairs are reported through `training_restrictions` (#242); real-event
     restrictions and unexpected training errors remain failures. A training restriction never
     hides existing attachment gaps. Restricted events stay eligible to recheck next run.
+
+    `only` (document numbers) limits the run to those pending events, for one targeted
+    attempt (#304); a number that is not an open, pending event raises before any login.
     """
     from playwright.sync_api import sync_playwright
 
@@ -1946,6 +2016,14 @@ def capture_attachments(conn, dest_dir=None, log=lambda _m: None, headless=False
     dest_dir = Path(dest_dir if dest_dir is not None else config.ARIBA_ATTACHMENTS_DIR)
     events = open_solicitation_events(conn)
     pending = [e for e in events if not bundle_complete(dest_dir, e["document_number"])]
+    if only is not None:
+        wanted = {str(n) for n in only}
+        unknown = wanted - {e["document_number"] for e in pending}
+        if unknown:
+            raise ValueError(
+                "not an open event still pending capture (unknown, closed, or already "
+                f"complete; give the bare 10-digit number): {', '.join(sorted(unknown))}")
+        pending = [e for e in pending if e["document_number"] in wanted]
     log(f"  open events: {len(events)}  complete: {len(events) - len(pending)}  "
         f"to capture: {len(pending)}")
     if not pending:

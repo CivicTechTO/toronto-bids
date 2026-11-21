@@ -34,7 +34,7 @@ uv run tb extract --corpus award_summary --dry-run   # LLM extraction for one co
 - `TB_DATA_DIR` relocates the DB and downloads (default `scrapers/files/`).
 - The browser deps (playwright, pyvirtualdisplay, python-dotenv) are **mandatory base deps** — they run in-line in `tb nightly`, so `uv sync --locked` installs them and no sync variant can strip them (they were an optional extra until a `uv sync --locked` on the deploy box dropped them and broke the nightly). Only the browser BINARY is a separate step: `uv run playwright install chromium`.
 - `tb sync` hits live City endpoints and takes minutes; the tests are the dev loop.
-- Other opt-in commands, none part of `tb sync`: `enrich-council` (`--virtual-display` for Xvfb), `enrich-titles` (offline over cached agendas; `--reports` fetches staff-report PDFs), `enrich-awards` (`--download`), `enrich-committee-awards` (`--scrape`), `enrich-agencies` (`--only`, `--fetch`, `--scrape`, `--portal`, `--record`), `enrich-ariba-attachments` (`--capture`, `--ingest`, `--reindex`), `amounts`, `manifest`, `record-step`, `known-gaps`.
+- Other opt-in commands, none part of `tb sync`: `enrich-council` (`--virtual-display` for Xvfb), `enrich-titles` (offline over cached agendas; `--reports` fetches staff-report PDFs), `enrich-awards` (`--download`), `enrich-committee-awards` (`--scrape`), `enrich-agencies` (`--only`, `--fetch`, `--scrape`, `--portal`, `--record`), `enrich-ariba-attachments` (`--capture`, `--document N` to target one open event, `--ingest`, `--reindex`), `amounts`, `manifest`, `record-step`, `known-gaps`.
 
 ### Deployment
 
@@ -165,7 +165,7 @@ Extraction comes from the LLM `composite` corpus. `call_number` is `normalize_ca
 
 ### Ariba attachments (`sources/ariba_attachments.py`, `sources/ariba_files.py`, #117/#174) — the documents behind Respond
 
-An explicit event permission denial gets one fresh authenticated browser context and one retry. A repeated denial remains a failure; closed/public-sector restrictions do not trigger a fresh login. A recovered session is reused for subsequent events.
+An explicit event permission denial gets one fresh authenticated browser context and one retry. A repeated denial remains a failure; closed/public-sector restrictions do not trigger a fresh login. A recovered session is reused for subsequent events. A post-Respond timeout (no event, no recognised rejection) stays a retryable failure; its message records URL, title, preview visibility, other tabs and a text excerpt, and each tab's HTML + screenshot is kept under `attachments/respond-timeouts/` (local only, unpruned, may hold session tokens; outside the `Doc*.zip` glob) (#304).
 
 The City posts every competitive solicitation to Ariba Discovery, but the **actual documents** (RFP parts, drawings, addenda, pricing forms) live inside the Sourcing event, reachable only as a participating supplier after clicking **Respond**. Authorized by PMMD in writing (2026-07). Respond registers our account as a participant for archival access and **never submits a bid**.
 
