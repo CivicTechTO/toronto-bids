@@ -18,7 +18,6 @@ from toronto_bids.store import db
 
 @pytest.fixture
 def seeded(conn):
-    # One solicitation with an award and a bridged Ariba posting.
     db.upsert_row(conn, Solicitation(document_number="5672751291", status="Open",
                                      title="RFT Watermain", source="odata"), overwrite=True)
     db.upsert_row(conn, Award(document_number="5672751291", supplier_name_raw="Acme Co",
@@ -26,11 +25,9 @@ def seeded(conn):
     db.upsert_row(conn, AribaPosting(rfx_id="1110015885", document_number="5672751291",
                                      title="RFT Watermain", categories='["Sidewalk"]',
                                      raw_json='{"big":"blob"}', source="ariba_discovery"), overwrite=True)
-    # An Ariba posting that never bridged (document_number is NULL).
     db.upsert_row(conn, AribaPosting(rfx_id="1110099999", document_number=None,
                                      title="Unbridged posting", categories='["Water"]',
                                      source="ariba_discovery"), overwrite=True)
-    # A non-competitive contract (separate keyspace).
     db.upsert_row(conn, NonCompetitive(workspace_number="8614", supplier_name_raw="Sole Source Inc",
                                        reason="Emergency", source="odata"), overwrite=True)
     conn.commit()
@@ -38,9 +35,6 @@ def seeded(conn):
 
 
 def test_meta_carries_the_attribution_the_grants_require(conn):
-    # TRCA and the Toronto Zoo each granted portal access on condition of attribution as
-    # the data source (docs/permissions/2026-07-18-*.md, #228). Static: present even on an
-    # empty store, since the grant conditions the publication, not a night's rows.
     import pathlib
 
     doc = build_export_document(conn, generated_at="2026-07-15T00:00:00Z")
@@ -74,12 +68,10 @@ def test_award_and_posting_nested_under_solicitation(seeded):
     sol = sols[0]
     assert sol["document_number"] == "5672751291"
     assert "odata_id" not in sol
-    # award nested, internal cols dropped, redundant document_number dropped
     assert len(sol["awards"]) == 1
     assert sol["awards"][0]["supplier_name_raw"] == "Acme Co"
     assert "id" not in sol["awards"][0]
     assert "document_number" not in sol["awards"][0]
-    # ariba posting nested, raw_json dropped, categories parsed to a list
     assert len(sol["ariba_postings"]) == 1
     assert sol["ariba_postings"][0]["rfx_id"] == "1110015885"
     assert "raw_json" not in sol["ariba_postings"][0]
@@ -94,7 +86,6 @@ def test_unbridged_posting_goes_to_unlinked_not_dropped(seeded):
     assert unlinked[0]["rfx_id"] == "1110099999"
     assert unlinked[0]["categories"] == ["Water"]
     assert "raw_json" not in unlinked[0]
-    # It must NOT appear under any solicitation.
     assert all(p["rfx_id"] != "1110099999"
                for s in doc["solicitations"] for p in s["ariba_postings"])
 
@@ -103,13 +94,12 @@ def test_noncompetitive_is_separate_top_level(seeded):
     doc = build_export_document(seeded, generated_at="t")
     assert len(doc["noncompetitive"]) == 1
     assert doc["noncompetitive"][0]["workspace_number"] == "8614"
-    # supplier_id is retained for joining to suppliers[]
     assert "supplier_id" in doc["noncompetitive"][0]
 
 
 def test_document_is_json_serializable(seeded):
     doc = build_export_document(seeded, generated_at="t")
-    json.dumps(doc)  # must not raise
+    json.dumps(doc)
 
 
 def test_empty_store_produces_empty_collections(conn):
@@ -122,15 +112,13 @@ def test_empty_store_produces_empty_collections(conn):
 
 
 def test_orphan_posting_docnum_not_in_solicitation_goes_to_unlinked(seeded):
-    # A posting bridged to a doc number that matches NO solicitation must NOT vanish.
     db.upsert_row(seeded, AribaPosting(rfx_id="1110088888", document_number="4044346425",
                                        title="Mock RFT", source="ariba_discovery"), overwrite=True)
     seeded.commit()
     doc = build_export_document(seeded, generated_at="t")
     orphan = [p for p in doc["unlinked_ariba_postings"] if p["rfx_id"] == "1110088888"]
     assert len(orphan) == 1
-    assert orphan[0]["document_number"] == "4044346425"   # kept for diagnostics
-    # and it must NOT be nested under any solicitation
+    assert orphan[0]["document_number"] == "4044346425"
     assert all(p["rfx_id"] != "1110088888"
                for s in doc["solicitations"] for p in s["ariba_postings"])
 
@@ -146,7 +134,6 @@ def test_orphan_award_docnum_not_in_solicitation_goes_to_unlinked_awards(seeded)
 
 
 def test_no_record_is_dropped_counts_reconcile(seeded):
-    # Every posting/award is either nested or unlinked — nested + unlinked == db count.
     db.upsert_row(seeded, AribaPosting(rfx_id="1110088888", document_number="4044346425",
                                        source="ariba_discovery"), overwrite=True)
     db.upsert_row(seeded, Award(document_number="4044346425", supplier_name_raw="Orphan Co",
@@ -193,12 +180,8 @@ def test_export_has_suppliers_array_and_retains_supplier_id(conn):
     doc = build_export_document(conn, generated_at="t")
     assert len(doc["suppliers"]) == 1
     assert doc["suppliers"][0]["display_name"] == "Compugen Inc."
-    # supplier_key is the frontend's only stable permalink identity (#144): supplier_id is
-    # rebuilt every sync, display_name shifts as variants accrue.
     assert doc["suppliers"][0]["supplier_key"] == "compugen inc"
-    # variants is parsed to a list for consistency with categories
     assert doc["suppliers"][0]["variants"] == ["Compugen Inc."]
-    # supplier_id is retained on nested awards so consumers can join to suppliers[]
     award = doc["solicitations"][0]["awards"][0]
     assert award["supplier_id"] == sid
 
@@ -224,8 +207,8 @@ def test_export_has_council_items_with_nested_pdfs(conn):
     assert ci["reference"] == "2025.GG26.3"
     assert len(ci["background_pdfs"]) == 1
     assert ci["background_pdfs"][0]["kind"] == "bgrd"
-    assert "text" not in ci["background_pdfs"][0]  # bulky extracted text excluded from the export
-    assert "local_path" not in ci["background_pdfs"][0]  # machine-specific paths excluded from the export
+    assert "text" not in ci["background_pdfs"][0]
+    assert "local_path" not in ci["background_pdfs"][0]
 
 
 def test_export_council_items_empty_when_none(conn):
@@ -253,7 +236,7 @@ def test_documents_nested_under_solicitation(seeded):
     assert ariba["source"] == "ariba_attachment"
     assert ariba["path"] == "Appendix C2 - Planning Documents.zip/site-plan.pdf"
     assert ariba["type"] == "pdf" and ariba["size_bytes"] == 12656277 and ariba["url"] is None
-    assert "crc32" not in ariba and "sha256" not in ariba   # internal fields stay private
+    assert "crc32" not in ariba and "sha256" not in ariba
 
     form = docs["Award Summary Form.pdf"]
     assert form["source"] == "award_summary" and form["type"] == "pdf"
@@ -262,13 +245,11 @@ def test_documents_nested_under_solicitation(seeded):
 
 
 def test_documents_use_leaf_basename_for_name_and_type(seeded):
-    # Extensionless leaf inside a nested zip: name is the leaf, not the container's extension.
     db.upsert_row(seeded, AribaAttachment(
         document_number="5672751291", filename="README",
         path="Base Information.zip/README",
         file_size=42, crc32="deadbeef", zip_name="Doc5672751291.zip",
         zip_sha256="a" * 64), overwrite=True)
-    # Leaf several directories deep inside a nested zip: name/type come from the final segment.
     db.upsert_row(seeded, AribaAttachment(
         document_number="5672751291", filename="site-plan.pdf",
         path="Appendix C2.zip/drawings/site-plan.pdf",
@@ -298,7 +279,6 @@ def test_solicitation_without_documents_gets_empty_list(conn):
 
 
 def test_staff_report_surfaces_under_solicitation_via_bid_bridge(seeded):
-    # An Ariba-era bid row carries BOTH the council reference and the document_number.
     db.upsert_row(seeded, Bid(bidder_name_raw="Acme Co", reference="2020.BA5.3",
                               document_number="5672751291", bid_price="1000",
                               source="bid_award_panel"), overwrite=True)
@@ -319,7 +299,6 @@ def test_staff_report_surfaces_under_solicitation_via_bid_bridge(seeded):
 
 
 def test_reference_null_bid_nests_under_solicitation(seeded):
-    # An Award Summary bid: reference IS NULL, document_number set to a real solicitation.
     db.upsert_row(seeded, Bid(bidder_name_raw="Post-Panel Co", reference=None,
                               document_number="5672751291", bid_price="2500",
                               source="award_summary"), overwrite=True)
@@ -330,8 +309,7 @@ def test_reference_null_bid_nests_under_solicitation(seeded):
     assert len(sol["bids"]) == 1
     assert sol["bids"][0]["bidder_name_raw"] == "Post-Panel Co"
     assert "id" not in sol["bids"][0]
-    assert "document_number" not in sol["bids"][0]   # redundant under the solicitation
-    # It must NOT leak into any council item.
+    assert "document_number" not in sol["bids"][0]
     assert all(b["bidder_name_raw"] != "Post-Panel Co"
                for ci in build_export_document(seeded, generated_at="t")["council_items"]
                for b in ci["bids"])
@@ -345,7 +323,7 @@ def test_reference_null_bid_with_no_matching_solicitation_goes_to_unlinked_bids(
     doc = build_export_document(seeded, generated_at="t")
     orphan = [b for b in doc["unlinked_bids"] if b["bidder_name_raw"] == "Orphan Bidder"]
     assert len(orphan) == 1
-    assert orphan[0]["document_number"] == "4044346425"   # kept for diagnostics
+    assert orphan[0]["document_number"] == "4044346425"
     assert all(b["bidder_name_raw"] != "Orphan Bidder"
                for s in doc["solicitations"] for b in s["bids"])
 
@@ -359,7 +337,6 @@ def test_reference_bid_stays_under_council_item(conn):
     doc = build_export_document(conn, generated_at="t")
     ci = doc["council_items"][0]
     assert [b["bidder_name_raw"] for b in ci["bids"]] == ["Panel Bidder"]
-    # and it must NOT appear in unlinked_bids
     assert doc["unlinked_bids"] == []
 
 
@@ -388,8 +365,6 @@ def test_empty_store_has_empty_unlinked_bids(conn):
 
 
 def test_pre_ariba_bid_bridges_to_its_solicitation(seeded):
-    # A pre-Ariba bid: has a reference, no document_number. A solicitation_link maps its
-    # reference to a solicitation -> the bid nests under the solicitation, not the council item.
     from toronto_bids.models import CouncilItem
     db.upsert_row(seeded, CouncilItem(reference="2016.BD106.3", title="Award"), overwrite=True)
     db.upsert_row(seeded, Bid(bidder_name_raw="Loser Co", reference="2016.BD106.3",
@@ -399,9 +374,9 @@ def test_pre_ariba_bid_bridges_to_its_solicitation(seeded):
     seeded.commit()
     doc = build_export_document(seeded, generated_at="t")
     sol = next(s for s in doc["solicitations"] if s["document_number"] == "5672751291")
-    assert any(b["bidder_name_raw"] == "Loser Co" for b in sol["bids"])          # under solicitation
+    assert any(b["bidder_name_raw"] == "Loser Co" for b in sol["bids"])
     ci = next(c for c in doc["council_items"] if c["reference"] == "2016.BD106.3")
-    assert all(b["bidder_name_raw"] != "Loser Co" for b in ci["bids"])           # NOT under council item
+    assert all(b["bidder_name_raw"] != "Loser Co" for b in ci["bids"])
 
 
 def test_unbridged_pre_ariba_bid_stays_under_its_council_item(seeded):
@@ -409,7 +384,7 @@ def test_unbridged_pre_ariba_bid_stays_under_its_council_item(seeded):
     db.upsert_row(seeded, CouncilItem(reference="2016.BD200.1", title="Award"), overwrite=True)
     db.upsert_row(seeded, Bid(bidder_name_raw="Orphan Co", reference="2016.BD200.1",
                               document_number=None, bid_price="9", source="bid_award_panel"), overwrite=True)
-    seeded.commit()  # no solicitation_link row
+    seeded.commit()
     doc = build_export_document(seeded, generated_at="t")
     ci = next(c for c in doc["council_items"] if c["reference"] == "2016.BD200.1")
     assert any(b["bidder_name_raw"] == "Orphan Co" for b in ci["bids"])
@@ -431,24 +406,19 @@ def test_reconciliation_holds_with_a_bridged_pre_ariba_bid(seeded):
 
 
 def test_unbridged_staff_report_stays_out_of_documents(seeded):
-    # A staff report whose reference has no dual-key bid row must not attach to any solicitation.
     db.upsert_row(seeded, BackgroundPdf(
         url="https://www.toronto.ca/legdocs/x/backgroundfile-1.pdf",
         reference="2020.XX9.9", kind="bgrd"), overwrite=True)
     seeded.commit()
 
     sols = build_export_document(seeded, generated_at="t")["solicitations"]
-    assert sols  # the fixture has real solicitations the report could wrongly attach to
+    assert sols
     assert not any(d["source"] == "staff_report"
                    and d["url"] == "https://www.toronto.ca/legdocs/x/backgroundfile-1.pdf"
                    for s in sols for d in s["documents"])
 
 
 def test_dual_key_bid_stays_under_council_item_not_solicitation(seeded):
-    # An Ariba-era (#126) dual-key bid: BOTH reference and document_number are set, and the
-    # document_number matches a real solicitation. This PR's re-homing is pre-Ariba only
-    # (document_number IS NULL), so a dual-key bid must keep its #145 placement under its
-    # council item and must NOT be re-homed to the solicitation.
     from toronto_bids.models import CouncilItem
     db.upsert_row(seeded, CouncilItem(reference="2020.BA5.3", title="Award"), overwrite=True)
     db.upsert_row(seeded, Bid(bidder_name_raw="Dual Key Co", reference="2020.BA5.3",

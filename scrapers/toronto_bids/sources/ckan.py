@@ -12,10 +12,7 @@ _LOG = logging.getLogger(__name__)
 
 
 def resolve_resource_id(http, slug: str) -> str:
-    """Resolve the datastore-active resource UUID for a CKAN dataset slug.
-
-    Resource UUIDs rotate on refresh, so this must be called at runtime.
-    """
+    """Resolve the datastore-active resource UUID for a CKAN slug (rotates on refresh)."""
     data = http.get_json(config.CKAN_BASE + "package_show", params={"id": slug})
     if data.get("success") is False:
         raise RuntimeError(f"CKAN package_show failed for '{slug}': {data.get('error', '<no detail>')}")
@@ -44,7 +41,7 @@ def fetch_datastore(http, resource_id: str, page_size: int = 10000) -> Iterator[
 
 
 def _clean(value):
-    """Normalize CKAN empties to None. Treats '', 'None', and null as missing."""
+    """Return stripped string, or None for None, empty, or 'None'."""
     if value is None:
         return None
     text = str(value).strip()
@@ -154,12 +151,7 @@ def normalize_noncompetitive(raw: dict):
     )
 
 
-# The City packs a construction contract number into the project name:
-#   'Dufferin Transfer Station - Compactors Replacement  - 25ECS-MI-02SW'
-# Same shape as the contract numbers seen on Bid Award Panel agendas ('22TR-OM-104-SC-TM')
-# and in the legacy archive's folder names ('22ECS-TI-22SP'). Nothing joins on it today —
-# these projects have no document number yet — but teasing it out costs one regex and is the
-# only identifier a future join could use.
+# Construction contract number embedded in capital project names (e.g. '25ECS-MI-02SW').
 _CONTRACT_NO = re.compile(r"\b(\d{2}[A-Z]{2,4}(?:-[A-Z0-9]+){1,3})\b")
 
 
@@ -193,7 +185,7 @@ _NORMALIZERS = {
 
 
 class CkanSource:
-    """A CKAN dataset adapter."""
+    """CKAN dataset adapter."""
 
     def __init__(self, name: str, slug: str, kind: str, overwrite: bool = False):
         if kind not in _NORMALIZERS:
@@ -201,9 +193,7 @@ class CkanSource:
         self.name = name
         self.slug = slug
         self.kind = kind
-        # False by default: CKAN backfills, OData is the spine. capital_pipeline is the
-        # exception — no spine covers it, so CKAN *is* authoritative there, and a project
-        # whose target year or scope shifts must land rather than be COALESCEd away.
+        # False by default because OData is authoritative; True for capital_pipeline.
         self.overwrite = overwrite
 
     def fetch(self, http) -> Iterable[dict]:

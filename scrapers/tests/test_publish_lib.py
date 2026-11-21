@@ -1,17 +1,3 @@
-"""`deploy/publish-lib.sh` — durable step recording + artifact freshness for publish-data.sh
-(#176, deferred from the comment on #173).
-
-`record_step` gives publish-data.sh — bash, downstream of `tb nightly` in its own systemd
-unit — the same `sync_run` recording every Python nightly step gets via `_run_step`.
-`verify_artifact_size` answers the stronger question the issue's comment asked for: not "did
-the upload command exit 0" (the R2 mirror kept exiting 0 while dead for 8 nights) but "is what's
-actually live right now the same size as what we hold locally" — checked via a real HTTP HEAD
-request against the artifact itself.
-
-Bash-subprocess tests, the same shape #173 introduced for resolve-node.sh: these functions have
-real side effects (a subprocess `tb` invocation, a real `curl`), so a fake PATH / local HTTP
-server stands in rather than mocking bash itself.
-"""
 import http.server
 import shutil
 import sqlite3
@@ -33,12 +19,7 @@ def test_the_library_exists():
     assert PUBLISH_LIB.exists(), f"missing {PUBLISH_LIB}"
 
 
-# --- a local HEAD server, so verify_artifact_size needs no real network -------------------
-
 class _HeadServer:
-    """Answers every request with a fixed Content-Length (or none at all) and nothing else —
-    just enough for `curl -sIL` to read a header from a real socket."""
-
     def __init__(self, content_length):
         handler = _make_handler(content_length)
         self._httpd = http.server.HTTPServer(("127.0.0.1", 0), handler)
@@ -83,8 +64,6 @@ def head_server():
         s.close()
 
 
-# --- verify_artifact_size, record_step stubbed out to isolate the size comparison ---------
-
 _STUB_RECORD_STEP = 'record_step() { echo "STUB record_step $*"; }\n'
 
 
@@ -102,8 +81,6 @@ echo "RC=$?"
 
 
 def test_verify_artifact_size_mismatch_is_reported_and_returns_nonzero(tmp_path, head_server):
-    """The exact case #173 needed: a size that doesn't match what's actually live, independent
-    of whether the upload command that wrote it claimed success."""
     local = tmp_path / "local.bin"
     local.write_bytes(b"x" * 100)
     server = head_server(999)
@@ -117,8 +94,6 @@ echo "RC=$?"
 
 
 def test_verify_artifact_size_with_no_content_length_is_a_failure_not_a_crash(tmp_path, head_server):
-    """A server that answers but sends no Content-Length (a misconfigured proxy, an unexpected
-    response shape) must not read as a silent pass."""
     local = tmp_path / "local.bin"
     local.write_bytes(b"x" * 10)
     server = head_server(None)
@@ -132,8 +107,6 @@ echo "RC=$?"
 
 
 def test_verify_artifact_size_follows_a_redirect_to_read_the_final_content_length(tmp_path, head_server):
-    """A GitHub release asset 302s to a signed blob URL whose own response carries the real
-    Content-Length; the redirect response's is 0. `curl -sIL` must land on the LAST one."""
     real = head_server(555)
 
     class RedirectHandler(http.server.BaseHTTPRequestHandler):
@@ -162,8 +135,6 @@ echo "RC=$?"
         httpd.shutdown()
         thread.join(timeout=5)
 
-
-# --- record_step, against the real `tb` CLI -----------------------------------------------
 
 def _last_run(db_path):
     conn = sqlite3.connect(db_path)
@@ -210,8 +181,6 @@ def test_record_step_is_a_pure_echo_under_dry_run_and_writes_nothing(tmp_path):
 
 
 def test_record_steps_own_failure_is_a_warning_not_a_crash(tmp_path):
-    """If `uv`/`tb` itself can't run, record_step must warn and return — a monitoring
-    convenience call must never be why the actual publish looks broken."""
     res = run_publish_lib(tmp_path, 'record_step publish ok\n', env={
         "DRY_RUN": "0", "UV": "/nonexistent/uv", "SCRAPERS": str(SCRAPERS_DIR),
         "TB_DATA_DIR": str(tmp_path),

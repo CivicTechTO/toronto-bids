@@ -19,7 +19,7 @@ def _legacy_sample():
 def test_legacy_listing_field_aliases_remain_supported():
     row = parse_listing(_legacy_sample(), buyer_id=7)
     assert row.buyer_id == 7
-    assert row.native_ref == "RFT-2026-014"          # ReferenceNumber, normalized
+    assert row.native_ref == "RFT-2026-014"
     assert row.title == "Trail Bridge Replacement - Example Creek"
     assert row.status == "Open"
     assert row.closing_date == "2026-08-15T14:00:00"
@@ -81,18 +81,16 @@ def test_run_portal_capture_isolates_a_failing_body(conn, monkeypatch):
 
     def fake_fetch(portal, **_kw):
         if portal["slug"] == "trca":
-            raise RuntimeError("boom")            # one body fails
+            raise RuntimeError("boom")
         yield dict(_legacy_sample(), buyer_slug="toronto-zoo")
 
     monkeypatch.setattr(bt, "fetch_listings", fake_fetch)
     result = bt.run_portal_capture(conn, log=lambda _m: None)
-    assert result["toronto-zoo"] == 1             # zoo still captured
-    assert "trca" in result and result["trca"] == "FAILED: boom"   # trca isolated, recorded
+    assert result["toronto-zoo"] == 1
+    assert "trca" in result and result["trca"] == "FAILED: boom"
 
 
 def test_nightly_wires_up_the_portal_step():
-    """Doc-smoke: `tb nightly` (cli._run_nightly) actually calls into this module, isolated
-    the same way sync/award_summary are (#135 asks it never stop the export)."""
     import inspect
 
     from toronto_bids import cli
@@ -101,19 +99,14 @@ def test_nightly_wires_up_the_portal_step():
     assert "run_portal_capture(conn" in src
 
 
-# --- #226: a broken reply is a FAILURE, never "no open bids" -------------------------------
-
 _LANDING_HTML = ('<input id="NodeId" type="hidden" value="node-1">'
                  '<input name="__RequestVerificationToken" type="hidden" value="tok-1">')
 
-# The shape fetch_listings reads: a `success` flag beside the `data` page and a `total`.
 _EMPTY = {"success": True, "data": [], "total": 0}
 
 
 def _fake_portal(monkeypatch, search_reply):
-    """Route bids_tenders' own httpx.Client through a MockTransport: the landing GET serves a
-    page carrying NodeId + token, and every search POST is answered by
-    `search_reply(slug, request) -> httpx.Response`. No network, no rate-limit sleep."""
+    """Stub bids_tenders httpx.Client via MockTransport and disable sleeps."""
     import types
 
     import httpx
@@ -153,13 +146,13 @@ def test_non_json_reply_is_reported_failed_and_other_portal_still_runs(conn, mon
     import httpx
 
     def reply(slug, _req):
-        if slug == "trca":   # e.g. the Error?aspxerrorpath HTML page a bad request lands on
+        if slug == "trca":
             return httpx.Response(200, text="<html>Error</html>")
         return httpx.Response(200, json=_EMPTY)
 
     bt = _fake_portal(monkeypatch, reply)
     result = bt.run_portal_capture(conn, log=lambda _m: None)
-    assert result["toronto-zoo"] == 0                    # the other portal still ran
+    assert result["toronto-zoo"] == 0
     assert isinstance(result["trca"], str) and result["trca"].startswith("FAILED")
     assert "trca" in result["trca"] and "non-JSON" in result["trca"]
     assert "HTTP 200" in result["trca"] and "status=All" in result["trca"]

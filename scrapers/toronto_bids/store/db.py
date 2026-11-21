@@ -25,9 +25,8 @@ from toronto_bids.models import (
     SuspendedFirm,
 )
 
-# model -> (table, conflict-key columns). A model's fields ARE the table's writable
-# columns, in INSERT order; auto/default columns (id, first_seen, last_seen, supplier_id)
-# are DB-side only and deliberately absent from the models.
+# Model -> (table, key_cols). DB-side columns (id, first_seen, last_seen, supplier_id, title_source)
+# are omitted from models so upsert_row never overwrites them.
 _TABLES = {
     BidScope: ("bid_scope", ["reference", "source", "scope_key"]),
     BidResponse: ("bid_response", ["scope_id", "response_key"]),
@@ -69,9 +68,7 @@ _TABLES = {
     AgencyBid: ("agency_bid", ["buyer_id", "native_ref", "bidder_name_raw", "source"]),
 }
 
-# Tables whose uniqueness is enforced by an expression index rather than a column list, so
-# ON CONFLICT must name the same expressions. award's key COALESCEs its nullable parts
-# because SQLite treats NULLs as distinct — see the award_line_key comment in schema.sql.
+# Expression-index conflict targets; must match the COALESCE unique indexes in schema.sql.
 _CONFLICT_TARGETS = {
     "award": "document_number, supplier_name_raw, "
     "COALESCE(award_amount, ''), COALESCE(award_date, ''), source",
@@ -83,8 +80,7 @@ _CONFLICT_TARGETS = {
     "COALESCE(award_amount, ''), source",
 }
 
-# The published table set — the export dictionary (#168) and counts() share this so they
-# cannot drift. Ordered for a deterministic schema document.
+# Published table set shared by export and counts().
 EXPORT_TABLES = [
     "pdf_text",
     "solicitation",
@@ -137,8 +133,7 @@ def connect(path) -> sqlite3.Connection:
 def init_db(conn) -> None:
     schema = resources.files("toronto_bids.store").joinpath("schema.sql").read_text()
     conn.executescript(schema)
-    # Preserve real FK declarations on legacy stores; the generic additive migration
-    # below knows only types/defaults and cannot reconstruct REFERENCES clauses.
+    # Add procurement_id with its FK clause before _add_missing_columns (which cannot add REFERENCES).
     from toronto_bids.linking.procurement import FACT_TABLES
     for table in FACT_TABLES:
         if 'procurement_id' not in {r[1] for r in conn.execute(f'PRAGMA table_info({table})')}:
@@ -151,24 +146,7 @@ def init_db(conn) -> None:
 
 
 def _rebuild_bid_for_nullable_reference(conn, schema: str) -> bool:
-    """Drop bid.reference's NOT NULL and widen bid_key to cover document_number (#114).
-
-    Same reasoning as _rebuild_award_for_line_key: `_add_missing_columns` only ADDs columns
-    and `CREATE TABLE IF NOT EXISTS` never alters an existing table, so a database built
-    before #114 keeps `reference TEXT NOT NULL` — which rejects every Award Summary Form bid,
-    because the Bid Award Panel that issued council references was abolished on 2025-10-01 and
-    those bids have no council item to name.
-
-    The index has to move with it. The old key was (reference, bidder_name_raw, bid_price,
-    source); with reference NULL for #114 rows, SQLite treats every one of them as distinct
-    and re-inserts the whole corpus on each run — the exact NULL-in-a-UNIQUE-index trap #73
-    and #84 already hit. The new key COALESCEs both identifiers.
-
-    Rows are copied rather than re-fetched so `first_seen` survives — it is archive metadata
-    no feed can tell us again.
-
-    Returns True if a rebuild happened. Idempotent: a no-op once reference is nullable.
-    """
+    """Rebuild legacy bid table to make reference nullable and update bid_key, preserving first_seen. Idempotent."""
     row = conn.execute(
         "SELECT sql FROM sqlite_master WHERE type='table' AND name='bid'"
     ).fetchone()
@@ -176,15 +154,14 @@ def _rebuild_bid_for_nullable_reference(conn, schema: str) -> bool:
         row is None
         or "NOT NULL" not in (row["sql"] or "").split("reference")[-1][:24].upper()
     ):
-        return False  # fresh DB, or already rebuilt
+        return False
 
     cols = [r[1] for r in conn.execute("PRAGMA table_info(bid)")]
     quoted = ", ".join(cols)
     conn.executescript("PRAGMA foreign_keys = OFF;")
     try:
         conn.execute("ALTER TABLE bid RENAME TO _bid_pre114")
-        # The rename drags bid_key along, and CREATE INDEX IF NOT EXISTS would then skip it by
-        # name, leaving the rebuilt table with no unique index at all. Free the name first.
+        # Drop renamed index first so schema.sql recreates bid_key on the new table.
         conn.execute("DROP INDEX IF EXISTS bid_key")
         conn.executescript(schema)
         conn.execute(f"INSERT INTO bid ({quoted}) SELECT {quoted} FROM _bid_pre114")
@@ -195,38 +172,20 @@ def _rebuild_bid_for_nullable_reference(conn, schema: str) -> bool:
 
 
 def _rebuild_award_for_line_key(conn, schema: str) -> bool:
-    """Drop award's old table-level UNIQUE so award_line_key governs instead (#73).
-
-    `_add_missing_columns` only ADDs columns; it cannot remove a constraint, and
-    `CREATE TABLE IF NOT EXISTS` never alters an existing table. A database built before #73
-    therefore keeps `UNIQUE (document_number, supplier_name_raw, source)` — which silently
-    discards every award line after the first for a (document, supplier), and would reject the
-    additional lines the next sync tries to insert. So the table needs a genuine rebuild.
-
-    Rows are copied rather than re-fetched so `first_seen` survives: it is archive metadata
-    recording when we first saw a row, and no feed can tell us that again. The lines that were
-    already dropped cannot be recovered here — the next sync re-reads the feed and inserts them.
-
-    Returns True if a rebuild happened. Idempotent: a no-op once the old UNIQUE is gone.
-    """
+    """Rebuild legacy award table to drop table-level UNIQUE in favor of award_line_key, preserving first_seen. Idempotent."""
     row = conn.execute(
         "SELECT sql FROM sqlite_master WHERE type='table' AND name='award'"
     ).fetchone()
     if row is None or "UNIQUE" not in (row["sql"] or "").upper():
-        return False  # fresh DB, or already rebuilt
+        return False
 
     cols = [r[1] for r in conn.execute("PRAGMA table_info(award)")]
     quoted = ", ".join(cols)
     conn.executescript("PRAGMA foreign_keys = OFF;")
     try:
         conn.execute("ALTER TABLE award RENAME TO _award_pre73")
-        # The rename drags award_line_key along with the old table, and CREATE INDEX
-        # IF NOT EXISTS would then skip it by name — leaving the rebuilt table with no
-        # unique index at all. Free the name first.
+        # Drop renamed index first so schema.sql recreates award_line_key on the new table.
         conn.execute("DROP INDEX IF EXISTS award_line_key")
-        # Recreating from schema.sql keeps one definition of the table, rather than a second
-        # copy of the DDL drifting here. Every statement is IF NOT EXISTS, so re-running the
-        # whole script only materialises the award table we just renamed away.
         conn.executescript(schema)
         conn.execute(f"INSERT INTO award ({quoted}) SELECT {quoted} FROM _award_pre73")
         conn.execute("DROP TABLE _award_pre73")
@@ -237,21 +196,12 @@ def _rebuild_award_for_line_key(conn, schema: str) -> bool:
 
 
 def _rebuild_ariba_attachment_for_path(conn, schema: str) -> bool:
-    """Swap ariba_attachment's UNIQUE(document_number, filename) for UNIQUE(document_number, path).
-
-    Recursive indexing (#123) surfaces leaves that share a filename across different nested zips,
-    which the old key rejected. `_add_missing_columns` adds `path` but cannot change a table-level
-    UNIQUE, so a database built before #123 needs a genuine rebuild — same pattern as
-    _rebuild_bid_for_nullable_reference. Rows are copied so first_seen survives; their `path` is
-    NULL until a --reindex rebuilds them from the bytes.
-
-    Returns True if a rebuild happened. Idempotent: a no-op once the key is on path.
-    """
+    """Rebuild legacy ariba_attachment table to key on (document_number, path) instead of filename, preserving first_seen. Idempotent."""
     row = conn.execute(
         "SELECT sql FROM sqlite_master WHERE type='table' AND name='ariba_attachment'"
     ).fetchone()
     if row is None or "document_number, filename)" not in (row["sql"] or ""):
-        return False  # fresh DB, or already rebuilt
+        return False
 
     cols = [r[1] for r in conn.execute("PRAGMA table_info(ariba_attachment)")]
     quoted = ", ".join(cols)
@@ -270,15 +220,7 @@ def _rebuild_ariba_attachment_for_path(conn, schema: str) -> bool:
 
 
 def _add_missing_columns(conn, schema: str) -> None:
-    """Additively self-heal an older database.
-
-    `CREATE TABLE IF NOT EXISTS` never alters a table that already exists, so a
-    database created before a column was added to schema.sql (e.g. suspended_firm.
-    supplier_id, added in P5a) silently lacks that column. Build the reference schema
-    in a scratch in-memory DB, then `ALTER TABLE ... ADD COLUMN` any column present in
-    the reference but missing from the live table. Only additive, nullable-or-defaulted
-    columns are handled — exactly what ADD COLUMN can safely apply.
-    """
+    """Additively apply nullable or defaulted columns from schema.sql missing in an older DB."""
     ref = sqlite3.connect(":memory:")
     try:
         ref.executescript(schema)
@@ -289,14 +231,14 @@ def _add_missing_columns(conn, schema: str) -> None:
         for table in ref_tables:
             actual = {r[1] for r in conn.execute(f"PRAGMA table_info({table})")}
             if not actual:
-                continue  # table didn't exist — the CREATE above already made it current
+                continue
             for _cid, name, coltype, notnull, default, _pk in ref.execute(
                 f"PRAGMA table_info({table})"
             ):
                 if name in actual:
                     continue
                 if notnull and default is None:
-                    continue  # ADD COLUMN can't add NOT NULL without a default
+                    continue  # ADD COLUMN requires a default for NOT NULL
                 decl = f"{name} {coltype}".strip()
                 if notnull:
                     decl += " NOT NULL"
@@ -305,9 +247,7 @@ def _add_missing_columns(conn, schema: str) -> None:
                 try:
                     conn.execute(f"ALTER TABLE {table} ADD COLUMN {decl}")
                 except sqlite3.OperationalError:
-                    # ADD COLUMN also refuses non-constant defaults (e.g. datetime('now')),
-                    # UNIQUE, and PRIMARY KEY. Such columns can't be retrofitted onto an
-                    # existing table; they predate any realistic legacy DB anyway. Skip.
+                    # Skip columns ADD COLUMN cannot retrofit (non-constant defaults, UNIQUE, PRIMARY KEY).
                     continue
     finally:
         ref.close()
@@ -317,10 +257,10 @@ def _upsert_keyed(conn, table, cols, values, key_cols, overwrite: bool) -> None:
     placeholders = ", ".join("?" for _ in cols)
     non_key = [c for c in cols if c not in key_cols]
     if overwrite:
-        # New non-null value wins; keep existing when the new value is NULL.
+        # Overwrite: incoming non-NULL wins.
         sets = ", ".join(f"{c} = COALESCE(excluded.{c}, {table}.{c})" for c in non_key)
     else:
-        # Backfill only: keep existing value; fill in only where existing is NULL.
+        # Backfill: keep existing non-NULL.
         sets = ", ".join(f"{c} = COALESCE({table}.{c}, excluded.{c})" for c in non_key)
     conflict = _CONFLICT_TARGETS.get(table) or ", ".join(key_cols)
     sql = (
@@ -336,7 +276,7 @@ def upsert_row(conn, row, *, overwrite: bool) -> None:
 
 
 def _row_values(row):
-    """(table, key_cols, cols, values) for a model row — shared by every upsert path."""
+    """Return (table, key_cols, cols, values) for a model row."""
     try:
         table, key_cols = _TABLES[type(row)]
     except KeyError:
@@ -344,8 +284,7 @@ def _row_values(row):
     cols = [f.name for f in fields(row)]
     values = [getattr(row, c) for c in cols]
     if table == "suspended_firm":
-        # council_authority is part of the UNIQUE key; coerce None -> '' so a firm with no
-        # parseable Authority stays idempotent (SQLite treats NULLs as distinct in UNIQUE indexes).
+        # Coerce NULL council_authority to '' so UNIQUE(supplier_name_raw, council_authority) stays idempotent.
         ca_idx = cols.index("council_authority")
         values[ca_idx] = values[ca_idx] or ""
     return table, key_cols, cols, values
@@ -355,13 +294,10 @@ _TOUCHED = "temp._rebuild_touched"
 
 
 def _rebuild_upsert(conn, row) -> None:
-    """Upsert one row for `rebuild_rows`, recording its id in the touched set.
+    """Upsert one row for rebuild_rows and record its id in _TOUCHED.
 
-    The first time a run touches a row, every non-key column takes the derived value
-    verbatim (NULL included) — exactly what a delete + reinsert would leave. A later
-    touch in the same run merges like `overwrite=True` (non-NULL wins, NULL never wipes),
-    which is what successive upserts into an emptied table did. Either way `first_seen`
-    and `id` are kept and `last_seen` is bumped.
+    First touch replaces non-key columns verbatim (including NULL); later touches in the same
+    run merge with COALESCE(excluded, existing). Preserves id and first_seen.
     """
     table, key_cols, cols, values = _row_values(row)
     non_key = [c for c in cols if c not in key_cols]
@@ -382,20 +318,9 @@ def _rebuild_upsert(conn, row) -> None:
 
 
 def rebuild_rows(conn, rows, *, scope: str, params=()) -> int:
-    """Make the rows of one table selected by `scope` exactly `rows`, by mark-and-sweep.
+    """Replace rows matching scope via mark-and-sweep, preserving id and first_seen for retained keys.
 
-    For tables DERIVED from bytes we hold, where a rebuild replaces a slice wholesale
-    (#215) but archive metadata must survive it (#218). Every row is upserted on the
-    table's own conflict target (`_CONFLICT_TARGETS`, so COALESCE'd NULL key parts match
-    as the unique index does); a row whose key is derived again keeps its `id` and
-    `first_seen`, has its other columns replaced and its `last_seen` bumped; a new key is
-    inserted with `first_seen` = now. Then every row in `scope` (a WHERE clause over the
-    table, with `params`) that no derived row touched is deleted. Returns that count.
-
-    `rows` must all be of one model type and non-empty. Does not commit: run it inside
-    the caller's transaction so the upserts and the sweep stand or fall together. A key
-    with a NULL part outside the COALESCE'd ones (e.g. agency_bid.buyer_id) never
-    conflicts, so such a row is re-inserted and the old one swept — new first_seen.
+    rows must be non-empty and of one model type. Does not commit.
     """
     tables = {_row_values(r)[0] for r in rows}
     if len(tables) != 1:
@@ -423,7 +348,7 @@ def counts(conn) -> dict:
 
 
 def last_runs(conn) -> list:
-    """The most recent sync_run per source, newest source-run first."""
+    """Return the most recent sync_run row per source."""
     return conn.execute(
         "SELECT source, status, started_at, rows_upserted, error FROM sync_run "
         "WHERE id IN (SELECT MAX(id) FROM sync_run GROUP BY source) ORDER BY source"
@@ -451,11 +376,7 @@ def finish_sync_run(
 
 
 def sync_runs_since(conn, after_id: int) -> list[dict]:
-    """Every sync_run row newer than after_id, oldest first — one nightly's per-source detail.
-
-    Capture MAX(id) before pipeline.sync, pass it here after, and you get exactly the rows that
-    run wrote (sync_run.id is autoincrement).
-    """
+    """Return sync_run rows with id > after_id, ordered by id."""
     cur = conn.execute(
         "SELECT source, status, rows_fetched, rows_upserted, error "
         "FROM sync_run WHERE id > ? ORDER BY id",

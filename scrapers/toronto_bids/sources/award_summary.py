@@ -1,18 +1,4 @@
-"""Award Summary Forms — the losing bidders, after the Bid Award Panel was abolished (#114).
-
-By-law 766-2025 eliminated the Bid Award Panel effective 2025-10-01, and its agendas were the
-only published record of who *lost*. `sources/bid_award_panel.py` therefore stops dead at
-2025.BA151 (2025-09-25) and will never find another agenda — 891 cached pages is the complete
-and final corpus.
-
-The bidders did not stop. Every awarded contract over $500,000 now carries an **Award Summary
-Form** PDF on the Toronto Bids Portal, and it publishes more than the panel ever did.
-
-No browser. The portal's table is driven by `feis_solicitation_published` — the same OData
-spine sources/odata.py already reads — and `secure.toronto.ca` is not Akamai-gated the way
-TMMIS is. The PDF hangs off the record itself in `uploadedFilesStaff`, so the whole path is
-plain HTTP. Parsing is handled by LLM extraction (#205).
-"""
+"""Download Award Summary Form PDFs from the Toronto Bids OData API (post-BAP, >= 2025-10-01)."""
 
 from urllib.parse import quote
 
@@ -35,7 +21,7 @@ _PAGE = 500
 
 
 def fetch_awarded_records(http, log=lambda _m: None) -> list:
-    """Every awarded-contract record the portal's API will serve, paged. Plain HTTP."""
+    """Page through awarded-contract records from the OData API."""
     out, skip = [], 0
     while True:
         page = http.get_json(
@@ -53,7 +39,7 @@ def fetch_awarded_records(http, log=lambda _m: None) -> list:
 
 
 def award_summary_files(record: dict) -> list:
-    """(url, name) for each Award Summary Form on a record."""
+    """Return (url, name) pairs for Award Summary Form attachments on a record."""
     out = []
     for f in record.get("uploadedFilesStaff") or []:
         bin_id = f.get("bin_id")
@@ -63,7 +49,7 @@ def award_summary_files(record: dict) -> list:
 
 
 def download_award_summaries(conn, http, dest_dir=None, log=lambda _m: None) -> int:
-    """Archive every Award Summary Form. Idempotent and resumable."""
+    """Download and archive uncached Award Summary Form PDFs. Idempotent."""
     from toronto_bids.sources.council import download_pdf
 
     dest_dir = dest_dir if dest_dir is not None else config.AWARD_SUMMARY_DIR
@@ -110,7 +96,7 @@ def download_award_summaries(conn, http, dest_dir=None, log=lambda _m: None) -> 
 
 
 def store_award_summary_bids(conn, log=lambda _m: None, failures=None) -> int:
-    """Extract and backfill bid rows from cached LLM extractions (#205)."""
+    """Extract and backfill bid rows from cached LLM extractions."""
     from toronto_bids.extraction import extract_and_backfill
 
     result = extract_and_backfill(conn, "award_summary", log=log, failures=failures)

@@ -1,8 +1,3 @@
-"""`tb nightly` — what the systemd timer calls (deployment spec §3.3).
-
-Every step is isolated the way pipeline.run_source already isolates sources: one failure never
-stops the steps behind it. These tests are offline — every network-touching call is patched.
-"""
 import sqlite3
 
 import pytest
@@ -16,7 +11,6 @@ from toronto_bids.sources.merx import run_merx_capture as _real_merx_capture
 
 @pytest.fixture
 def nightly(conn, monkeypatch, tmp_path):
-    """A `tb nightly` with the network removed and the data dir pointed at tmp."""
     monkeypatch.setattr(cli, "_open_db", lambda: conn)
     monkeypatch.setattr(config, "DATA_DIR", tmp_path)
     monkeypatch.setattr(cli.pipeline, "sync", lambda *a, **k: [])
@@ -44,7 +38,6 @@ def nightly(conn, monkeypatch, tmp_path):
 def test_a_clean_run_exits_zero_and_writes_the_export(nightly, tmp_path):
     assert nightly() == 0
     assert (tmp_path / "export" / "bids.json").exists()
-    # schema.json rides the export step (#168) — publish-data.sh requires it beside bids.json.
     assert (tmp_path / "export" / "schema.json").exists()
     assert (tmp_path / "export" / "bids-csv.zip").exists()
     assert (tmp_path / "export" / "solicitation.parquet").exists()
@@ -56,16 +49,12 @@ def test_a_failed_source_exits_non_zero_so_systemd_sees_it(nightly, monkeypatch)
 
 
 def test_the_export_runs_even_after_a_partial_sync(nightly, monkeypatch, tmp_path):
-    """Rows are committed per-source and never deleted, so partial data is still data.
-    Skipping the export would discard a good artifact over one bad feed."""
     monkeypatch.setattr(cli.pipeline, "sync", lambda *a, **k: [("ariba_discovery", "boom")])
     assert nightly() == 1
     assert (tmp_path / "export" / "bids.json").exists()
 
 
 def test_a_raising_sync_is_caught_and_the_run_continues(nightly, monkeypatch, tmp_path):
-    """pipeline.sync catches per-source, but a failure in the pass machinery itself would
-    otherwise take the export down with it."""
     def boom(*a, **k):
         raise RuntimeError("pipeline exploded")
     monkeypatch.setattr(cli.pipeline, "sync", boom)
@@ -83,8 +72,6 @@ def test_a_raising_award_summary_step_does_not_stop_the_export(nightly, monkeypa
 
 
 def test_a_raising_portal_step_does_not_stop_the_export(nightly, monkeypatch, tmp_path):
-    """The portal step (bids_tenders.run_portal_capture) is isolated the same way sync and
-    award_summary are: a failure records to `failures` and the export still runs."""
     from toronto_bids.sources import bids_tenders
     def boom(*a, **k):
         raise RuntimeError("portal down")
@@ -94,8 +81,6 @@ def test_a_raising_portal_step_does_not_stop_the_export(nightly, monkeypatch, tm
 
 
 def test_a_failed_portal_body_is_recorded_but_does_not_fail_the_run_alone(nightly, monkeypatch):
-    """run_portal_capture already isolates per-body; a `FAILED: ...` string in its result dict
-    is surfaced into `failures` (and therefore the exit code), without raising."""
     from toronto_bids.sources import bids_tenders
     monkeypatch.setattr(bids_tenders, "run_portal_capture",
                          lambda *a, **k: {"trca": "FAILED: boom", "toronto-zoo": 0})
@@ -121,9 +106,6 @@ def test_a_failing_run_posts_the_failure(nightly, monkeypatch):
 
 
 def test_a_broken_database_still_reports_to_slack(nightly, monkeypatch):
-    """The one class of failure the guards missed. If _open_db raises and nothing catches it,
-    the exception leaves _cmd_nightly and notify.post never fires — the run breaks in exactly
-    the way nobody is told about."""
     posted = []
     monkeypatch.setattr(notify, "post", lambda text, **k: posted.append(text) or True)
     def boom():
@@ -146,9 +128,6 @@ def test_counting_the_archive_failing_still_reports_to_slack(nightly, monkeypatc
 
 def test_a_failure_building_the_http_client_does_not_cost_us_the_export(nightly, monkeypatch,
                                                                        tmp_path):
-    """The export needs only the database — it does not need the network. Losing a good
-    artifact because an HTTP client would not construct is the failure this whole command is
-    shaped to avoid."""
     def boom(self, *a, **k):
         raise RuntimeError("no http for you")
     monkeypatch.setattr(cli.HttpClient, "__init__", boom)
@@ -157,34 +136,23 @@ def test_a_failure_building_the_http_client_does_not_cost_us_the_export(nightly,
 
 
 def test_a_counts_failure_is_labelled_counts_not_open_db(nightly, monkeypatch):
-    """Blaming 'open_db' for a failure in the counting query sends the reader to the wrong
-    system. The open succeeded; the count did not."""
     posted = []
     monkeypatch.setattr(notify, "post", lambda text, **k: posted.append(text) or True)
     calls = {"n": 0}
     real_counts = cli.db.counts
     def flaky(conn):
         calls["n"] += 1
-        if calls["n"] == 1:               # the `before` count fails
+        if calls["n"] == 1:
             raise sqlite3.DatabaseError("locked")
-        return real_counts(conn)           # the `after` count recovers
+        return real_counts(conn)
     monkeypatch.setattr(cli.db, "counts", flaky)
     assert nightly() == 1
     assert posted
     assert "counts: locked" in posted[0]
-    # and the recovered `after` count must NOT be reported as a delta against a zero `before`
     assert "(+" not in posted[0]
 
 
 def test_a_failure_closing_the_database_does_not_swallow_the_summary(nightly, monkeypatch, conn):
-    """A successful export must still get reported: conn.close() raising (a wedged disk, a
-    locked file, a competing writer) must not prevent notify.post from firing after a run
-    that otherwise completed cleanly.
-
-    sqlite3.Connection is a C type — its methods can't be monkeypatched directly (`cannot set
-    'close' attribute of immutable type`), so a thin proxy stands in for `conn` and forwards
-    everything except `close`.
-    """
     posted = []
     monkeypatch.setattr(notify, "post", lambda text, **k: posted.append(text) or True)
 
@@ -222,9 +190,6 @@ def test_an_agency_body_failure_is_recorded_but_export_still_runs(nightly, monke
 
 
 def test_report_sources_excludes_linking_passes_and_validator(conn):
-    # sync_run records the linking passes and the schema-drift validator too; they are not
-    # fetch sources (a pass touching 0 rows is normal), so the Sources list must drop them —
-    # otherwise every night falsely ⚠-flags title_cleanup/ariba_bridge/schema_check as broken.
     from toronto_bids import cli
     from toronto_bids.store import db as _db
     for src, fetched in (("schema_check", 0), ("odata_solicitations", 7446),
@@ -233,12 +198,10 @@ def test_report_sources_excludes_linking_passes_and_validator(conn):
         _db.finish_sync_run(conn, rid, status="ok", rows_fetched=fetched, rows_upserted=fetched)
     names = [r["source"] for r in cli._report_sources(conn, 0)]
     assert "odata_solicitations" in names
-    assert "schema_check" not in names          # validator, fetches 0 by nature
-    assert "supplier_dimension" not in names     # linking pass, not a fetch
-    assert "title_cleanup" not in names          # linking pass, not a fetch
+    assert "schema_check" not in names
+    assert "supplier_dimension" not in names
+    assert "title_cleanup" not in names
 
-
-# --- #178: the sync step's headline must describe the run, not a static list ------------
 
 def _record(conn, source, status="ok"):
     from toronto_bids.store import db as _db
@@ -247,8 +210,6 @@ def _record(conn, source, status="ok"):
 
 
 def test_sync_detail_counts_every_unit_the_run_recorded(conn):
-    """The old detail was `len(default_sources())` — a static 9 against the 14 rows a real
-    run writes, undercounting by exactly the five post-source passes (#178)."""
     from toronto_bids import cli, pipeline
     _record(conn, "schema_check")
     for s in pipeline.default_sources():
@@ -259,13 +220,10 @@ def test_sync_detail_counts_every_unit_the_run_recorded(conn):
 
     detail = cli._sync_detail(conn, 0)
     assert detail == "schema check · 8 sources · 6 passes"
-    # The categories account for every row, which is the property that actually broke.
     assert 1 + 8 + 6 == len(cli.db.sync_runs_since(conn, 0)) == 15
 
 
 def test_sync_detail_names_a_failure_wherever_it_happened(conn):
-    """A linking pass is isolated and recorded exactly like a source, so a pass failure is a
-    real sync failure — the thing the old count could not have accounted for."""
     from toronto_bids import cli
     _record(conn, "schema_check")
     _record(conn, "odata_solicitations")
@@ -274,14 +232,11 @@ def test_sync_detail_names_a_failure_wherever_it_happened(conn):
 
 
 def test_sync_detail_says_so_when_the_run_recorded_nothing(conn):
-    """`0 sources · 0 passes` reads like a healthy empty run; it is a broken one."""
     from toronto_bids import cli
     assert cli._sync_detail(conn, 0) == "nothing recorded"
 
 
 def test_linking_passes_is_the_list_sync_actually_runs(conn):
-    """The count is only honest while the report's idea of the passes and the pipeline's are
-    the same object. Run sync with no sources and read back what it recorded."""
     from toronto_bids import pipeline
     from toronto_bids.store import db as _db
     assert pipeline.sync(conn, http=None, sources=[]) == []
@@ -290,9 +245,6 @@ def test_linking_passes_is_the_list_sync_actually_runs(conn):
 
 
 def test_a_failed_source_marks_the_sync_step_failed(nightly, monkeypatch):
-    """pipeline.sync RETURNS failures rather than raising — per-source isolation — so
-    _run_step only ever saw the ok branch and a night where every feed died still read
-    `✅ sync` (#178)."""
     posted = {}
     from toronto_bids import notify
     monkeypatch.setattr(notify, "post", lambda text, **k: posted.setdefault("text", text))
@@ -310,19 +262,13 @@ def test_a_clean_sync_step_still_reads_ok(nightly, monkeypatch):
     assert "✅ sync" in posted["text"]
 
 
-# --- #176: every nightly step writes a sync_run row, not just the 14 sync sources ---------
-
 def _sync_run_sources(conn):
     from toronto_bids.store import db as _db
     return {r["source"]: r["status"] for r in _db.last_runs(conn)}
 
 
 class _KeepOpen:
-    """`nightly()` closes the connection it's given, same as a real process would on exit.
-    sqlite3.Connection is a C type and can't be monkeypatched directly (#176's own tests need
-    the SAME pattern `test_a_failure_closing_the_database_does_not_swallow_the_summary` above
-    already established) — this proxy forwards everything except `close`, so the test can
-    still query `sync_run` afterward."""
+    # Proxy sqlite3.Connection so tests can inspect tables after nightly() calls close().
     def __init__(self, conn):
         self._conn = conn
 
@@ -334,10 +280,6 @@ class _KeepOpen:
 
 
 def test_nightly_records_a_sync_run_row_for_every_step_but_sync(nightly, monkeypatch, conn):
-    """Before this, everything past the 14 `tb sync` sources — award summaries, portal, Ariba
-    attachments, agencies, export, supplier rebuild — wrote nothing durable, so a step failing
-    every night was invisible to `tb status` (#176). "sync" itself is deliberately excluded —
-    it already writes 14 rows of its own via pipeline.sync."""
     monkeypatch.setattr(cli, "_open_db", lambda: _KeepOpen(conn))
     nightly()
     sources = _sync_run_sources(conn)
@@ -348,8 +290,6 @@ def test_nightly_records_a_sync_run_row_for_every_step_but_sync(nightly, monkeyp
 
 
 def test_council_is_recorded_only_when_it_actually_runs(nightly, monkeypatch, conn):
-    """The 1st-of-the-month gate short-circuits before `_run_step` — a skip must not fabricate
-    a sync_run row (there is nothing to report a status for)."""
     monkeypatch.setattr(cli, "_open_db", lambda: _KeepOpen(conn))
     nightly()
     assert "council" not in _sync_run_sources(conn)
@@ -357,11 +297,6 @@ def test_council_is_recorded_only_when_it_actually_runs(nightly, monkeypatch, co
 
 def test_a_swallowed_agencies_failure_marks_the_step_and_the_sync_run_row_failed(
         nightly, monkeypatch, conn):
-    """`_capture_agency_bodies` records a per-body failure into the shared `failures` list
-    rather than raising (per-body isolation) — so `_agencies()` itself never raises, and
-    `_run_step` alone would read this as ✅ agencies, exactly the #178 pattern one level up.
-    The sync_run row must be corrected too, not just the Steps entry — that row is the whole
-    point of #176."""
     monkeypatch.setattr(cli, "_open_db", lambda: _KeepOpen(conn))
     monkeypatch.setattr(cli, "_capture_agency_bodies",
                         lambda *a, **k: [("trca", "eSCRIBE unreachable")])
@@ -393,9 +328,6 @@ def test_a_swallowed_portal_failure_marks_the_step_and_the_sync_run_row_failed(
 
 def test_a_swallowed_ariba_event_failure_marks_the_step_and_the_sync_run_row_failed(
         nightly, monkeypatch, conn):
-    """#223: capture_attachments catches each event's exception and returns a count, so a night
-    on which every event failed returned normally and read ✅. It now reports those events into
-    the shared failures list, and the step is corrected like the portal's."""
     monkeypatch.setattr(cli, "_open_db", lambda: _KeepOpen(conn))
     from toronto_bids.sources import ariba_attachments
 
@@ -419,9 +351,6 @@ def test_a_swallowed_ariba_event_failure_marks_the_step_and_the_sync_run_row_fai
 
 def test_swallowed_award_summary_extraction_errors_mark_the_step_failed(
         nightly, monkeypatch, conn):
-    """#219: extract_corpus catches each document's extraction error and extract_and_backfill
-    returns normally, so a night on which every new form failed extraction (a retired model)
-    read ✅. The store now reports one summary entry per corpus into the shared list."""
     monkeypatch.setattr(cli, "_open_db", lambda: _KeepOpen(conn))
     from toronto_bids.sources import award_summary
 
@@ -457,7 +386,7 @@ def test_award_summary_step_reads_ok_when_extraction_has_no_errors(
     posted = {}
     monkeypatch.setattr(notify, "post", lambda text, **k: posted.setdefault("text", text))
     assert nightly() == 0
-    assert seen["failures"] is not None  # the nightly did hand the store its list
+    assert seen["failures"] is not None
     assert "❌ award summaries" not in posted["text"]
     row = conn.execute(
         "SELECT status FROM sync_run WHERE source='award summaries'").fetchone()
@@ -465,8 +394,6 @@ def test_award_summary_step_reads_ok_when_extraction_has_no_errors(
 
 
 def test_agency_store_extraction_errors_reach_the_agencies_failures(monkeypatch, conn):
-    """#219: `_capture_agency_bodies` hands its OWN returned failures list to each store, so
-    extraction errors travel the one existing channel into the nightly's agencies step."""
     from toronto_bids.sources import ep_board, trca_board, zoo_board
 
     def failing_store(corpus):
@@ -556,7 +483,7 @@ def test_run_step_records_ok_and_isolates_failure():
     assert steps[0]["status"] == "ok" and steps[0]["detail"] == "+3 things"
     cli._run_step(steps, failures, "boom", lambda: (_ for _ in ()).throw(RuntimeError("x")))
     assert steps[1]["status"] == "fail" and steps[1]["error"] == "x"
-    assert failures == [("boom", "x")]   # failure mirrored for the exit-code contract
+    assert failures == [("boom", "x")]
 
 
 def test_council_runs_only_on_the_first_of_the_month(nightly, monkeypatch):
@@ -565,26 +492,18 @@ def test_council_runs_only_on_the_first_of_the_month(nightly, monkeypatch):
     monkeypatch.setattr(council_src, "enrich_council", lambda *a, **k: calls.append(1) or 0)
     monkeypatch.setattr(cli, "_is_first_of_month", lambda: False)
     nightly()
-    assert calls == []            # not the 1st -> council skipped
+    assert calls == []
     monkeypatch.setattr(cli, "_is_first_of_month", lambda: True)
-    # `nightly()` closes the connection it was given, same as a real process would on exit —
-    # the fixture's `_open_db` always returns the SAME connection object, so a second call in
-    # the same test needs a fresh one (#176 gave `_run_step` its first genuinely unmocked SQL
-    # write in this path, which is what turned "closed but never actually touched" into a
-    # real `ProgrammingError` here).
+    # nightly() closes its DB connection on exit, so the second call needs a fresh one.
     from toronto_bids.store import db as _db
     fresh = _db.connect(":memory:")
     _db.init_db(fresh)
     monkeypatch.setattr(cli, "_open_db", lambda: fresh)
     nightly()
-    assert calls == [1]           # the 1st -> council runs
+    assert calls == [1]
 
-
-# --- #218: the award-summary store REBUILDS its rows, so its return is the corpus total ------
 
 def _rebuilding_store(corpus):
-    """Stand-in for `store_award_summary_bids` post-#205: delete the source's rows, reinsert the
-    whole derived set, return how many were written — the TOTAL, exactly like the real one."""
     def store(conn, log=lambda _m: None, failures=None):
         conn.execute("DELETE FROM bid WHERE source='award_summary'")
         for i, name in enumerate(corpus):
@@ -615,8 +534,6 @@ def _two_nights(nightly, monkeypatch, conn, corpus, between=lambda: None):
 
 
 def test_award_summary_step_reports_the_delta_not_the_corpus_total(nightly, monkeypatch, conn):
-    """Slack read the ~1,100-bid corpus as nightly growth (#218, the #177 trap again). A second
-    run over an unchanged corpus rebuilds every row and must read +0, not the total."""
     first, second = _two_nights(
         nightly, monkeypatch, conn, ["Alpha Co.", "Beta Ltd.", "Gamma Inc."]
     )
@@ -626,7 +543,6 @@ def test_award_summary_step_reports_the_delta_not_the_corpus_total(nightly, monk
 
 
 def test_award_summary_step_renders_a_shrinking_rebuild_as_negative(nightly, monkeypatch, conn):
-    """A rebuild can REMOVE rows (a re-extraction drops a phantom bidder); that must show."""
     corpus = ["Alpha Co.", "Beta Ltd.", "Gamma Inc."]
     _, second = _two_nights(nightly, monkeypatch, conn, corpus, between=corpus.pop)
     assert "-1 bids (2 total)" in second
@@ -639,8 +555,6 @@ def test_bid_delta_is_signed():
 
 
 def test_near_close_postings_reach_slack_without_failing_the_run(nightly, monkeypatch):
-    """#223: an open posting about to close with no bundle is a warning in the summary, never a
-    failed step — it can still be captured tomorrow."""
     from toronto_bids.sources import ariba_attachments
     monkeypatch.setattr(ariba_attachments, "near_close_uncaptured", lambda conn: [
         {"document_number": "5713434353", "closes": "2026-10-03", "days_left": 2}])
@@ -664,7 +578,6 @@ def test_a_raising_near_close_check_is_reported_but_does_not_fail_the_run(nightl
 
 
 def _run_trca_downloads(nightly, monkeypatch, conn, tmp_path, ids):
-    """Exercise the real downloader through the nightly, every listed document 404ing."""
     import httpx
     from toronto_bids.sources import trca_board
 
@@ -684,8 +597,6 @@ def _run_trca_downloads(nightly, monkeypatch, conn, tmp_path, ids):
     monkeypatch.setattr(cli.HttpClient, "get_bytes", missing)
     monkeypatch.setattr(trca_board, "store_trca_reports", lambda *a, **k:
                         {"solicitations": 0, "awards": 0, "bids": 0})
-    # Import the original function from the saved module-level reference, since the
-    # nightly fixture replaces cli._capture_agency_bodies to keep other tests offline.
     monkeypatch.setattr(cli, "_capture_agency_bodies", lambda c, **k:
                         _real_agency_capture(c, bodies=["trca"], fetch=True, scrape=False,
                                              virtual_display=False, out=k['out']))
@@ -696,7 +607,6 @@ def _run_trca_downloads(nightly, monkeypatch, conn, tmp_path, ids):
 
 def test_trca_download_gaps_reach_nightly_status_history_and_summary(
         nightly, monkeypatch, conn, tmp_path):
-    """An unreviewed gap fails the step; reviewed #259 originals beside it stay known (#283)."""
     code, text, urls = _run_trca_downloads(nightly, monkeypatch, conn, tmp_path,
                                            (99999991, 99999992, 5558))
     new, reviewed = urls[:2], urls[2]
@@ -723,7 +633,6 @@ def test_only_reviewed_trca_gaps_leave_the_nightly_green_and_queued(
     assert "Failures" not in text
     row = conn.execute("SELECT status, error FROM sync_run WHERE source='agencies'").fetchone()
     assert row['status'] == 'ok' and row['error'] is None
-    # Known is a reporting verdict only: the originals stay queued for retry.
     assert conn.execute("SELECT count(*) FROM background_pdf WHERE sha256 IS NULL").fetchone()[0] == 3
 
 
@@ -961,7 +870,6 @@ def test_nightly_merx_counts_actual_bid_and_award_growth(nightly, monkeypatch, c
 
 
 def test_real_merx_capture_reaches_nightly_history_and_export(nightly, monkeypatch, conn, tmp_path):
-    """Real listing/detail parsers and the real per-buyer runner, with HTTP fixtures."""
     import json
     from pathlib import Path
     import httpx

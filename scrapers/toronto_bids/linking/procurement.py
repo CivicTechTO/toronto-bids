@@ -1,8 +1,4 @@
-"""Stable archive identities, with only source-proven equivalences (#124).
-
-Natural ingest keys remain on source tables. Repeated portal labels do not resolve
-identity; buyer/page URLs do. Documents and council items can describe many procurements.
-"""
+"""Assign stable procurement IDs and merge only source-proven identity links."""
 import json
 from collections import defaultdict
 from contextlib import contextmanager
@@ -42,9 +38,7 @@ class _Identities:
     def join(self, left, right, evidence, *, prefer=None):
         if left == right:
             return left
-        # Singular publisher identities cannot fuse through a broad council item.
-        # Only independently validated same-page document aliases are an exception;
-        # other namespaces and unrelated document anchors keep the strict guard.
+        # Refuse merges that combine distinct primary anchors, except reviewed city_document aliases.
         groups = defaultdict(set)
         for (namespace, value), pid in self.keys.items():
             if pid in (left, right) and (namespace in ('city_document', 'city_workspace', 'city_call')
@@ -58,7 +52,7 @@ class _Identities:
             raise ValueError('preferred canonical identity must be an existing merge participant')
         self.conn.execute('UPDATE procurement SET merged_into=?,merge_evidence=? WHERE id=?',
                           (winner, evidence, loser))
-        # Flatten older redirects so every published alias points at a current identity.
+        # Flatten transitive redirects to the new winner.
         self.conn.execute('UPDATE procurement SET merged_into=? WHERE merged_into=?', (winner, loser))
         self.conn.execute('UPDATE procurement_key SET procurement_id=? WHERE procurement_id=?', (winner, loser))
         for key, pid in self.keys.items():
@@ -68,11 +62,7 @@ class _Identities:
 
 
 def resolve_procurements(conn):
-    """Resolve all held source facts atomically; return the active procurement count.
-
-    The caller owns commit. IDs/keys/redirects persist across refreshes; source facts
-    retain their payload and history. Unsupported extraction identities are untouched.
-    """
+    """Resolve procurement IDs across all fact tables inside a savepoint (caller owns commit)."""
     with _transaction(conn):
         return _resolve(conn)
 
@@ -103,8 +93,7 @@ def _resolve(conn):
         ids.join(ids.get('city_call', proof['call_number']), ids.get('city_document', proof['document_number']),
                  json.dumps(dict(rule='reviewed_native_call_participation', call_number=proof['call_number'],
                                  document_number=proof['document_number'], reference=proof['reference'])))
-    # Derive all approved links before assigning FKs, so a late join cannot leave a fact
-    # pointing at an alias. A conflicting reference stays unjoined to document identities.
+    # Resolve all joins before assigning FKs so no fact points at a merged alias.
     ref_docs = defaultdict(set)
     for row in conn.execute('SELECT DISTINCT reference,document_number FROM bid '
                             'WHERE reference IS NOT NULL AND document_number IS NOT NULL'):
@@ -125,7 +114,7 @@ def _resolve(conn):
         ids.join(ids.get('ariba_event', row['rfx_id']), ids.get('city_document', row['document_number']),
                  json.dumps(dict(rule='published_ariba_document_number', rfx_id=row['rfx_id'], document_number=row['document_number'])))
 
-    # Resolving new keys below never merges IDs, so the in-memory assignment is stable.
+    # Only new keys are created below; existing IDs do not merge.
     ref_ids = defaultdict(set)
     for (namespace, value), pid in ids.keys.items():
         if namespace == 'city_council_bid':
@@ -133,7 +122,7 @@ def _resolve(conn):
     document_ids = defaultdict(set)
     for table in FACT_TABLES:
         if table == 'background_pdf':
-            continue  # many-to-many associations, collected after all contract facts
+            continue  # Handled below after collecting document links.
         updates = []
         for row in conn.execute(f'SELECT rowid AS _rowid,* FROM {table} ORDER BY rowid'):
             pid = None
@@ -153,12 +142,11 @@ def _resolve(conn):
                 elif row['reference']:
                     pid = ids.get('city_council_bid', row['reference'])
                 else:
-                    # A stored observation with no publisher ID still has archive identity.
                     pid = row['procurement_id'] or ids.get('unidentified_bid', row['id'])
             elif table == 'published_award':
                 pid = ids.get('published_award:' + str(row['buyer_id']), row['source_key'])
             elif table in ('agency_bid', 'agency_award') and row['source'] == 'merx':
-                # MERX facts use the held notice page, never its reusable printed label.
+                # MERX keys on the notice page URL, not reusable printed labels.
                 pid = ids.get('agency_portal:' + str(row['buyer_id']), row['native_ref'])
             elif table == 'portal_listing' or (table == 'agency_solicitation'
                                                and row['source'] == 'bids_tenders' and row['portal_url']):

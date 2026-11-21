@@ -1,8 +1,4 @@
-"""Anonymous Bonfire listing metadata (#110, #134).
-
-Follow the public portal's Open/Past JSON requests; retain replies before parsing,
-validate the complete capture, and archive by buyer/page rather than printed ref.
-"""
+"""Capture public Bonfire Open/Past listing JSON and store normalized PortalListing rows."""
 import hashlib
 import json
 import os
@@ -28,7 +24,7 @@ SECTIONS = {'open': '/PublicPortal/getOpenPublicOpportunitiesSectionData',
 
 
 def _record(response, root, now):
-    """Store original bytes and request provenance, including empty/error replies."""
+    """Content-address raw response bytes and write a JSON provenance manifest."""
     root.mkdir(parents=True, exist_ok=True)
     content = response.content
     digest = hashlib.sha256(content).hexdigest()
@@ -78,7 +74,7 @@ def _get(client, url, root, *, sleep, clock, retries=3):
             raise RuntimeError('Bonfire retry deferred until ' + until.isoformat())
         cooldown.unlink()
     for attempt in range(retries + 1):
-        sleep(1.0)  # Serial requests, including every retry, at least one second apart.
+        sleep(1.0)  # Space all requests and retries at least 1s apart.
         try:
             response = client.get(url)
         except httpx.TransportError:
@@ -89,8 +85,7 @@ def _get(client, url, root, *, sleep, clock, retries=3):
         _record(response, root, clock())
         if response.status_code == 429 or 500 <= response.status_code < 600:
             server_wait = _retry_after(response.headers.get('Retry-After'), clock())
-            # Preserve server deadlines across command/nightly runs as well as
-            # retries inside this process. Never retry a deferred request early.
+            # Persist long Retry-After deadlines across runs.
             if server_wait > 0 and (server_wait > 60 or attempt == retries):
                 cooldown.write_text((clock() + timedelta(seconds=server_wait)).isoformat() + '\n')
             if attempt == retries:
@@ -100,7 +95,7 @@ def _get(client, url, root, *, sleep, clock, retries=3):
                 raise RuntimeError(f'Bonfire {response.status_code}: retry deferred; Retry-After requires {pause:g}s')
             sleep(pause)
             continue
-        # Redirects/login responses are failures, not empty datasets. No account access.
+        # Redirects and non-2xx responses fail rather than looking like empty datasets.
         response.raise_for_status()
         return response
     raise AssertionError('Unreachable retry state')
@@ -139,7 +134,6 @@ def _section(response):
         raise ValueError('Bonfire invalid projects collection')
     if any(not isinstance(project, dict) for project in projects):
         raise ValueError('Bonfire invalid project record')
-    # This is an anonymous capture; account-specific proposals are outside its scope.
     if payload.get('proposalsForVendorForOrganization'):
         raise ValueError('Bonfire unexpected account-specific proposals')
     return projects, payload
@@ -148,7 +142,7 @@ def _section(response):
 def _date(value):
     if not isinstance(value, str) or not re.fullmatch(r'\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}', value):
         raise ValueError(f'Bonfire invalid UTC close date: {value!r}')
-    # The portal passes these fields to BFUtil.createMomentFromUtcDateString.
+    # Portal timestamps are UTC strings (BFUtil.createMomentFromUtcDateString).
     return datetime.strptime(value, '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
 
 
@@ -172,7 +166,7 @@ def _listing(record, payload, base, buyer_id, now):
         raise ValueError(f'Bonfire {pid}: invalid public-award indicator')
     close = _date(record.get('DateClose'))
     if state == '6':
-        # Match the UI's anonymous view of a reopened event: use its original close.
+        # Reopened projects use their original close date from the payload.
         originals = payload.get('pastScheduledProjectOpenPeriodsWhereNotIsReopen')
         if not isinstance(originals, list):
             raise ValueError(f'Bonfire {pid}: missing original close for reopened project')
@@ -180,7 +174,7 @@ def _listing(record, payload, base, buyer_id, now):
         if len(matches) != 1:
             raise ValueError(f'Bonfire {pid}: ambiguous original close for reopened project')
         close = _date(matches[0].get('DateClose'))
-    # Labels follow the captured public UI, not the internal workflow status name.
+    # Map workflow status codes to public UI labels.
     status = 'Open' if state == '2' and close > now else 'Closed'
     if status == 'Closed' and public_award and state in ('4', '5'):
         status = 'Awarded'
@@ -194,11 +188,7 @@ def _listing(record, payload, base, buyer_id, now):
 
 def capture_portal(conn, portal, *, client=None, data_dir=None, sleep=time.sleep,
                    clock=lambda: datetime.now(timezone.utc)):
-    """Capture one enabled public portal atomically; retained evidence survives failure.
-
-    Three ordinary GETs on success: landing page and complete Open/Past collections.
-    No per-project requests, authentication, documents or inferred award/bid facts.
-    """
+    """Fetch landing page plus Open/Past JSON for one enabled Bonfire portal and upsert listings atomically."""
     if not portal.get('enabled') or not portal.get('permission'):
         raise PermissionError('Bonfire capture requires an enabled portal with recorded permission')
     base = portal['portal_url'].rstrip('/')
@@ -220,7 +210,6 @@ def capture_portal(conn, portal, *, client=None, data_dir=None, sleep=time.sleep
         for section, endpoint in SECTIONS.items():
             if endpoint not in landing.text:
                 raise ValueError('Bonfire public listing endpoint missing from page: ' + section)
-        # Hold and validate both responses before writing any normalized listings.
         batches = []
         for section, endpoint in SECTIONS.items():
             response = _get(client, base + endpoint, root, sleep=sleep, clock=clock)
@@ -253,7 +242,7 @@ def capture_portal(conn, portal, *, client=None, data_dir=None, sleep=time.sleep
 
 
 def run_bonfire_capture(conn, *, only=None, log=lambda _m: None):
-    """Per-buyer isolation for standalone/nightly; failures must reach their caller."""
+    """Capture all enabled Bonfire portals with per-buyer error isolation."""
     results = {}
     for portal in config.BONFIRE_PORTALS:
         if not portal['enabled'] or (only and portal['slug'] not in only):

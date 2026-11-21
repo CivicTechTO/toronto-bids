@@ -1,4 +1,4 @@
-"""Conservative normalization inside each agency's identifier space (#217)."""
+"""Conservative per-agency reference normalization."""
 import re
 import uuid
 
@@ -9,8 +9,8 @@ def normalize_agency_reference(buyer_slug, raw):
                         "rfp", "rft", "rfq", "request for quotation", "new agreement"}:
         return None
     if re.match(r"https?://", text, re.I):
-        return text  # report-URL fallbacks are case-sensitive identities
-    # Portal GUIDs are opaque identifiers, not embedded eight-digit TRCA call numbers.
+        return text  # Report-URL fallbacks are case-sensitive.
+    # Portal GUIDs are opaque; do not match embedded 8-digit TRCA numbers.
     try:
         uuid.UUID(text)
         return text.upper()
@@ -31,12 +31,11 @@ def normalize_agency_reference(buyer_slug, raw):
         match = re.fullmatch(r"Contract\s+(?:No\.?|#)\s*([0-9][0-9A-Za-z-]{3,})", text, re.I)
         if match:
             return match[1].upper()
-    # Keep unfamiliar printed identifiers; normalization must not invent equivalences.
     return text.upper()
 
 
 def report_reference(council_reference, url):
-    """An item may identify a single contract; a meeting reference cannot identify a report."""
+    """Return an uppercase council item reference if present, else the report URL."""
     ref = " ".join((council_reference or "").split()).upper()
     if re.fullmatch(r"\d{4}\.(?:EP|ZB)\d+\.\d+(?:\.\d+)*", ref):
         return ref
@@ -44,15 +43,11 @@ def report_reference(council_reference, url):
 
 
 def normalize_stored_references(conn, buyer_slug, buyer_id, source, *, proven_aliases=()):
-    """Re-key only deterministic aliases, preserving row history inside the caller's transaction.
+    """Re-key deterministic reference aliases inside the caller's transaction.
 
-    These are identifier-format equivalences, never supplier/title/amount matching. When an
-    alias collides with its canonical row, retain the canonical id and non-null values, fill
-    missing fields from the alias, and retain the earliest first_seen/latest last_seen.
-    Reviewed history aliases additionally bind the old/new representation to an exact
-    held-report observation and its extracted facts. Supplier/amount constrain an already
-    proven relationship; they never establish one. Solicitation rows lack that provenance
-    and do not use these per-report aliases.
+    Merges colliding rows by keeping canonical non-null values, filling NULLs from the
+    alias, and spanning min(first_seen)/max(last_seen). Reviewed proven_aliases apply only
+    to agency_bid and agency_award rows matching report_url and (name, amount).
     """
     keys = {
         "agency_solicitation": ("buyer_id", "native_ref"),
@@ -71,7 +66,7 @@ def normalize_stored_references(conn, buyer_slug, buyer_id, source, *, proven_al
             try:
                 ref = normalize_agency_reference(buyer_slug, old["native_ref"])
             except ValueError:
-                continue  # unresolved identity stays held; never guess a merge
+                continue  # Keep ambiguous references unchanged.
             if table in ('agency_bid', 'agency_award'):
                 kind, name, amount = (('bids', 'bidder_name_raw', 'bid_price') if table == 'agency_bid'
                                       else ('awards', 'supplier_name_raw', 'award_amount'))

@@ -11,10 +11,7 @@ from toronto_bids.store import db
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
-# enrich_council requires pdftotext up front — a system package, not a Python dep. Skip
-# rather than fail so a plain `uv sync && uv run pytest` is green on a clean machine; CI
-# installs poppler-utils so these still run there. Note test_enrich_requires_pdftotext is
-# deliberately NOT marked: it fakes pdftotext's absence and must run either way.
+# Skip when system poppler is missing; test_enrich_requires_pdftotext runs regardless.
 needs_pdftotext = pytest.mark.skipif(
     shutil.which("pdftotext") is None,
     reason="needs pdftotext (poppler): apt-get install -y poppler-utils / brew install poppler",
@@ -22,7 +19,6 @@ needs_pdftotext = pytest.mark.skipif(
 
 
 def _stub_fetch(reference):
-    # Return the fixture HTML regardless of reference (simulates the headed fetch).
     return (FIXTURES / "agenda_item.html").read_text()
 
 
@@ -40,7 +36,6 @@ def test_enrich_builds_council_item_and_pdfs(conn, tmp_path):
     n = enrich_council(conn, _http_pdf(), fetch=_stub_fetch, dest_dir=tmp_path)
     assert n == 1
     assert db.counts(conn)["council_item"] == 1
-    # 3 distinct PDFs from the fixture, each downloaded + extracted
     assert db.counts(conn)["background_pdf"] == 3
     row = conn.execute("SELECT text FROM background_pdf LIMIT 1").fetchone()
     assert "HELLO PDF" in row["text"]
@@ -54,14 +49,13 @@ def test_enrich_skips_blank_authority_and_is_idempotent(conn, tmp_path):
                                       source="suspended_firms"), overwrite=True)
     conn.commit()
     enrich_council(conn, _http_pdf(), fetch=_stub_fetch, dest_dir=tmp_path)
-    enrich_council(conn, _http_pdf(), fetch=_stub_fetch, dest_dir=tmp_path)  # re-run
-    assert db.counts(conn)["council_item"] == 1      # only the non-blank authority
-    assert db.counts(conn)["background_pdf"] == 3     # no duplicate PDFs on re-run
+    enrich_council(conn, _http_pdf(), fetch=_stub_fetch, dest_dir=tmp_path)
+    assert db.counts(conn)["council_item"] == 1
+    assert db.counts(conn)["background_pdf"] == 3
 
 
 @needs_pdftotext
 def test_enrich_isolates_a_failing_ref(conn, tmp_path):
-    # One ref's fetch raises; the other must still be processed (not aborted).
     db.upsert_row(conn, SuspendedFirm(supplier_name_raw="A", council_authority="2025.GG26.3",
                                       source="suspended_firms"), overwrite=True)
     db.upsert_row(conn, SuspendedFirm(supplier_name_raw="B", council_authority="2025.BAD.1",
@@ -74,17 +68,15 @@ def test_enrich_isolates_a_failing_ref(conn, tmp_path):
         return _stub_fetch(ref)
 
     n = enrich_council(conn, _http_pdf(), fetch=fetch, dest_dir=tmp_path)
-    assert n == 1                                  # only the good ref processed
+    assert n == 1
     assert db.counts(conn)["council_item"] == 1
 
 
 @needs_pdftotext
 def test_enrich_isolates_a_failing_pdf(conn, tmp_path):
-    # A PDF that 404s must not abort the item — its other PDFs + the council_item still land.
     pdf = (FIXTURES / "tiny.pdf").read_bytes()
 
     def handler(request):
-        # 404 the communication PDFs, serve the background ones.
         if "/comm/" in str(request.url):
             return httpx.Response(404, text="nope")
         return httpx.Response(200, content=pdf)
@@ -96,7 +88,7 @@ def test_enrich_isolates_a_failing_pdf(conn, tmp_path):
     n = enrich_council(conn, http, fetch=_stub_fetch, dest_dir=tmp_path)
     assert n == 1
     assert db.counts(conn)["council_item"] == 1
-    # fixture has 2 bgrd + 3 comm distinct; comm all 404 -> only the 2 bgrd PDFs stored
+    # Fixture has 2 background + 3 comm PDFs; only the 2 background PDFs succeed.
     assert db.counts(conn)["background_pdf"] == 2
 
 

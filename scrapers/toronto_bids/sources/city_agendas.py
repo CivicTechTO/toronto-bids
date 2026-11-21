@@ -1,8 +1,4 @@
-"""Resumable all-term City agenda/item/report inventory, independent of voting records.
-
-The inventory is discovery evidence. Printed identifiers and candidate matches do
-not create procurement identities or bidder facts.
-"""
+"""Resumable City Council and committee agenda/report discovery inventory."""
 import csv
 from datetime import date, datetime, timezone, timedelta
 import fcntl
@@ -160,7 +156,7 @@ class InventoryBusy(ValueError):
 
 
 def maintenance_page(source):
-    """Recognize the platform's dedicated unavailable page, not agenda prose."""
+    """Return True if the HTML is TMMIS's scheduled-maintenance page."""
     root=html.fromstring(source)
     crumbs=[clean(node.text_content()).casefold() for node in root.xpath('//*[@id="breadcrumbs"]//li')]
     notice=clean(' '.join(root.xpath('//*[@id="main"]//text()'))).casefold()
@@ -168,7 +164,7 @@ def maintenance_page(source):
 
 
 class Browser:
-    """One ordinary anonymous headed browser; no persisted cookies or auth headers."""
+    """Anonymous headed Chromium wrapper under Xvfb for TMMIS agenda pages."""
     def __enter__(self):
         from pyvirtualdisplay import Display
         from playwright.sync_api import sync_playwright
@@ -207,7 +203,7 @@ class Browser:
 
 
 def capture(directory, *, browser, limit=None, log=lambda m:None):
-    """Resume every scheduled meeting, checkpointing one validated source at a time."""
+    """Fetch, validate, and checkpoint pending City meeting agendas one at a time."""
     directory=Path(directory);conn=connect(directory);count=0
     lock=(directory/'.capture.lock').open('a')
     try:fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
@@ -274,7 +270,7 @@ def status(conn):
 
 
 def seed_schedules(directory, *, http, from_year=2010, through_year=None):
-    """Resolve official CSV resources through package metadata; pin enumeration inputs."""
+    """Fetch and pin official CKAN meeting-schedule CSVs and seed the meeting table."""
     directory=Path(directory);conn=connect(directory)
     snapshots=directory/'schedules';snapshots.mkdir(exist_ok=True)
     manifest=snapshots/'manifest.json'
@@ -294,7 +290,6 @@ def seed_schedules(directory, *, http, from_year=2010, through_year=None):
                 data=http.get_bytes(url)
                 sha=hashlib.sha256(data).hexdigest();path=snapshots/(sha+'.csv')
                 path.write_bytes(data)
-                # A resource must parse before it can enter a durable manifest.
                 schedule(data.decode('utf-8-sig'),from_year=from_year,through_year=through_year or date.today().year)
                 resources.append(dict(url=url,path=str(path.resolve()),sha256=sha))
                 time.sleep(1.1)
@@ -309,11 +304,7 @@ def seed_schedules(directory, *, http, from_year=2010, through_year=None):
 
 
 def capture_reports(directory, *, http, limit=None, log=lambda m:None):
-    """Archive candidate attachments once, retaining immutable bytes and native text.
-
-    Attachment candidacy is deliberately broad. Neither the filename nor a
-    procurement title qualifies a report for model extraction or fact admission.
-    """
+    """Download and validate pending candidate attachment PDFs with native text extraction."""
     from toronto_bids.sources.bd_reports import PacedHttp, CaptureDeferred as PdfDeferred, _validate_pdf
     directory=Path(directory);conn=connect(directory);count=0
     lane=PacedHttp(http)
@@ -346,8 +337,7 @@ def capture_reports(directory, *, http, limit=None, log=lambda m:None):
                     with conn:conn.execute("UPDATE report SET state='failed',error=?,updated_at=datetime('now') WHERE url=?",(str(exc),row['url']))
                     log('failed '+row['url']+': '+str(exc))
                     if isinstance(exc,PdfDeferred):
-                        # PacedHttp has already honored short retries; defer the lane
-                        # instead of running the same failing service for every PDF.
+                        # Persist backoff deadline so subsequent PDFs do not retry a deferred server.
                         deferred.write_text(json.dumps(dict(until=(datetime.now(timezone.utc)+timedelta(seconds=max(120,exc.retry_after))).isoformat(),reason=str(exc)))+'\n')
                         break
                 count+=1

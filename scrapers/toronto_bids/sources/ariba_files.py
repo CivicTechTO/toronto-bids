@@ -1,64 +1,12 @@
 """Per-file capture of Ariba solicitation documents (#174).
 
-The bundle path drives Download Content -> Download Attachments, which server-zips a SELECTION
-and is hard-stopped at 500 MB. That cannot reach Doc5713434353: row 3.1 is atomic within the
-picker (nothing expands it) and holds 787.71 MB of the event's 792 MB. Batching splits a
-selection, not a row.
+Pure module (no Playwright): builds canonical `Doc<n>.zip` bundles from
+individually downloaded files, avoiding Ariba's 500 MB server-zip ceiling.
+Adapters implement a 2-method FileSource protocol:
+  - `list_files() -> [{key, name, row, ordinal}]` (`key` stable across runs, non-positional)
+  - `download(file, dest) -> Path` (truncates and writes to `dest`, or raises)
 
-But the event page's `All Content` view exposes every document individually, each with a
-"Download this attachment" menu, and Max Size is 88.7 MB across 54 files. Nothing about the
-content is too large -- only the bundle path's granularity was wrong.
-
-So this captures files one at a time and builds the canonical zip ourselves. Because WE build
-it, its layout is our choice, which is why naming matters here and never did before.
-
-This module is PURE -- no Playwright import. The adapter lives in ariba_attachments.py, above
-a 2-method FileSource protocol:
-
-    list_files()          -> [{key, name, row, ordinal}]  traversal, References expanded
-    download(file, dest)  -> Path                 TRUNCATES and saves to EXACTLY dest, or raises
-
-A third method, `expected_count()`, used to sit here -- the picker's `Total Number`, read as an
-independent ground truth and compared against the traversal's own count. Removed (#185): the
-first live comparison found the picker reporting 54 against a traversal of 39 and a true leaf
-count of 178 after nested expansion. Three quantities, no derivable relationship between any
-two of them, so every capture of that event recorded a `SHORT by 15` gap that did not exist --
-in an archive whose value rests on honest gap records, a permanent false one is worse than no
-check. See CLAUDE.md's Ariba attachments section for the measurement.
-
-**Every PURE decision in that traversal lives here, not in the adapter** -- `is_document_name`
-(which labels name a document), `anchor_key` (what a listed file IS), `listing_from_anchors`
-(which repeats are duplicates, and what was discarded) and `order_listing`. They were written
-inside the Playwright class, which is untestable by convention, and two of them are what the
-archive's integrity rests on. The adapter reads the DOM and clicks; it decides nothing.
-
-`key` CONTRACT: it must be STABLE across repeated traversals of the same event and INDEPENDENT
-of position -- never derived from a file's index in the listing, and never from a counter that
-increments in traversal order, which is the same thing wearing a different name (see
-`anchor_key`). `make_fingerprint` below keys on the ordered `(key, name)` pairs precisely so a
-resumed run can tell whether the same document is still in the same slot; a positional key
-(`str(index)`) trivially has the right shape while carrying zero identity information, which
-silently defeats that fingerprint the moment two files share a name -- see `make_fingerprint`'s
-docstring for the exact reproduction.
-
-`download` writes to the path it is handed and nothing else: the `.part` staging and the
-os.replace live here, because atomicity is the property most worth testing and the adapter is
-the half that cannot be unit-tested. It must TRUNCATE that path rather than append to or
-range-resume it -- this side unlinks a stale `.part` before every call so the contract holds
-from both ends, because an adapter that appended would turn a killed transfer's leftover bytes
-into a corrupt file that then becomes canonical.
-
-`key` is a file's IDENTITY in the listing and `name` is only its label: two different documents
-routinely share a name, so the fingerprint below keys on the ORDERED (key, name) pairs.
-
-The small path/manifest helpers below were deliberately NOT imported from ariba_batch.py while
-it still existed. They were a few lines each, and depending on a module slated for deletion
-would have inverted the retirement order (see the spec's "out of scope"). ariba_batch.py was
-removed in #186 once per-file capture had archived a real event end to end and its three
-inherited lessons (atomic bundle write, corrupt-manifest discard, gap-record-before-bundle)
-were confirmed to live independently here.
-
-Design: docs/superpowers/specs/2026-07-27-ariba-per-file-capture-design.md
+Docs: docs/ariba-attachments.md
 """
 
 import json
@@ -69,39 +17,23 @@ import tempfile
 import zipfile
 from pathlib import Path
 
-# Extensions a City solicitation actually publishes. NOT anchored to end-of-string: a content-tree
-# anchor routinely renders its own size after the filename ("Appendix C2.pdf (1.2 MB)"), and the
-# `$`-anchored pattern this replaces silently skipped every one of those -- a document missing
-# from an archive that cannot be re-fetched. `(?![A-Za-z0-9])` keeps `notes.pdfx` out while
-# letting anything non-alphanumeric (space, comma, bracket, end) follow the extension.
-#
-# The list is deliberately wider than "what we have seen": drawings arrive as .dwf/.dxf beside
-# .dwg, pricing forms as macro-enabled .xlsm, scans as .tif, correspondence as .msg/.eml, and
-# bundles as .7z/.gz/.tar/.rar/.kmz. Every omission here is a silent drop, so err wide -- a
-# non-document that slips through fails loudly at download, which is the recoverable direction.
+# Unanchored so trailing size metadata ("Appendix.pdf (1.2 MB)") still matches,
+# while negative lookahead rejects glued suffixes like "notes.pdfx".
 _DOCUMENT_EXTENSION = re.compile(
     r"\.(7z|bmp|csv|dgn|docx?|dwf|dwg|dxf|eml|gif|gz|jpe?g|kmz|msg|odt|pdf|png|pptx?|rar|rtf|"
     r"tar|tiff?|txt|xlsm|xlsx?|xml|zip)(?![A-Za-z0-9])",
     re.IGNORECASE,
 )
 
-# A row that LEADS with an outline number ("3.1 Drawings Package ...") -- the content tree's own
-# address for that row, and the most stable identity a row can offer. Sub-rows behind a
-# `References` toggle carry none, which is exactly the case the adapter's old key got wrong.
+# Leading outline number ("3.1 Drawings Package ..."); sub-rows under References omit it.
 _OUTLINE = re.compile(r"^(\d+(?:\.\d+)*)(?:\s|$)")
 
-# The smallest share of its OWN listing a capture may deliver and still be archived. Below this
-# the run broke rather than the event being short, so `capture_files` keeps its partials and
-# leaves the event pending instead of writing a permanent bundle. See the long note at its use.
+# Minimum fraction of listed files required to archive; lower counts keep partials pending.
 _MIN_CAPTURE_RATIO = 0.5
 
 
 def is_document_name(name) -> bool:
-    """Whether an anchor's label names a downloadable document. PURE.
-
-    A URL is not a document label: the content tree carries ordinary hyperlinks beside its
-    attachments, and one ending in `.pdf` would otherwise be planned as a file to download.
-    """
+    """Return True if an anchor label names a downloadable document (excluding URLs)."""
     text = " ".join((name or "").replace("\xa0", " ").split())
     if not text or text.lower().startswith(("http://", "https://", "www.")):
         return False
@@ -109,70 +41,23 @@ def is_document_name(name) -> bool:
 
 
 def row_identity(row_text) -> str:
-    """The tree row an anchor sits in, as a stable string. PURE.
-
-    The row's outline number when it has one -- the tree's own address, unchanged by anything
-    the traversal does -- and the row's flattened text otherwise. Both are properties of the
-    document's PLACE; neither is a fact about when a traversal reached it.
-    """
+    """Return a stable row identifier: its outline number if present, else normalized row text."""
     text = " ".join((row_text or "").replace("\xa0", " ").split())
     m = _OUTLINE.match(text)
     return m.group(1) if m else text
 
 
 def is_outline_row(row_text) -> bool:
-    """Whether a row's text leads with an outline number ('3.1 Drawings Package ...'). PURE.
-
-    Used as a POSITIVE marker that the content tree specifically -- not merely "not the
-    picker" -- is the page in front of us (#174 M4): an outline-numbered row is the tree's
-    own address for a top-level row, and nothing on the export page (the other place the old,
-    purely-negative check could land on) renders anything shaped like it.
-    """
+    """Return True if row text starts with a content-tree outline number (e.g. '3.1 ...')."""
     text = " ".join((row_text or "").replace("\xa0", " ").split())
     return bool(_OUTLINE.match(text))
 
 
 def anchor_key(anchor) -> str:
-    """A listed file's DURABLE identity: row identity + within-row ordinal + filename. PURE.
+    """Durable cross-run file identity: `row_identity#ordinal#name`.
 
-    **The one thing this must not be is positional.** The key the adapter used to build was
-    `outline#name` plus an occurrence counter that incremented in TRAVERSAL ORDER, so two files
-    sharing a base got `#2` for *when they were seen* rather than for *what they are*. That is
-    a positional key wearing a stable key's clothes, and it defeats `make_fingerprint` exactly
-    as the module docstring warns: the ordered (key, name) pairs come back byte-identical after
-    a reorder, the resumed run adopts the partials, the listing is zipped against `unique_names`
-    positionally, and the bundle holds one document twice and another never -- counts matching,
-    so no gap is recorded. Silently wrong, permanently.
-
-    Two reachable routes made that reproducible rather than theoretical. A `References` sub-row
-    is its own `<tr>` whose text does not lead with a number, so `outline` was `""` for **every
-    file behind every toggle** -- and the bulk of the files live there. And two rows can share
-    an outline number's row text. Neither "degrades safely": the fallback WAS the positional
-    counter.
-
-    The ordinal fixes it because a row's DOM order is a property of the row, not of the sweep
-    that read it -- the anchor is the 2nd link in row 3.1 no matter which pass sees it, which
-    is precisely what a listing index can never say.
-
-    **DURABLE, and deliberately not used to re-find an element mid-run (#174).** This key is
-    stable where it is asked to be stable -- across runs -- because every run traverses before
-    it downloads anything, and at traversal time the tree is pristine. It is NOT stable within
-    a run: measured live, downloading a single file invalidated 36 of 39 of these keys at once,
-    on a tree that was otherwise intact (same 39 documents, same 138 anchors, same names).
-    Opening an attachment's menu re-parents the menu containers, so `closest('tr')` stops
-    resolving to the fused `Reference Documents Attachment 1 ... Attachment 3 Tree` blob and
-    starts resolving to the real `3.1` row, while the ordinal shifts by one as that row's own
-    link joins the count:
-
-        before:  'Reference Documents Attachment 1 ... Tree#0#Attachment 1 ... Appendix E.zip'
-        after:   '3.1#1#Attachment 1 ... Appendix E.zip'
-
-    The key was therefore invalidated *by the act of downloading*, and every download after the
-    first was certain to fail. The error was asking one string to do two jobs with different
-    requirements. Re-finding an element to click is the other job, and it belongs to the
-    anchor's own DOM id (`handle`, carried beside this) with `pick_unclaimed` behind it --
-    neither of which may ever reach `make_fingerprint`, since AribaWeb re-mints its ids per
-    session and a fingerprint carrying one would discard the partials on every run.
+    Stable across pristine pre-download traversals, not mid-run: opening an AribaWeb menu
+    reparents containers and shifts `closest('tr')`/ordinals, so mid-run clicks use DOM `handle`.
     """
     ordinal = anchor.get("ordinal")
     try:
@@ -188,25 +73,9 @@ TREE_LINK = "tree-link"
 
 
 def anchor_kind(anchor) -> str:
-    """Which of the two document shapes this anchor is, and therefore how it downloads. PURE.
+    """Classify an anchor as `MENU_ITEM` (AribaWeb PMI, direct click) or `TREE_LINK` (PML, opens menu).
 
-    Measured on the live event (#174): its 39 documents are not one kind of thing.
-
-        36  role=menuitem  bh=PMI  class=w-pmi-item    35 of them in ONE container
-         3  (plain link)   bh=PML  class=leg-p-r-9     Part 1, Part 2, Part 3
-
-    AribaWeb's own vocabulary names them: PML is a popup-menu LINK (a trigger that opens a menu
-    holding `Download this attachment`), PMI is a popup-menu ITEM (already inside such a menu,
-    and clicking it downloads DIRECTLY -- measured: one click on `Attachment 1 Field Services
-    Manual Appendix E.zip` yielded 246,873 bytes with no intermediate menu at all).
-
-    The capture treated all 39 as PML, so it opened a menu that does not exist for the 36 and
-    waited for a `Download this attachment` that never appears. Every one of them failed.
-
-    Read from the role/bh/class the DOM publishes rather than inferred from position, so a
-    document that moves in the tree does not change kind. Anything unrecognised is a TREE_LINK:
-    that path opens a menu and checks what it got, so a misclassification there fails loudly,
-    whereas guessing MENU_ITEM would click an arbitrary link and take whatever came back.
+    Defaults to `TREE_LINK` so unrecognized anchors fail loudly waiting for the download menu.
     """
     role = (anchor.get("role") or "").strip().lower()
     bh = (anchor.get("bh") or "").strip().upper()
@@ -217,26 +86,7 @@ def anchor_kind(anchor) -> str:
 
 
 def pick_unclaimed(anchors, name, claimed):
-    """The anchor to click for `name`, ignoring ones already used this run. PURE.
-
-    The LAST-RESORT half of mid-run resolution, behind the DOM id. It exists because the
-    durable `anchor_key` provably cannot do this job: the menu re-parenting above rewrites it
-    for most of the tree the moment the first file downloads, so a fallback keyed on it would
-    fail on exactly the runs the fallback is for.
-
-    Matching on a bare name is what `_resolve_anchor`'s docstring warns against -- two
-    same-named documents both resolve to the first link, so the same bytes land twice and the
-    second document is never fetched, counts matching, no gap recorded. `claimed` is what makes
-    it safe: it holds the ids already clicked in this run, so a second `report.pdf` cannot
-    resolve back onto the first one's anchor. For the overwhelmingly common unique-name case
-    this is exact.
-
-    The residual ambiguity is honest and narrow: two documents sharing a filename, whose ids
-    have ALSO gone stale, are told apart only by remaining DOM order. Both are still captured
-    (`unique_names` gives them distinct disk names); only which bytes land under which of the
-    two names could transpose. That is strictly better than the alternative on offer, which is
-    failing every remaining download.
-    """
+    """Fallback mid-run match: first anchor matching `name` whose DOM id is not in `claimed`."""
     wanted = " ".join((name or "").replace("\xa0", " ").split())
     for anchor in anchors:
         text = " ".join((anchor.get("name") or "").replace("\xa0", " ").split())
@@ -250,32 +100,10 @@ def pick_unclaimed(anchors, name, claimed):
 
 
 def listing_from_anchors(anchors) -> dict:
-    """One DOM read of every `<a>` -> `{files, rejected, collided}`. PURE.
+    """Convert raw DOM anchor dicts into `{files, rejected, collided}` for one read.
 
-    `anchors` are `{name, row, ordinal}` dicts in DOM order; any other field they carry (the
-    adapter's own `index`, which addresses an element within ONE read and must never leave it)
-    is read here and not passed on. Returns the FileSource listing plus what it threw away,
-    because both discards
-    are ways a document goes missing from an archive that cannot be re-fetched, and neither may
-    be silent:
-
-    * `rejected` -- labels `is_document_name` refused. The adapter logs them, so a widened
-      extension list is a data question with evidence rather than a guess.
-    * `collided` -- entries whose key another entry in the SAME read already took. With the
-      ordinal in the key this can no longer happen within one row (the old `(name, row)` rule
-      dropped a second same-named link there with no log and no count); it survives only for
-      two rows whose flattened text is genuinely identical, which we cannot tell apart. That
-      collapse is recorded rather than left as a hole nothing mentions.
-
-    Repeats ACROSS reads are ordinary -- the traversal re-reads the whole DOM on every scroll
-    pass -- and the caller merges by key.
-
-    `ordinal` on each entry is trusted as given: the reader that built `anchors` (`_ANCHORS_JS`
-    in the adapter) is what scopes it to document-named siblings within the anchor's own row
-    element (#174 M3) -- that scoping cannot be redone here from the flattened `row` TEXT
-    alone, because two genuinely different row elements can render identical text (see
-    `test_an_indistinguishable_duplicate_is_reported_not_silently_dropped`), and grouping by
-    that text would wrongly treat them as one row's two anchors instead of two rows' one each.
+    Trusts each anchor's `ordinal` (scoped to document siblings in its row by `_ANCHORS_JS`)
+    and records duplicate keys in `collided` rather than silently dropping them.
     """
     files, rejected, collided, seen = [], [], [], set()
     for anchor in anchors:
@@ -289,12 +117,7 @@ def listing_from_anchors(anchors) -> dict:
             collided.append({"key": key, "name": name})
             continue
         seen.add(key)
-        # `handle` is the anchor's own DOM id -- the LIVE half of the identity split described
-        # in `document_key`. Unique across every document anchor on this page (measured: 39 of
-        # 39 distinct; the single id-less anchor was an external http link, which
-        # `is_document_name` rejects anyway). It is what the adapter clicks, and it must never
-        # reach `make_fingerprint`: AribaWeb mints these per session, so a fingerprint carrying
-        # one would differ on every run and discard the partials every time.
+        # `handle` is the per-session DOM id for mid-run clicks; excluded from `make_fingerprint`.
         files.append(
             {
                 "key": key,
@@ -317,29 +140,13 @@ def _listing_sort_key(entry) -> tuple:
 
 
 def order_listing(files) -> list:
-    """Put a merged listing into TREE order, not sweep order. PURE.
-
-    The traversal sweeps up and then down, so first-seen order depends on where the list
-    happened to be sitting -- and that order goes straight into `make_fingerprint`, where a
-    difference between two runs discards every partial on disk. Ordering by the row's own
-    address instead makes the fingerprint a fact about the event.
-
-    Outline rows sort numerically (`4.10` after `4.9`, the same trap `_outline_sort_key`
-    exists for on the picker side), then unnumbered rows by their text, then by within-row
-    ordinal so two links in one row keep their DOM order.
-    """
+    """Sort listed files into deterministic tree order (numeric outline, text, ordinal)
+    so fingerprints do not depend on scroll-sweep direction."""
     return sorted(files, key=_listing_sort_key)
 
 
 def unique_names(names) -> list:
-    """Flat zip names, disambiguating duplicates as `name_2.ext`, `name_3.ext`.
-
-    The first occurrence keeps its name and later ones are numbered, deterministically in
-    traversal order -- so the same event always produces the same bundle. A candidate that
-    would itself collide (a real `a_2.pdf` already present) keeps searching rather than
-    stealing the name: silently overwriting one document with another is the one outcome an
-    archive cannot have.
-    """
+    """Disambiguate duplicate flat zip names as `name_2.ext`, skipping any name already taken."""
     used, out = set(), []
     for name in names:
         if name not in used:
@@ -359,14 +166,9 @@ def unique_names(names) -> list:
 
 
 def build_bundle(files, target, *, before_replace=None) -> Path:
-    """Zip `[(disk_path, zip_name)]` flat into `target`, atomically.
+    """Write `[(disk_path, zip_name)]` flat into `target` atomically via a sibling `.tmp` file.
 
-    Built into a sibling `.tmp` and moved into place with os.replace, so `target` either does
-    not exist or is complete. A half-written Doc<n>.zip is worse than none: a sibling function
-    treats that filename's existence as proof the solicitation is archived, forever.
-
-    `before_replace`, when provided, validates the completed temporary zip and records its
-    omissions before publication. Raising keeps the old target and removes the temporary zip.
+    Runs `before_replace(tmp)` before `os.replace` and removes `tmp` on any failure.
     """
     target = Path(target)
     target.parent.mkdir(parents=True, exist_ok=True)
@@ -377,7 +179,7 @@ def build_bundle(files, target, *, before_replace=None) -> Path:
                 with open(src, "rb") as fsrc, out.open(zip_name, "w") as fdst:
                     shutil.copyfileobj(
                         fsrc, fdst, 1 << 20
-                    )  # 88 MB files: stream, never slurp
+                    )
         if before_replace is not None:
             before_replace(tmp)
         os.replace(tmp, target)
@@ -394,22 +196,8 @@ PARTIAL_DIRNAME = ".partial-files"
 
 
 def partial_dir(dest_dir, document_number: str) -> Path:
-    """Working directory for an in-progress per-file capture.
-
-    Outside the canonical `Doc<n>.zip` namespace on purpose: capture_attachments decides what
-    is already archived by testing for that file, so a partial capture must be invisible to it.
-
-    And deliberately NOT `.partial/`, which the batched capture (`ariba_batch.py`, retired in
-    #186) used: the two held the same path, with the same `manifest.json` name and incompatible
-    schemas, so whichever module looked first self-healed by discarding the other's work -- and
-    the closed-posting branch in capture_event ran the BATCH salvage over a per-file directory,
-    found no `batch-*.zip`, logged "skipped", and abandoned downloaded files that can never be
-    re-fetched. Separate namespaces removed the whole class rather than arbitrating it -- kept
-    even after ariba_batch.py's removal, since a stray `.partial/` from an old checkout must
-    still never collide with this one.
-    """
+    """Working directory for in-progress per-file captures, outside `Doc<n>.zip` and legacy `.partial/`."""
     return Path(dest_dir) / PARTIAL_DIRNAME / f"Doc{document_number}"
-
 
 
 def _retire_partials(pdir):
@@ -423,23 +211,10 @@ def _retire_partials(pdir):
 
 
 def make_fingerprint(files) -> dict:
-    """Identity of the event as we traversed it: the ORDERED (key, name) pairs it listed.
+    """Ordered `[key, name]` pairs identifying a listing for resume checks.
 
-    Order is load-bearing, and a sorted name multiset was silently wrong. `capture_files`
-    assigns a resumed file's disk name by POSITION -- it zips the listing against
-    `unique_names(...)` -- so position IS identity here. Two documents can share a name
-    (`report.pdf` twice is ordinary), and a listing that comes back in the other order maps the
-    same disk names onto different documents. Fingerprinting `sorted(names)` cannot see that:
-    run 1 saves X as `report.pdf` and dies, run 2 lists Y first, the fingerprint matches, the
-    partial is kept as already-complete, and the bundle ends up holding X twice and Y never --
-    with the counts matching, so no gap is recorded. Silently wrong, permanently.
-
-    So the pairs are compared in order and any reorder or identity substitution retires the
-    partials. Their complete bytes survive as historical versions while current slots re-download. Lists (not tuples) because this is
-    compared against a manifest read back from JSON. No longer carries an `expected_count` (#185)
-    -- the picker's count it used to ride along with was proven incommensurable with this list's
-    own length, so it protected nothing an addendum-mid-capture wasn't already caught by: a
-    changed `files` list already invalidates the fingerprint on its own.
+    Order matters because disk names are assigned positionally via `unique_names`, so any reorder
+    or key substitution invalidates partials. Uses lists to match JSON round-tripping.
     """
     return {"files": [[f["key"], f["name"]] for f in files]}
 
@@ -454,7 +229,7 @@ def read_manifest(pdir):
             return None
         return record
     except (OSError, ValueError, KeyError, TypeError):
-        return None  # missing OR corrupt: retire stale slots and re-traverse
+        return None
 
 
 def write_manifest(pdir, fingerprint: dict) -> Path:
@@ -485,27 +260,9 @@ def read_omitted(bundle_path):
 
 
 def write_omitted(bundle_path, omitted, collided: int = 0):
-    """Durable record of what a bundle does NOT contain, beside the bundle itself.
+    """Atomically write `<bundle>.omitted.json` when files were omitted or links collided.
 
-    Written only when something is actually missing, so its ABSENCE is meaningful evidence that
-    nothing is. It outlives the capture (the partial manifest does not), so a gap is greppable
-    later without reading logs. Atomic (tmp + os.replace), the same way the ephemeral
-    `write_manifest` is -- this is the durable artifact and deserves at least as much care.
-
-    `collided` is the count of links the traversal found INDISTINGUISHABLE from one another and
-    collapsed (`listing_from_anchors`'s `collided`, #174 Low) -- a gap that never shows up in
-    `omitted`, since the collapsed entry still counts once.
-
-    No longer takes an `expected_files`/`actual_files` comparison against the picker (#185): the
-    picker's `Total Number` was proven incommensurable with the traversal's own count (54 vs. 39
-    vs. 178 true leaves on the one validated event), so every successful capture of that event
-    wrote a phantom gap here -- `omitted: []` beside `expected_files: 54, actual_files: 37` --
-    describing a shortfall that did not exist. The only things that can now make this write
-    anything are real: a file that failed to download, or a link the traversal collapsed.
-
-    A no-op (returns None, touches nothing on disk) when there is nothing to record. Clearing a
-    STALE record from an EARLIER run is a different decision with a different timing requirement
-    -- see `clear_omitted_when_complete`, which must run only after the bundle itself exists.
+    No-op when nothing is missing or collided; stale records are cleared separately after bundle write.
     """
     if not omitted and not collided:
         return None
@@ -520,20 +277,7 @@ def write_omitted(bundle_path, omitted, collided: int = 0):
 
 
 def clear_omitted_when_complete(bundle_path, omitted, collided: int = 0):
-    """Unlink a stale gap record left by an EARLIER run, now that this run is complete.
-
-    Call this only AFTER `build_bundle` has returned successfully. A capture that once omitted
-    a file and a later run that captures everything write the same bundle path, and a stale
-    record left beside it would go on claiming a gap that no longer exists -- but "absence means
-    nothing is missing" only holds if the bundle backing that claim actually landed. Clearing
-    the record before `build_bundle` runs (or while it might still fail) would leave an
-    incomplete or entirely absent `Doc<n>.zip` standing next to a gap record that was just
-    erased -- exactly the state this whole mechanism exists to prevent.
-
-    `collided` gates this the same way `omitted` does: counts matching is not evidence nothing
-    is wrong when a collision was silently collapsed this run too. No longer compares against
-    the picker's count (#185) -- see `write_omitted`.
-    """
+    """Remove a stale `.omitted.json` after `build_bundle` succeeds with no omissions or collisions."""
     if omitted or collided:
         return
     Path(bundle_path).with_suffix(".omitted.json").unlink(missing_ok=True)
@@ -555,8 +299,7 @@ def _publish_capture(captured, target, omitted, *, collided=0, listing=None, log
     captured_names = {name for _, name in captured}
     unresolved = list(dict.fromkeys([
         *omitted, *(name for name in previous["omitted"] if name not in captured_names)]))
-    # A count alone cannot identify a previously collapsed link. Keep that uncertainty until
-    # it can be audited, rather than claiming that an unrelated new listing resolved it.
+    # Carry forward prior collision counts since a count alone cannot verify resolution.
     collisions = max(collided, previous["collided"])
     gap = target.with_suffix(".omitted.json")
     old_gap = gap.read_bytes() if gap.exists() else None
@@ -587,8 +330,7 @@ def _publish_capture(captured, target, omitted, *, collided=0, listing=None, log
         log(f"  {exc}")
         return False
     except BaseException:
-        # A failed atomic replacement must leave the gap describing the HELD archive.
-        # Restore only if the pre-publication callback changed that evidence.
+        # Restore previous gap sidecar if atomic bundle replacement failed.
         current_gap = gap.read_bytes() if gap.exists() else None
         if had_bundle and current_gap != old_gap:
             if old_gap is None:
@@ -600,7 +342,6 @@ def _publish_capture(captured, target, omitted, *, collided=0, listing=None, log
         raise
     clear_omitted_when_complete(target, unresolved, collided=collisions)
     return True
-
 
 
 def _publish_amendment(captured, target, omitted, listing, *, collided=0, log=lambda _m: None):
@@ -627,7 +368,7 @@ def _publish_amendment(captured, target, omitted, listing, *, collided=0, log=la
             pairs = prior["fingerprint"]["files"]
             keys = dict(zip(unique_names([p[1] for p in pairs]), [p[0] for p in pairs]))
         except (TypeError, KeyError, IndexError):
-            keys = {}  # preserve bytes without inventing identity for unreadable evidence
+            keys = {}  # preserve bytes without inventing keys for unreadable manifests
         for path in sorted((snapshot / "files").glob("*")):
             if path.is_file() and path.stat().st_size and path.suffix != ".part":
                 retired.append((path, path.name, keys.get(path.name)))
@@ -642,8 +383,7 @@ def _publish_amendment(captured, target, omitted, listing, *, collided=0, log=la
         try:
             build_bundle(files, target, before_replace=validate)
         except BaseException:
-            # The candidate and its provenance publish atomically. Until that happens the
-            # sidecar must continue describing the held archive, not the new listing.
+            # Restore previous gap sidecar if atomic bundle replacement failed.
             if had_bundle:
                 if old_gap is None:
                     gap.unlink(missing_ok=True)
@@ -657,11 +397,9 @@ def _publish_amendment(captured, target, omitted, listing, *, collided=0, log=la
 
 
 def capture_files(source, document_number: str, dest_dir, log=lambda _m: None):
-    """Download every document individually, then build the canonical bundle.
+    """Download listed documents individually into `.part` staging files, then build the bundle.
 
-    Returns the bundle path, or None if nothing usable was captured (the event stays pending).
-    Raises when the source lists NO files -- that is an event withholding its content, and an
-    empty Doc<n>.zip would mark it archived forever. Empty is never success.
+    Returns the bundle path or None if too few files succeeded; raises if `list_files()` is empty.
     """
     dest_dir = Path(dest_dir)
     files = source.list_files()
@@ -671,26 +409,13 @@ def capture_files(source, document_number: str, dest_dir, log=lambda _m: None):
             f"empty bundle, which would mark this event archived permanently"
         )
 
-    # The picker's `Total Number` comparison that used to run here was removed (#185): the
-    # first live comparison found the picker reporting 54 against a traversal of 39 and a true
-    # leaf count of 178, three quantities with no derivable relationship, so every successful
-    # capture of that event recorded a phantom `SHORT by 15` gap. See CLAUDE.md.
-    #
-    # Optional: a source may report how many links it found INDISTINGUISHABLE from one another
-    # and collapsed (#174 Low) -- read here, defensively (the FileSource protocol's other method,
-    # `download`, stays a hard requirement; this one is not), and folded into the durable record
-    # below rather than living only in the traversal's log.
+    # Optional adapter hook reporting indistinguishable links collapsed during traversal.
     collided_count = getattr(source, "collided_count", lambda: 0)() or 0
     fingerprint = make_fingerprint(files)
     pdir = partial_dir(dest_dir, document_number)
     manifest = read_manifest(pdir)
     if manifest is None:
-        # Missing OR corrupt: `read_manifest` cannot tell "no partials yet" from "a manifest we
-        # cannot trust", so both must retire rather than fall through and adopt whatever is
-        # already in `files/` POSITIONALLY -- `ariba_batch.py`'s retired `capture_in_batches`
-        # made the identical call for the identical reason (#186 confirmed this lesson lives
-        # here independently before that module was removed). Discarding an empty or
-        # nonexistent directory costs nothing.
+        # Retire partials on missing or corrupt manifest to avoid positional mismatch.
         if pdir.exists():
             log(
                 f"  Doc{document_number}: missing/unreadable manifest — retiring partials "
@@ -709,37 +434,24 @@ def capture_files(source, document_number: str, dest_dir, log=lambda _m: None):
     captured, omitted = [], []
     for entry, zip_name in zip(files, unique_names([f["name"] for f in files])):
         dest = fdir / zip_name
-        # Complete by construction: a file only reaches this name through the os.replace below,
-        # which a 0-byte transfer never gets to. The size is checked all the same, so a 0-byte
-        # file from anywhere else is re-fetched rather than silently promoted (see M11 below).
+        # Skip non-empty finalized files; 0-byte files are re-fetched.
         if dest.is_file() and dest.stat().st_size:
             captured.append((dest, zip_name))
             continue
         part = dest.with_suffix(dest.suffix + ".part")
-        # A `.part` left by a killed run is an INTERRUPTED transfer, never a head start: drop it
-        # before handing the path over, so an adapter that appends or range-resumes cannot turn
-        # those bytes into a corrupt file that then becomes canonical (see the FileSource
-        # contract in the module docstring — both ends enforce truncation).
+        # Drop any leftover .part from a killed run so downloads always start clean.
         part.unlink(missing_ok=True)
         try:
             source.download(entry, part)
             if not part.stat().st_size:
-                # No attachment here is legitimately empty, so a 0-byte "success" is a failed
-                # transfer. Promoting it would put a permanent silent hole in the bundle where
-                # a document should be; recorded as an omission it is at least greppable.
                 raise RuntimeError("downloaded 0 bytes")
             os.replace(part, dest)
         except BaseException as exc:
-            part.unlink(missing_ok=True)  # an incomplete download is never useful
+            part.unlink(missing_ok=True)
             if not isinstance(exc, Exception):
-                # Ctrl-C / SystemExit: clean up the `.part` like build_bundle cleans up its
-                # `.tmp`, then let it through. Recording an interrupt as "this file is missing
-                # from Ariba" would be a false durable claim about the event.
+                # Let interrupts propagate without recording the file as missing.
                 raise
-            # Recorded by its DISAMBIGUATED zip name, not the raw label: `unique_names` exists
-            # precisely because names collide, so a bare label ("report.pdf") cannot say WHICH
-            # of two same-named documents this is. `zip_name` is already in scope for exactly
-            # this entry.
+            # Record by disambiguated zip name so duplicate labels remain distinguishable.
             omitted.append(zip_name)
             log(f"    {entry['name']}: download failed ({exc}) — omitted")
             continue
@@ -749,27 +461,7 @@ def capture_files(source, document_number: str, dest_dir, log=lambda _m: None):
         log(f"  Doc{document_number}: no file downloaded — leaving the event pending")
         return None
 
-    # A near-total download failure is a BROKEN RUN, not a short event, and must not archive.
-    #
-    # `Doc<n>.zip` existing is the whole of what `capture_attachments` reads as "this event is
-    # done" -- there is no other flag -- so a bundle holding 1 of 39 documents closes the event
-    # out at 2% permanently, and Respond dies with the posting, so no later run can reopen it.
-    # Two live #174 runs did exactly that (the content tree stopped resolving mid-run); both
-    # wrote the bundle, both were caught by hand, and on the unattended nightly neither would
-    # have been. The gap record was perfect each time and changed nothing, because nothing acts
-    # on it.
-    #
-    # This is a DIFFERENT check from the `expected` comparison above, which deliberately records
-    # rather than refuses. That one compares against the picker -- provisional, possibly not even
-    # counting the same things -- so it must never gate a capture. This one compares the run
-    # against the traversal's own listing, ground truth this module produced moments earlier, so
-    # a near-total shortfall can only mean the acquisition broke. Returning None keeps the
-    # partials, so the retry resumes from whatever did arrive rather than refetching it.
-    #
-    # The floor is deliberately LOW. Routine omissions (an Ariba 500, one dead file) are the
-    # expected steady state and must still archive with their gap recorded; only a wholesale
-    # failure is caught. Half is a round number comfortably below any plausible partial capture
-    # and far above the 2% the live runs produced.
+    # Keep partials pending on wholesale failures instead of archiving a nearly empty bundle.
     if len(captured) < _MIN_CAPTURE_RATIO * len(files):
         log(
             f"  Doc{document_number}: only {len(captured)} of {len(files)} listed document(s) "
@@ -778,18 +470,7 @@ def capture_files(source, document_number: str, dest_dir, log=lambda _m: None):
         )
         return None
 
-    # The gap record goes down BEFORE the bundle, the same way ariba_batch.py (retired #186)
-    # wrote a batch's sidecar before its zip. Once Doc<n>.zip exists, capture_attachments
-    # treats the event as archived forever -- so a record that failed to write after it (ENOSPC
-    # is not hypothetical when the next call writes 787 MB) would leave the gap undescribed
-    # permanently, and the record whose ABSENCE means "nothing is missing" would be the thing
-    # that went missing. A record with no bundle beside it is the harmless direction: nothing
-    # reads it, and the next run rewrites it.
-    #
-    # Clearing a STALE record from an earlier run runs in the OPPOSITE order: only after
-    # `build_bundle` has actually landed the new bundle, never before it or around a failure --
-    # an incomplete or absent `Doc<n>.zip` standing beside a just-erased gap record would make
-    # "absence means nothing is missing" false.
+    # Write gap sidecar before publishing the bundle; clear stale sidecars only after.
     target = dest_dir / f"Doc{document_number}.zip"
 
     if not _publish_capture(captured, target, omitted, collided=collided_count, listing=files, log=log):
@@ -802,27 +483,10 @@ def capture_files(source, document_number: str, dest_dir, log=lambda _m: None):
 def finalise_partial(
     document_number: str, dest_dir, *, posting_open: bool, log=lambda _m: None
 ):
-    """Bundle whatever files are already on disk, for a posting that closed mid-capture.
+    """Bundle complete partial files for a closed posting (`posting_open=False` required).
 
-    **`posting_open` must be False and is validated, not assumed.** Respond is disabled the
-    moment a posting closes, so the files still owed can never be fetched and keeping 30 of 54
-    is permanently better than nothing -- that is the whole reason partials are retained. Run it
-    while the posting is still OPEN and it canonicalises a capture that could have completed:
-    `Doc<n>.zip` would exist, so `capture_attachments` would never come back to it. The caller
-    has the answer already: `posting_open=not respond.is_disabled()`.
-
-    Salvage policy, the mirror of `capture_files`: take every complete file, record the rest as
-    omitted by NAME (the same way capture_files names them), and write the gap record before the
-    bundle. The manifest's fingerprint supplies the names and the disk layout, so a lost or
-    corrupt manifest costs the naming, never the bytes: anything sitting in `files/` is bundled
-    under its own disk name regardless, with no way to name what else was owed (there is no
-    picker comparison to fall back on either, per #185 — it was never a reliable signal here).
-
-    A leftover `.part` is a truncated transfer -- never a bundle member, and never deleted
-    either, since those bytes can no longer be re-fetched. Its file is recorded missing and the
-    working directory is kept so the residue sits beside the `.omitted.json` that says so.
-
-    Returns the bundle path, or None if there is nothing on disk to finalise.
+    Records missing planned files in `.omitted.json` and preserves leftover `.part` files
+    in place since closed postings cannot be re-fetched. Returns the bundle path or None.
     """
     if posting_open is not False:
         raise ValueError(
@@ -844,8 +508,6 @@ def finalise_partial(
             captured.append((path, zip_name))
             taken.add(zip_name)
         else:
-            # Disambiguated zip name, not the raw label -- see the identical comment in
-            # capture_files.
             omitted.append(zip_name)
 
     leftover = []
@@ -856,7 +518,7 @@ def finalise_partial(
             if path.suffix == ".part":
                 leftover.append(path.name)
             elif path.name not in taken and path.stat().st_size:
-                # Bytes the manifest cannot account for are still bytes we can never re-fetch.
+                # Include any complete files the manifest could not account for.
                 captured.append((path, path.name))
                 taken.add(path.name)
 
@@ -864,8 +526,6 @@ def finalise_partial(
         return None
 
     target = dest_dir / f"Doc{document_number}.zip"
-    # Gap record first, and the stale-clear only after `build_bundle` succeeds -- for the same
-    # reasons capture_files does both: see the comments there.
     if not _publish_capture(captured, target, omitted, log=log):
         return None
     if leftover:

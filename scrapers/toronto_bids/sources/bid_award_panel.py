@@ -1,25 +1,6 @@
-"""Mine solicitation titles from Bid Award Panel agendas (#65, and fills #68's council_item).
+"""Scrape and parse Bid Award Panel (BA) and Bid Committee (BD) agendas from TMMIS.
 
-The City publishes the document number *as* the title for ~72% of solicitations, so
-`solicitation.title` is NULL for 5,391 of 7,444 (see title.py / #70). The subject exists in
-exactly one accessible place: the Bid Award Panel agenda that approved the award.
-
-    BA189.1 - Award of Ariba Document Number 3234668279 to GHD Limited for the Aeration
-              Blower System Upgrades at the Humber Treatment Plant
-
-Before Ariba, agendas use native Call Numbers while the current feed publishes numeric
-competitive identifiers. Numeric encoding is discovery evidence only. The guarded legacy
-supplier/value fallback covers some items; linking.city_crosswalk validates separately
-reviewed equivalences against exact original publisher and agenda facts. Neither path
-makes a derived solicitation title independent identity evidence.
-
-Rather than hardcode a cutoff year, this reads every agenda and extracts whatever 10-digit
-numbers it finds. Pre-Ariba meetings simply yield nothing, so the data draws the boundary
-instead of a guess baked into a constant.
-
-TMMIS is Akamai-gated: plain HTTP gets 403 (verified), as does anything without a real
-browser. So fetching needs the headed Chromium behind the `council` extra, exactly as
-sources/council.py already does. Parsing is pure and testable against saved HTML.
+Fetching requires headed Chromium (Akamai blocks plain HTTP and headless); parsing is offline.
 """
 
 import json
@@ -42,21 +23,15 @@ from toronto_bids.store import db
 
 AGENDA_URL = "https://secure.toronto.ca/council/report.do"
 
-# "BA189.1 - Award of Ariba Document Number 3234668279 to GHD Limited for the ..."
-# BA = Bid Award Panel (2017-01-04 onward). BD = Bid Committee, its predecessor, which ran
-# 2009-02-04 to 2016-12-21 — three weeks before BA's first meeting (#90). Same agenda
-# structure throughout: same "Award of <id> to <supplier> for <subject>" heading, same
-# "Contract Award Value ... net of all applicable taxes" block, same bid tables, same
-# background-file PDFs. One series succeeded the other; nothing else changed.
+# BA = Bid Award Panel (2017+), BD = Bid Committee (2009-2016); same agenda structure.
 _ITEM_HEADING = re.compile(
     r"^\s*(?P<ref>B[AD]\d+\.\d+)\s*-\s*(?P<title>.+?)\s*$", re.DOTALL
 )
 _TEN_DIGIT = re.compile(r"\d{10}")
 _WS = re.compile(r"\s+")
-# Collapse spaces/tabs but keep newlines: item headings are found by line.
+# Keep newlines; item headings are split by line.
 _WS_LINES = re.compile(r"[ \t]+")
 
-# Item titles that are panel housekeeping, never an award.
 _NOT_AN_AWARD = re.compile(
     r"^(election of|confirmation of minutes|declarations? of)", re.IGNORECASE
 )
@@ -67,12 +42,7 @@ def _clean(text):
 
 
 def parse_agenda(html: str, meeting: str) -> list[dict]:
-    """Every award item on one agenda page.
-
-    Returns [{"reference", "meeting", "title", "document_numbers": [...]}, ...].
-    Items with no 10-digit number are still returned (with an empty list) so a caller can
-    see the pre-Ariba years for what they are rather than mistaking them for a fetch failure.
-    """
+    """Parse award items from one agenda page into dicts with reference, meeting, title, and document_numbers."""
     root = _html.fromstring(html)
     items = []
     for node in root.xpath("//h1|//h2|//h3|//h4|//h5|//h6"):
@@ -98,33 +68,22 @@ def parse_agenda(html: str, meeting: str) -> list[dict]:
     return items
 
 
-# TMMIS answers 200 with an error page for a reference that is not real, and it has more than
-# one way of saying so. Missing either one records an error page as an agenda.
+# TMMIS returns HTTP 200 with an error page for nonexistent meeting references.
 _MISSING_MARKERS = (
-    "this meeting is not available",  # e.g. 2018.BA10
-    "the published report was not found",  # e.g. 2007.BD1
+    "this meeting is not available",
+    "the published report was not found",
 )
 
 
 def agenda_is_missing(html: str) -> bool:
-    """True when TMMIS served an error page rather than an agenda.
-
-    Meeting numbering restarts each council term and the year prefix is a session year, so
-    enumerating references means probing. A miss is normal, not an error.
-    """
+    """Return True when TMMIS served a missing-meeting error page."""
     text = (html or "").lower()
     return any(marker in text for marker in _MISSING_MARKERS)
 
 
 @contextmanager
 def agenda_fetcher(virtual_display: bool = False):
-    """Yield `fetch(meeting) -> html`, backed by ONE headed Chromium for the whole run.
-
-    Akamai 403s plain HTTP and headless (both verified), so a real browser is unavoidable.
-    But sources/council.py launches a browser per page, which is fine for 3 suspended firms
-    and ruinous here: enumerating ~474 meetings means launching Chromium ~474 times, and
-    startup would dominate the run. One browser, many pages.
-    """
+    """Yield fetch(meeting) -> html using one shared headed Chromium instance (Akamai blocks headless)."""
     from playwright.sync_api import sync_playwright
 
     display = None
@@ -159,11 +118,7 @@ def agenda_fetcher(virtual_display: bool = False):
 
 
 def agenda_date(html: str) -> str | None:
-    """The meeting date the page reports, as YYYY-MM-DD.
-
-    This is how a probe confirms it landed on the meeting it meant to: references cannot be
-    derived reliably (see meeting_date_index), so we guess a reference and check the date.
-    """
+    """Extract the agenda's meeting date as YYYY-MM-DD, or None."""
     m = re.search(
         r"Meeting Date:\s*</?[^>]*>?\s*\w+day,\s*(\w+)\s+(\d{1,2}),\s*(\d{4})",
         _clean(_html.fromstring(html).text_content()) if "<" in html else html,
@@ -192,26 +147,6 @@ def agenda_date(html: str) -> str | None:
     return f"{m.group(3)}-{month:02d}-{int(m.group(2)):02d}"
 
 
-# The first meeting of each council term, as (session_year, term_label). A term's meetings
-# are numbered 1..N contiguously; the reference's year prefix is the SESSION year, which
-# rolls over in November when a term starts. Confirmed by fetching: 2017.BA1 = 2017-01-04,
-# 2022.BA189 = 2022-05-25, 2023.BA4 = 2022-12-07.
-# (series, first session year of the term, term label). A term numbers its meetings 1..N
-# contiguously and the year prefix is the SESSION year, rolling over each November.
-# Confirmed by fetching: 2017.BA1 = 2017-01-04, 2022.BA189 = 2022-05-25,
-# 2023.BA4 = 2022-12-07, 2016.BD106 = 2016-10-19.
-#
-# BD shares the 2014-2018 term with BA: the Bid Committee sat until 2016-12-21 and the
-# Bid Award Panel restarted numbering at 1 on 2017-01-04, mid-term. So both are walked
-# for that term, and each stops where its own meetings run out.
-# (series, first session year, term label, first meeting number).
-#
-# first_n is 1 everywhere except BD's 2006-2010 term: the Bid Committee was already sitting
-# when that term began, so its meetings there are numbered from 105 (2009.BD105 = 2009-02-04,
-# the earliest the City's schedule lists). Walking from 1 finds nothing and gives up, silently
-# losing every 2009-2010 meeting — which is exactly what happened on the first run.
-
-
 def _read_agenda_date(page):
     from datetime import date
 
@@ -233,7 +168,7 @@ def _agenda_in_term(page, term):
 
 
 def _automatic_term_plan(fetch, term_starts, today, log):
-    """Probe first agendas; a speculative/future successor cannot close an older term."""
+    """Probe first agendas for each term and extend 4-year council terms through today."""
     terms = list(term_starts)
     first = {}
 
@@ -282,31 +217,10 @@ def discover_meetings(
     auto_terms=False,
     today=None,
 ):
-    """Walk each term's meetings, returning {reference: html} for every agenda that exists.
+    """Probe contiguous meeting numbers per term and return {reference: html} for existing agendas.
 
-    References cannot be derived from the City's published schedule: it lists dates but omits
-    MTG # for every term before 2022-2026, and inferring numbers from date order is wrong in
-    both directions (measured against four references confirmed by fetching: it landed 188 vs
-    189, 51 vs 50, 99 vs 100, 2 vs 1). The schedule both duplicates and omits meetings, and
-    the drift is not constant, so there is no offset to correct for.
-
-    So: probe, and let each page's own date confirm what it is. Walking n upward within a
-    term is cheap because numbering is contiguous; only the session-year prefix has to be
-    guessed, and it only ever advances.
-
-    `term_starts` is the committee's term list (e.g. `zoo_board.ZB_TERM_STARTS`); the Bid
-    Award Panel is abolished, so no in-repo default remains. Other TMMIS committees (e.g.
-    the Zoo Board's ZB series, #135) reuse this prober by passing their own list — same
-    probe-and-confirm design, different (series, start_year, term, first_n) tuples.
-
-    Active committees opt into `auto_terms`: extend the latest four-year seed through the
-    current year and confirm each successor from its first dated agenda. Only a successor
-    meeting that has occurred can close an older term. Persisted boundaries carry that
-    successor's reference and date; legacy integer caps are revalidated once. A prepublished
-    future agenda is collected without freezing the previous term.
-
-    Without `auto_terms`, the historical BA/BD rule remains: every configured term except
-    the last is closed. `closed_terms` and `on_term_closed` let callers persist boundaries.
+    Shared by BA/BD and active TMMIS committees (e.g. Zoo/EP). With auto_terms=True, extends
+    4-year seeds through today and only closes an older term once a successor agenda has occurred.
     """
     if auto_terms:
         from datetime import date
@@ -349,7 +263,7 @@ def discover_meetings(
         misses = 0
         for n in range(first_n, cap + 1):
             html = ref = None
-            # The prefix only ever advances, and only at a November boundary.
+            # Session year prefix only advances at a November boundary.
             for candidate in (session, session + 1):
                 probe = f"{candidate}.{series}{n}"
                 page = fetch(probe)
@@ -374,21 +288,8 @@ def discover_meetings(
     return found
 
 
-# Deliberately NOT trimming "Award of Ariba Document Number 3234668279 to GHD Limited for
-# the ..." down to a bare subject. The obvious rules both break on real data: taking the
-# last " for " mangles subjects that contain one ("... for Engineering and Construction
-# Services" -> "Engineering and Construction Services"), and taking the first breaks on
-# suppliers that contain one ("Centre for Excellence Inc."). There is no reliable rule, the
-# full heading is already readable, and it names the supplier too. Store the City's words
-# verbatim and let source='bid_award_panel' say where they came from.
-
-
 def store_items(conn, agendas: dict) -> int:
-    """Upsert every award item from {reference: html} into council_item. Idempotent.
-
-    This is what finally populates council_item (#68), which has been in the schema and the
-    export since the rewrite with nothing ever written to it.
-    """
+    """Upsert all parsed award items from {reference: html} into council_item. Idempotent."""
     n = 0
     for meeting, html in agendas.items():
         for item in parse_agenda(html, meeting):
@@ -403,14 +304,7 @@ def store_items(conn, agendas: dict) -> int:
 
 
 def fill_titles_from_council(conn) -> int:
-    """Give title-less solicitations the title of the council item that awarded them.
-
-    Only fills NULLs — the City's own posting title always wins where it published one.
-    Thanks to #70 a placeholder is spelled NULL, so this can land at all; before that,
-    'Doc-3524228095' was non-NULL and no backfill could ever replace it.
-
-    Returns the number of solicitations named. Idempotent.
-    """
+    """Populate NULL solicitation.title values from council_item titles naming a 10-digit document number. Idempotent."""
     missing = {
         r["document_number"]
         for r in conn.execute(
@@ -425,8 +319,7 @@ def fill_titles_from_council(conn) -> int:
     ):
         for hit in _TEN_DIGIT.findall(row["title"]):
             doc = normalize_document_number(hit)
-            # First council item wins: agendas are walked oldest-first, so the original
-            # award beats any later amendment naming the same document.
+            # First council item wins (oldest-first), so the original award beats later amendments.
             if doc in missing and doc not in filled:
                 filled[doc] = row["title"]
     conn.executemany(
@@ -439,7 +332,7 @@ def fill_titles_from_council(conn) -> int:
 
 
 def cached_agendas(agenda_dir) -> dict:
-    """{reference: html} for every agenda already on disk. Offline."""
+    """Load cached {reference: html} agenda files from agenda_dir."""
     root = pathlib.Path(agenda_dir)
     if not root.is_dir():
         return {}
@@ -451,12 +344,7 @@ def _closed_terms_path(agenda_dir) -> pathlib.Path:
 
 
 def _load_closed_terms(agenda_dir) -> dict:
-    """A historical term's confirmed miss boundary, `{"EP2018-2022": 27}`-shaped (#177).
-
-    Missing or corrupt reads as empty rather than raising: this is a resumability cache, not
-    a record — losing it costs one term's worth of miss-probing on the next run, exactly the
-    pre-#177 behaviour, never a wrong discovery.
-    """
+    """Load persisted closed-term boundaries from .closed_terms.json, returning {} if missing or corrupt."""
     path = _closed_terms_path(agenda_dir)
     if not path.exists():
         return {}
@@ -477,16 +365,9 @@ def scrape_agendas(
     agenda_dir, *, virtual_display: bool = False, log=lambda _m: None, term_starts,
     auto_terms=False, today=None
 ) -> dict:
-    """Discover and cache every agenda, returning {reference: html}.
+    """Discover, cache, and return {reference: html} agendas, persisting closed-term boundaries.
 
-    Reuse cached agendas and persist closed-term boundaries in `.closed_terms.json`.
-    With `auto_terms`, cached pages must have a date in the reference's council term;
-    malformed or wrong-term pages are refetched. Missing pages are never cached.
-    Closure requires a confirmed successor meeting that has occurred, rather than merely
-    a later entry in the configured list. Historical BA/BD callers retain the legacy rule.
-
-    `term_starts` supplies each committee's historical seeds. Active EP/ZB callers enable
-    automatic four-year extensions; see `discover_meetings` for the closure evidence.
+    With auto_terms=True, cached pages must carry a valid date inside their council term.
     """
     root = pathlib.Path(agenda_dir)
     root.mkdir(parents=True, exist_ok=True)
@@ -522,7 +403,7 @@ def scrape_agendas(
                 log(f"  {meeting}: cached page has no valid term date; checking the source")
             html = fetch_live(meeting)
             if not agenda_is_missing(html) and cache_is_agenda(meeting, html):
-                # Store <main> only: the rest is nav, sharing widgets and a language picker.
+                # Store <main> only to omit navigation chrome.
                 match = re.search(r"(<main.*</main>)", html, re.DOTALL)
                 cached.write_text(match.group(1) if match else html)
             return html
@@ -539,17 +420,9 @@ def scrape_agendas(
 
 
 def parse_agenda_pdfs(html: str, meeting: str) -> list[dict]:
-    """The staff-report PDFs an agenda links, attributed to the item each sits under.
+    """Extract legdocs PDF links from an agenda page, attributed to the preceding item heading.
 
-    Rewrite spec §2.3 lists background-file PDFs as having "**No index** — source
-    (year, committee, id) tuples from TMMIS". The agendas *are* that index: every award item
-    links its report, and 474 of the 475 cached agendas carry at least one. 3,142 distinct
-    PDFs across the corpus.
-
-    Attribution works because the City emits them in document order — item heading, then that
-    item's Background Information links, then the next heading — so the most recent heading
-    owns the links that follow it. Links appearing before any item heading (agenda-level
-    attachments) are attributed to the meeting rather than dropped.
+    Links before the first item heading are attributed to the meeting reference.
     """
     root = _html.fromstring(html)
     out, seen = [], set()
@@ -577,13 +450,7 @@ def parse_agenda_pdfs(html: str, meeting: str) -> list[dict]:
 
 
 def store_background_pdfs(conn, agendas: dict) -> int:
-    """Index every staff-report PDF the agendas link. Idempotent. Downloads nothing.
-
-    The URL index is the deliverable: it is what spec §2.3 says does not exist, and it turns
-    "fetch the report for award X" from an unanswerable question into a lookup. Fetching the
-    bytes is a separate, much heavier pass — these are plain HTTP (verified: 200,
-    application/pdf), so it needs no browser, unlike the agendas themselves.
-    """
+    """Index staff-report PDF URLs from parsed agendas into background_pdf without downloading. Idempotent."""
     n = 0
     for meeting, html in agendas.items():
         for pdf in parse_agenda_pdfs(html, meeting):
@@ -599,45 +466,26 @@ def store_background_pdfs(conn, agendas: dict) -> int:
     return n
 
 
-# Bid tables name their first column six ways across the corpus.
-# The plural is not decoration: BA189.3 heads its table "Suppliers", and without the `s?` the
-# whole table is declined and its five bids are silently dropped. Found by #94, on a BA
-# agenda, because the Bid Committee parser accepted a header the Bid Award Panel one refused.
+# Match singular/plural bidder headers (e.g. "Suppliers" in BA189.3).
 _BIDDER_HDR = re.compile(
     r"^\s*(supplier|bidder|proponent|firm|vendor|company|respondent)s?"
     r"[\s/]*(name|names|or proponent name)?\s*$",
     re.IGNORECASE,
 )
 _PRICE_HDR = re.compile(r"bid price|bid amount|price|quotation", re.IGNORECASE)
-# "including H.S.T." vs "excluding H.S.T." is a real difference — 1,307 tables say one and
-# 1,048 the other. A bare price column would silently mix the two bases.
-# "incl\w*\.?" not "includ\w*": the Bid Committee overwhelmingly abbreviates, and
-# "Bid Price (Incl. HST)" is its single most common price header (587 of them). Requiring the
-# full word reads those as basis-unknown, which is the one thing a bid price must not be —
-# 5,801 bids include HST and 4,097 exclude it, so an unmarked price is two incomparable
-# things in one column (#84).
+# Match abbreviated "Incl."/"Excl." forms common in BD headers (e.g. "Bid Price (Incl. HST)").
 _HST_INCLUDING = re.compile(
     r"\bincl\w*\.?\s*(all applicable taxes|h\.?s\.?t)", re.IGNORECASE
 )
 _HST_EXCLUDING = re.compile(
     r"\bexcl\w*\.?\s*(all applicable taxes|h\.?s\.?t)", re.IGNORECASE
 )
-# Footnote markers ride on both names and prices: '$2,982,036.67*', 'Smith and Long Ltd.**'.
-# They point at a note under the table ('*includes contingency', '**found non-compliant'), so
-# the raw string keeps them and only the parse strips them.
+# Trailing footnote markers kept on raw prices but stripped when parsing.
 _FOOTNOTE = re.compile(r"[\s*^+†‡§]+$")
-# Some tables enumerate their rows, two different ways, and both corrupt the bidder name:
-#   inline    ['1. Pave Tar Construction Ltd', '$937,419']        -> 639 rows
-#   own column ['1', 'Joe Pace & Sons Inc.', '$1,219,281']        ->  19 rows, and the header
-#              declares only 2 columns, so every cell shifts and the NAME lands in bid_price.
-# Pure presentation — unlike a footnote marker it points at nothing — so it is stripped.
+# Leading row numbers appear either inline ("1. Name") or as an extra leading cell.
 _ROW_NUMBER_CELL = re.compile(r"^\s*\d+\.?\s*$")
 _ROW_NUMBER_PREFIX = re.compile(r"^\s*\d+[.)]\s+")
-# Footnote markers ride on bidder names too, and on either side: '**AQUA TECH SOLUTIONS INC',
-# 'Smith and Long Ltd.**'. Unlike bid_price — where the marker sits beside a value we parse,
-# so keeping it preserves the pairing — a name is an identifier that has to match across
-# sources. The marker is not part of it, and left on it wins display_name's alphabetical
-# sort ('**AQUA TECH...' before 'AQUA TECH...') and uglifies the dimension.
+# Strip footnote markers from bidder names so they match across sources.
 _NAME_MARKERS = re.compile(r"^[\s*^+†‡§]+|[\s*^+†‡§]+$")
 
 
@@ -649,32 +497,15 @@ def _hst_basis(header: str) -> str | None:
     return None
 
 
-# --- Bid Committee (BD) bid tables (#94) -------------------------------------------------
-#
-# BA lays a bid table out one row per bidder. BD does not, and 417 BD agendas yielded 36 bids
-# because of it. Its columns are single cells holding a <p> per value, so the whole table is:
-#
-#     cell[0]  "Number of Bids:"                                    (a rowspan)
-#     cell[1]  "Firm Name"             / R.E. Cavanagh Electric / Ozz Electric Inc. / ...
-#     cell[2]  "Bid Price (Incl. HST)" / $ 224,156.52 / $ 231,817.47 / ...
-#
-# Two things follow. The heading is a LINE inside a cell, not the table's header row, so
-# _BIDDER_HDR.match(header[0]) never fires. And lxml's text_content() concatenates those <p>
-# runs with no separator, so the cell reads as one blob: "$ 224,156.52$ 231,817.47$ ...".
-# Reading the markup back as lines is what recovers the column.
-#
-# The same agendas also put the bidders in the FOLLOWING rows instead, offset by the rowspan
-# cell, and mix the two freely. Both reduce to the same rule: zip the bidder column's lines
-# against the price column's lines.
+# BD tables pack multi-bidder columns as <p>/<br> lines inside single cells (or offset rows under a rowspan).
 _CELL_BLOCK_END = re.compile(r"</(p|div|li|tr|td)>", re.IGNORECASE)
 _CELL_BR = re.compile(r"<br\s*/?>", re.IGNORECASE)
 
 
 def _cell_lines(cell) -> list[str]:
-    """A table cell's values, one per line of block markup.
+    """Split a table cell into lines at block/<br> boundaries.
 
-    text_content() would fuse them: a BD price column comes back as
-    "$ 224,156.52$ 231,817.47$ 240,633.50" with nothing to split on.
+    Avoids lxml text_content() fusing BD <p> entries into one string.
     """
     markup = _CELL_BR.sub("\n", etree.tostring(cell, encoding="unicode"))
     text = _html.fromstring(_CELL_BLOCK_END.sub("\n", markup)).text_content()
@@ -683,13 +514,12 @@ def _cell_lines(cell) -> list[str]:
     ]
 
 
-# A BD heading occupies its cell alone ("Firm Name"), unlike the appendix label
-# "Recommended Bidder:" which carries its value beside it.
+# Standalone BD bidder column header (excludes inline labels like "Recommended Bidder:").
 _BD_BIDDER_HDR = re.compile(
     r"^(bidder|firm|proponent|company|contractor|supplier|vendor)s?[\s/]*(name|names)?\s*:?$",
     re.IGNORECASE,
 )
-# What can stand in a price column: an amount, or the outcome the City writes instead of one.
+# Price cell values: currency amounts or stated bid outcomes.
 _BD_PRICEY = re.compile(
     r"\$|\d[\d,]*\.\d{2}|non.?compliant|no bid|withdrawn|informal", re.IGNORECASE
 )
@@ -703,12 +533,7 @@ _BD_BIDDER_NOTE = re.compile(
 
 
 def _bd_column_pairs(names, prices):
-    """Separate only source-marked trailing notes, then validate the whole alignment.
-
-    A footnote is distinguishable from a firm only when its explicit marker is referenced
-    by a price. Unknown/wrapped lines remain ambiguous. Never skip one non-price pair after
-    zipping: a leftover header can shift every later bidder while preserving equal counts.
-    """
+    """Strip marker-referenced trailing notes and pair names with prices only if counts and price shapes match."""
     names = list(names)
     while names and (note := _BD_BIDDER_NOTE.match(names[-1])):
         marker = note.group(1)
@@ -722,17 +547,8 @@ def _bd_column_pairs(names, prices):
 
 
 def _parse_bd_bid_table(table, reference: str, docs: list) -> list[dict]:
-    """Bids from one Bid Committee table, whichever of its two layouts it uses.
-
-    Returns [] for anything it cannot read cleanly. Unequal columns are REFUSED rather than
-    paired: names and prices are positional, so one stray line (a footnote, a wrapped name)
-    silently attributes a bid to the wrong firm, and a misattributed bid is worse than a
-    missing one.
-    """
-    # Direct children only. These agendas nest a bid table inside the item's outer table, and
-    # the element walk visits both: with .//tr the outer table descends into the inner one and
-    # re-parses rows the row-major path already read, duplicating five of BA189.3's bids.
-    # Scoped this way, every row belongs to exactly one table.
+    """Parse a Bid Committee table (in-cell or multi-row layout), returning [] if columns misalign."""
+    # Direct child rows only; .//tr descends into nested tables and duplicates inner bids.
     rows = table.xpath("./tr|./tbody/tr|./thead/tr")
     out = []
     for index, row in enumerate(rows):
@@ -758,14 +574,13 @@ def _parse_bd_bid_table(table, reference: str, docs: list) -> list[dict]:
             price_header += " " + price_lines.pop(0)
 
         pairs = []
-        if len(columns[bidder_col]) > 1:  # the column's values share its header cell
+        if len(columns[bidder_col]) > 1:
             pairs.append((columns[bidder_col][1:], price_lines))
-        for later in rows[index + 1 :]:  # ...or sit in the rows below it
+        for later in rows[index + 1 :]:
             cells = [_cell_lines(c) for c in later.xpath("./td|./th")]
             if not cells:
                 break
-            # The header's rowspan cell ("Number of Bids:") is absent from the rows beneath,
-            # shifting every one of their cells left by exactly that much.
+            # Offset adjusts for the header's rowspan cell ("Number of Bids:") absent from later rows.
             offset = len(columns) - len(cells)
             if offset < 0 or bidder_col - offset < 0 or price_col - offset < 0:
                 break
@@ -773,7 +588,7 @@ def _parse_bd_bid_table(table, reference: str, docs: list) -> list[dict]:
                 break
             names, prices = cells[bidder_col - offset], cells[price_col - offset]
             if not names or not prices or not any(_BD_PRICEY.search(p) for p in prices):
-                break  # left the bid table
+                break
             pairs.append((names, prices))
 
         for names, prices in pairs:
@@ -797,16 +612,7 @@ def _parse_bd_bid_table(table, reference: str, docs: list) -> list[dict]:
 
 
 def parse_bid_tables(html: str, meeting: str) -> list[dict]:
-    """Every bid on an agenda: who bid, what they bid, and on which basis.
-
-    Rewrite spec §2.5.2 calls this data "never published anywhere. **Unrecoverable.**" It is
-    published on every Bid Award Panel agenda, in real <table> markup (#84).
-
-    Returns dicts of reference / document_number / bidder_name_raw / bid_price /
-    hst_basis / price_header. Tables are selected on their first column matching a bidder
-    heading, because an item also carries Financial Impact and WBS cost-centre tables that
-    look nothing like a bid.
-    """
+    """Extract bid dicts (reference, document_number, bidder_name_raw, bid_price, hst_basis, price_header) from an agenda."""
     root = _html.fromstring(html)
     out = []
     reference, docs = meeting, []
@@ -830,13 +636,7 @@ def parse_bid_tables(html: str, meeting: str) -> list[dict]:
             continue
         header = [_clean(c.text_content()) for c in rows[0].xpath(".//td|.//th")]
         if not (len(rows) >= 2 and header and _BIDDER_HDR.match(header[0])):
-            # Not BA's shape. Try the Bid Committee's, which puts its heading in a cell rather
-            # than a header row (#94). Additive by construction: only reached once the
-            # row-major path has declined, so BA's 12,733 bids are untouched.
-            #
-            # The `len(rows) >= 2` belongs to the row-major path alone: it wants a header row
-            # plus data rows, whereas a BD table is routinely a SINGLE row whose cells each
-            # hold a whole column. Testing it before the fallback skipped those outright.
+            # Fall back to BD layout when row-major header check fails (BD tables can be a single row).
             out.extend(_parse_bd_bid_table(el, reference, docs))
             continue
         price_col = next(
@@ -845,8 +645,7 @@ def parse_bid_tables(html: str, meeting: str) -> list[dict]:
         price_header = header[price_col] if price_col is not None else None
         for row in rows[1:]:
             cells = [_clean(c.text_content()) for c in row.xpath(".//td|.//th")]
-            # An undeclared leading row-number column shifts every cell left, dropping the
-            # bidder name into the price. Realign against the header before reading either.
+            # Drop undeclared leading row-number cells so columns align with header.
             while (
                 len(cells) > len(header)
                 and cells
@@ -868,8 +667,6 @@ def parse_bid_tables(html: str, meeting: str) -> list[dict]:
             out.append(
                 {
                     "reference": reference,
-                    # Pre-2019 items name no document number (Toronto adopted Ariba ~2019), so a
-                    # bid can be real and unattributable. Kept anyway — #77 wants exactly these.
                     "document_number": docs[0] if docs else None,
                     "bidder_name_raw": name,
                     "bid_price": price or None,
@@ -881,11 +678,7 @@ def parse_bid_tables(html: str, meeting: str) -> list[dict]:
 
 
 def store_bids(conn, agendas: dict, *, failures=None, log=lambda _m: None) -> int:
-    """Re-derive successful item tables, preserving unrelated facts and archive timestamps.
-
-    Key changes must replace stale positional pairs, rather than append corrected rows
-    beside them. An unreadable item keeps prior observations and reports a review gap.
-    """
+    """Rebuild bid_award_panel bid rows per reference; retain prior rows and report failures if a table degrades."""
     by_ref = {}
     seen = set()
     for meeting, html in agendas.items():
@@ -911,41 +704,29 @@ def store_bids(conn, agendas: dict, *, failures=None, log=lambda _m: None) -> in
     return sum(len(rows) for rows in by_ref.values())
 
 
-# "Award of Tender Call No. 14-2017 to Ontario Excavac Inc. for Replacement of ..."
 _WINNER = re.compile(r"\bto\s+(.+?)\s+for\s+", re.IGNORECASE)
-# Council publishes THREE figures per award. Calibrated against 980 Ariba-era items where the
-# document number gives ground truth: award_amount is the "net of all applicable taxes" one
-# (820/980 = 84%). "including HST" matched 0; "net of HST recoveries" matched 4.
+# Award amount matches "net of all applicable taxes" (not including-HST or net-of-HST-recoveries).
 _NET_OF_TAXES = re.compile(
     r"\$([\d,]+(?:\.\d+)?)\s*net of all applicable taxes", re.IGNORECASE
 )
 _ITEM_SPLIT_CAP = re.compile(
     r"(B[AD]\d+\.\d+) - "
-)  # capturing: keeps the 'BD106.3' item token
+)  # Capturing group keeps the item token (e.g. 'BD106.3').
 
 
 def parse_pre_ariba_awards(html: str, meeting: str | None = None) -> list[dict]:
-    """Items that name no document number, with the winner and value needed to match them.
-
-    These are inputs to the guarded legacy supplier/value fallback, not proof of a
-    native identifier crosswalk. Reviewed crosswalks separately compare original
-    publisher and agenda contexts, including later meetings still using native calls.
-
-    When `meeting` is given, each item carries a full council `reference` (e.g. '2016.BD106.3')
-    built from the meeting's year prefix and the item's 'BD106.3' token — so a match can be
-    recorded against the reference (#124), not only used to fill a title.
-    """
+    """Parse agenda items without a 10-digit doc number into winner/net-award dicts for legacy fallback matching."""
     text = _WS_LINES.sub(" ", _html.fromstring(html).text_content())
     parts = _ITEM_SPLIT_CAP.split(
         text
-    )  # [pre, reftoken1, chunk1, reftoken2, chunk2, ...]
+    )
     year = (meeting or "").split(".")[0] if meeting else None
     out = []
     for i in range(1, len(parts) - 1, 2):
         reftoken, chunk = parts[i], parts[i + 1]
         head = chunk[:400]
         if _TEN_DIGIT.search(head):
-            continue  # names a doc number — joins directly, not our case
+            continue
         winner, value = _WINNER.search(head), _NET_OF_TAXES.search(chunk)
         if not (winner and value):
             continue
@@ -963,9 +744,6 @@ def parse_pre_ariba_awards(html: str, meeting: str | None = None) -> list[dict]:
     return out
 
 
-# Legal-form noise that varies freely between how council writes a supplier and how the feed
-# does: 'Sanscon Construction Limited' vs 'Sanscon Construction Ltd.', 'Liftsafe Engineering &
-# Service Group' vs '... and Service Group', 'The Municipal Infrastructure Group,'.
 _LEGAL_NOISE = re.compile(
     r"\b(limited|ltd|incorporated|inc|corporation|corp|company|co|"
     r"lp|llp|ulc|holdings|group|canada|ontario)\b",
@@ -975,31 +753,22 @@ _LEADING_THE = re.compile(r"^the\s+", re.IGNORECASE)
 
 
 def supplier_tokens(name: str | None) -> set:
-    """Legacy supplier comparison tokens, not an independent identity proof.
-
-    The caller also requires full-name/meaningful-word corroboration, period compatibility
-    and an already-unique legacy candidate. Generic-word/value collisions exist in the
-    historical corpus; old positive-only calibration did not establish zero false joins.
-    """
+    """Return >2-char normalized tokens for legacy supplier/value fallback matching."""
     text = _LEADING_THE.sub("", (name or "").lower().replace("&", " and "))
     return {t for t in supplier_key(_LEGAL_NOISE.sub(" ", text)).split() if len(t) > 2}
 
 
 def match_pre_ariba_titles(conn, agendas: dict) -> int:
-    """Fill missing legacy titles with the shared guarded supplier/value matcher.
-
-    This is a conservative legacy fallback. Native publisher identifier crosswalks
-    require independent source review; current derived titles are not new evidence.
-    """
+    """Fill missing pre-2019 solicitation titles using the guarded supplier/value fallback matcher."""
     items = []
     for meeting, html in agendas.items():
         if meeting.split(".")[0] >= "2019":
-            continue  # 2019+ names a document number; no need to guess
+            continue
         items.extend(parse_pre_ariba_awards(html, meeting))
     return match_on_supplier_and_value(conn, items, "council_pre_ariba")
 
 
-# Generic industry/legal words cannot independently establish supplier identity.
+# Industry/legal words that cannot uniquely identify a supplier.
 _GENERIC_SUPPLIER = {'and', 'construction', 'services', 'service', 'contracting',
                      'general', 'group', 'canada', 'international', 'company', 'engineering'}
 
@@ -1011,8 +780,7 @@ def _supplier_core(name):
 
 
 def _legacy_supplier_matches(left, right):
-    # Preserve punctuation/legal-form variants of the full name, including short names
-    # such as Co-X-Co. Otherwise require a shared identifying word, not just an industry.
+    # Match exact stripped core (handles short names like Co-X-Co) or a shared non-generic token.
     core = _supplier_core(left)
     return bool(core and core == _supplier_core(right)) or bool(
         (supplier_tokens(left) & supplier_tokens(right)) - _GENERIC_SUPPLIER)
@@ -1036,8 +804,7 @@ def _legacy_documents(item, by_value):
     year = int(reference[:4]) if reference[:4].isdigit() else None
     candidates = [(name, doc, issued) for name, doc, issued in by_value.get(round(item['award_value']), [])
                   if supplier_tokens(item['winner_raw']) & supplier_tokens(name)]
-    # New guards may reject a former unique match. They must not promote a formerly
-    # ambiguous price/token match into a new identity without native identifier proof.
+    # Require uniqueness before applying extra guards so ambiguous matches are never promoted.
     if len({doc for _, doc, _ in candidates}) != 1:
         return set()
     return {doc for name, doc, issued in candidates
@@ -1046,13 +813,9 @@ def _legacy_documents(item, by_value):
 
 
 def match_pre_ariba_solicitations(conn, agendas: dict) -> int:
-    """Record pre-Ariba reference<->document_number equivalences in solicitation_link (#124).
+    """Rebuild council_pre_ariba links in solicitation_link by unique (winner, net award) match.
 
-    Same join as #77's title match — a council item's (winner, award value net-of-taxes) to a
-    solicitation's award — but keyed on the item's REFERENCE, and matched against ALL awards
-    (a titled solicitation still needs its bids linked). Unique match only; a wrong merge is
-    worse than none. Only this fallback method is rebuilt; reviewed crosswalk links and
-    their immutable proof survive every replay.
+    Leaves reviewed crosswalk links untouched.
     """
     by_value = _awards_by_value(conn)
     links = {}
@@ -1065,8 +828,6 @@ def match_pre_ariba_solicitations(conn, agendas: dict) -> int:
             docs = _legacy_documents(item, by_value)
             if len(docs) == 1:
                 links[item["reference"]] = docs.pop()
-    # Reviewed crosswalks carry independent immutable proof. Rebuilding the
-    # weaker supplier/value fallback must not delete or overwrite those links.
     conn.execute("DELETE FROM solicitation_link WHERE method='council_pre_ariba'")
     conn.executemany(
         "INSERT INTO solicitation_link (reference, document_number, method) VALUES (?, ?, 'council_pre_ariba') ON CONFLICT(reference) DO NOTHING",
@@ -1077,7 +838,7 @@ def match_pre_ariba_solicitations(conn, agendas: dict) -> int:
 
 
 def store_composite_awards(conn, log=lambda _m: None, failures=None) -> int:
-    """Extract and backfill composite awards from cached LLM extractions (#205)."""
+    """Extract and backfill composite awards from cached LLM extractions."""
     from toronto_bids.extraction import extract_and_backfill
 
     result = extract_and_backfill(conn, "composite", log=log, failures=failures)
@@ -1085,12 +846,7 @@ def store_composite_awards(conn, log=lambda _m: None, failures=None) -> int:
 
 
 def store_ba_report_bids(conn, log=lambda _m: None, failures=None) -> int:
-    """Extract and backfill the bids in Bid Award Panel staff reports (#216).
-
-    The reports `_BA_REPORTS_WITHOUT_BIDS` fetched: BA items whose agenda tabulates no bids.
-    Bids land in `bid` keyed on the council reference, so `solicitation_link` can carry them
-    to solicitations. Their awards are not stored — the spine already holds BA-era awards.
-    """
+    """Extract and backfill bid rows from Bid Award Panel staff reports (ba_report)."""
     from toronto_bids.extraction import extract_and_backfill
 
     result = extract_and_backfill(conn, "ba_report", log=log, failures=failures)
@@ -1098,11 +854,7 @@ def store_ba_report_bids(conn, log=lambda _m: None, failures=None) -> int:
 
 
 def match_composite_titles(conn) -> int:
-    """Name title-less solicitations from composite awards already stored.
-
-    Reads from composite_award (populated by store_composite_awards via LLM extraction)
-    rather than re-parsing PDFs. Idempotent.
-    """
+    """Populate NULL solicitation titles from stored composite_award rows via supplier/value matching. Idempotent."""
     items = [
         {
             "title": r["title"],
@@ -1119,9 +871,7 @@ def match_composite_titles(conn) -> int:
 
 
 
-# BA reports whose agendas lack bids. The separate bd_reports capture inventory covers
-# the omitted 2013–2016 BD reports; this BA query is not a whole-archive coverage ceiling.
-# A held hash, rather than readable text, records captured bytes (including scanned PDFs).
+# BA reports for items whose agendas have no bids; queue keys on sha256 IS NULL.
 _BA_REPORTS_WITHOUT_BIDS = """
     SELECT p.url, p.reference FROM background_pdf p
     JOIN council_item ci ON ci.reference = p.reference
@@ -1138,12 +888,7 @@ _COMPOSITE_REPORTS = """
 def download_reports(
     conn, http, query: str, label: str = "reports", dest_dir=None, log=lambda _m: None
 ) -> int:
-    """Download staff-report PDFs and store their text. Plain HTTP, no browser.
-
-    Only TMMIS itself is Akamai-gated; the legdocs PDFs are ordinary HTTP. Bounded by what
-    store_background_pdfs already indexed off the cached agendas, and resumable: rows that
-    already hold text are skipped, so an interrupted run costs only what it had not fetched.
-    """
+    """Download uncached (sha256 IS NULL) staff-report PDFs over plain HTTP and extract text with pdftotext. Resumable."""
     from toronto_bids.sources.council import download_pdf
 
     if shutil.which("pdftotext") is None:
@@ -1177,7 +922,7 @@ def download_reports(
             conn.rollback()
             log(
                 f"    skipped {row['reference']}: {exc}"
-            )  # one bad PDF must not end the run
+            )
         if i % 25 == 0:
             log(f"    {i}/{len(rows)}")
     return stored
@@ -1188,17 +933,9 @@ def _title_less_awards_by_value(conn):
 
 
 def match_on_supplier_and_value(conn, items, title_source: str) -> int:
-    """Name title-less solicitations from items carrying (title, winner_raw, award_value).
+    """Populate NULL solicitation titles from unique (winner_raw, award_value) matches. Idempotent.
 
-    The one join shared by the two sources that have no identifier to offer: agenda items
-    (#77) and composite-report appendices (#93). The value carries the match and the supplier
-    only confirms it; a non-unique match is dropped rather than guessed. Idempotent — the
-    UPDATE is guarded on `title IS NULL`.
-
-    An item with no title is skipped before it can match (#216): `title_source` records the
-    provenance of a REAL title, so writing it beside a NULL one is a false claim, and counting
-    it would report a fill that never happened. Skipping it here, not in the UPDATE, also stops
-    a title-less item from claiming a document ahead of a titled one (first match wins).
+    Skips items with blank titles before matching so they cannot claim a document ahead of a titled item.
     """
     by_value = _title_less_awards_by_value(conn)
     filled = {}

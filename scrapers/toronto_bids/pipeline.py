@@ -13,11 +13,7 @@ from toronto_bids.linking.procurement import resolve_procurements
 
 
 def default_sources():
-    """OData spine first (overwrite=True), then CKAN backfill (overwrite=False).
-
-    schema_check leads: it reports feed drift without blocking the sources behind it
-    (per-source isolation), so drift is loud but never costs us a run's data.
-    """
+    """Return sources in run order: schema_check, OData (overwrite), CKAN (backfill), Ariba, suspended firms."""
     return [
         SchemaCheckSource(),
         ODataSolicitationSource(),
@@ -25,8 +21,7 @@ def default_sources():
         CkanSource(name="ckan_awarded", slug=config.CKAN_AWARDED_SLUG, kind="awarded"),
         CkanSource(name="ckan_open", slug=config.CKAN_OPEN_SLUG, kind="open"),
         CkanSource(name="ckan_noncomp", slug=config.CKAN_NONCOMP_SLUG, kind="noncompetitive"),
-        # No spine covers the forward-looking pipeline, so CKAN is authoritative for it
-        # and it overwrites (#69).
+        # CKAN is the only source for capital_pipeline, so it overwrites.
         CkanSource(name="ckan_pipeline", slug=config.CKAN_PIPELINE_SLUG,
                    kind="capital_pipeline", overwrite=True),
         AribaDiscoverySource(),
@@ -35,14 +30,10 @@ def default_sources():
 
 
 def linking_passes():
-    """The post-source passes, in run order. Named here rather than inline in `sync` so the
-    nightly report can count what a run actually consists of without restating the list (#178).
+    """Post-source passes in required run order.
 
-    title_cleanup leads: it clears placeholder titles COALESCE would otherwise preserve
-    forever (#70), and the passes behind it read titles.
-    amount_backfill before amount_labels: the label pass and its review queue both read
-    `*_numeric IS NULL` as "not machine-parseable", which is only true once rows written
-    before amount.py existed have caught up (#74).
+    title_cleanup runs before title readers; amount_backfill runs before amount_labels so
+    *_numeric IS NULL reflects current parsing.
     """
     return (("title_cleanup", clear_placeholder_titles),
             ("ariba_bridge", bridge_postings_to_spine),
@@ -53,11 +44,7 @@ def linking_passes():
 
 
 def run_source(conn, http, source):
-    """Run one source; record a sync_run. Never raises — returns (fetched, upserted, error).
-
-    error is None on success. Callers are responsible for surfacing it: this is the only
-    place a source's exception is seen, so silence here means silence everywhere.
-    """
+    """Run one source and record a sync_run row. Catches errors and returns (fetched, upserted, error)."""
     run_id = db.start_sync_run(conn, source.name)
     fetched = upserted = 0
     try:
@@ -70,7 +57,7 @@ def run_source(conn, http, source):
         db.finish_sync_run(conn, run_id, status="ok",
                            rows_fetched=fetched, rows_upserted=upserted)
         return fetched, upserted, None
-    except Exception as exc:  # per-source isolation
+    except Exception as exc:
         conn.commit()
         db.finish_sync_run(conn, run_id, status="failed",
                            rows_fetched=fetched, rows_upserted=upserted, error=str(exc))
@@ -88,9 +75,7 @@ def sync(conn, http, sources=None, only=None) -> list[tuple[str, str]]:
         *_, error = run_source(conn, http, source)
         if error:
             failures.append((source.name, error))
-    # Post-source passes run after every source, and regardless of --only: they read whatever
-    # is in the store, so a partial sync still leaves it internally consistent. Order and
-    # rationale live in linking_passes().
+    # Run linking passes even under --only so the store stays consistent.
     for name, link in linking_passes():
         error = _run_linking_pass(conn, name, link)
         if error:
@@ -99,7 +84,7 @@ def sync(conn, http, sources=None, only=None) -> list[tuple[str, str]]:
 
 
 def _run_linking_pass(conn, name, link) -> str | None:
-    """Run one post-source pass. Isolated like a source: never raises out of sync."""
+    """Run one post-source pass in isolation and record a sync_run row."""
     run_id = db.start_sync_run(conn, name)
     try:
         n = link(conn)

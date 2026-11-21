@@ -1,43 +1,12 @@
-"""Archive the solicitation documents behind Ariba's "Respond" gate (#117).
+"""Archive and index solicitation documents behind Ariba's Respond gate (#117).
 
-The City posts every competitive solicitation to SAP Ariba Discovery, but the actual documents
-— RFP parts, drawings, addenda, pricing forms, environmental assessments — live inside the
-Sourcing event, downloadable only "as a participating Supplier", i.e. after clicking Respond.
-The Discovery preview shows `Attachments (0)`; the files are genuinely not there (verified
-across the corpus, #117). Respond registers our account as a participant — we never submit a
-bid — and unlocks the event's content.
+Respond registers the supplier account as a participant (without bidding) and is disabled once
+a posting closes, so this runs as a recurring job via `tb enrich-ariba-attachments` (not `tb sync`).
+Documents are captured one file at a time from the event content tree (`ariba_files` +
+`AribaFileSource`) to avoid Ariba's 500 MB server-zip limit.
 
-Authorized by PMMD (2026-07, on the City's own open-by-default policy). One hard limit shapes
-the design, observed live, not assumed:
-
-  * Respond is DISABLED once a posting closes. So this only ever reaches solicitations OPEN at
-    capture time — a recurring job, not a backfill. Whatever closes before we look is gone —
-    which is why a partial capture already on disk is salvaged (`ariba_files.finalise_partial`)
-    rather than abandoned: those bytes can never be re-fetched once Respond is gone.
-
-Documents are captured ONE FILE AT A TIME from the event's own content tree
-(`ariba_files`/`AribaFileSource`, #174), never as a single server-zipped bundle. Ariba's bundle
-download hard-stops above 500 MB as a single zip (>100 MB only warns), and one real event's own
-picker row is atomic at 787.71 MB — a single selectable unit that no amount of splitting the
-SELECTION could ever get under the ceiling. The content tree exposes the same documents
-individually, each capped around 88.7 MB, so per-file capture has no ceiling to special-case at
-all. (The batched-bundle path that preceded this, `ariba_batch.py`, was retired in #186 once
-per-file capture had archived a real event end to end and its inherited lessons were confirmed
-to live independently in `ariba_files.py`.)
-
-Two halves, split the way the rest of the package splits fetch from normalize:
-
-  * PURE / testable (no browser, no network): `ariba_files` builds the canonical `Doc<n>.zip`
-    from individually downloaded documents (naming, atomic zip, resume across runs) and this
-    module indexes it — `document_number_from_zip_name`, `index_zip`, `store_bundle`,
-    `ingest_downloads`. This is the INDEX the DB holds; the bytes stay on disk under
-    <DATA_DIR>/ariba/attachments/ and are never committed.
-  * BROWSER-bound (headed Chromium behind the `council` extra, logged into a real supplier
-    account from scrapers/.env): drive Respond, then traverse the event's content tree and
-    download each document individually — `login`, `capture_event`, `capture_attachments`,
-    `AribaFileSource`.
-
-Not part of `tb sync`. Run via `tb enrich-ariba-attachments`.
+Pure indexing/storage (`index_zip`, `store_bundle`, `ingest_downloads`) is separated from the
+Playwright browser flow (`login`, `capture_event`, `capture_attachments`, `AribaFileSource`).
 """
 import hashlib
 import json
@@ -53,24 +22,16 @@ from toronto_bids.models import AribaAttachment
 from toronto_bids.sources import ariba_files
 from toronto_bids.store import db
 
-# The AUTHENTICATED preview path — no `/public/`, no `?anId=ANONYMOUS`. The anonymous URL does
-# not reliably carry the logged-in session, so Respond there pops a "Register/Login" modal
-# instead of opening the Sourcing event (the whole source of the earlier flakiness). This host
-# holds the session cookie set at login, so the authed path shows a working Respond.
+# Authenticated preview URL (no `/public/` or `?anId=ANONYMOUS`) so the login session cookie
+# carries over and Respond opens the Sourcing event directly.
 DISCOVERY_PREVIEW_URL = (
     "https://portal.us.bn.cloud.ariba.com/dashboard/appext/"
     "comsapsbncdiscoveryui#/RfxEvent/preview/{rfx_id}"
 )
 
 
-# --- pure: manifest + storage -------------------------------------------------------------
-
 def document_number_from_zip_name(name: str) -> str | None:
-    """The 10-digit document number Ariba names a bundle after: `Doc5660182540.zip` -> `5660182540`.
-
-    Reuses the spine's own `Doc##########` bridge, so a stray-digit filename can't fabricate a
-    key: it matches the `Doc<10 digits>` token, not "strip everything non-digit".
-    """
+    """Extract the 10-digit document number from a `Doc##########.zip` name."""
     return bridge_document_number(None, name)
 
 
@@ -79,14 +40,14 @@ _MAX_ZIP_ENTRIES = 10000
 
 
 def index_zip(zip_path) -> list[dict]:
-    """Index held leaves with the same traversal used by the no-shrink guard (#199)."""
+    """Recursively index zip leaf entries using the shared zip_index limits (#199)."""
     from toronto_bids.sources.zip_index import index_zip as read_zip
 
     return read_zip(zip_path, max_depth=_MAX_ZIP_DEPTH, max_entries=_MAX_ZIP_ENTRIES)
 
 
 def sha256_of_file(path, _chunk=1 << 20) -> str:
-    """Streamed sha256 so a 160 MB bundle never lands in memory whole."""
+    """Streamed sha256 so large bundles never load into memory whole."""
     h = hashlib.sha256()
     with open(path, "rb") as f:
         for block in iter(lambda: f.read(_chunk), b""):
@@ -95,12 +56,9 @@ def sha256_of_file(path, _chunk=1 << 20) -> str:
 
 
 def store_bundle(conn, zip_path, document_number: str, dest_dir=None) -> int:
-    """Archive one event bundle under <dest_dir>/<Docnnnn>.zip and index every file in it.
+    """Copy a bundle to `<dest_dir>/Doc<document_number>.zip` and rebuild its DB index rows.
 
-    Idempotent: the canonical path is keyed on document_number, so re-storing the same event
-    overwrites the bytes in place, and the document's rows are deleted then re-inserted from the
-    freshly indexed bytes — a rebuild, not an upsert, so a leaf that no longer exists (e.g. one
-    from before recursion) cannot survive a re-store. Returns the number of files indexed.
+    Returns the number of leaf files indexed.
     """
     dest_dir = Path(dest_dir if dest_dir is not None else config.ARIBA_ATTACHMENTS_DIR)
     dest_dir.mkdir(parents=True, exist_ok=True)
@@ -112,9 +70,7 @@ def store_bundle(conn, zip_path, document_number: str, dest_dir=None) -> int:
 
     zip_sha = sha256_of_file(canonical)
     entries = index_zip(canonical)
-    # Rebuild this document's index from the bytes: ariba_attachment is a derived index of the
-    # on-disk zips (like the supplier dimension), so clear the document's rows — dropping any
-    # stale top-level-only rows from before recursion — then insert the current recursive set.
+    # Rebuild all rows for this document so stale entries cannot survive.
     conn.execute("DELETE FROM ariba_attachment WHERE document_number = ?", (document_number,))
     for entry in entries:
         db.upsert_row(conn, AribaAttachment(
@@ -131,12 +87,7 @@ def store_bundle(conn, zip_path, document_number: str, dest_dir=None) -> int:
 
 
 def ingest_downloads(conn, source_dir, dest_dir=None, log=lambda _m: None) -> int:
-    """Index every `Doc*.zip` sitting in source_dir (e.g. a browser's download folder).
-
-    The manual path and the scraper's own post-download step share this: the browser half
-    saves a bundle, then hands it here. A zip whose name yields no document number is skipped
-    loudly, never guessed. Returns the number of bundles ingested.
-    """
+    """Archive and index every `Doc*.zip` in `source_dir`, skipping names without a valid Doc number."""
     source_dir = Path(source_dir)
     ingested = 0
     for zip_path in sorted(source_dir.glob("Doc*.zip")):
@@ -151,23 +102,13 @@ def ingest_downloads(conn, source_dir, dest_dir=None, log=lambda _m: None) -> in
 
 
 def reindex_bundles(conn, dest_dir=None, log=lambda _m: None) -> int:
-    """Rebuild the index from the bundles already in the store. Offline, no browser.
-
-    ariba_attachment is a derived index of the on-disk zips, so it can be regenerated whenever the
-    indexing changes (e.g. #123's recursion). Just re-ingest the store into itself — store_bundle
-    skips the copy when the source is already the canonical path and rebuilds the rows from the
-    bytes. Idempotent. Returns the number of bundles reindexed.
-    """
+    """Rebuild `ariba_attachment` rows offline from canonical bundles already in `dest_dir`."""
     root = dest_dir if dest_dir is not None else config.ARIBA_ATTACHMENTS_DIR
     return ingest_downloads(conn, root, root, log=log)
 
 
-# --- browser: log in and capture ----------------------------------------------------------
-
-# Verified training identities (#242), not a selection blacklist. Every pending event is
-# still visited: supported events are captured and changed/unknown failures remain failures.
-# Only an explicit source rejection for a matching document + posting can become a notice.
-# Evidence for all five is in docs/ariba-training-events-2026-10-20.md.
+# Verified training events (#242); still visited each run, but explicit source rejections
+# for matching document/posting pairs are reported as notices. Evidence: docs/ariba-attachments.md.
 VERIFIED_TRAINING_EVENTS = {
     "3861692164": "15346406",
     "3861744322": "15346471",
@@ -191,12 +132,10 @@ class EventUnavailable(RuntimeError):
         super().__init__(message)
 
 
-# Open postings with missing/incomplete bundles closing within this many days appear in
-# the nightly Slack summary (#174 item 4, #223/#243).
+# Warn in nightly summaries when open uncaptured postings close within this many days.
 NEAR_CLOSE_DAYS = 3
 
-# A date-shaped prefix — the spine stores `YYYY-MM-DD`, Ariba `YYYY-MM-DDTHH:MM:SS-07:00`. Rows
-# whose date column is anything else are never treated as open (we cannot say when they close).
+# Matches leading YYYY-MM-DD in spine dates and Ariba ISO timestamps.
 _DATE_GLOB = "[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]*"
 
 
@@ -224,28 +163,10 @@ def bundle_complete(dest_dir, document_number: str) -> bool:
 
 
 def open_solicitation_events(conn, today: str | None = None) -> list[dict]:
-    """The still-open solicitations whose Respond is (probably) still live, soonest-closing first.
+    """Return still-open solicitations (`{rfx_id, document_number, closes}`), soonest-closing first.
 
-    Each event is `{"rfx_id", "document_number", "closes"}`, `closes` an ISO `YYYY-MM-DD`.
-
-    Two sources, unioned and de-duplicated on document number (the spine wins):
-
-      * The OData spine: `submission_deadline` today or later, and only modern
-        `RfxEvent/preview/<id>` links, the only ones carrying an rfx id we can drive.
-      * `ariba_posting` as a BACKSTOP (#223): on a night the spine sync fails, postings added
-        since the last good sync are missing from `solicitation` and would go uncaptured — and
-        Respond is disabled once they close. A bridged posting (it has a `document_number`) whose
-        `close_date` is today or later is included when the spine has no row for it, no
-        deadline, or a deadline EARLIER than Ariba's (a stale row). Its own `rfx_id` is the
-        Discovery id, which is what the spine's link would have carried. Unbridged postings
-        are skipped: the bundle is keyed on the document number.
-
-    Dates compare at day granularity on the leading `YYYY-MM-DD` of each column (the spine
-    stores a bare date; Ariba's `close_date` carries a time and offset, and its date part is the
-    posting's own local close day). A posting closing this morning is still "open" here;
-    `capture_event` re-checks Respond on the page, which is the real gate.
-
-    `today` (ISO date) defaults to SQLite's `date('now')`; tests pass it to pin the clock.
+    Unions `solicitation` (modern `RfxEvent/preview/` links) with bridged `ariba_posting` rows as a
+    backstop when the spine row is missing, dateless, or has an earlier deadline (#223).
     """
     from toronto_bids.linking.ariba import rfx_id_from_link
 
@@ -292,17 +213,7 @@ def open_solicitation_events(conn, today: str | None = None) -> list[dict]:
 
 def near_close_uncaptured(conn, dest_dir=None, days: int = NEAR_CLOSE_DAYS,
                           today: str | None = None) -> list[dict]:
-    """Open postings closing within `days` days with missing or incomplete bundles (#223/#243).
-
-    Respond is disabled once a posting closes, so each of these is documents about to be lost
-    for good — a capture failure with a deadline must not read like one without (#174 item 4).
-    Reads the same open set and the same `bundle_complete` predicate the capture uses, so the
-    alert lists exactly what tonight's capture would still try and has not yet got.
-
-    Returns `[{"document_number", "closes", "days_left"}]`, soonest first. Pure over the DB and
-    the directory listing: no browser, no network. A warning for the Slack summary, never a
-    failure — a posting that is still open can still be captured tomorrow.
-    """
+    """Return open postings closing within `days` days whose bundle is missing or incomplete (#223/#243)."""
     from datetime import date
 
     dest_dir = Path(dest_dir if dest_dir is not None else config.ARIBA_ATTACHMENTS_DIR)
@@ -313,7 +224,7 @@ def near_close_uncaptured(conn, dest_dir=None, days: int = NEAR_CLOSE_DAYS,
         try:
             left = (date.fromisoformat(event["closes"]) - day0).days
         except ValueError:
-            continue                      # date-shaped but not a real date (e.g. 2026-13-45)
+            continue  # skip malformed dates like 2026-13-45
         if 0 <= left <= days and not bundle_complete(dest_dir, event["document_number"]):
             out.append({"document_number": event["document_number"],
                         "closes": event["closes"], "days_left": left})
@@ -321,27 +232,16 @@ def near_close_uncaptured(conn, dest_dir=None, days: int = NEAR_CLOSE_DAYS,
 
 
 def login(page, username: str, password: str, log=lambda _m: None) -> None:
-    """Sign the headed browser into the supplier account so Respond reaches the event.
+    """Sign into the Ariba supplier account (2-step `#userid` -> `.next-button-text` -> `#Password`).
 
-    Credentials come from scrapers/.env (never the repo). SAP's supplier sign-in is TWO steps —
-    username (`#userid`) then password (`#Password`), split by a `.next-button-text` link (an
-    `<a>`, not a `<button>`, so role locators miss it). The page re-renders once just after load
-    and wipes an early fill, so we wait for network-idle plus a settle, then verify the value
-    stuck and re-enter it if not — selectors and this race were both read off the live page.
-
-    The account has no MFA — if that changes, this lands on a challenge page and raises rather
-    than hanging: an unattended login cannot answer a 2FA prompt, and a CAPTCHA is a policy stop.
+    Raises immediately on MFA/CAPTCHA challenges or rejected credentials.
     """
-    # Step 1 (username -> Next) is flaky: SAP rotates a CSRF token on a re-render just after
-    # load, and a submit that races it bounces back to a fresh username page. Reloading the
-    # whole page gives a fresh token, so retry the entire step — reload, wait for the URL to
-    # STOP rotating (the tell that the re-render settled), fill, submit — rather than re-poking
-    # a page mid-rotation. Selectors (#userid, the <a> around .next-button-text, #Password) and
-    # this race were all read off the live page.
+    # Wait for SAP's post-load CSRF token rotation to settle before submitting username;
+    # reload on bounce for a fresh token.
     for attempt in range(5):
         page.goto(config.ARIBA_LOGIN_URL, wait_until="domcontentloaded", timeout=60000)
         page.wait_for_selector("#userid", state="visible", timeout=30000)
-        _wait_url_stable(page)                        # let the token-rotation reload finish
+        _wait_url_stable(page)
         page.fill("#userid", username)
         if page.input_value("#userid") != username:
             continue
@@ -350,16 +250,14 @@ def login(page, username: str, password: str, log=lambda _m: None) -> None:
             page.wait_for_selector("#Password", state="visible", timeout=15000)
             break
         except Exception:
-            continue                                  # bounced — reload for a fresh token
+            continue
     else:
         raise RuntimeError("Could not reach the Ariba password step (username step kept bouncing).")
 
     page.fill("#Password", password)
     page.press("#Password", "Enter")
 
-    # The supplier dashboard polls, so it never reaches network-idle — wait on the sign-in form
-    # leaving instead. On success the whole document navigates and #Password detaches; on
-    # failure it stays put and the wait times out, which the checks below then explain.
+    # Dashboard polls continuously so networkidle never fires; wait for #Password to detach.
     try:
         page.wait_for_selector("#Password", state="detached", timeout=45000)
     except Exception:
@@ -372,16 +270,13 @@ def login(page, username: str, password: str, log=lambda _m: None) -> None:
         raise RuntimeError(
             "Ariba presented an MFA/CAPTCHA challenge; unattended login cannot proceed. "
             "Re-authenticate manually or disable 2FA on the archival account.")
-    # Still on the sign-in page (password field present) means the credentials were rejected.
     if page.query_selector("#Password") is not None:
         raise RuntimeError("Ariba did not accept the sign-in; check the credentials in scrapers/.env.")
     log("  logged in")
 
 
 def _wait_url_stable(page, checks: int = 4, interval: int = 800) -> None:
-    """Block until the URL stops changing — the sign-in page rotates its CSRF token via a
-    re-render right after load, and its awssk query param changes each time. A URL unchanged
-    across two polls means that settled and it is safe to fill the form."""
+    """Wait until the URL stops changing across two polls (post-load CSRF token rotation)."""
     last = page.url
     stable = 0
     for _ in range(checks):
@@ -396,13 +291,8 @@ def _wait_url_stable(page, checks: int = 4, interval: int = 800) -> None:
 
 
 def _dismiss_cookie_banner(page) -> None:
-    """Decline non-essential cookies if SAP shows the consent dialog — the privacy-preserving
-    choice, and it otherwise overlays the buttons the capture flow needs to click.
-
-    Labels are matched EXACTLY and kept to unambiguous consent wording. A loose "Decline"
-    match once hit the event's "Decline to Respond" button, which withdraws participation —
-    never widen these to a substring that a destructive event control could satisfy.
-    """
+    """Dismiss SAP's cookie banner using exact labels so destructive controls like
+    'Decline to Respond' can never be matched."""
     for label in ("Deny All", "Reject All"):
         try:
             btn = page.get_by_role("button", name=label, exact=True)
@@ -415,18 +305,10 @@ def _dismiss_cookie_banner(page) -> None:
 
 
 def capture_event(page, event: dict, dest_dir, log=lambda _m: None) -> Path | None:
-    """Drive one open event through Respond, then capture its documents one file at a time.
+    """Open one event preview, click Respond, and capture its documents one file at a time.
 
-    Returns the saved bundle path, or None if the event could not be captured this run (Respond
-    disabled = already closed with nothing salvageable; a traversal that captured no file this
-    run, leaving the event pending). Never raises for those expected outcomes — the caller
-    isolates real errors per event. Explicit source rejections after Respond raise
-    `EventUnavailable`; only the caller can classify a verified training restriction.
-
-    Per-file capture (`ariba_files.capture_files`, #174) has no size ceiling to special-case:
-    Ariba's own bundle download hard-stops above 500 MB as a single zip, but the event's content
-    tree exposes every document individually and none exceeds ~88.7 MB, so nothing here is ever
-    "too large" the way a picker selection could be.
+    Returns the bundle path, or None if closed/deferred without error. Raises `EventUnavailable`
+    on explicit post-Respond rejections.
     """
     rfx_id, document_number = event["rfx_id"], event["document_number"]
     dest_dir = Path(dest_dir)
@@ -438,31 +320,13 @@ def capture_event(page, event: dict, dest_dir, log=lambda _m: None) -> Path | No
 
     respond = _preview_respond(page, rfx_id)
     if respond.is_disabled():
-        # Respond dies the moment a posting closes, so any files we already hold can never be
-        # completed. Salvaging 30 of 54 is permanently better than nothing -- this is the whole
-        # reason partial captures are retained (#174).
-        #
-        # But salvage is DESTRUCTIVE in one direction: finalise_partial writes the canonical
-        # Doc<n>.zip, and capture_attachments then treats the event as archived forever. This is
-        # a single-page app that renders Respond disabled until the event data lands, so ONE
-        # instantaneous read is not evidence a posting closed. Two guards, cheapest first:
-        # nothing to salvage means nothing a spurious read can damage, so skip without paying
-        # for the confirmation wait; and where partials do exist, require the disabled state to
-        # hold across several reads before canonicalising anything.
-        #
-        # ariba_files.partial_dir/finalise_partial, NOT ariba_batch.py's (retired #186) -- per-
-        # file capture kept its working directory under a different namespace
-        # (ariba_files.PARTIAL_DIRNAME) so the two mechanisms could never collide, and salvaging
-        # from the wrong one found nothing on disk, logged "skipped", and abandoned bytes that
-        # can never be re-fetched once Respond is gone. See ariba_files.partial_dir's docstring.
+        # Salvage partial captures only if Respond stays disabled across reads (SPA renders
+        # disabled while loading); skip immediately when no partial directory exists.
         pdir = ariba_files.partial_dir(dest_dir, document_number)
         if not pdir.exists():
             log(f"  Doc{document_number}: Respond disabled (closed) — skipped")
             return None
         if _respond_stably_disabled(page, respond):
-            # posting_open=False is the assertion, not a formality: finalise_partial refuses to
-            # canonicalise a capture that could still complete, and this branch is the one place
-            # that knows the posting is closed.
             salvaged = ariba_files.finalise_partial(
                 document_number, dest_dir, posting_open=False, log=log)
             if salvaged is not None:
@@ -470,14 +334,10 @@ def capture_event(page, event: dict, dest_dir, log=lambda _m: None) -> Path | No
                 return salvaged
             log(f"  Doc{document_number}: Respond disabled (closed) — skipped")
             return None
-        # Disabled once, enabled on a later read: the page was still settling. Fall through and
-        # capture normally — the partials stay partials and resume below.
         log(f"  Doc{document_number}: Respond read disabled once then enabled — treating the "
             f"posting as open, partials kept")
     respond.click()
 
-    # Distinguish the source's explicit rejection from a navigation/session timeout. A
-    # training title or distant deadline cannot establish any of these outcomes (#242).
     download_content = page.get_by_role("button", name="Download Content")
     outcome = _wait_post_respond(page, download_content)
     if outcome in _EVENT_REJECTIONS:
@@ -492,30 +352,21 @@ def capture_event(page, event: dict, dest_dir, log=lambda _m: None) -> Path | No
             f"Doc{document_number}: the Sourcing event never loaded after Respond. {evidence}")
     _dismiss_cookie_banner(page)
 
-    # Per-file capture (#174). The bundle path is retired here: it server-zips a SELECTION and
-    # is hard-stopped at 500 MB, which cannot reach an event whose row 3.1 is atomic at
-    # 787.71 MB. Every individual file is <= 88.7 MB, so this path has no ceiling at all.
     source = AribaFileSource(page, rfx_id=rfx_id, log=log)
-    # Reaching this line means the posting is OPEN -- the Respond-disabled branch above already
-    # routed a closed posting to salvage and returned. That is what makes it safe for
-    # `capture_files` to retire partial slots on a fingerprint mismatch or an unreadable manifest
-    # (see its docstring): those bytes are always re-fetchable from here. The salvage side of
-    # this same invariant is checked by IDENTITY (`finalise_partial(..., posting_open=False)`,
-    # asserted a few lines up); this side has no such flag and is guarded only structurally, by
-    # every path that reaches this call having already failed to prove the posting is closed.
+    # Posting is open here, so capture_files may safely retire stale partials and re-fetch.
     return ariba_files.capture_files(source, document_number, dest_dir, log=log)
 
 
-# Under the attachments dir but outside the `Doc*.zip` glob that ingest/reindex read.
+# Subdir outside the Doc*.zip glob used by ingest/reindex.
 RESPOND_TIMEOUT_DIRNAME = "respond-timeouts"
 _EXCERPT_CHARS = 400
-_EVIDENCE_TIMEOUT_MS = 5000     # the page may already be hung; never add minutes to a failure
+_EVIDENCE_TIMEOUT_MS = 5000  # bound diagnostics when the page is already hung
 
 
 def _best_effort(fn, default="?"):
     try:
         return fn()
-    except Exception:  # noqa: BLE001 — evidence is best effort
+    except Exception:  # noqa: BLE001
         return default
 
 
@@ -532,15 +383,7 @@ def _save_tab(tab, out: Path, stem: str) -> list[str]:
 
 
 def _respond_timeout_evidence(page, rfx_id: str, document_number: str, dest_dir: Path) -> str:
-    """Say what the browser showed when Respond led nowhere recognisable (#304).
-
-    A bare timeout cannot tell "Discovery stayed put", "Sourcing opened in another tab" and
-    "Sourcing showed an unrecognised error" apart. Record the page's URL and title, whether
-    the preview's identity marker is still VISIBLE, a bounded text excerpt, and every other
-    open tab's URL and title; keep each tab's HTML + screenshot beside the bundles (local only,
-    never published: the HTML can hold session tokens). Best-effort throughout: gathering
-    evidence must never replace, or noticeably delay, the failure it describes.
-    """
+    """Capture best-effort page/tab URLs, titles, excerpt, and local HTML+PNG artifacts on Respond timeout (#304)."""
     url = _best_effort(lambda: page.url)
     title = _best_effort(lambda: page.title())
     visible = _best_effort(
@@ -570,18 +413,14 @@ def _respond_timeout_evidence(page, rfx_id: str, document_number: str, dest_dir:
 
 
 def _open_authed_preview(page, rfx_id: str, attempts: int = 3) -> bool:
-    """Load the event preview in the AUTHENTICATED Discovery app, returning True once it shows.
+    """Load the authenticated Discovery preview, retrying until `ID - <rfx_id>` appears.
 
-    The first navigation to the authed URL triggers an SSO redirect that consumes the
-    `#/RfxEvent/preview/<id>` fragment and lands on the app shell (no event). Navigating again,
-    with SSO now settled, routes to the event — verified live: nav1 shows nothing, nav2 shows
-    the event with an enabled Respond. So retry until the `ID - <rfx>` marker appears, dismissing
-    the per-origin cookie banner each pass.
+    First navigation can drop the hash fragment during SSO redirects; retrying routes cleanly.
     """
     for _ in range(attempts):
         page.goto(DISCOVERY_PREVIEW_URL.format(rfx_id=rfx_id),
                   wait_until="domcontentloaded", timeout=60000)
-        page.wait_for_timeout(6000)                       # let the SSO redirect chain settle
+        page.wait_for_timeout(6000)  # wait for SSO redirect chain
         _dismiss_cookie_banner(page)
         if page.query_selector(f"text=ID - {rfx_id}") is not None:
             return True
@@ -589,13 +428,7 @@ def _open_authed_preview(page, rfx_id: str, attempts: int = 3) -> bool:
 
 
 def _preview_respond(page, rfx_id: str, timeout_ms: int = 15000):
-    """Wait for the event action, revealing its responsive overflow menu if needed (#241).
-
-    The preview can move Respond into its "Additional Options" overflow menu.
-    The event ID already being visible proves identity, not readiness of those actions.
-    Open that named menu once and require Respond to become visible; an unrelated or
-    unavailable action remains a failure, never evidence that the event has closed.
-    """
+    """Wait for the Respond button, opening the 'Additional Options' overflow menu once if needed (#241)."""
     respond = page.get_by_role("button", name="Respond", exact=True)
     options = page.get_by_role("button", name="Additional Options", exact=True)
     opened = False
@@ -616,17 +449,9 @@ def _preview_respond(page, rfx_id: str, timeout_ms: int = 15000):
 
 
 def _respond_stably_disabled(page, respond, reads: int = 3, interval_ms: int = 1500) -> bool:
-    """Whether Respond is disabled on several reads a short wait apart, not just once.
+    """Confirm Respond remains disabled across multiple polls before salvaging partials.
 
-    Only called where partials exist, because the answer decides whether to CANONICALISE an
-    incomplete capture (see capture_event): the Discovery preview is a single-page app that
-    renders its buttons disabled until the event data lands, so one instantaneous `is_disabled()`
-    is a state the page passes THROUGH, not a fact about the posting. Agreement across reads is
-    the cheapest evidence that separates the two.
-
-    A read that raises (the button re-rendering out from under the locator mid-poll) is not
-    evidence of a closed posting either, so it answers False. That errs toward keeping the
-    partials and retrying next run — the recoverable direction.
+    Returns False on transient errors so partials stay retryable.
     """
     for _ in range(max(reads - 1, 1)):
         page.wait_for_timeout(interval_ms)
@@ -642,13 +467,7 @@ _PERMISSION_DENIED = "do not have the correct permission to view the event"
 
 
 def _wait_post_respond(page, download_content, timeout_ms: int = 60000) -> str:
-    """After Respond, distinguish a supported event, explicit source rejection and timeout.
-
-    Discovery can reject Respond before opening Sourcing. Recognize its rejection heading
-    together with a specific closed/public-sector-rule message. Sourcing permission messages
-    and anonymous Register/Login views are distinct outcomes. Unknown responses still time
-    out; neither a training title nor a future date proves a restriction.
-    """
+    """Poll after clicking Respond and classify outcome: event, rejection reason, anonymous, or timeout."""
     waited = 0
     while waited < timeout_ms:
         try:
@@ -665,53 +484,19 @@ def _wait_post_respond(page, download_content, timeout_ms: int = 60000) -> str:
             if page.get_by_role("button", name="Register/Login").count():
                 return "anonymous"
         except Exception:
-            pass                                          # mid-navigation DOM churn — retry
+            pass  # mid-navigation DOM churn
         page.wait_for_timeout(1000)
         waited += 1000
     return "timeout"
 
 
-# The picker identifies itself by this heading -- `_on_event_view` checks for its ABSENCE as
-# part of confirming the content tree (not the picker) is in front of us. `_on_picker`, the
-# function that used to check for its PRESENCE, was retired with `AribaPicker` (#195) — this
-# constant is the one piece of that cluster still load-bearing.
+# Heading that identifies the attachment picker; `_on_event_view` requires its absence.
 PICKER_HEADING = "Selected Attachments Summary"
 
 
-# The scroll container, found the same way every time it is needed (#174 fix5).
-#
-# Parametrised by a MARKER selector (`opts.marker`) -- the thing a row of this list reliably
-# contains. For the attachment picker that is `input.w-chk-native` (a row checkbox); for the
-# event's content tree it is `a` (a document link). The finding RULE is identical and is the
-# one measured against the live page, which is the whole point of there being one copy: two
-# ad-hoc scroll implementations that could silently disagree about what "landed" meant is what
-# made this take six live runs.
-#
-# NOT by class name -- `div.yScroll.tableBody` is one release's CSS, brittle by nature.
-# NOT by "the element with the most checkboxes" -- that returns the outer wrapper, which
-# contains the header select-all row too and measured a scroll range of only ~221 px on the
-# live page. The right discriminator, measured live: walk each row checkbox's ancestor chain
-# (stopping before <html>/<body>, so the page's OWN 221 px scroller is never a candidate even
-# though it technically has one too) and keep the ancestor with the LARGEST scroll range
-# (scrollHeight - clientHeight) among those holding more than one row checkbox. On the live
-# page that is unambiguous: the row list at ~3129 px versus the page/wrapper at ~221 px.
-#
-# **`allowDocument` makes the document a CANDIDATE, not a fallback (#174 M5).** The first shape
-# of this only reached for `document.scrollingElement` when NO inner element qualified at all --
-# and live evidence on the content tree showed that is wrong: a 54 px element with 6 px of
-# scroll range and only 25 of the page's 72 `a` markers inside it satisfied `count > 1 && range
-# > EDGE` and was picked, while the genuine scroller was the page itself (range 465 px, all 72
-# markers). A 6 px range is not a scroller in any meaningful sense -- it is scrollbar/rounding
-# noise, not a real content list -- so it must not be allowed to out-rank the document merely by
-# existing. Now, when `allowDocument` is set, the inner best-so-far only wins if it BOTH clears a
-# minimum meaningful scroll range and holds every one of the markers being traversed; otherwise
-# the document is the answer. See `tbFindContainer`'s body for the exact rule.
-# Inlined into the body of each arrow function below (rather than declared at top level and
-# concatenated in front of them) so each of _CONTAINER_STATE_JS / _PROGRAMMATIC_SCROLL_JS
-# stays a single, self-contained function literal -- two top-level statements (a `function`
-# declaration followed by an `() => {}` expression) parse ambiguously depending on how the
-# embedding evaluate() call wraps the string, and one shape of that ambiguity really did fail
-# ("Malformed arrow function parameter list") when tried standalone.
+# Locate the scrollable ancestor holding multiple `marker` elements with the largest scroll range.
+# With `allowDocument`, falls back to the document unless an inner container scrolls >=20px and holds all markers.
+# Inlined inside each arrow function so Playwright evaluates a single function literal.
 _FIND_CONTAINER_BODY_JS = """
     function tbFindContainer(marker, allowDocument) {
         const EDGE = 1;
@@ -762,14 +547,7 @@ _FIND_CONTAINER_BODY_JS = """
     }
 """
 
-# Returns the container's current scrollTop/scrollHeight/clientHeight plus a hover point,
-# or null if no container qualifies -- callers must fail loudly on null rather than scroll
-# blindly. The container is scrolled into view FIRST (the page scrolls too, per the class
-# docstring, so a hover point computed before that could be slid out from under the cursor by
-# the time the wheel fires), and the hover point comes only from the container's OWN checkbox
-# descendants -- never `.first` on the page, which is the header sitting outside the list --
-# clamped to the container's visible rect so it is provably over the strip, not merely
-# "rendered somewhere on the page".
+# Return scroll container metrics and a clamped hover point over an interior marker row, or null.
 _CONTAINER_STATE_JS = """
 (opts) => {""" + _FIND_CONTAINER_BODY_JS + """
     const best = tbFindContainer(opts.marker, opts.allowDocument);
@@ -810,17 +588,7 @@ _CONTAINER_STATE_JS = """
 }
 """
 
-# One-time geometry self-check (#174 retrospective). Reports the picker's actual structure
-# rather than assuming it: which element scrolls, how far, and -- the fact that mattered --
-# how many row checkboxes live on the PAGE versus INSIDE the container.
-#
-# This exists because seven live runs were spent fixing the scroll mechanism without once
-# measuring the structure it operated on. The decisive fact was a single count: 51 checkboxes
-# on the page, 50 in the list, so the header select-all sits OUTSIDE the scrollable strip and
-# every `.first` hover parked the cursor off the list. A probe surfaced it in one line; four
-# fixes had already shipped without it. Printing it on every capture costs one evaluate() and
-# means the next person to touch this -- or the next release that reshapes the DOM -- reads the
-# geometry instead of inferring it from failures.
+# One-time DOM scroll geometry summary logged per traversal.
 _GEOMETRY_JS = """
 (opts) => {""" + _FIND_CONTAINER_BODY_JS + """
     const best = tbFindContainer(opts.marker, opts.allowDocument);
@@ -838,12 +606,7 @@ _GEOMETRY_JS = """
 }
 """
 
-# The OPTIONAL programmatic path (#174): assigning scrollTop directly removes the mouse from
-# the equation entirely, but whether the virtualised list re-renders on a programmatic
-# assignment (versus only on a real wheel/scroll gesture) has NOT been verified live. So this
-# only ever reports whether the assignment moved scrollTop at all; `_wheel_step` additionally
-# checks the rendered keys actually changed before trusting it, and disables further attempts
-# on this picker the first time that verification fails.
+# Direct scrollTop adjustment; callers verify the rendered signature changes before trusting it.
 _PROGRAMMATIC_SCROLL_JS = """
 (opts) => {""" + _FIND_CONTAINER_BODY_JS + """
     const best = tbFindContainer(opts.marker, opts.allowDocument);
@@ -863,17 +626,9 @@ _PROGRAMMATIC_SCROLL_JS = """
 
 
 class _ListScroller:
-    """Container-aware, scrollTop-verified scrolling for one long list (#174 fix5).
+    """Container-aware, scrollTop-verified scroller for Ariba lists.
 
-    **One implementation, used by both lists that need scrolling** -- the attachment picker's
-    virtualised row strip (marker `input.w-chk-native`) and the event's content tree (marker
-    `a`). Two ad-hoc scroll implementations that could silently disagree about what "landed"
-    meant is itself part of why the picker took six live runs to fix; a bare `page.mouse.wheel`
-    on the content tree would have been a third.
-
-    `signature` is a callable returning a hashable snapshot of what the list currently RENDERS.
-    It is used for one thing only: deciding whether the optional programmatic scroll actually
-    re-rendered anything (see `step`).
+    `signature` returns a hashable view snapshot used to verify programmatic scrollTop updates.
     """
 
     def __init__(self, page, marker: str, signature, log=lambda _m: None,
@@ -884,29 +639,14 @@ class _ListScroller:
         self.log = log
         self.allow_document = allow_document
         self.label = label
-        # Set True the first time a programmatic scrollTop assignment fails verification (moved
-        # scrollTop but nothing re-rendered, or found no container at all) -- once disproved on
-        # this page instance there is no reason to keep paying for the extra evaluate() on every
-        # subsequent scroll; the hover+wheel path below is the mechanism actually proven to work.
+        # Latched True once programmatic scrollTop fails verification; falls back to hover+wheel.
         self._programmatic_scroll_disabled = False
 
     def _args(self, **extra) -> dict:
         return {"marker": self.marker, "allowDocument": self.allow_document, **extra}
 
     def state(self) -> dict:
-        """Fresh geometry + scrollTop of the scroll container, re-found on every call.
-
-        Never a held handle -- the picker re-renders on every selection (the second hazard the
-        now-retired `AribaPicker` was built to contain, #195), so this runs `_CONTAINER_STATE_JS`
-        (walk each marker's own ancestor chain, keep the one with the largest scroll range) fresh
-        each time rather than caching an element reference that a re-render could invalidate
-        underneath it.
-
-        Raises rather than returning something to scroll blindly against: a caller with no
-        container has nothing safe to hover or wheel, and every prior guess that tried anyway
-        (guessing a class name, guessing "most checkboxes") is exactly what five earlier fixes
-        got wrong (#174 fix5).
-        """
+        """Re-find the scroll container on each call (handles DOM re-renders) and return geometry + hover point."""
         state = self.page.evaluate(_CONTAINER_STATE_JS, self._args())
         if state is None:
             raise RuntimeError(
@@ -916,22 +656,10 @@ class _ListScroller:
         return state
 
     def log_geometry(self) -> None:
-        """State the list's actual structure once per capture, instead of assuming it.
-
-        Seven live runs were spent fixing this widget's scrolling without measuring the DOM it
-        scrolls. The fact that resolved it was one count -- markers on the page versus inside
-        the container -- which says outright whether the header select-all sits outside the row
-        list (it does), and therefore whether a `.first` hover can ever land on the strip (it
-        cannot). Every one of those runs would have printed the answer in its first line.
-
-        Best-effort by design: a geometry read that fails must never be what stops a capture,
-        so it logs and returns. The guards that actually protect correctness -- the dead-wheel
-        check, the enumeration count, the completeness gate -- are elsewhere and are not
-        best-effort.
-        """
+        """Best-effort log of container scroll range and marker counts."""
         try:
             g = self.page.evaluate(_GEOMETRY_JS, self._args())
-        except Exception as exc:                       # noqa: BLE001 — diagnostics never block
+        except Exception as exc:  # noqa: BLE001
             self.log(f"    {self.label} geometry: unreadable ({exc})")
             return
         if not g or not g.get("found"):
@@ -946,53 +674,16 @@ class _ListScroller:
             f"({outside} outside); page range {g['pageRange']}px")
 
     def hover(self) -> dict:
-        """Move the mouse over a row genuinely inside the container, and return the container's
-        freshly-read state (scrollTop, scroll range, the hover point used).
-
-        Playwright dispatches wheel events wherever the mouse last was; nothing else positions
-        it. **The picker's header select-all checkbox sits OUTSIDE its scrollable row list**
-        (measured: 51 `input.w-chk-native` on the page, 50 inside the list container -- #174
-        fix5), so a `.first` locator -- what every earlier attempt hovered -- parks the cursor on
-        the header every time: a wheel from there can move the *page* (which also scrolls) and
-        leave the list completely untouched. That is the "dead wheel" that made this take six
-        live runs.
-
-        The hover point comes from `state()`, which builds it only from the container's OWN
-        marker descendants and clamps it to the container's visible rect, so it is provably over
-        the strip rather than merely "rendered somewhere on the page". The container is also
-        scrolled into view there before the point is computed, so the page's own scroll cannot
-        slide the strip out from under the cursor between the read and the wheel that follows.
-        """
+        """Move the mouse over a row inside the scroll container (avoiding outer headers) and return its state."""
         state = self.state()
         self.page.mouse.move(state["hoverX"], state["hoverY"])
         return state
 
     def step(self, delta_y: int) -> dict:
-        """Scroll the container by one wheel step, verified by ITS OWN scrollTop.
+        """Advance the container by `delta_y`, verified by `scrollTop` rather than rendered row lag.
 
-        This is the single scrolling primitive every sweep and directional search shares
-        (#174 fix5).
-
-        **Verified by scrollTop, not by the rendered row window.** scrollTop is a native
-        browser property that updates the instant an actual scroll happens, wheel or
-        programmatic; the virtualised re-render that repaints new rows can lag a frame behind
-        it. Inferring "did the scroll land" from the rendered keys (what every earlier attempt
-        did) conflates a real no-op with a render that just hasn't caught up yet -- this reads
-        the one signal that cannot be fooled that way.
-
-        Tries an OPTIONAL programmatic `scrollTop` assignment first -- it would remove the
-        mouse from the equation entirely, but whether a virtualised list re-renders on a
-        programmatic assignment (as opposed to only a genuine wheel/scroll gesture) has not
-        been verified live. So it is trusted only if BOTH the container's scrollTop moved AND
-        `signature()` actually changed; otherwise `_programmatic_scroll_disabled` is latched so
-        later calls do not keep paying for an evaluate() already shown not to work, and control
-        falls through to the hover+wheel path, which is the mechanism actually proven to work
-        against the live page.
-
-        Returns `{before, after, moved, at_edge, max_scroll}`. `at_edge` means the container
-        was already at that end of its scroll range (scrollTop 0 for an upward step, or the max
-        for a downward one) *before* this step -- a legitimate reason for `moved` to be False,
-        as opposed to a dead wheel, which is `moved=False` while NOT at an edge.
+        Tries programmatic `scrollTop` first (requiring `signature()` to change), then falls back to
+        hover+wheel. Returns `{before, after, moved, at_edge, max_scroll}`.
         """
         EDGE_TOL = 2
 
@@ -1001,10 +692,6 @@ class _ListScroller:
             programmatic = self.page.evaluate(
                 _PROGRAMMATIC_SCROLL_JS, self._args(deltaY=delta_y))
             if programmatic is None:
-                # No container at all -- not a fact about the programmatic mechanism, just
-                # nothing to scroll. Disable it (the hover+wheel path below raises its own,
-                # clearer "container not found" error via `state()`) rather than paying for
-                # this evaluate() again on every later call.
                 self._programmatic_scroll_disabled = True
             elif not programmatic["moved"]:
                 at_edge = (
@@ -1013,8 +700,7 @@ class _ListScroller:
                         and programmatic["before"] >= programmatic["maxScroll"] - EDGE_TOL)
                 )
                 if at_edge:
-                    # A legitimate no-op (already at that end of the range) -- not evidence the
-                    # mechanism doesn't work, so it stays enabled for later calls.
+                    # Already at edge; keep programmatic scrolling enabled.
                     return {"before": programmatic["before"], "after": programmatic["after"],
                             "moved": False, "at_edge": True,
                             "max_scroll": programmatic["maxScroll"]}
@@ -1023,9 +709,7 @@ class _ListScroller:
                          f"container while not at an edge -- using hover+wheel from here")
             else:
                 self.page.wait_for_timeout(300)
-                # Verified only if the rendering actually changed -- a scrollTop move with no
-                # re-render is exactly the "not verified live" case the docstring warns about,
-                # so it is not trusted even though the assignment technically moved.
+                # Require rendered signature to change before trusting programmatic scroll.
                 if self.signature() != before_keys:
                     return {"before": programmatic["before"], "after": programmatic["after"],
                             "moved": True, "at_edge": False,
@@ -1049,23 +733,8 @@ class _ListScroller:
                 "at_edge": at_edge, "max_scroll": max_scroll}
 
 
-# Every `<a>` on the page, with the two facts `ariba_files.anchor_key` needs to identify a
-# document by its PLACE in the tree: the row it sits in, and its ordinal WITHIN that row. Both
-# are properties of the DOM, so they are the same on every pass; the traversal's own progress
-# is nowhere in them. `index` is this read's position in `document.querySelectorAll('a')` and is
-# used ONLY to tag an element for a click inside the same read -- it is never part of a key.
-#
-# **`ordinal` is scoped to DOCUMENT-named siblings only, not every `<a>` in the row (#174 M3).**
-# The row can carry non-document links too -- a `References` toggle, a stray "Download this
-# attachment" menu item left open from a previous document -- and any of those sitting ahead of
-# a document shifted the identity of every document after it in that row: two same-named
-# documents in one row could resolve to each other's ordinal. Filtering here, against the row's
-# OWN `<a>` elements, is also the only place this can be done soundly: the anchor dicts this
-# function hands back flatten `row` to TEXT, and two genuinely different row elements can render
-# identical text, so redoing this filter in Python from the flattened list afterwards cannot
-# tell them apart and would wrongly treat two rows' one document each as one row's two (see
-# `ariba_files.listing_from_anchors`'s docstring). The extension list mirrors
-# `ariba_files.is_document_name` -- keep the two in sync if the vocabulary changes.
+# Read all `<a>` elements with row text, DOM id, AribaWeb kind metadata, and document-only within-row ordinal.
+# Keep the extension regex in sync with `ariba_files._DOCUMENT_EXTENSION`.
 _ANCHORS_JS = """
 () => {
     const isDocLabel = (raw) => {
@@ -1103,9 +772,7 @@ _ANCHORS_JS = """
 }
 """
 
-# Tag ONE anchor, addressed by its index in the read that just resolved it and re-verified by
-# its label before the tag lands. A stale index (the tree re-rendered between the read and this
-# call) therefore fails loudly instead of tagging a different document.
+# Tag a single anchor by index after verifying its text still matches.
 _TAG_ANCHOR_JS = """
 (want) => {
     for (const e of document.querySelectorAll('[data-tb-file]')) {
@@ -1120,11 +787,7 @@ _TAG_ANCHOR_JS = """
 }
 """
 
-# The `References` toggles, innermost match only (an ancestor wrapping the whole tree also
-# contains the word), each tagged twice: `data-tb-toggle` is a per-read click target, and
-# `data-tb-refid` is a durable identity assigned once and never reassigned, so a section is
-# never clicked twice across rounds. `aria-expanded`, where the widget publishes it, says
-# outright whether a section is already open.
+# Find innermost References toggles, assigning persistent `data-tb-refid` so sections are clicked at most once.
 _REFERENCE_TOGGLES_JS = """
 () => {
     for (const e of document.querySelectorAll('[data-tb-toggle]')) {
@@ -1156,14 +819,7 @@ _REFERENCE_TOGGLES_JS = """
 }
 """
 
-# A bulk expander, if the widget offers one -- the rejected labels seen live carry
-# 'Collapse All'/'Collapse All Detail Rows', which strongly implies an 'Expand All' (or
-# similarly worded) counterpart, but the exact label was never confirmed against the live
-# site (it cannot exist to click until 'All Content' has already been opened -- see
-# `_open_all_content` -- so the earlier probes never reached it). Matched generically
-# (`^expand\s*all\b`) rather than one hardcoded phrase, and the innermost match only, the
-# same shape as `_REFERENCE_TOGGLES_JS`, so an outer wrapper that merely contains the words
-# is not mistaken for the control itself.
+# Locate an innermost 'Expand All' control if present.
 _EXPAND_ALL_JS = """
 () => {
     for (const e of document.querySelectorAll('[data-tb-bulk-expand]')) {
@@ -1191,76 +847,29 @@ _DOWNLOAD_MENU_ITEM = "Download this attachment"
 
 
 class AribaFileSource:
-    """Playwright adapter satisfying ariba_files' FileSource protocol (#174).
+    """Playwright FileSource adapter for the Sourcing event's All Content tree (#174).
 
-    The bundle path could not reach this event's documents: picker row 3.1 is atomic and holds
-    787.71 MB. The event page's `All Content` view exposes the same documents INDIVIDUALLY,
-    each with its own "Download this attachment" menu, and no file exceeds 88.7 MB -- so no
-    ceiling is ever in play here.
-
-    **Thin means it decides nothing.** Naming, resume, atomicity, the count check -- and now
-    the filename predicate, the identity of a listed file, and the dedupe rule -- all live in
-    `ariba_files`, which is unit-tested. This class reads the DOM, scrolls, and clicks. Every
-    pure decision it used to make itself is a function over there with tests against it, which
-    is the point of the seam: the two decisions the archive's integrity rests on were
-    unreachable by any test while they lived in here.
-
-    Three things this class exists to get right, each of which silently corrupts an archive that
-    cannot be re-fetched if it does not. (A fourth used to sit here -- reading the picker's count
-    before the traversal and restoring the event view after, since that round trip navigated away
-    from it. Removed in #185 once the picker's count was proven incommensurable with anything
-    this class or `ariba_files` could check it against, which also retired the round trip and
-    the navigate-away problem it existed to undo.)
-
-    * **Identity is never positional** (`ariba_files.anchor_key`). The key is row identity +
-      within-row ordinal + filename, all facts about the document's place in the tree. The
-      counter this replaces incremented in TRAVERSAL order, so two files sharing a base got
-      their `#2` for when they were seen -- which reproduces `make_fingerprint`'s exact
-      Critical: identical ordered pairs after a reorder, partials adopted positionally, one
-      document stored twice and another lost, counts matching, no gap recorded.
-    * **`download` addresses ONE document, not a label.** It re-reads the tree, finds the
-      anchor whose KEY matches, and clicks that element -- never `get_by_text(name).first`,
-      which resolves both of two same-named documents to the same first link and stores the
-      same bytes twice on a single clean run, again with matching counts and no gap record.
-    * **Expansion is idempotent and evidence-based.** A `References` control keeps its label
-      after it opens, so a second blind click COLLAPSES what the first one opened -- the same
-      lesson the now-retired `AribaPicker.clear_selection` recorded for the header checkbox
-      (#195). Sections are tracked by a durable DOM id, `aria-expanded` is honoured where
-      present, and a click that shrinks the link count is undone and reported.
+    Pure listing, identity, and naming logic lives in `ariba_files`; this class handles DOM reads,
+    idempotent expansion of References sections, scrolling, and per-file download clicks.
     """
 
     MAX_SCROLL_PASSES = 40
-    STALL_LIMIT = 3               # consecutive dead (non-edge, non-moving) wheels before raising
+    STALL_LIMIT = 3  # consecutive non-edge stalled wheels before raising
 
     def __init__(self, page, rfx_id: str | None = None, log=lambda _m: None):
         self.page = page
         self.rfx_id = rfx_id
         self.log = log
         self._toggled: set = set()
-        # Set by `list_files()` from `_sweep()`'s own count -- how many links the traversal
-        # found INDISTINGUISHABLE from one another and collapsed. Exposed via `collided_count()`
-        # so `ariba_files.capture_files` can fold it into the durable `.omitted.json` record
-        # rather than it living only in this class's log (#174 Low).
         self._collided_count = 0
-        # Which of `_resolve_anchor`'s two routes carried each download (#174). Counters, not a
-        # boolean, because the interesting outcome is a MIX: ids holding for the tree's own rows
-        # and going stale for the menu-item attachments would say the re-parenting re-mints only
-        # those, which no single live run has yet shown either way.
         self._resolved_by_handle = 0
         self._resolved_by_key = 0
-        # DOM ids already clicked this run. What keeps the name-based last resort from
-        # resolving a second `report.pdf` back onto the first one's anchor (`pick_unclaimed`).
+        # DOM ids already clicked this run (guards pick_unclaimed fallback).
         self._claimed: set = set()
-        # The same container-aware, scrollTop-verified primitive the now-retired `AribaPicker`
-        # used (#195) -- not a bare `mouse.wheel`, which is every mistake it spent six live runs
-        # unlearning: wheeling without hovering the scroll container, never verifying scrollTop
-        # moved, no stall tolerance, and only ever scrolling down. `allow_document` because this
-        # list, unlike the picker's inner strip, may well scroll the page itself.
         self._scroller = _ListScroller(
             page, "a", self._anchor_signature, log=log, allow_document=True,
             label="content tree")
 
-    # --- reads ---------------------------------------------------------------------------
     def _read_anchors(self) -> list:
         return self.page.evaluate(_ANCHORS_JS)
 
@@ -1268,31 +877,17 @@ class AribaFileSource:
         return self.page.evaluate("() => document.querySelectorAll('a').length")
 
     def _anchor_signature(self):
-        """What the tree currently renders, as keys -- `_ListScroller`'s re-render evidence."""
+        """Return sorted anchor keys currently rendered (re-render check for `_ListScroller`)."""
         try:
             anchors = self._read_anchors()
-        except Exception:                             # noqa: BLE001 — mid-render churn
+        except Exception:  # noqa: BLE001
             return ()
         listing = ariba_files.listing_from_anchors(anchors)
         return tuple(sorted(f["key"] for f in listing["files"]))
 
-    # --- the event view ------------------------------------------------------------------
     def _on_event_view(self) -> bool:
-        """Whether the event's All Content view -- not the picker, not the export page -- is in
-        front of us. Evidence, the way `_wait_post_respond` takes evidence (and the now-retired
-        `_on_picker`, #195, did for the picker's own presence).
-
-        **A NEGATIVE check alone is not enough (#174 M4).** "No picker heading, and a visible
-        Download Content button" also describes the export page reached right after the
-        picker's `Done` -- the chain used to be Download Content -> export page -> Download
-        Attachments (the picker-count round trip that drove it was removed in #185, but this
-        page shape is still reachable any time something clicks through to it), and if that page
-        renders its own Download Content button, a negative-only check is satisfied there too
-        and would traverse or download against whatever is actually in front of it. So a
-        POSITIVE marker of the content tree itself is required as well: either the "All Content"
-        label the tree renders (and the export page does not), or at least one outline-numbered
-        row -- the tree's own row addressing, and nothing the export page has anything like.
-        """
+        """Return True when the event's All Content view is active (no picker heading, visible
+        Download Content button, plus a positive 'All Content' or outline-row marker)."""
         try:
             if self.page.query_selector(f"text={PICKER_HEADING}") is not None:
                 return False
@@ -1302,17 +897,14 @@ class AribaFileSource:
             if self.page.get_by_text("All Content", exact=False).count():
                 return True
             return self._has_outline_row()
-        except Exception:                             # noqa: BLE001 — mid-navigation churn
+        except Exception:  # noqa: BLE001
             return False
 
     def _has_outline_row(self) -> bool:
-        """Whether at least one row currently in the DOM leads with an outline number
-        ('3.1 ...') -- the second, independent positive marker `_on_event_view` checks
-        (#174 M4). Best-effort: an unreadable DOM here is "no evidence yet", not a crash.
-        """
+        """Return True if any current DOM anchor sits in an outline-numbered row."""
         try:
             anchors = self._read_anchors()
-        except Exception:                             # noqa: BLE001 — mid-render churn
+        except Exception:  # noqa: BLE001
             return False
         return any(ariba_files.is_outline_row(a.get("row")) for a in anchors)
 
@@ -1335,34 +927,26 @@ class AribaFileSource:
             f"{self.page.url}). Traversing or clicking here would silently address whatever "
             f"else is rendered — refusing (#174).")
 
-    # `_restore_event_view` was removed with the picker-count round trip it existed solely to
-    # undo (#185) — nothing else ever navigated away from the event's All Content view.
-
-    # --- traversal -----------------------------------------------------------------------
     def _reference_toggles(self) -> list:
         try:
             return self.page.evaluate(_REFERENCE_TOGGLES_JS) or []
-        except Exception as exc:                      # noqa: BLE001 — reported, never fatal
+        except Exception as exc:  # noqa: BLE001
             self.log(f"    could not read the References toggles ({exc})")
             return []
 
     def _await_anchor_count_change(self, baseline: int, timeout_ms: int = 8000) -> int:
-        """Poll until the number of links on the page moves off `baseline`, then let it settle.
-
-        The evidence a toggle actually did something. Never a sleep: a section that renders in
-        700 ms and a section that does nothing look identical to a fixed wait.
-        """
+        """Poll until the page anchor count changes from `baseline`, then allow 400 ms to settle."""
         waited = 0
         while True:
             try:
                 count = self._anchor_count()
-            except Exception:                         # noqa: BLE001 — mid-render churn
+            except Exception:  # noqa: BLE001
                 count = baseline
             if count != baseline:
-                self.page.wait_for_timeout(400)       # let the rest of the section land
+                self.page.wait_for_timeout(400)
                 try:
                     return self._anchor_count()
-                except Exception:                     # noqa: BLE001
+                except Exception:  # noqa: BLE001
                     return count
             if waited >= timeout_ms:
                 return baseline
@@ -1370,57 +954,36 @@ class AribaFileSource:
             waited += 250
 
     def _open_section(self, cand: dict) -> bool:
-        """Click one `References` toggle and prove it OPENED rather than closed."""
+        """Click a References toggle and undo if it collapsed an already-open section."""
         before = self._anchor_count()
         try:
             loc = self.page.locator(f'[data-tb-toggle="{cand["id"]}"]').first
             loc.scroll_into_view_if_needed(timeout=5000)
             loc.click(timeout=5000)
-        except Exception as exc:                      # noqa: BLE001 — one toggle, not the run
+        except Exception as exc:  # noqa: BLE001
             self.log(f"    References toggle {cand['text']!r} did not click ({exc})")
             return False
         after = self._await_anchor_count_change(before)
         if after > before:
             return True
         if after < before:
-            # The label survives expansion, so a control we had not recorded may already have
-            # been open -- exactly what the now-retired `AribaPicker.clear_selection` documented
-            # for the header checkbox (#195). Put it back rather than leaving the tree in a
-            # parity accident.
             self.log(f"    References toggle {cand['text']!r} COLLAPSED an open section "
                      f"({before} -> {after} links) — re-opening it")
             try:
                 self.page.locator(f'[data-tb-toggle="{cand["id"]}"]').first.click(timeout=5000)
                 self._await_anchor_count_change(after)
-            except Exception as exc:                  # noqa: BLE001
+            except Exception as exc:  # noqa: BLE001
                 self.log(f"      could not re-open it ({exc})")
             return False
         self.log(f"    References toggle {cand['text']!r} revealed nothing")
         return False
 
     def _open_all_content(self) -> bool:
-        """Click the 'All Content' control if present, so every Part's row renders.
-
-        **The event view renders only the first Part's row until this is clicked (#174).**
-        A live probe of this same page found 5 filenames after clicking it against 3 before
-        -- Part 2's and Part 3's rows, and the `References` toggles behind them, do not exist
-        in the DOM at all until then. `_on_event_view` already treats this same 'All Content'
-        text as one positive marker of this page; reused here for the identical text, never
-        hardcoded twice.
-
-        **Detected, never assumed.** Absent is logged and traversal continues rather than
-        failing -- a future layout may already render everything, and this control existing
-        at all is inferred from one probe, not guaranteed permanent.
-
-        **Verified by evidence, not a fixed pause.** Reuses `_await_anchor_count_change`, the
-        same growth signal a `References` toggle is verified by -- a click that lands on a
-        view already fully rendered legitimately grows nothing, and a click that silently
-        missed its target looks identical to a fixed wait ending early.
-        """
+        """Click 'All Content' if visible so Part 2+ rows and References toggles render (#174)."""
         control = self.page.get_by_text("All Content", exact=False)
         try:
             found = bool(control.count())
-        except Exception as exc:                      # noqa: BLE001 — best effort, never fatal
+        except Exception as exc:  # noqa: BLE001
             self.log(f"    content tree: could not check for an 'All Content' control ({exc})")
             return False
         if not found:
@@ -1436,7 +999,7 @@ class AribaFileSource:
             before = self._anchor_count()
             target.scroll_into_view_if_needed(timeout=5000)
             target.click(timeout=5000)
-        except Exception as exc:                      # noqa: BLE001 — one control, not the run
+        except Exception as exc:  # noqa: BLE001
             self.log(f"    content tree: 'All Content' did not click ({exc})")
             return False
         after = self._await_anchor_count_change(before, timeout_ms=10000)
@@ -1449,19 +1012,10 @@ class AribaFileSource:
         return False
 
     def _bulk_expand_references(self) -> bool:
-        """Click a bulk 'Expand All' control for the References sections, if the widget
-        offers one, rather than iterating N individual toggles.
-
-        **Detected, never assumed** (`_EXPAND_ALL_JS`) -- the exact label was never confirmed
-        live, only inferred from the 'Collapse All'/'Collapse All Detail Rows' rejected
-        labels a probe already saw. `_expand_references` still runs immediately after this
-        regardless of the outcome here: it is idempotent (a section already open is skipped),
-        so it costs nothing when the bulk control got everything, and it is what actually
-        expands things when this finds nothing or the click does not visibly help.
-        """
+        """Click a bulk 'Expand All' control if present; `_expand_references` still runs afterward."""
         try:
             cand = self.page.evaluate(_EXPAND_ALL_JS)
-        except Exception as exc:                      # noqa: BLE001 — best effort, never fatal
+        except Exception as exc:  # noqa: BLE001
             self.log(f"    content tree: could not check for a bulk expand control ({exc})")
             return False
         if not cand:
@@ -1477,7 +1031,7 @@ class AribaFileSource:
             loc = self.page.locator('[data-tb-bulk-expand="1"]').first
             loc.scroll_into_view_if_needed(timeout=5000)
             loc.click(timeout=5000)
-        except Exception as exc:                      # noqa: BLE001 — one control, not the run
+        except Exception as exc:  # noqa: BLE001
             self.log(f"    content tree: {cand['text']!r} did not click ({exc})")
             return False
         after = self._await_anchor_count_change(before, timeout_ms=10000)
@@ -1490,59 +1044,42 @@ class AribaFileSource:
         return False
 
     def _outline_row_count(self) -> int:
-        """Distinct outline-numbered top-level rows ('3.1 ...') currently in the DOM.
-
-        Logged alongside the file count so a near-empty traversal states its own cause
-        instead of only its symptom (#174): staying at 1 here — only Part 1's row — says the
-        tree never opened; a high count next to a still-short file total says the tree opened
-        and the files themselves are the gap. Best-effort like `_has_outline_row` — an
-        unreadable DOM here must never be what stops a capture.
-        """
+        """Count distinct outline-numbered rows currently in the DOM (best-effort diagnostic)."""
         try:
             anchors = self._read_anchors()
-        except Exception:                             # noqa: BLE001 — mid-render churn
+        except Exception:  # noqa: BLE001
             return 0
         return len({ariba_files.row_identity(a.get("row")) for a in anchors
                     if ariba_files.is_outline_row(a.get("row"))})
 
     def _expand_references(self, max_rounds: int = 6) -> int:
-        """Open every `References` section exactly once; the bulk of the files live behind them.
+        """Expand each visible References section at most once using persistent `data-tb-refid` tags.
 
-        Returns the number of sections that DEMONSTRABLY opened (the page's link count grew),
-        not the number of clicks. The version this replaces clicked every match up to 20 times
-        over: `progressed` was set by any click landing, so it never stopped early, and the
-        matcher still matched the control after expansion -- so pass 2 closed what pass 1
-        opened and the final state was a parity accident.
+        Returns the number of sections whose click increased the anchor count.
         """
         expanded = 0
         for _ in range(max_rounds):
             clicked = 0
             for cand in self._reference_toggles():
                 if cand["refid"] in self._toggled:
-                    continue                          # already handled -- never click twice
+                    continue
                 if (cand["expanded"] or "").lower() == "true":
-                    self._toggled.add(cand["refid"])  # the widget says it is already open
+                    self._toggled.add(cand["refid"])
                     continue
                 if not cand["visible"]:
-                    continue                          # behind a section not yet opened
+                    continue
                 self._toggled.add(cand["refid"])
                 clicked += 1
                 if self._open_section(cand):
                     expanded += 1
             if not clicked:
-                break                                 # nothing left that has not been handled
+                break
         return expanded
 
     def _sweep(self) -> tuple:
-        """Scroll the whole tree, merging every read by KEY. Mirrored the now-retired
-        `AribaPicker.row_keys` (#195).
+        """Sweep up then down to scroll edges, merging every DOM read by anchor key.
 
-        Each direction stops on the container's own `scrollTop` reaching that end of its range
-        (`_ListScroller.step`'s `at_edge`), never on "a pass added nothing" -- that stop
-        condition takes this shape because a count-based one was measured wrong. A wheel that
-        neither moves scrollTop nor sits at an edge is a dead wheel and raises rather than
-        silently under-reading. The upward sweep runs first because nothing guarantees the tree
-        starts at the top, and a downward-only traversal simply never sees what is above it.
+        Raises on stalled wheels or pass exhaustion rather than returning a partial list.
         """
         by_key: dict = {}
         rejected: dict = {}
@@ -1567,7 +1104,7 @@ class AribaFileSource:
                     stalled = 0
                     continue
                 if step["at_edge"]:
-                    self.page.wait_for_timeout(300)   # let a trailing re-render land
+                    self.page.wait_for_timeout(300)
                     collect()
                     return
                 stalled += 1
@@ -1587,34 +1124,7 @@ class AribaFileSource:
         return list(by_key.values()), rejected, collided
 
     def list_files(self) -> list:
-        """Every downloadable document in the content tree, in TREE order.
-
-        A traversal that quietly sees 6 files instead of 60 is the failure that matters here,
-        and #174 spent six live runs learning that a silent short read looks exactly like
-        success. The tree's own geometry (outline rows seen, References toggles found/expanded)
-        is logged below as the diagnostic for that — cheaper and, per #185, more trustworthy
-        than the picker's `Total Number` this used to also read and log alongside it: the first
-        live comparison found the picker reporting 54 against a traversal of 39 and a true leaf
-        count of 178, three numbers with no derivable relationship. Only a traversal that finds
-        ZERO files is fatal, and that check lives in `ariba_files.capture_files`, not here.
-
-        **The tree's geometry is logged once here, on a live run of the brand-new
-        `allow_document=True` scroll path (#174 M2).** The now-retired `AribaPicker` (#195)
-        stated its row list's structure this way already; this traversal never did, though the
-        module's own docstring named that exact diagnostic as the one that would have ended the
-        picker's six-live-run debugging streak in its first line. Logged AFTER
-        `_require_event_view` confirms the content tree, not the picker or the export page, is
-        actually in front of
-        the geometry read.
-
-        **The event view renders only the first Part's row until 'All Content' is clicked,
-        and the `References` toggles behind Part 2+ do not exist until then either (#174).**
-        So the required sequence, in order, is: open the full tree (`_open_all_content`) ->
-        prefer a bulk expander if the widget offers one (`_bulk_expand_references`) -> run
-        the existing per-toggle `_expand_references` regardless, since it is idempotent and
-        catches anything the bulk step missed or if it never fired. Only once that sequence
-        has run does the sweep below see the rows that carry the bulk of the documents.
-        """
+        """Expand 'All Content' and References sections, sweep the tree, and return files in tree order."""
         self._require_event_view("the content-tree traversal")
         self._scroller.log_geometry()
 
@@ -1627,17 +1137,9 @@ class AribaFileSource:
         files, rejected, collided = self._sweep()
         files = ariba_files.order_listing(files)
 
-        # Named explicitly (#174) so a near-empty result states its own cause rather than
-        # only its symptom: `outline_rows` stuck at 1 says the tree never opened past Part 1;
-        # a healthy `outline_rows`/`toggles_found` beside a still-short `files` count says the
-        # tree opened fine and the files themselves are the gap.
         self.log(f"    content tree: {len(files)} file(s), {outline_rows} outline row(s) "
                  f"seen, {toggles_found} References toggle(s) found ({opened} expanded)")
         if rejected:
-            # Named, because the alternative is a document silently absent from an archive
-            # nobody can re-fetch. The predicate this replaced was `$`-anchored (so it skipped
-            # every label rendering its own size) over a short extension list (no .dwf, .xlsm,
-            # .tif, .msg, .7z, .gz, .kmz) — and this log is how you would ever find that out.
             sample = sorted(rejected)[:10]
             self.log(f"    content tree: {len(rejected)} label(s) not taken for documents "
                      f"(showing {len(sample)}): {sample}")
@@ -1649,15 +1151,11 @@ class AribaFileSource:
         return files
 
     def collided_count(self) -> int:
-        """How many links `list_files()` found indistinguishable from one another and
-        collapsed -- read by `ariba_files.capture_files` so the gap reaches the durable
-        `.omitted.json` record, not only this class's log (#174 Low)."""
+        """Return the number of indistinguishable links collapsed during `list_files()`."""
         return self._collided_count
 
-    # --- download ------------------------------------------------------------------------
     def _match_anchor(self, key: str):
-        """The one anchor in the current DOM whose durable KEY is `key`, or None. Never
-        `.first`. Used to re-find a document the traversal has not yet disturbed."""
+        """Return the unique current DOM anchor matching durable `key`, or None."""
         matches = [a for a in self._read_anchors()
                    if ariba_files.is_document_name(a["name"])
                    and ariba_files.anchor_key(a) == key]
@@ -1668,23 +1166,13 @@ class AribaFileSource:
         return matches[0] if matches else None
 
     def _find_unclaimed(self, file: dict):
-        """The last-resort match: a link labelled with this document's name whose id has not
-        already been clicked this run (`ariba_files.pick_unclaimed`)."""
+        """Find the first unclaimed document anchor matching `file['name']`."""
         anchors = [a for a in self._read_anchors()
                    if ariba_files.is_document_name(a["name"])]
         return ariba_files.pick_unclaimed(anchors, file["name"], self._claimed)
 
     def _locate_by_handle(self, file: dict):
-        """The anchor carrying this document's DOM id, if it is still there and still labelled
-        the same. The LIVE half of the identity split (`ariba_files.document_key`).
-
-        Preferred over the durable key because it addresses the element the traversal actually
-        saw, rather than re-deriving which element that was. Best-effort by design: an id is a
-        per-session artifact and may be reassigned by a re-render, so a miss here is ordinary
-        and falls through to `_match_anchor`. The LABEL is re-checked before the handle is
-        trusted -- an id that now belongs to a different document must not be clicked, which is
-        the same reason `_TAG_ANCHOR_JS` re-verifies the label before it tags an index.
-        """
+        """Locate an anchor by its per-session DOM id, verifying its text still matches `file['name']`."""
         handle = (file.get("handle") or "").strip()
         if not handle:
             return None
@@ -1694,33 +1182,16 @@ class AribaFileSource:
                 return None
             text = " ".join((loc.first.inner_text() or "").replace("\xa0", " ").split())
             return loc.first if text == file["name"] else None
-        except Exception:                             # noqa: BLE001 — a miss, never fatal
+        except Exception:  # noqa: BLE001
             return None
 
     def _resolve_anchor(self, file: dict):
-        """Tag and return the anchor for THIS document, scrolling to find it if need be.
-
-        Keyed on identity, not on the label: `get_by_text(name).first` resolves both of two
-        same-named documents to the same link, so the same bytes land twice under two names
-        and the second document is never fetched -- both "successful", counts matching, no gap
-        record, on a single clean run. `.first` also risks a hidden or collapsed match.
-
-        **Two routes, in order, because they fail in different conditions** (the identity split
-        in `ariba_files.document_key`). The DOM id addresses the element the traversal saw and
-        needs no re-derivation, so it is tried first; it goes stale if the widget re-renders and
-        re-mints its ids. The durable key survives that but is re-derived from the current read,
-        so it needs the document to still be present and countable. Which route carried a run is
-        logged once per document: it is the only way to learn empirically whether these ids
-        survive the menu re-parenting that broke the old key, and guessing at that is what cost
-        #174 four live runs.
-        """
+        """Resolve the anchor to click for `file`: DOM handle first, then unclaimed-name fallback with scrolling."""
         by_handle = self._locate_by_handle(file)
         if by_handle is not None:
             self._resolved_by_handle += 1
             self._claimed.add(file["handle"])
             return by_handle
-        # Logged every time, because it is rare-or-never if the ids hold and constant if they
-        # do not -- and that is precisely the fact this run exists to establish.
         self._resolved_by_key += 1
         self.log(f"    {file['name']}: DOM id {file.get('handle') or '(none)'!r} no longer "
                  f"resolves — falling back to name-among-unclaimed")
@@ -1747,26 +1218,14 @@ class AribaFileSource:
         return self.page.locator('a[data-tb-file="1"]').first
 
     def _await_menu_clear(self, file: dict, timeout_ms: int = 10000) -> None:
-        """Refuse to click the next anchor while a PREVIOUS attachment's menu is still open
-        (#174 M1 -- a wrong-bytes hazard, not a flakiness one).
-
-        Documents are downloaded in tree order, so a menu `_dismiss_menu`'s best-effort Escape
-        failed to close survives as the FIRST visible 'Download this attachment' item on the
-        page -- and that precedes the menu THIS click is about to open. `_await_menu_item` has
-        no way to tell the two apart: it takes the first visible item, full stop. So a stale
-        menu silently supplies the PREVIOUS document's bytes under the NEXT document's name --
-        counts match, nothing is missing, and no gap record is written, because nothing failed.
-        That is a strictly worse outcome than the retry a failed Escape actually costs (a false
-        claim this replaces -- see `_dismiss_menu`). Polling here for ZERO visible menu items
-        before the anchor is even clicked turns "the menu I am about to open is the one this
-        click opened" from an assumption into evidence.
-        """
+        """Wait until no 'Download this attachment' menu item is visible before clicking the next anchor,
+        preventing a stale menu from downloading the previous document under the next filename."""
         waited = 0
         while True:
             try:
                 item = self.page.get_by_text(_DOWNLOAD_MENU_ITEM, exact=False)
                 visible = sum(1 for i in range(item.count()) if item.nth(i).is_visible())
-            except Exception:                         # noqa: BLE001 — menu mid-render churn
+            except Exception:  # noqa: BLE001
                 visible = None
             if visible == 0:
                 return
@@ -1781,19 +1240,9 @@ class AribaFileSource:
             waited += 250
 
     def _await_menu_item(self, file: dict, timeout_ms: int = 15000):
-        """Poll for a VISIBLE 'Download this attachment' entry -- never sleep a guess.
-
-        These entries exist for every attachment row and only one is visible at a time, so a
-        `.first` locator picks a hidden one and times out (observed). A fixed 600 ms wait
-        standing in for this condition means a menu that renders in 700 ms raises, and that
-        document is omitted from an archive that cannot be re-fetched.
-
-        `_await_menu_clear` (called before the anchor is ever clicked) is what guarantees the
-        item this returns belongs to the anchor just clicked, not a stale survivor -- see its
-        docstring. This is a plain "wait for the thing to appear" poll.
-        """
+        """Poll for the visible 'Download this attachment' menu item (hidden items exist for every row)."""
         waited = 0
-        seen = None                # None = "not yet counted", distinct from a real 0
+        seen = None
         while True:
             item = self.page.get_by_text(_DOWNLOAD_MENU_ITEM, exact=False)
             try:
@@ -1802,7 +1251,7 @@ class AribaFileSource:
                     candidate = item.nth(i)
                     if candidate.is_visible():
                         return candidate
-            except Exception:                         # noqa: BLE001 — menu mid-render
+            except Exception:  # noqa: BLE001
                 pass
             if waited >= timeout_ms:
                 raise RuntimeError(
@@ -1813,31 +1262,16 @@ class AribaFileSource:
             waited += 250
 
     def _dismiss_menu(self) -> None:
-        """Best-effort: close the attachment menu so it does not linger into the next click.
-
-        Escape here is NOT the mechanism that protects the archive from wrong bytes --
-        `_await_menu_clear` is, by polling for zero visible menu items before the next anchor
-        is ever clicked (#174 M1). Before that guard existed, a failed Escape (silently
-        swallowed, and never verified to have landed) cost exactly what M1 describes: the
-        NEXT document downloaded under the wrong menu, saved under the wrong name, with
-        nothing to show a gap ever opened. That is not "at most a retry on the next click" --
-        it is a silently corrupted archive entry. With `_await_menu_clear` in place, a failed
-        Escape now costs only a slower clear (the poll waits out whatever Escape didn't), so
-        this can stay best-effort.
-        """
+        """Best-effort Escape to close the attachment menu (`_await_menu_clear` enforces clearance)."""
         try:
             self.page.keyboard.press("Escape")
             self.page.wait_for_timeout(200)
-        except Exception:                             # noqa: BLE001 — best effort by nature
+        except Exception:  # noqa: BLE001
             pass
 
     def _await_request_idle(self, file: dict, timeout_ms: int = 30000) -> None:
-        """Wait for Ariba's download callback, which outlives Playwright's save_as (#183).
-
-        The request gate can stay busy for several seconds after the bytes arrive. During
-        that interval Ariba suppresses subsequent menu actions, even on visible controls.
-        Read its own state; never clear it or substitute a guessed fixed delay.
-        """
+        """Wait for `window.ariba.Request.isRequestInProgress()` to clear after a download (#183);
+        Ariba suppresses subsequent menu actions while busy."""
         waited = 0
         while True:
             busy = self.page.evaluate("""() => {
@@ -1857,7 +1291,7 @@ class AribaFileSource:
             waited += 250
 
     def _popup_owner(self, menu):
-        """Resolve the widget's published trigger association, never a guessed neighbour."""
+        """Resolve a `.awmenu` popup's unique `a[bh="PML"][_mid=...]` trigger."""
         menu_id = menu.get_attribute("id")
         if not menu_id:
             raise RuntimeError("attachment popup has no id — cannot resolve its owner")
@@ -1868,12 +1302,7 @@ class AribaFileSource:
         return owners
 
     def _close_popups(self) -> None:
-        """Dismiss through the widget, then verify the previously visible menus are hidden.
-
-        A large popup covers both document links and its own trigger. Escape is unreliable
-        for anchor triggers, and Enter can select an item. Use the same dismissal operation
-        Ariba's menu handlers use, without altering its state fields or selecting a document.
-        """
+        """Dismiss open `.awmenu` popups via `window.ariba.Menu.hideActiveMenu()` and wait until hidden."""
         menu_ids = self.page.locator('.awmenu:visible').evaluate_all(
             '(menus) => menus.map(menu => menu.id)')
         if not menu_ids:
@@ -1890,26 +1319,17 @@ class AribaFileSource:
                 state="hidden", timeout=5000)
 
     def download(self, file: dict, dest) -> Path:
-        """Save ONE document to exactly `dest`, or raise.
-
-        `.part` staging, the rename and the parent directory are the caller's job
-        (`ariba_files.capture_files`) -- this writes where it is told and nothing else.
-        """
+        """Download one document directly to `dest` (caller manages `.part` staging)."""
         dest = Path(dest)
         self._require_event_view(f"downloading {file['name']}")
         self._await_request_idle(file)
-        # Before the anchor is even clicked: refuse to proceed while a previous document's
-        # menu is still open (#174 M1). See `_await_menu_clear`'s docstring for the wrong-bytes
-        # hazard this closes.
         self._await_menu_clear(file)
         if file.get("kind") != ariba_files.MENU_ITEM:
             self._close_popups()
         link = self._resolve_anchor(file)
         self._ensure_clickable(file, link)
 
-        # A popup-menu ITEM is already inside its menu: clicking it downloads outright, and
-        # there is no `Download this attachment` to wait for (`ariba_files.anchor_kind`).
-        # Sending it down the PML path is what failed all 36 of them in run 5.
+        # PMI items download on direct click without opening a sub-menu.
         if file.get("kind") == ariba_files.MENU_ITEM:
             with self.page.expect_download(timeout=300000) as dl:
                 link.click(timeout=15000)
@@ -1927,12 +1347,7 @@ class AribaFileSource:
         return dest
 
     def _ensure_clickable(self, file: dict, link) -> None:
-        """Restore only this document's popup, then verify its control is visible (#183).
-
-        References menus are mutually exclusive. Expanding all of them leaves only the last
-        visible; link counts do not measure visibility because the hidden items stay in DOM.
-        The containing `.awmenu` id and its trigger's `_mid` publish the exact association.
-        """
+        """If `link` is hidden inside a mutually exclusive `.awmenu` popup, open its owner trigger first (#183)."""
         if not link.is_visible():
             menu = link.locator(
                 'xpath=ancestor::*[contains(concat(" ", normalize-space(@class), " "), '
@@ -1946,22 +1361,9 @@ class AribaFileSource:
             link.wait_for(state="visible", timeout=10000)
         link.scroll_into_view_if_needed(timeout=10000)
 
-    # The picker's `Total Number` round trip (`expected_count`/`_read_expected_count`,
-    # Download Content -> Download Attachments -> picker -> Done -> `_restore_event_view`) was
-    # removed here (#185). It never established what it set out to: the first live comparison
-    # found the picker reporting 54 against a traversal of 39 and a true leaf count of 178 after
-    # nested expansion — three different quantities, none of which the other two could be
-    # derived from. The comparison only ever recorded, never refused, so removing it changes no
-    # capture outcome; it only stops writing a `Doc<n>.omitted.json` claiming documents are
-    # missing when none are. See CLAUDE.md's Ariba attachments section for the measurement.
-
 
 def _capture_with_session_recovery(browser, page, event, dest_dir, log):
-    """Retry one explicit denial in a fresh authenticated context, then preserve the result.
-
-    A denial can be session state rather than an event restriction. Closed events and
-    other errors still follow the normal failure/training paths without another login.
-    """
+    """Retry a single `denied` rejection in a fresh logged-in browser context."""
     try:
         return capture_event(page, event, dest_dir, log=log), page
     except EventUnavailable as exc:
@@ -1984,27 +1386,10 @@ def capture_attachments(conn, dest_dir=None, log=lambda _m: None, headless=False
                         virtual_display=False, failures: list | None = None,
                         training_restrictions: list | None = None,
                         only: list[str] | None = None) -> int:
-    """Log in, walk every open solicitation, capture and index each bundle. Resumable.
+    """Log in and capture+index all open pending solicitations (or those in `only`).
 
-    A complete bundle is skipped; recorded gaps keep an open event eligible for retry.
-    The expensive half is the download, and
-    Respond is idempotent (re-responding just re-opens the event). One event's failure is
-    logged and never ends the run, exactly as pipeline.run_source isolates a source.
-
-    **Continuing past a failed event is not the same as reporting it (#223, the #178 lesson).**
-    The return value counts only bundles captured, so a night on which every event raised reads
-    exactly like a night with nothing to capture. Pass `failures` (a list) and each event that
-    raised is appended as `("ariba:Doc<n>", str(exc))` — the shape the nightly's shared
-    failures list and `_mark_if_swallowed_failures` read. Events for which `capture_event`
-    returns None without raising are also reported when durable gaps remain, including
-    closed or refused retries. A newly written partial bundle is indexed, but its unresolved
-    gaps still mark the step failed (#243). Explicit source rejections for verified training
-    document/posting pairs are reported through `training_restrictions` (#242); real-event
-    restrictions and unexpected training errors remain failures. A training restriction never
-    hides existing attachment gaps. Restricted events stay eligible to recheck next run.
-
-    `only` (document numbers) limits the run to those pending events, for one targeted
-    attempt (#304); a number that is not an open, pending event raises before any login.
+    Skips complete bundles, isolates per-event failures into `failures`, and records verified
+    training-event rejections in `training_restrictions` without hiding existing gaps (#223/#242).
     """
     from playwright.sync_api import sync_playwright
 
@@ -2031,8 +1416,7 @@ def capture_attachments(conn, dest_dir=None, log=lambda _m: None, headless=False
         return 0
 
     captured = 0
-    # A headed browser is required (Ariba blocks headless login), so a headless server needs a
-    # virtual framebuffer — same Xvfb wrapper as sources/bid_award_panel.py:agenda_fetcher.
+    # Ariba blocks headless login, so headless servers run Chromium under Xvfb.
     display = None
     if virtual_display:
         from pyvirtualdisplay import Display
@@ -2061,7 +1445,7 @@ def capture_attachments(conn, dest_dir=None, log=lambda _m: None, headless=False
                         except EventUnavailable as exc:
                             if (VERIFIED_TRAINING_EVENTS.get(event["document_number"]) != str(event["rfx_id"])
                                     or exc.reason not in _EVENT_REJECTIONS):
-                                raise  # a real procurement, mismatched identity or unknown reason
+                                raise
                             saved = None
                             restriction = exc
                             event_log(f"  {exc} — verified training restriction; remains retryable")

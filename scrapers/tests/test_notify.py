@@ -1,7 +1,3 @@
-"""The nightly job's Slack summary.
-
-`summarize` is pure, so the whole message is tested offline with no webhook and no network.
-"""
 from toronto_bids import notify
 
 
@@ -97,7 +93,7 @@ def test_sources_section_flags_zero_fetch():
     text = notify.summarize(report)
     assert "*Sources* (fetched)" in text
     assert "odata_solicitations 7,446" in text
-    assert "→ +" not in text   # rows_upserted is written-rows, NOT "new" — Growth owns new-record counts
+    assert "→ +" not in text
     assert "⚠ suspended_firms 0 fetched" in text
 
 
@@ -105,7 +101,6 @@ def test_nothing_moved_omits_growth_and_empty_before_suppresses_deltas():
     same = _counts(solicitation=10)
     assert "*Growth*" not in notify.summarize(
         {"ok": True, "before": same, "after": same, "failures": [], "export_bytes": 1, "elapsed_s": 1.0})
-    # empty before => before-count failed => no fabricated deltas
     assert "*Growth*" not in notify.summarize(
         {"ok": True, "before": {}, "after": _counts(bid=5), "failures": [], "export_bytes": 1, "elapsed_s": 1.0})
 
@@ -128,8 +123,6 @@ def test_growth_labels_agency_and_ariba():
 
 
 def test_post_without_a_webhook_is_a_no_op_and_makes_no_request(monkeypatch):
-    """Absence of the credential degrades gracefully — this Mac and CI stay silent with no
-    separate code path, the same way the rewrite design's goal 3 asks of auth-optional parts."""
     monkeypatch.delenv("TB_SLACK_WEBHOOK", raising=False)
     def boom(*a, **k):
         raise AssertionError("must not make a request without a webhook")
@@ -164,8 +157,6 @@ def test_post_reads_the_webhook_from_the_environment(monkeypatch):
 
 
 def test_a_slack_failure_never_fails_the_run(monkeypatch):
-    """The archive outranks the notification. A dead webhook must not turn a good sync into a
-    failed unit."""
     def boom(*a, **k):
         raise OSError("slack is down")
     monkeypatch.setattr(notify.httpx, "post", boom)
@@ -175,8 +166,6 @@ def test_a_slack_failure_never_fails_the_run(monkeypatch):
 
 
 def test_a_rejected_webhook_is_reported_rather_than_counted_as_sent(monkeypatch):
-    """A revoked webhook returns 4xx without raising. Reporting that as success is how the
-    channel goes quiet while the job believes it is still talking."""
     class Resp:
         status_code = 403
     monkeypatch.setattr(notify.httpx, "post", lambda url, **kw: Resp())
@@ -186,8 +175,6 @@ def test_a_rejected_webhook_is_reported_rather_than_counted_as_sent(monkeypatch)
 
 
 def test_a_rejection_never_leaks_the_webhook_into_the_log(monkeypatch):
-    """log() goes to journald. raise_for_status() would put the URL in the exception message
-    and write the credential to the system log — which is why the status code is read by hand."""
     class Resp:
         status_code = 403
     monkeypatch.setattr(notify.httpx, "post", lambda url, **kw: Resp())
@@ -204,8 +191,6 @@ def test_a_successful_post_returns_true(monkeypatch):
 
 
 def test_a_malformed_webhook_exception_never_leaks_the_url_into_the_log(monkeypatch):
-    """The exception branch must not undo what the status-code branch is careful about:
-    httpx.InvalidURL embeds the request URL in its message, and log() goes to journald."""
     def raise_invalid(*a, **k):
         raise notify.httpx.InvalidURL("Invalid URL 'https://hooks.slack.test/SECRET-TOKEN'")
     monkeypatch.setattr(notify.httpx, "post", raise_invalid)
@@ -227,7 +212,7 @@ def test_near_close_section_lists_postings_and_does_not_change_the_header():
                   {"document_number": "5701234567", "closes": "2026-10-04", "days_left": 3},
               ]}
     text = notify.summarize(report)
-    assert text.startswith("*✅ toronto-bids nightly*")       # a warning, not a failure
+    assert text.startswith("*✅ toronto-bids nightly*")
     assert "*⚠ Ariba closing soon, not fully archived (3)*" in text
     assert "Doc5713434353 · closes 2026-10-01 · last day" in text
     assert "Doc5660182540 · closes 2026-10-02 · 1 day left" in text

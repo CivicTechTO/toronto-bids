@@ -1,9 +1,4 @@
-"""Durable asynchronous extraction, private to the scraper's operational store.
-
-A document manifest groups every chunk before anything can enter the existing
-cache. Job identity includes the complete request and prompt version. Submission
-and billing state share one SQLite transaction; uncertain POSTs are never retried.
-"""
+"""Durable Claude Message Batches queue and billing ledger in llm-usage.sqlite."""
 
 from contextlib import contextmanager
 from contextvars import ContextVar
@@ -28,7 +23,7 @@ _MAX_BYTES = 64 * 1024 * 1024
 
 
 class ExtractionPending(Exception):
-    """Work is durably queued or submitted, and is not a completed extraction."""
+    """Raised when document extraction is queued or in-flight rather than complete."""
 
 
 def pending_events():
@@ -62,8 +57,7 @@ def _json(value):
 
 
 def _request_json(body):
-    # Schema property order affects constrained generation. Preserve the exact
-    # qualified request through persistence; it is part of the job identity.
+    # Preserve schema property order (do not sort_keys); it affects constrained generation and job identity.
     return json.dumps(body, ensure_ascii=False, separators=(',', ':'))
 
 
@@ -137,7 +131,7 @@ class BatchQueue:
             conn.close()
 
     def document(self, sha256, version, bodies, *, source='unspecified'):
-        """Queue all chunks atomically, or return the complete validated result."""
+        """Queue all document chunks atomically, or return the merged validated result if ready."""
         if not bodies:
             raise ValueError('A batch document must contain at least one chunk')
         keys = [_job_key(version, body) for body in bodies]
@@ -216,8 +210,7 @@ class BatchQueue:
                 if budget_error:
                     raise BudgetExceeded(budget_error)
                 return {'submitted': 0}
-            # One POST only. The durable 'submitting' record also covers a crash
-            # after acceptance but before receipt persistence.
+            # Single POST only; 'submitting' state records in-flight batches in case of crash before receipt.
             try:
                 response = self.http.post(_API, json={'requests': requests}, headers=headers, timeout=120)
                 response.raise_for_status()
@@ -279,14 +272,13 @@ class BatchQueue:
             self.budget.settle(item['reservation'], charge, 'reported', usage, conn=conn)
             data = parse_response(message)
         except (ValueError, TypeError) as exc:
-            # A success with invalid/missing usage keeps its reservation. An
-            # invalid extraction with valid usage has already been charged.
+            # Keep reservation if usage is invalid; invalid extractions with valid usage are already settled.
             conn.execute("UPDATE batch_job SET status='failed',error=? WHERE id=?", (str(exc), item['job']))
         else:
             conn.execute("UPDATE batch_job SET status='ready',result=?,error=NULL WHERE id=?", (_json(data), item['job']))
 
     def collect(self, archive):
-        """Poll once; import only complete documents, never wait for processing."""
+        """Poll active batches once and import completed documents into extraction_cache."""
         conn = self._connect()
         errors = []
         try:
@@ -335,8 +327,7 @@ class BatchQueue:
             if not all(row is not None and row['status'] == 'ready' for row in jobs):
                 continue
             result = self._merge(jobs)
-            # Two-store recovery is idempotent: a crash after this commit leaves
-            # an existing cache entry, which a later import preserves verbatim.
+            # Idempotent across stores: INSERT OR IGNORE preserves existing cache entries on retry.
             cursor = archive.execute('INSERT OR IGNORE INTO extraction_cache (sha256,extractor_version,result_json) VALUES (?,?,?)',
                                      (doc['sha256'], doc['version'], _json(result)))
             archive.commit()
@@ -346,7 +337,7 @@ class BatchQueue:
         return imported
 
     def attach(self, local_id, remote_id):
-        """Recover a lost receipt only after the server proves every custom ID."""
+        """Recover a lost remote_id for an uncertain submission after verifying every custom_id on the server."""
         conn = self._connect()
         try:
             batch = conn.execute('SELECT * FROM batch_submission WHERE id=?', (local_id,)).fetchone()
