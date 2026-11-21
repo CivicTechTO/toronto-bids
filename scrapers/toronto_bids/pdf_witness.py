@@ -1,8 +1,4 @@
-"""Verify reviewed rectangular source witnesses against held PDF words.
-
-Coordinates are source evidence, not a table parser: semantic row/column roles live
-in committed reviews. A whole PDF is read once; every crop must reproduce its quote.
-"""
+"""Verify reviewed rectangular PDF/OCR crops against held PDF files."""
 from functools import lru_cache
 import hashlib
 import math
@@ -76,18 +72,14 @@ def verify(witnesses,path,sha256):
 
 
 def verify_ocr(witnesses, path, sha256, provenance):
-    """Check image-space crops against pinned OCR words, retaining their raw reading.
-
-    Recognition is not a literal-source guarantee. A committed visual review and
-    independent publisher transcription authorize any corrected source quotation.
-    """
+    """Verify held PDF bytes and check image-space crops against pinned OCR words."""
     if hashlib.sha256(Path(path).read_bytes()).hexdigest()!=sha256:
         raise ValueError('Held PDF bytes changed')
     return ocr_quotes(witnesses,provenance)
 
 
 def ocr_quotes(witnesses, provenance):
-    """Reproduce raw crops from immutable recognition evidence, without file access."""
+    """Extract and check normalized crop quotes from pinned OCR word boxes."""
     pages=provenance['pages'];quotes={}
     for key,witness in witnesses.items():
         page,box=rectangle(witness)
@@ -108,7 +100,7 @@ def reviewed_quote(proof, key):
 
 
 def corroborated_quotes(proof, quotes, transcription):
-    """Apply only explicit, source-bound corrections present in City-authored text."""
+    """Apply explicit OCR corrections corroborated by City-authored text."""
     import difflib
     import re
     def comparable(text):
@@ -131,9 +123,7 @@ def corroborated_quotes(proof, quotes, transcription):
             raise ValueError('OCR correction lacks its original reading or publisher corroboration')
         before,after=correction['before'],correction['after']
         a,b=characters(before),characters(after)
-        # Source review cannot use recognition cleanup to rename firms, exchange
-        # their prices, or repair a number. Noncritical text corrections remain
-        # small, explicit and independently corroborated.
+        # OCR corrections cannot alter digits, supplier names, or price tokens.
         if (re.findall(r'\d',before)!=re.findall(r'\d',after) or
                 (key in name_keys|price_keys and a!=b) or
                 any(characters(quotes[n]) in a and characters(quotes[n]) not in b for n in name_keys)):

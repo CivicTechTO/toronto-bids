@@ -37,16 +37,13 @@ def test_fetch_keeps_only_toronto_and_pairs_detail():
     def handler(request):
         if request.url.path.endswith("/search"):
             return httpx.Response(200, json=SEARCH_BODY)
-        # detail: 1110015885 succeeds, 1110099999 500s persistently
         if "1110015885" in request.url.path:
             return httpx.Response(200, json={"ID": "1110015885", "anid": "AN01050912625", "rfxIdExternal": "Doc5672751291"})
         return httpx.Response(500, text="boom")
     raws = list(AribaDiscoverySource().fetch(_http(handler)))
-    # TransLink record dropped; two Toronto records kept.
     assert len(raws) == 2
     by_id = {r["search"]["rfxID"]: r for r in raws}
     assert by_id["1110015885"]["detail"]["rfxIdExternal"] == "Doc5672751291"
-    # The 500'd posting is still yielded, with detail=None (per-posting isolation).
     assert by_id["1110099999"]["detail"] is None
 
 
@@ -73,18 +70,18 @@ def test_normalize_with_detail_bridges_and_snapshots():
     p = posts[0]
     assert isinstance(p, AribaPosting)
     assert p.rfx_id == "1110015885"
-    assert p.document_number == "5672751291"          # bridged from externalRfxId
+    assert p.document_number == "5672751291"
     assert p.external_rfx_id == "Doc5672751291"
     assert p.status == "Published"
     assert p.customer_name == "City of Toronto"
-    assert p.close_date == "2026-07-17T09:00:00-07:00"  # search endDate preferred
+    assert p.close_date == "2026-07-17T09:00:00-07:00"
     assert p.currency == "CAD"
-    assert p.amount_max == "99000000"                 # from detail opportunityAmount
+    assert p.amount_max == "99000000"
     assert p.public_posting_url == "https://discovery.ariba.com/rfx/1110015885"
-    assert p.sourcing_url is None  # new public detail does not expose the Sourcing URL
+    assert p.sourcing_url is None
     assert json.loads(p.categories) == ["Sidewalk construction and repair service",
                                         "Water main construction service"]
-    assert json.loads(p.raw_json)["rfxIdExternal"] == "Doc5672751291"  # snapshot present
+    assert json.loads(p.raw_json)["rfxIdExternal"] == "Doc5672751291"
     assert p.source == "ariba_discovery"
 
 
@@ -92,12 +89,12 @@ def test_normalize_without_detail_archives_search_only():
     raw = {"search": _fixture("ariba_search_record.json"), "detail": None}
     p = list(ariba.normalize_posting(raw))[0]
     assert p.rfx_id == "1110015885"
-    assert p.document_number is None          # no externalRfxId, no Doc in this title
-    assert p.raw_json is None                 # nothing to snapshot
+    assert p.document_number is None
+    assert p.raw_json is None
     assert p.external_rfx_id is None
     assert p.title == "Request for Tenders for Watermain and Sewer Replacement on various roads"
     assert p.customer_name == "City of Toronto"
-    assert p.amount_max == "70542967.0799487"  # falls back to search maxAmount
+    assert p.amount_max == "70542967.0799487"
     assert p.currency is None
     assert json.loads(p.categories) == ["Sidewalk construction and repair service",
                                         "Sewer line construction service"]
@@ -107,7 +104,7 @@ def test_normalize_without_detail_bridges_title_embedded_doc():
     search = dict(_fixture("ariba_search_record.json"))
     search["title"] = "Doc5581608073 - Request for Quotations for supplies"
     p = list(ariba.normalize_posting({"search": search, "detail": None}))[0]
-    assert p.document_number == "5581608073"   # bridged from the title
+    assert p.document_number == "5581608073"
 
 
 def _filter(request):

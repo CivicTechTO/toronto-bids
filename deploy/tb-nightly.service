@@ -1,26 +1,16 @@
 [Unit]
 Description=toronto-bids nightly: sync, enrich (award summaries, ariba attachments, agency board reports, monthly council), export, publish
-Documentation=https://github.com/CivicTechTO/toronto-bids/blob/main/docs/superpowers/specs/2026-07-19-publish-data-design.md
+Documentation=https://github.com/CivicTechTO/toronto-bids/blob/main/deploy/README.md
 After=network-online.target
 Wants=network-online.target
 
 [Service]
 Type=oneshot
 WorkingDirectory=%h/toronto-bids/scrapers
-# The default data dir is scrapers/files/ — inside the checkout. On a server the archive must
-# live where a `git pull` cannot reach it.
+# Keep data outside the git checkout so `git pull` cannot touch it.
 Environment=TB_DATA_DIR=%h/tb-data
-# The leading '-' makes this optional: no webhook file -> notify.post() no-ops and the run
-# still succeeds. The file holds credentials (TB_SLACK_WEBHOOK, optional GH_TOKEN, ARIBA_USERNAME/
-# ARIBA_PASSWORD, ANTHROPIC_API_KEY) and is mode 0600; it is never in git. Without
-# ANTHROPIC_API_KEY every extraction-backed step fails on any uncached document (#221).
-# Publishing requires gh to be authenticated (a GH_TOKEN here OR a
-# prior `gh auth login` on the box) — the publish step fails loudly otherwise (#146).
+# Optional credentials file (mode 0600, not in git): TB_SLACK_WEBHOOK, GH_TOKEN, ARIBA_*, ANTHROPIC_API_KEY.
 EnvironmentFile=-%h/.config/toronto-bids/tb.env
-# The wrapper runs `tb nightly` then publish-data.sh — publish runs even after a partial sync
-# (the export is still valid) and the unit fails if EITHER step failed, neither masking the
-# other. See docs/superpowers/specs/2026-07-19-publish-data-design.md (#146).
 ExecStart=%h/toronto-bids/deploy/tb-nightly-run.sh
-# Browser captures (Ariba attachments cold sweep ~1-2h; agency scrapes incremental) now run
-# in-line before the export, so the nightly can be long. 3h is a generous ceiling (#unified-nightly).
+# Generous ceiling for inline browser captures and scrapes.
 TimeoutStartSec=3h

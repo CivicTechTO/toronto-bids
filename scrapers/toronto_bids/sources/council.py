@@ -20,16 +20,13 @@ def _clean(text: str | None) -> str | None:
 
 
 def parse_agenda_item(html: str, reference: str):
-    """Parse a TMMIS agenda-item page into a CouncilItem + a deduped list of PDF links.
-
-    Returns (CouncilItem, [{"url": str, "kind": "bgrd"|"comm"}, ...]).
-    """
+    """Parse a TMMIS agenda-item page into (CouncilItem, [{"url", "kind"}, ...])."""
     root = _html.fromstring(html)
 
     title = root.xpath("//title/text()")
     title = _clean(title[0]) if title else None
 
-    # Decision text: everything after the "City Council Decision" heading until the next heading.
+    # Decision text runs from the "City Council Decision" heading until the next heading.
     decision = None
     heads = root.xpath("//*[self::h1 or self::h2 or self::h3 or self::h4 or self::h5 or self::h6][contains(translate(text(),"
                        "'CITY COUNCIL DECISION','city council decision'),'city council decision')]")
@@ -38,7 +35,6 @@ def parse_agenda_item(html: str, reference: str):
         for sib in heads[0].itersiblings():
             if sib.tag in ("h1", "h2", "h3", "h4", "h5", "h6"):
                 break
-            # Skip comment nodes
             if not isinstance(sib, HtmlComment):
                 parts.append(sib.text_content())
         decision = _clean(" ".join(parts))
@@ -56,22 +52,14 @@ def parse_agenda_item(html: str, reference: str):
 
 
 def pdf_kind(url: str) -> str:
-    """Classify a legdocs PDF by the path segment the City files it under.
-
-    Shared with sources/bid_award_panel.py, which indexes the same PDFs off agenda pages.
-    """
+    """Classify a legdocs PDF URL as 'bgrd', 'comm', or 'other'."""
     return "bgrd" if "/bgrd/" in url else ("comm" if "/comm/" in url else "other")
 
 
 def download_pdf(http, url: str, dest_dir, layout: bool = False) -> dict:
-    """Download a PDF over plain HTTP, save it, hash it, and extract its text with pdftotext.
+    """Download a PDF, save and hash it, and extract text with pdftotext.
 
-    `layout=True` passes pdftotext -layout, which preserves the column alignment a form
-    depends on. It is off by default because that is what every council PDF was extracted
-    with, and re-extracting them differently now would rewrite text already in the store for
-    no gain — #96 measured the two as identical on the composite reports (244/280 blocks
-    either way). The Award Summary Forms are the opposite case: without -layout their
-    "Label    value" columns collapse and the form parses to nothing at all (#114).
+    Pass layout=True (-layout) for columnar forms such as Award Summary Forms.
     """
     data = http.get_bytes(url)
     dest_dir = Path(dest_dir)
@@ -87,11 +75,7 @@ def download_pdf(http, url: str, dest_dir, layout: bool = False) -> dict:
 
 
 def fetch_agenda_item(reference: str, virtual_display: bool = False) -> str:
-    """Fetch a TMMIS agenda-item page's HTML with a HEADED Chromium (Akamai blocks headless).
-
-    On a headless server pass virtual_display=True to run Chromium under Xvfb (needs Xvfb
-    installed). Not unit-tested — exercised by the live smoke.
-    """
+    """Fetch TMMIS agenda-item HTML with headed Chromium (Akamai blocks headless); uses Xvfb if virtual_display=True."""
     from playwright.sync_api import sync_playwright
 
     display = None
@@ -118,11 +102,7 @@ def fetch_agenda_item(reference: str, virtual_display: bool = False) -> str:
 
 
 def enrich_council(conn, http, fetch=fetch_agenda_item, dest_dir=None) -> int:
-    """Fetch + archive the council decision and PDFs for each suspended firm's Authority.
-
-    `fetch(reference) -> html` is injectable so the loop is testable without a browser.
-    Idempotent. Returns the number of council items processed.
-    """
+    """Fetch and archive council decisions and PDFs for each suspended_firm.council_authority. Idempotent."""
     dest_dir = dest_dir if dest_dir is not None else config.COUNCIL_DOCS_DIR
     if shutil.which("pdftotext") is None:
         raise RuntimeError(
@@ -147,10 +127,10 @@ def enrich_council(conn, http, fetch=fetch_agenda_item, dest_dir=None) -> int:
                         local_path=info["local_path"], sha256=info["sha256"], text=info["text"],
                     ), overwrite=True)
                 except Exception:
-                    continue  # skip a bad PDF; keep the rest of this item
+                    continue
             conn.commit()
             processed += 1
         except Exception:
-            conn.rollback()  # discard this ref's partial work; move on to the next authority
+            conn.rollback()
             continue
     return processed

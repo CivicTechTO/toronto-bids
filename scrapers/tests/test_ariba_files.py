@@ -1,13 +1,4 @@
-"""Per-file capture of Ariba solicitation documents (#174).
-
-The bundle path could not reach Doc5713434353: row 3.1 is atomic in the picker and holds
-787.71 MB of a 792 MB event. But every individual file is <= 88.7 MB, and the event page
-exposes each one. This module captures them one at a time and builds the canonical zip
-ourselves -- so WE choose its layout, which is why naming is a real concern here and was not
-before.
-
-Design: docs/superpowers/specs/2026-07-27-ariba-per-file-capture-design.md
-"""
+"""Tests for per-file Ariba document capture (ariba_files)."""
 
 import json
 import zipfile
@@ -34,7 +25,6 @@ def test_a_name_with_no_extension_still_disambiguates():
 
 
 def test_a_suffix_that_would_itself_collide_keeps_searching():
-    """`a_2.pdf` already exists, so the second `a.pdf` must not steal it."""
     assert ariba_files.unique_names(["a.pdf", "a_2.pdf", "a.pdf"]) == [
         "a.pdf",
         "a_2.pdf",
@@ -68,7 +58,6 @@ def test_build_bundle_zips_files_flat_under_their_given_names(tmp_path):
 
 
 def test_build_bundle_is_atomic_leaving_no_target_on_failure(tmp_path):
-    """A half-written Doc<n>.zip would be indistinguishable from a finished capture."""
     a = _write(tmp_path / "src" / "a.pdf", b"aaa")
     missing = tmp_path / "src" / "gone.pdf"
     target = tmp_path / "Doc2.zip"
@@ -92,22 +81,7 @@ def test_build_bundle_overwrites_an_existing_target(tmp_path):
 
 
 class FakeFileSource:
-    """FileSource stand-in.
-
-    `fail_on` / `kill_on` name files (by name OR key) whose download raises -- an ordinary
-    Exception and a BaseException respectively, the latter standing in for a Ctrl-C mid
-    transfer. `keys` gives the listing's identities explicitly, which is what distinguishes two
-    DIFFERENT documents that share a name. `append=True` models an adapter that appends to
-    (rather than truncates) the path it is handed, which is what makes a leftover `.part`
-    dangerous.
-
-    Without `keys`, identity defaults to `name#occurrence` (`_default_keys` below) -- stable
-    and INDEPENDENT of a file's position among files with different names, satisfying the `key`
-    contract in the module docstring for the common case. It still cannot tell apart two files
-    that share a name (there is no name-only way to do that): that case needs `keys=` passed
-    explicitly. A bare positional default (the index into the list) would look the same shape
-    but carry zero real identity, silently defeating exactly the fingerprint this module tests.
-    """
+    """In-memory FileSource fake supporting failures, interrupts, custom keys, and append mode."""
 
     def __init__(
         self, names, fail_on=(), contents=None, keys=None, kill_on=(), append=False
@@ -122,13 +96,7 @@ class FakeFileSource:
 
     @staticmethod
     def _default_keys(names):
-        """`name#occurrence` -- stable across calls and NOT derived from list position.
-
-        Two different names get different keys no matter where they sit in the list; two
-        occurrences of the SAME name get distinct-but-deterministic keys rather than colliding
-        on a bare index. Still cannot represent two DIFFERENT documents that share a name --
-        nothing about a name alone can -- so that case must pass `keys=` explicitly.
-        """
+        """Return `name#occurrence` keys independent of overall list position."""
         counts: dict = {}
         out = []
         for name in names:
@@ -145,7 +113,6 @@ class FakeFileSource:
         return self.contents.get(file["name"], file["name"].encode())
 
     def _die_midway(self, dest, exc):
-        """Fail the way a real transfer fails: some bytes already on disk, then the error."""
         dest.parent.mkdir(parents=True, exist_ok=True)
         with open(dest, "ab") as fh:
             fh.write(b"PARTIALLY-TRANSFERRED")
@@ -176,7 +143,6 @@ def test_a_clean_run_captures_every_file_and_builds_the_bundle(tmp_path):
 
 
 def test_zero_files_raises_and_writes_no_bundle(tmp_path):
-    """An event withholding its content must not be marked archived forever."""
     source = FakeFileSource([])
 
     with pytest.raises(RuntimeError, match="no files"):
@@ -197,11 +163,7 @@ def test_one_failed_file_does_not_abort_the_others(tmp_path):
 
 
 def test_a_failed_download_leaves_no_part_file_behind(tmp_path):
-    """EVERY file fails, so the partial directory survives to be inspected.
-
-    With a file captured the run rmtree's the whole partial directory, which would hide a
-    leaked `.part` behind a directory that no longer exists.
-    """
+    # All files fail so partial_dir survives to inspect for leaked .part files.
     source = FakeFileSource(["a.pdf", "b.pdf"], fail_on=["a.pdf", "b.pdf"])
 
     assert ariba_files.capture_files(source, "5713434353", tmp_path) is None
@@ -211,7 +173,6 @@ def test_a_failed_download_leaves_no_part_file_behind(tmp_path):
 
 
 def test_when_every_file_fails_nothing_is_archived_and_the_partials_are_kept(tmp_path):
-    """No bundle means capture_attachments comes back next run; an empty one would not."""
     source = FakeFileSource(["a.pdf", "b.pdf"], fail_on=["a.pdf", "b.pdf"])
 
     assert ariba_files.capture_files(source, "5713434353", tmp_path) is None
@@ -223,21 +184,6 @@ def test_when_every_file_fails_nothing_is_archived_and_the_partials_are_kept(tmp
 def test_a_run_that_captured_almost_nothing_stays_pending_instead_of_archiving(
     tmp_path,
 ):
-    """A wholesale download failure must not mint a bundle, because a bundle is permanent.
-
-    Measured, not hypothetical: two live #174 runs downloaded 1 of 39 listed documents (the
-    content tree stopped resolving mid-run) and both wrote `Doc<n>.zip` holding that one file.
-    `Doc<n>.zip` existing is what `capture_attachments` reads as "archived" -- so on an
-    unattended nightly the event is closed out at 2% forever, its 38 lost documents described
-    only in a gap record nothing acts on, and Respond dies with the posting so no later run can
-    ever fix it. Both were caught by hand; nothing in the code would have caught either.
-
-    This measures the run against the traversal's OWN listing -- ground truth this module
-    produced -- where a near-total shortfall means the run broke, not that the event is short.
-    Broken runs are worth retrying; short events are not. (An earlier version of this check also
-    compared against the picker's `Total Number`; that comparison was removed in #185 once the
-    first live run proved the two counts incommensurable -- see CLAUDE.md.)
-    """
     source = FakeFileSource(
         ["a.pdf", "b.pdf", "c.pdf", "d.pdf", "e.pdf"],
         fail_on=["b.pdf", "c.pdf", "d.pdf", "e.pdf"],
@@ -250,10 +196,7 @@ def test_a_run_that_captured_almost_nothing_stays_pending_instead_of_archiving(
     )
 
     assert not (tmp_path / "Doc5713434353.zip").exists()
-    # No gap record either: it is the bundle's companion, and one standing alone would claim a
-    # capture happened here.
     assert not (tmp_path / "Doc5713434353.omitted.json").exists()
-    # The one file that DID arrive is kept, so the retry resumes rather than refetching it.
     assert (
         ariba_files.partial_dir(tmp_path, "5713434353") / "files" / "a.pdf"
     ).is_file()
@@ -261,13 +204,6 @@ def test_a_run_that_captured_almost_nothing_stays_pending_instead_of_archiving(
 
 
 def test_a_mostly_successful_capture_is_still_archived_with_its_gap_recorded(tmp_path):
-    """The floor above catches a broken RUN, so it must not catch an ordinary bad file.
-
-    Losing some documents is the expected steady state here -- Ariba 500s, a file goes missing
-    -- and the design's answer is to bundle what arrived and record the rest. If the floor
-    swallowed that case it would convert every routine omission into an event that never
-    archives at all, which is the opposite failure.
-    """
     source = FakeFileSource(["a.pdf", "b.pdf", "c.pdf", "d.pdf"], fail_on=["d.pdf"])
 
     bundle = ariba_files.capture_files(source, "5713434353", tmp_path)
@@ -288,40 +224,32 @@ def test_resume_skips_files_already_complete_on_disk(tmp_path):
 
     bundle = ariba_files.capture_files(source, "5713434353", tmp_path)
 
-    assert source.downloaded == ["b.pdf"]  # a.pdf was NOT re-fetched
+    assert source.downloaded == ["b.pdf"]
     with zipfile.ZipFile(bundle) as zf:
         assert zf.read("a.pdf") == b"already here"
 
 
 def test_a_resume_over_a_part_left_by_a_kill_refetches_it_cleanly(tmp_path):
-    """A `.part` is an interrupted transfer: never complete, and never appended to.
-
-    The adapter here APPENDS to the path it is handed, so a surviving `.part` would make the
-    re-download `HALF` + `WHOLE` and that corruption would become canonical.
-    """
+    # append=True ensures a surviving .part would corrupt b.pdf if not unlinked first.
     source = FakeFileSource(
         ["a.pdf", "b.pdf"], contents={"b.pdf": b"WHOLE"}, append=True
     )
     pdir = ariba_files.partial_dir(tmp_path, "5713434353")
     (pdir / "files").mkdir(parents=True)
-    (pdir / "files" / "a.pdf").write_bytes(b"a.pdf")  # complete
-    (pdir / "files" / "b.pdf.part").write_bytes(b"HALF")  # killed mid-transfer
+    (pdir / "files" / "a.pdf").write_bytes(b"a.pdf")
+    (pdir / "files" / "b.pdf.part").write_bytes(b"HALF")
     ariba_files.write_manifest(pdir, ariba_files.make_fingerprint(source.list_files()))
 
     bundle = ariba_files.capture_files(source, "5713434353", tmp_path)
 
     with zipfile.ZipFile(bundle) as zf:
-        assert sorted(zf.namelist()) == ["a.pdf", "b.pdf"]  # the .part is not a member
-        assert zf.read("b.pdf") == b"WHOLE"  # not b"HALFWHOLE"
+        assert sorted(zf.namelist()) == ["a.pdf", "b.pdf"]
+        assert zf.read("b.pdf") == b"WHOLE"
     assert not (tmp_path / "Doc5713434353.omitted.json").exists()
 
 
 def test_a_changed_event_preserves_old_partials_without_reusing_them(tmp_path):
-    """An addendum landed between runs -- partials describe a different version.
-
-    The stale partial deliberately carries a name the NEW listing also has: a stale file whose
-    name the new listing lacks could never have entered the bundle anyway, so it proves nothing.
-    """
+    # Stale partial shares a name with the new listing to verify it is not reused.
     source = FakeFileSource(["a.pdf", "b.pdf"], contents={"a.pdf": b"FRESH"})
     stale = FakeFileSource(["a.pdf"])
     pdir = ariba_files.partial_dir(tmp_path, "5713434353")
@@ -332,7 +260,7 @@ def test_a_changed_event_preserves_old_partials_without_reusing_them(tmp_path):
     bundle = ariba_files.capture_files(source, "5713434353", tmp_path)
 
     with zipfile.ZipFile(bundle) as zf:
-        assert zf.read("a.pdf") == b"FRESH"  # stale bytes must never satisfy current coverage
+        assert zf.read("a.pdf") == b"FRESH"
         assert any(zf.read(name)==b"STALE" for name in zf.namelist())
 
 
@@ -345,11 +273,7 @@ def test_duplicate_names_across_the_tree_are_both_kept(tmp_path):
         assert sorted(zf.namelist()) == ["dup.pdf", "dup_2.pdf"]
 
 
-# --- C1: a resumed file's identity is the listing's ORDER, not a name multiset -------------
-
-
 def test_the_fingerprint_sees_a_reordered_listing():
-    """Same names, same count, different documents in each position -- a different event."""
     first = [{"key": "X", "name": "report.pdf"}, {"key": "Y", "name": "report.pdf"}]
     second = [{"key": "Y", "name": "report.pdf"}, {"key": "X", "name": "report.pdf"}]
 
@@ -364,7 +288,6 @@ def test_the_fingerprint_sees_a_substituted_identity_behind_an_unchanged_name():
 
 
 def test_the_fingerprint_survives_a_json_round_trip(tmp_path):
-    """It is compared against a manifest READ BACK, so tuples-vs-lists must not diverge."""
     source = FakeFileSource(["a.pdf", "b.pdf"])
     fp = ariba_files.make_fingerprint(source.list_files())
     ariba_files.write_manifest(tmp_path, fp)
@@ -373,14 +296,6 @@ def test_the_fingerprint_survives_a_json_round_trip(tmp_path):
 
 
 def test_a_reordered_listing_with_duplicate_names_does_not_reuse_the_partials(tmp_path):
-    """The archive-corrupting case: two documents named `report.pdf`, captured across a kill.
-
-    Run 1 lists X then Y, saves X as `report.pdf`, and dies. Run 2 lists them the other way
-    round. A fingerprint over a name MULTISET cannot see that, so the partials are kept and
-    `report.pdf` (which now means Y) is skipped as already-complete -- the bundle ends up
-    holding X twice, Y never, and the counts match so no gap is recorded. Silently wrong,
-    permanently.
-    """
     doc = "5713434353"
     contents = {"X": b"DOC-X", "Y": b"DOC-Y"}
     run1 = FakeFileSource(
@@ -397,23 +312,15 @@ def test_a_reordered_listing_with_duplicate_names_does_not_reuse_the_partials(tm
 
     with zipfile.ZipFile(bundle) as zf:
         assert {"report.pdf", "report_2.pdf"}.issubset(zf.namelist())
-        assert zf.read("report.pdf") == b"DOC-Y"  # position 1 is Y this run
+        assert zf.read("report.pdf") == b"DOC-Y"
         assert zf.read("report_2.pdf") == b"DOC-X"
         assert {zf.read(n) for n in zf.namelist()} == {
             b"DOC-X",
             b"DOC-Y",
-        }  # neither lost
-
-
-# --- I2 / I7: the gap record precedes the bundle, and this module owns its own partials ----
+        }
 
 
 def test_the_gap_record_is_written_before_the_bundle(tmp_path, monkeypatch):
-    """A bundle whose gap record failed to land is an event archived with an undescribed gap.
-
-    Writing 787 MB is exactly where ENOSPC happens, and the record whose ABSENCE means
-    "nothing is missing" would be the thing that went missing.
-    """
     source = FakeFileSource(["a.pdf", "bad.pdf"], fail_on=["bad.pdf"])
 
     replace = ariba_files.os.replace
@@ -435,14 +342,10 @@ def test_the_gap_record_is_written_before_the_bundle(tmp_path, monkeypatch):
 
 
 def test_the_partial_directory_is_this_modules_own_namespace(tmp_path):
-    """Not the batched capture's `.partial/`: same path, same manifest name, other schema."""
     pdir = ariba_files.partial_dir(tmp_path, "5713434353")
 
     assert pdir == tmp_path / ".partial-files" / "Doc5713434353"
     assert pdir != tmp_path / ".partial" / "Doc5713434353"
-
-
-# --- M8 / M11: stale records cleared, a 0-byte "success" recorded as the gap it is ---------
 
 
 def test_a_complete_capture_clears_a_stale_gap_record(tmp_path):
@@ -452,7 +355,7 @@ def test_a_complete_capture_clears_a_stale_gap_record(tmp_path):
 
     ariba_files.capture_files(source, "5713434353", tmp_path)
 
-    assert not stale.exists()  # nothing is missing now, and the record must not say so
+    assert not stale.exists()
 
 
 def test_a_zero_byte_download_is_a_failure_not_a_silent_hole(tmp_path):
@@ -468,7 +371,6 @@ def test_a_zero_byte_download_is_a_failure_not_a_silent_hole(tmp_path):
 
 
 def test_a_kill_mid_transfer_is_not_swallowed_as_one_dead_file(tmp_path):
-    """Ctrl-C must abort the run rather than be recorded as an omission -- and leave no .part."""
     source = FakeFileSource(["a.pdf", "b.pdf"], kill_on=["b.pdf"])
 
     with pytest.raises(KeyboardInterrupt):
@@ -476,9 +378,6 @@ def test_a_kill_mid_transfer_is_not_swallowed_as_one_dead_file(tmp_path):
 
     assert list(tmp_path.rglob("*.part")) == []
     assert not (tmp_path / "Doc5713434353.zip").exists()
-
-
-# --- I7b: salvage, for a posting that closed mid-capture -----------------------------------
 
 
 def test_finalise_partial_refuses_an_open_posting(tmp_path):
@@ -499,7 +398,6 @@ def test_finalise_partial_is_none_when_there_is_nothing_to_finalise(tmp_path):
 
 
 def test_finalise_partial_bundles_what_is_on_disk_and_records_the_rest(tmp_path):
-    """Respond dies at close, so the files already downloaded can never be completed."""
     source = FakeFileSource(["a.pdf", "b.pdf", "c.pdf"])
     pdir = ariba_files.partial_dir(tmp_path, "5713434353")
     (pdir / "files").mkdir(parents=True)
@@ -517,7 +415,6 @@ def test_finalise_partial_bundles_what_is_on_disk_and_records_the_rest(tmp_path)
 
 
 def test_finalise_partial_keeps_a_part_file_rather_than_deleting_it(tmp_path):
-    """A truncated transfer is bytes that can never be re-fetched: recorded missing, not erased."""
     source = FakeFileSource(["a.pdf", "b.pdf"])
     pdir = ariba_files.partial_dir(tmp_path, "5713434353")
     (pdir / "files").mkdir(parents=True)
@@ -528,36 +425,23 @@ def test_finalise_partial_keeps_a_part_file_rather_than_deleting_it(tmp_path):
     bundle = ariba_files.finalise_partial("5713434353", tmp_path, posting_open=False)
 
     with zipfile.ZipFile(bundle) as zf:
-        assert zf.namelist() == ["a.pdf"]  # the .part is never a member
+        assert zf.namelist() == ["a.pdf"]
     assert json.loads((tmp_path / "Doc5713434353.omitted.json").read_text())[
         "omitted"
     ] == ["b.pdf"]
     assert (pdir / "files" / "b.pdf.part").exists()
 
 
-# --- F1: an unreadable (missing OR corrupt) manifest must not adopt partials positionally --
-
-
 def test_a_corrupt_manifest_discards_partials_instead_of_trusting_them_positionally(
     tmp_path,
 ):
-    """`files/report.pdf` already holds DOC-X on disk; the manifest is truncated/corrupt.
-
-    Pre-fix, `read_manifest` returning None fell straight through `if manifest and ...`
-    (None is falsy) without discarding anything, so the existing file was trusted
-    POSITIONALLY. This run's listing comes back reordered ([Y, X] instead of [X, Y]), so
-    `report.pdf` is adopted as already-complete for what is now Y's slot, Y's real bytes are
-    never fetched, and `report_2.pdf` downloads X again -- the bundle holds DOC-X twice, DOC-Y
-    never, and the counts match so no gap is recorded. That is the Critical verbatim, reached
-    through the "corrupt" half of `manifest is None` rather than the "missing" half.
-    """
     doc = "5713434353"
     pdir = ariba_files.partial_dir(tmp_path, doc)
     (pdir / "files").mkdir(parents=True)
     (pdir / "files" / "report.pdf").write_bytes(b"DOC-X")
     (pdir / ariba_files.MANIFEST_NAME).write_text(
         "{not valid json"
-    )  # truncated / corrupt
+    )
 
     source = FakeFileSource(
         ["report.pdf", "report.pdf"],
@@ -571,23 +455,12 @@ def test_a_corrupt_manifest_discards_partials_instead_of_trusting_them_positiona
         assert {zf.read(n) for n in zf.namelist()} == {
             b"DOC-X",
             b"DOC-Y",
-        }  # neither lost
-    assert not (tmp_path / f"Doc{doc}.omitted.json").exists()  # nothing missing, no gap
-    assert source.downloaded.count("report.pdf") == 2  # both re-fetched, not adopted
-
-
-# --- F2: the fingerprint's identity guarantee needs keys that are stable and non-positional -
+        }
+    assert not (tmp_path / f"Doc{doc}.omitted.json").exists()
+    assert source.downloaded.count("report.pdf") == 2
 
 
 def test_a_stable_nonsequential_key_reorder_survives_after_an_interrupted_run(tmp_path):
-    """Same shape as the archive-corrupting case, with keys that are not sequential integers.
-
-    `key` only defends the fingerprint if it is stable across traversals and independent of
-    position -- never derived from a file's index in the listing. This pins that contract with
-    arbitrary, non-sequential identifiers rather than "0"/"1", so a regression that silently
-    made key derivation positional again (in `FakeFileSource`'s default, or in a real adapter)
-    could not hide behind keys that merely happen to look like stable strings.
-    """
     doc = "5713434353"
     contents = {"aria-QQ7": b"DOC-Q", "aria-ZZ2": b"DOC-Z"}
     run1 = FakeFileSource(
@@ -609,41 +482,27 @@ def test_a_stable_nonsequential_key_reorder_survives_after_an_interrupted_run(tm
         assert {zf.read(n) for n in zf.namelist()} == {
             b"DOC-Q",
             b"DOC-Z",
-        }  # neither lost
+        }
     assert not (tmp_path / f"Doc{doc}.omitted.json").exists()
 
 
 def test_fake_file_source_default_keys_are_not_positional(tmp_path):
-    """The fake's default (no `keys=` given) must satisfy the same contract real adapters do.
-
-    A file's default key must depend on its NAME, not the index it happens to sit at: two
-    unique names get the same keys regardless of order, and duplicates of the same name get
-    distinct-but-deterministic keys (`name#occurrence`) rather than colliding on a bare index.
-    """
     forward = {
         f["name"]: f["key"] for f in FakeFileSource(["a.pdf", "b.pdf"]).list_files()
     }
     backward = {
         f["name"]: f["key"] for f in FakeFileSource(["b.pdf", "a.pdf"]).list_files()
     }
-    assert forward == backward  # same identity regardless of position in the listing
+    assert forward == backward
 
     dup_keys = [f["key"] for f in FakeFileSource(["dup.pdf", "dup.pdf"]).list_files()]
-    assert len(set(dup_keys)) == 2  # distinct, not both "dup.pdf" nor a bare index
-    assert dup_keys != ["0", "1"]  # not the old positional default
-
-
-# --- Minor 3: the stale-record unlink must run AFTER the bundle, never before ---------------
+    assert len(set(dup_keys)) == 2
+    assert dup_keys != ["0", "1"]
 
 
 def test_a_stale_gap_record_survives_if_the_bundle_write_then_fails(
     tmp_path, monkeypatch
 ):
-    """A previous run left a real gap recorded. This run has nothing missing, but the bundle
-    write itself then fails, so `Doc<n>.zip` never lands. If the stale record were cleared up
-    front (before `build_bundle` even runs) "absence means nothing is missing" becomes false:
-    no bundle stands, and now nothing describes why.
-    """
     stale = tmp_path / "Doc5713434353.omitted.json"
     stale.write_text(json.dumps({"omitted": ["gone.pdf"]}))
     source = FakeFileSource(["a.pdf"])
@@ -656,14 +515,13 @@ def test_a_stale_gap_record_survives_if_the_bundle_write_then_fails(
     with pytest.raises(OSError):
         ariba_files.capture_files(source, "5713434353", tmp_path)
 
-    assert stale.exists()  # not cleared -- no bundle landed
+    assert stale.exists()
     assert not (tmp_path / "Doc5713434353.zip").exists()
 
 
 def test_finalise_partial_keeps_a_stale_gap_record_if_the_bundle_write_then_fails(
     tmp_path, monkeypatch
 ):
-    """`finalise_partial` has the same shape as `capture_files` here -- see the test above."""
     stale = tmp_path / "Doc5713434353.omitted.json"
     stale.write_text(json.dumps({"omitted": ["gone.pdf"]}))
     source = FakeFileSource(["a.pdf"])
@@ -684,11 +542,7 @@ def test_finalise_partial_keeps_a_stale_gap_record_if_the_bundle_write_then_fail
     assert not (tmp_path / "Doc5713434353.zip").exists()
 
 
-# --- Minor 5: a gap must name a duplicate by its disambiguated zip name, not a bare label ---
-
-
 def test_omitted_names_a_duplicate_by_its_disambiguated_zip_name(tmp_path):
-    """Two `report.pdf`s, one fails -- the gap record must say WHICH one, not just the label."""
     source = FakeFileSource(
         ["report.pdf", "report.pdf"], keys=["A", "B"], fail_on=["B"]
     )
@@ -698,7 +552,7 @@ def test_omitted_names_a_duplicate_by_its_disambiguated_zip_name(tmp_path):
     with zipfile.ZipFile(bundle) as zf:
         assert zf.namelist() == ["report.pdf"]
     body = json.loads((tmp_path / "Doc5713434353.omitted.json").read_text())
-    assert body["omitted"] == ["report_2.pdf"]  # not the ambiguous "report.pdf"
+    assert body["omitted"] == ["report_2.pdf"]
 
 
 def test_finalise_partial_names_a_duplicate_omission_by_its_disambiguated_zip_name(
@@ -707,7 +561,7 @@ def test_finalise_partial_names_a_duplicate_omission_by_its_disambiguated_zip_na
     source = FakeFileSource(["report.pdf", "report.pdf"], keys=["A", "B"])
     pdir = ariba_files.partial_dir(tmp_path, "5713434353")
     (pdir / "files").mkdir(parents=True)
-    (pdir / "files" / "report.pdf").write_bytes(b"AAA")  # only the first is on disk
+    (pdir / "files" / "report.pdf").write_bytes(b"AAA")
     ariba_files.write_manifest(pdir, ariba_files.make_fingerprint(source.list_files()))
 
     bundle = ariba_files.finalise_partial("5713434353", tmp_path, posting_open=False)
@@ -719,12 +573,6 @@ def test_finalise_partial_names_a_duplicate_omission_by_its_disambiguated_zip_na
 
 
 def test_finalise_partial_salvages_files_a_lost_manifest_cannot_name(tmp_path):
-    """No manifest means no planned list -- but the bytes are still unrepeatable.
-
-    Nothing was "planned" to compare against, so there is nothing to name as missing: `omitted`
-    comes out empty and no gap record is written at all -- there is no longer a picker count to
-    fall back on either (#185), and it was never a reliable signal for this case regardless.
-    """
     pdir = ariba_files.partial_dir(tmp_path, "5713434353")
     (pdir / "files").mkdir(parents=True)
     (pdir / "files" / "a.pdf").write_bytes(b"aaa")
@@ -737,23 +585,11 @@ def test_finalise_partial_salvages_files_a_lost_manifest_cannot_name(tmp_path):
     assert not (tmp_path / "Doc5713434353.omitted.json").exists()
 
 
-# --- the pure decisions the Playwright adapter used to make itself (#174) ------------------
-#
-# Three decisions lived inside `AribaFileSource`, which is untestable by convention: which
-# anchor labels name a document, how a listed file is IDENTIFIED, and which repeats are
-# duplicates. Two of them are what the archive's integrity rests on -- a positional identity
-# reproduces the corruption `make_fingerprint` exists to catch, and a name-keyed one cannot
-# address the right document at all. They live here now, and these are the tests that pin them.
-
-
 class TestIsDocumentName:
-    """The filename predicate. A silent reject is a document missing from the archive."""
-
     def test_a_plain_filename_is_a_document(self):
         assert ariba_files.is_document_name("Addendum 1.pdf")
 
     def test_trailing_metadata_does_not_hide_the_extension(self):
-        """The `$`-anchored pattern this replaces skipped every row rendering its own size."""
         assert ariba_files.is_document_name("Appendix C2 - Drawings.pdf (1.2 MB)")
         assert ariba_files.is_document_name("site.dwg   4,102 KB")
 
@@ -813,9 +649,6 @@ class TestIsDocumentName:
 
 
 class TestAnchorKey:
-    """Identity, and the one property that matters: it is a fact about the document's place in
-    the tree, never about when the traversal reached it."""
-
     def test_a_row_that_leads_with_an_outline_number_keys_on_it(self):
         key = ariba_files.anchor_key(
             {
@@ -827,9 +660,6 @@ class TestAnchorKey:
         assert key.startswith("3.1#")
 
     def test_a_row_with_no_outline_number_keys_on_its_own_text(self):
-        """The References sub-rows -- where the brief says the bulk of the files live -- are
-        their own `<tr>` and carry no outline number. The old fallback was an empty prefix plus
-        a traversal-order counter, i.e. positional."""
         key = ariba_files.anchor_key(
             {"row": "Addendum 1.pdf 2.1 MB", "name": "Addendum 1.pdf", "ordinal": 0}
         )
@@ -868,14 +698,7 @@ class TestAnchorKey:
     def test_the_key_does_NOT_survive_the_menu_reparenting_which_is_why_it_is_not_clicked_on(
         self,
     ):
-        """Pins the measured #174 failure so the two halves are never re-merged.
-
-        The key is durable ACROSS runs -- every run traverses before it downloads, and the tree
-        is pristine then. It is not durable WITHIN one: downloading a single file re-parents the
-        menu containers, `closest('tr')` starts resolving to the real row, and the ordinal shifts
-        as that row's own link joins the count. 36 of 39 keys changed at once. So re-finding an
-        element to click must go through the DOM id and `pick_unclaimed`, never through this.
-        """
+        # AribaWeb reparents menu containers after the first click, shifting closest('tr') and ordinal.
         blob = (
             "Reference Documents Attachment 1 Field Services Manual Appendix E.zip "
             "Attachment 2 Arborist Report.zip Attachment 3 Tree"
@@ -894,9 +717,6 @@ class TestAnchorKey:
 
 
 class TestHandleAndUnclaimed:
-    """Mid-run resolution: the DOM id first, a name among unclaimed anchors as the last resort.
-    Neither may reach `make_fingerprint` -- AribaWeb re-mints ids per session."""
-
     def test_the_dom_id_rides_along_as_a_handle(self):
         files = ariba_files.listing_from_anchors(
             [{"name": "a.pdf", "row": "1.1 x", "ordinal": 0, "id": "_obgqjc"}]
@@ -904,8 +724,6 @@ class TestHandleAndUnclaimed:
         assert files[0]["handle"] == "_obgqjc"
 
     def test_a_respawned_id_does_not_change_the_fingerprint(self):
-        """A fingerprint carrying a per-session id would differ on every run and discard the
-        partials every time -- resume would never once work."""
         first = ariba_files.listing_from_anchors(
             [{"name": "a.pdf", "row": "1.1 x", "ordinal": 0, "id": "_obgqjc"}]
         )["files"]
@@ -936,9 +754,6 @@ class TestHandleAndUnclaimed:
     def test_a_claimed_anchor_is_skipped_so_a_duplicate_name_cannot_refetch_the_first(
         self,
     ):
-        """Without this, two same-named documents both resolve to the first link: the same bytes
-        land twice under two names, the second document is never fetched, counts match and no
-        gap is recorded -- on a single clean run."""
         anchors = [
             {"name": "report.pdf", "id": "_1"},
             {"name": "report.pdf", "id": "_2"},
@@ -963,9 +778,6 @@ class TestHandleAndUnclaimed:
         )
 
     def test_a_popup_menu_item_is_recognised_by_any_of_the_three_markers(self):
-        """Measured live: 36 of this event's 39 documents are PMI menu items and only 3 are PML
-        tree links. Clicking a PMI downloads directly; the code opened a menu that does not
-        exist for them and waited for a control that never appears, failing all 36."""
         for anchor in ({"role": "menuitem"}, {"bh": "PMI"}, {"cls": "w-pmi-item rr"}):
             assert ariba_files.anchor_kind(anchor) == ariba_files.MENU_ITEM, anchor
 
@@ -976,9 +788,6 @@ class TestHandleAndUnclaimed:
         )
 
     def test_an_unrecognised_anchor_defaults_to_the_self_checking_path(self):
-        """TREE_LINK opens a menu and checks what it got, so a misclassification there fails
-        loudly. Defaulting to MENU_ITEM would click an arbitrary link and keep whatever came
-        back, which in an archive nobody can re-fetch is the worse direction."""
         assert ariba_files.anchor_kind({}) == ariba_files.TREE_LINK
 
     def test_the_listing_carries_the_kind(self):
@@ -1006,17 +815,12 @@ class TestHandleAndUnclaimed:
         ]
 
     def test_an_id_less_anchor_is_matchable_but_never_counts_as_claimed(self):
-        """`claimed` holds ids; an anchor with no id cannot be excluded by one, and must not be
-        excluded by the empty string either or every id-less document would be unreachable."""
         anchors = [{"name": "a.pdf", "id": ""}]
         assert ariba_files.pick_unclaimed(anchors, "a.pdf", {""}) is not None
 
 
 class TestListingFromAnchors:
-    """One DOM read -> the listing. Rejects and collapses are RETURNED, never swallowed."""
-
     def test_it_keeps_both_of_two_same_named_files_in_one_row(self):
-        """The `(name, row)` dedupe dropped the second one with no log and no count."""
         result = ariba_files.listing_from_anchors(
             [
                 {"row": "3.1 Parts", "name": "report.pdf", "ordinal": 0},
@@ -1038,14 +842,11 @@ class TestListingFromAnchors:
         assert result["rejected"] == ["References"]
 
     def test_a_second_reading_of_the_same_anchor_is_one_file(self):
-        """Traversal re-reads the whole DOM on every scroll pass."""
         anchor = {"row": "3.1 Parts", "name": "a.pdf", "ordinal": 0}
         result = ariba_files.listing_from_anchors([dict(anchor), dict(anchor)])
         assert len(result["files"]) == 1
 
     def test_an_indistinguishable_duplicate_is_reported_not_silently_dropped(self):
-        """Two rows whose flattened text is identical: we cannot tell them apart, so the
-        collapse is recorded rather than left as a hole nothing mentions."""
         anchor = {"row": "Attachments a.pdf", "name": "a.pdf", "ordinal": 0}
         result = ariba_files.listing_from_anchors([dict(anchor), dict(anchor)])
         assert len(result["files"]) == 1
@@ -1060,9 +861,6 @@ class TestListingFromAnchors:
         assert result["files"][0]["ordinal"] == 2
 
     def test_no_key_encodes_the_listing_position(self):
-        """The exact Critical: with a positional key the ordered (key, name) pairs come out
-        byte-identical after a reorder, so a resumed run adopts the partials POSITIONALLY --
-        one document stored twice, another lost, counts matching, no gap recorded."""
         anchors = [
             {"row": "3.1 Part A", "name": "report.pdf", "ordinal": 0},
             {"row": "4.2 Part B", "name": "report.pdf", "ordinal": 0},
@@ -1084,10 +882,6 @@ class TestListingFromAnchors:
 
 
 class TestIsOutlineRow:
-    """A positive marker that the content tree, not some other page, is in front of us
-    (#174 M4) -- an outline-numbered row is the tree's own row addressing and nothing else
-    on the event's pages looks like it."""
-
     def test_a_row_leading_with_an_outline_number_is_true(self):
         assert ariba_files.is_outline_row("3.1 Drawings Package plan.dwg 787.7 MB")
 
@@ -1100,8 +894,6 @@ class TestIsOutlineRow:
 
 
 class TestOrderListing:
-    """The bundle's order must be a property of the tree, not of where a sweep started."""
-
     def test_outline_rows_sort_numerically_not_as_strings(self):
         files = ariba_files.listing_from_anchors(
             [
@@ -1155,9 +947,6 @@ class TestOrderListing:
         assert forward == reverse
 
 
-# --- Low: a dropped collision is greppable in the durable record, not just the log (#174) --
-
-
 def test_write_omitted_records_a_collided_count(tmp_path):
     path = ariba_files.write_omitted(tmp_path / "Doc1.zip", [], collided=1)
 
@@ -1173,7 +962,6 @@ def test_write_omitted_is_still_a_noop_when_nothing_is_missing_or_collided(tmp_p
 def test_clear_omitted_when_complete_keeps_a_record_a_collision_still_explains(
     tmp_path,
 ):
-    """Counts matching is not evidence nothing is wrong when a collision was dropped."""
     stale = (tmp_path / "Doc1.zip").with_suffix(".omitted.json")
     stale.write_text(json.dumps({"omitted": [], "collided": 1}))
 
@@ -1194,10 +982,6 @@ def test_clear_omitted_when_complete_still_clears_a_clean_stale_record(tmp_path)
 def test_capture_files_folds_a_collided_count_from_the_source_into_the_omitted_record(
     tmp_path,
 ):
-    """`list_files` can drop a collision (two rows read as identical, #174) that never shows
-    up in `omitted` -- so it must reach the durable record on its own terms, not only through
-    the traversal's log."""
-
     class SourceWithCollisions(FakeFileSource):
         def collided_count(self):
             return 2
@@ -1213,9 +997,6 @@ def test_capture_files_folds_a_collided_count_from_the_source_into_the_omitted_r
 def test_capture_files_defaults_collided_to_zero_for_a_source_without_the_method(
     tmp_path,
 ):
-    """The FileSource protocol's other method (`download`) must not gain a hard new
-    requirement -- `collided_count` is read defensively, so a source that lacks it is just
-    uncounted, not broken."""
     source = FakeFileSource(["a.pdf", "bad.pdf"], fail_on=["bad.pdf"])
 
     ariba_files.capture_files(source, "5713434353", tmp_path)
@@ -1224,19 +1005,13 @@ def test_capture_files_defaults_collided_to_zero_for_a_source_without_the_method
     assert body.get("collided", 0) == 0
 
 
-# --- #199: refuse to shrink a bundle that already exists on disk --------
-
-
 def test_recapture_with_fewer_files_preserves_withdrawn_files(tmp_path):
-    """A re-capture that would lose documents must not overwrite the existing bundle."""
-    # First capture: 3 files → bundle exists on disk
     ariba_files.capture_files(
         FakeFileSource(["a.pdf", "b.pdf", "c.pdf"]), "5713434353", tmp_path
     )
     target = tmp_path / "Doc5713434353.zip"
     assert target.exists()
 
-    # A shorter listing must retain withdrawn historical bytes.
     messages = []
     result = ariba_files.capture_files(
         FakeFileSource(["a.pdf", "b.pdf"]),
@@ -1252,13 +1027,11 @@ def test_recapture_with_fewer_files_preserves_withdrawn_files(tmp_path):
 
 
 def test_recapture_with_equal_or_more_files_proceeds(tmp_path):
-    """A re-capture with at least as many files should overwrite normally."""
     source_small = FakeFileSource(["a.pdf", "b.pdf"])
     ariba_files.capture_files(source_small, "5713434353", tmp_path)
     target = tmp_path / "Doc5713434353.zip"
     assert target.exists()
 
-    # Re-capture with MORE files — should proceed
     source_bigger = FakeFileSource(["a.pdf", "b.pdf", "c.pdf"])
     result = ariba_files.capture_files(source_bigger, "5713434353", tmp_path)
 
@@ -1268,15 +1041,12 @@ def test_recapture_with_equal_or_more_files_proceeds(tmp_path):
 
 
 def test_first_capture_has_no_shrink_check(tmp_path):
-    """When no bundle exists yet, the guard must not fire — there is nothing to compare against."""
     source = FakeFileSource(["a.pdf"])
     result = ariba_files.capture_files(source, "5713434353", tmp_path)
     assert result == tmp_path / "Doc5713434353.zip"
 
 
 def test_version_merge_keeps_nested_historical_leaves(tmp_path):
-    """Three outer entries can hide a reduction from four held leaves to three."""
-    # Build a bundle with 3 top-level entries, one of which is a nested zip
     inner_zip = tmp_path / "inner.zip"
     with zipfile.ZipFile(inner_zip, "w") as zf:
         zf.writestr("nested_a.pdf", "aaa")
@@ -1323,7 +1093,6 @@ def test_recapture_with_fewer_outer_entries_but_equal_or_more_leaves_proceeds(tm
 
 
 def test_preservation_guard_keeps_partials_on_failure(tmp_path, monkeypatch):
-    """On refusal, partials remain on disk for a future retry."""
     ariba_files.capture_files(
         FakeFileSource(["a.pdf", "b.pdf", "c.pdf"]), "5713434353", tmp_path
     )

@@ -1,9 +1,4 @@
-"""Committee/Council award discovery and download (#164).
-
-The awards too large for the CPO go to a Standing Committee or Council. The route is
-voting-record CSV -> agenda-item page (headed browser) -> staff-report PDF -> bid table.
-Parsing is handled by LLM extraction (#205).
-"""
+"""Standing Committee / Council award discovery (voting-record CSV -> TMMIS page -> PDF)."""
 
 import csv
 import hashlib
@@ -26,7 +21,7 @@ _DOC = re.compile(
 
 
 def award_doc_number(title):
-    """The 10-digit document number an award item names, else None."""
+    """Extract a 10-digit document number from an award item title, or None."""
     if not title:
         return None
     m = _DOC.search(title)
@@ -34,7 +29,7 @@ def award_doc_number(title):
 
 
 def award_items_from_voting_record(csv_text):
-    """Distinct award items carrying a document number, from one voting-record CSV."""
+    """Return distinct award items with a document number from a voting-record CSV."""
     out = {}
     for row in csv.DictReader(io.StringIO(csv_text)):
         title = row.get("Agenda Item Title") or ""
@@ -54,7 +49,7 @@ def award_items_from_voting_record(csv_text):
 
 
 def fetch_voting_records(http):
-    """The per-term voting-record CSV bodies from CKAN."""
+    """Fetch per-term council voting-record CSVs from CKAN."""
     data = http.get_json(
         config.CKAN_BASE + "package_show",
         params={"id": "members-of-toronto-city-council-voting-record"},
@@ -69,7 +64,7 @@ def fetch_voting_records(http):
 
 
 def report_url_from_item_html(html: str, document_number: str) -> str | None:
-    """The award report PDF URL from a TMMIS agenda-item page."""
+    """Find the award report backgroundfile PDF URL on a TMMIS agenda-item page."""
     root = _html.fromstring(html)
     seen = set()
     candidates = []
@@ -94,7 +89,7 @@ def report_url_from_item_html(html: str, document_number: str) -> str | None:
 def discover_report_urls(
     items, cache_dir, *, virtual_display: bool = False, log=lambda _m: None
 ) -> dict:
-    """Browser-discover each item's award report URL."""
+    """Use headed Chromium to fetch uncached TMMIS item pages and locate report PDF URLs."""
     try:
         from playwright.sync_api import sync_playwright
     except ImportError as exc:
@@ -171,7 +166,7 @@ def _pdftotext(path) -> str | None:
 
 
 def download_committee_reports(conn, http, url_map: dict, log=lambda _m: None) -> int:
-    """Fetch each committee award staff report PDF (plain HTTP) and store it."""
+    """Download and archive uncached committee award staff report PDFs."""
     COMMITTEE_REPORTS_DIR.mkdir(parents=True, exist_ok=True)
     have = {
         r["url"]
@@ -212,7 +207,7 @@ def download_committee_reports(conn, http, url_map: dict, log=lambda _m: None) -
 
 
 def store_committee_bids(conn, log=lambda _m: None, failures=None) -> int:
-    """Extract and backfill bid rows from cached LLM extractions (#205)."""
+    """Extract and backfill bid rows from cached LLM extractions."""
     from toronto_bids.extraction import extract_and_backfill
 
     result = extract_and_backfill(conn, "committee", log=log, failures=failures)

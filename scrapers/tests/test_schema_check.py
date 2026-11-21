@@ -1,8 +1,3 @@
-"""Drift detection for the City's feeds (#10).
-
-The failure being caught: a renamed City field makes every normalizer's .get() return
-None, so the column NULLs out across all rows and the run still reports success.
-"""
 import json
 
 import pytest
@@ -10,8 +5,6 @@ import pytest
 from toronto_bids import config, pipeline
 from toronto_bids.sources.schema_check import SchemaCheckSource, missing_fields
 
-# One record per feed, shaped like the real thing. Only the
-# fields the normalizers read plus a little noise — the real feeds carry ~63.
 ODATA_SOLICITATION = {
     "Solicitation_Document_Number": "3303123110", "Status": "Awarded",
     "Solicitation_Document_Type": "RFQ", "Solicitation_Form_Type": "Goods",
@@ -66,13 +59,6 @@ CKAN_PIPELINE = {
 
 
 class FakeHttp:
-    """Serves each feed, matching the real request/response shapes in odata.py and ckan.py.
-
-    Each feed takes a dict (one record), a list (several — the OData feeds are sampled),
-    or {} / [] for a feed that returns nothing. Pages honestly, so fetch_entityset's
-    $skip loop and fetch_datastore's offset loop actually terminate.
-    """
-
     def __init__(self, solicitation=None, noncomp=None, awarded=None, open_=None,
                  ckan_noncomp=None, pipeline_=None):
         def page(value, default):
@@ -90,7 +76,7 @@ class FakeHttp:
 
     def get_json(self, url, params=None):
         params = params or {}
-        if "package_show" in url:  # CKAN slug -> resource id; slug round-trips as the id
+        if "package_show" in url:
             return {"result": {"resources": [{"datastore_active": True, "id": params["id"]}]}}
         if "datastore_search" in url:
             key = {config.CKAN_AWARDED_SLUG: "awarded",
@@ -109,12 +95,12 @@ def _run():
 
 
 def test_passes_when_every_feed_still_has_the_fields_we_read():
-    assert list(_run()) == []  # no drift, no rows
+    assert list(_run()) == []
 
 
 def test_detects_a_renamed_odata_field():
     drifted = {**ODATA_SOLICITATION}
-    drifted["Posting_Title_v2"] = drifted.pop("Posting_Title")  # the City renames a field
+    drifted["Posting_Title_v2"] = drifted.pop("Posting_Title")
     with pytest.raises(ValueError, match="Posting_Title"):
         SchemaCheckSource().fetch(FakeHttp(solicitation=drifted))
 
@@ -138,14 +124,11 @@ def test_checks_ckan_award_fields_after_empty_records_and_valid_entries():
 
 def test_detects_drift_in_the_nested_supplier_dict():
     drifted = {**ODATA_SOLICITATION, "Awarded_Suppliers": [{"Bidder": "Acme"}]}
-    # match the nested field, not "Awarded_Suppliers" — that also matches the top-level message
     with pytest.raises(ValueError, match="Successful_Bidder"):
         SchemaCheckSource().fetch(FakeHttp(solicitation=drifted))
 
 
 def test_nested_check_looks_past_records_that_have_no_supplier_yet():
-    """The live feed's record #1 has no Awarded_Suppliers (it isn't awarded yet), so a
-    check that only sampled record #1 would silently verify none of the nested fields."""
     not_awarded = {**ODATA_SOLICITATION, "Awarded_Suppliers": []}
     drifted_award = {**ODATA_SOLICITATION, "Awarded_Suppliers": [{"Bidder": "Acme"}]}
     with pytest.raises(ValueError, match="Successful_Bidder"):
@@ -153,7 +136,6 @@ def test_nested_check_looks_past_records_that_have_no_supplier_yet():
 
 
 def test_reports_when_no_sampled_record_has_a_supplier_to_check():
-    # Can't verify != verified. Silence here would hide the nested fields forever.
     not_awarded = {**ODATA_SOLICITATION, "Awarded_Suppliers": []}
     with pytest.raises(ValueError, match="went unchecked"):
         SchemaCheckSource().fetch(FakeHttp(solicitation=[not_awarded]))
@@ -173,16 +155,11 @@ def test_detects_a_feed_that_returns_nothing():
 
 
 def test_declared_schema_matches_what_the_normalizers_actually_read():
-    """The declared fields mirror the normalizers' .get("...") calls by hand. This fails
-    when the two diverge — otherwise someone adds raw.get("New_Field"), forgets to declare
-    it, and drift in that field silently stops being detected: #10's bug, quietly restored.
-    """
     import ast
     import pathlib
 
     from toronto_bids.sources import schema_check
 
-    # (module, normalizer) -> the feed whose declared fields that normalizer reads.
     reads = {
         ("odata.py", "normalize_solicitation"): "odata_solicitations",
         ("odata.py", "normalize_noncompetitive"): "odata_noncompetitive",
@@ -195,8 +172,7 @@ def test_declared_schema_matches_what_the_normalizers_actually_read():
         tree = ast.parse((src_dir / module).read_text())
         functions = {n.name:n for n in tree.body if isinstance(n,ast.FunctionDef)}
         pending,visited,actually_read = [func_name],set(),set()
-        # Follow local helpers too: moving a field read into identity_record must
-        # not hide a newly used publisher field from the drift contract.
+        # Walk local helper functions so delegated .get() calls stay covered.
         while pending:
             name=pending.pop()
             if name in visited:continue
@@ -224,7 +200,6 @@ def test_declared_schema_matches_what_the_normalizers_actually_read():
 
 
 def test_unused_extra_fields_are_not_drift():
-    # The City adding a field is not a problem; only losing one we read is.
     assert missing_fields("f", {"a": 1, "b": 2, "new": 3}, {"a", "b"}) == []
 
 
@@ -233,7 +208,6 @@ def test_schema_check_runs_in_the_default_pipeline():
 
 
 def test_drift_is_isolated_and_surfaced_not_swallowed(conn):
-    """Drift must fail loudly (#18) yet never stop the other sources ingesting (#10)."""
     from tests.test_pipeline import FakeSource
     from toronto_bids.models import Solicitation
     from toronto_bids.store import db
@@ -242,13 +216,12 @@ def test_drift_is_isolated_and_surfaced_not_swallowed(conn):
     real_data = FakeSource("odata_solicitations", [Solicitation("3303123110", source="odata")])
     failures = pipeline.sync(conn, http=FakeHttp(solicitation=drifted),
                              sources=[SchemaCheckSource(), real_data])
-    assert [name for name, _ in failures] == ["schema_check"]  # surfaced to the CLI
+    assert [name for name, _ in failures] == ["schema_check"]
     assert "Status" in failures[0][1]
-    assert db.counts(conn)["solicitation"] == 1  # ingestion continued anyway
+    assert db.counts(conn)["solicitation"] == 1
 
 
 def test_detects_a_renamed_pipeline_column():
-    """The forward-looking feed is guarded like every other (#69)."""
     drifted = {**CKAN_PIPELINE}
     drifted["Project Name"] = drifted.pop("Name and Construction Contract Number")
     with pytest.raises(ValueError, match="Name and Construction Contract Number"):
@@ -256,7 +229,6 @@ def test_detects_a_renamed_pipeline_column():
 
 
 def test_every_declared_ckan_feed_has_a_source_that_reads_it():
-    """A declared feed with no source, or a source with no declaration, is a bug either way."""
     from toronto_bids.sources.schema_check import _CKAN
 
     slugs_declared = {slug for slug, _fields in _CKAN.values()}

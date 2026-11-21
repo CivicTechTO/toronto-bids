@@ -1,9 +1,4 @@
-"""Replay committed, source-reviewed City cache projections; no extraction or discovery.
-
-Every projection binds the whole source and extraction context. Historical native-call
-identities use the existing crosswalk gate; a modern Doc must identify the actual event,
-not an earlier qualification. Literal table/row quotations retain the review evidence.
-"""
+"""Validate and replay committed source-reviewed City bid projections."""
 import hashlib
 import json
 from pathlib import Path
@@ -30,7 +25,7 @@ def _fail(proof,reason):
 
 
 def reviewed_context(conn,proof,historical,*,previously_approved=False):
-    """Validate shared source/cache/identity context for scalar and scoped reviews."""
+    """Validate source PDF, extraction cache, and identity context for a reviewed proof."""
     item=conn.execute('SELECT title FROM council_item WHERE reference=?',(proof['reference'],)).fetchone()
     if not item or item['title']!=proof['agenda_title']:_fail(proof,'council title missing/changed')
     row=conn.execute('SELECT b.*,e.result_json FROM background_pdf b LEFT JOIN extraction_cache e '
@@ -46,8 +41,7 @@ def reviewed_context(conn,proof,historical,*,previously_approved=False):
         _fail(proof,'held report/text/cache missing or changed')
     path=Path(row['local_path']) if row['local_path'] else None
     if path is None or not path.exists():
-        # Old captures can retain a workstation path after the archive moves.
-        # A conventional local file is usable only if its bytes match the pinned hash.
+        # Fall back to DATA_DIR/documents/council when stored local_path moved; hash is verified below.
         path=config.DATA_DIR/'documents'/'council'/Path(proof['report_url']).name
     if path is not None and path.exists():
         if hashlib.sha256(path.read_bytes()).hexdigest()!=proof['report_sha256']:_fail(proof,'held PDF bytes changed')
@@ -172,11 +166,7 @@ def persist_evidence(conn,reviews):
 
 
 def replay_reviewed_bids(conn,*,registry=None):
-    """Validate the entire applicable inventory, then replay only its reviewed source scopes.
-
-    The caller owns commit. A savepoint keeps all projections/evidence atomic; canonical
-    resolution wraps this in its own transaction, so a later identity conflict also rolls back.
-    """
+    """Validate and atomically replay reviewed City bid rows and evidence (caller owns commit)."""
     reviews=reviewed_reports(conn,registry=registry)
     if not reviews:return 0
     conn.execute('SAVEPOINT reviewed_city_bids')

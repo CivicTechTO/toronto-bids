@@ -1,12 +1,4 @@
-"""Reviewed source relationships for agency identities, separate from extraction (#258).
-
-Evidence binds a buyer, held document, extraction version and exact contract payload.
-Unmatched legacy decisions retain their existing identity rules. Explicit reviewed
-source contexts require re-review when they change. This registry does not infer matches from
-names, titles, amounts, document positions or digit substrings. Reviewed TTC
-decisions may also withhold unproven tax/compliance fields from derived bids;
-prices, supplier names and the original extraction remain unchanged.
-"""
+"""Validate and apply committed source-reviewed agency identity decisions."""
 import hashlib
 import json
 import re
@@ -125,12 +117,9 @@ def _evidence():
 
 
 def reviewed_identity(corpus, document_sha256, contract, *, report_url=None, contract_count=None, contract_index=None, result_sha256=None):
-    """Resolve exact reviewed facts; changed bound contexts require fresh review.
+    """Return the matching reviewed identity decision, or raise IdentityReviewRequired if bound context changed.
 
-    Legacy decisions retain their unmatched-reference policy. New explicit agency
-    contexts also bind result digest and contract index, even without date edits. TTC decisions
-    explicitly bind the held URL and collection count so an administrative footer
-    cannot reappear as the identity after a payload/version/source change.
+    TTC and explicit agency reviews also bind report_url, contract_count, contract_index, and result_sha256.
     """
     try:
         evidence = _evidence()
@@ -157,11 +146,7 @@ def reviewed_identity(corpus, document_sha256, contract, *, report_url=None, con
 
 
 def validate_representatives(corpus,rows):
-    """Keep Zoo historical confirmations out of fact tables only while originals derive.
-
-    Availability is checked before the caller rebuilds anything. A changed or absent
-    original cannot turn duplicate withholding into loss of the priced award.
-    """
+    """Verify Zoo historical duplicate-withholding reviews still have intact primary award sources."""
     try:
         evidence=_evidence()
     except ValueError as exc:
@@ -199,12 +184,7 @@ def validate_representatives(corpus,rows):
 
 
 def reviewed_bids(contract, evidence):
-    """Derive copies with only explicitly reviewed metadata withheld.
-
-    Call after reviewed_identity has bound the exact raw contract and source context.
-    No price, supplier, rank, participation or raw-cache correction is supported.
-    Guards are checked before the caller swaps any stored facts.
-    """
+    """Return copies of contract bids with explicitly reviewed tax/compliance fields nulled."""
     bids = [dict(bid) for bid in contract.get('bids', [])]
     for field in (evidence or {}).get('withheld_bid_fields', []):
         index, name = field['bid_index'], field['field']
@@ -215,7 +195,7 @@ def reviewed_bids(contract, evidence):
 
 
 def reviewed_decision_date(contract,evidence):
-    """Use only an explicitly reviewed carried-resolution date; retain raw JSON."""
+    """Return the reviewed decision_date override if present, verifying expected_value."""
     value=contract.get('decision_date')
     review=(evidence or {}).get('decision_date_review')
     if review is not None:
@@ -226,7 +206,7 @@ def reviewed_decision_date(contract,evidence):
 
 
 def history_aliases(decisions):
-    """Only reviewed old representations of facts from the same held report may re-key."""
+    """Extract reviewed legacy_native_ref -> native_ref aliases bound to each report's bids and awards."""
     aliases = []
     for decision in decisions:
         proof = json.loads(decision.get('identity_evidence_json') or 'null')

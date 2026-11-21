@@ -1,4 +1,4 @@
-"""Preserve pre-2019 public Laserfiche minute books, without model extraction (#224)."""
+"""Archive pre-2019 public TRCA Laserfiche minute-book PDFs (outside LLM extraction)."""
 
 import hashlib
 import io
@@ -15,8 +15,8 @@ from toronto_bids.store import db
 
 BASE = "https://laserfiche.trca.ca/WebLink/"
 REPO = "LASERFICHE"
-MINUTE_BOOKS = 1030915  # Public 0335 LIBRARY / Corporate / Minute Books series.
-KIND = "trca_history"  # Deliberately outside the paid extraction corpora.
+MINUTE_BOOKS = 1030915  # Public 0335 LIBRARY / Corporate / Minute Books folder.
+KIND = "trca_history"  # Excluded from LLM extraction corpora.
 PAGE_SIZE = 100
 
 
@@ -30,7 +30,7 @@ def _data(reply):
 
 
 class PublicArchive:
-    """The anonymous UI's HTTP requests, spaced out even while polling exports."""
+    """Rate-limited client for TRCA's anonymous Laserfiche WebLink endpoints."""
 
     def __init__(self, http, interval=1.5):
         self.http = http
@@ -86,8 +86,7 @@ class PublicArchive:
             self._pace()
             blob = self.http.get_bytes(document_url(entry_id))
         else:
-            # Image-only documents have no native file. Use the same single-document
-            # export as Download in the public UI, never a recursive folder export.
+            # Image-only entries require single-document export via ZipEntriesHandler.
             result = self.post("ZipEntriesHandler.aspx/StartExport", {
                 "vdirName": "WebLink", "repoName": REPO, "ids": [entry_id],
                 "key": -1, "watermarkIdx": -1,
@@ -105,9 +104,7 @@ class PublicArchive:
                 result = self.post("ZipEntriesHandler.aspx/CheckExportStatus", {"token": token})
             self._pace()
             exported = self.http.get_bytes(BASE + "ExportJobHandler.aspx/GetExportJob/?token=" + token)
-            # Single scanned documents return PDF directly. Also accept an unambiguous
-            # one-PDF ZIP; folder exports can silently omit descendants, so never use them.
-            # Archive member names never become filesystem paths.
+            # Single-document exports return a PDF directly or a single-PDF ZIP (folder exports can omit descendants).
             if exported.startswith(b"%PDF-"):
                 blob = exported
             else:
@@ -115,7 +112,7 @@ class PublicArchive:
                     files = [info for info in archive.infolist() if not info.is_dir()]
                     if len(files) != 1 or not files[0].filename.lower().endswith(".pdf"):
                         raise ValueError("Single-document export did not contain exactly one PDF")
-                    blob = archive.read(files[0])  # CRC checked by zipfile.
+                    blob = archive.read(files[0])
         if not blob.startswith(b"%PDF-"):
             raise ValueError(f"Entry {entry_id} returned non-PDF bytes")
         return blob
@@ -132,11 +129,9 @@ def _save_json(path, value):
 
 
 def capture_history(conn, http, *, log=print, discover=True, limit=None):
-    """Discover all pre-2019 minute-book descendants; download only unheld PDFs.
+    """Discover pre-2019 minute-book entries and download unheld PDFs (sha256 IS NULL queue).
 
-    Discovery failures are visible, but already indexed downloads still run. Each document
-    commits independently. Native non-PDF attachments remain in the inventory as exclusions.
-    PDF shortcuts are queued too: public export decides whether their targets are accessible.
+    Commits per folder/document; discovery failures do not block already-queued downloads.
     """
     root = config.TRCA_HISTORY_DIR
     root.mkdir(parents=True, exist_ok=True)
@@ -205,8 +200,7 @@ def capture_history(conn, http, *, log=print, discover=True, limit=None):
         failures.extend(prior_inventory.get("failures") or
                         [("discovery", "Incomplete or absent inventory; rerun without --resume")])
 
-    # Reference names do not reliably contain an extension; save the native extension in
-    # inventory, then consult it on --resume. The stable URL is the persistent queue key.
+    # Read native extensions from inventory.json on --resume since reference paths may omit them.
     saved = json.loads(inventory_path.read_text())["entries"] if inventory_path.exists() else []
     extensions = {item["entryId"]: ("" if item["type"] == -1 else item.get("extension") or "")
                   for item in saved}

@@ -1,62 +1,36 @@
 # Deploying the nightly job
 
-Design: [`docs/superpowers/specs/2026-07-17-deployment-design.md`](../docs/superpowers/specs/2026-07-17-deployment-design.md)
+The nightly pipeline runs under user-level systemd. `tb nightly` runs each step in sequence:
 
-User-level systemd. `tb nightly` is a single unified run: sync, award summaries, MERX, Ariba
-attachment capture, agency (Zoo/TRCA/EP) board-report scrapes, council enrichment (monthly,
-gated to the 1st), export, then publish. The browser-driven captures run in-line, isolated the
-same way sources are — a failure in one is recorded and never blocks the rest, and export +
-publish still run.
+`sync -> award summaries -> portal -> bonfire listings -> MERX -> Ariba attachments -> agencies -> waterfront awards -> council (1st of month only) -> supplier rebuild -> export`
 
-The host has no passwordless sudo, and linger is already enabled for the operator, so the only
-privileged steps are installing a handful of apt packages.
+Each step is isolated: a failure in one step is recorded in `sync_run` and does not stop later steps, export, or publishing. The systemd wrapper `deploy/tb-nightly-run.sh` then runs `deploy/publish-data.sh` regardless of `tb nightly`'s exit code, and exits non-zero if either step failed.
 
-## 1. Prerequisites (the only step needing a password)
+Because the host has no passwordless `sudo` and systemd linger is already enabled, only system-package installation requires a password.
+
+## 1. Prerequisites
 
 ```shell
-sudo apt install -y poppler-utils pipx
+sudo apt install -y poppler-utils pipx xvfb zip
 pipx install uv
 ```
 
-`poppler-utils` is required: `download_pdf` shells out to `pdftotext`, and a missing binary
-raises `FileNotFoundError` per form — `download_award_summaries` catches it, logs `skipped`,
-never writes the row, and therefore **re-downloads the same form on every run, forever**.
+- `poppler-utils` provides `pdftotext` (required for PDF downloads; without it, `download_award_summaries` logs `skipped`, never records the row, and re-downloads the same files on every run).
+- `pipx` installs `uv` from distro packages instead of piping a remote shell script.
+- `xvfb` and `zip` are needed for headed-Chromium captures (Ariba attachments, agency board reports, council enrichment) and building `council-agendas.zip`.
 
-`pipx` rather than uv's `curl … | sh` installer: distro packages over piping a remote script
-into a shell.
-
-### Browser prerequisites (now required — the nightly drives a headed browser)
-
-`tb enrich-ariba-attachments --capture` (#117) archives the solicitation documents behind
-Ariba's Respond gate, and the agency board-report scrapes (#135) share the same headed-Chromium
-prober. Both now run in-line inside `tb nightly`, so their prerequisites are required, not
-optional:
+Install the browser binary and its shared libraries:
 
 ```shell
-# 1. Xvfb + Chromium's system libraries, and zip (the publish step builds
-#    council-agendas.zip) — the privileged step
-sudo apt install -y xvfb zip
 cd ~/toronto-bids/scrapers
-uv sync --locked                        # playwright + pyvirtualdisplay + python-dotenv are base deps now
-uv run playwright install chromium      # the browser binary (~150MB, non-privileged)
-sudo .venv/bin/python -m playwright install-deps chromium   # its shared libs (needs root)
-
-# 2. Ariba credentials, appended to the same 0600 env file as the Slack webhook (see §3 below).
-#    The account must NOT have MFA — an unattended login cannot answer a challenge.
-# `read -r "U?prompt"` is bash-only and fails in zsh ("no coprocess"); prompt separately so
-# this works in either shell.
-umask 077
-printf 'ARIBA_USERNAME: '; read -r U
-printf 'ARIBA_PASSWORD: '; read -rs P; echo
-printf 'ARIBA_USERNAME=%s\nARIBA_PASSWORD=%s\n' "$U" "$P" >> ~/.config/toronto-bids/tb.env
-unset U P; chmod 600 ~/.config/toronto-bids/tb.env
+uv sync --locked
+uv run playwright install chromium
+sudo .venv/bin/python -m playwright install-deps chromium
 ```
 
-The Ariba capture's first run is a full sweep (~1-2h, ~44 open events); later runs are fast (a
-bundle already on disk is skipped). Respond is disabled once a posting closes, so the capture
-only reaches currently-open solicitations — this is why it runs nightly, not once.
+`playwright`, `pyvirtualdisplay`, and `python-dotenv` are base dependencies installed by `uv sync --locked`.
 
-## 2. Code
+## 2. Clone and verify
 
 ```shell
 git clone https://github.com/CivicTechTO/toronto-bids.git ~/toronto-bids
@@ -64,9 +38,11 @@ cd ~/toronto-bids/scrapers && uv sync --locked
 uv run tb --version
 ```
 
-## 3. Credentials — the Slack webhook, the publish token and the extraction key
+## 3. Credentials
 
-The repo is public. All of these are credentials and live only here, mode `0600`:
+This repository is public. Store all secrets in `~/.config/toronto-bids/tb.env` with mode `0600` (see `scrapers/.env.example` for local variable names).
+
+### Slack webhook (optional)
 
 ```shell
 mkdir -p ~/.config/toronto-bids
@@ -75,96 +51,68 @@ read -rs W && printf 'TB_SLACK_WEBHOOK=%s\n' "$W" > ~/.config/toronto-bids/tb.en
 chmod 600 ~/.config/toronto-bids/tb.env
 ```
 
-Unset the webhook and `tb nightly` still runs — it just posts nothing.
+If `TB_SLACK_WEBHOOK` is unset, `tb nightly` and `publish-data.sh` run normally without posting to Slack.
 
-**Publishing** (see **Publishing the export**, below) needs `gh` to be **authenticated** with
-`repo` scope on `CivicTechTO/toronto-bids-data` (release write) and `workflow` scope on
-`CivicTechTO/toronto-bids-frontend` (deploy dispatch). Either works:
+### Ariba supplier account (for attachment capture)
 
-- **A prior `gh auth login` on the box** (check with `gh auth status`) — nothing to add here; or
-- **A `GH_TOKEN`** appended to the same env file, for an unattended service token:
+The account must not have MFA enabled, since unattended logins cannot answer challenges. Prompting separately works in both bash and zsh:
 
-  ```shell
-  read -rs T && printf 'GH_TOKEN=%s\n' "$T" >> ~/.config/toronto-bids/tb.env
-  chmod 600 ~/.config/toronto-bids/tb.env
-  ```
+```shell
+umask 077
+printf 'ARIBA_USERNAME: '; read -r U
+printf 'ARIBA_PASSWORD: '; read -rs P; echo
+printf 'ARIBA_USERNAME=%s\nARIBA_PASSWORD=%s\n' "$U" "$P" >> ~/.config/toronto-bids/tb.env
+unset U P; chmod 600 ~/.config/toronto-bids/tb.env
+```
 
-Unlike the webhook, authentication is **required** for publishing — the nightly's publish step
-fails loudly if `gh auth status` fails (publishing is the deliverable, not a notification).
+The first Ariba capture sweeps all open events (1-2 hours). Later runs skip events already bundled on disk.
 
-### `ANTHROPIC_API_KEY` — direct Claude document extraction
+### GitHub authentication (required for publishing)
 
-Uncached document text goes directly to the Claude Messages API. Use a key in the
-Console organization linked to the subscription's included API credits. Those credits
-apply to direct Claude API usage; OpenRouter billing is separate. Create a dedicated
-scraper workspace and set its spending limit in the Console before unattended use.
-See [Anthropic's subscriber credit guide](https://platform.claude.com/docs/en/about-claude/api-credits-for-subscribers).
+`publish-data.sh` requires `gh` to have `repo` scope on `CivicTechTO/toronto-bids-data` (releases) and `workflow` scope on `CivicTechTO/toronto-bids-frontend` (deploy dispatch). Either log in interactively (`gh auth login`, check with `gh auth status`) or append a service token to `tb.env`:
 
-Set `ANTHROPIC_API_KEY` in `~/.config/toronto-bids/tb.env`, mode `0600`, using a private
-editor or secret manager. Do not paste the key into a ticket, chat or shell history.
-The placeholders in `scrapers/.env.example` read as unset. No key is needed when all
-eligible documents already have cached extraction results. Downloads remain archived
-if extraction fails for a missing key or exhausted budget.
+```shell
+read -rs T && printf 'GH_TOKEN=%s\n' "$T" >> ~/.config/toronto-bids/tb.env
+chmod 600 ~/.config/toronto-bids/tb.env
+```
 
-The default is `TB_LLM_PROVIDER=anthropic`, `TB_CLAUDE_MODEL=claude-sonnet-5-5` and
-`TB_LLM_MONTHLY_USD=20`. Sonnet uses high effort after live testing found an
-omission at medium effort; the supported
-`claude-haiku-5-5` option must pass a representative real-document evaluation before
-becoming the production default. `tb extract --model ...` overrides the model for
-both single-document and corpus commands. `TB_CLAUDE_EFFORT` optionally selects
-`low`, `medium`, `high`, `xhigh` or `max` without a prompt edit; unset uses Sonnet
-`high` or Haiku `medium`. Higher effort is bounded by the same output-token and
-monthly budget controls. The measured tradeoffs, including batch processing, are
-in `docs/claude-cost-options-2026-10-23.md`. There is no automatic paid-provider
-fallback. Legacy OpenRouter remains available only with `TB_LLM_PROVIDER=openrouter`
-and `OPENROUTER_API_KEY`, using `openai/gpt-5.6-luna` with Flex; the rejected free
-model has been removed.
+Publishing fails with a non-zero exit code if `gh auth status` fails.
 
-Claude requests schema-constrained JSON rather than relying on the prompt alone to
-avoid prose or malformed responses. The shared extraction prompt and
-`EXTRACTOR_VERSION` are unchanged. The existing
-per-document cache stays usable; provider migration does not trigger a corpus
-re-extraction. Claude also receives a five-minute cache breakpoint on the shared
-instruction prefix, leaving each varying document outside that cache breakpoint.
+### `ANTHROPIC_API_KEY` (direct Claude document extraction)
+
+Uncached PDFs are sent directly to the Claude Messages API. Use an API key from the Console organization linked to the subscription's included API credits (see [Anthropic's subscriber credit guide](https://platform.claude.com/docs/en/about-claude/api-credits-for-subscribers)). Create a dedicated workspace and set a hard spending limit in the Console before unattended use.
+
+Add `ANTHROPIC_API_KEY` to `~/.config/toronto-bids/tb.env` (mode `0600`) via a private editor or secret manager. Placeholders from `scrapers/.env.example` are treated as unset. No key is needed when all eligible documents are already cached. If extraction fails due to a missing key or exhausted budget, downloaded PDFs remain archived.
+
+#### Model and provider settings
+
+- Defaults: `TB_LLM_PROVIDER=anthropic`, `TB_CLAUDE_MODEL=claude-sonnet-5-5`, `TB_LLM_MONTHLY_USD=20`.
+- Effort: `TB_CLAUDE_EFFORT` accepts `low`, `medium`, `high`, `xhigh`, or `max` without invalidating the prompt cache. Default is `high` for Sonnet (medium omitted records in live testing) and `medium` for Haiku. Evaluate `claude-haiku-5-5` on representative real documents before making it the default (see [`docs/document-extraction.md`](../docs/document-extraction.md)).
+- Override per command with `tb extract --model ...`.
+- There is no automatic fallback between paid providers. Legacy OpenRouter is opt-in via `TB_LLM_PROVIDER=openrouter` and `OPENROUTER_API_KEY` (using `openai/gpt-5.6-luna` with Flex).
+- Claude requests use schema-constrained JSON output and a 5-minute prompt-cache breakpoint on the shared instruction prefix. Changing the provider does not change `EXTRACTOR_VERSION` or invalidate `extraction_cache`; editing the prompt itself does, so treat prompt edits as a deployment event.
 
 #### Usage and budget accounting
 
-`<TB_DATA_DIR>/llm-usage.sqlite` is private operational state, excluded from public
-procurement exports. Each Claude attempt reserves a conservative maximum allowance
-before network access. Successful responses replace that allowance with estimated
-cost from reported input, output (including thinking), cache-write and cache-read
-tokens. Refused, malformed and truncated outputs are billed and counted too. Definite
-HTTP 4xx rejections release their allowance. Timeouts, 5xx responses, process crashes
-and unusable usage metadata keep the reservation because billing is uncertain.
-Retries require a fresh allowance, and concurrent processes share the same ledger.
+`<TB_DATA_DIR>/llm-usage.sqlite` tracks local spending and is excluded from public exports:
 
-The guard uses reviewed per-model prices; unknown models are refused until their
-prices are added. Prices were checked on 23 October 2026 against the
-[official price list](https://platform.claude.com/docs/en/about-claude/pricing).
-Reservations deliberately overestimate input tokens and can stop a request before
-the nominal remaining balance is fully consumed. Use the Console workspace limit
-as the account billing authority: the local estimate does not control other keys,
-applications, provider pricing changes or legacy OpenRouter calls.
+- Before each request, the client reserves a conservative maximum cost estimate (intentionally overestimating input tokens, so requests can stop slightly below the nominal monthly limit).
+- Successful responses reconcile the reservation against reported input, output (including thinking), cache-write, and cache-read tokens. Refused, malformed, and truncated outputs still count toward spend.
+- HTTP 4xx errors release their reservations. Timeouts, 5xx errors, crashes, and missing usage metadata keep their reservations because billing is uncertain. Retries take a new reservation, and concurrent processes share the same SQLite ledger.
+- Unknown models are rejected until their pricing is added to the code (checked 2026-10-23 against the [official price list](https://platform.claude.com/docs/en/about-claude/pricing)).
+- Unresolved reservations carry across UTC calendar months; settlements are recorded in the month received. Note that included credits renew on the subscription cycle rather than UTC calendar months, so keep the Console workspace limit as the real spending cap.
+- Set `TB_LLM_MONTHLY_USD=0` to block new API calls while allowing cached work to run. Keep `llm-usage.sqlite` across deployments; deleting it resets local spend tracking.
 
-Outstanding reservations carry into subsequent calendar months until reconciled;
-a batch crossing midnight cannot bypass the new month's guard. Settlement is
-booked conservatively in the month received. Inspect charges and unresolved reservations without API access:
+Inspect charges and open reservations offline:
 
 ```shell
 sqlite3 "$TB_DATA_DIR/llm-usage.sqlite" \
   "SELECT month, status, count(*), sum(charged_microdollars)/1000000.0 AS usd FROM request GROUP BY month, status;"
 ```
 
-`TB_LLM_MONTHLY_USD=0` blocks new Claude requests while cached work continues.
-Changing the limit does not erase earlier usage. Retain the ledger across deployments;
-deleting it resets the local accounting. Its months are UTC calendar months, whereas
-included credits renew on the subscription billing cycle. Investigate uncertain
-reservations against Console billing before adjusting operational state.
+## 4. Install systemd units
 
-A prompt edit still changes the cache version and can re-extract the entire corpus;
-treat it as a deployment event.
-
-## 4. Units
+### Nightly timer
 
 ```shell
 mkdir -p ~/.config/systemd/user
@@ -172,15 +120,25 @@ cp ~/toronto-bids/deploy/tb-nightly.{service,timer} ~/.config/systemd/user/
 systemctl --user daemon-reload
 ```
 
-### Asynchronous extraction collector
+Test a manual run before enabling the timer:
 
-The nightly queues uncached Sonnet work and the hourly collector imports completed
-results, derives supported facts from held sources, exports and publishes. Both
-wrappers use `<TB_DATA_DIR>/.pipeline.lock`: the collector skips an active nightly,
-and the nightly waits for a short collector. No new source scraping occurs in the
-collector. Failed publication keeps its document handoff unacknowledged for retry.
+```shell
+systemctl --user start tb-nightly.service
+journalctl --user -u tb-nightly -n 50 --no-pager
+```
 
-Install the collector alongside the nightly after deploying the code:
+Then enable the schedule:
+
+```shell
+systemctl --user enable --now tb-nightly.timer
+systemctl --user list-timers tb-nightly.timer
+```
+
+### Hourly batch collector
+
+By default, `tb nightly` queues uncached Claude extraction jobs as asynchronous batches, and an hourly collector imports finished results, derives rows, exports, and publishes without re-scraping sources. Both wrappers coordinate on `<TB_DATA_DIR>/.pipeline.lock` (the collector skips if nightly is active; nightly waits briefly for an active collector). Failed publications leave batch handoffs unacknowledged for retry.
+
+Install and enable the collector:
 
 ```shell
 cp ~/toronto-bids/deploy/tb-batch-collect.{service,timer} ~/.config/systemd/user/
@@ -190,67 +148,27 @@ journalctl --user -u tb-batch-collect -n 50 --no-pager
 systemctl --user enable --now tb-batch-collect.timer
 ```
 
-The collector runs hourly on all days, including weekends. It publishes only when
-completed results need applying. Pending work is explicit in the nightly summary;
-its presence alone does not fail the unit. API, derivation or publishing failures
-still produce nonzero status. For queue operations, failed-job retry and lost
-receipt recovery, read [Claude batches](../docs/claude-batches.md).
-`TB_CLAUDE_MODE=sync` restores immediate nightly extraction. Standalone commands
-remain immediate unless `tb extract --batch --corpus ...` is selected.
+The collector runs hourly every day (including weekends) and publishes only when newly completed batch results apply. Set `TB_CLAUDE_MODE=sync` to run nightly extraction synchronously instead. For queue commands, retries, and lost-receipt recovery, see [docs/claude-batches.md](../docs/claude-batches.md).
 
-## 5. Prove it before scheduling it
+## Operating commands
 
-```shell
-systemctl --user start tb-nightly.service
-journalctl --user -u tb-nightly -n 50 --no-pager
-```
-
-Then enable the timer:
-
-```shell
-systemctl --user enable --now tb-nightly.timer
-systemctl --user list-timers tb-nightly.timer
-```
-
-## Operating
-
-| what | command |
+| Task | Command |
 |---|---|
-| last run | `journalctl --user -u tb-nightly -n 50 --no-pager` |
-| next fire | `systemctl --user list-timers tb-nightly.timer` |
-| run now | `systemctl --user start tb-nightly.service` |
-| row counts / per-source status | `cd ~/toronto-bids/scrapers && TB_DATA_DIR=~/tb-data uv run tb status` |
-| update | `cd ~/toronto-bids && git pull && cd scrapers && uv sync --locked` |
+| View last run | `journalctl --user -u tb-nightly -n 50 --no-pager` |
+| Next scheduled run | `systemctl --user list-timers tb-nightly.timer` |
+| Trigger run now | `systemctl --user start tb-nightly.service` |
+| Row counts and per-source status | `cd ~/toronto-bids/scrapers && TB_DATA_DIR=~/tb-data uv run tb status` |
+| Update code | `cd ~/toronto-bids && git pull && cd scrapers && uv sync --locked` |
 
-Updating is deliberately manual.
+Updates are manual.
 
-## Schedule: Tuesday through Saturday, not daily (#180)
+## Schedule: Tuesday through Saturday (#180)
 
-The City does not transact on weekends, and a 05:30 run reports on the **previous** day — so
-Saturday's run (covering Friday, a full business day) is worth keeping, but Sunday's (covering
-Saturday) and Monday's (covering Sunday) are not. Measured over an 11-day window: zero new rows
-in any table on either day, and the City's own Ariba `close_date` values never land on a
-weekend at all (n=48 dated postings). `deploy/tb-nightly.timer` reflects this:
-`OnCalendar=Tue..Sat *-*-* 05:30:00 America/Toronto`.
+`deploy/tb-nightly.timer` runs at `05:30 America/Toronto`, Tuesday through Saturday (`OnCalendar=Tue..Sat *-*-* 05:30:00 America/Toronto`). Because a 05:30 run captures the previous day's activity and the City does not publish procurement updates on weekends, Sunday and Monday morning runs produced zero new rows.
 
-**Accepted tradeoff:** a solicitation whose window opens only over the weekend and closes Monday
-at noon gets its last capture chance at Saturday's run — about 2.5 days out, versus same-day
-Monday under the old daily schedule. The Ariba capture step is idempotent and resumable (a
-bundle already on disk is never refetched), so this only affects what a single run might miss
-entirely, not anything already captured on an earlier day.
-
-**A side effect worth knowing about:** skipping two nights means the published artifacts'
-`generated_at` can be up to 3 days old over a weekend (Saturday's run through Tuesday's). That is
-accurate rather than stale data going unnoticed — nothing changed at the source — but if the
-frontend ever surfaces a bare "last updated" timestamp, it is worth a line explaining the
-weekday cadence rather than reading as an outage.
-
-**If you find a `tb-ariba-attachments.timer`/`.service` under `~/.config/systemd/user/` on a
-live box, it should not be there.** Ariba attachment capture was unified into `tb nightly`'s
-in-line steps on 2026-07-19 (#135/#146) and the standalone timer was removed from git the same
-day — but on at least one deployment the installed unit files were never actually disabled, so
-Ariba capture ran twice a day (05:30 inline, plus the orphaned noon timer) for over a week before
-#180 found it via `systemctl --user list-timers`. Finish the retirement:
+- **Tradeoff:** An Ariba posting that opens over a weekend and closes Monday morning has its last capture chance on Saturday morning (~2.5 days early). Already-captured bundles are unaffected.
+- **Timestamp behavior:** Over a weekend, `generated_at` in the published export can be up to 3 days old (Saturday through Tuesday morning).
+- **Orphaned Ariba timer:** Older deployments may still have a retired `tb-ariba-attachments.timer` unit installed under `~/.config/systemd/user/`. Remove it if present so Ariba capture does not run twice:
 
 ```shell
 systemctl --user disable --now tb-ariba-attachments.timer
@@ -258,72 +176,51 @@ rm ~/.config/systemd/user/tb-ariba-attachments.{timer,service}
 systemctl --user daemon-reload
 ```
 
-## Publishing the export — #146
+## Publishing exports (#146)
 
-Design: [`docs/superpowers/specs/2026-07-19-publish-data-design.md`](../docs/superpowers/specs/2026-07-19-publish-data-design.md)
-
-The nightly's `ExecStart` is `deploy/tb-nightly-run.sh`, which runs `tb nightly` and then
-`deploy/publish-data.sh`. Publish runs **even after a partial sync** (the export is still valid),
-and the unit fails if **either** step failed — neither masks the other.
-
-`publish-data.sh` uploads `bids.json`, `bids.json.gz`, and `bids.sqlite` to a rolling **`latest`**
-release on `CivicTechTO/toronto-bids-data`, giving the frontend a stable URL:
+`deploy/publish-data.sh` uploads `bids.json`, `bids.json.gz`, and `bids.sqlite` (plus CSV/Parquet/manifest assets) to the rolling `latest` release on `CivicTechTO/toronto-bids-data`:
 
 ```
 https://github.com/CivicTechTO/toronto-bids-data/releases/download/latest/bids.json
 ```
 
-On the 1st of each month it also cuts a dated `snapshot-YYYY-MM-DD` release (point-in-time
-citation), then triggers the frontend build (`gh workflow run deploy.yml`, best-effort).
+Uploads retry up to three times on HTTP 5xx errors (5s / 10s backoff), and the manifest uploads last. On the 1st of each month, the script also creates a dated `snapshot-YYYY-MM-DD` release. After uploading, it dispatches the frontend build (`gh workflow run deploy.yml`, best-effort).
 
-The nightly posts two Slack messages: `tb nightly` posts the rich archive report first, then
-`publish-data.sh` posts a one-line publish result (✅ + release URL, or ❌ + reason). Both use
-`TB_SLACK_WEBHOOK` and both no-op silently when it is unset.
+Slack notifications: `tb nightly` posts the archive summary, and `publish-data.sh` posts a one-line publish result (including any rejected frontend deploy dispatch error, #237).
 
-The publish message also warns when the frontend deploy **trigger** is rejected (#237),
-including the GitHub CLI error. The attempt is recorded as `frontend_deploy_trigger` in
-`sync_run`, with `ok` meaning dispatch accepted and `failed` carrying the error. This does not
-monitor the later build or deployment. A rejected trigger leaves `publish` successful when
-the data release succeeded, and does not skip the artifact freshness checks. Dry-runs send
-no notification and write no step-history rows.
-
-**One-time prerequisites** (do these before the first publish):
+### One-time data repo setup
 
 ```shell
-sudo apt install -y gh              # the GitHub CLI (privileged, once)
-# Create the data repo (public). Do this once, from any authenticated machine:
+sudo apt install -y gh
 gh repo create CivicTechTO/toronto-bids-data --public \
   --description "Nightly export of the Toronto procurement archive (data only)."
 ```
 
-Then add `GH_TOKEN` to `~/.config/toronto-bids/tb.env` (§3).
+### Dry-run self-test
 
-**Self-test before wiring it live** — prints every `gh` command instead of running it, after the
-real artifact/JSON checks and gzip (needs a prior `tb export`, no token, no data repo):
+Runs local artifact validation and gzip, then prints every `gh` command without uploading, notifying Slack, or writing `sync_run` rows:
 
 ```shell
 cd ~/toronto-bids
 TB_PUBLISH_DRY_RUN=1 TB_DATA_DIR=~/tb-data deploy/publish-data.sh
-# Force the 1st-of-month snapshot path on any day:
+# Test the 1st-of-month snapshot path on any day:
 TB_PUBLISH_DRY_RUN=1 TB_PUBLISH_DAY=01 TB_DATA_DIR=~/tb-data deploy/publish-data.sh
 ```
 
+### Step recording and freshness checks (#176)
+
+`publish-data.sh` sources helpers from `deploy/publish-lib.sh` (tested in `tests/test_publish_lib.py`) to record outcomes in `sync_run`:
+
+- `publish`: overall release upload status.
+- `r2_mirror`: recorded only when `CLOUDFLARE_API_TOKEN` is set and an upload is attempted.
+- `frontend_deploy_trigger`: `ok` if GitHub accepted the workflow dispatch, or `failed` with the CLI error (does not fail `publish` or monitor the downstream build).
+- `github_release_freshness` and `r2_freshness`: after real publishes, `verify_artifact_size` sends a `HEAD` request to each public `bids.sqlite` URL and compares `Content-Length` to the local file size. Read-only and best-effort (never retries or fails `publish`). Override the R2 check URL with `TB_R2_PUBLIC_URL`.
+
 ### Recovering a frontend workflow disabled for inactivity (#236)
 
-Data publication and frontend deployment are separate outcomes. A successful data release can
-coexist with a stale website when GitHub rejects the frontend dispatch. On 2026-10-20, the
-frontend's `deploy.yml` was `disabled_inactivity`, and dispatch returned HTTP 422: "Cannot
-trigger a 'workflow_dispatch' on a disabled workflow." Its last successful deployment was
-2026-09-19, and its last commit was 2026-07-21.
+[GitHub disables scheduled workflows in public repositories after 60 days without repo commits](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/disable-and-enable-workflows). Releases in `toronto-bids-data` do not count as activity in `toronto-bids-frontend`, so `deploy.yml` can enter `disabled_inactivity` and reject `workflow_dispatch` with HTTP 422.
 
-[GitHub automatically disables scheduled workflows in public repositories after 60 days
-without repository activity](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/disable-and-enable-workflows).
-The frontend workflow has both `schedule` and `workflow_dispatch` triggers; the disabled state
-also prevents the nightly's explicit dispatch. Fresh releases in the **data repository** did
-not keep the **frontend repository's** workflow active in this incident. Re-enabling restores
-operation but does not exempt the workflow from GitHub's inactivity policy.
-
-Inspect the workflow state before changing anything:
+Check workflow state:
 
 ```shell
 gh api repos/CivicTechTO/toronto-bids-frontend/actions/workflows/deploy.yml \
@@ -331,137 +228,54 @@ gh api repos/CivicTechTO/toronto-bids-frontend/actions/workflows/deploy.yml \
 gh run list -R CivicTechTO/toronto-bids-frontend --workflow deploy.yml --limit 5
 ```
 
-For `disabled_inactivity`, re-enable the existing workflow and dispatch it against `main`:
+If disabled, re-enable it and dispatch a build from `main`:
 
 ```shell
 gh workflow enable deploy.yml -R CivicTechTO/toronto-bids-frontend
 gh workflow run deploy.yml -R CivicTechTO/toronto-bids-frontend --ref main
 gh run list -R CivicTechTO/toronto-bids-frontend --workflow deploy.yml \
   --event workflow_dispatch --limit 1
-# Use the run ID returned above:
 gh run watch RUN_ID -R CivicTechTO/toronto-bids-frontend --exit-status
 ```
 
-Verify `state: active`, acceptance of the dispatch, and completion of the deploy job. Its
-existing steps fetch the latest `bids.json`, compare against the deployed `counts.json` to
-reject archive shrinkage, build Astro/Pagefind, verify internal links, and deploy to Pages.
-A dispatch returning successfully is not proof that the deployment completed. If the run
-fails, inspect its failed step rather than disabling the shrink or link checks.
+Once the run succeeds, check <https://civictechto.github.io/toronto-bids-frontend/> and `/counts.json` to confirm the timestamp and counts match the latest release. No scraper rerun or data re-upload is required.
 
-Recovery on 2026-10-20 was verified with
-[deployment run 39427672769](https://github.com/CivicTechTO/toronto-bids-frontend/actions/runs/39427672769).
-The workflow returned to `active`; its dispatch, data fetch, shrink guard, build, internal-link
-checks, and Pages deployment succeeded. The public site's data timestamp matched the recovered
-export (`2026-10-20T13:00:07.510704+00:00`), and all seven published entity counts matched it,
-including 7,565 solicitations, 15,554 award lines, and 8,577 suppliers.
+### Provisioning a fresh host from published archives
 
-Finally check the public site at
-<https://civictechto.github.io/toronto-bids-frontend/>: its exported-data timestamp should match
-the intended release, and `/counts.json` should reflect the recovered archive. Allow for
-Pages/CDN propagation. No scraper rerun or data re-upload is needed when only the frontend
-workflow was disabled. Publish-notification handling for rejected dispatches is tracked
-separately in #237.
-
-### Provisioning a fresh box from the archives
-
-The DB itself is published (`bids.sqlite` on the `latest` release), so a new box can start from
-it directly. To rebuild the *derived* Bid Award Panel data from primary sources instead (the
-`enrich-titles --scrape` path was retired — the Panel is abolished and the corpus is final),
-download the agenda archive and re-derive offline:
+A fresh host can start directly from `bids.sqlite` on the `latest` release. To re-derive Bid Award Panel titles and bids offline from the archived agenda HTML (the Panel was abolished on 2025-10-01 and the 891 cached pages are final):
 
 ```shell
 gh release download council-agendas -R CivicTechTO/toronto-bids-data -D /tmp/agendas
 mkdir -p ~/tb-data/council/agendas
 unzip -q -o /tmp/agendas/council-agendas.zip -d ~/tb-data/council/agendas
-cd ~/toronto-bids/scrapers && TB_DATA_DIR=~/tb-data uv run tb enrich-titles   # offline, no browser
+cd ~/toronto-bids/scrapers && TB_DATA_DIR=~/tb-data uv run tb enrich-titles
 ```
 
-### R2 mirror of bids.sqlite — for browser-side Datasette-Lite (#155)
+## R2 mirror for Datasette-Lite (#155)
 
-GitHub release assets no longer send `Access-Control-Allow-Origin`, so the frontend's in-browser
-SQL page cannot load `bids.sqlite` from the release. `publish-data.sh` therefore also mirrors
-`bids.sqlite` each night to a **CORS-enabled Cloudflare R2 bucket** (overwriting the same object,
-so the URL is stable), using the Python S3 multipart uploader and the existing
-`CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_ACCOUNT_ID`. The step is **best-effort**
-(a failed push warns; the GitHub release is the deliverable) and **skips cleanly** when
-`CLOUDFLARE_API_TOKEN` is unset.
+GitHub release assets do not send `Access-Control-Allow-Origin`, so browser-side SQL (Datasette-Lite) cannot load `bids.sqlite` directly from GitHub. `publish-data.sh` mirrors `bids.sqlite` to a CORS-enabled Cloudflare R2 bucket using a Python S3 multipart uploader (avoiding Wrangler's 300 MiB upload limit and requiring no Node at runtime).
 
-Public URL: `https://pub-99a890c186c743c19ef7bcd00024dca8.r2.dev/bids.sqlite`
-(Datasette-Lite: `https://lite.datasette.io/?url=<that URL>`).
+- Public URL: `https://pub-99a890c186c743c19ef7bcd00024dca8.r2.dev/bids.sqlite`
+- Datasette-Lite: `https://lite.datasette.io/?url=https://pub-99a890c186c743c19ef7bcd00024dca8.r2.dev/bids.sqlite`
+- Best-effort: skips when `CLOUDFLARE_API_TOKEN` is unset; a failure warns without failing `publish`.
+- Derives S3 credentials in memory from `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` per [Cloudflare's token mapping](https://developers.cloudflare.com/r2/api/tokens/), verifies uploaded size and SHA-256 metadata, and runs while holding the pipeline lock.
+- Override bucket name with `TB_R2_BUCKET` (default `toronto-bids-data`).
 
-The uploader uses bounded managed multipart transfers, avoiding Wrangler's 300 MiB
-object-upload limit as the archive grows. It verifies account tokens through the
-account-scoped endpoint, falling back to the legacy user-token endpoint. S3 key
-material is derived in memory using [Cloudflare's documented token mapping](https://developers.cloudflare.com/r2/api/tokens/);
-no additional credentials are stored. Authenticated object size and SHA-256 metadata
-are checked after upload; the independent public freshness check still runs.
-The caller holds the pipeline lock so the SQLite file stays stable during upload.
-
-The nightly mirror no longer requires Node. Wrangler is still used for the one-time
-bucket provisioning below; those commands require a suitable Node installation.
-
-**One-time R2 setup** (already done for the current deployment):
+One-time bucket provisioning (requires Node for `wrangler`; already completed for production):
 
 ```shell
-# 1. Enable R2 in the Cloudflare dashboard (accept terms; free tier covers this).
-# 2. Create a scoped API token (Workers R2 Storage: Edit) + note the Account ID; add to tb.env:
-#      CLOUDFLARE_API_TOKEN=...      (0600, gitignored — same file as the Slack webhook)
-#      CLOUDFLARE_ACCOUNT_ID=...
-# 3. Provision the bucket (wrangler runs via npx — no global install):
+# Enable R2 in Cloudflare, create a scoped token (Workers R2 Storage: Edit),
+# and add CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID to ~/.config/toronto-bids/tb.env.
 wr() { ( set -a; . ~/.config/toronto-bids/tb.env; set +a; npx -y wrangler@latest "$@" ); }
 wr r2 bucket create toronto-bids-data
-wr r2 bucket dev-url enable toronto-bids-data          # -> the public pub-*.r2.dev URL
-# CORS must allow '*' (NOT the frontend origin — Datasette-Lite fetches from lite.datasette.io):
+wr r2 bucket dev-url enable toronto-bids-data
+# CORS must allow '*' because Datasette-Lite fetches from lite.datasette.io:
 printf '{"rules":[{"allowed":{"origins":["*"],"methods":["GET","HEAD"],"headers":["*"]},"maxAgeSeconds":3600}]}' > /tmp/r2-cors.json
 wr r2 bucket cors set toronto-bids-data --file /tmp/r2-cors.json
 ```
 
-`TB_R2_BUCKET` overrides the bucket name (default `toronto-bids-data`).
+## Notes on specific steps
 
-**A "best-effort" step that only warns is invisible to `tb status` unless it says so itself
-(#176).** The 8-night R2 outage above was findable only by grepping the journal: `publish-data.sh`
-kept exiting 0 (the GitHub release is the deliverable) and `tb status` showed 14/14 ok, because
-neither `publish` nor the R2 mirror wrote anything to `sync_run`. The script now calls
-`tb record-step NAME {ok,failed} [--error TEXT]` — `publish` overall (from `fail()` on every
-early-exit guard, and once at the end on success) and `r2_mirror` as its own row, recorded only
-on a real attempt (success, a wrangler failure, or no suitable Node) — the deliberate
-not-configured skip (no `CLOUDFLARE_API_TOKEN`) gets no row, same as the nightly's own
-`council: skip (not the 1st)`. `TB_PUBLISH_DRY_RUN=1` skips recording entirely.
-`record_step`/`verify_artifact_size` live in `deploy/publish-lib.sh`, sourced by
-`publish-data.sh` — split out purely so `tests/test_publish_lib.py` can drive them directly.
-
-**Recording an exit code is not the same as verifying the artifact (#176, the deferred half of
-the R2 incident above).** The wrangler command that failed for 8 nights was at least failing
-*loudly* once its stderr was captured — but a step recording "I exited 0" is still one step
-removed from "the thing I was supposed to publish is actually there and the right size." After
-every real publish (never in dry-run), `verify_artifact_size` sends a HEAD request to
-`bids.sqlite`'s two public URLs and compares `Content-Length` to the local file, recording
-`github_release_freshness` and (only when R2 is configured for this deployment) `r2_freshness`
-as their own `sync_run` rows — distinct from `publish`/`r2_mirror`, and running regardless of
-which upload branch fired tonight, so it also catches a short write that an upload command
-reported as a success. `TB_R2_PUBLIC_URL` overrides the R2 dev URL this check reads (default is
-the one two sections up). Read-only, best-effort: never retries or re-uploads, and a mismatch
-here does not fail the overall `publish` step.
-
-## What does NOT run here
-
-`enrich-council` needs a **headed** Chromium (TMMIS is Akamai-gated and blocks headless), but
-Playwright is installed as part of the base setup now (§1, "Browser prerequisites") — it runs
-monthly inside the nightly (gated to the 1st), so there is nothing separate to schedule for it.
-
-- The Bid Award Panel title-recovery scrape **will never find another agenda** — the Panel was
-  abolished on 2025-10-01 by By-law 766-2025, and the 891 cached pages are the final corpus.
-- `enrich-council` covers 3 suspended firms and changes rarely; it runs monthly inside the
-  nightly (gated to the 1st) rather than every run.
-
-Run either by hand if ever needed outside the nightly's own schedule.
-
-### MERX capture
-
-The nightly `merx` step captures public listings and advertised public bid/award
-tabs for the five enabled buyer profiles after Bonfire. It requires no credentials
-or new timer. Requests identify the archive and serialize with a five-second
-minimum interval and persistent Retry-After deadlines. The summary reports listing
-counts and actual bid/award growth; a buyer failure or detail gap fails the step
-while the remaining buyers, later steps and export continue. Full historical
-backfills remain a separate operation; see [MERX operation](../docs/merx.md).
+- **Suspended-firm council enrichment (`enrich-council`)**: Runs monthly on the 1st inside `tb nightly` because the suspension list changes rarely. Run manually if needed between monthly runs.
+- **Bid Award Panel scraping**: Retired; the Panel was abolished on 2025-10-01 by By-law 766-2025.
+- **MERX (`merx` step)**: Runs after Bonfire in `tb nightly` for the five enabled buyers, including public bid/award detail tabs, with no credentials or extra timer. Uses a 5-second minimum interval and persisted `Retry-After` deadlines. Full historical backfills are run manually (see [docs/merx.md](../docs/merx.md)).

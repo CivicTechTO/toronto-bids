@@ -334,19 +334,17 @@ def merx_bid_ids(conn):
 
 
 def test_capture_resolves_identity_once_per_buyer_run(conn, tmp_path, monkeypatch):
-    """#305: one full resolution pass per capture, not one per section and per notice."""
     passes = resolve_spy(monkeypatch)
     report, calls, waits = run(conn, tmp_path, detail_handler(), sections=['results'], details=True)
-    assert report['detail_facts'] == 8 and len(calls) > 3    # listing + several details + fragment
+    assert report['detail_facts'] == 8 and len(calls) > 3
     assert passes == [1]
     listing_id = conn.execute('SELECT procurement_id FROM portal_listing WHERE portal_url LIKE ?',
                               ('%' + GOOD_NOTICE,)).fetchone()[0]
     assert listing_id is not None and set(merx_bid_ids(conn)) == {listing_id}
-    assert waits == [5.2] * len(calls)                       # pacing unchanged: one wait per request
+    assert waits == [5.2] * len(calls)
 
 
 def test_mid_run_failure_keeps_completed_notices_resolved_and_reported(conn, tmp_path, monkeypatch):
-    """A network stop after one finished notice keeps its facts, with identities, and reads incomplete."""
     passes = resolve_spy(monkeypatch)
     report, _, _ = run(conn, tmp_path, detail_handler(httpx.Response(403)), sections=['results'], details=True)
     assert report['detail_facts'] == 8
@@ -365,7 +363,7 @@ def test_failed_final_resolution_is_a_visible_failure_not_lost_facts(conn, tmp_p
     report, _, _ = run(conn, tmp_path, detail_handler(), sections=['results'], details=True)
     assert any('procurement resolution' in f and 'identity conflict' in f for f in report['failures'])
     assert not report['complete']
-    assert len(merx_bid_ids(conn)) == 8                      # committed facts survive, unresolved
+    assert len(merx_bid_ids(conn)) == 8
     assert conn.execute('SELECT complete FROM merx_capture').fetchone()[0] == 0
 
 

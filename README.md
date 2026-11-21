@@ -1,67 +1,55 @@
 # Toronto Bids Project
 
-The Toronto Bids Project promotes transparency and accountability in City of Toronto
-procurement. The City publishes solicitations and awards while they are open, but the
-data is hard to use and much of it becomes difficult to reach once a bid closes. This
-project pulls that data into a local, queryable store and exports it as a single public
-artifact — so the record stays available after the due date has passed.
+The Toronto Bids Project archives public procurement data from the City of Toronto and its agencies. The City publishes solicitations and awards while they are open, but the data is fragmented and much of it becomes hard to reach once a bid closes. This project collects those records into a local SQLite database and exports them as public JSON, CSV, and Parquet datasets so the record stays accessible after closing dates pass.
 
 ## Quick start
 
-Everything lives in [`scrapers/`](scrapers/), a `uv`-managed Python 3.12 package that
-installs a `tb` command. No browser, no login, no cloud, no API keys.
+All active code lives in [`scrapers/`](scrapers/), a `uv`-managed Python 3.12+ package that installs the `tb` CLI. Core syncing requires no browser, login, or API keys.
 
 ```shell
 cd scrapers
 uv sync
-uv run tb sync      # fetch every source into files/bids.sqlite (non-zero exit if any source failed)
-uv run tb status    # row counts + last run per source
-uv run tb export    # write the whole store to one JSON artifact
-uv run pytest       # tests (offline; uses fixtures)
+uv run tb sync      # fetch core sources into files/bids.sqlite (exits non-zero if any source fails)
+uv run tb status    # row counts and last run per source
+uv run tb export    # write the store to JSON
+uv run pytest       # offline test suite (uses local fixtures)
 ```
 
-See [`scrapers/README.md`](scrapers/README.md) for the source inventory, the data model,
-and the opt-in council/PDF enrichment.
+See [`scrapers/README.md`](scrapers/README.md) for the source inventory, CLI details, and data caveats, [`deploy/README.md`](deploy/README.md) for nightly scheduling and publishing, and [`docs/README.md`](docs/README.md) for subsystem documentation.
 
 ## What it collects
 
-- **Solicitations** — the lifecycle spine (open / awarded / cancelled), from the City's
-  OData feed, backfilled from CKAN Open Data.
-- **Awards** — who won, for how much, including divisible awards split across suppliers.
-- **Non-competitive contracts** — sole-source awards and their stated justification.
-- **Ariba Discovery postings** — archived while open, before they disappear.
-- **Suspended & disqualified firms** — the City's public supplier-suspension registry,
-  bridged to the City Council decision that authorized each suspension.
-- **Suppliers** — a canonicalized supplier dimension linking the above together, so you
-  can ask "which contracts belong to this firm?"
+- **Solicitations**: Open, awarded, and cancelled procurements from the City's OData feed, backfilled from CKAN Open Data.
+- **Awards**: Winning suppliers and amounts, including split awards across multiple suppliers.
+- **Non-competitive contracts**: Sole-source awards and their stated justifications.
+- **Bids**: Participating suppliers (including losing bids) recovered from Bid Award Panel agendas, Bid Committee reports, Award Summary Forms, and committee reports.
+- **Ariba Discovery postings and attachments**: Archived while open before postings disappear.
+- **Suspended and disqualified firms**: The City's public supplier-suspension registry, linked to the City Council decisions that authorized each suspension.
+- **Agency and corporation records**: Board reports and public portal listings for Toronto agencies and corporations (including TRCA, Toronto Zoo, Exhibition Place, TTC, Toronto Public Library, TCHC/TSHC, Waterfront Toronto, and others).
+- **Suppliers**: A canonical supplier table linking awards, bids, non-competitive contracts, and suspensions across sources.
 
-Everything competitive is keyed on the normalized 10-digit `document_number`.
+Competitive City records are keyed by their normalized 10-digit `document_number`.
 
 ## Attribution
 
-The archive also carries agency procurement records (the Toronto Zoo and the Toronto and
-Region Conservation Authority) whose public bid listings are archived under written
-permission from each body, on condition that the body is credited as the data source.
-Those statements travel with the data in the exported JSON's `meta.attribution` (each with
-a pointer to its permission record under [`docs/permissions/`](docs/permissions/)); if you
-republish the agency data, keep them with it.
+Some agency procurement listings and records are archived under written permission from the respective bodies on condition that each body is credited as the data source. Those attribution notices are included in `meta.attribution` in the exported JSON, with links to the permission records in [`docs/permissions/`](docs/permissions/). Keep those notices intact if you republish agency data.
 
 ## Project status
 
-The scraper (`scrapers/`) is the active, working part of this repo, and `tb export`
-produces the public artifact.
+The scraper in `scrapers/` runs on a nightly schedule and publishes data exports to `CivicTechTO/toronto-bids-data` for the static frontend at `CivicTechTO/toronto-bids-frontend`.
 
-A previous MySQL-backed application — a Clojure API plus Clojure and Angular frontends —
-lived under `app/` and was dormant from mid-2023. It was removed in the repo cleanup;
-it remains in git history if anyone wants to revive it. Publishing the exported JSON is
-the open next step, and it does not depend on that older stack.
+An earlier MySQL-backed Clojure/Angular application lived under `app/` until it was removed during cleanup; it remains in git history if needed.
 
 ## Contributing
 
-This is a [CivicTechTO](https://civictech.ca/) project. Issues and pull requests welcome.
-The scraper's tests run offline against fixtures, so `cd scrapers && uv sync && uv run pytest`
-is enough to get a working development setup — it needs no database, credentials, or network.
+This is a [CivicTechTO](https://civictech.ca/) project. Issues and pull requests are welcome.
 
-The council-enrichment tests additionally shell out to `pdftotext`, and skip if it isn't
-installed. To run them too, install poppler (`brew install poppler`, or
-`apt-get install -y poppler-utils`); CI does.
+The test suite runs offline against local fixtures with no database, credentials, or network access:
+
+```shell
+cd scrapers
+uv sync
+uv run pytest
+```
+
+Council-enrichment tests also invoke `pdftotext` and skip if it is missing. To run them locally, install Poppler (`brew install poppler` on macOS or `apt-get install -y poppler-utils` on Debian/Ubuntu).

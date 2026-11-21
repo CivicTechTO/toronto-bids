@@ -1,25 +1,6 @@
-"""The schema the City's feeds must provide, and a check that they still do (#10).
+"""Verify that City OData and CKAN feeds still expose all fields read by normalizers.
 
-Every normalizer reads its fields by name (`raw.get("Posting_Title")`). If the City
-renames or drops one, `.get` returns None, that column NULLs out on every row written from
-then on, and nothing anywhere complains. This module is the declared schema for the two
-machine-readable sources and the check that catches that.
-
-It runs as an ordinary source, which buys two things for free:
-
-  * per-source isolation — drift is reported WITHOUT stopping ingestion, so a renamed
-    field never costs us the archive of postings that vanish when they close;
-  * visibility — the failure lands in sync_run, on stderr, and in tb sync's exit code (#18).
-
-That trade is deliberate, and the upsert semantics are why it's the right one: every write
-COALESCEs, so a NULL never overwrites a value already in the store (see db._upsert_keyed).
-Undetected drift therefore costs new rows a column until someone fixes the normalizer, and
-the next sync backfills them — recoverable. Aborting the source instead would cost us the
-postings themselves, which is not.
-
-Only fields a normalizer actually reads are listed. The feeds carry ~63 fields; the day we
-start reading one, it belongs here. Verified live 2026-07-16: all five feeds return one
-stable key-set across 500 records each, so a missing key means real drift, not an empty cell.
+Runs as a normal source so drift is logged to sync_run without blocking ingestion.
 """
 from itertools import islice
 
@@ -27,9 +8,7 @@ from toronto_bids import config
 from toronto_bids.sources.ckan import decode_award_entries, fetch_datastore, resolve_resource_id
 from toronto_bids.sources.odata import fetch_entityset
 
-# entityset -> (top-level fields, fields of each nested Awarded_Suppliers dict).
-# AwardedDate is solicitation-only; that asymmetry is why normalize_solicitation falls
-# back Date_Awarded -> AwardedDate and normalize_noncompetitive does not.
+# entityset -> (top-level fields, nested Awarded_Suppliers fields; AwardedDate is solicitation-only).
 _ODATA = {
     "odata_solicitations": (config.ODATA_SOLICITATIONS, {
         "Solicitation_Document_Number", "Status", "Solicitation_Document_Type",
@@ -44,7 +23,6 @@ _ODATA = {
     }, {"Successful_Bidder", "Award_Amount", "Date_Awarded"}),
 }
 
-# CKAN dataset slug -> the datastore columns the normalizer reads.
 _CKAN = {
     "ckan_awarded": (config.CKAN_AWARDED_SLUG, {
         "Document Number", "RFx (Solicitation) Type", "High Level Category",
@@ -71,12 +49,12 @@ _CKAN = {
 _CKAN_AWARD_ENTRY = {"Successful_Bidder", "Award_Amount", "Date_Awarded", "AwardedDate"}
 
 
-# Sample past the first record on feeds with nested awards, which can be empty.
+# Sample enough records to find at least one nested award entry.
 _SAMPLE = 50
 
 
 def missing_fields(feed: str, record: dict | None, expected: set) -> list[str]:
-    """Drift complaints for one sampled record. Empty list == the feed still matches."""
+    """Return drift error strings for missing expected keys in record."""
     if record is None:
         return [f"{feed}: feed returned no records at all"]
     gone = sorted(expected - record.keys())
@@ -91,10 +69,7 @@ def check_odata(http, feed: str, entityset: str, expected: set, supplier_expecte
     problems = missing_fields(feed, records[0] if records else None, expected)
     if problems:
         return problems
-    # Awarded_Suppliers is a nested list whose fields drift independently of the record
-    # around it, and it's empty for anything not yet awarded. Scan the sample for a record
-    # that actually has one; finding none means we could not check, which is worth saying
-    # out loud rather than passing green.
+    # Find a record with non-empty Awarded_Suppliers to check nested fields.
     supplier = next((s for r in records for s in (r.get("Awarded_Suppliers") or [])), None)
     if supplier is None:
         return [f"{feed}: no awarded supplier in the first {_SAMPLE} records, so "
@@ -137,7 +112,7 @@ def check_ckan_awards(feed: str, records: list[dict], expected: set) -> list[str
 
 
 class SchemaCheckSource:
-    """Samples each feed and fails the check if a field we read has gone missing."""
+    """Check feed schemas and raise if any expected field is missing."""
 
     name = "schema_check"
     overwrite = True
@@ -150,7 +125,7 @@ class SchemaCheckSource:
             problems += check_ckan(http, feed, slug, expected)
         if problems:
             raise ValueError("City feed check failed: " + "; ".join(problems))
-        return []  # a check, not a data source: it contributes no rows
+        return []
 
     def normalize(self, raw):
         return []

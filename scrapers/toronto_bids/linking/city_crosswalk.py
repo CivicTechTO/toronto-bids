@@ -1,9 +1,4 @@
-"""Reviewed City crosswalks: publisher assertions or independent compound facts.
-
-Numeric Call Number encodings are deliberately absent from admission. Proposals
-must survive a global publisher comparison and a pinned, single-item agenda
-context. Only committed reviewed proofs become persistent identity links.
-"""
+"""Validate and apply reviewed City call-number to document-number crosswalks."""
 import hashlib
 import gzip
 import json
@@ -39,7 +34,7 @@ def clean(text):
 
 
 def supplier_identity(name):
-    """Full name with legal/punctuation typography only; no token/fuzzy matching."""
+    """Normalize supplier name by stripping leading 'the', legal suffixes, and punctuation."""
     text=re.sub(r'^the\s+','',(name or '').casefold()).replace('&',' and ')
     return re.sub(r'[^a-z0-9]','',_LEGAL.sub(' ',text))
 
@@ -69,14 +64,13 @@ def publisher_index(records):
                             award.get('Successful_Bidder'),award.get('Award_Amount'))
             target=(record.get('id'),record.get('Solicitation_Document_Number'))
             index[key].add(target)
-            # Reviewed type discrepancies must be unique across every method.
+            # Also index without rfx_type for reviewed type-discrepancy checks.
             index[(key[0],key[1],None,key[3],key[4])].add(target)
     return index
 
 
 def sections(source,meeting):
-    # Playwright agenda captures are UTF-8 even when an inherited page meta tag
-    # advertises another charset. Keep adjacent HTML blocks/text nodes separate.
+    # Playwright captures are UTF-8 regardless of page meta charset.
     root=html_parser.fromstring(source.decode('utf-8') if isinstance(source,bytes) else source)
     parts=_SPLIT.split(clean(' '.join(root.itertext())))
     by_ref=defaultdict(list)
@@ -101,15 +95,14 @@ def _source_type(title):
 
 def _title_calls(title):
     calls=find_call_numbers(title)
-    # A typed call in an original title can use spaces between its three groups.
-    # Keep this local to identity review; arbitrary spaced digits are not calls.
+    # Allow space-separated 4-2-4 call numbers in titles for identity review only.
     for match in re.finditer(r'\b(?:Request (?:for|of) (?:Proposal|Quotation)|RF[QP])\s+(?:No\.?\s*)?(\d{4})[ \t]+(\d{2})[ \t]+(\d{4})\b',title or '',re.I):
         calls.add('-'.join(match.groups()))
     return calls
 
 
 def _reviewed_initial_award(text,review):
-    """A first, separately named initial award; every relation stays in one scope."""
+    """Verify a reviewed initial-award heading and literal net amount under Contract Award Value."""
     recommendation=clean(review.get('recommendation'))
     heading=clean(review.get('award_heading'));quote=clean(review.get('award_quotation'))
     supplier=clean(review.get('supplier'))
@@ -120,9 +113,7 @@ def _reviewed_initial_award(text,review):
         raise ValueError('reviewed supplier absent from recommendation')
     named=re.sub(r'^Firm\s+[A-Z]\)\s*','',heading,flags=re.I).rstrip(':').strip()
     if supplier_identity(named)!=supplier_identity(supplier):
-        # A schedule heading names its scope; the recommendation separately binds
-        # that exact schedule to its supplier. Neither whole-event totals nor an
-        # adjacent schedule establish this initial amount.
+        # If heading names a Price Schedule instead of supplier, bind it via recommendation_heading.
         schedule=re.fullmatch(r'Price Schedule [“"\']([A-Z])[”"\']:',heading)
         binding=clean(review.get('recommendation_heading'))
         expected=rf'Price Schedule [“"\']{schedule[1]}[”"\']\s*[-–]\s*(.+)' if schedule else None
@@ -138,7 +129,7 @@ def _reviewed_initial_award(text,review):
 
 
 def propose(*, reference,title,source,publisher,index,source_sha256,snapshot_sha256,review=None):
-    """One auditable proposal or ValueError; this function never writes identities."""
+    """Build and validate a single auditable crosswalk proof dict, or raise ValueError."""
     encoded=source.encode('utf-8') if isinstance(source,str) else source
     if hashlib.sha256(encoded).hexdigest()!=source_sha256:raise ValueError('source bytes disagree with supplied digest')
     if not _REF.fullmatch(reference):raise ValueError('invalid council reference')
@@ -199,8 +190,7 @@ def propose(*, reference,title,source,publisher,index,source_sha256,snapshot_sha
         if clean(winner.group())!=clean(review.get('recommendation')):
             raise ValueError('reviewed supplier recommendation changed')
     if not winner or not value:raise ValueError('single named winner / explicit net award witness absent')
-    # The first recommendation amount is the compared scope. Never choose a later
-    # option, contingent sum or total just because it matches a feed amount.
+    # Compare only the first net amount under Contract Award Value (never later option years).
     award_label=re.search(r'\bContract Award Value\s*:',text,re.I)
     if not award_label:raise ValueError('award value role is not explicit')
     scoped=text[award_label.end():]
@@ -236,11 +226,9 @@ def propose(*, reference,title,source,publisher,index,source_sha256,snapshot_sha
 
 
 def reviewed_links(conn, *, registry=None, agendas=None, persist=True):
-    """Validate every applicable committed proof before writing any link or ledger row.
+    """Validate applicable committed crosswalk proofs and optionally persist links and evidence.
 
-    A previously accepted immutable proof can travel with a released database
-    when the original agenda files are unavailable. New approvals require held
-    bytes and repeat proposal validation against the original publisher record.
+    Previously accepted proofs travel without agenda files; new approvals require held agenda HTML.
     """
     from toronto_bids import config
     from toronto_bids.sources.odata import identity_record
@@ -263,8 +251,7 @@ def reviewed_links(conn, *, registry=None, agendas=None, persist=True):
         raise ValueError('Reviewed City publisher population changed')
     index=publisher_index(population)
     approved=[]
-    # Global uniqueness was measured against the complete original snapshot. Also
-    # reject ambiguity introduced by any currently held (including archived) award.
+    # Also check uniqueness against all currently held OData awards.
     current=defaultdict(set)
     for r in conn.execute("SELECT s.document_number,s.issue_date,s.submission_deadline,s.rfx_type,a.supplier_name_raw,a.award_amount FROM solicitation s JOIN award a ON a.document_number=s.document_number WHERE a.source='odata'"):
         key=fingerprint(r['issue_date'],r['submission_deadline'],r['rfx_type'],r['supplier_name_raw'],r['award_amount'])

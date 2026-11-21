@@ -1,9 +1,4 @@
-"""The pure half of the Ariba attachment archive (#117): manifest + storage.
-
-No browser and no network — the login/Respond/download half is exercised live, but indexing a
-downloaded bundle is where the correctness lives (what document a bundle belongs to, what files
-it holds, and that re-ingesting never duplicates).
-"""
+"""Tests for Ariba attachment indexing, storage, open-event selection, and session recovery."""
 import io
 import zipfile
 
@@ -34,14 +29,13 @@ def test_index_zip_recurses_into_nested_zips_with_full_paths(tmp_path):
         "Appendix C2 - Planning Documents.zip": inner,
     })
     by_path = {e["path"]: e for e in aa.index_zip(z)}
-    # The container zip is gone; its contents surface with prefixed paths.
     assert set(by_path) == {
         "PART 1 - RFP.pdf",
         "Appendix C2 - Planning Documents.zip/drawings/site-plan.pdf",
         "Appendix C2 - Planning Documents.zip/notes.txt",
     }
     nested = by_path["Appendix C2 - Planning Documents.zip/drawings/site-plan.pdf"]
-    assert nested["filename"] == "drawings/site-plan.pdf"   # leaf name within its zip
+    assert nested["filename"] == "drawings/site-plan.pdf"
     assert nested["file_size"] == len(b"plan")
     assert int(nested["crc32"], 16) == zipfile.crc32(b"plan")
 
@@ -52,7 +46,6 @@ def test_index_zip_records_a_corrupt_nested_zip_as_a_leaf(tmp_path):
         "broken.zip": b"not a valid zip file",
     })
     by_path = {e["path"]: e for e in aa.index_zip(z)}
-    # The unreadable zip is kept as its own leaf rather than lost or fatal.
     assert set(by_path) == {"good.pdf", "broken.zip"}
 
 
@@ -64,7 +57,6 @@ def test_index_zip_caps_total_entries(tmp_path, monkeypatch):
 
 def test_document_number_comes_from_the_Doc_token_not_stray_digits():
     assert aa.document_number_from_zip_name("Doc5660182540.zip") == "5660182540"
-    # A filename with other digits must not fabricate a key from digit-stripping.
     assert aa.document_number_from_zip_name("2026-report.zip") is None
     assert aa.document_number_from_zip_name("random.zip") is None
 
@@ -75,16 +67,13 @@ def test_index_zip_lists_files_with_size_and_crc_and_drops_directories(tmp_path)
         "sub/Appendix A.pdf": b"appendix bytes",
     })
     entries = {e["filename"]: e for e in aa.index_zip(z)}
-    # Only real files; the implicit "sub/" directory entry is not indexed.
     assert set(entries) == {"PART 1 - RFP.pdf", "sub/Appendix A.pdf"}
     assert entries["PART 1 - RFP.pdf"]["file_size"] == len(b"hello world")
-    # CRC32 is the fixed 8-hex-digit central-directory value.
     crc = entries["PART 1 - RFP.pdf"]["crc32"]
     assert len(crc) == 8 and int(crc, 16) == zipfile.crc32(b"hello world")
 
 
 def test_training_postings_stay_eligible_for_source_verification(conn):
-    """Training titles, future dates and known IDs do not establish unavailability (#242)."""
     link = "https://service.ariba.com/Discovery.aw/ad/profile?#/RfxEvent/preview/{}"
     rows = [
         ("4044346425", "Mock RFT Training and Practice", "2099-12-31", "1110088888"),
@@ -107,25 +96,24 @@ def test_store_bundle_copies_to_canonical_path_and_indexes_every_file(conn, tmp_
     dest = tmp_path / "store"
     n = aa.store_bundle(conn, src, "5660182540", dest)
     assert n == 2
-    assert (dest / "Doc5660182540.zip").exists()          # keyed on document number
+    assert (dest / "Doc5660182540.zip").exists()
 
     rows = conn.execute(
         "SELECT filename, file_size, zip_name, zip_sha256 FROM ariba_attachment "
         "WHERE document_number='5660182540' ORDER BY filename").fetchall()
     assert [r["filename"] for r in rows] == ["A.pdf", "B.pdf"]
     assert rows[0]["zip_name"] == "Doc5660182540.zip"
-    assert all(len(r["zip_sha256"]) == 64 for r in rows)  # one bundle hash on every file
+    assert all(len(r["zip_sha256"]) == 64 for r in rows)
 
 
 def test_ingest_scans_a_folder_skips_unnamed_zips_and_is_idempotent(conn, tmp_path):
     downloads = tmp_path / "downloads"
     downloads.mkdir()
     _make_zip(downloads / "Doc5660182540.zip", {"A.pdf": b"a"})
-    _make_zip(downloads / "not-a-doc.zip", {"X.pdf": b"x"})   # no Doc########## -> skipped
+    _make_zip(downloads / "not-a-doc.zip", {"X.pdf": b"x"})
     dest = tmp_path / "store"
 
-    assert aa.ingest_downloads(conn, downloads, dest) == 1   # only the Doc-named one
-    # Re-ingesting rebuilds the document's rows from the bytes — same count, not a duplicate.
+    assert aa.ingest_downloads(conn, downloads, dest) == 1
     assert aa.ingest_downloads(conn, downloads, dest) == 1
     total = conn.execute("SELECT COUNT(*) FROM ariba_attachment").fetchone()[0]
     assert total == 1
@@ -136,23 +124,21 @@ def test_store_bundle_writes_paths_and_rebuilds_stale_rows(conn, tmp_path):
     src = _make_zip(tmp_path / "Doc9.zip", {"P1.pdf": b"p", "Appx.zip": inner})
     dest = tmp_path / "store"
 
-    # Simulate a pre-recursion row (the container zip indexed as a top-level leaf).
-    aa.store_bundle(conn, src, "9", dest)  # first pass already recursive; force a stale row:
+    aa.store_bundle(conn, src, "9", dest)
+    # Seed a stale pre-recursion container row.
     conn.execute("INSERT INTO ariba_attachment (document_number, filename, path) "
                  "VALUES ('9', 'Appx.zip', 'Appx.zip')")
     conn.commit()
 
-    aa.store_bundle(conn, src, "9", dest)  # rebuild clears the stale container row
+    aa.store_bundle(conn, src, "9", dest)
     paths = {r["path"] for r in conn.execute(
         "SELECT path FROM ariba_attachment WHERE document_number='9'")}
-    assert paths == {"P1.pdf", "Appx.zip/a.pdf"}          # stale 'Appx.zip' leaf gone
+    assert paths == {"P1.pdf", "Appx.zip/a.pdf"}
 
 
 def test_reindex_bundles_rebuilds_every_zip_on_disk(conn, tmp_path):
     dest = tmp_path / "store"
     dest.mkdir()
-    # Real bundle names carry a full 10-digit document number (document_number_from_zip_name
-    # requires exactly 10 digits) — "Doc11"/"Doc12" would never occur and are silently skipped.
     _make_zip(dest / "Doc1234567891.zip", {"only.pdf": b"x"})
     _make_zip(dest / "Doc1234567892.zip", {"a.pdf": b"a", "b.pdf": b"b"})
 
@@ -161,7 +147,7 @@ def test_reindex_bundles_rebuilds_every_zip_on_disk(conn, tmp_path):
 
 
 def test_init_db_migrates_old_unique_index_to_path(tmp_path):
-    # Build a database with the OLD schema (UNIQUE on filename) and a stale row.
+    # Legacy schema with UNIQUE(document_number, filename).
     conn = _db.connect(":memory:")
     conn.executescript(
         "CREATE TABLE ariba_attachment (id INTEGER PRIMARY KEY AUTOINCREMENT, "
@@ -173,14 +159,13 @@ def test_init_db_migrates_old_unique_index_to_path(tmp_path):
     conn.execute("INSERT INTO ariba_attachment (document_number, filename) VALUES ('1','a.zip')")
     conn.commit()
 
-    _db.init_db(conn)   # must add `path` and swap the unique index without error
+    _db.init_db(conn)
 
     cols = [r[1] for r in conn.execute("PRAGMA table_info(ariba_attachment)")]
     assert "path" in cols
     sql = conn.execute("SELECT sql FROM sqlite_master WHERE name='ariba_attachment'").fetchone()[0]
     assert "document_number, path" in sql
     assert "document_number, filename" not in sql
-    # Two leaves sharing a filename but differing in path now coexist (the old key forbade it).
     for p in ("x.zip/a.pdf", "y.zip/a.pdf"):
         _db.upsert_row(conn, AribaAttachment(document_number="1", filename="a.pdf", path=p),
                        overwrite=True)
@@ -203,8 +188,6 @@ def test_cli_reindex_rebuilds_from_the_store(tmp_path, monkeypatch, capsys):
 
 
 def test_capture_attachments_fails_fast_with_no_credentials(conn, monkeypatch):
-    """The guard fires BEFORE Playwright ever touches a browser — a genuinely unset credential
-    must not cost a 30s login timeout to discover (#184)."""
     from toronto_bids import config
     monkeypatch.setattr(config, "ARIBA_USERNAME", None)
     monkeypatch.setattr(config, "ARIBA_PASSWORD", None)
@@ -217,11 +200,6 @@ def test_capture_attachments_fails_fast_with_no_credentials(conn, monkeypatch):
 
 
 def test_capture_attachments_fails_fast_on_a_placeholder_credential(conn, monkeypatch):
-    """The exact #184 scenario end to end: scrapers/.env still holds the committed example's
-    placeholder values, so os.environ reads them back as non-empty strings. Runs the real
-    `config._real_env` over that placeholder (proving it resolves to None, not just asserting
-    it) and feeds the result to capture_attachments — the guard must react exactly as it does
-    to a truly-missing credential, with no Playwright import required to see it."""
     from toronto_bids import config
     monkeypatch.setenv("ARIBA_USERNAME", "your-ariba-supplier-username")
     placeholder_resolved = config._real_env("ARIBA_USERNAME")
@@ -236,9 +214,6 @@ def test_capture_attachments_fails_fast_on_a_placeholder_credential(conn, monkey
 
 
 def test_capture_attachments_reports_a_failed_event_and_keeps_going(conn, monkeypatch, tmp_path):
-    """#223: one event raising is logged and the run continues (unchanged) — and it is now also
-    reported to a caller-supplied `failures` list, so the nightly can mark the step failed.
-    A browser is never launched: Playwright and the per-event capture are faked."""
     import playwright.sync_api
     from toronto_bids import config
 
@@ -275,29 +250,25 @@ def test_capture_attachments_reports_a_failed_event_and_keeps_going(conn, monkey
         seen.append(event["document_number"])
         if event["document_number"] == "1111111111":
             raise RuntimeError("content tree never resolved")
-        return None   # a clean skip — not a failure
+        return None
 
     monkeypatch.setattr(aa, "capture_event", fake_capture_event)
     failures = []
     assert aa.capture_attachments(conn, dest_dir=tmp_path, failures=failures) == 0
-    assert seen == ["1111111111", "2222222222"]          # the failure did not end the run
+    assert seen == ["1111111111", "2222222222"]
     assert failures == [("ariba:Doc1111111111", "content tree never resolved")]
-    # Omitting `failures` keeps the old behaviour for other callers.
     assert aa.capture_attachments(conn, dest_dir=tmp_path) == 0
 
-    # #304: `only` restricts one targeted attempt to the named open events.
     import pytest
     seen.clear()
     assert aa.capture_attachments(conn, dest_dir=tmp_path, only=["2222222222"]) == 0
     assert seen == ["2222222222"]
-    # A document that is not an open, pending event is refused before any browser work.
     with pytest.raises(ValueError, match="9999999999"):
         aa.capture_attachments(conn, dest_dir=tmp_path, only=["9999999999"])
     assert seen == ["2222222222"]
 
 
 def test_cli_capture_threads_virtual_display(tmp_path, monkeypatch):
-    # --virtual-display must reach capture_attachments (the flag a headless server needs).
     from toronto_bids import config, cli
     from toronto_bids.sources import ariba_attachments as aa
     monkeypatch.setattr(config, "DATA_DIR", tmp_path)
@@ -315,8 +286,6 @@ def test_cli_capture_threads_virtual_display(tmp_path, monkeypatch):
     assert seen["virtual_display"] is True
 
 
-# --- open set backstop + near-close alert (#223) -------------------------------------------
-
 _TODAY = "2026-10-01"
 _LINK = "https://service.ariba.com/Discovery.aw/ad/profile?#/RfxEvent/preview/{}"
 
@@ -333,18 +302,11 @@ def _posting(conn, rfx, doc, close_date):
 
 
 def test_open_events_backstop_from_ariba_posting_when_the_spine_lacks_the_row(conn):
-    """A night the spine sync fails hides postings added since the last good sync; a bridged
-    `ariba_posting` that is still open is captured anyway."""
     _spine(conn, "1111111111", "2026-10-05", "1110000001")
-    # Ariba-only, open: the spine never saw it.
     _posting(conn, "1110000002", "2222222222", "2026-10-03T09:00:00-07:00")
-    # Already in the spine's open set: no duplicate, the spine's row wins.
     _posting(conn, "1110000001", "1111111111", "2026-10-05T09:00:00-07:00")
-    # Unbridged: no document number to key a bundle on.
     _posting(conn, "1110000003", None, "2026-10-04T09:00:00-07:00")
-    # Training posting known only to Ariba: remains eligible for verification.
     _posting(conn, "1110000004", "4044346425", "2099-12-31T09:00:00-07:00")
-    # Closed in Ariba.
     _posting(conn, "1110000005", "5555555555", "2026-09-30T09:00:00-07:00")
 
     events = aa.open_solicitation_events(conn, today=_TODAY)
@@ -356,9 +318,9 @@ def test_open_events_backstop_from_ariba_posting_when_the_spine_lacks_the_row(co
 
 
 def test_open_events_backstop_covers_a_spine_row_with_no_or_a_stale_deadline(conn):
-    _spine(conn, "1111111111", None, "1110000001")             # no deadline in the spine
-    _spine(conn, "2222222222", "2026-09-20", "1110000002")     # stale: Ariba extended it
-    _spine(conn, "3333333333", "2026-09-20", "1110000003")     # really closed
+    _spine(conn, "1111111111", None, "1110000001")
+    _spine(conn, "2222222222", "2026-09-20", "1110000002")
+    _spine(conn, "3333333333", "2026-09-20", "1110000003")
     _posting(conn, "1110000001", "1111111111", "2026-10-02T09:00:00-07:00")
     _posting(conn, "1110000002", "2222222222", "2026-10-09T09:00:00-07:00")
     _posting(conn, "1110000003", "3333333333", "2026-09-20T09:00:00-07:00")
@@ -367,12 +329,12 @@ def test_open_events_backstop_covers_a_spine_row_with_no_or_a_stale_deadline(con
 
 
 def test_near_close_lists_open_unarchived_postings_closing_within_the_window(conn, tmp_path):
-    _spine(conn, "1111111111", "2026-10-03", "1110000001")   # 2 days, no bundle -> listed
-    _spine(conn, "2222222222", "2026-10-02", "1110000002")   # 1 day, bundle on disk -> omitted
-    _spine(conn, "3333333333", "2026-10-11", "1110000003")   # 10 days -> omitted
-    _spine(conn, "4444444444", "2026-09-30", "1110000004")   # closed -> omitted
-    _spine(conn, "6666666666", "2026-10-01", "1110000006")   # closes today -> listed
-    _posting(conn, "1110000005", "5555555555", "2026-10-04T09:00:00-07:00")  # Ariba-only, 3 days
+    _spine(conn, "1111111111", "2026-10-03", "1110000001")
+    _spine(conn, "2222222222", "2026-10-02", "1110000002")
+    _spine(conn, "3333333333", "2026-10-11", "1110000003")
+    _spine(conn, "4444444444", "2026-09-30", "1110000004")
+    _spine(conn, "6666666666", "2026-10-01", "1110000006")
+    _posting(conn, "1110000005", "5555555555", "2026-10-04T09:00:00-07:00")
     _make_zip(tmp_path / "Doc2222222222.zip", {"a.pdf": b"a"})
 
     got = aa.near_close_uncaptured(conn, dest_dir=tmp_path, today=_TODAY)

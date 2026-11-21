@@ -19,7 +19,7 @@ def _parse_json(record: dict, key: str) -> dict:
         try:
             record[key] = json.loads(raw)
         except (TypeError, ValueError):
-            pass  # leave the raw string if it isn't valid JSON
+            pass
     return record
 
 
@@ -32,13 +32,7 @@ def _ext(name: str | None) -> str | None:
 
 
 def _attribution() -> list[dict]:
-    """Attribution statements the recorded permission grants require (#228).
-
-    Derived from the enabled bids&tenders and Bonfire configuration, where grants
-    are recorded. A new `attribution` needs no change to this module. Static
-    config, sorted by slug: deterministic, and present whether or not the body has rows yet
-    (the grant conditions the publication, not any particular night's data).
-    """
+    """Collect attribution statements for enabled portals, sorted by slug."""
     return [
         {
             "slug": p["slug"],
@@ -53,13 +47,10 @@ def _attribution() -> list[dict]:
 
 
 def build_export_document(conn, generated_at: str | None = None) -> dict:
-    """Assemble the solicitation-centric nested export document from the store.
+    """Assemble the nested solicitation-centric export document.
 
-    Pure and deterministic: no file I/O, every query ordered. Awards and Ariba
-    postings are nested under their solicitation only when their document_number
-    matches an existing solicitation; everything else (NULL or non-matching
-    document_number) goes to unlinked_ariba_postings / unlinked_awards
-    (nothing dropped).
+    Awards, postings, and reference-null bids nest under their solicitation when
+    document_number matches, or fall into unlinked_* lists.
     """
     if generated_at is None:
         generated_at = datetime.now(timezone.utc).isoformat()
@@ -110,8 +101,7 @@ def build_export_document(conn, generated_at: str | None = None) -> dict:
             "size_bytes": None,
             "url": form["url"],
         })
-    # Legacy nesting uses a reference only when all held evidence names one document.
-    # Many-procurement item/PDF associations remain explicit in the identity index.
+    # Nest by reference only when all evidence points to a single document_number.
     bridge_candidates = {}
     for row in _rows(conn, "SELECT DISTINCT reference, document_number FROM bid "
                            "WHERE reference IS NOT NULL AND document_number IS NOT NULL "
@@ -123,7 +113,7 @@ def build_export_document(conn, generated_at: str | None = None) -> dict:
     for report in _rows(conn, "SELECT reference, url FROM background_pdf "
                               "WHERE kind='bgrd' ORDER BY reference, url"):
         doc = bridge.get(report["reference"])
-        if doc in sol_docs:                           # attach only to a real solicitation
+        if doc in sol_docs:
             name = report["url"].rsplit("/", 1)[-1]
             documents_by_doc.setdefault(doc, []).append({
                 "source": "staff_report",
@@ -134,8 +124,7 @@ def build_export_document(conn, generated_at: str | None = None) -> dict:
                 "url": report["url"],
             })
 
-    # Attach approved report sources directly to their proven City documents.
-    # Composite and bulk reports need no broad item/reference bridge.
+    # Attach directly proven report URLs without requiring a reference bridge.
     for receipt in _rows(conn, "SELECT document_number,report_url FROM city_native_bid_evidence UNION "
                               "SELECT document_number,report_url FROM city_bulk_bid_evidence ORDER BY document_number,report_url"):
         doc=receipt['document_number'];url=receipt['report_url']
@@ -143,11 +132,7 @@ def build_export_document(conn, generated_at: str | None = None) -> dict:
             name=url.rsplit('/',1)[-1]
             documents_by_doc.setdefault(doc,[]).append(dict(source='staff_report',name=name,path=name,type='pdf',size_bytes=None,url=url))
 
-    # Bids split by which identifier they carry. A bid with a council `reference` (Bid Award
-    # Panel era) nests under its council item, below. A reference-null bid (Award Summary Form,
-    # the post-panel successor #145) has no council item — it nests under its solicitation by
-    # document_number, or, matching no solicitation, lands in unlinked_bids. Same
-    # nested-or-unlinked contract as awards/postings — nothing is dropped.
+    # Route bids by identifier: matched/bridged/reference-null under solicitation, other council-ref bids under council_item, rest unlinked.
     scoped_participation_ids = {r[0] for r in conn.execute("SELECT DISTINCT bid_id FROM bid_response WHERE bid_id IS NOT NULL")}
     bids_by_ref: dict = {}
     bids_by_doc: dict[str, list] = {}
@@ -155,18 +140,18 @@ def build_export_document(conn, generated_at: str | None = None) -> dict:
     for bid in _rows(conn, "SELECT * FROM bid ORDER BY reference, document_number, bidder_name_raw, id"):
         cleaned = _drop(bid, "id")
         ref, doc = bid["reference"], bid["document_number"]
-        bridged = bridge.get(ref) if ref is not None else None          # pre-Ariba: ref -> sol
+        bridged = bridge.get(ref) if ref is not None else None
         alias_target = city_alias_targets.get(doc)
         if alias_target in sol_docs:
-            bids_by_doc.setdefault(alias_target, []).append(cleaned)  # retain the original published Doc identifier
+            bids_by_doc.setdefault(alias_target, []).append(cleaned)  # keep original published document_number
         elif bid['id'] in scoped_participation_ids and doc in sol_docs:
             bids_by_doc.setdefault(doc, []).append(_drop(cleaned, 'document_number'))
         elif ref is not None and doc is None and bridged in sol_docs:
-            bids_by_doc.setdefault(bridged, []).append(_drop(cleaned, "document_number"))   # under solicitation
+            bids_by_doc.setdefault(bridged, []).append(_drop(cleaned, "document_number"))
         elif ref is not None:
-            bids_by_ref.setdefault(ref, []).append(cleaned)             # under council item (unchanged)
+            bids_by_ref.setdefault(ref, []).append(cleaned)
         elif doc in sol_docs:
-            bids_by_doc.setdefault(doc, []).append(_drop(cleaned, "document_number"))       # #145 reference-null
+            bids_by_doc.setdefault(doc, []).append(_drop(cleaned, "document_number"))
         else:
             unlinked_bids.append(cleaned)
 
@@ -190,13 +175,9 @@ def build_export_document(conn, generated_at: str | None = None) -> dict:
         for nc in _rows(conn, "SELECT * FROM noncompetitive ORDER BY workspace_number")
     ]
 
-    # Forward-looking and joinable to nothing — a project has no document_number until it
-    # is actually solicited. Top-level rather than nested for that reason (#69).
     capital_projects = _rows(conn, "SELECT * FROM capital_project ORDER BY name")
 
-    # 2009-2012 awards, keyed on Call Number because they predate Ariba (#96). Top-level for
-    # the same reason as capital_projects: they nest under no solicitation and never will.
-    # For 2009-2011 these are the only awards the archive has at all.
+    # 2009-2012 pre-Ariba awards keyed on Call Number.
     composite_awards = _rows(
         conn, "SELECT * FROM composite_award ORDER BY call_number, supplier_name_raw")
 
@@ -205,8 +186,7 @@ def build_export_document(conn, generated_at: str | None = None) -> dict:
         for firm in _rows(conn, "SELECT * FROM suspended_firm ORDER BY supplier_name_raw, council_authority")
     ]
 
-    # Keep supplier_key: it is the frontend's only stable supplier permalink (#144). supplier_id
-    # is rebuilt from scratch every sync, and display_name shifts as variants accrue.
+    # Preserve supplier_key as the stable permalink; supplier_id is rebuilt every sync.
     suppliers = [
         _parse_json(dict(s), "variants")
         for s in _rows(conn, "SELECT * FROM supplier ORDER BY display_name")
@@ -228,9 +208,7 @@ def build_export_document(conn, generated_at: str | None = None) -> dict:
         ci["bids"] = bids_by_ref.get(ci["reference"], [])
         council_items.append(ci)
 
-    # Agency buyers (#135): a fourth keyspace, in its own section so no City-spine
-    # count changes meaning. Partnered buyers carry their flag and funding share so a
-    # consumer can segment — the TRCA scope decision is the reader's, made visible.
+    # Agency/corporation buyers, separate from the City solicitation spine.
     buyers_out = []
     for buyer in _rows(conn, "SELECT * FROM buyer ORDER BY slug"):
         bid_ = buyer["id"]

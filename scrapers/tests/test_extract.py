@@ -1,5 +1,3 @@
-"""Tests for the LLM extraction client — offline, fixture-based, no network."""
-
 import json
 from pathlib import Path
 from unittest.mock import patch
@@ -11,17 +9,13 @@ FIXTURES = Path(__file__).parent / "fixtures"
 
 @pytest.fixture(autouse=True)
 def legacy_provider(monkeypatch):
-    # These are the retained OpenRouter protocol/retry tests. The Claude default
-    # and its independent spending guard are exercised in test_claude.py.
+    # Retained OpenRouter protocol/retry tests; Claude default is in test_claude.py.
     monkeypatch.setenv("TB_LLM_PROVIDER", "openrouter")
     monkeypatch.setattr("toronto_bids.extract.MODELS", ["test/first", "test/second"])
 
 
 def _load_fixture(name="extract_response.json"):
     return json.loads((FIXTURES / name).read_text())
-
-
-# ── config ──
 
 
 def test_placeholder_api_key_reads_as_none():
@@ -43,9 +37,6 @@ def test_missing_api_key_reads_as_none():
 
     with patch.dict("os.environ", {}, clear=True):
         assert _real_openrouter_key() is None
-
-
-# ── schema validation ──
 
 
 def test_validate_extraction_accepts_good_response():
@@ -104,15 +95,10 @@ def test_validate_extraction_rejects_non_dict():
     ],
 )
 def test_validate_extraction_refuses_shape_surprises_with_value_error(bad):
-    """#219: a shape surprise is a per-document refusal (ValueError), never a TypeError
-    that escapes the corpus loop."""
     from toronto_bids.extract import validate_extraction
 
     with pytest.raises(ValueError):
         validate_extraction(bad)
-
-
-# ── response parsing ──
 
 
 def test_parse_llm_response_extracts_content():
@@ -142,9 +128,6 @@ def test_parse_llm_response_strips_markdown_fence():
     assert len(result["contracts"]) == 1
 
 
-# ── prompt ──
-
-
 def test_prompt_contains_key_rules():
     from toronto_bids.extract import build_prompt
 
@@ -155,17 +138,11 @@ def test_prompt_contains_key_rules():
     assert "declared_submissions" in prompt
 
 
-# ── extractor version ──
-
-
 def test_extractor_version_is_stable():
     from toronto_bids.extract import EXTRACTOR_VERSION
 
     assert isinstance(EXTRACTOR_VERSION, str)
     assert len(EXTRACTOR_VERSION) > 0
-
-
-# ── ExtractionClient ──
 
 
 def test_client_raises_on_missing_key():
@@ -305,10 +282,6 @@ def test_client_does_not_retry_4xx(monkeypatch):
 
 
 def _status_then_fixture(monkeypatch, statuses):
-    """Patch httpx.post: each model in `statuses` raises that status; others succeed.
-
-    Returns (calls, sleeps) lists recording model per call and every backoff sleep.
-    """
     import time
 
     import httpx
@@ -341,7 +314,6 @@ def _status_then_fixture(monkeypatch, statuses):
 
 
 def test_client_falls_back_on_404_without_retrying(monkeypatch):
-    """A retired :free slug (404) moves straight to the next model (#208)."""
     from toronto_bids.extract import MODELS, ExtractionClient
 
     calls, sleeps = _status_then_fixture(monkeypatch, {MODELS[0]: 404})
@@ -364,7 +336,6 @@ def test_client_falls_back_on_402(monkeypatch):
 
 @pytest.mark.parametrize("status", [401, 403])
 def test_client_auth_error_raises_without_fallback(monkeypatch, status):
-    """A bad key is the same key for every model, so no fallback can help."""
     import httpx
 
     from toronto_bids.extract import MODELS, ExtractionClient
@@ -420,9 +391,6 @@ def test_client_sets_flex_tier_for_openai(monkeypatch):
     )
     client.extract("text")
     assert captured["service_tier"] == "flex"
-
-
-# ── CLI dry-run ──
 
 
 def test_cli_extract_dry_run_prints_result(monkeypatch, conn):

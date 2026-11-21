@@ -1,5 +1,3 @@
-"""Tests for the extraction orchestrator — offline, fixture-based, no network."""
-
 import json
 
 import pytest
@@ -41,9 +39,6 @@ class FakeClient:
         return self.result
 
 
-# ── classification gate ──
-
-
 def test_load_labels_builds_url_to_flag_dict(labels_file):
     labels = load_classification_labels(labels_file)
     assert labels["https://example.com/procurement.pdf"] is True
@@ -53,9 +48,6 @@ def test_load_labels_builds_url_to_flag_dict(labels_file):
 def test_load_labels_returns_empty_dict_when_file_missing(tmp_path):
     labels = load_classification_labels(tmp_path / "nonexistent.json")
     assert labels == {}
-
-
-# ── corpus definitions ──
 
 
 def test_all_corpora_are_defined():
@@ -76,9 +68,6 @@ def test_unknown_corpus_raises(conn):
     client = FakeClient()
     with pytest.raises(ValueError, match="Unknown corpus 'bogus'"):
         extract_corpus(conn, "bogus", client=client, labels={})
-
-
-# ── orchestrator ──
 
 
 def test_extract_corpus_skips_false_classification(conn):
@@ -233,11 +222,7 @@ def test_extract_corpus_stores_result_in_cache(conn):
     assert json.loads(cached)["contracts"][0]["reference"] == "RFT 999"
 
 
-# ── ground-truth validation ──
-
-
 def _seed_gt_doc(conn, url, sha256, extraction_result):
-    """Insert a background_pdf row and cache an extraction result for it."""
     from toronto_bids.extract import EXTRACTOR_VERSION
     from toronto_bids.store.db import mark_extracted
 
@@ -386,9 +371,6 @@ def test_validate_not_extracted_is_reported(conn, tmp_path):
     assert result["documents"][0]["status"] == "not_extracted"
 
 
-# ── declared-count invariant ──
-
-
 def test_check_declared_counts_shortfall():
     extraction = {
         "contracts": [
@@ -490,9 +472,6 @@ def test_extract_corpus_stores_flags_on_shortfall(conn):
     assert cached["_flags"][0]["actual"] == 2
 
 
-# ── document splitting ──
-
-
 def test_split_document_small_passes_through():
     from toronto_bids.extraction import split_document
 
@@ -572,9 +551,6 @@ def test_extract_corpus_splits_large_doc_and_merges(conn):
     assert "RFT B" in refs
 
 
-# ── contract dedup ──
-
-
 def test_dedup_contracts_merges_on_reference():
     from toronto_bids.extraction import dedup_contracts
 
@@ -593,16 +569,10 @@ def test_dedup_contracts_merges_on_reference():
     assert len(rft1["bids"]) == 2
 
 
-# ── backfill from extraction cache ──
-
-
 def test_backfill_agency_bids_from_extraction(conn):
-    """Backfill maps LLM extraction → agency_bid/agency_award rows."""
     from toronto_bids.extraction import backfill_from_extraction
 
-    # Set up a buyer
     conn.execute("INSERT INTO buyer (id, slug, name) VALUES (2, 'trca', 'TRCA')")
-    # Set up a background_pdf with a cached extraction
     conn.execute(
         "INSERT INTO background_pdf (url, kind, sha256, text) "
         "VALUES ('https://pub-trca.escribemeetings.com/report.pdf', 'agency_board', 'aaa', 'text')"
@@ -647,7 +617,6 @@ def test_backfill_agency_bids_from_extraction(conn):
 
 
 def test_backfill_bid_table_from_extraction(conn):
-    """Backfill maps LLM extraction → bid rows for award_summary corpus."""
     from toronto_bids.extraction import backfill_from_extraction
 
     conn.execute(
@@ -702,8 +671,6 @@ def _cache_city_doc(conn, *, kind, sha, doc_num, extraction):
     [
         ("including_HST", "including"),
         ("plus_HST", "excluding"),
-        # "Net of all applicable taxes" is neither: the old header regex returned None for it
-        # too, and rule 7 of the prompt says it must not be conflated with plus-HST.
         ("net_of_taxes", None),
         ("unknown", None),
         (None, None),
@@ -711,7 +678,6 @@ def _cache_city_doc(conn, *, kind, sha, doc_num, extraction):
     ],
 )
 def test_backfill_maps_amount_basis_onto_hst_basis(conn, amount_basis, hst_basis):
-    """#217: the model's amount_basis restores the bid's hst_basis; anything else is NULL."""
     from toronto_bids.extraction import backfill_from_extraction
 
     bid = {"supplier_name": "Alpha Co.", "amount_raw": "$500.00"}
@@ -728,11 +694,10 @@ def test_backfill_maps_amount_basis_onto_hst_basis(conn, amount_basis, hst_basis
         "SELECT hst_basis, price_header FROM bid WHERE source='award_summary'"
     ).fetchone()
     assert row["hst_basis"] == hst_basis
-    assert row["price_header"] is None  # the model returns no header text
+    assert row["price_header"] is None
 
 
 def test_backfill_committee_keys_each_contract_on_its_own_document_number(conn):
-    """#217: a two-contract committee report attaches each contract's bids to its own doc."""
     from toronto_bids.extraction import backfill_from_extraction
 
     _cache_city_doc(
@@ -776,13 +741,10 @@ def test_backfill_committee_keys_each_contract_on_its_own_document_number(conn):
         "",
         None,
         "RFP 999",
-        # A trailing Contract No. is a different identifier; its digits push the string past
-        # exactly 10, so the strict normalizer refuses rather than splicing the two together.
         "Doc3333344444, Contract No. 22TE-17WS",
         "Tender Call No. 317-2010, Contract No. 10TE-17WS",
-        # A pre-Ariba Call Number strips to exactly 10 digits — a call number, not a doc.
         "Request for Quotation 3905-10-0097",
-        "1111111111",  # placeholder denylist
+        "1111111111",
     ],
 )
 def test_backfill_committee_unusable_reference_falls_back_to_pdf_document(conn, reference):
@@ -809,7 +771,6 @@ def test_backfill_committee_unusable_reference_falls_back_to_pdf_document(conn, 
 
 
 def test_backfill_award_summary_ignores_contract_reference(conn):
-    """One form is one document: its bids key on the form's own document number."""
     from toronto_bids.extraction import backfill_from_extraction
 
     _cache_city_doc(
@@ -846,8 +807,6 @@ def _cache_bgrd(conn, *, sha, reference, extraction):
 
 
 def test_backfill_composite_awards_from_extraction(conn):
-    """#216: a composite award keys on the NORMALIZED call number, keeps the raw, and carries
-    the contract's title."""
     from toronto_bids.extraction import backfill_from_extraction
 
     _cache_bgrd(
@@ -855,8 +814,6 @@ def test_backfill_composite_awards_from_extraction(conn):
         extraction={
             "contracts": [
                 {
-                    # The trailing Contract No. is a different identifier (CLAUDE.md, third
-                    # keyspace) and must not survive into the key.
                     "reference": "Request for Tender No. 3905-10-0097, Contract No. 10TE-17WS",
                     "title": "Watermain Replacement on Main St",
                     "awards": [
@@ -888,7 +845,6 @@ def test_backfill_composite_awards_from_extraction(conn):
 
 @pytest.mark.parametrize("reference", ["", None, "RFP 999", "Contract No. 10TE-17WS"])
 def test_backfill_composite_refuses_a_reference_that_is_not_a_call_number(conn, reference):
-    """#216: refuse and log, never store the model's raw string as the key."""
     from toronto_bids.extraction import backfill_from_extraction
 
     _cache_bgrd(
@@ -928,13 +884,10 @@ def test_backfill_composite_refuses_a_reference_that_is_not_a_call_number(conn, 
         ("2017.BA3.1", False, True),
         ("2019.BA12.3", False, True),
         ("2025.BA190.4", False, True),
-        # Bid Committee 2013-2016 agendas tabulate their own bids; their reports are in
-        # neither corpus, exactly as before e936004.
         ("2014.BD20.1", False, False),
     ],
 )
 def test_composite_and_ba_report_corpora_partition_bgrd(conn, reference, in_composite, in_ba_report):
-    """#216: composite is the 2009-2012 composite reports only, not every bgrd PDF."""
     conn.execute(
         "INSERT INTO background_pdf (url, kind, sha256, text, reference) "
         "VALUES ('https://example.com/r.pdf', 'bgrd', 'rrr', 'text', ?)",
@@ -952,8 +905,6 @@ def test_composite_and_ba_report_corpora_partition_bgrd(conn, reference, in_comp
 
 
 def test_ba_report_bids_land_in_bid_not_composite_award(conn):
-    """#216: a 2019 Bid Award Panel staff report is not a composite report. Its bids go to
-    `bid` keyed on the council reference; its awards are already on the spine."""
     from toronto_bids.extraction import backfill_from_extraction
 
     _cache_bgrd(
@@ -971,7 +922,6 @@ def test_ba_report_bids_land_in_bid_not_composite_award(conn):
                     "awards": [{"supplier_name": "Alpha Co.", "amount_raw": "$1.00"}],
                 },
                 {
-                    # The Call Number trap: strips to exactly 10 digits, is not a doc number.
                     "reference": "Request for Quotation 3905-10-0097",
                     "bids": [{"supplier_name": "Gamma Ltd.", "amount_raw": "$3.00"}],
                 },
@@ -1005,9 +955,6 @@ def test_ba_report_bids_land_in_bid_not_composite_award(conn):
 
 
 def test_ba_report_reuses_the_composite_era_cache(conn):
-    """No API cost: these reports were extracted when they sat in `composite`, and the cache
-    is keyed (sha256, extractor_version), so the new corpus has nothing to extract and the
-    swap-coverage floor is met."""
     from toronto_bids.extraction import _count_uncached, backfill_from_extraction
 
     for i in range(3):
@@ -1021,7 +968,6 @@ def test_ba_report_reuses_the_composite_era_cache(conn):
 
 
 def test_composite_rebuild_clears_ba_era_rows_from_the_pre_feed_keyspace(conn):
-    """The rows the unscoped corpus wrote for BA-era reports go on the next rebuild."""
     from toronto_bids.extraction import backfill_from_extraction
 
     conn.execute(
@@ -1039,9 +985,6 @@ def test_composite_rebuild_clears_ba_era_rows_from_the_pre_feed_keyspace(conn):
     assert [r[0] for r in conn.execute("SELECT reference FROM composite_award")] == [
         "2010.BD2.2"
     ]
-
-
-# ── backfill: derive first, delete only on success ──
 
 
 def _award_summary_doc(conn, sha, doc_num, url):
@@ -1072,7 +1015,6 @@ def _bidders(conn):
 
 
 def test_backfill_rebuild_drops_rows_no_longer_derived(conn):
-    """A successful rebuild replaces the source's rows — stale ones go."""
     from toronto_bids.extract import EXTRACTOR_VERSION
     from toronto_bids.extraction import backfill_from_extraction
 
@@ -1087,7 +1029,6 @@ def test_backfill_rebuild_drops_rows_no_longer_derived(conn):
 
 
 def test_backfill_empty_derived_set_deletes_nothing(conn):
-    """No current-version extractions anywhere (cold cache): existing rows survive."""
     from toronto_bids.extraction import backfill_from_extraction
 
     conn.execute(
@@ -1103,8 +1044,6 @@ def test_backfill_empty_derived_set_deletes_nothing(conn):
 
 
 def test_backfill_refuses_partial_reextraction_after_version_bump(conn):
-    """A prompt edit bumps EXTRACTOR_VERSION; until re-extraction catches up, the
-    rebuild must not replace the archive with the fraction re-extracted so far."""
     import pytest
 
     from toronto_bids.extract import EXTRACTOR_VERSION
@@ -1121,7 +1060,7 @@ def test_backfill_refuses_partial_reextraction_after_version_bump(conn):
         "('Old Bidder 3', '3333333333', 'award_summary')"
     )
     conn.commit()
-    _cache(conn, "s0", EXTRACTOR_VERSION, "New Bidder 0")  # 1 of 4 re-extracted
+    _cache(conn, "s0", EXTRACTOR_VERSION, "New Bidder 0")
 
     with pytest.raises(RuntimeError, match="1 of 4"):
         backfill_from_extraction(conn, "award_summary")
@@ -1130,14 +1069,13 @@ def test_backfill_refuses_partial_reextraction_after_version_bump(conn):
 
 
 def test_backfill_proceeds_once_coverage_reaches_floor(conn):
-    """A few documents failing re-extraction must not freeze the tables."""
     from toronto_bids.extract import EXTRACTOR_VERSION
     from toronto_bids.extraction import backfill_from_extraction
 
     for i in range(4):
         _award_summary_doc(conn, f"s{i}", f"{i}" * 10, f"https://example.com/{i}.pdf")
         _cache(conn, f"s{i}", "v0-old", f"Old Bidder {i}")
-    for i in range(3):  # 3 of 4 re-extracted; s3 keeps failing
+    for i in range(3):
         _cache(conn, f"s{i}", EXTRACTOR_VERSION, f"New Bidder {i}")
 
     result = backfill_from_extraction(conn, "award_summary")
@@ -1147,7 +1085,6 @@ def test_backfill_proceeds_once_coverage_reaches_floor(conn):
 
 
 def test_backfill_rolls_back_when_the_swap_fails(conn, monkeypatch):
-    """An error mid-insert must not leave the source's rows deleted."""
     import pytest
 
     import toronto_bids.store.db as db
@@ -1173,11 +1110,10 @@ def test_backfill_rolls_back_when_the_swap_fails(conn, monkeypatch):
         backfill_from_extraction(conn, "award_summary")
 
     assert _bidders(conn) == {"Alpha Co.", "Beta Inc."}
-    assert len(calls) == 2  # the failure really landed mid-swap
+    assert len(calls) == 2
 
 
 def test_backfill_rolls_back_when_the_sweep_fails(conn):
-    """An error in the sweep, after every upsert, also leaves the table as it was."""
     import pytest
 
     from toronto_bids.extract import EXTRACTOR_VERSION
@@ -1189,8 +1125,6 @@ def test_backfill_rolls_back_when_the_sweep_fails(conn):
     _cache(conn, "s1", EXTRACTOR_VERSION, "Gamma Ltd.")
 
     class FailingSweep:
-        """Delegates to the real connection, but the sweep's DELETE raises."""
-
         def __init__(self, real):
             self._real = real
 
@@ -1208,13 +1142,10 @@ def test_backfill_rolls_back_when_the_sweep_fails(conn):
     assert _bidders(conn) == {"Alpha Co.", "Beta Inc."}
 
 
-# ── backfill: surviving rows keep their archive history (#218) ──
-
 _OLD = "2020-01-01 00:00:00"
 
 
 def _age_rows(conn, table):
-    """Backdate every row so a rebuild that re-mints first_seen cannot pass by accident."""
     conn.execute(f"UPDATE {table} SET first_seen = ?, last_seen = ?", (_OLD, _OLD))
     conn.commit()
 
@@ -1231,9 +1162,6 @@ def _seen(conn, table, name_col, **where):
 
 
 def test_backfill_rebuild_keeps_first_seen_of_surviving_rows(conn):
-    """A row derived again keeps its first_seen (and id) and gets a fresh last_seen; a
-    row no longer derived is removed; a genuinely new row is stamped now. The bid key
-    has a NULL part here (reference), which the COALESCE conflict target must match."""
     from toronto_bids.extract import EXTRACTOR_VERSION
     from toronto_bids.extraction import backfill_from_extraction
 
@@ -1259,8 +1187,6 @@ def test_backfill_rebuild_keeps_first_seen_of_surviving_rows(conn):
 
 
 def test_backfill_rebuild_keeps_first_seen_with_null_key_parts(conn):
-    """composite_award keys on COALESCE(award_value, ''): an award with no value must
-    still be recognised as the same row on the next rebuild."""
     from toronto_bids.extract import EXTRACTOR_VERSION
     from toronto_bids.extraction import backfill_from_extraction
     from toronto_bids.store.db import mark_extracted
@@ -1295,7 +1221,6 @@ def test_backfill_rebuild_keeps_first_seen_with_null_key_parts(conn):
 
 
 def test_backfill_rebuild_keeps_first_seen_of_agency_rows(conn):
-    """agency_bid (plain UNIQUE) and agency_award (expression key) both survive."""
     from toronto_bids.extract import EXTRACTOR_VERSION
     from toronto_bids.extraction import backfill_from_extraction
     from toronto_bids.store.db import mark_extracted
@@ -1330,8 +1255,6 @@ def test_backfill_rebuild_keeps_first_seen_of_agency_rows(conn):
 
 
 def test_backfill_rebuild_clears_a_column_the_derivation_no_longer_sets(conn):
-    """A surviving row takes the derivation verbatim: a value the new extraction drops
-    goes NULL, exactly as it would after a delete + reinsert."""
     from toronto_bids.extract import EXTRACTOR_VERSION
     from toronto_bids.extraction import backfill_from_extraction
     from toronto_bids.store.db import mark_extracted
@@ -1352,7 +1275,6 @@ def test_backfill_rebuild_clears_a_column_the_derivation_no_longer_sets(conn):
 
 
 def test_backfill_rebuild_leaves_other_sources_alone(conn):
-    """The sweep is scoped to the corpus's source; another source's rows are untouched."""
     from toronto_bids.extract import EXTRACTOR_VERSION
     from toronto_bids.extraction import backfill_from_extraction
 
@@ -1372,8 +1294,6 @@ def test_backfill_rebuild_leaves_other_sources_alone(conn):
 
 
 def test_extract_and_backfill_keyless_ignores_text_less_docs(conn, monkeypatch):
-    """#220: a held doc with no text is never extracted, so it must not count as
-    uncached — otherwise the keyless all-cached path re-raises forever."""
     from toronto_bids.extract import EXTRACTOR_VERSION
     from toronto_bids.extraction import extract_and_backfill
     from toronto_bids.store.db import mark_extracted
@@ -1405,9 +1325,6 @@ def test_extract_and_backfill_keyless_ignores_text_less_docs(conn, monkeypatch):
     assert result["awards_written"] == 1
 
 
-# ── malformed model responses (#219) ──
-
-
 def _one_contract(declared):
     return {
         "contracts": [
@@ -1422,7 +1339,6 @@ def _one_contract(declared):
 
 
 def test_check_declared_counts_coerces_a_numeric_string():
-    """A model that returns `"8"` instead of `8` is still a shortfall of 7, not a crash."""
     flags = check_declared_counts(_one_contract("8"))
     assert len(flags) == 1
     assert flags[0]["declared"] == 8
@@ -1435,8 +1351,6 @@ def test_check_declared_counts_ignores_a_non_numeric_declared_count(declared):
 
 
 class _SequenceClient:
-    """Returns (or raises) one scripted response per call, in order."""
-
     def __init__(self, *responses):
         self.responses = list(responses)
         self.calls = []
@@ -1450,8 +1364,6 @@ class _SequenceClient:
 
 
 def test_one_bad_response_does_not_block_the_rest_of_the_corpus(conn):
-    """#219: a TypeError from one document's response used to escape extract_corpus, so
-    every uncached document after it (ORDER BY url) was blocked on every run."""
     from toronto_bids.extract import EXTRACTOR_VERSION
     from toronto_bids.store.db import is_extracted
 
@@ -1504,9 +1416,6 @@ def test_string_declared_count_in_a_response_is_extracted_not_crashed(conn):
     assert stats["count_flags"] == 1
 
 
-# ── store functions forward `log` (#219) ──
-
-
 @pytest.mark.parametrize(
     "module, fn, corpus",
     [
@@ -1537,7 +1446,7 @@ def test_store_functions_forward_log_to_extraction(monkeypatch, module, fn, corp
     result = getattr(importlib.import_module(module), fn)(None, log=logged.append)
 
     assert seen["corpus"] == corpus
-    assert seen["failures"] is None  # default keeps non-nightly callers unchanged
+    assert seen["failures"] is None
     assert logged == ["FAILED something"]
     if isinstance(result, dict):
         assert result["bids"] == 3
@@ -1545,9 +1454,6 @@ def test_store_functions_forward_log_to_extraction(monkeypatch, module, fn, corp
     failures = []
     getattr(importlib.import_module(module), fn)(None, failures=failures)
     assert seen["failures"] is failures
-
-
-# ── extraction errors reach the caller's failures list (#219) ──
 
 
 class _FailingClient:
@@ -1576,7 +1482,6 @@ def test_extract_and_backfill_appends_one_entry_per_corpus_on_errors(conn, monke
     extract_and_backfill(conn, "award_summary", log=logged.append, failures=failures)
 
     assert failures == [("extract:award_summary", "2 of 2 documents failed extraction")]
-    # per-document lines are still logged; the summary line carries the flag count
     assert sum(m.startswith("  FAILED") for m in logged) == 2
     assert any("2 errors, 0 count flags" in m for m in logged)
 

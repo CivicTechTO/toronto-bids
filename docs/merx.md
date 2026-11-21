@@ -1,190 +1,69 @@
-# MERX capture and TTC supplementary reports
+# MERX capture and supplementary TTC reports
 
-`capture-merx` archives buyer-scoped public listings and optional public bid/award
-tabs for TTC, Police, Parking Authority, CreateTO (Build Toronto/TPLC), and Pan Am.
-Reproduction authorization is recorded in [the permission record](permissions/2026-10-24-merx.md).
-`nightly` runs incremental MERX capture for all enabled buyers after Bonfire,
-including advertised public bid/award detail tabs (`details=True`). The isolated
-`merx` step records status in `sync_run`, reports real bid/award row-count growth,
-and forwards per-buyer failures and legacy detail gaps to the nightly summary.
-Other buyers and later pipeline steps continue after a failure. The core `sync`
-command does not invoke MERX. Historical backfills and the reviewed supplementary
-TTC report archive remain separately invoked commands.
+`tb capture-merx` archives public listings and advertised public bid/award tabs for five buyers: TTC, Toronto Police Service, Toronto Parking Authority, CreateTO (Build Toronto/TPLC), and Pan Am. Written permission is in [permissions/2026-10-24-merx.md](permissions/2026-10-24-merx.md).
 
-## Running it
+`tb nightly` runs incremental MERX capture (with `details=True`) after Bonfire as an isolated step, recording status in `sync_run`, reporting bid/award row growth, and forwarding buyer errors and legacy detail gaps to the nightly summary. `tb sync` does not run MERX. Historical backfills and supplementary TTC reports are run manually.
 
-From `scrapers/`, with `TB_DATA_DIR` pointing at the intended data directory:
+## Commands
+
+Run from `scrapers/` with `TB_DATA_DIR` set:
 
 ```sh
-# Recent closed/results/awarded windows, plus all accessible open pages.
+# Incremental capture: all open pages + latest 25 per closed/results/awarded section
 uv run tb capture-merx
-# Capture the public bid/award tabs advertised by those detail pages as well.
+
+# Include advertised public bid/award detail tabs for one buyer
 uv run tb capture-merx --only toronto-transit-commission --details
-# Historical listing enumeration, with a hard request budget and resumable pages.
+
+# Historical backfill with request budget and resume
 uv run tb capture-merx --only toronto-transit-commission --section closed --backfill --max-requests 300
 uv run tb capture-merx --only toronto-transit-commission --section closed --backfill --resume --max-requests 300
-# A bounded query: completeness applies to T11 only, not the whole buyer.
+
+# Bounded keyword backfill (coverage applies to T11 only)
 uv run tb capture-merx --only toronto-transit-commission --section closed --keywords T11 --backfill
 ```
 
-`--section` is repeatable (`open`, `closed`, `results`, `awarded`). The default
-requests every section. Incremental historical sections capture the latest 25
-listings; this is explicitly a recent window, not complete history. Absence from a
-window never deletes or closes a held listing. The request budget applies per
-buyer and includes retries and detail/fragment requests.
+- `--section` is repeatable (`open`, `closed`, `results`, `awarded`); defaults to all four.
+- Incremental historical sections fetch only the latest 25 listings; absence from that window never deletes or closes a stored listing.
+- `--max-requests` applies per buyer and includes retries and detail/fragment requests.
 
-Historical enumeration collects the latest and oldest public windows (at most 40
-pages each), then searches observed TTC code prefixes using ordinary positive
-keywords **without a wildcard**. `--query` adds positive search terms within the
-same buyer profile. Searches can overlap: counts are never added to assert coverage.
-A bounded `--keywords` cohort stays scoped to that query and does not automatically
-expand into unrelated prefix queries. Whole-population coverage requires this
-attempt's distinct ID union to equal the initial advertised count, with an
-unchanged live count and latest first-page ID sequence at the end. This guards
-observed drift; it cannot guarantee a transactionally consistent publisher snapshot.
-A smaller query that still exceeds the public window is reported as incomplete.
+### Historical pagination and coverage
 
-### Retention and resumption
+MERX caps standard pagination at 40 pages (1,000 rows). `--backfill` fetches both the newest and oldest 40-page windows, then runs non-wildcard prefix queries (`--query` adds extra positive terms). `--keywords` stays strictly scoped to that query.
 
-`<DATA_DIR>/agencies/merx/<buyer>/` retains immutable response bytes by SHA-256,
-request manifests, per-attempt coverage reports, `capture.json` and backfill-page
-pointers. `merx_capture` retains coverage history in SQLite and the buyer export's
-`merx_captures` array. `complete` applies to the report's sections, keyword and
-`details_requested` scope. It does not assert a complete procurement history.
+Whole-population completeness requires the distinct ID union from this run to equal the initial advertised count, with an unchanged live count and first-page ID sequence at the end. Any smaller query that still hits the 40-page cap is reported as incomplete.
 
-`--resume` reuses hash-verified historical listing/detail/fragment response bytes and always rechecks the
-live population. A fresh backfill replaces only resume pointers; original response
-snapshots remain. Changed populations may require a fresh attempt. Malformed,
-changing, duplicate or clamped pages fail validation. Already validated query
-batches remain held; an invalid batch writes no partial listings. Coverage is
-computed from this attempt, never from accumulated database row counts.
+### Storage, resume, and pacing
 
-Each validated listing query and each notice detail commits as soon as it completes.
-Procurement identity is resolved once per buyer capture, after the run or its
-failure and before the coverage report is written (#305). A full resolution pass
-covers the whole archive, so running it per section and per notice made the nightly
-step several times slower than its requests. A failed final pass is recorded as a
-coverage failure; the committed facts remain and take their identities on the next
-pass (the export resolves again before writing).
+- Files live under `<DATA_DIR>/agencies/merx/<buyer>/`: SHA-256 response snapshots, request manifests, per-attempt coverage reports, `capture.json`, and backfill-page pointers. Coverage history is also stored in SQLite (`merx_capture`) and exported in `merx_captures`.
+- `--resume` reuses hash-verified historical listing/detail/fragment responses while rechecking the live population. Malformed, duplicate, clamped, or shifting pages fail validation without writing partial batches.
+- **Identity resolution (#305)**: Each validated listing query and notice detail commits as it completes; procurement identity resolves once per buyer capture in `finally` before writing the coverage report. A failed pass is recorded as a coverage failure, while committed rows stay in place to be resolved on the next pass or before export.
+- Exit code 1 indicates a capture error, incomplete backfill, exhausted request budget, or gated detail failure. Normal incremental runs exit 0.
+- **Pacing and browser fallback**: Requests wait at least 5.2s, serialized per `TB_DATA_DIR` via a process lock, with exponential backoff and persisted `Retry-After` deadlines. Run only one live MERX capture environment at a time. Redirects or access denials stop that buyer immediately. If plain HTTP gets an incomplete HTTP 202 / empty response (AWS WAF browser check), the reader waits at least 60s (or longer per `Retry-After`) and makes one bounded anonymous Chromium fallback sharing the same budget and pacing. Anonymous cookies stay in memory (never logged); allowlisted diagnostic headers are saved under `diagnostics/`. No logins, registrations, or CAPTCHA interactions are performed.
 
-A failed capture, incomplete backfill, exhausted request budget or requested gated
-detail produces exit code 1. A normal incremental window is not an error simply
-because historical coverage is partial. Reports distinguish that scope explicitly.
-This code does not retry unknown records through alternate gated detail routes.
+## Identity, bids, and awards
 
-All request attempts wait at least 5.2 seconds. A process lock serializes MERX
-requests for buyers sharing a data directory; retries use bounded exponential
-backoff and honour Retry-After. Long deadlines persist across buyers/runs and defer
-capture. A redirect or access denial stops that buyer's network sequence. Requests
-identify the Toronto Bids archive. Ordinary capture uses HTTP. An incomplete HTTP 202/empty reply triggers one
-bounded anonymous Chromium fallback after at least 60 seconds (and any longer
-Retry-After deadline defers the run). The site's normal JavaScript may render the
-public page; navigation is bounded and shares the request budget and pacing. The
-reader retains source bytes, reuses anonymous browser cookies privately, and never
-logs cookie values or interacts with account/CAPTCHA controls. Diagnostic response
-headers are stored under `diagnostics/` using an allowlist. No login, registration
-or submissions are performed. Separate data directories do not share the process lock; run only one
-live capture environment against MERX at a time.
+- `merx_notice` maps `(buyer, notice_id)` to the first observed public URL. Notice IDs (9-digit legacy or zero-padded 10-digit modern) stay strings. URL slug, tab, or query changes preserve the listing and canonical procurement ID. Printed references are optional, non-unique labels and are not joined to the City spine.
+- `portal_listing` stores titles, date-only publication/closing dates, and printed references. Listings on results/awarded tabs do not create award rows, and result/award publication dates are not written to `closing_date`. `Open`/`Closed` status comes only from those listing sections.
+- **Detail tabs**: Modern detail pages must match the listing's Reference Number. Only advertised public `data-ajax-url` tabs are fetched, and JS envelopes are decoded as literal strings rather than executed.
+- **Bids**: `agency_bid.result_stage` preserves `Unofficial Results`, `Official Results`, or `Bid Results` independently of compliance status. `No Bid` records a `NULL` price and explicit status; `N/A` or omitted prices keep the named bidder with `NULL` price. Advertised Bid Results tabs showing an explicit `No Files` row record `no_bidder_disclosure` in `detail_notes` (creating no bids and setting `bidder_disclosure_complete = false`), whereas unmarked empty or malformed fragments fail parsing.
+- **Awards**: Require an explicit awardee list and matching notice reference. Explicit `No Award` tabs are valid non-award outcomes and create no award rows. `award_date` and `publication_date` stay separate. MERX bids and awards use the held notice page as their internal `native_ref` (keeping them attached to the listing's procurement ID) and store the fragment URL in `report_url`.
+- **Legacy details**: Sampled legacy notices require account entitlement and are recorded under `detail_gaps` without retrying alternate routes.
 
-## Identity, bids and awards
+## Supplementary TTC reports
 
-`merx_notice` maps buyer + publisher notice ID to the first observed public page.
-Nine-digit legacy IDs and modern zero-prefixed ten-digit IDs remain strings. Tab,
-slug or tracking-parameter changes preserve the archive page and procurement IDs.
-Printed references are nullable, nonunique labels; the source is not joined to the
-City document-number spine.
-
-`portal_listing` retains titles, date-only publication/closing dates and explicitly
-labelled printed references. A listing on a results/awarded tab does not create an
-award. Those tabs' result-publication/award-publication dates are not closing dates;
-unknown closing dates remain null. Open/Closed status is assigned only from those
-listing sections. Full original responses retain the other displayed dates.
-
-Modern detail pages must match the listing's Reference Number. Only advertised
-public `data-ajax-url` tabs are fetched. JavaScript envelopes are decoded as a
-literal string, never executed. Bidder amounts bind inside each bidder container;
-`No Bid` has a null price and explicit status. `agency_bid.result_stage` preserves
-`Unofficial Results`, `Official Results`, or the generic `Bid Results` label
-independently of compliance status. `N/A` and omitted prices retain named bidders
-with null prices; they do not mean No Bid. Only required metadata fields must be
-unique: repeated ancillary locations, events or pricing sections are valid.
-No lowest-price award or unknown tax basis is inferred.
-
-Awards require the separate explicit awardee collection and matching notice
-reference. An explicit `No Award` tab creates no award facts and is a valid
-non-award outcome, including cancellations. `agency_award.award_date` and `publication_date` retain distinct source
-days; tax/value semantics remain those of the source. MERX bid/award facts use the
-held notice page as their internal `native_ref`, keeping them on the listing's
-procurement ID even when printed references are missing or reused. These facts
-retain the actual fragment URL as `report_url`. Missing fields and source absence
-preserve held facts, following archive upsert semantics.
-
-Legacy listing metadata is public, but sampled legacy details require account
-entitlement. They remain visible `detail_gaps`, independently of listing coverage.
-Whole-history reconciliation and exhaustive legacy detail recovery remain unproven.
-
-## Independent TTC reports
-
-Year-scoped Board discovery, complete linked-PDF capture and reviewed extraction
-admission are documented in [TTC history](ttc-history.md). Historical capture is
-separate from MERX and invokes no model automatically.
+For year-by-year TTC Board archive capture and reviewed admission, see [ttc-history.md](ttc-history.md).
 
 ```sh
 uv run tb capture-ttc-reports
-# Queue shared Sonnet batch extraction; collection and extraction are separate.
 uv run tb extract --corpus ttc --batch --backfill
 uv run tb agency-coverage --only ttc
 ```
 
-The reviewed seed inventory in `toronto_bids/data/ttc_reports.json` contains three
-independently published TTC procurement reports. This remains a reviewed supplementary seed list,
-not a claim of exhaustive meeting coverage. The source investigation is recorded in
-[the TTC note](ttc-independent-sources-2026-10-24.md); year-scoped meeting enumeration is separately available through
-`capture-ttc-history`. Add reports only from verified published TTC links, with a
-review basis. Downloading invokes no model, publication or supplier-account action.
+- `toronto_bids/data/ttc_reports.json` holds a reviewed seed list of three public TTC procurement reports.
+- Reports queue as `background_pdf.kind = 'ttc_board'`, verify PDF structure and `pdftotext`, save by SHA-256, and hash-verify already-held files before skipping.
+- Extraction uses the shared Claude prompt, batch queue, and monthly budget. Extracted bids get `result_stage = 'Board report'`. Staff award recommendations stay withheld in `agency_coverage` until backed by independent Board decision verification. No automatic MERX-to-report links are inferred.
 
-Reports are queued as `background_pdf.kind='ttc_board'`. Downloads validate PDF
-structure, save by content hash, and require successful `pdftotext`; HTML errors
-remain queued with visible failures. Already held PDFs are hash-verified before
-skipping. Unattempted URLs remain in the inventory if a denial stops a run.
+## Validation notes
 
-The `ttc` corpus reuses the existing shared prompt/cache, Claude batch queue and
-monthly budget. The prompt is unchanged. Bid facts retain `result_stage='Board
-report'`. Staff-report award recommendations are withheld and reported through the
-agency coverage ledger until independent decision verification is implemented.
-They do not become approved awards or an Awarded solicitation status. No automatic
-MERX-to-report bridge is asserted from a shared title or a contract-number guess.
-Original extraction results remain available for a later reviewed decision.
-
-## Validation
-
-The fixture suite covers actual public listings for all five profiles, TTC's nine
-`T11` pages (210 advertised at that earlier capture), bid and award fragments, hidden
-empty templates, missing dates, singular/zero counts, reused routes, stage/date
-separation, access failures, cooldowns, request budgets, resume and changing totals.
-A simulated 2,050-notice population verifies the complete cap workaround: two
-1,000-row windows plus an overlapping smaller query reconcile to 2,050 unique IDs.
-
-The new code's isolated live validation on 2026-10-24 captured seven open TTC pages,
-eight bidder entries from a public notice and all three supplementary TTC PDFs.
-A subsequent live open capture also validated Police (4 listings), Parking Authority
-(2), CreateTO (1) and Pan Am (0). Its live `T11` backfill captured all
-**201 of 201 then-advertised** records across
-nine pages plus a fresh first-page population check. This differs from the earlier
-210-record snapshot: preserve counts as dated observations. No full buyer-wide
-history, paid extraction, production deployment or publication was performed.
-
-The first production run's refusals and saved evidence are recorded in
-[the validation report](merx-production-validation-2026-10-25.md). A subsequent
-ordinary Chromium probe observed `x-amzn-waf-action: challenge` on the exact
-Parking Authority URL. AWS documents this [HTTP 202 browser-check behavior](https://docs.aws.amazon.com/waf/latest/developerguide/waf-captcha-and-challenge-actions.html).
-The reader loads the site's normal rendering assets, bounds automatic navigation,
-and refuses an incomplete page if normal rendering does not finish. An HTTP 202
-alone never establishes a successful capture or permanent blocking.
-
-An advertised Bid Results tab with no bidder entries and an explicit visible
-`No Files` row in its result-document table is retained as `no_bidder_disclosure`
-in capture `detail_notes`. It creates no bid rows and does not imply zero
-submissions. Any advertised award tab is still captured. Such notes make
-`bidder_disclosure_complete` and overall coverage `complete` false, while malformed
-or unmarked empty fragments remain parser failures.
+Offline tests cover all five buyer profiles, TTC `T11` pages, bid/award fragments, empty templates, missing dates, access errors, cooldowns, request budgets, resume, and a simulated 2,050-notice backfill reconciling two 1,000-row windows plus an overlapping query.

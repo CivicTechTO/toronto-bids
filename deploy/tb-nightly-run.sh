@@ -1,13 +1,6 @@
 #!/usr/bin/env bash
-# systemd ExecStart wrapper (#146): run the nightly, then publish the export.
-#
-# Design: docs/superpowers/specs/2026-07-19-publish-data-design.md
-#
-# publish-data.sh runs EVEN AFTER a partial/failed `tb nightly` — the export is still valid
-# whenever any rows exist — and the unit fails if EITHER step failed, so neither masks the other.
-#
-# Deliberately NOT `set -e`: publish must run regardless of the nightly's exit code, so we capture
-# each exit code and combine them ourselves rather than let the first non-zero abort the script.
+# Run `tb nightly` then publish-data.sh; fail the unit if either fails.
+# Avoid `set -e` so publish still runs after a partial/failed nightly.
 set -uo pipefail
 
 HERE="$(cd "$(dirname "$0")" && pwd)"

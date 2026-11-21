@@ -1,8 +1,3 @@
-"""#69: the forward-looking capital project pipeline.
-
-Solicitations the City *intends* to issue. No document_number — a project only gets one once
-it is actually solicited — so this joins nothing and lives in its own table.
-"""
 import pytest
 
 from toronto_bids.sources.ckan import CkanSource, normalize_capital_project
@@ -39,11 +34,9 @@ def test_normalizes_a_pipeline_row():
     ("Dufferin Transfer Station - Compactors Replacement  - 25ECS-MI-02SW", "25ECS-MI-02SW"),
     ("Dufferin Transfer Station - Paving - 25SWM-IRM-042CDU", "25SWM-IRM-042CDU"),
     ("Basement Flooding Protection Program - 23ECS-LU-02FP", "23ECS-LU-02FP"),
-    # Many projects are named without one; that is not an error.
     ("Sewage Pumping Station Planning and Environmental Assessment Study", None),
 ])
 def test_teases_the_construction_contract_number_out_of_the_name(name, expected):
-    """Nothing joins on it today, but it is the only identifier a future join could use."""
     project, = normalize_capital_project({"Name and Construction Contract Number": name})
     assert project.contract_number == expected
 
@@ -62,10 +55,6 @@ def test_stores_and_is_idempotent(conn):
 
 
 def test_a_refreshed_project_updates_rather_than_being_coalesced_away(conn):
-    """CKAN is authoritative here — no spine covers the pipeline — so the source overwrites.
-
-    A project whose target year slips must land; with overwrite=False the old year would win.
-    """
     first, = normalize_capital_project(RAW)
     db.upsert_row(conn, first, overwrite=True)
     moved, = normalize_capital_project(dict(RAW, **{"Target Sourcing Year": "2027"}))
@@ -79,10 +68,10 @@ def test_the_pipeline_source_overwrites_unlike_the_other_ckan_sources():
 
     by_name = {s.name: s for s in pipeline.default_sources()}
     assert by_name["ckan_pipeline"].overwrite is True
-    assert by_name["ckan_awarded"].overwrite is False   # CKAN backfills the OData spine
+    assert by_name["ckan_awarded"].overwrite is False
     assert by_name["ckan_open"].overwrite is False
     assert CkanSource(name="x", slug=config.CKAN_PIPELINE_SLUG,
-                      kind="capital_pipeline").overwrite is False   # default stays False
+                      kind="capital_pipeline").overwrite is False
 
 
 def test_capital_projects_reach_the_export(conn):
