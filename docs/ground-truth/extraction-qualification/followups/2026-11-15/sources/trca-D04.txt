@@ -1,0 +1,479 @@
+
+
+[ ——— 59,023 characters of this meeting package omitted here ——— ]
+
+                                              50
+                                                               Subject
+              RD
+
+
+
+
+                                                               Property
+           CH
+         UR
+       CH
+     D
+   OL
+
+
+
+
+              Legend
+                                                                                                                                                                     DURHAM
+             Subj
+                ec tPr
+                     oper
+                        ty
+                                                                                                            SITE
+             Wat
+               erc our
+                     s es
+                                                                                                                 PEEL
+                                                                                                                      ^                           YORK
+
+
+
+             Fl
+              oodLi
+                  ne
+             Regul
+
+
+             Par
+                 at
+             TRCAPr
+               c el
+                   i
+                   onLi
+                  oper
+                     t
+                      mi
+                      y
+                        t
+
+
+                  As s es s ment         0   25       50
+                                                           F                        100
+                                                                                                                                                           TORONTO
+
+                                                                                                                                                                     Lake Ontario
+
+
+                                                                                      Met
+                                                                                        ers
+                                                                                                                                                                        Key Map
+©Queen’
+      s Pr
+         int
+           erf
+             orOnt
+                 ari
+                   oandi
+                       ts l
+                          i
+                          c ens or
+                                 s .[
+                                    2017]May NotbeRepr
+                                                     oduc edw i
+                                                              thoutPer
+                                                                     missi
+                                                                         on.THI
+                                                                              SISNOTAPLANOFSURVEY.
+Section II – Items for Executive Action
+
+RES.#B53/20 -        EXTENSION OF CITY OF TORONTO INTEGRATED
+                     TELECOMMUNICATIONS INFRASTRUCTURE MASTER AGREEMENT
+                     Adoption of City of Toronto Amending Agreement No. 11 for Request for
+                     Proposal (RFP) No. 2104-09-3006 for Bell Canada Integrated
+                     Telecommunications Infrastructure, including telephony and connectivity
+                     services.
+
+Moved by:            Paul Ainslie
+Seconded by:         Gordon Highet
+
+WHEREAS Toronto and Region Conservation Authority (TRCA) is engaged in ongoing
+business operations that require Integrated Telecommunications Infrastructure;
+
+AND WHEREAS the City of Toronto solicited and evaluated proposals through a publicly
+advertised process for Integrated Telecommunications Infrastructure and entered into a
+Master Agreement with Bell Canada on October 1, 2010
+
+AND WHEREAS Bell Canada agreed to make the services available to City of Toronto
+partner agencies pursuant to the terms of the Master Agreement;
+
+AND WHEREAS TRCA has been receiving the services under the terms of the City of
+Toronto and Bell Canada Master Agreement since February 3, 2012 and staff are satisfied
+with the services provided to date;
+
+THEREFORE LET IT BE RESOLVED THAT TRCA staff be directed to execute the City of
+Toronto and Bell Canada Amending Agreement No. 11 to extend the contract term until
+2025 with an option for five (5) one-year term extensions as and when approved by the
+City of Toronto;
+
+AND FURTHER THAT authorized TRCA officials be directed to take whatever action may
+be required to implement the contract, including the obtaining of necessary approvals
+and the signing and execution of any documents.
+                                                                                    CARRIED
+BACKGROUND
+TRCA operates twenty-five (25) locations with requirements for telephony and connectivity
+services to conduct business operations. The services to support ongoing business operations
+include telephone systems, private networks and internet connectivity.
+
+In 2009, the City of Toronto undertook a competitive procurement process to support the needs
+of Toronto’s technology infrastructure. The scope of work included a series of categories in
+which two are most applicable to TRCA:
+
+Carrier Services
+•       CS - Carrier Service General
+•       CS-1 - Centrex Service
+•       CS-2 - Megalink Service
+•       CS-3 - Bell Long Distance and Toll Free Service
+•       CS-4 - Bell Individual Business Line Service
+WAN Schedules
+•    WS - WAN Services – General
+•    WS-1 - Internet Protocol Virtual Private Network (IP VPN) Service
+•    WS-1B - SIP Trunking
+•    WS-2 - Ethernet Internetworking
+•    WS-3 - Business Internet Service (BIS)
+•    WS-4 - Business Internet Dedicated (BID)
+•    WS-8 – NDDoS
+
+RFP documentation was posted on the public website of the City of Toronto on January 28,
+2009 and closed on April 22, 2009. Ten (10) addendums were issued to respond to questions
+received. A total of twenty-nine (29) firms downloaded the documents and eight (8) proposals
+were received from the following Proponent(s):
+•      Aastra Telecom Inc
+•      Alcatel-Lucent Canada Inc
+•      Bell Canada
+•      Cogeco
+•      FlexITy Solutions Inc
+•      MTS Allstream Inc
+•      Quartet Services Inc
+•      Rogers Communications Inc
+
+One Proponent submitted a Proposal for the WAN bundle only. This Proposal failed during the
+Stage 1 Evaluation of Mandatory Requirements, reducing the number of Proponents to seven
+(7).
+
+Oversight of the entire procurement process was provided by PPI Consulting and key staff for
+City of Toronto’s Purchasing and Material Management Division. On completion of the
+evaluation process, the proposal submitted by Bell Canada was ranked the highest.
+
+RATIONALE
+This procurement process (RFP# 2104-09-3006 for Integrated Telecommunications
+Infrastructure) is open to City of Toronto’s Agencies, Boards and Commissions through adoption
+of the Master Agreement. TRCA is deemed to be a partner agency by the City, and therefore
+TRCA has been receiving the services under the Bell Canada Master Agreement since 2012.
+The Master Agreement is set to expire in 2020. The City of Toronto Amending Agreement No.
+11 has extended the Master Agreement for an additional 5 year term (ending in 2025) with an
+option for five (5) one-year term extensions and includes renegotiated service rates.
+
+Through an analysis performed by TRCA staff, adopting the amended agreement provides
+significant service cost savings as well as administrative efficiencies for TRCA. Service pricing
+is outlined in the form of a rate card, and as such, TRCA can achieve cost transparency and
+consistency over the term of the agreement.
+
+
+Relationship to Building the Living City, the TRCA 2013-2022 Strategic Plan
+This report supports the following strategic priority set forth in the TRCA 2013-2022 Strategic
+Plan:
+Strategy 7 – Build partnerships and new business models
+Strategy 10 – Accelerate innovation
+FINANCIAL DETAILS
+Based upon review of TRCA 2019 spending with Bell Canada for services within the scope of
+the Master Agreement, anticipated annual costs for ongoing services are $235,000 excluding
+HST. It is anticipated that adoption of the amended agreement will have cost savings of
+$105,000 over the balance of the contract term.
+
+Funds for the contract are identified in IT Infrastructure and various Business Unit Operating
+accounts for the respective budget years
+
+Report prepared by: James Dong, extension 5357
+Emails: james.dong@trca.ca
+For Information contact: James Dong, extension 5357
+Emails: james.dong@trca.ca
+Date: August 5, 2020
+RES.#B54/20 -          VENDOR OF RECORD ARRANGEMENT FOR ELECTRICAL AND
+                       MECHANICAL CONTRACTORS 2020 - 2021
+                       Award of Request for Proposal (RFP) No. 10032967 for a Vendor of
+                       Record (VOR) arrangement for on-call electrical and mechanical
+                       contractor services at various facilities.
+
+Moved by:              Paul Ainslie
+Seconded by:           Gordon Highet
+
+WHEREAS Toronto and Region Conservation Authority (TRCA) is engaged in activities
+that require on-call electrical and mechanical maintenance and repair services at various
+facilities or project sites across TRCA’s jurisdiction;
+
+AND WHEREAS TRCA solicited proposals through a publicly advertised process and
+evaluated the proposals based on the criteria outlined in this report;
+
+THEREFORE, LET IT BE RESOLVED THAT TRCA staff be directed to establish a Vendor
+of Record arrangement with the following electrical contractors: RPM Industrial Inc.,
+Bolton Electric Company Inc., Ainsworth, Black Creek Mechanical Ltd., for the supply of
+on-call electrical contractor services for a period of one (1) year with the option to renew
+for an additional year;
+
+THAT TRCA staff be directed to establish a Vendor of Record arrangement with the
+following mechanical contractors: Black Creek Mechanical Ltd, Ocean Mechanical Ltd.,
+MSB Mechanical Ltd., and Glen the Plumber for the supply of on-call mechanical
+contractor services for a period of one (1) year with the option to renew for an additional
+year;
+
+AND FURTHER THAT authorized TRCA officials be directed to take whatever action may
+be required to implement the contract, including the obtaining of necessary approvals
+and the signing and execution of any documents.
+                                                                                          CARRIED
+BACKGROUND
+TRCA requires on-call electrical and mechanical contractor services for maintenance and repair
+at various TRCA facilities, residential properties, and project sites. By establishing a VOR
+arrangement for electrical and mechanical contractors, vendors are authorized to provide these
+services for a defined period of time and with fixed pricing. Staff may contact a vendor on the list
+to provide these services with a value up to $15,000 per work order. Services above the
+$15,000 threshold will be procured through a separate competitive process and are subject to
+TRCA’s Procurement Policy. Vendors will be required to provide all resources required to
+service the divisional or program needs in accordance with applicable laws, codes, standards,
+terms and conditions of the VOR agreement. The VOR arrangement will be subject to annual
+review in order to confirm that the vendors are providing an adequate level of service and to
+update any applicable insurance, certifications, or policies of the vendors.
+
+RATIONALE
+RFP documentation was posted on the public procurement website www.biddingo.com on
+Wednesday, June 3rd, 2020 and closed on Wednesday, June 17th, 2020. Two (2) addendums
+were issued to respond to questions received.
+
+A total of thirty-six (36) firms downloaded the documents and fifteen (15) proposals were
+received from the following vendors:
+
+           Electrical Proposals                        Mechanical Proposals
+                                  Ainsworth Inc.
+                           Black Creek Mechanical Ltd.
+    R.A Graham Electrical Contractors            Nortek Mechanical Services
+
+            Electric Group Ltd.                        Ocean Mechanical Ltd.
+
+           Beckett Electrical Inc.                Pipe-All Plumbing and Heating Ltd.
+
+       Bolton Electric Company Inc                     Nor-Line Mechanical Ltd
+
+            Everbrite Industries                        MSB Mechanical Ltd.
+
+            RPM Industrial Inc                      Litek Mechnical Services Inc.
+
+                                                          Glen The Plumber
+
+
+The mechanical proposal from Ainsworth Inc.and electrical proposal from Everbrite Industries
+were both disqualified because they both failed to acknowledge Addendum #2, which confirmed
+that pricing for travel time was to be submitted as a per km rate. In failing to acknowledge the
+addendum, both vendors submitted flat rate fees for travel time per vehicle.
+
+An Evaluation Committee comprised of staff from Business Services, Black Creek Pioneer
+Village, Procurement Services and Property Services reviewed the proposals. The criteria used
+to evaluate and select the recommended Proponents for each category included the following:
+            Criteria                      Weight                Minimum Score
+
+Applicants Information and
+Profile                                      15
+
+Key Personnel                                15
+Experience and Qualifications                30
+Health and Safety
+                                             15
+                       Sub-Total            75                        30
+Pricing                                     25                        10
+                     Sub-Total              25                        10
+                  Total Score              100                        40
+Proponents had the option to provide pricing for one or both categories. The four (4) highest
+scoring Proponents for each service category are recommended for contract award.
+
+Through the evaluation process it was determined that RPM Industrial Inc., Bolton Electric
+Company Inc., Ainsworth Inc., and Black Creek Mechanical Ltd., are the highest scoring
+vendor(s) meeting the qualifications and requirements for electrical contractor services as set
+out in the RFP. For the mechanical services category, Ocean Mechanical Ltd., MSB
+Mechanical Ltd., Black Creek Mechanical Ltd., and Glen the Plumber are the highest
+scoring vendors meeting the qualifications and requirements for mechanical contractor services
+as set out in the RFP. Therefore, staff recommends the award of contract No.10032967 to the
+aforementioned Proponents. Proponent’s scores and staff analysis of the evaluation results can
+be provided in an in-camera presentation, upon request.
+
+Relationship to Building the Living City, the TRCA 2013-2022 Strategic Plan
+This report supports the following strategic priority set forth in the TRCA 2013-2022 Strategic
+Plan:
+Strategy 7 – Build partnerships and new business models
+Strategy 3 – Rethink greenspace to maximize its value
+
+FINANCIAL DETAILS
+Based upon a review of previous work completed for 2018-2020, the anticipated costs for the
+requested goods and/or services are approximately $400,000, plus applicable taxes. An
+increase or decrease in workload will have an impact on the value of this contract. All
+proponents understand both the potential cost and resource implications associated with
+changes in workload. The goods and/or services will be provided on an “as required” basis with
+no minimum hours guaranteed.
+
+Funds for the contract are identified in various divisional operating accounts.
+
+Report prepared by: Julia Del Monte, extension 6418
+Emails: julia.delmonte@trca.ca
+For Information contact: Julia Del Monte, extension 6418
+Emails: julia.delmonte@trca.ca
+Date: August 11, 2020
+Section III – Items for the Information of the Board
+
+RES.#B55/20 -          FUNDING AND GRANTS PROGRAM
+                       To provide an in-year update to the Funding and Grants program as of
+                       August 31, 2020.
+
+Moved by:              Joanne Dies
+Seconded by:           Jack Heath
+
+IT IS RECOMMENDED THAT the staff report highlighting the in-year Funding and
+Grants program update for 2020, be received.
+                                                                                     CARRIED
+BACKGROUND
+The Funding and Grants program within the Strategic Business Planning and Performance
+business unit provides timely and seamless support for all Toronto and Region Conservation
+Authority (TRCA) and Toronto and Region Conservation Foundation (TRCF) funding and grant
+applications. This program provides opportunities for TRCA programs and services to diversify
+their revenue streams through additional support provided through the centralized funding and
+grants team. The funding and grants team also assists in strengthening the leadership and
+collaboration among all divisions to ensure consensus in the prioritization and strategic
+positioning of all new funding opportunities.
+
+RATIONALE
+Attachment 1 provides a summary of the status of funding applications submitted in 2020,
+which are organized based on their current status of approved, under review, and declined
+grants. The attachment is current as of August 31, 2020.
+
+Relationship to Building the Living City, the TRCA 2013-2022 Strategic Plan
+This report supports the following strategies set forth in the TRCA 2013-2022 Strategic Plan:
+Strategy 7 – Build partnerships and new business models
+Strategy 9 – Measure performance
+
+FINANCIAL DETAILS
+Between January 1, 2020 and August 31, 2020, the Funding and Grants program has
+facilitated a total of 46 grant submissions with a total in-year request of $9.8M. The additional
+revenues and support generated through the funding and grants program help to provide
+projects and programs with an increasingly sustainable business model by reducing reliance
+on partner municipality funding.
+
+TRCA currently has $5.7M in grant applications under review with various funding programs
+following grant applications that were submitted in the current or previous fiscal years. To date
+in 2020, TRCA received notice that $2.6M has been awarded through the Funding and Grants
+program, and that $20.5M has been declined. This indicates an in-year success rate of 11% as
+of August 31, 2020 for the Funding and Grants program.
+Table 1: In-Year Grant Program Update
+                                                                     Approved/Requested
+                                                                          Funding
+         Grant Status                      # of Grants                    $ (000’s)
+Under Review Grants                                          14                      $5,696
+Awarded Grants                                               16                      $2,560
+Declined Grants                                              27                     $20,455
+
+In addition to the funding applications submitted and/or awarded in the current fiscal year,
+TRCA continues to manage grants and funding that have been successful in previous fiscal
+years and are still active in 2020. TRCA has budgeted a total of $25.7M in revenues for 2020,
+which is representative of all sources of grant funding.
+
+As of August 31, 2020, TRCA had earned 25% of the budgeted grant revenue for 2020,
+primarily as a result of delayed invoicing for the Disaster Mitigation and Adaptation Fund
+(DMAF). TRCA staff are working closely with program officers throughout this process and will
+continue to report on the status of these projects. Additionally, delays related to approvals for
+The Meadoway trail implementation have caused much of this project to be deferred into 2021.
+
+The following section highlights some of the major projects and programs that make up the
+budgeted total for each revenue category:
+
+Federal
+Toronto Region Ravine Erosion Management and Hazard Mitigation Project and Waterfront
+Erosion Hazard Mitigation Project– With funding from the Government of Canada’s DMAF
+program, these projects continue to be implemented to address erosion issues within TRCA
+jurisdiction. The projects address erosion along ravine systems in the Region of Peel, York
+Region and the City of Toronto, as well as maintaining and restoring TRCA’s extensive
+network of shoreline erosion control structures over the next 10 years.
+
+Monarch Nation – TRCA was awarded a grant from Environment and Climate Change Canada
+to engage children aged 6-12 in programming focused on species at risk. Over the next 2
+years, the program will continue to engage a total of 55,000 children through stewardship and
+environmental action projects.
+
+TRCA’s New Administrative Office Building – With funding from Natural Resources Canada’s
+Green Construction through Wood (GCWood) Program, TRCA is constructing a new mass
+timber head office building which promises to be one of the most energy-efficient office
+buildings in North America once completed.
+
+Canada Emergency Wage Subsidy – TRCA successfully applied for the first three intake
+periods of this grant to offset the impacts of COVID-19 on its operations and is assessing
+further intakes, in accordance with the program’s regulations.
+
+Provincial
+Drinking Water Source Protection Program – With funding from the Ontario Ministry of the
+Environment and Climate Change, the Drinking Water Source Protection Program supports
+communities to continue to protect their drinking water sources under Ontario’s framework for
+source protection planning.
+Professional Access Into Employment (PAIE) Program – With funding from the Ontario
+Ministry of Citizenship and Immigration, the PAIE Program continues to help internationally
+trained environmental engineers, geoscientists, planners, ecologists and green building
+specialists to obtain commensurate employed in Ontario.
+
+Municipal
+Toronto Tree Cover Project – The Toronto Tree Cover Project will engage communities
+throughout Toronto in support of the development and expansion of native tree cover on
+commercial, industrial and institutional lands throughout the city.
+
+Non-Government
+The Meadoway – With funding from The W. Garfield Weston Foundation, detailed design work
+is currently being completed for The Meadoway trail network, as well as extensive meadow
+restoration and outreach and education programs to engage and inform members of the
+surrounding community.
+
+The funding and grants program continues to support the establishment and success of
+sustainable business models through collaboration with partners and the pursuit of diversified
+revenue streams which directs additional resources towards key initiatives.
+
+DETAILS OF WORK TO BE DONE
+Various aspects of the Funding and Grants Program were affected by the COVID-19 outbreak
+beginning in March 2020. A number of grant intakes were extended, and several award notices
+are still outstanding beyond anticipated notification dates. The Funding and Grants team will
+continue to work with its partners to keep abreast of developments in existing application
+streams. Various project reporting periods were also adjusted to account for government
+closures and restrictions. The Funding and Grants team continues to work with TRCA’s funding
+partners to submit grant reports in a timely fashion.
+
+The Funding and Grants Program is committed to enhancing the relationship between TRCA
+and its funding partners. To this end, the Funding and Grants Team has developed and
+implemented a new Standard Operating Procedure for liaising with funding partners before and
+after grant applications are submitted to ensure program alignment, to assess areas for
+improvement in the case of unfunded projects, and to determine successful approaches in the
+case of awarded grants.
+
+TRCA will continue its efforts to grow the funding and grants program to support both mandatory
+and non-mandatory activities as a means of reducing the financial impacts anticipated as a
+result of the changes to the Conservation Authorities Act. TRCA staff will continue to update the
+Board of Directors on a bi-annual basis as to the status and success of the Funding and Grants
+program inclusive of reporting on the success rate and performance indicators for the program.
+
+Report prepared by: Kimberly Krawczyk, extension 5862
+Emails: kim.krawczyk@trca.ca
+For Information contact: Jenifer Moravek, extension 5659
+Emails: jenifer.moravek@trca.ca
+Date: September 4, 2020
+Attachments: 1
+
+Attachment 1: 2020 In-Year Grant Program Update
+Attachment 1: In-Year Grant Program Update
+
+                                                                                                                                                                                                Approved /
+                           Funding Body                            Funding Program/Stream                                            Project Title                            Project Status Requested Amount
+                                                                                                                                                                                                 ($000's)
+
+Grants Under Review
+Environment and Climate Change Canada        Great Lakes Protection Initiative                       Toronto Inner Harbour Seabin Project                                     Under Review               204
+
+Environment and Climate Change Canada        Great Lakes Protection Initiative                       King's Park Stream Restoration and Water Quality Wetland Project         Under Review               300
+
+Environment and Climate Change Canada        Zero Plastic Waste Initiative                           Toronto Inner Harbour Seabin Project                                     Under Review        
+
+[ ——— 267,742 characters omitted to the end of the package ——— ]

@@ -8,11 +8,13 @@ from toronto_bids.llm_budget import BudgetExceeded, UsageBudget
 
 # Sonnet is the conservative default until Haiku passes real-document evaluation.
 DEFAULT_MODEL = "claude-sonnet-5-5"
-# USD per million tokens, checked against official pricing on 2026-10-23.
+# USD per million tokens; Sonnet/Haiku reviewed 2026-10-23, Opus 2026-11-13.
 # input, 5-minute cache writes, cache reads, output; Haiku has a >100k tier.
 _RATES = {
     "claude-sonnet-5-5": ("2", "2.5", "0.10", "10"),
     "claude-haiku-5-5": ("0.10", "0.125", "0.01", "0.50"),
+    # Opt-in comparison, official pricing checked 2026-11-13. Default unchanged.
+    "claude-opus-5-5": ("4", "5", "0.20", "20"),
 }
 _HAIKU_LONG = ("0.50", "0.625", "0.05", "2.50")
 MAX_TOKENS = 32768
@@ -131,6 +133,27 @@ def api_headers(api_key=None):
     return {"x-api-key": key, "anthropic-version": "2026-10-21", "content-type": "application/json"}
 
 
+def extraction_request(text, *, model=DEFAULT_MODEL, effort=None):
+    """Build the exact production request without credentials or network access."""
+    from toronto_bids.extract import build_prompt
+
+    content = [{"type": "text", "text": build_prompt(""), "cache_control": {"type": "ephemeral"}}]
+    if text:
+        content.append({"type": "text", "text": text})
+    return _request_body(model, content, effort)
+
+
+def _request_body(model, content, effort):
+    return {
+        "model": model, "max_tokens": MAX_TOKENS,
+        "messages": [{"role": "user", "content": content}],
+        "output_config": {
+            "effort": effort or ("high" if model == "claude-sonnet-5-5" else "medium"),
+            "format": {"type": "json_schema", "schema": EXTRACTION_SCHEMA},
+        },
+    }
+
+
 class ClaudeExtractionClient:
     def __init__(self, api_key=None, models=None, retries=3, backoff=1.0, timeout=120.0):
         from toronto_bids.config import DATA_DIR
@@ -181,23 +204,10 @@ class ClaudeExtractionClient:
         raise last
 
     def _body(self, model, content):
-        body = {
-            "model": model, "max_tokens": MAX_TOKENS,
-            "messages": [{"role": "user", "content": content}],
-            "output_config": {
-                "effort": self.effort or ("high" if model == "claude-sonnet-5-5" else "medium"),
-                "format": {"type": "json_schema", "schema": EXTRACTION_SCHEMA},
-            },
-        }
-        return body
+        return _request_body(model, content, self.effort)
 
     def request_body(self, text, model=None):
-        from toronto_bids.extract import build_prompt
-
-        content = [{"type": "text", "text": build_prompt(""), "cache_control": {"type": "ephemeral"}}]
-        if text:
-            content.append({"type": "text", "text": text})
-        return self._body(model or self.models[0], content)
+        return extraction_request(text, model=model or self.models[0], effort=self.effort)
 
     def _call(self, httpx, model, content):
         body = self._body(model, content)

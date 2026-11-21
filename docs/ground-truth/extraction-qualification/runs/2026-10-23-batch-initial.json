@@ -1,0 +1,760 @@
+{
+  "id": "2026-10-23-batch-initial",
+  "attempts": {
+    "waterfront-2017-09": {
+      "state": "success",
+      "extraction": {
+        "contracts": [
+          {
+            "awards": [],
+            "bids": [],
+            "buyer": null,
+            "closed_date": null,
+            "decision_body": null,
+            "decision_date": null,
+            "declared_compliant": null,
+            "declared_submissions": null,
+            "documents_taken": null,
+            "funding_source": null,
+            "invited_to_tender": [],
+            "posted_date": null,
+            "prequalified": [],
+            "reference": null,
+            "solicitation_type": "unknown",
+            "stage": "single_stage",
+            "title": ""
+          }
+        ]
+      },
+      "provenance": {
+        "document_sha256": "766aef29fcf10179870b4f14abf1818b85e81e01be50cfbbcb22ec0d19dabcd2",
+        "text_sha256": "11c4a52b1206cd5ddeb966d34c44c09d68cb96a2e280e0980acd1a6a2e2d0a6c",
+        "prompt_version": "v1-b63aa8c835ae",
+        "model": "claude-sonnet-5-5",
+        "effort": "high",
+        "mode": "batch",
+        "response_sha256": "375f7f31a281598eda1219c6af5b3cf75cfa9a2fba80e397607b330cc95e2137",
+        "response_id": "msg_011CgKMbsDtnwEPJM7Gs9fHo",
+        "request": {
+          "max_tokens": 32768,
+          "messages": [
+            {
+              "content": [
+                {
+                  "cache_control": {
+                    "type": "ephemeral"
+                  },
+                  "text": "You are a procurement-document data extractor for the City of Toronto archive.\n\nGiven the full text of a board report or award document, extract EVERY procurement\ncontract described in it. A single document may describe SEVERAL contracts.\n\nReturn a JSON object with this exact structure:\n\n{\n  \"contracts\": [\n    {\n      \"reference\": \"RFT/RFP/RFQ/contract number as printed\",\n      \"solicitation_type\": \"RFT | RFP | RFQ | RFSQ | VOR | sole_source | blanket | unknown\",\n      \"title\": \"what is being bought\",\n      \"buyer\": \"which body is procuring\",\n      \"posted_date\": \"YYYY-MM-DD or null\",\n      \"closed_date\": \"YYYY-MM-DD or null\",\n      \"documents_taken\": \"stated count of firms that downloaded documents, or null\",\n      \"declared_submissions\": integer count of submissions stated by the document, or null,\n      \"declared_compliant\": integer count of compliant submissions, or null,\n      \"stage\": \"single_stage | prequalification_then_tender\",\n      \"prequalified\": [\"names of firms that made pre-qualification submissions only\"],\n      \"invited_to_tender\": [\"names of firms invited to submit tenders\"],\n      \"bids\": [\n        {\n          \"supplier_name\": \"verbatim, exactly as printed (REQUIRED)\",\n          \"amount_raw\": \"verbatim dollar amount or null if none shown\",\n          \"amount_basis\": \"plus_HST | net_of_taxes | including_HST | unknown | null\",\n          \"status\": \"compliant | non_compliant | disqualified | withdrawn | no_bid | not_stated\",\n          \"rank\": integer or null\n        }\n      ],\n      \"awards\": [\n        {\n          \"supplier_name\": \"verbatim (REQUIRED)\",\n          \"amount_raw\": \"verbatim or null\",\n          \"amount_basis\": \"plus_HST | net_of_taxes | including_HST | unknown | null\",\n          \"contingency_raw\": \"stated contingency or null\",\n          \"value_confidential\": true or false\n        }\n      ],\n      \"funding_source\": \"budget line or null\",\n      \"decision_date\": \"YYYY-MM-DD or null\",\n      \"decision_body\": \"Board of Directors | Bid Award Panel | CPO | committee name | null\"\n    }\n  ]\n}\n\nCRITICAL RULES — each was learned from a real extraction error:\n\n1. Pre-qualified != bid. A firm that made a pre-qualification submission and was never\n   issued tender documents NEVER BID. Put them in \"prequalified\", NOT in \"bids\".\n   A firm invited to tender but who did not submit goes in \"invited_to_tender\", not \"bids\".\n\n2. A disqualified bidder IS a bid with status \"disqualified\" and amount_raw null.\n   Withdrawn, non-compliant, and \"no bid\" are likewise bids with the appropriate status.\n\n3. declared_submissions is the count the document states (\"Eight (8) submissions were\n   received\"). Extract it even when it looks redundant — it is the runtime self-check.\n\n4. Names and amounts VERBATIM, including typos, numeric-leading firm names\n   (\"2489960 Ontario Inc.\"), and legal suffixes. Normalisation belongs downstream.\n\n5. Multiple awards on one contract is normal (Vendor of Record arrangements).\n\n6. If the document describes NO procurement contracts, return {\"contracts\": []}.\n\n7. amount_basis is load-bearing. \"Plus HST\" and \"net of all applicable taxes\" are different\n   bases and must not be confused.\n\nDOCUMENT TEXT:\n\n",
+                  "type": "text"
+                },
+                {
+                  "text": "Waterfront Toronto — published awarded contracts.\nPublication month only (no exact award day published): 2017-09\n\nPort Lands Area – Soil & Groundwater Remediation and Treatment Technologies – Part B: Field-Scale Pilot Testing:\nEthical Solutions - surfactant enhanced injection combined with chemical oxidation technology ($278,100)\nGeosyntec Consultants – demonstration of self-sustaining smouldering remediation in both in-situ and ex-situ environments technology ($869,110)\nGroundwater Technology BV - in-situ biological cementation using urea-based solution to enhance geotechnical stability of soils technology ($313,022)\nWSP Canada - Block and Absorb and Enhanced Aerobic Biodegration technology ($340,335)​​\nEngineering and Inspection Fees for Services for Bayside Phase II – City of Toronto ($88,950) (Sole Source)\nLegal Services to Assist with Board/Corporate Governance Matters – Axiom Global Canada Inc. ($52,000) (Sole Source)\nInterior Design-Build Services for Waterfront Toronto’s Corporate Office – Greenferd Construction Inc. ($186,446)\nEast Bayfront Dockside Block 1 - Dockwall Reinforcing Design and Contract Administration – SNC-Lavalin Inc. ($173,082)",
+                  "type": "text"
+                }
+              ],
+              "role": "user"
+            }
+          ],
+          "model": "claude-sonnet-5-5",
+          "output_config": {
+            "effort": "high",
+            "format": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "contracts": {
+                    "items": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "awards": {
+                          "items": {
+                            "additionalProperties": false,
+                            "properties": {
+                              "amount_basis": {
+                                "anyOf": [
+                                  {
+                                    "enum": [
+                                      "plus_HST",
+                                      "net_of_taxes",
+                                      "including_HST",
+                                      "unknown"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "amount_raw": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "contingency_raw": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "supplier_name": {
+                                "type": "string"
+                              },
+                              "value_confidential": {
+                                "type": "boolean"
+                              }
+                            },
+                            "required": [
+                              "supplier_name",
+                              "amount_raw",
+                              "amount_basis",
+                              "contingency_raw",
+                              "value_confidential"
+                            ],
+                            "type": "object"
+                          },
+                          "type": "array"
+                        },
+                        "bids": {
+                          "items": {
+                            "additionalProperties": false,
+                            "properties": {
+                              "amount_basis": {
+                                "anyOf": [
+                                  {
+                                    "enum": [
+                                      "plus_HST",
+                                      "net_of_taxes",
+                                      "including_HST",
+                                      "unknown"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "amount_raw": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "rank": {
+                                "type": [
+                                  "integer",
+                                  "null"
+                                ]
+                              },
+                              "status": {
+                                "enum": [
+                                  "compliant",
+                                  "non_compliant",
+                                  "disqualified",
+                                  "withdrawn",
+                                  "no_bid",
+                                  "not_stated"
+                                ],
+                                "type": "string"
+                              },
+                              "supplier_name": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "supplier_name",
+                              "amount_raw",
+                              "amount_basis",
+                              "status",
+                              "rank"
+                            ],
+                            "type": "object"
+                          },
+                          "type": "array"
+                        },
+                        "buyer": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "closed_date": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "decision_body": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "decision_date": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "declared_compliant": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ]
+                        },
+                        "declared_submissions": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ]
+                        },
+                        "documents_taken": {
+                          "type": [
+                            "integer",
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "funding_source": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "invited_to_tender": {
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        },
+                        "posted_date": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "prequalified": {
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        },
+                        "reference": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "solicitation_type": {
+                          "enum": [
+                            "RFT",
+                            "RFP",
+                            "RFQ",
+                            "RFSQ",
+                            "VOR",
+                            "sole_source",
+                            "blanket",
+                            "unknown"
+                          ],
+                          "type": "string"
+                        },
+                        "stage": {
+                          "enum": [
+                            "single_stage",
+                            "prequalification_then_tender"
+                          ],
+                          "type": "string"
+                        },
+                        "title": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "reference",
+                        "solicitation_type",
+                        "title",
+                        "buyer",
+                        "posted_date",
+                        "closed_date",
+                        "documents_taken",
+                        "declared_submissions",
+                        "declared_compliant",
+                        "stage",
+                        "prequalified",
+                        "invited_to_tender",
+                        "bids",
+                        "awards",
+                        "funding_source",
+                        "decision_date",
+                        "decision_body"
+                      ],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "contracts"
+                ],
+                "type": "object"
+              },
+              "type": "json_schema"
+            }
+          }
+        },
+        "request_sha256": "c53dd9afc1e32e493406b218b4d5b124116913c9ff570d3cd30c4ef3420db3c8",
+        "schema_sha256": "4c57a351f555882f3a51c1dd3a6ff4addcd82744d2d60594d35a9cb21d80d83f",
+        "receipt_sha256": "0f019b1f4ad1f7270d8d913c874f3f40ef0a52d30b463bafc40c1116b204279b"
+      },
+      "usage": {
+        "input_tokens": 473,
+        "cache_creation_input_tokens": 2870,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 2870,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 153,
+        "output_tokens_details": {
+          "thinking_tokens": 0
+        },
+        "service_tier": "batch",
+        "inference_geo": "global",
+        "speed": "standard"
+      },
+      "charged_microdollars": 4826,
+      "origin": "claude-batch-validation-2026-10-23/validation.sqlite",
+      "historical_source_check": {
+        "month": "2017-09",
+        "sha256": "11c4a52b1206cd5ddeb966d34c44c09d68cb96a2e280e0980acd1a6a2e2d0a6c",
+        "pending": false,
+        "ok": false,
+        "claims": 0,
+        "errors": [
+          "Unmapped monetary evidence: 934a03cb955bd2a15455b35c0141b62181641e9b7b8f7950695d7ee2c4453379",
+          "Unmapped monetary evidence: 9e6912b02441d8f872ac6b278644f6810ab1e5c4fccaca9aa032ec7dbcff0e9a",
+          "Unmapped monetary evidence: 0147e6bffea3aed0be0fd89316b0f1c6db250f22db1aecb1e5bd9b4186bc62b5",
+          "Unmapped monetary evidence: 686adc8bd58f169571c462f658f5d78f03eb4f2286daef5342663584884bd4f1",
+          "Unmapped monetary evidence: 2f17737426f73e02b7cf6e28d5bd9692b4dd8f25312343fdefeff8a29e87c681",
+          "Unmapped monetary evidence: 139eacef18229ea7de92946f72ba0e70b4d14be452f8258fd0afc1225a859497",
+          "Unmapped monetary evidence: 7d896b0a684f3282b01a30a8829aea36106d06bb5ce6589b0e48b5f41d854164",
+          "Unmapped monetary evidence: 430d37893d800744a06a73ff837bc6a344b2fed2ec8864b6d39777b933628c84",
+          "No supported award claims extracted"
+        ]
+      },
+      "raw_response": {
+        "model": "claude-sonnet-5-5",
+        "id": "msg_011CgKMbsDtnwEPJM7Gs9fHo",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"contracts\":[{\"awards\":[],\"bids\":[],\"buyer\":null,\"closed_date\":null,\"decision_body\":null,\"decision_date\":null,\"declared_compliant\":null,\"declared_submissions\":null,\"documents_taken\":null,\"funding_source\":null,\"invited_to_tender\":[],\"posted_date\":null,\"prequalified\":[],\"reference\":null,\"solicitation_type\":\"unknown\",\"stage\":\"single_stage\",\"title\":\"\"}]}"
+          }
+        ],
+        "container": null,
+        "stop_reason": "end_turn",
+        "stop_sequence": null,
+        "stop_details": null,
+        "usage": {
+          "input_tokens": 473,
+          "cache_creation_input_tokens": 2870,
+          "cache_read_input_tokens": 0,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 2870,
+            "ephemeral_1h_input_tokens": 0
+          },
+          "output_tokens": 153,
+          "output_tokens_details": {
+            "thinking_tokens": 0
+          },
+          "service_tier": "batch",
+          "inference_geo": "global",
+          "speed": "standard"
+        },
+        "diagnostics": null
+      }
+    },
+    "waterfront-2021-10": {
+      "state": "success",
+      "extraction": {
+        "contracts": [
+          {
+            "awards": [],
+            "bids": [],
+            "buyer": null,
+            "closed_date": null,
+            "decision_body": null,
+            "decision_date": null,
+            "declared_compliant": null,
+            "declared_submissions": null,
+            "documents_taken": null,
+            "funding_source": null,
+            "invited_to_tender": [],
+            "posted_date": null,
+            "prequalified": [],
+            "reference": null,
+            "solicitation_type": "sole_source",
+            "stage": "single_stage",
+            "title": ""
+          }
+        ]
+      },
+      "provenance": {
+        "document_sha256": "766aef29fcf10179870b4f14abf1818b85e81e01be50cfbbcb22ec0d19dabcd2",
+        "text_sha256": "bba4275dfe67ace53b3f017e71ac3a0200db080c2b64e09696f32ad4c9cb28ae",
+        "prompt_version": "v1-b63aa8c835ae",
+        "model": "claude-sonnet-5-5",
+        "effort": "high",
+        "mode": "batch",
+        "response_sha256": "70579756096b876d37ab07120ad616cc14e154fb6df17e33ba63e0053738570b",
+        "response_id": "msg_011CgKNJgZ6ZcWhwWfj2LNzR",
+        "request": {
+          "max_tokens": 32768,
+          "messages": [
+            {
+              "content": [
+                {
+                  "cache_control": {
+                    "type": "ephemeral"
+                  },
+                  "text": "You are a procurement-document data extractor for the City of Toronto archive.\n\nGiven the full text of a board report or award document, extract EVERY procurement\ncontract described in it. A single document may describe SEVERAL contracts.\n\nReturn a JSON object with this exact structure:\n\n{\n  \"contracts\": [\n    {\n      \"reference\": \"RFT/RFP/RFQ/contract number as printed\",\n      \"solicitation_type\": \"RFT | RFP | RFQ | RFSQ | VOR | sole_source | blanket | unknown\",\n      \"title\": \"what is being bought\",\n      \"buyer\": \"which body is procuring\",\n      \"posted_date\": \"YYYY-MM-DD or null\",\n      \"closed_date\": \"YYYY-MM-DD or null\",\n      \"documents_taken\": \"stated count of firms that downloaded documents, or null\",\n      \"declared_submissions\": integer count of submissions stated by the document, or null,\n      \"declared_compliant\": integer count of compliant submissions, or null,\n      \"stage\": \"single_stage | prequalification_then_tender\",\n      \"prequalified\": [\"names of firms that made pre-qualification submissions only\"],\n      \"invited_to_tender\": [\"names of firms invited to submit tenders\"],\n      \"bids\": [\n        {\n          \"supplier_name\": \"verbatim, exactly as printed (REQUIRED)\",\n          \"amount_raw\": \"verbatim dollar amount or null if none shown\",\n          \"amount_basis\": \"plus_HST | net_of_taxes | including_HST | unknown | null\",\n          \"status\": \"compliant | non_compliant | disqualified | withdrawn | no_bid | not_stated\",\n          \"rank\": integer or null\n        }\n      ],\n      \"awards\": [\n        {\n          \"supplier_name\": \"verbatim (REQUIRED)\",\n          \"amount_raw\": \"verbatim or null\",\n          \"amount_basis\": \"plus_HST | net_of_taxes | including_HST | unknown | null\",\n          \"contingency_raw\": \"stated contingency or null\",\n          \"value_confidential\": true or false\n        }\n      ],\n      \"funding_source\": \"budget line or null\",\n      \"decision_date\": \"YYYY-MM-DD or null\",\n      \"decision_body\": \"Board of Directors | Bid Award Panel | CPO | committee name | null\"\n    }\n  ]\n}\n\nCRITICAL RULES — each was learned from a real extraction error:\n\n1. Pre-qualified != bid. A firm that made a pre-qualification submission and was never\n   issued tender documents NEVER BID. Put them in \"prequalified\", NOT in \"bids\".\n   A firm invited to tender but who did not submit goes in \"invited_to_tender\", not \"bids\".\n\n2. A disqualified bidder IS a bid with status \"disqualified\" and amount_raw null.\n   Withdrawn, non-compliant, and \"no bid\" are likewise bids with the appropriate status.\n\n3. declared_submissions is the count the document states (\"Eight (8) submissions were\n   received\"). Extract it even when it looks redundant — it is the runtime self-check.\n\n4. Names and amounts VERBATIM, including typos, numeric-leading firm names\n   (\"2489960 Ontario Inc.\"), and legal suffixes. Normalisation belongs downstream.\n\n5. Multiple awards on one contract is normal (Vendor of Record arrangements).\n\n6. If the document describes NO procurement contracts, return {\"contracts\": []}.\n\n7. amount_basis is load-bearing. \"Plus HST\" and \"net of all applicable taxes\" are different\n   bases and must not be confused.\n\nDOCUMENT TEXT:\n\n",
+                  "type": "text"
+                },
+                {
+                  "text": "Waterfront Toronto — published awarded contracts.\nPublication month only (no exact award day published): 2021-10\n\nWater Service Connections from the Property line to the Watermain and Sewers for Love Park in Central Waterfront - The Treasurer, City of Toronto ($100,507) (Sole Source)\nDesign and Supply of Play Equipment Phase 1 for Port Lands Flood Protection Project\nAPE Studio Inc. ($409,136)\nEarthscape Play Inc. ($465,660)\nMonstrum APS ($416,931)\nWhole Trees LLC ($210,880)\nCIP Concrete (SPS, OGS1, SWTF, Outfall) for Port Lands Flood Protection Project - Alliance Verdi Civil Inc. ($2,915,010) (Contract awarded by Ellis Don Civil Ltd on behalf of Waterfront Toronto)\nDry Utilities for New Cherry St and Lakeshore for Port Lands Flood Protection Project - Guild Electric Limited ($680,653) (Contract awarded by Ellis Don Civil Ltd on behalf of Waterfront Toronto)\nBioengineering Supervision Services for Port Lands Flood Protection Project - Urban Forest Associates ($249,400) (Contract awarded by Ellis Don Civil Ltd on behalf of Waterfront Toronto)\nTemporary Street Lighting Design for Port Lands Flood Protection Project - Utility Solutions ($214,108) (Contract awarded by Ellis Don Civil Ltd on behalf of Waterfront Toronto)",
+                  "type": "text"
+                }
+              ],
+              "role": "user"
+            }
+          ],
+          "model": "claude-sonnet-5-5",
+          "output_config": {
+            "effort": "high",
+            "format": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "contracts": {
+                    "items": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "awards": {
+                          "items": {
+                            "additionalProperties": false,
+                            "properties": {
+                              "amount_basis": {
+                                "anyOf": [
+                                  {
+                                    "enum": [
+                                      "plus_HST",
+                                      "net_of_taxes",
+                                      "including_HST",
+                                      "unknown"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "amount_raw": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "contingency_raw": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "supplier_name": {
+                                "type": "string"
+                              },
+                              "value_confidential": {
+                                "type": "boolean"
+                              }
+                            },
+                            "required": [
+                              "supplier_name",
+                              "amount_raw",
+                              "amount_basis",
+                              "contingency_raw",
+                              "value_confidential"
+                            ],
+                            "type": "object"
+                          },
+                          "type": "array"
+                        },
+                        "bids": {
+                          "items": {
+                            "additionalProperties": false,
+                            "properties": {
+                              "amount_basis": {
+                                "anyOf": [
+                                  {
+                                    "enum": [
+                                      "plus_HST",
+                                      "net_of_taxes",
+                                      "including_HST",
+                                      "unknown"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "amount_raw": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "rank": {
+                                "type": [
+                                  "integer",
+                                  "null"
+                                ]
+                              },
+                              "status": {
+                                "enum": [
+                                  "compliant",
+                                  "non_compliant",
+                                  "disqualified",
+                                  "withdrawn",
+                                  "no_bid",
+                                  "not_stated"
+                                ],
+                                "type": "string"
+                              },
+                              "supplier_name": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "supplier_name",
+                              "amount_raw",
+                              "amount_basis",
+                              "status",
+                              "rank"
+                            ],
+                            "type": "object"
+                          },
+                          "type": "array"
+                        },
+                        "buyer": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "closed_date": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "decision_body": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "decision_date": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "declared_compliant": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ]
+                        },
+                        "declared_submissions": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ]
+                        },
+                        "documents_taken": {
+                          "type": [
+                            "integer",
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "funding_source": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "invited_to_tender": {
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        },
+                        "posted_date": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "prequalified": {
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        },
+                        "reference": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "solicitation_type": {
+                          "enum": [
+                            "RFT",
+                            "RFP",
+                            "RFQ",
+                            "RFSQ",
+                            "VOR",
+                            "sole_source",
+                            "blanket",
+                            "unknown"
+                          ],
+                          "type": "string"
+                        },
+                        "stage": {
+                          "enum": [
+                            "single_stage",
+                            "prequalification_then_tender"
+                          ],
+                          "type": "string"
+                        },
+                        "title": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "reference",
+                        "solicitation_type",
+                        "title",
+                        "buyer",
+                        "posted_date",
+                        "closed_date",
+                        "documents_taken",
+                        "declared_submissions",
+                        "declared_compliant",
+                        "stage",
+                        "prequalified",
+                        "invited_to_tender",
+                        "bids",
+                        "awards",
+                        "funding_source",
+                        "decision_date",
+                        "decision_body"
+                      ],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "contracts"
+                ],
+                "type": "object"
+              },
+              "type": "json_schema"
+            }
+          }
+        },
+        "request_sha256": "7342d076b2420e36e17f650526834c10ffa712049f2130a906d40e2e384b2596",
+        "schema_sha256": "4c57a351f555882f3a51c1dd3a6ff4addcd82744d2d60594d35a9cb21d80d83f",
+        "receipt_sha256": "0f019b1f4ad1f7270d8d913c874f3f40ef0a52d30b463bafc40c1116b204279b"
+      },
+      "usage": {
+        "input_tokens": 549,
+        "cache_creation_input_tokens": 2870,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 2870,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 160,
+        "output_tokens_details": {
+          "thinking_tokens": 0
+        },
+        "service_tier": "batch",
+        "inference_geo": "global",
+        "speed": "standard"
+      },
+      "charged_microdollars": 4937,
+      "origin": "claude-batch-validation-2026-10-23/validation.sqlite",
+      "historical_source_check": {
+        "month": "2021-10",
+        "sha256": "bba4275dfe67ace53b3f017e71ac3a0200db080c2b64e09696f32ad4c9cb28ae",
+        "pending": false,
+        "ok": false,
+        "claims": 0,
+        "errors": [
+          "Unmapped monetary evidence: 834e2706b80db86a35c856ace7a8c61c47be38194a0ac1a42835c774818d6b49",
+          "Unmapped monetary evidence: c027e81a51ce1a7c70edeadddd9bc047655413acf1ee6e42dde323adf0399067",
+          "Unmapped monetary evidence: 985892009fb5f4bea22273869f80eeccd0a3319ed1391e9a8a360f88df535218",
+          "Unmapped monetary evidence: de1132cb2e50b324705013e83f74bca78bcb28180b1d5032a2383319f72bb318",
+          "Unmapped monetary evidence: bc33d95ae3b86d753bb0477ef80fe78484ed87efd0046c8c03676e9db73d1b32",
+          "Unmapped monetary evidence: 085ce9f37d27cc14ee85971b7ad98f95e5d70f90a789dd1f1f18c1c2d5c81369",
+          "Unmapped monetary evidence: e3dfc5cee1cca5bfe9910dec651897af6e8801d3bcbe2cf44045e5c94705d1d8",
+          "Unmapped monetary evidence: feafb4a7aa3d9efbb36670c27217c714af19d85ddf200e00b7cfad421daedddf",
+          "Unmapped monetary evidence: 96e64af917df203849f64651abc6e6b3380feccceecb07e3df47d49930eb4db4",
+          "No supported award claims extracted"
+        ]
+      },
+      "raw_response": {
+        "model": "claude-sonnet-5-5",
+        "id": "msg_011CgKNJgZ6ZcWhwWfj2LNzR",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"contracts\":[{\"awards\":[],\"bids\":[],\"buyer\":null,\"closed_date\":null,\"decision_body\":null,\"decision_date\":null,\"declared_compliant\":null,\"declared_submissions\":null,\"documents_taken\":null,\"funding_source\":null,\"invited_to_tender\":[],\"posted_date\":null,\"prequalified\":[],\"reference\":null,\"solicitation_type\":\"sole_source\",\"stage\":\"single_stage\",\"title\":\"\"}]}"
+          }
+        ],
+        "container": null,
+        "stop_reason": "end_turn",
+        "stop_sequence": null,
+        "stop_details": null,
+        "usage": {
+          "input_tokens": 549,
+          "cache_creation_input_tokens": 2870,
+          "cache_read_input_tokens": 0,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 2870,
+            "ephemeral_1h_input_tokens": 0
+          },
+          "output_tokens": 160,
+          "output_tokens_details": {
+            "thinking_tokens": 0
+          },
+          "service_tier": "batch",
+          "inference_geo": "global",
+          "speed": "standard"
+        },
+        "diagnostics": null
+      }
+    }
+  }
+}

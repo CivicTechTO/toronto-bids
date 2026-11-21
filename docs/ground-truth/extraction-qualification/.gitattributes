@@ -1,0 +1,4 @@
+# Source and prompt snapshots are hash-bound evidence; preserve their exact bytes.
+sources/*.txt -whitespace
+followups/*/sources/*.txt -whitespace
+comparisons/*/prompt-clarifications.txt -whitespace

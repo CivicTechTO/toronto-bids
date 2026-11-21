@@ -19,6 +19,16 @@ def build_parser() -> argparse.ArgumentParser:
 
     sub.add_parser("status", help="Show row counts in the local store")
 
+    p_qualify = sub.add_parser("qualify-extraction", help="Offline source-reviewed relationship evaluation (#302)")
+    p_qualify.add_argument("--cohort", required=True, help="Reviewed cohort JSON")
+    p_qualify.add_argument("--run", action="append", default=[], help="Retained trial JSON (repeatable)")
+    p_qualify.add_argument("--runs-dir", help="Read all trial JSON files in this directory in filename order")
+    p_qualify.add_argument("--out", help="Write JSON report here instead of stdout")
+
+    p_counts = sub.add_parser("extraction-counts", help="Review persistent cached extraction shortfalls (#302)")
+    p_counts.add_argument("--reviews", help="JSON mapping of evidence-bound review keys to dispositions")
+    p_counts.add_argument("--out", help="Write JSON report here instead of stdout")
+
     p_coverage = sub.add_parser('agency-coverage', help='Inspect agency identity decisions and coverage as JSON (#257)')
     p_coverage.add_argument('--only', choices=['trca', 'zoo', 'ep', 'ttc'])
     p_coverage.add_argument('--baseline', help='Read-only SQLite baseline for prior-fact reconciliation')
@@ -1981,6 +1991,36 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_extraction_batches(args)
     if args.command == "extract":
         return _cmd_extract(args)
+    if args.command in {"qualify-extraction", "extraction-counts"}:
+        import json
+        import sqlite3
+        from pathlib import Path
+        from toronto_bids.qualification import qualification_report, count_discrepancy_report
+
+        try:
+            if args.command == "qualify-extraction":
+                runs = list(args.run)
+                if args.runs_dir:
+                    runs.extend(sorted(Path(args.runs_dir).glob("*.json")))
+                result = qualification_report(args.cohort, runs)
+                ok = result["qualified"]
+            else:
+                reviews = json.loads(Path(args.reviews).read_text()) if args.reviews else None
+                conn = sqlite3.connect(config.DB_PATH.resolve().as_uri() + "?mode=ro", uri=True)
+                try:
+                    result = count_discrepancy_report(conn, reviews=reviews)
+                finally:
+                    conn.close()
+                ok = not result["unresolved"] and not result["malformed"]
+            output = json.dumps(result, indent=2, ensure_ascii=False) + "\n"
+            if args.out:
+                Path(args.out).write_text(output)
+            else:
+                print(output, end="")
+            return 0 if ok else 1
+        except (OSError, sqlite3.Error, ValueError, KeyError, TypeError) as exc:
+            print(f"Extraction evaluation: {exc}", file=sys.stderr)
+            return 1
     parser.print_help()
     return 0
 

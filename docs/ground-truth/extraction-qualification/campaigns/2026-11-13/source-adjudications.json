@@ -1,0 +1,515 @@
+[
+  {
+    "document": "award-summary",
+    "disposition": "tax_basis_code_disagreement",
+    "reason": "Both responses preserve the supplier, bid and award values. The bid table says Excl. HST, while both responses encode net_of_taxes rather than the reviewed plus_HST label. Preserve this qualifier/codebook discrepancy; it is not a changed-price finding.",
+    "evidence": [
+      "Bid Price (Excl. HST)",
+      "net of all applicable taxes and charges"
+    ],
+    "observations": [
+      {
+        "run": "2026-11-13-sonnet-high-reviewed-batch-1",
+        "mode": "batch",
+        "repeat": 1,
+        "response_id": "msg_011Ch1DpTg8zNirEEmCTLZnK",
+        "response_sha256": "cb9ecc997bf79631b544012ba76878af1b9b00fd53605a51b1492d585aba698b"
+      },
+      {
+        "run": "2026-11-13-sonnet-high-reviewed-sync-1",
+        "mode": "sync",
+        "repeat": 1,
+        "response_id": "msg_011Ch1DoJPGHVuWJjSrAygpj",
+        "response_sha256": "ddc7ef02318d13e2d941b55a75dd187eaaf1a9a3ca15d18753f31e983c950556"
+      }
+    ]
+  },
+  {
+    "document": "ba-report",
+    "disposition": "historical_award_supported_admission_separate",
+    "reason": "Both responses preserve the described prior plumbing award. The report rescinds only a duplicate decision. Historical/current decision admission remains a #282 question; a matching award relation is not permission to create a new decision.",
+    "evidence": [
+      "This report corrects that administrative error by rescinding the second report.",
+      "October 31, 2018"
+    ],
+    "observations": [
+      {
+        "run": "2026-11-13-sonnet-high-reviewed-batch-1",
+        "mode": "batch",
+        "repeat": 1,
+        "response_id": "msg_011Ch1E4JabL5GBPcYXtnuxt",
+        "response_sha256": "dba258e11c75d7d800b0cc9f25d22e73ce1c467ff6aeaff14d3ec4c733374a7c"
+      },
+      {
+        "run": "2026-11-13-sonnet-high-reviewed-sync-1",
+        "mode": "sync",
+        "repeat": 1,
+        "response_id": "msg_011Ch1Dofp7f39gPr7Xn69mx",
+        "response_sha256": "b7b7cd6628342f50040a5ad8b13e7029b7ea3befee4b4587fff22d3e5a54c898"
+      }
+    ]
+  },
+  {
+    "document": "bd-report",
+    "disposition": "bounded_case_pass",
+    "reason": "Both modes preserve seven HST-inclusive bids and the separate net-of-taxes award. This establishes the selected document only.",
+    "evidence": [
+      "Bid Price (Incl. HST)",
+      "$1,205,900.00 net of all applicable taxes and charges"
+    ],
+    "observations": [
+      {
+        "run": "2026-11-13-sonnet-high-reviewed-batch-1",
+        "mode": "batch",
+        "repeat": 1,
+        "response_id": "msg_011Ch1E7BqcSmk6WuoyA5Yv2",
+        "response_sha256": "36f7965d066a91110e0a5aee46fc725f394a30ca7e94c52c06183d1ed061c409"
+      },
+      {
+        "run": "2026-11-13-sonnet-high-reviewed-sync-1",
+        "mode": "sync",
+        "repeat": 1,
+        "response_id": "msg_011Ch1DoyZhqR4S9PAEWLTHG",
+        "response_sha256": "4b0c5c45f00d01c6f83680b9a79f7f26601d3b1cf2f1fbfde44dc1f3e19ca4ae"
+      }
+    ]
+  },
+  {
+    "document": "ttc",
+    "disposition": "reference_ambiguity_and_unsupported_tax_basis",
+    "reason": "Both modes preserve the six bid values and two allocated award values. The unlabelled footer 9-118-80 is an unresolved reference-role assumption in the oracle: withholding it in batch is not established as a factual false join. The source says applicable taxes, without establishing an HST basis; both modes assign including_HST to awards. MCI spelling alternatives are explicitly corroborated within this report.",
+    "evidence": [
+      "9-118-80",
+      "including applicable taxes",
+      "Initially, Neopart will be allocated $229,000.00"
+    ],
+    "observations": [
+      {
+        "run": "2026-11-13-sonnet-high-reviewed-batch-1",
+        "mode": "batch",
+        "repeat": 1,
+        "response_id": "msg_011Ch1E4MUTzKNQ2aetPuwS2",
+        "response_sha256": "0fce03210804e5eec8153609020edba960dbd365fe554fcbd356ad76ffaa6f28"
+      },
+      {
+        "run": "2026-11-13-sonnet-high-reviewed-sync-1",
+        "mode": "sync",
+        "repeat": 1,
+        "response_id": "msg_011Ch1DpJmMmcoC1YxFa41Sw",
+        "response_sha256": "0fb06bf384cda7e90d3ffa54da00199eb371fb2a804413a5864b053e48499db6"
+      }
+    ]
+  },
+  {
+    "document": "ep-bus-duct",
+    "disposition": "price_footnote_format_and_tax_qualifier_loss",
+    "reason": "All five submitted prices and the distinct recommended award value are retained. The asterisk is a source footnote, not a changed numeric price. Both batch responses mark all tax bases unknown even though excluding HST is stated; sync uses plus_HST. Exact and numeric-value diagnostics stay separate.",
+    "evidence": [
+      "excluding HST",
+      "$418,854.47",
+      "$403,854.47",
+      "Identifies revised tender price after correcting"
+    ],
+    "observations": [
+      {
+        "run": "2026-11-13-sonnet-high-reviewed-batch-1",
+        "mode": "batch",
+        "repeat": 1,
+        "response_id": "msg_011Ch1E7HQESmHHu5WZt3sc7",
+        "response_sha256": "346b0944f7d2ae2031c58c62503aedbd6b3c0953985ebb0a9f79eb343eba85af"
+      },
+      {
+        "run": "2026-11-13-sonnet-high-reviewed-batch-2",
+        "mode": "batch",
+        "repeat": 2,
+        "response_id": "msg_011Ch1DpS4A6QKWnDG1Mxugx",
+        "response_sha256": "91e97b5d0c3dbb5d02a19fdd648674364a780def36d48edccb8ca737164733c2"
+      },
+      {
+        "run": "2026-11-13-sonnet-high-reviewed-sync-1",
+        "mode": "sync",
+        "repeat": 1,
+        "response_id": "msg_011Ch1Dpdawu3mnKN8PcDWqH",
+        "response_sha256": "051e837d4459c39c940bca4262171660ce740b1c95e1b65c9b0751935fd7e58f"
+      },
+      {
+        "run": "2026-11-13-sonnet-high-reviewed-sync-2",
+        "mode": "sync",
+        "repeat": 2,
+        "response_id": "msg_011Ch1DvcQRE7GqsEJ8FEB3t",
+        "response_sha256": "0b7042395a696fbd082ab031b08a6c1c065e6437d56819279e7bc0ecea977403"
+      }
+    ]
+  },
+  {
+    "document": "ep-negative",
+    "disposition": "negative_control_pass",
+    "reason": "Both selected responses have no procurement contracts. Injury counts and WSIB invoiced costs do not become fabricated procurement relationships.",
+    "evidence": [
+      "Occupational Health and Safety Report",
+      "The Board receive this report for information."
+    ],
+    "observations": [
+      {
+        "run": "2026-11-13-sonnet-high-reviewed-batch-1",
+        "mode": "batch",
+        "repeat": 1,
+        "response_id": "msg_011Ch1E4J83pbAutyyMRk1k1",
+        "response_sha256": "3312b062bb7ccfa55b0b7d0aba9f02f1876e292d3da750d7baac18e579416a51"
+      },
+      {
+        "run": "2026-11-13-sonnet-high-reviewed-sync-1",
+        "mode": "sync",
+        "repeat": 1,
+        "response_id": "msg_011Ch1DpvbtSUTz72GSKMcWp",
+        "response_sha256": "3312b062bb7ccfa55b0b7d0aba9f02f1876e292d3da750d7baac18e579416a51"
+      }
+    ]
+  },
+  {
+    "document": "zoo-fence",
+    "disposition": "known_unpriced_bidder_omitted",
+    "reason": "Both modes preserve the public Imperial award cap but omit its explicit submitted participation and return an unknown award tax basis. The source names one of four bidders; the three unpublished names are a source limit, while omission of the named bidder is an extraction omission. The award cap is not a submitted tender price.",
+    "evidence": [
+      "the lowest bid among all four received",
+      "the bid from Imperial Fence Inc. to be the lowest meeting specifications",
+      "$1,639,615.00 (excluding HST)"
+    ],
+    "observations": [
+      {
+        "run": "2026-11-13-sonnet-high-reviewed-batch-1",
+        "mode": "batch",
+        "repeat": 1,
+        "response_id": "msg_011Ch1E7HFYr9CUSSrc3dekS",
+        "response_sha256": "2582167dedc694e28a6156b7910229333e17f0306e70f8c313474e9615d0aa8c"
+      },
+      {
+        "run": "2026-11-13-sonnet-high-reviewed-sync-1",
+        "mode": "sync",
+        "repeat": 1,
+        "response_id": "msg_011Ch1Dq5nH7cfnXKXDMkAfm",
+        "response_sha256": "2582167dedc694e28a6156b7910229333e17f0306e70f8c313474e9615d0aa8c"
+      }
+    ]
+  },
+  {
+    "document": "composite",
+    "disposition": "known_unpriced_bidders_omitted",
+    "reason": "All four responses preserve all four first-term net-of-taxes awards and select no option-year totals. Each nevertheless has zero bids, omitting all four source-supported recommended-bidder participations. Other unnamed bidders are unpublished source limits. The full printed call-type prefixes are legitimate literal aliases, not procurement false joins.",
+    "evidence": [
+      "lowest bidder meeting specifications",
+      "Number of Bids:",
+      "$284,752.25 net of all applicable taxes and charges"
+    ],
+    "observations": [
+      {
+        "run": "2026-11-13-sonnet-high-reviewed-batch-1",
+        "mode": "batch",
+        "repeat": 1,
+        "response_id": "msg_011Ch1E4J7oLU8cTgZqT2UhK",
+        "response_sha256": "fa6b6422812b9a98494917fecda251ad5c625e535642fb27cafe1d01b3a89816"
+      },
+      {
+        "run": "2026-11-13-sonnet-high-reviewed-batch-2",
+        "mode": "batch",
+        "repeat": 2,
+        "response_id": "msg_011Ch1E4JshRUmaauXnoRqA3",
+        "response_sha256": "61ea2f82f656db966b1b6135555eed3455820cb17c52033db5bf65484efc63dc"
+      },
+      {
+        "run": "2026-11-13-sonnet-high-reviewed-sync-1",
+        "mode": "sync",
+        "repeat": 1,
+        "response_id": "msg_011Ch1DqEn2cYMozaLoWkwUs",
+        "response_sha256": "a38801349bb7cc59d33305a6bb2d5b1a87833c6e412b9cfad898c058fb5866c5"
+      },
+      {
+        "run": "2026-11-13-sonnet-high-reviewed-sync-2",
+        "mode": "sync",
+        "repeat": 2,
+        "response_id": "msg_011Ch1Dw3dj6dibWthoL5FKa",
+        "response_sha256": "2ca57d61618f9cb9d0ac09a1d08aa29aba09c3a6285c2a815660f7a3ff6449af"
+      }
+    ]
+  },
+  {
+    "document": "committee",
+    "disposition": "bid_and_award_values_preserved_tax_qualifiers_missing",
+    "reason": "All responses retain the two submitted bid values and distinct recommended award. Table asterisks are footnotes, not another supplier or a different numeric price. Bid bases remain unknown despite excluding-HST wording. The source disagrees about initial-term versus option-year scope of the recommended amount; retain that defect.",
+    "evidence": [
+      "Bid Price Excluding HST and",
+      "Contingency",
+      "$36,182,930.00*",
+      "$284,250,333 net of all applicable taxes and charges"
+    ],
+    "observations": [
+      {
+        "run": "2026-11-13-sonnet-high-reviewed-batch-1",
+        "mode": "batch",
+        "repeat": 1,
+        "response_id": "msg_011Ch1E7QJTaDSB5fVxwjA9h",
+        "response_sha256": "5f53a41777081552bb002823bf39d37cbccf8823edf3e6373420397f020d0074"
+      },
+      {
+        "run": "2026-11-13-sonnet-high-reviewed-batch-2",
+        "mode": "batch",
+        "repeat": 2,
+        "response_id": "msg_011Ch1E4K3rZqDnU4EZFsWN4",
+        "response_sha256": "6826a44eac85c07cc36e398adf30791f70ca591bab8cef7a7ef2a8aa5472b94b"
+      },
+      {
+        "run": "2026-11-13-sonnet-high-reviewed-sync-1",
+        "mode": "sync",
+        "repeat": 1,
+        "response_id": "msg_011Ch1DqmfefjUYAN6DTqho3",
+        "response_sha256": "8967a3677d725d08d06727d970859974b2b453f1d5084ffc75a958757044e735"
+      },
+      {
+        "run": "2026-11-13-sonnet-high-reviewed-sync-2",
+        "mode": "sync",
+        "repeat": 2,
+        "response_id": "msg_011Ch1DwbbqChTR7WuV5UBja",
+        "response_sha256": "5195942d2d498f708f450e29a800c875247237d61d4466d75622cca66e569465"
+      }
+    ]
+  },
+  {
+    "document": "trca-D01",
+    "disposition": "mode_dependent_role_and_status_discrepancies",
+    "reason": "All four responses retain the three actual tenders and three invitations. Both batch responses also place those tenderers in the schema's prequalification-only list. Sync omits the source-supported compliant status of the winning tender. All new declared tender counts are three; do not confuse this with the older cached six-prequalification declaration warning.",
+    "evidence": [
+      "the following three (3) Proponent(s):",
+      "meets the requirements as outlined in the RFT documents"
+    ],
+    "observations": [
+      {
+        "run": "2026-11-13-sonnet-high-reviewed-batch-1",
+        "mode": "batch",
+        "repeat": 1,
+        "response_id": "msg_011Ch1E4JBXg9Zdf33H3VLDB",
+        "response_sha256": "3b47fce0b89a48f247e3d6dce52cc177378846c901611b7647d639aaaca3a43e"
+      },
+      {
+        "run": "2026-11-13-sonnet-high-reviewed-batch-2",
+        "mode": "batch",
+        "repeat": 2,
+        "response_id": "msg_011Ch1E4MQFHv3gpWLoSaCNH",
+        "response_sha256": "3b47fce0b89a48f247e3d6dce52cc177378846c901611b7647d639aaaca3a43e"
+      },
+      {
+        "run": "2026-11-13-sonnet-high-reviewed-sync-1",
+        "mode": "sync",
+        "repeat": 1,
+        "response_id": "msg_011Ch1Dr9Y2wfWdNLPrEjY7J",
+        "response_sha256": "d9c063d28de595426691595210a361eaffd22b05ee739cf09fca2df29147840b"
+      },
+      {
+        "run": "2026-11-13-sonnet-high-reviewed-sync-2",
+        "mode": "sync",
+        "repeat": 2,
+        "response_id": "msg_011Ch1Dwq9fZv6QhiinWtZSY",
+        "response_sha256": "5d058a18dbd018d074e610c50a8acb1e9f90c282cb1449b4ae11a0b413944ac1"
+      }
+    ]
+  },
+  {
+    "document": "trca-D02",
+    "disposition": "raw_price_format_and_status_variability",
+    "reason": "All four responses conserve both contracts' supplier/value associations. A space after the currency symbol is a raw-format difference. One batch response leaves the two explicitly acceptable winners' bid statuses unstated; a later batch response retains those statuses. Neither amount formatting nor status differences establish a cross-contract supplier join.",
+    "evidence": [
+      "Contract #10009905",
+      "Contract #10009906",
+      "Fee (Plus HST)"
+    ],
+    "observations": [
+      {
+        "run": "2026-11-13-sonnet-high-reviewed-batch-1",
+        "mode": "batch",
+        "repeat": 1,
+        "response_id": "msg_011Ch1E4JAXPcRatzXNK3R3f",
+        "response_sha256": "6aa41d352f1b735d8c029a89ceb67265ec0163dce755bc7bf840df8ffc2eaab6"
+      },
+      {
+        "run": "2026-11-13-sonnet-high-reviewed-batch-2",
+        "mode": "batch",
+        "repeat": 2,
+        "response_id": "msg_011Ch1E4LJ1tRcWNV7vcY7ZK",
+        "response_sha256": "3a33a1986684e0dd691a38105e2240c28c4f45ecde036301f04868475f43e50b"
+      },
+      {
+        "run": "2026-11-13-sonnet-high-reviewed-sync-1",
+        "mode": "sync",
+        "repeat": 1,
+        "response_id": "msg_011Ch1DrTGPm5VM4KUFzQGWq",
+        "response_sha256": "867bdae80110129bcfde5917ff3d09ecb92c6ba015c1a6a2c5a0b1b085a26f1d"
+      },
+      {
+        "run": "2026-11-13-sonnet-high-reviewed-sync-2",
+        "mode": "sync",
+        "repeat": 2,
+        "response_id": "msg_011Ch1Dx8K2acXvc4ig8ebB2",
+        "response_sha256": "b12e6ec1bf1d9df3c1ae21e190d766f091966186095ed68d6f7705c753a69873"
+      }
+    ]
+  },
+  {
+    "document": "trca-D04",
+    "disposition": "excerpt_category_gap_award_forecast_and_label_correction",
+    "reason": "The input is an excerpt, not a complete meeting package. Electrical/mechanical participation is collapsed despite repeated suppliers and a category-specific Ainsworth disqualification; the schema has no category field. Sync assigns the $235,000 annual service forecast as an award value, while batch withholds that value. The original agent labels understated eight VOR winner statuses: the explicit qualifications/requirements statement supports compliant. That post-trial correction and all original labels are retained; human labels are unchanged.",
+    "evidence": [
+      "59,023 characters",
+      "267,742 characters",
+      "anticipated annual costs for ongoing services are $235,000 excluding",
+      "meeting the qualifications and requirements"
+    ],
+    "observations": [
+      {
+        "run": "2026-11-13-sonnet-high-reviewed-batch-1",
+        "mode": "batch",
+        "repeat": 1,
+        "response_id": "msg_011Ch1E7QReFdBwDniB1boTT",
+        "response_sha256": "68ea3ac0e41cdeacd7a96b5905afc3bbc72c5855602e6c3f9a74d9e1a0387529"
+      },
+      {
+        "run": "2026-11-13-sonnet-high-reviewed-batch-2",
+        "mode": "batch",
+        "repeat": 2,
+        "response_id": "msg_011Ch1E4JtCCHhyXRs8CKrZV",
+        "response_sha256": "b85922fc4b445dcc087561342f379a94cbc83ea4c895c43b690ed16b65acdeeb"
+      },
+      {
+        "run": "2026-11-13-sonnet-high-reviewed-sync-1",
+        "mode": "sync",
+        "repeat": 1,
+        "response_id": "msg_011Ch1DrsbNA1JYDuGii91L8",
+        "response_sha256": "a81235e004c5d651236ea3aeb501dcb0b3e354cc429c4699b6013f209b2d6003"
+      },
+      {
+        "run": "2026-11-13-sonnet-high-reviewed-sync-2",
+        "mode": "sync",
+        "repeat": 2,
+        "response_id": "msg_011Ch1DxYEhTNob7M9zmcZMU",
+        "response_sha256": "c204cd6c7e73b6c08fb0de4581e439535881e101354ecb5c0739223c8eb095d1"
+      }
+    ]
+  },
+  {
+    "document": "waterfront-2017-09",
+    "disposition": "source_relationships_conserved",
+    "reason": "All four responses preserve all eight source-key/recipient/value relationships through the actual production verifier; there are no fabricated or duplicate awards.",
+    "evidence": [
+      "Ethical Solutions",
+      "$278,100",
+      "City of Toronto"
+    ],
+    "observations": [
+      {
+        "run": "2026-11-13-sonnet-high-reviewed-batch-1",
+        "mode": "batch",
+        "repeat": 1,
+        "response_id": "msg_011Ch1E4JBn9otSrrG9MLyAZ",
+        "response_sha256": "3d60dece0c66407ef49517324d8af8a83632f5a6308158fd4c57ee5c625377f4"
+      },
+      {
+        "run": "2026-11-13-sonnet-high-reviewed-batch-2",
+        "mode": "batch",
+        "repeat": 2,
+        "response_id": "msg_011Ch1E7By3pH73Mhyv8UgHm",
+        "response_sha256": "3d60dece0c66407ef49517324d8af8a83632f5a6308158fd4c57ee5c625377f4"
+      },
+      {
+        "run": "2026-11-13-sonnet-high-reviewed-sync-1",
+        "mode": "sync",
+        "repeat": 1,
+        "response_id": "msg_011Ch1DtYk6bAQoA5V5sG3PR",
+        "response_sha256": "3d60dece0c66407ef49517324d8af8a83632f5a6308158fd4c57ee5c625377f4"
+      },
+      {
+        "run": "2026-11-13-sonnet-high-reviewed-sync-2",
+        "mode": "sync",
+        "repeat": 2,
+        "response_id": "msg_011Ch1Dz2gG9V3bjFgfbC1FQ",
+        "response_sha256": "3d60dece0c66407ef49517324d8af8a83632f5a6308158fd4c57ee5c625377f4"
+      }
+    ]
+  },
+  {
+    "document": "waterfront-2021-10",
+    "disposition": "source_relationships_conserved",
+    "reason": "All four responses preserve all nine source-key/recipient/value relationships through the actual production verifier.",
+    "evidence": [
+      "The Treasurer, City of Toronto",
+      "APE Studio Inc.",
+      "Guild Electric Limited"
+    ],
+    "observations": [
+      {
+        "run": "2026-11-13-sonnet-high-reviewed-batch-1",
+        "mode": "batch",
+        "repeat": 1,
+        "response_id": "msg_011Ch1E4JFz9sbbX4wkfy55f",
+        "response_sha256": "3ad30e2dbe7740a7776945e15d9b3f31fecbcc3a1331e9f04d3525d39f268432"
+      },
+      {
+        "run": "2026-11-13-sonnet-high-reviewed-batch-2",
+        "mode": "batch",
+        "repeat": 2,
+        "response_id": "msg_011Ch1E4UC31g7xDhUej8RJn",
+        "response_sha256": "3ad30e2dbe7740a7776945e15d9b3f31fecbcc3a1331e9f04d3525d39f268432"
+      },
+      {
+        "run": "2026-11-13-sonnet-high-reviewed-sync-1",
+        "mode": "sync",
+        "repeat": 1,
+        "response_id": "msg_011Ch1DuGETBbdu72EFX1KAt",
+        "response_sha256": "3ad30e2dbe7740a7776945e15d9b3f31fecbcc3a1331e9f04d3525d39f268432"
+      },
+      {
+        "run": "2026-11-13-sonnet-high-reviewed-sync-2",
+        "mode": "sync",
+        "repeat": 2,
+        "response_id": "msg_011Ch1DzehgksGsyFFP1ULpv",
+        "response_sha256": "3ad30e2dbe7740a7776945e15d9b3f31fecbcc3a1331e9f04d3525d39f268432"
+      }
+    ]
+  },
+  {
+    "document": "waterfront-2023-03",
+    "disposition": "source_context_gate_requires_282_review",
+    "reason": "All four actual executions completed with verified provenance, but the production recipient proof binds a different historical extraction. This is source_review_required, not malformed JSON or missing execution. Manual inspection finds the four primary-source named relationships in every response; one batch adds an unknown placeholder for the dewatering entry, while the other three withhold that recipient. None invents Ellis Don as recipient. WJ Groundwater is independently known from the dashboard, but that supplementary text was not sent to the model. Do not count inability to infer an absent name as a factual model omission or transfer the production proof silently.",
+    "evidence": [
+      "Dewatering System for Chamber CC6567 Rebuild Operations",
+      "WJ Groundwater"
+    ],
+    "observations": [
+      {
+        "run": "2026-11-13-sonnet-high-reviewed-batch-1",
+        "mode": "batch",
+        "repeat": 1,
+        "response_id": "msg_011Ch1E4JWczRSCFjT76xkEg",
+        "response_sha256": "e9064392097b400b60a13809546b28379526413e1e3008ec1c71d1b011b652c6"
+      },
+      {
+        "run": "2026-11-13-sonnet-high-reviewed-batch-2",
+        "mode": "batch",
+        "repeat": 2,
+        "response_id": "msg_011Ch1E4JzeMAgEXLdE6tkDe",
+        "response_sha256": "9c5a92e2f22597a17c21aa0c7208be96668e98c8a6a8fba97a3c1b2923296a3d"
+      },
+      {
+        "run": "2026-11-13-sonnet-high-reviewed-sync-1",
+        "mode": "sync",
+        "repeat": 1,
+        "response_id": "msg_011Ch1Dv1kpkDz2jyccjQs71",
+        "response_sha256": "9c5a92e2f22597a17c21aa0c7208be96668e98c8a6a8fba97a3c1b2923296a3d"
+      },
+      {
+        "run": "2026-11-13-sonnet-high-reviewed-sync-2",
+        "mode": "sync",
+        "repeat": 2,
+        "response_id": "msg_011Ch1E1SdgeghkrJVfy7CNo",
+        "response_sha256": "9c5a92e2f22597a17c21aa0c7208be96668e98c8a6a8fba97a3c1b2923296a3d"
+      }
+    ]
+  }
+]

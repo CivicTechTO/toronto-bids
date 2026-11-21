@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "purpose": "Retrospective source adjudication for protected unpriced-participation component only. Frozen strict labels/scores remain unchanged.",
+  "supplier_aliases": [
+    {
+      "document": "zoo-fence",
+      "alias": "Imperial Fence, Inc.",
+      "canonical": "Imperial Fence Inc.",
+      "evidence": [
+        "Imperial Fence, Inc.",
+        "the bid from Imperial Fence Inc. to be the lowest meeting specifications"
+      ]
+    }
+  ]
+}

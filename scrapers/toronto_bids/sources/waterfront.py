@@ -137,7 +137,7 @@ def _amount_extent(text, amount):
     return amount
 
 
-def verified_claims(rows, result):
+def verified_claims(rows, result, *, observations=None):
     """Map model roles to unambiguous literal source evidence; retain refusals."""
     from toronto_bids.linking.publication_evidence import reviewed_recipients
     month=rows[0].get('publication_month') if rows else None
@@ -149,6 +149,10 @@ def verified_claims(rows, result):
     nonmonetary = defaultdict(list)
     for contract_index,contract in enumerate(result['contracts']):
         for award_index,award in enumerate(contract.get('awards', [])):
+            observation = {'contract_index': contract_index, 'award_index': award_index,
+                           'disposition': 'refused'}
+            if observations is not None:
+                observations.append(observation)
             proof=reviewed.get((contract_index,award_index))
             name = award.get('supplier_name')
             amount = award.get('amount_raw')
@@ -178,11 +182,14 @@ def verified_claims(rows, result):
                 errors.append(f'Unresolved literal supplier/value evidence: {name!r}, {amount!r} ({len(matches)} blocks)')
                 continue
             row, extent = matches[0]
+            observation.update(publication_key=row['source_key'], supplier=name, amount=extent)
             key = _sha(json.dumps([row['source_key'], name, extent], ensure_ascii=False))
             if key in seen:
+                observation['disposition'] = 'duplicate'
                 errors.append('Repeated extracted award: ' + name)
                 continue
             seen.add(key)
+            observation['disposition'] = 'admitted'
             nonmonetary[row['source_key']].append(name)
             if isinstance(title, str) and title.strip() and _clean(title) in row['raw_text']:
                 nonmonetary[row['source_key']].append(_clean(title))

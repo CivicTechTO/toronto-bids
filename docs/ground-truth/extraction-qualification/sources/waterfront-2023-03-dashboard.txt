@@ -1,0 +1,101 @@
+                                                                                                       PLFP Contingency Tracker
+
+
+                                                                                                                                                             90% EAC       APPROVED        CONTINGENCY
+                                                                                 March 2023                                                                 ESTIMATE        AMOUNT          DRAWDOWN
+SCO01: PFP: Design and Supply of Playing Equipment-Material Price Increase and Product Deletion Substitutions                                                        -        52,717.51         52,717.51
+                                                                                                                                                                                                       -
+SCO67: PLFPEI-Peer Review forDewateringCommissioners                                                                                                          15,163.24       15,163.24                -
+SCO67: PLFPEI-Peer Review forDewateringCommissioners                                                                                                          15,163.24       15,163.24                -
+SCO67: PLFPEI-Peer Review forDewateringCommissioners                                                                                                          15,163.24       15,163.24                -
+                                                                                                                                                                                                       -
+TPBR35-Package 05 Feeders Relocation Don Roadway & Lakeshroe Blvd. E- (Black Mcdonald)) CM2022-28                                                           1,255,400.11    2,380,475.25      1,125,075.14
+CO#94-TP16- Parapet Railing Coating - Aecon                                                                                                                     2,807.92       2,807.92                -
+CO#95-TP16- East Abutment Access Gate - Aecon                                                                                                                  7,050.41        7,050.41                -
+CO#98-TP16- Parapet Wall Stainless-Steel Plates - Aecon                                                                                                             -        212,171.20         212,171.20
+CO#99-TP16- Additional Utility Bridge Bearings - Aecon                                                                                                         2,534.16        2,534.16                -
+CO#100-TP16- Added Timber Fenders-Supply - Aecon                                                                                                              81,188.00       81,188.00                -
+CO#101-TP16- Additional Girder per CN 5- Aecon                                                                                                                32,885.00       32,885.00                -
+CO#102-TP16- Additional Access- Aecon                                                                                                                        224,594.63      224,594.63                -
+CO#104-TP16-Balustrade Revisions- Aecon                                                                                                                             -         70,664.59          70,664.59
+                                                                                                                                                                                                       -
+TPBR183-Traffice Control Signals (Guild Electric Ltd) CM#2022-42                                                                                                    -        133,954.71         133,954.71
+TPBR183-Traffice Control Signals (Guild Electric Ltd) CM#2022-42                                                                                             368,213.14      616,671.42         248,458.28
+TPBR183-Traffice Control Signals (Guild Electric Ltd) CM#2022-42                                                                                              55,386.86       55,386.86               0.00
+TPBR182-Dewaltering System for Chamber CC6567 Rebuild Operations (WJ Groundwater) CM#2023-03                                                                 158,550.00      332,261.25         173,711.25
+TPBR185-Cherry & Lakeshore Temporary Line Making (McGuinness) CM#2023-05                                                                                       6,345.00        6,345.00                -
+CO784-TP45-SSM for RVPS                                                                                                                                      805,227.95      671,934.90        (133,293.05)
+CO793-TP125-Drowned Tree Modifications                                                                                                                              -         14,161.69          14,161.69
+CO805-TP76-Sanitary Connection at Polson St                                                                                                                         -         17,283.15          17,283.15
+CO808-TP76-Locate and Connection of STM Pipe to Polson St                                                                                                           -         15,132.05          15,132.05
+CO819-TP76-VOC Exceedance on Commissioners and Future Polson                                                                                                  31,135.62       23,433.39          (7,702.22)
+CO825-TP23-Dewaltering Existing SWTF Shaft at 480 LSBE (Accuworx)                                                                                            126,167.58      209,389.49          83,221.91
+CO830-TP78-Dewatering from Jan 4 2022 to March 8 2022 Reduced                                                                                                232,494.71      228,492.47          (4,002.24)
+CO833-TP124-Bell Missing Contract Items at Future Polson                                                                                                      75,000.00      118,269.31          43,269.31
+CO834-TP115-Panel Removal for Commissioners St Bridge Electrical Install                                                                                            -         56,901.42          56,901.42
+CO835-TP82-West Plug and Polson RPS Dewatering                                                                                                                      -        119,601.64         119,601.64
+CO836-TP76- Saulter St Sanitary Forcemain Relocation                                                                                                                -         18,482.68          18,482.68
+CO838-TP147-HONI Tower Foundation Removal (North of Villiers)                                                                                                       -         45,097.62          45,097.62
+CO839-TP116-Curbside Detour T&M                                                                                                                                     -        208,021.65         208,021.65
+CO839-TP116-Curbside Detour T&M                                                                                                                                     -        112,011.66         112,011.66
+CO841-TP167-Vac Pond Management Extension (January 2023-June 2023)                                                                                                  -        224,612.50         224,612.50
+CO842-TP119-Temp Sani Management Phase 03 – FRP Temp Service                                                                                                        -        245,488.25         245,488.25
+CO843-TP118-Service Entrance Circuit Breakers and Updated SCADA                                                                                                     -         70,065.89          70,065.89
+CO844-TP41-MT-35 Found Wall Deadman Removal                                                                                                                  227,074.25       83,239.30        (143,834.95)
+CO865-TP181-Commissioners St Bridge Scaffold Bird Netting                                                                                                           -         18,243.82          18,243.82
+CO867-TP76-Commissioning of WM HDD Lines                                                                                                                      21,140.00      110,308.52          89,168.52
+                                                                                                                                                                                                       -
+PFP: Packets 2 and 9 Agreement of Purchase and Sale between Toronto Port Authority and Waterfront Toronto                                                            -         1,721.46           1,721.46
+PFP: Packets 2 and 9 Agreement of Purchase and Sale between Toronto Port Authority and Waterfront Toronto                                                            -           641.43             641.43
+PFP: Packets 2 and 9 Agreement of Purchase and Sale between Toronto Port Authority and Waterfront Toronto                                                            -         2,499.75           2,499.75
+PFP: Packets 2 and 9 Agreement of Purchase and Sale between Toronto Port Authority and Waterfront Toronto                                                            -           902.87             902.87
+PFP: Packets 2 and 9 Agreement of Purchase and Sale between Toronto Port Authority and Waterfront Toronto                                                            -           659.67             659.67
+PFP: Packets 2 and 9 Agreement of Purchase and Sale between Toronto Port Authority and Waterfront Toronto                                                            -         5,869.92           5,869.92
+PFP: Packets 2 and 9 Agreement of Purchase and Sale between Toronto Port Authority and Waterfront Toronto                                                            -         2,862.66           2,862.66
+PFP: Packets 2 and 9 Agreement of Purchase and Sale between Toronto Port Authority and Waterfront Toronto                                                            -         3,318.85           3,318.85
+PFP: Packets 2 and 9 Agreement of Purchase and Sale between Toronto Port Authority and Waterfront Toronto                                                            -         2,677.91           2,677.91
+PFP: Packets 2 and 9 Agreement of Purchase and Sale between Toronto Port Authority and Waterfront Toronto                                                            -         3,018.26           3,018.26
+PFP: Packets 2 and 9 Agreement of Purchase and Sale between Toronto Port Authority and Waterfront Toronto                                                            -           308.59             308.59
+PFP: Packets 2 and 9 Agreement of Purchase and Sale between Toronto Port Authority and Waterfront Toronto                                                            -        35,156.22          35,156.22
+PFP: Packets 2 and 9 Agreement of Purchase and Sale between Toronto Port Authority and Waterfront Toronto                                                            -         2,187.25           2,187.25
+PFP: Packets 2 and 9 Agreement of Purchase and Sale between Toronto Port Authority and Waterfront Toronto                                                            -         3,926.13           3,926.13
+PFP: Packets 2 and 9 Agreement of Purchase and Sale between Toronto Port Authority and Waterfront Toronto                                                            -         2,287.91           2,287.91
+PFP: Packets 2 and 9 Agreement of Purchase and Sale between Toronto Port Authority and Waterfront Toronto                                                            -         2,097.76           2,097.76
+PFP: Packets 2 and 9 Agreement of Purchase and Sale between Toronto Port Authority and Waterfront Toronto                                                            -         5,598.96           5,598.96
+PFP: Packets 2 and 9 Agreement of Purchase and Sale between Toronto Port Authority and Waterfront Toronto                                                            -           974.31             974.31
+PFP: Packets 2 and 9 Agreement of Purchase and Sale between Toronto Port Authority and Waterfront Toronto                                                            -         3,740.04           3,740.04
+PFP: Packets 2 and 9 Agreement of Purchase and Sale between Toronto Port Authority and Waterfront Toronto                                                            -         2,158.19           2,158.19
+PFP: Packets 2 and 9 Agreement of Purchase and Sale between Toronto Port Authority and Waterfront Toronto                                                            -         3,216.90           3,216.90
+                                                                                                                                                                                    -                  -
+SCO#05-PFP: Procurement Advisory Services-Addi onal work for PLFP Programinsurance coverage (Builder’s Risk, Wrap-up Liability, and Errors and Omissions)            -         2,020.00           2,020.00
+                                                                                                                                                                                                       -
+SCO109: PLFPEI (USD)-Geotech CA, RSI Extension of Services                                                                                                   234,500.00      234,500.00                -
+                                                                                                                                                                                                       -
+CO632-TP145-Diposal of Dredge Material ST0360                                                                                                                 97,290.68       97,290.68                -
+CO763- TP145-Diposal of Dredge Material ST0360                                                                                                                28,588.61       28,588.61                -
+CO763- TP145-Diposal of Dredge Material ST0360                                                                                                                12,419.75       12,419.75                -
+CO771-TP121-MT35 Rock Anchor                                                                                                                                  52,850.00       89,159.08          36,309.08
+CO776-TP41-SDMA Movement of Stockpiles                                                                                                                       554,925.00      554,925.00                -
+CO783-TP11-- CSN/CSS - Deck Beam Hole Filling                                                                                                                       -          1,927.07           1,927.07
+CO783-TP11-- CSN/CSS - Deck Beam Hole Filling                                                                                                                       -          3,943.61           3,943.61
+CO787-TP145-Dockwall Demolition Section F                                                                                                                           -          1,802.19           1,802.19
+CO795-TP41-ST0384 Disposal                                                                                                                                    16,383.50       16,383.50                -
+CO797-TP11-CSN/CSS/COMM-Ports Toronto Cargo Dues- Cherubini Metal Works                                                                                             -         18,233.25          18,233.25
+CO797-TP11-CSN/CSS/COMM-Ports Toronto Cargo Dues- Cherubini Metal Works                                                                                             -          9,116.63           9,116.63
+CO797-TP11-CSN/CSS/COMM-Ports Toronto Cargo Dues- Cherubini Metal Works                                                                                             -         18,233.25          18,233.25
+CO798-TP11-CSN-LRT Weld Photo Report- Cherubini Metal Works                                                                                                         -          9,238.18           9,238.18
+CO799-TP22-CSN- OSD Concrete                                                                                                                                  53,061.40       99,659.25          46,597.85
+CO800-TP22-CSN-OSD Waterproofing-Belor Construciton                                                                                                           63,420.00      142,033.32          78,613.32
+CO801-TP44-COMM-Modular Expansion Joint Installation- Alliance Verdic Civil                                                                                         -         21,711.97          21,711.97
+CO815-TP145-SDMA Obstruction Removals Oct to Dec, 2022                                                                                                        33,056.62       33,056.62                -
+CO816-TP145-Alt Micropile Wall for Future Gardiner Pier                                                                                                      103,600.78      213,408.30         109,807.52
+TPBR184-Old Cherry Street Bridge Early Engineering Cost (Sarens Canada) CM#2023-04                                                                                  -         84,720.00          84,720.00
+                                                                                                                                                                                                       -
+                                                                                                                                                                                                       -
+SCO108: PLFPEI (USD)-PPS Surcharge Reduction Analysis                                                                                                         10,596.96       10,596.96                -
+Total                                                                                                                                                        5,019,378       8,656,161         3,636,783
+
+
+
+                                                                                                                                                                                  Page 27 of 210
+

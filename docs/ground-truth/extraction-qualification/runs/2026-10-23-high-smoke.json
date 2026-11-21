@@ -1,0 +1,293 @@
+{
+  "id": "2026-10-23-high-smoke",
+  "attempts": {
+    "waterfront-2017-09": {
+      "state": "success",
+      "extraction": {
+        "contracts": [
+          {
+            "reference": null,
+            "solicitation_type": "unknown",
+            "title": "Port Lands Area – Soil & Groundwater Remediation and Treatment Technologies – Part B: Field-Scale Pilot Testing: surfactant enhanced injection combined with chemical oxidation technology",
+            "buyer": "Waterfront Toronto",
+            "posted_date": null,
+            "closed_date": null,
+            "documents_taken": null,
+            "declared_submissions": null,
+            "declared_compliant": null,
+            "stage": "single_stage",
+            "prequalified": [],
+            "invited_to_tender": [],
+            "bids": [],
+            "awards": [
+              {
+                "supplier_name": "Ethical Solutions",
+                "amount_raw": "$278,100",
+                "amount_basis": "unknown",
+                "contingency_raw": null,
+                "value_confidential": false
+              }
+            ],
+            "funding_source": null,
+            "decision_date": null,
+            "decision_body": null
+          },
+          {
+            "reference": null,
+            "solicitation_type": "unknown",
+            "title": "Port Lands Area – Soil & Groundwater Remediation and Treatment Technologies – Part B: Field-Scale Pilot Testing: demonstration of self-sustaining smouldering remediation in both in-situ and ex-situ environments technology",
+            "buyer": "Waterfront Toronto",
+            "posted_date": null,
+            "closed_date": null,
+            "documents_taken": null,
+            "declared_submissions": null,
+            "declared_compliant": null,
+            "stage": "single_stage",
+            "prequalified": [],
+            "invited_to_tender": [],
+            "bids": [],
+            "awards": [
+              {
+                "supplier_name": "Geosyntec Consultants",
+                "amount_raw": "$869,110",
+                "amount_basis": "unknown",
+                "contingency_raw": null,
+                "value_confidential": false
+              }
+            ],
+            "funding_source": null,
+            "decision_date": null,
+            "decision_body": null
+          },
+          {
+            "reference": null,
+            "solicitation_type": "unknown",
+            "title": "Port Lands Area – Soil & Groundwater Remediation and Treatment Technologies – Part B: Field-Scale Pilot Testing: in-situ biological cementation using urea-based solution to enhance geotechnical stability of soils technology",
+            "buyer": "Waterfront Toronto",
+            "posted_date": null,
+            "closed_date": null,
+            "documents_taken": null,
+            "declared_submissions": null,
+            "declared_compliant": null,
+            "stage": "single_stage",
+            "prequalified": [],
+            "invited_to_tender": [],
+            "bids": [],
+            "awards": [
+              {
+                "supplier_name": "Groundwater Technology BV",
+                "amount_raw": "$313,022",
+                "amount_basis": "unknown",
+                "contingency_raw": null,
+                "value_confidential": false
+              }
+            ],
+            "funding_source": null,
+            "decision_date": null,
+            "decision_body": null
+          },
+          {
+            "reference": null,
+            "solicitation_type": "unknown",
+            "title": "Port Lands Area – Soil & Groundwater Remediation and Treatment Technologies – Part B: Field-Scale Pilot Testing: Block and Absorb and Enhanced Aerobic Biodegration technology",
+            "buyer": "Waterfront Toronto",
+            "posted_date": null,
+            "closed_date": null,
+            "documents_taken": null,
+            "declared_submissions": null,
+            "declared_compliant": null,
+            "stage": "single_stage",
+            "prequalified": [],
+            "invited_to_tender": [],
+            "bids": [],
+            "awards": [
+              {
+                "supplier_name": "WSP Canada",
+                "amount_raw": "$340,335",
+                "amount_basis": "unknown",
+                "contingency_raw": null,
+                "value_confidential": false
+              }
+            ],
+            "funding_source": null,
+            "decision_date": null,
+            "decision_body": null
+          },
+          {
+            "reference": null,
+            "solicitation_type": "sole_source",
+            "title": "Engineering and Inspection Fees for Services for Bayside Phase II",
+            "buyer": "Waterfront Toronto",
+            "posted_date": null,
+            "closed_date": null,
+            "documents_taken": null,
+            "declared_submissions": null,
+            "declared_compliant": null,
+            "stage": "single_stage",
+            "prequalified": [],
+            "invited_to_tender": [],
+            "bids": [],
+            "awards": [
+              {
+                "supplier_name": "City of Toronto",
+                "amount_raw": "$88,950",
+                "amount_basis": "unknown",
+                "contingency_raw": null,
+                "value_confidential": false
+              }
+            ],
+            "funding_source": null,
+            "decision_date": null,
+            "decision_body": null
+          },
+          {
+            "reference": null,
+            "solicitation_type": "sole_source",
+            "title": "Legal Services to Assist with Board/Corporate Governance Matters",
+            "buyer": "Waterfront Toronto",
+            "posted_date": null,
+            "closed_date": null,
+            "documents_taken": null,
+            "declared_submissions": null,
+            "declared_compliant": null,
+            "stage": "single_stage",
+            "prequalified": [],
+            "invited_to_tender": [],
+            "bids": [],
+            "awards": [
+              {
+                "supplier_name": "Axiom Global Canada Inc.",
+                "amount_raw": "$52,000",
+                "amount_basis": "unknown",
+                "contingency_raw": null,
+                "value_confidential": false
+              }
+            ],
+            "funding_source": null,
+            "decision_date": null,
+            "decision_body": null
+          },
+          {
+            "reference": null,
+            "solicitation_type": "unknown",
+            "title": "Interior Design-Build Services for Waterfront Toronto’s Corporate Office",
+            "buyer": "Waterfront Toronto",
+            "posted_date": null,
+            "closed_date": null,
+            "documents_taken": null,
+            "declared_submissions": null,
+            "declared_compliant": null,
+            "stage": "single_stage",
+            "prequalified": [],
+            "invited_to_tender": [],
+            "bids": [],
+            "awards": [
+              {
+                "supplier_name": "Greenferd Construction Inc.",
+                "amount_raw": "$186,446",
+                "amount_basis": "unknown",
+                "contingency_raw": null,
+                "value_confidential": false
+              }
+            ],
+            "funding_source": null,
+            "decision_date": null,
+            "decision_body": null
+          },
+          {
+            "reference": null,
+            "solicitation_type": "unknown",
+            "title": "East Bayfront Dockside Block 1 - Dockwall Reinforcing Design and Contract Administration",
+            "buyer": "Waterfront Toronto",
+            "posted_date": null,
+            "closed_date": null,
+            "documents_taken": null,
+            "declared_submissions": null,
+            "declared_compliant": null,
+            "stage": "single_stage",
+            "prequalified": [],
+            "invited_to_tender": [],
+            "bids": [],
+            "awards": [
+              {
+                "supplier_name": "SNC-Lavalin Inc.",
+                "amount_raw": "$173,082",
+                "amount_basis": "unknown",
+                "contingency_raw": null,
+                "value_confidential": false
+              }
+            ],
+            "funding_source": null,
+            "decision_date": null,
+            "decision_body": null
+          }
+        ]
+      },
+      "usage": {
+        "input_tokens": 473,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 2866,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 2095,
+        "output_tokens_details": {
+          "thinking_tokens": 0
+        },
+        "service_tier": "standard",
+        "inference_geo": "global",
+        "speed": "standard"
+      },
+      "charged_microdollars": 22183,
+      "provenance": {
+        "document_sha256": "766aef29fcf10179870b4f14abf1818b85e81e01be50cfbbcb22ec0d19dabcd2",
+        "text_sha256": "11c4a52b1206cd5ddeb966d34c44c09d68cb96a2e280e0980acd1a6a2e2d0a6c",
+        "prompt_version": "v1-b63aa8c835ae",
+        "model": "claude-sonnet-5-5",
+        "effort": "high",
+        "mode": "sync",
+        "response_id": "msg_011CgKGi98hCcVyydYxxfsn2",
+        "response_sha256": "4d341eb101986fc5b1205dedc6dbf506517531ef70be7445e059f9cd69ddefe6",
+        "schema_sha256": null,
+        "request_sha256": null,
+        "request": null,
+        "raw_response_sha256": "d9c3b38e00bbfd8ef22c653130ff6551ac506eb3273162f2aa29cf6afc77fcf5"
+      },
+      "origin": "claude-validation-2026-10-23/high-smoke/claude-sonnet-5-5--waterfront-2017-09.json",
+      "raw_response": {
+        "model": "claude-sonnet-5-5",
+        "id": "msg_011CgKGi98hCcVyydYxxfsn2",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"contracts\":[{\"reference\":null,\"solicitation_type\":\"unknown\",\"title\":\"Port Lands Area – Soil & Groundwater Remediation and Treatment Technologies – Part B: Field-Scale Pilot Testing: surfactant enhanced injection combined with chemical oxidation technology\",\"buyer\":\"Waterfront Toronto\",\"posted_date\":null,\"closed_date\":null,\"documents_taken\":null,\"declared_submissions\":null,\"declared_compliant\":null,\"stage\":\"single_stage\",\"prequalified\":[],\"invited_to_tender\":[],\"bids\":[],\"awards\":[{\"supplier_name\":\"Ethical Solutions\",\"amount_raw\":\"$278,100\",\"amount_basis\":\"unknown\",\"contingency_raw\":null,\"value_confidential\":false}],\"funding_source\":null,\"decision_date\":null,\"decision_body\":null},{\"reference\":null,\"solicitation_type\":\"unknown\",\"title\":\"Port Lands Area – Soil & Groundwater Remediation and Treatment Technologies – Part B: Field-Scale Pilot Testing: demonstration of self-sustaining smouldering remediation in both in-situ and ex-situ environments technology\",\"buyer\":\"Waterfront Toronto\",\"posted_date\":null,\"closed_date\":null,\"documents_taken\":null,\"declared_submissions\":null,\"declared_compliant\":null,\"stage\":\"single_stage\",\"prequalified\":[],\"invited_to_tender\":[],\"bids\":[],\"awards\":[{\"supplier_name\":\"Geosyntec Consultants\",\"amount_raw\":\"$869,110\",\"amount_basis\":\"unknown\",\"contingency_raw\":null,\"value_confidential\":false}],\"funding_source\":null,\"decision_date\":null,\"decision_body\":null},{\"reference\":null,\"solicitation_type\":\"unknown\",\"title\":\"Port Lands Area – Soil & Groundwater Remediation and Treatment Technologies – Part B: Field-Scale Pilot Testing: in-situ biological cementation using urea-based solution to enhance geotechnical stability of soils technology\",\"buyer\":\"Waterfront Toronto\",\"posted_date\":null,\"closed_date\":null,\"documents_taken\":null,\"declared_submissions\":null,\"declared_compliant\":null,\"stage\":\"single_stage\",\"prequalified\":[],\"invited_to_tender\":[],\"bids\":[],\"awards\":[{\"supplier_name\":\"Groundwater Technology BV\",\"amount_raw\":\"$313,022\",\"amount_basis\":\"unknown\",\"contingency_raw\":null,\"value_confidential\":false}],\"funding_source\":null,\"decision_date\":null,\"decision_body\":null},{\"reference\":null,\"solicitation_type\":\"unknown\",\"title\":\"Port Lands Area – Soil & Groundwater Remediation and Treatment Technologies – Part B: Field-Scale Pilot Testing: Block and Absorb and Enhanced Aerobic Biodegration technology\",\"buyer\":\"Waterfront Toronto\",\"posted_date\":null,\"closed_date\":null,\"documents_taken\":null,\"declared_submissions\":null,\"declared_compliant\":null,\"stage\":\"single_stage\",\"prequalified\":[],\"invited_to_tender\":[],\"bids\":[],\"awards\":[{\"supplier_name\":\"WSP Canada\",\"amount_raw\":\"$340,335\",\"amount_basis\":\"unknown\",\"contingency_raw\":null,\"value_confidential\":false}],\"funding_source\":null,\"decision_date\":null,\"decision_body\":null},{\"reference\":null,\"solicitation_type\":\"sole_source\",\"title\":\"Engineering and Inspection Fees for Services for Bayside Phase II\",\"buyer\":\"Waterfront Toronto\",\"posted_date\":null,\"closed_date\":null,\"documents_taken\":null,\"declared_submissions\":null,\"declared_compliant\":null,\"stage\":\"single_stage\",\"prequalified\":[],\"invited_to_tender\":[],\"bids\":[],\"awards\":[{\"supplier_name\":\"City of Toronto\",\"amount_raw\":\"$88,950\",\"amount_basis\":\"unknown\",\"contingency_raw\":null,\"value_confidential\":false}],\"funding_source\":null,\"decision_date\":null,\"decision_body\":null},{\"reference\":null,\"solicitation_type\":\"sole_source\",\"title\":\"Legal Services to Assist with Board/Corporate Governance Matters\",\"buyer\":\"Waterfront Toronto\",\"posted_date\":null,\"closed_date\":null,\"documents_taken\":null,\"declared_submissions\":null,\"declared_compliant\":null,\"stage\":\"single_stage\",\"prequalified\":[],\"invited_to_tender\":[],\"bids\":[],\"awards\":[{\"supplier_name\":\"Axiom Global Canada Inc.\",\"amount_raw\":\"$52,000\",\"amount_basis\":\"unknown\",\"contingency_raw\":null,\"value_confidential\":false}],\"funding_source\":null,\"decision_date\":null,\"decision_body\":null},{\"reference\":null,\"solicitation_type\":\"unknown\",\"title\":\"Interior Design-Build Services for Waterfront Toronto’s Corporate Office\",\"buyer\":\"Waterfront Toronto\",\"posted_date\":null,\"closed_date\":null,\"documents_taken\":null,\"declared_submissions\":null,\"declared_compliant\":null,\"stage\":\"single_stage\",\"prequalified\":[],\"invited_to_tender\":[],\"bids\":[],\"awards\":[{\"supplier_name\":\"Greenferd Construction Inc.\",\"amount_raw\":\"$186,446\",\"amount_basis\":\"unknown\",\"contingency_raw\":null,\"value_confidential\":false}],\"funding_source\":null,\"decision_date\":null,\"decision_body\":null},{\"reference\":null,\"solicitation_type\":\"unknown\",\"title\":\"East Bayfront Dockside Block 1 - Dockwall Reinforcing Design and Contract Administration\",\"buyer\":\"Waterfront Toronto\",\"posted_date\":null,\"closed_date\":null,\"documents_taken\":null,\"declared_submissions\":null,\"declared_compliant\":null,\"stage\":\"single_stage\",\"prequalified\":[],\"invited_to_tender\":[],\"bids\":[],\"awards\":[{\"supplier_name\":\"SNC-Lavalin Inc.\",\"amount_raw\":\"$173,082\",\"amount_basis\":\"unknown\",\"contingency_raw\":null,\"value_confidential\":false}],\"funding_source\":null,\"decision_date\":null,\"decision_body\":null}]}"
+          }
+        ],
+        "container": null,
+        "stop_reason": "end_turn",
+        "stop_sequence": null,
+        "stop_details": null,
+        "usage": {
+          "input_tokens": 473,
+          "cache_creation_input_tokens": 0,
+          "cache_read_input_tokens": 2866,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 0
+          },
+          "output_tokens": 2095,
+          "output_tokens_details": {
+            "thinking_tokens": 0
+          },
+          "service_tier": "standard",
+          "inference_geo": "global",
+          "speed": "standard"
+        },
+        "diagnostics": null
+      }
+    }
+  }
+}

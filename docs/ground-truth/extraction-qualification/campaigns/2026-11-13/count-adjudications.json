@@ -1,0 +1,304 @@
+[
+  {
+    "run": "2026-11-13-sonnet-high-reviewed-batch-1",
+    "document": "zoo-fence",
+    "review_key": "bf976cb4b019ae91c19ded4cf253dd540fc182b6fd410d8c5b85623c7585c74e",
+    "review": {
+      "disposition": "mixed_source_limit_and_extraction_omission",
+      "reason": "The public report states four received bids but names only Imperial Fence. Three other bidder names are unpublished. The response omits the explicitly named winning bidder participation as well; the public award cap does not supply its tender price. This count discrepancy remains material.",
+      "evidence": [
+        "the lowest bid among all four received",
+        "the bid from Imperial Fence Inc. to be the lowest meeting specifications"
+      ],
+      "supported_named_bids": 1,
+      "observed_bids": 0
+    }
+  },
+  {
+    "run": "2026-11-13-sonnet-high-reviewed-batch-1",
+    "document": "composite",
+    "review_key": "f0eb3a31c9c70b4e2c46239af171b1968dd39121a2bbdae560c45d65ea936b8e",
+    "review": {
+      "disposition": "mixed_source_limit_and_extraction_omission",
+      "reason": "The source states 6 submissions and names only the recommended bidder Guillevin International Co.. The other 5 names are unpublished, but this response omits even that supported bidder participation. The shortfall is not approved as a wholly legitimate subset.",
+      "evidence": [
+        "6302-12-0219",
+        "Guillevin International Co.",
+        "Number of Bids:",
+        "lowest bidder meeting specifications"
+      ],
+      "supported_named_bids": 1,
+      "observed_bids": 0
+    }
+  },
+  {
+    "run": "2026-11-13-sonnet-high-reviewed-batch-1",
+    "document": "composite",
+    "review_key": "39a6a92c1cb860586554e7e30c07095d43815815306dd95f4c805b4da3f88778",
+    "review": {
+      "disposition": "mixed_source_limit_and_extraction_omission",
+      "reason": "The source states 2 submissions and names only the recommended bidder Accrue Contracting Ltd.. The other 1 names are unpublished, but this response omits even that supported bidder participation. The shortfall is not approved as a wholly legitimate subset.",
+      "evidence": [
+        "3917-12-7226",
+        "Accrue Contracting Ltd.",
+        "Number of Bids:",
+        "lowest bidder meeting specifications"
+      ],
+      "supported_named_bids": 1,
+      "observed_bids": 0
+    }
+  },
+  {
+    "run": "2026-11-13-sonnet-high-reviewed-batch-1",
+    "document": "composite",
+    "review_key": "611c42115adee88344d62431875194fc73510d363aefb5d4ab45f1fc5b72c9f0",
+    "review": {
+      "disposition": "mixed_source_limit_and_extraction_omission",
+      "reason": "The source states 11 submissions and names only the recommended bidder Steelcore Construction Ltd.. The other 10 names are unpublished, but this response omits even that supported bidder participation. The shortfall is not approved as a wholly legitimate subset.",
+      "evidence": [
+        "192-2012",
+        "Steelcore Construction Ltd.",
+        "Number of Bids:",
+        "lowest bidder meeting specifications"
+      ],
+      "supported_named_bids": 1,
+      "observed_bids": 0
+    }
+  },
+  {
+    "run": "2026-11-13-sonnet-high-reviewed-batch-1",
+    "document": "composite",
+    "review_key": "f413b4ef2bf9f0f78f3571d9d63def963a93e8ad38af3d40b6bcd95908facd71",
+    "review": {
+      "disposition": "mixed_source_limit_and_extraction_omission",
+      "reason": "The source states 1 submissions and names only the recommended bidder Jones & Bartlett Learning. The other 0 names are unpublished, but this response omits even that supported bidder participation. The shortfall is not approved as a wholly legitimate subset.",
+      "evidence": [
+        "3001-12-3202",
+        "Jones & Bartlett Learning",
+        "Number of Bids:",
+        "lowest bidder meeting specifications"
+      ],
+      "supported_named_bids": 1,
+      "observed_bids": 0
+    }
+  },
+  {
+    "run": "2026-11-13-sonnet-high-reviewed-batch-2",
+    "document": "composite",
+    "review_key": "2d7bb1878110c2eb1d98557d428efaa5ef075926781227cc8b2374701d5b20df",
+    "review": {
+      "disposition": "mixed_source_limit_and_extraction_omission",
+      "reason": "The source states 6 submissions and names only the recommended bidder Guillevin International Co.. The other 5 names are unpublished, but this response omits even that supported bidder participation. The shortfall is not approved as a wholly legitimate subset.",
+      "evidence": [
+        "6302-12-0219",
+        "Guillevin International Co.",
+        "Number of Bids:",
+        "lowest bidder meeting specifications"
+      ],
+      "supported_named_bids": 1,
+      "observed_bids": 0
+    }
+  },
+  {
+    "run": "2026-11-13-sonnet-high-reviewed-batch-2",
+    "document": "composite",
+    "review_key": "75b24d3e75d777f3b600f8e5b7c54de7fa7c8a3f7bf78a1f2dd05552ee516aad",
+    "review": {
+      "disposition": "mixed_source_limit_and_extraction_omission",
+      "reason": "The source states 2 submissions and names only the recommended bidder Accrue Contracting Ltd.. The other 1 names are unpublished, but this response omits even that supported bidder participation. The shortfall is not approved as a wholly legitimate subset.",
+      "evidence": [
+        "3917-12-7226",
+        "Accrue Contracting Ltd.",
+        "Number of Bids:",
+        "lowest bidder meeting specifications"
+      ],
+      "supported_named_bids": 1,
+      "observed_bids": 0
+    }
+  },
+  {
+    "run": "2026-11-13-sonnet-high-reviewed-batch-2",
+    "document": "composite",
+    "review_key": "d81df35324f0687399f587127b2dd40d82d76e24727ac42e384e26217452e93b",
+    "review": {
+      "disposition": "mixed_source_limit_and_extraction_omission",
+      "reason": "The source states 11 submissions and names only the recommended bidder Steelcore Construction Ltd.. The other 10 names are unpublished, but this response omits even that supported bidder participation. The shortfall is not approved as a wholly legitimate subset.",
+      "evidence": [
+        "192-2012",
+        "Steelcore Construction Ltd.",
+        "Number of Bids:",
+        "lowest bidder meeting specifications"
+      ],
+      "supported_named_bids": 1,
+      "observed_bids": 0
+    }
+  },
+  {
+    "run": "2026-11-13-sonnet-high-reviewed-batch-2",
+    "document": "composite",
+    "review_key": "4381c0757fcbe18537cb18e90b4c428e3ff4c8ba2e88b6bb69bfd50059208368",
+    "review": {
+      "disposition": "mixed_source_limit_and_extraction_omission",
+      "reason": "The source states 1 submissions and names only the recommended bidder Jones & Bartlett Learning. The other 0 names are unpublished, but this response omits even that supported bidder participation. The shortfall is not approved as a wholly legitimate subset.",
+      "evidence": [
+        "3001-12-3202",
+        "Jones & Bartlett Learning",
+        "Number of Bids:",
+        "lowest bidder meeting specifications"
+      ],
+      "supported_named_bids": 1,
+      "observed_bids": 0
+    }
+  },
+  {
+    "run": "2026-11-13-sonnet-high-reviewed-sync-1",
+    "document": "zoo-fence",
+    "review_key": "bf976cb4b019ae91c19ded4cf253dd540fc182b6fd410d8c5b85623c7585c74e",
+    "review": {
+      "disposition": "mixed_source_limit_and_extraction_omission",
+      "reason": "The public report states four received bids but names only Imperial Fence. Three other bidder names are unpublished. The response omits the explicitly named winning bidder participation as well; the public award cap does not supply its tender price. This count discrepancy remains material.",
+      "evidence": [
+        "the lowest bid among all four received",
+        "the bid from Imperial Fence Inc. to be the lowest meeting specifications"
+      ],
+      "supported_named_bids": 1,
+      "observed_bids": 0
+    }
+  },
+  {
+    "run": "2026-11-13-sonnet-high-reviewed-sync-1",
+    "document": "composite",
+    "review_key": "32e9832f5436a57e5af9578798e2748d7b7c7e399430fce892bf285fa265d7f2",
+    "review": {
+      "disposition": "mixed_source_limit_and_extraction_omission",
+      "reason": "The source states 6 submissions and names only the recommended bidder Guillevin International Co.. The other 5 names are unpublished, but this response omits even that supported bidder participation. The shortfall is not approved as a wholly legitimate subset.",
+      "evidence": [
+        "6302-12-0219",
+        "Guillevin International Co.",
+        "Number of Bids:",
+        "lowest bidder meeting specifications"
+      ],
+      "supported_named_bids": 1,
+      "observed_bids": 0
+    }
+  },
+  {
+    "run": "2026-11-13-sonnet-high-reviewed-sync-1",
+    "document": "composite",
+    "review_key": "7845ff7b10e846f46abd715f6fd3c8b6ed8f936e22033fd30ec29a124124bb29",
+    "review": {
+      "disposition": "mixed_source_limit_and_extraction_omission",
+      "reason": "The source states 2 submissions and names only the recommended bidder Accrue Contracting Ltd.. The other 1 names are unpublished, but this response omits even that supported bidder participation. The shortfall is not approved as a wholly legitimate subset.",
+      "evidence": [
+        "3917-12-7226",
+        "Accrue Contracting Ltd.",
+        "Number of Bids:",
+        "lowest bidder meeting specifications"
+      ],
+      "supported_named_bids": 1,
+      "observed_bids": 0
+    }
+  },
+  {
+    "run": "2026-11-13-sonnet-high-reviewed-sync-1",
+    "document": "composite",
+    "review_key": "f66c7d8b86a635cbcb154ddb3f0b1e767b47341409309582f988bb4224029397",
+    "review": {
+      "disposition": "mixed_source_limit_and_extraction_omission",
+      "reason": "The source states 11 submissions and names only the recommended bidder Steelcore Construction Ltd.. The other 10 names are unpublished, but this response omits even that supported bidder participation. The shortfall is not approved as a wholly legitimate subset.",
+      "evidence": [
+        "192-2012",
+        "Steelcore Construction Ltd.",
+        "Number of Bids:",
+        "lowest bidder meeting specifications"
+      ],
+      "supported_named_bids": 1,
+      "observed_bids": 0
+    }
+  },
+  {
+    "run": "2026-11-13-sonnet-high-reviewed-sync-1",
+    "document": "composite",
+    "review_key": "39d28b72d1ef8923ed473ccfe064e654adfc355dd80ab050656d1a34a7267440",
+    "review": {
+      "disposition": "mixed_source_limit_and_extraction_omission",
+      "reason": "The source states 1 submissions and names only the recommended bidder Jones & Bartlett Learning. The other 0 names are unpublished, but this response omits even that supported bidder participation. The shortfall is not approved as a wholly legitimate subset.",
+      "evidence": [
+        "3001-12-3202",
+        "Jones & Bartlett Learning",
+        "Number of Bids:",
+        "lowest bidder meeting specifications"
+      ],
+      "supported_named_bids": 1,
+      "observed_bids": 0
+    }
+  },
+  {
+    "run": "2026-11-13-sonnet-high-reviewed-sync-2",
+    "document": "composite",
+    "review_key": "cbb750b65c500eba91e478a400619ddba1f98c0288b5d71658f0d8ce025ed234",
+    "review": {
+      "disposition": "mixed_source_limit_and_extraction_omission",
+      "reason": "The source states 6 submissions and names only the recommended bidder Guillevin International Co.. The other 5 names are unpublished, but this response omits even that supported bidder participation. The shortfall is not approved as a wholly legitimate subset.",
+      "evidence": [
+        "6302-12-0219",
+        "Guillevin International Co.",
+        "Number of Bids:",
+        "lowest bidder meeting specifications"
+      ],
+      "supported_named_bids": 1,
+      "observed_bids": 0
+    }
+  },
+  {
+    "run": "2026-11-13-sonnet-high-reviewed-sync-2",
+    "document": "composite",
+    "review_key": "d1e7da8d97ddd0ce656aebdbd097d9eef06319c0a5495a8082f4a4244bea8681",
+    "review": {
+      "disposition": "mixed_source_limit_and_extraction_omission",
+      "reason": "The source states 2 submissions and names only the recommended bidder Accrue Contracting Ltd.. The other 1 names are unpublished, but this response omits even that supported bidder participation. The shortfall is not approved as a wholly legitimate subset.",
+      "evidence": [
+        "3917-12-7226",
+        "Accrue Contracting Ltd.",
+        "Number of Bids:",
+        "lowest bidder meeting specifications"
+      ],
+      "supported_named_bids": 1,
+      "observed_bids": 0
+    }
+  },
+  {
+    "run": "2026-11-13-sonnet-high-reviewed-sync-2",
+    "document": "composite",
+    "review_key": "167f88e76d2c450c5c737f81f8499372f1ab45c7939251692d008af29ddb469e",
+    "review": {
+      "disposition": "mixed_source_limit_and_extraction_omission",
+      "reason": "The source states 11 submissions and names only the recommended bidder Steelcore Construction Ltd.. The other 10 names are unpublished, but this response omits even that supported bidder participation. The shortfall is not approved as a wholly legitimate subset.",
+      "evidence": [
+        "192-2012",
+        "Steelcore Construction Ltd.",
+        "Number of Bids:",
+        "lowest bidder meeting specifications"
+      ],
+      "supported_named_bids": 1,
+      "observed_bids": 0
+    }
+  },
+  {
+    "run": "2026-11-13-sonnet-high-reviewed-sync-2",
+    "document": "composite",
+    "review_key": "58c84430d650290f0e332e184fed80e3f1d6efaf941fa8c63bf81f59ed217065",
+    "review": {
+      "disposition": "mixed_source_limit_and_extraction_omission",
+      "reason": "The source states 1 submissions and names only the recommended bidder Jones & Bartlett Learning. The other 0 names are unpublished, but this response omits even that supported bidder participation. The shortfall is not approved as a wholly legitimate subset.",
+      "evidence": [
+        "3001-12-3202",
+        "Jones & Bartlett Learning",
+        "Number of Bids:",
+        "lowest bidder meeting specifications"
+      ],
+      "supported_named_bids": 1,
+      "observed_bids": 0
+    }
+  }
+]

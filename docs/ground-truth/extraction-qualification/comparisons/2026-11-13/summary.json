@@ -1,0 +1,1374 @@
+{
+  "campaign": "2026-11-13-comparison",
+  "cohort_sha256": "d9bd8f127d77dbd3c6db9ab38ed5dd665c629c77095f6f106565159b98fffeef",
+  "component_reviews_sha256": "3d325de25124304e9011a664434259fb95c8390f6b833c2405aac208c97cac5f",
+  "scope": "Known failure cases and two regression controls; no held-out accuracy claim",
+  "requests_expected": 80,
+  "requests_complete": 80,
+  "charged_microdollars": 2058287,
+  "arms": [
+    {
+      "arm": {
+        "id": "sonnet-high",
+        "model": "claude-sonnet-5-5",
+        "effort": "high",
+        "clarified": false
+      },
+      "requests": 20,
+      "states": {
+        "success": 20
+      },
+      "provenance_issues": [],
+      "exact_relations": {
+        "expected": 166,
+        "observed": 150,
+        "correct": 121,
+        "omissions": 45,
+        "false_joins": 0,
+        "attribute_errors": 29,
+        "fabrications": 0,
+        "duplicates": 0
+      },
+      "numeric_correct": 123,
+      "exact_document_observations": 7,
+      "negative_controls_passed": 2,
+      "positive_controls_passed": 2,
+      "protected_unpriced": {
+        "expected": 10,
+        "named_participations_present": 0,
+        "correctly_unpriced": 0,
+        "unsupported_priced_observations": 0,
+        "observations": [
+          {
+            "run": "2026-11-13-comparison-sonnet-high-sync-1",
+            "document": "zoo-fence",
+            "supplier": "Imperial Fence Inc.",
+            "contract": "RFT-42",
+            "named_participation_present": false,
+            "correctly_unpriced": false,
+            "unsupported_priced_observations": 0
+          },
+          {
+            "run": "2026-11-13-comparison-sonnet-high-sync-1",
+            "document": "composite",
+            "supplier": "Guillevin International Co.",
+            "contract": "6302-12-0219",
+            "named_participation_present": false,
+            "correctly_unpriced": false,
+            "unsupported_priced_observations": 0
+          },
+          {
+            "run": "2026-11-13-comparison-sonnet-high-sync-1",
+            "document": "composite",
+            "supplier": "Accrue Contracting Ltd.",
+            "contract": "3917-12-7226",
+            "named_participation_present": false,
+            "correctly_unpriced": false,
+            "unsupported_priced_observations": 0
+          },
+          {
+            "run": "2026-11-13-comparison-sonnet-high-sync-1",
+            "document": "composite",
+            "supplier": "Steelcore Construction Ltd.",
+            "contract": "192-2012",
+            "named_participation_present": false,
+            "correctly_unpriced": false,
+            "unsupported_priced_observations": 0
+          },
+          {
+            "run": "2026-11-13-comparison-sonnet-high-sync-1",
+            "document": "composite",
+            "supplier": "Jones & Bartlett Learning",
+            "contract": "3001-12-3202",
+            "named_participation_present": false,
+            "correctly_unpriced": false,
+            "unsupported_priced_observations": 0
+          },
+          {
+            "run": "2026-11-13-comparison-sonnet-high-sync-2",
+            "document": "zoo-fence",
+            "supplier": "Imperial Fence Inc.",
+            "contract": "RFT-42",
+            "named_participation_present": false,
+            "correctly_unpriced": false,
+            "unsupported_priced_observations": 0
+          },
+          {
+            "run": "2026-11-13-comparison-sonnet-high-sync-2",
+            "document": "composite",
+            "supplier": "Guillevin International Co.",
+            "contract": "6302-12-0219",
+            "named_participation_present": false,
+            "correctly_unpriced": false,
+            "unsupported_priced_observations": 0
+          },
+          {
+            "run": "2026-11-13-comparison-sonnet-high-sync-2",
+            "document": "composite",
+            "supplier": "Accrue Contracting Ltd.",
+            "contract": "3917-12-7226",
+            "named_participation_present": false,
+            "correctly_unpriced": false,
+            "unsupported_priced_observations": 0
+          },
+          {
+            "run": "2026-11-13-comparison-sonnet-high-sync-2",
+            "document": "composite",
+            "supplier": "Steelcore Construction Ltd.",
+            "contract": "192-2012",
+            "named_participation_present": false,
+            "correctly_unpriced": false,
+            "unsupported_priced_observations": 0
+          },
+          {
+            "run": "2026-11-13-comparison-sonnet-high-sync-2",
+            "document": "composite",
+            "supplier": "Jones & Bartlett Learning",
+            "contract": "3001-12-3202",
+            "named_participation_present": false,
+            "correctly_unpriced": false,
+            "unsupported_priced_observations": 0
+          }
+        ]
+      },
+      "charged_microdollars": 349318,
+      "unknown_charges": 0,
+      "documents": [
+        {
+          "document": "award-summary",
+          "scope_complete": true,
+          "observations": [
+            {
+              "state": "success",
+              "correct": 1,
+              "expected": 2,
+              "observed": 2,
+              "numeric_correct": 1
+            },
+            {
+              "state": "success",
+              "correct": 1,
+              "expected": 2,
+              "observed": 2,
+              "numeric_correct": 1
+            }
+          ],
+          "relationship_variants": 1
+        },
+        {
+          "document": "bd-report",
+          "scope_complete": true,
+          "observations": [
+            {
+              "state": "success",
+              "correct": 8,
+              "expected": 8,
+              "observed": 8,
+              "numeric_correct": 8
+            },
+            {
+              "state": "success",
+              "correct": 8,
+              "expected": 8,
+              "observed": 8,
+              "numeric_correct": 8
+            }
+          ],
+          "relationship_variants": 1
+        },
+        {
+          "document": "ep-bus-duct",
+          "scope_complete": true,
+          "observations": [
+            {
+              "state": "success",
+              "correct": 5,
+              "expected": 6,
+              "observed": 6,
+              "numeric_correct": 6
+            },
+            {
+              "state": "success",
+              "correct": 5,
+              "expected": 6,
+              "observed": 6,
+              "numeric_correct": 6
+            }
+          ],
+          "relationship_variants": 1
+        },
+        {
+          "document": "ep-negative",
+          "scope_complete": true,
+          "observations": [
+            {
+              "state": "success",
+              "correct": 0,
+              "expected": 0,
+              "observed": 0,
+              "numeric_correct": 0
+            },
+            {
+              "state": "success",
+              "correct": 0,
+              "expected": 0,
+              "observed": 0,
+              "numeric_correct": 0
+            }
+          ],
+          "relationship_variants": 1
+        },
+        {
+          "document": "zoo-fence",
+          "scope_complete": true,
+          "observations": [
+            {
+              "state": "success",
+              "correct": 0,
+              "expected": 2,
+              "observed": 1,
+              "numeric_correct": 0
+            },
+            {
+              "state": "success",
+              "correct": 0,
+              "expected": 2,
+              "observed": 1,
+              "numeric_correct": 0
+            }
+          ],
+          "relationship_variants": 1
+        },
+        {
+          "document": "composite",
+          "scope_complete": true,
+          "observations": [
+            {
+              "state": "success",
+              "correct": 4,
+              "expected": 8,
+              "observed": 4,
+              "numeric_correct": 4
+            },
+            {
+              "state": "success",
+              "correct": 4,
+              "expected": 8,
+              "observed": 4,
+              "numeric_correct": 4
+            }
+          ],
+          "relationship_variants": 1
+        },
+        {
+          "document": "committee",
+          "scope_complete": true,
+          "observations": [
+            {
+              "state": "success",
+              "correct": 1,
+              "expected": 3,
+              "observed": 3,
+              "numeric_correct": 1
+            },
+            {
+              "state": "success",
+              "correct": 1,
+              "expected": 3,
+              "observed": 3,
+              "numeric_correct": 1
+            }
+          ],
+          "relationship_variants": 1
+        },
+        {
+          "document": "trca-D01",
+          "scope_complete": true,
+          "observations": [
+            {
+              "state": "success",
+              "correct": 9,
+              "expected": 10,
+              "observed": 10,
+              "numeric_correct": 9
+            },
+            {
+              "state": "success",
+              "correct": 10,
+              "expected": 10,
+              "observed": 10,
+              "numeric_correct": 10
+            }
+          ],
+          "relationship_variants": 2
+        },
+        {
+          "document": "trca-D02",
+          "scope_complete": true,
+          "observations": [
+            {
+              "state": "success",
+              "correct": 10,
+              "expected": 10,
+              "observed": 10,
+              "numeric_correct": 10
+            },
+            {
+              "state": "success",
+              "correct": 10,
+              "expected": 10,
+              "observed": 10,
+              "numeric_correct": 10
+            }
+          ],
+          "relationship_variants": 1
+        },
+        {
+          "document": "trca-D04",
+          "scope_complete": false,
+          "observations": [
+            {
+              "state": "success",
+              "correct": 22,
+              "expected": 34,
+              "observed": 31,
+              "numeric_correct": 22
+            },
+            {
+              "state": "success",
+              "correct": 22,
+              "expected": 34,
+              "observed": 31,
+              "numeric_correct": 22
+            }
+          ],
+          "relationship_variants": 1
+        }
+      ]
+    },
+    {
+      "arm": {
+        "id": "sonnet-xhigh",
+        "model": "claude-sonnet-5-5",
+        "effort": "xhigh",
+        "clarified": false
+      },
+      "requests": 20,
+      "states": {
+        "success": 20
+      },
+      "provenance_issues": [],
+      "exact_relations": {
+        "expected": 166,
+        "observed": 160,
+        "correct": 139,
+        "omissions": 27,
+        "false_joins": 2,
+        "attribute_errors": 19,
+        "fabrications": 0,
+        "duplicates": 0
+      },
+      "numeric_correct": 142,
+      "exact_document_observations": 11,
+      "negative_controls_passed": 2,
+      "positive_controls_passed": 2,
+      "protected_unpriced": {
+        "expected": 10,
+        "named_participations_present": 10,
+        "correctly_unpriced": 0,
+        "unsupported_priced_observations": 10,
+        "observations": [
+          {
+            "run": "2026-11-13-comparison-sonnet-xhigh-sync-1",
+            "document": "zoo-fence",
+            "supplier": "Imperial Fence Inc.",
+            "contract": "RFT-42",
+            "named_participation_present": true,
+            "correctly_unpriced": false,
+            "unsupported_priced_observations": 1
+          },
+          {
+            "run": "2026-11-13-comparison-sonnet-xhigh-sync-1",
+            "document": "composite",
+            "supplier": "Guillevin International Co.",
+            "contract": "6302-12-0219",
+            "named_participation_present": true,
+            "correctly_unpriced": false,
+            "unsupported_priced_observations": 1
+          },
+          {
+            "run": "2026-11-13-comparison-sonnet-xhigh-sync-1",
+            "document": "composite",
+            "supplier": "Accrue Contracting Ltd.",
+            "contract": "3917-12-7226",
+            "named_participation_present": true,
+            "correctly_unpriced": false,
+            "unsupported_priced_observations": 1
+          },
+          {
+            "run": "2026-11-13-comparison-sonnet-xhigh-sync-1",
+            "document": "composite",
+            "supplier": "Steelcore Construction Ltd.",
+            "contract": "192-2012",
+            "named_participation_present": true,
+            "correctly_unpriced": false,
+            "unsupported_priced_observations": 1
+          },
+          {
+            "run": "2026-11-13-comparison-sonnet-xhigh-sync-1",
+            "document": "composite",
+            "supplier": "Jones & Bartlett Learning",
+            "contract": "3001-12-3202",
+            "named_participation_present": true,
+            "correctly_unpriced": false,
+            "unsupported_priced_observations": 1
+          },
+          {
+            "run": "2026-11-13-comparison-sonnet-xhigh-sync-2",
+            "document": "zoo-fence",
+            "supplier": "Imperial Fence Inc.",
+            "contract": "RFT-42",
+            "named_participation_present": true,
+            "correctly_unpriced": false,
+            "unsupported_priced_observations": 1
+          },
+          {
+            "run": "2026-11-13-comparison-sonnet-xhigh-sync-2",
+            "document": "composite",
+            "supplier": "Guillevin International Co.",
+            "contract": "6302-12-0219",
+            "named_participation_present": true,
+            "correctly_unpriced": false,
+            "unsupported_priced_observations": 1
+          },
+          {
+            "run": "2026-11-13-comparison-sonnet-xhigh-sync-2",
+            "document": "composite",
+            "supplier": "Accrue Contracting Ltd.",
+            "contract": "3917-12-7226",
+            "named_participation_present": true,
+            "correctly_unpriced": false,
+            "unsupported_priced_observations": 1
+          },
+          {
+            "run": "2026-11-13-comparison-sonnet-xhigh-sync-2",
+            "document": "composite",
+            "supplier": "Steelcore Construction Ltd.",
+            "contract": "192-2012",
+            "named_participation_present": true,
+            "correctly_unpriced": false,
+            "unsupported_priced_observations": 1
+          },
+          {
+            "run": "2026-11-13-comparison-sonnet-xhigh-sync-2",
+            "document": "composite",
+            "supplier": "Jones & Bartlett Learning",
+            "contract": "3001-12-3202",
+            "named_participation_present": true,
+            "correctly_unpriced": false,
+            "unsupported_priced_observations": 1
+          }
+        ]
+      },
+      "charged_microdollars": 533760,
+      "unknown_charges": 0,
+      "documents": [
+        {
+          "document": "award-summary",
+          "scope_complete": true,
+          "observations": [
+            {
+              "state": "success",
+              "correct": 2,
+              "expected": 2,
+              "observed": 2,
+              "numeric_correct": 2
+            },
+            {
+              "state": "success",
+              "correct": 1,
+              "expected": 2,
+              "observed": 2,
+              "numeric_correct": 1
+            }
+          ],
+          "relationship_variants": 2
+        },
+        {
+          "document": "bd-report",
+          "scope_complete": true,
+          "observations": [
+            {
+              "state": "success",
+              "correct": 8,
+              "expected": 8,
+              "observed": 8,
+              "numeric_correct": 8
+            },
+            {
+              "state": "success",
+              "correct": 8,
+              "expected": 8,
+              "observed": 8,
+              "numeric_correct": 8
+            }
+          ],
+          "relationship_variants": 1
+        },
+        {
+          "document": "ep-bus-duct",
+          "scope_complete": true,
+          "observations": [
+            {
+              "state": "success",
+              "correct": 6,
+              "expected": 6,
+              "observed": 6,
+              "numeric_correct": 6
+            },
+            {
+              "state": "success",
+              "correct": 6,
+              "expected": 6,
+              "observed": 6,
+              "numeric_correct": 6
+            }
+          ],
+          "relationship_variants": 1
+        },
+        {
+          "document": "ep-negative",
+          "scope_complete": true,
+          "observations": [
+            {
+              "state": "success",
+              "correct": 0,
+              "expected": 0,
+              "observed": 0,
+              "numeric_correct": 0
+            },
+            {
+              "state": "success",
+              "correct": 0,
+              "expected": 0,
+              "observed": 0,
+              "numeric_correct": 0
+            }
+          ],
+          "relationship_variants": 1
+        },
+        {
+          "document": "zoo-fence",
+          "scope_complete": true,
+          "observations": [
+            {
+              "state": "success",
+              "correct": 1,
+              "expected": 2,
+              "observed": 2,
+              "numeric_correct": 1
+            },
+            {
+              "state": "success",
+              "correct": 1,
+              "expected": 2,
+              "observed": 2,
+              "numeric_correct": 1
+            }
+          ],
+          "relationship_variants": 1
+        },
+        {
+          "document": "composite",
+          "scope_complete": true,
+          "observations": [
+            {
+              "state": "success",
+              "correct": 0,
+              "expected": 8,
+              "observed": 8,
+              "numeric_correct": 1
+            },
+            {
+              "state": "success",
+              "correct": 4,
+              "expected": 8,
+              "observed": 8,
+              "numeric_correct": 4
+            }
+          ],
+          "relationship_variants": 2
+        },
+        {
+          "document": "committee",
+          "scope_complete": true,
+          "observations": [
+            {
+              "state": "success",
+              "correct": 3,
+              "expected": 3,
+              "observed": 3,
+              "numeric_correct": 3
+            },
+            {
+              "state": "success",
+              "correct": 3,
+              "expected": 3,
+              "observed": 3,
+              "numeric_correct": 3
+            }
+          ],
+          "relationship_variants": 1
+        },
+        {
+          "document": "trca-D01",
+          "scope_complete": true,
+          "observations": [
+            {
+              "state": "success",
+              "correct": 10,
+              "expected": 10,
+              "observed": 10,
+              "numeric_correct": 10
+            },
+            {
+              "state": "success",
+              "correct": 10,
+              "expected": 10,
+              "observed": 10,
+              "numeric_correct": 10
+            }
+          ],
+          "relationship_variants": 1
+        },
+        {
+          "document": "trca-D02",
+          "scope_complete": true,
+          "observations": [
+            {
+              "state": "success",
+              "correct": 9,
+              "expected": 10,
+              "observed": 10,
+              "numeric_correct": 10
+            },
+            {
+              "state": "success",
+              "correct": 9,
+              "expected": 10,
+              "observed": 10,
+              "numeric_correct": 10
+            }
+          ],
+          "relationship_variants": 1
+        },
+        {
+          "document": "trca-D04",
+          "scope_complete": false,
+          "observations": [
+            {
+              "state": "success",
+              "correct": 29,
+              "expected": 34,
+              "observed": 31,
+              "numeric_correct": 29
+            },
+            {
+              "state": "success",
+              "correct": 29,
+              "expected": 34,
+              "observed": 31,
+              "numeric_correct": 29
+            }
+          ],
+          "relationship_variants": 1
+        }
+      ]
+    },
+    {
+      "arm": {
+        "id": "opus-high",
+        "model": "claude-opus-5-5",
+        "effort": "high",
+        "clarified": false
+      },
+      "requests": 20,
+      "states": {
+        "success": 20
+      },
+      "provenance_issues": [],
+      "exact_relations": {
+        "expected": 166,
+        "observed": 161,
+        "correct": 138,
+        "omissions": 28,
+        "false_joins": 2,
+        "attribute_errors": 21,
+        "fabrications": 0,
+        "duplicates": 0
+      },
+      "numeric_correct": 138,
+      "exact_document_observations": 11,
+      "negative_controls_passed": 2,
+      "positive_controls_passed": 2,
+      "protected_unpriced": {
+        "expected": 10,
+        "named_participations_present": 10,
+        "correctly_unpriced": 0,
+        "unsupported_priced_observations": 10,
+        "observations": [
+          {
+            "run": "2026-11-13-comparison-opus-high-sync-1",
+            "document": "zoo-fence",
+            "supplier": "Imperial Fence Inc.",
+            "contract": "RFT-42",
+            "named_participation_present": true,
+            "correctly_unpriced": false,
+            "unsupported_priced_observations": 1
+          },
+          {
+            "run": "2026-11-13-comparison-opus-high-sync-1",
+            "document": "composite",
+            "supplier": "Guillevin International Co.",
+            "contract": "6302-12-0219",
+            "named_participation_present": true,
+            "correctly_unpriced": false,
+            "unsupported_priced_observations": 1
+          },
+          {
+            "run": "2026-11-13-comparison-opus-high-sync-1",
+            "document": "composite",
+            "supplier": "Accrue Contracting Ltd.",
+            "contract": "3917-12-7226",
+            "named_participation_present": true,
+            "correctly_unpriced": false,
+            "unsupported_priced_observations": 1
+          },
+          {
+            "run": "2026-11-13-comparison-opus-high-sync-1",
+            "document": "composite",
+            "supplier": "Steelcore Construction Ltd.",
+            "contract": "192-2012",
+            "named_participation_present": true,
+            "correctly_unpriced": false,
+            "unsupported_priced_observations": 1
+          },
+          {
+            "run": "2026-11-13-comparison-opus-high-sync-1",
+            "document": "composite",
+            "supplier": "Jones & Bartlett Learning",
+            "contract": "3001-12-3202",
+            "named_participation_present": true,
+            "correctly_unpriced": false,
+            "unsupported_priced_observations": 1
+          },
+          {
+            "run": "2026-11-13-comparison-opus-high-sync-2",
+            "document": "zoo-fence",
+            "supplier": "Imperial Fence Inc.",
+            "contract": "RFT-42",
+            "named_participation_present": true,
+            "correctly_unpriced": false,
+            "unsupported_priced_observations": 1
+          },
+          {
+            "run": "2026-11-13-comparison-opus-high-sync-2",
+            "document": "composite",
+            "supplier": "Guillevin International Co.",
+            "contract": "6302-12-0219",
+            "named_participation_present": true,
+            "correctly_unpriced": false,
+            "unsupported_priced_observations": 1
+          },
+          {
+            "run": "2026-11-13-comparison-opus-high-sync-2",
+            "document": "composite",
+            "supplier": "Accrue Contracting Ltd.",
+            "contract": "3917-12-7226",
+            "named_participation_present": true,
+            "correctly_unpriced": false,
+            "unsupported_priced_observations": 1
+          },
+          {
+            "run": "2026-11-13-comparison-opus-high-sync-2",
+            "document": "composite",
+            "supplier": "Steelcore Construction Ltd.",
+            "contract": "192-2012",
+            "named_participation_present": true,
+            "correctly_unpriced": false,
+            "unsupported_priced_observations": 1
+          },
+          {
+            "run": "2026-11-13-comparison-opus-high-sync-2",
+            "document": "composite",
+            "supplier": "Jones & Bartlett Learning",
+            "contract": "3001-12-3202",
+            "named_participation_present": true,
+            "correctly_unpriced": false,
+            "unsupported_priced_observations": 1
+          }
+        ]
+      },
+      "charged_microdollars": 793876,
+      "unknown_charges": 0,
+      "documents": [
+        {
+          "document": "award-summary",
+          "scope_complete": true,
+          "observations": [
+            {
+              "state": "success",
+              "correct": 1,
+              "expected": 2,
+              "observed": 2,
+              "numeric_correct": 1
+            },
+            {
+              "state": "success",
+              "correct": 1,
+              "expected": 2,
+              "observed": 2,
+              "numeric_correct": 1
+            }
+          ],
+          "relationship_variants": 1
+        },
+        {
+          "document": "bd-report",
+          "scope_complete": true,
+          "observations": [
+            {
+              "state": "success",
+              "correct": 8,
+              "expected": 8,
+              "observed": 8,
+              "numeric_correct": 8
+            },
+            {
+              "state": "success",
+              "correct": 8,
+              "expected": 8,
+              "observed": 8,
+              "numeric_correct": 8
+            }
+          ],
+          "relationship_variants": 1
+        },
+        {
+          "document": "ep-bus-duct",
+          "scope_complete": true,
+          "observations": [
+            {
+              "state": "success",
+              "correct": 6,
+              "expected": 6,
+              "observed": 6,
+              "numeric_correct": 6
+            },
+            {
+              "state": "success",
+              "correct": 6,
+              "expected": 6,
+              "observed": 6,
+              "numeric_correct": 6
+            }
+          ],
+          "relationship_variants": 1
+        },
+        {
+          "document": "ep-negative",
+          "scope_complete": true,
+          "observations": [
+            {
+              "state": "success",
+              "correct": 0,
+              "expected": 0,
+              "observed": 0,
+              "numeric_correct": 0
+            },
+            {
+              "state": "success",
+              "correct": 0,
+              "expected": 0,
+              "observed": 0,
+              "numeric_correct": 0
+            }
+          ],
+          "relationship_variants": 1
+        },
+        {
+          "document": "zoo-fence",
+          "scope_complete": true,
+          "observations": [
+            {
+              "state": "success",
+              "correct": 1,
+              "expected": 2,
+              "observed": 2,
+              "numeric_correct": 1
+            },
+            {
+              "state": "success",
+              "correct": 1,
+              "expected": 2,
+              "observed": 2,
+              "numeric_correct": 1
+            }
+          ],
+          "relationship_variants": 1
+        },
+        {
+          "document": "composite",
+          "scope_complete": true,
+          "observations": [
+            {
+              "state": "success",
+              "correct": 4,
+              "expected": 8,
+              "observed": 8,
+              "numeric_correct": 4
+            },
+            {
+              "state": "success",
+              "correct": 4,
+              "expected": 8,
+              "observed": 8,
+              "numeric_correct": 4
+            }
+          ],
+          "relationship_variants": 1
+        },
+        {
+          "document": "committee",
+          "scope_complete": true,
+          "observations": [
+            {
+              "state": "success",
+              "correct": 1,
+              "expected": 3,
+              "observed": 3,
+              "numeric_correct": 1
+            },
+            {
+              "state": "success",
+              "correct": 3,
+              "expected": 3,
+              "observed": 3,
+              "numeric_correct": 3
+            }
+          ],
+          "relationship_variants": 2
+        },
+        {
+          "document": "trca-D01",
+          "scope_complete": true,
+          "observations": [
+            {
+              "state": "success",
+              "correct": 10,
+              "expected": 10,
+              "observed": 10,
+              "numeric_correct": 10
+            },
+            {
+              "state": "success",
+              "correct": 10,
+              "expected": 10,
+              "observed": 10,
+              "numeric_correct": 10
+            }
+          ],
+          "relationship_variants": 1
+        },
+        {
+          "document": "trca-D02",
+          "scope_complete": true,
+          "observations": [
+            {
+              "state": "success",
+              "correct": 10,
+              "expected": 10,
+              "observed": 10,
+              "numeric_correct": 10
+            },
+            {
+              "state": "success",
+              "correct": 10,
+              "expected": 10,
+              "observed": 10,
+              "numeric_correct": 10
+            }
+          ],
+          "relationship_variants": 1
+        },
+        {
+          "document": "trca-D04",
+          "scope_complete": false,
+          "observations": [
+            {
+              "state": "success",
+              "correct": 24,
+              "expected": 34,
+              "observed": 32,
+              "numeric_correct": 24
+            },
+            {
+              "state": "success",
+              "correct": 30,
+              "expected": 34,
+              "observed": 31,
+              "numeric_correct": 30
+            }
+          ],
+          "relationship_variants": 2
+        }
+      ]
+    },
+    {
+      "arm": {
+        "id": "sonnet-clarified",
+        "model": "claude-sonnet-5-5",
+        "effort": "high",
+        "clarified": true
+      },
+      "requests": 20,
+      "states": {
+        "success": 20
+      },
+      "provenance_issues": [],
+      "exact_relations": {
+        "expected": 166,
+        "observed": 166,
+        "correct": 164,
+        "omissions": 2,
+        "false_joins": 2,
+        "attribute_errors": 0,
+        "fabrications": 0,
+        "duplicates": 0
+      },
+      "numeric_correct": 164,
+      "exact_document_observations": 18,
+      "negative_controls_passed": 2,
+      "positive_controls_passed": 2,
+      "protected_unpriced": {
+        "expected": 10,
+        "named_participations_present": 10,
+        "correctly_unpriced": 10,
+        "unsupported_priced_observations": 0,
+        "observations": [
+          {
+            "run": "2026-11-13-comparison-sonnet-clarified-sync-1",
+            "document": "zoo-fence",
+            "supplier": "Imperial Fence Inc.",
+            "contract": "RFT-42",
+            "named_participation_present": true,
+            "correctly_unpriced": true,
+            "unsupported_priced_observations": 0
+          },
+          {
+            "run": "2026-11-13-comparison-sonnet-clarified-sync-1",
+            "document": "composite",
+            "supplier": "Guillevin International Co.",
+            "contract": "6302-12-0219",
+            "named_participation_present": true,
+            "correctly_unpriced": true,
+            "unsupported_priced_observations": 0
+          },
+          {
+            "run": "2026-11-13-comparison-sonnet-clarified-sync-1",
+            "document": "composite",
+            "supplier": "Accrue Contracting Ltd.",
+            "contract": "3917-12-7226",
+            "named_participation_present": true,
+            "correctly_unpriced": true,
+            "unsupported_priced_observations": 0
+          },
+          {
+            "run": "2026-11-13-comparison-sonnet-clarified-sync-1",
+            "document": "composite",
+            "supplier": "Steelcore Construction Ltd.",
+            "contract": "192-2012",
+            "named_participation_present": true,
+            "correctly_unpriced": true,
+            "unsupported_priced_observations": 0
+          },
+          {
+            "run": "2026-11-13-comparison-sonnet-clarified-sync-1",
+            "document": "composite",
+            "supplier": "Jones & Bartlett Learning",
+            "contract": "3001-12-3202",
+            "named_participation_present": true,
+            "correctly_unpriced": true,
+            "unsupported_priced_observations": 0
+          },
+          {
+            "run": "2026-11-13-comparison-sonnet-clarified-sync-2",
+            "document": "zoo-fence",
+            "supplier": "Imperial Fence Inc.",
+            "contract": "RFT-42",
+            "named_participation_present": true,
+            "correctly_unpriced": true,
+            "unsupported_priced_observations": 0
+          },
+          {
+            "run": "2026-11-13-comparison-sonnet-clarified-sync-2",
+            "document": "composite",
+            "supplier": "Guillevin International Co.",
+            "contract": "6302-12-0219",
+            "named_participation_present": true,
+            "correctly_unpriced": true,
+            "unsupported_priced_observations": 0
+          },
+          {
+            "run": "2026-11-13-comparison-sonnet-clarified-sync-2",
+            "document": "composite",
+            "supplier": "Accrue Contracting Ltd.",
+            "contract": "3917-12-7226",
+            "named_participation_present": true,
+            "correctly_unpriced": true,
+            "unsupported_priced_observations": 0
+          },
+          {
+            "run": "2026-11-13-comparison-sonnet-clarified-sync-2",
+            "document": "composite",
+            "supplier": "Steelcore Construction Ltd.",
+            "contract": "192-2012",
+            "named_participation_present": true,
+            "correctly_unpriced": true,
+            "unsupported_priced_observations": 0
+          },
+          {
+            "run": "2026-11-13-comparison-sonnet-clarified-sync-2",
+            "document": "composite",
+            "supplier": "Jones & Bartlett Learning",
+            "contract": "3001-12-3202",
+            "named_participation_present": true,
+            "correctly_unpriced": true,
+            "unsupported_priced_observations": 0
+          }
+        ]
+      },
+      "charged_microdollars": 381333,
+      "unknown_charges": 0,
+      "documents": [
+        {
+          "document": "award-summary",
+          "scope_complete": true,
+          "observations": [
+            {
+              "state": "success",
+              "correct": 2,
+              "expected": 2,
+              "observed": 2,
+              "numeric_correct": 2
+            },
+            {
+              "state": "success",
+              "correct": 2,
+              "expected": 2,
+              "observed": 2,
+              "numeric_correct": 2
+            }
+          ],
+          "relationship_variants": 1
+        },
+        {
+          "document": "bd-report",
+          "scope_complete": true,
+          "observations": [
+            {
+              "state": "success",
+              "correct": 8,
+              "expected": 8,
+              "observed": 8,
+              "numeric_correct": 8
+            },
+            {
+              "state": "success",
+              "correct": 8,
+              "expected": 8,
+              "observed": 8,
+              "numeric_correct": 8
+            }
+          ],
+          "relationship_variants": 1
+        },
+        {
+          "document": "ep-bus-duct",
+          "scope_complete": true,
+          "observations": [
+            {
+              "state": "success",
+              "correct": 6,
+              "expected": 6,
+              "observed": 6,
+              "numeric_correct": 6
+            },
+            {
+              "state": "success",
+              "correct": 6,
+              "expected": 6,
+              "observed": 6,
+              "numeric_correct": 6
+            }
+          ],
+          "relationship_variants": 1
+        },
+        {
+          "document": "ep-negative",
+          "scope_complete": true,
+          "observations": [
+            {
+              "state": "success",
+              "correct": 0,
+              "expected": 0,
+              "observed": 0,
+              "numeric_correct": 0
+            },
+            {
+              "state": "success",
+              "correct": 0,
+              "expected": 0,
+              "observed": 0,
+              "numeric_correct": 0
+            }
+          ],
+          "relationship_variants": 1
+        },
+        {
+          "document": "zoo-fence",
+          "scope_complete": true,
+          "observations": [
+            {
+              "state": "success",
+              "correct": 1,
+              "expected": 2,
+              "observed": 2,
+              "numeric_correct": 1
+            },
+            {
+              "state": "success",
+              "correct": 1,
+              "expected": 2,
+              "observed": 2,
+              "numeric_correct": 1
+            }
+          ],
+          "relationship_variants": 1
+        },
+        {
+          "document": "composite",
+          "scope_complete": true,
+          "observations": [
+            {
+              "state": "success",
+              "correct": 8,
+              "expected": 8,
+              "observed": 8,
+              "numeric_correct": 8
+            },
+            {
+              "state": "success",
+              "correct": 8,
+              "expected": 8,
+              "observed": 8,
+              "numeric_correct": 8
+            }
+          ],
+          "relationship_variants": 1
+        },
+        {
+          "document": "committee",
+          "scope_complete": true,
+          "observations": [
+            {
+              "state": "success",
+              "correct": 3,
+              "expected": 3,
+              "observed": 3,
+              "numeric_correct": 3
+            },
+            {
+              "state": "success",
+              "correct": 3,
+              "expected": 3,
+              "observed": 3,
+              "numeric_correct": 3
+            }
+          ],
+          "relationship_variants": 1
+        },
+        {
+          "document": "trca-D01",
+          "scope_complete": true,
+          "observations": [
+            {
+              "state": "success",
+              "correct": 10,
+              "expected": 10,
+              "observed": 10,
+              "numeric_correct": 10
+            },
+            {
+              "state": "success",
+              "correct": 10,
+              "expected": 10,
+              "observed": 10,
+              "numeric_correct": 10
+            }
+          ],
+          "relationship_variants": 1
+        },
+        {
+          "document": "trca-D02",
+          "scope_complete": true,
+          "observations": [
+            {
+              "state": "success",
+              "correct": 10,
+              "expected": 10,
+              "observed": 10,
+              "numeric_correct": 10
+            },
+            {
+              "state": "success",
+              "correct": 10,
+              "expected": 10,
+              "observed": 10,
+              "numeric_correct": 10
+            }
+          ],
+          "relationship_variants": 1
+        },
+        {
+          "document": "trca-D04",
+          "scope_complete": false,
+          "observations": [
+            {
+              "state": "success",
+              "correct": 34,
+              "expected": 34,
+              "observed": 34,
+              "numeric_correct": 34
+            },
+            {
+              "state": "success",
+              "correct": 34,
+              "expected": 34,
+              "observed": 34,
+              "numeric_correct": 34
+            }
+          ],
+          "relationship_variants": 1
+        }
+      ]
+    }
+  ],
+  "production_qualification": false,
+  "limitations": [
+    "Known failure cases informed prompt design; not held-out accuracy.",
+    "All execution is synchronous; no new batch parity claim.",
+    "Category fields and source/identity proof gaps are unchanged.",
+    "Strict labels retain the Zoo punctuation mismatch; separate unpriced checks accept both printed forms."
+  ]
+}

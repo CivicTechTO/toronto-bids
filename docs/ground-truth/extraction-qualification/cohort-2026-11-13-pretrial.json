@@ -1,0 +1,2274 @@
+{
+  "version": 1,
+  "thresholds": {
+    "award_summary": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "modes": [
+        "sync",
+        "batch"
+      ],
+      "difficult_repeats": 2
+    },
+    "ba_report": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "modes": [
+        "sync",
+        "batch"
+      ],
+      "difficult_repeats": 2
+    },
+    "bd_report": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "modes": [
+        "sync",
+        "batch"
+      ],
+      "difficult_repeats": 2
+    },
+    "committee": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "modes": [
+        "sync",
+        "batch"
+      ],
+      "difficult_repeats": 2
+    },
+    "composite": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "modes": [
+        "sync",
+        "batch"
+      ],
+      "difficult_repeats": 2
+    },
+    "ep": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "modes": [
+        "sync",
+        "batch"
+      ],
+      "difficult_repeats": 2
+    },
+    "trca": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "modes": [
+        "sync",
+        "batch"
+      ],
+      "difficult_repeats": 2
+    },
+    "ttc": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "modes": [
+        "sync",
+        "batch"
+      ],
+      "difficult_repeats": 2
+    },
+    "waterfront": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "modes": [
+        "sync",
+        "batch"
+      ],
+      "difficult_repeats": 2
+    },
+    "zoo": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "modes": [
+        "sync",
+        "batch"
+      ],
+      "difficult_repeats": 2
+    }
+  },
+  "documents": [
+    {
+      "id": "award-summary",
+      "corpus": "award_summary",
+      "text_path": "sources/award-summary.txt",
+      "text_sha256": "2cb62f8b2b7f287698c5bede60cfda68d5271a29e752d13a4a156de62f32e431",
+      "document_sha256": "eeb0997f130b7f360481ee530c86ea0b0b46739460d1e4e82d4520eb933360c4",
+      "url": "https://secure.toronto.ca/c3api_upload/retrieve/pmmd_solicitations/N2ZEiEmfR4s4nNjBa65fHw",
+      "review_status": "reviewed",
+      "contracts": [
+        "Doc5349398029"
+      ],
+      "relations": [
+        {
+          "supplier": "Kemira Water Solutions Canada Inc",
+          "contract": "Doc5349398029",
+          "stage": "single_stage",
+          "role": "bid",
+          "amount": "$8,190,439.34",
+          "basis": "plus_HST",
+          "status": "not_stated",
+          "evidence": [
+            "Kemira Water Solutions Canada Inc",
+            "$8,190,439.34",
+            "Bid Price (Excl. HST)"
+          ]
+        },
+        {
+          "supplier": "Kemira Water Solutions Canada Inc",
+          "contract": "Doc5349398029",
+          "stage": "single_stage",
+          "role": "award",
+          "amount": "$8,190,439.34",
+          "basis": "net_of_taxes",
+          "status": null,
+          "evidence": [
+            "Kemira Water Solutions Canada Inc",
+            "$8,190,439.34",
+            "net of all applicable taxes and charges"
+          ]
+        }
+      ],
+      "review_notes": "Agent labels from Section 1 and Bid Summary. One submitted bid, net-of-taxes award and a bid excluding HST. Numbered table row is not an explicit compliance declaration. Preserve the printed Doc prefix; identity alias adjudication belongs to #282. Benchmark-only reference aliases enumerate the source's printed identifier with its type/No. label or bare shape; they do not infer another identifier, join another document, or change #282 production identity rules. Each normalization is reported alongside the untouched raw response.",
+      "difficult": false,
+      "adjudications": [],
+      "scope_complete": true,
+      "reference_aliases": [
+        {
+          "alias": "5349398029",
+          "canonical": "Doc5349398029",
+          "evidence": [
+            "Doc5349398029"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ba-report",
+      "corpus": "ba_report",
+      "text_path": "sources/ba-report.txt",
+      "text_sha256": "ab479fad8ac20418fb52668a9513360fd03294269efa0b600ecf304eb94d46c9",
+      "document_sha256": "2cc916d7dea72b10cf336ffeef69795eacedd64a80d659337fea945e95afdaf0",
+      "url": "https://www.toronto.ca/legdocs/mmis/2019/ba/bgrd/backgroundfile-123035.pdf",
+      "review_status": "reviewed",
+      "contracts": [
+        "4201-18-5067"
+      ],
+      "relations": [
+        {
+          "supplier": "Gorbern Mechanical Contractors Ltd.",
+          "contract": "4201-18-5067",
+          "stage": "single_stage",
+          "role": "award",
+          "amount": null,
+          "basis": null,
+          "status": null,
+          "evidence": [
+            "Gorbern Mechanical Contractors Ltd.",
+            "October 31, 2018",
+            "This report corrects that administrative error by rescinding the second report."
+          ]
+        }
+      ],
+      "review_notes": "Full source review: one historical plumbing contract is described, previously awarded under BA104.3. The document rescinds its erroneous duplicate BA110.4, not the valid earlier award. No submitted bid or amount is stated. Shared extraction asks for every described procurement; retaining one historical award is supported, but this cannot be admitted as a new award decision. No production identity or decision rule is changed. Benchmark-only reference aliases enumerate the source's printed identifier with its type/No. label or bare shape; they do not infer another identifier, join another document, or change #282 production identity rules. Each normalization is reported alongside the untouched raw response.",
+      "difficult": false,
+      "adjudications": [
+        {
+          "status": "unresolved",
+          "reason": "The current extraction schema has no historical/rescinded decision-status field, so raw award output cannot express the surviving BA104.3 award separately from the withdrawn duplicate. Admission review belongs to #282.",
+          "issue": "https://github.com/CivicTechTO/toronto-bids/issues/282"
+        }
+      ],
+      "scope_complete": true,
+      "reference_aliases": [
+        {
+          "alias": "RFQ No. 4201-18-5067",
+          "canonical": "4201-18-5067",
+          "evidence": [
+            "4201-18-5067"
+          ]
+        },
+        {
+          "alias": "RFQ No.4201-18-5067",
+          "canonical": "4201-18-5067",
+          "evidence": [
+            "4201-18-5067"
+          ]
+        },
+        {
+          "alias": "RFQ 4201-18-5067",
+          "canonical": "4201-18-5067",
+          "evidence": [
+            "4201-18-5067"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "bd-report",
+      "corpus": "bd_report",
+      "text_path": "sources/bd-report.txt",
+      "text_sha256": "ed37940c84e1d4ad7be8fa069ebac0d7509932133fb0093b70de62149876df30",
+      "document_sha256": "7dceadcbdd2ffe8290f006ca00d08f707133467d3b638082ee504a453f2c296c",
+      "url": "https://www.toronto.ca/legdocs/mmis/2013/bd/bgrd/backgroundfile-62292.pdf",
+      "review_status": "reviewed",
+      "contracts": [
+        "243-2013"
+      ],
+      "relations": [
+        {
+          "supplier": "Nortex Roofing Ltd.",
+          "contract": "243-2013",
+          "stage": "single_stage",
+          "role": "bid",
+          "amount": "$1,362,667.00",
+          "basis": "including_HST",
+          "status": "not_stated",
+          "evidence": [
+            "Nortex Roofing Ltd.",
+            "$1,362,667.00",
+            "Bid Price (Incl. HST)"
+          ]
+        },
+        {
+          "supplier": "Can-Sky Roofing & Sheet Metal",
+          "contract": "243-2013",
+          "stage": "single_stage",
+          "role": "bid",
+          "amount": "$1,433,970.93",
+          "basis": "including_HST",
+          "status": "not_stated",
+          "evidence": [
+            "Can-Sky Roofing & Sheet Metal",
+            "$1,433,970.93",
+            "Bid Price (Incl. HST)"
+          ]
+        },
+        {
+          "supplier": "Triumph Aluminum & Sheet Metal Inc.",
+          "contract": "243-2013",
+          "stage": "single_stage",
+          "role": "bid",
+          "amount": "$1,567,219.60",
+          "basis": "including_HST",
+          "status": "not_stated",
+          "evidence": [
+            "Triumph Aluminum & Sheet Metal Inc.",
+            "$1,567,219.60",
+            "Bid Price (Incl. HST)"
+          ]
+        },
+        {
+          "supplier": "Solar Roofing & Sheet Metal Ltd.",
+          "contract": "243-2013",
+          "stage": "single_stage",
+          "role": "bid",
+          "amount": "$1,665,620.00",
+          "basis": "including_HST",
+          "status": "not_stated",
+          "evidence": [
+            "Solar Roofing & Sheet Metal Ltd.",
+            "$1,665,620.00",
+            "Bid Price (Incl. HST)"
+          ]
+        },
+        {
+          "supplier": "Trio Roofing Systems Inc.",
+          "contract": "243-2013",
+          "stage": "single_stage",
+          "role": "bid",
+          "amount": "$1,745,494.05",
+          "basis": "including_HST",
+          "status": "not_stated",
+          "evidence": [
+            "Trio Roofing Systems Inc.",
+            "$1,745,494.05",
+            "Bid Price (Incl. HST)"
+          ]
+        },
+        {
+          "supplier": "Applewood Roofing & Sheet Metal Ltd.",
+          "contract": "243-2013",
+          "stage": "single_stage",
+          "role": "bid",
+          "amount": "$1,813,763.00",
+          "basis": "including_HST",
+          "status": "not_stated",
+          "evidence": [
+            "Applewood Roofing & Sheet Metal Ltd.",
+            "$1,813,763.00",
+            "Bid Price (Incl. HST)"
+          ]
+        },
+        {
+          "supplier": "Trinity Roofing Ltd.",
+          "contract": "243-2013",
+          "stage": "single_stage",
+          "role": "bid",
+          "amount": "$1,879,715.45",
+          "basis": "including_HST",
+          "status": "not_stated",
+          "evidence": [
+            "Trinity Roofing Ltd.",
+            "$1,879,715.45",
+            "Bid Price (Incl. HST)"
+          ]
+        },
+        {
+          "supplier": "Nortex Roofing Ltd.",
+          "contract": "243-2013",
+          "stage": "single_stage",
+          "role": "award",
+          "amount": "$1,205,900.00",
+          "basis": "net_of_taxes",
+          "status": null,
+          "evidence": [
+            "Nortex Roofing Ltd.",
+            "$1,205,900.00 net of all applicable taxes and charges"
+          ]
+        }
+      ],
+      "review_notes": "Agent labels from CALL SUMMARY and Contract Award Value. Seven bids including HST; recommended award net of all taxes. No explicit per-bid compliance labels. Printed reference prefix equivalence remains an identity question (#282). Benchmark-only reference aliases enumerate the source's printed identifier with its type/No. label or bare shape; they do not infer another identifier, join another document, or change #282 production identity rules. Each normalization is reported alongside the untouched raw response.",
+      "difficult": false,
+      "adjudications": [],
+      "scope_complete": true,
+      "reference_aliases": [
+        {
+          "alias": "Tender No. 243-2013",
+          "canonical": "243-2013",
+          "evidence": [
+            "243-2013"
+          ]
+        },
+        {
+          "alias": "Tender No.243-2013",
+          "canonical": "243-2013",
+          "evidence": [
+            "243-2013"
+          ]
+        },
+        {
+          "alias": "Tender 243-2013",
+          "canonical": "243-2013",
+          "evidence": [
+            "243-2013"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ttc",
+      "corpus": "ttc",
+      "text_path": "sources/ttc.txt",
+      "text_sha256": "0b0cc58db572125a5b15a48e2490f2b070c13bbd1742490629f7e7dfbd9daa3d",
+      "document_sha256": "2fdcf5ef04dacba8186ba6f1bd9861f29c7b0060f660f5f93f86afa287ab2086",
+      "url": "https://cdn.ttc.ca/-/media/Project/TTC/DevProto/Documents/Home/Public-Meetings/Board/2000/December-13/Procurement-Matters/Purchase_Of_Brake_Drums.pdf?rev=c0b80cf59e6f48b6a9e549f7c6a8a22f&hash=A3DBD60FBFA79523D67D307671A03528",
+      "review_status": "reviewed",
+      "contracts": [
+        "9-118-80"
+      ],
+      "relations": [
+        {
+          "supplier": "Orion Bus Industries Inc.",
+          "contract": "9-118-80",
+          "stage": "single_stage",
+          "role": "bid",
+          "amount": "$149,727.24",
+          "basis": "unknown",
+          "status": "non_compliant",
+          "evidence": [
+            "Orion Bus Industries Inc.",
+            "$149,727.24"
+          ]
+        },
+        {
+          "supplier": "MCI Service Parts",
+          "contract": "9-118-80",
+          "stage": "single_stage",
+          "role": "bid",
+          "amount": "$265,196.86",
+          "basis": "unknown",
+          "status": "compliant",
+          "evidence": [
+            "MCI Service Parts",
+            "$265,196.86"
+          ]
+        },
+        {
+          "supplier": "Neopart",
+          "contract": "9-118-80",
+          "stage": "single_stage",
+          "role": "bid",
+          "amount": "$266,115.27",
+          "basis": "unknown",
+          "status": "compliant",
+          "evidence": [
+            "Neopart",
+            "$266,115.27"
+          ]
+        },
+        {
+          "supplier": "New Flyer Industries",
+          "contract": "9-118-80",
+          "stage": "single_stage",
+          "role": "bid",
+          "amount": "$266,367.45",
+          "basis": "unknown",
+          "status": "not_stated",
+          "evidence": [
+            "New Flyer Industries",
+            "$266,367.45"
+          ]
+        },
+        {
+          "supplier": "Fort Garry Industries Ltd.",
+          "contract": "9-118-80",
+          "stage": "single_stage",
+          "role": "bid",
+          "amount": "$271,193.00",
+          "basis": "unknown",
+          "status": "not_stated",
+          "evidence": [
+            "Fort Garry Industries Ltd.",
+            "$271,193.00"
+          ]
+        },
+        {
+          "supplier": "Bartlett Provincial Brake Inc.",
+          "contract": "9-118-80",
+          "stage": "single_stage",
+          "role": "bid",
+          "amount": "$294,805.25",
+          "basis": "unknown",
+          "status": "not_stated",
+          "evidence": [
+            "Bartlett Provincial Brake Inc.",
+            "$294,805.25"
+          ]
+        },
+        {
+          "supplier": "Neopart",
+          "contract": "9-118-80",
+          "stage": "single_stage",
+          "role": "award",
+          "amount": "$229,000.00",
+          "basis": "unknown",
+          "status": null,
+          "evidence": [
+            "Neopart",
+            "$229,000.00"
+          ]
+        },
+        {
+          "supplier": "MCI Services Part Co.",
+          "contract": "9-118-80",
+          "stage": "single_stage",
+          "role": "award",
+          "amount": "$32,000.00",
+          "basis": "unknown",
+          "status": null,
+          "evidence": [
+            "MCI Services Part Co.",
+            "$32,000.00"
+          ]
+        }
+      ],
+      "review_notes": "Full source review: Appendix A has six whole-tender prices, not each winner's allocated purchase value. Orion quoted only year one and is explicitly unacceptable. The body identifies Neopart and MCI as acceptable item winners, allocating $229,000 and $32,000; do not allocate the $261,000 combined ceiling to each. Preserve Appendix supplier spelling MCI Service Parts and allocation spelling MCI Services Part Co.; the recommendation also says MCI Service Parts Co. Tax is not stated for Appendix prices. The general phrase including applicable taxes in a 2000 document does not establish an including-HST basis. The footer 9-118-80 is the only printed contract-like reference; its role is ambiguous.",
+      "difficult": false,
+      "adjudications": [
+        {
+          "status": "unresolved",
+          "reason": "9-118-80 is printed without an identifier label. Extraction reference matching is diagnostic only; it cannot establish a procurement identity (#282). The output schema cannot express item-level award allocations separately from whole-tender prices.",
+          "issue": "https://github.com/CivicTechTO/toronto-bids/issues/282"
+        }
+      ],
+      "scope_complete": true
+    },
+    {
+      "id": "ep-bus-duct",
+      "corpus": "ep",
+      "text_path": "sources/ep-bus-duct.txt",
+      "text_sha256": "766203113a8e808d11a48f46e03b4e0d335fc4c15faa4b30adb8c1f700f0b53b",
+      "document_sha256": "fedcc9cbe1a6422b8fd1e23df2c25299aff925f3c91ea57896a5193a7bc8ea03",
+      "url": "https://www.toronto.ca/legdocs/mmis/2019/ep/bgrd/backgroundfile-137241.pdf",
+      "review_status": "reviewed",
+      "contracts": [
+        "19-081-98116"
+      ],
+      "relations": [
+        {
+          "supplier": "Sutherland-Schultz Ltd.",
+          "contract": "19-081-98116",
+          "stage": "single_stage",
+          "role": "bid",
+          "amount": "$418,854.47",
+          "basis": "plus_HST",
+          "status": "compliant",
+          "evidence": [
+            "Sutherland-Schultz Ltd.",
+            "$418,854.47",
+            "excluding HST"
+          ]
+        },
+        {
+          "supplier": "Ontario Electrical Construction Co. Ltd.",
+          "contract": "19-081-98116",
+          "stage": "single_stage",
+          "role": "bid",
+          "amount": "$461,522.00",
+          "basis": "plus_HST",
+          "status": "not_stated",
+          "evidence": [
+            "Ontario Electrical Construction Co. Ltd.",
+            "$461,522.00",
+            "excluding HST"
+          ]
+        },
+        {
+          "supplier": "Modern Niagara Toronto Inc.",
+          "contract": "19-081-98116",
+          "stage": "single_stage",
+          "role": "bid",
+          "amount": "$470,700.00",
+          "basis": "plus_HST",
+          "status": "not_stated",
+          "evidence": [
+            "Modern Niagara Toronto Inc.",
+            "$470,700.00",
+            "excluding HST"
+          ]
+        },
+        {
+          "supplier": "Stevens & Black Electrical Contractors Ltd.",
+          "contract": "19-081-98116",
+          "stage": "single_stage",
+          "role": "bid",
+          "amount": "$518,000.00",
+          "basis": "plus_HST",
+          "status": "not_stated",
+          "evidence": [
+            "Stevens & Black Electrical Contractors Ltd.",
+            "$518,000.00",
+            "excluding HST"
+          ]
+        },
+        {
+          "supplier": "Rogol Electric Company Limited",
+          "contract": "19-081-98116",
+          "stage": "single_stage",
+          "role": "bid",
+          "amount": "$546,350.00",
+          "basis": "plus_HST",
+          "status": "not_stated",
+          "evidence": [
+            "Rogol Electric Company Limited",
+            "$546,350.00",
+            "excluding HST"
+          ]
+        },
+        {
+          "supplier": "Sutherland-Schultz Ltd.",
+          "contract": "19-081-98116",
+          "stage": "single_stage",
+          "role": "award",
+          "amount": "$403,854.47",
+          "basis": "plus_HST",
+          "status": null,
+          "evidence": [
+            "Sutherland-Schultz Ltd.",
+            "$403,854.47",
+            "excludes HST"
+          ]
+        }
+      ],
+      "review_notes": "Agent labels from Table 1, tender-process text and recommendation 1. Corrected price footnote is not part of the money. Only the winning tender is explicitly described as acceptable. Recommended award includes reduced contingency; it is not the submitted tender. Proposed recommendation is extraction evidence, not proof of a carried decision (#282).",
+      "difficult": true,
+      "adjudications": [],
+      "scope_complete": true
+    },
+    {
+      "id": "ep-negative",
+      "corpus": "ep",
+      "text_path": "sources/ep-negative.txt",
+      "text_sha256": "28efa93da8deec87939c0c214fbad3c35b04ba78a3a12f75c94186fbe248053a",
+      "document_sha256": "32bcb544ac0bc3c518fd7fa61be158edce67caf9d2ea78ff9a87768c9d066530",
+      "url": "https://www.toronto.ca/legdocs/mmis/2023/ep/bgrd/backgroundfile-230165.pdf",
+      "review_status": "reviewed",
+      "contracts": [],
+      "relations": [],
+      "review_notes": "Agent review of the full held report: occupational health and safety information, WSIB invoice statistics and no procurement award or bid. Historical costs are not contract amounts.",
+      "difficult": false,
+      "adjudications": [],
+      "scope_complete": true
+    },
+    {
+      "id": "zoo-fence",
+      "corpus": "zoo",
+      "text_path": "sources/zoo-fence.txt",
+      "text_sha256": "ec85b8f4fadc6db957f8abafcd0ceab21995426e71561bf1b51fbb501caf8275",
+      "document_sha256": "5f74dcf0051c760b21de8fffcf5aa6b058f1cb90ac17f13bfb130ea6260a12a6",
+      "url": "https://www.toronto.ca/legdocs/mmis/2025/zb/bgrd/backgroundfile-260182.pdf",
+      "review_status": "reviewed",
+      "contracts": [
+        "RFT-42"
+      ],
+      "relations": [
+        {
+          "supplier": "Imperial Fence Inc.",
+          "contract": "RFT-42",
+          "stage": "single_stage",
+          "role": "bid",
+          "amount": null,
+          "basis": null,
+          "status": "compliant",
+          "evidence": [
+            "the bid from Imperial Fence Inc. to be the lowest meeting specifications"
+          ]
+        },
+        {
+          "supplier": "Imperial Fence, Inc.",
+          "contract": "RFT-42",
+          "stage": "single_stage",
+          "role": "award",
+          "amount": "$1,639,615.00",
+          "basis": "plus_HST",
+          "status": null,
+          "evidence": [
+            "Imperial Fence, Inc.",
+            "$1,639,615.00 (excluding HST)"
+          ]
+        }
+      ],
+      "review_notes": "Agent review of recommendation and COMMENTS. Four bids are declared; only the winning bidder is named, without its submitted price. The public award cap is not a submitted tender price. Literal punctuation differs between submitted-bid and recommendation passages; preserve both. Missing other names is a legitimate public-source limitation, requiring a response-bound count review rather than rejecting the whole extraction. Benchmark-only reference aliases enumerate the source's printed identifier with its type/No. label or bare shape; they do not infer another identifier, join another document, or change #282 production identity rules. Each normalization is reported alongside the untouched raw response.",
+      "difficult": false,
+      "adjudications": [
+        {
+          "status": "unresolved",
+          "reason": "The public report names one of four bidders. Count justification must bind the actual response and exact discrepancy. Recommendation versus carried award decision remains #282.",
+          "issue": "https://github.com/CivicTechTO/toronto-bids/issues/282"
+        }
+      ],
+      "scope_complete": true,
+      "reference_aliases": [
+        {
+          "alias": "RFT 42",
+          "canonical": "RFT-42",
+          "evidence": [
+            "Request for Tender (RFT) 42",
+            "RFT-42"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "composite",
+      "corpus": "composite",
+      "text_path": "sources/composite.txt",
+      "text_sha256": "8c215821c896b6040f971bba85cd7108b36174060e0cab3c78854d860060072c",
+      "document_sha256": "f3ab0f9a9140dd2c7e074355469c2e3745808a2779c1dbd3bddb06722eda480e",
+      "url": "https://www.toronto.ca/legdocs/mmis/2012/bd/bgrd/backgroundfile-52208.pdf",
+      "review_status": "reviewed",
+      "contracts": [
+        "6302-12-0219",
+        "3917-12-7226",
+        "192-2012",
+        "3001-12-3202"
+      ],
+      "relations": [
+        {
+          "supplier": "Guillevin International Co.",
+          "contract": "6302-12-0219",
+          "stage": "single_stage",
+          "role": "bid",
+          "amount": null,
+          "basis": null,
+          "status": "compliant",
+          "evidence": [
+            "Guillevin International Co.",
+            "lowest bidder meeting specifications"
+          ]
+        },
+        {
+          "supplier": "Guillevin International Co.",
+          "contract": "6302-12-0219",
+          "stage": "single_stage",
+          "role": "award",
+          "amount": "$284,752.25",
+          "basis": "net_of_taxes",
+          "status": null,
+          "evidence": [
+            "Guillevin International Co.",
+            "$284,752.25",
+            "net of all applicable taxes and charges"
+          ]
+        },
+        {
+          "supplier": "Accrue Contracting Ltd.",
+          "contract": "3917-12-7226",
+          "stage": "single_stage",
+          "role": "bid",
+          "amount": null,
+          "basis": null,
+          "status": "compliant",
+          "evidence": [
+            "Accrue Contracting Ltd.",
+            "lowest bidder meeting specifications"
+          ]
+        },
+        {
+          "supplier": "Accrue Contracting Ltd.",
+          "contract": "3917-12-7226",
+          "stage": "single_stage",
+          "role": "award",
+          "amount": "$420,000.00",
+          "basis": "net_of_taxes",
+          "status": null,
+          "evidence": [
+            "Accrue Contracting Ltd.",
+            "$420,000.00",
+            "net of all applicable taxes and charges"
+          ]
+        },
+        {
+          "supplier": "Steelcore Construction Ltd.",
+          "contract": "192-2012",
+          "stage": "single_stage",
+          "role": "bid",
+          "amount": null,
+          "basis": null,
+          "status": "compliant",
+          "evidence": [
+            "Steelcore Construction Ltd.",
+            "lowest bidder meeting specifications"
+          ]
+        },
+        {
+          "supplier": "Steelcore Construction Ltd.",
+          "contract": "192-2012",
+          "stage": "single_stage",
+          "role": "award",
+          "amount": "$ 1,269,000.00",
+          "basis": "net_of_taxes",
+          "status": null,
+          "evidence": [
+            "Steelcore Construction Ltd.",
+            "$ 1,269,000.00",
+            "net of all applicable taxes and charges"
+          ]
+        },
+        {
+          "supplier": "Jones & Bartlett Learning",
+          "contract": "3001-12-3202",
+          "stage": "single_stage",
+          "role": "bid",
+          "amount": null,
+          "basis": null,
+          "status": "compliant",
+          "evidence": [
+            "Jones & Bartlett Learning",
+            "lowest bidder meeting specifications"
+          ]
+        },
+        {
+          "supplier": "Jones & Bartlett Learning",
+          "contract": "3001-12-3202",
+          "stage": "single_stage",
+          "role": "award",
+          "amount": "$187,480.00",
+          "basis": "net_of_taxes",
+          "status": null,
+          "evidence": [
+            "Jones & Bartlett Learning",
+            "$187,480.00",
+            "net of all applicable taxes and charges"
+          ]
+        }
+      ],
+      "review_notes": "Full archived report reviewed through all four appendices. Every recommended firm is supported as a submitted bidder by the explicit lowest-bidder/highest-scoring requirement, but none has a published submitted price. Award labels use each initial term's first net-of-taxes figure, not option-year totals, HST-recovery values or contingencies. Independent submission counts are 6, 2, 11 (10 formal and 1 informal), and 1; only the recommended bidder is named for each. Missing other bidder names is a published subset, not evidence for inventing them. The old repository fixture ended after appendix 2 and is not the evaluated input. Benchmark-only reference aliases enumerate the source's printed identifier with its type/No. label or bare shape; they do not infer another identifier, join another document, or change #282 production identity rules. Each normalization is reported alongside the untouched raw response.",
+      "difficult": true,
+      "adjudications": [],
+      "source_counts": [
+        {
+          "reference": "6302-12-0219",
+          "submissions": 6,
+          "evidence": [
+            "Total: Six (6) Bids"
+          ]
+        },
+        {
+          "reference": "3917-12-7226",
+          "submissions": 2,
+          "evidence": [
+            "Two (2)"
+          ]
+        },
+        {
+          "reference": "192-2012",
+          "submissions": 11,
+          "evidence": [
+            "Ten (10) Formal Bids, One (1) Informal Bid"
+          ]
+        },
+        {
+          "reference": "3001-12-3202",
+          "submissions": 1,
+          "evidence": [
+            "Total of one (1) bid received"
+          ]
+        }
+      ],
+      "scope_complete": true,
+      "reference_aliases": [
+        {
+          "alias": "RFQ No. 6302-12-0219",
+          "canonical": "6302-12-0219",
+          "evidence": [
+            "6302-12-0219"
+          ]
+        },
+        {
+          "alias": "RFQ No.6302-12-0219",
+          "canonical": "6302-12-0219",
+          "evidence": [
+            "6302-12-0219"
+          ]
+        },
+        {
+          "alias": "RFQ 6302-12-0219",
+          "canonical": "6302-12-0219",
+          "evidence": [
+            "6302-12-0219"
+          ]
+        },
+        {
+          "alias": "RFQ No. 3917-12-7226",
+          "canonical": "3917-12-7226",
+          "evidence": [
+            "3917-12-7226"
+          ]
+        },
+        {
+          "alias": "RFQ No.3917-12-7226",
+          "canonical": "3917-12-7226",
+          "evidence": [
+            "3917-12-7226"
+          ]
+        },
+        {
+          "alias": "RFQ 3917-12-7226",
+          "canonical": "3917-12-7226",
+          "evidence": [
+            "3917-12-7226"
+          ]
+        },
+        {
+          "alias": "Tender No. 192-2012",
+          "canonical": "192-2012",
+          "evidence": [
+            "192-2012"
+          ]
+        },
+        {
+          "alias": "Tender No.192-2012",
+          "canonical": "192-2012",
+          "evidence": [
+            "192-2012"
+          ]
+        },
+        {
+          "alias": "Tender 192-2012",
+          "canonical": "192-2012",
+          "evidence": [
+            "192-2012"
+          ]
+        },
+        {
+          "alias": "RFQ No. 3001-12-3202",
+          "canonical": "3001-12-3202",
+          "evidence": [
+            "3001-12-3202"
+          ]
+        },
+        {
+          "alias": "RFQ No.3001-12-3202",
+          "canonical": "3001-12-3202",
+          "evidence": [
+            "3001-12-3202"
+          ]
+        },
+        {
+          "alias": "RFQ 3001-12-3202",
+          "canonical": "3001-12-3202",
+          "evidence": [
+            "3001-12-3202"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "committee",
+      "corpus": "committee",
+      "text_path": "sources/committee.txt",
+      "text_sha256": "7b34ff0264c0a26a250f95c1495b7425f0234f66aa7498ba501d90593ff1db89",
+      "document_sha256": "e56c21abb982e175e606cdf7bb3086e6cd31d02d66192a412987a6d63f526afb",
+      "url": "https://www.toronto.ca/legdocs/mmis/2024/gg/bgrd/backgroundfile-248375.pdf",
+      "review_status": "reviewed",
+      "contracts": [
+        "Doc4553928310"
+      ],
+      "relations": [
+        {
+          "supplier": "GFL Environmental Inc.",
+          "contract": "Doc4553928310",
+          "stage": "single_stage",
+          "role": "bid",
+          "amount": "$36,182,930.00",
+          "basis": "plus_HST",
+          "status": "compliant",
+          "evidence": [
+            "GFL Environmental Inc.*",
+            "$36,182,930.00*",
+            "Bid Price Excluding HST and",
+            "Contingency"
+          ]
+        },
+        {
+          "supplier": "Halton Recycling Ltd.",
+          "contract": "Doc4553928310",
+          "stage": "single_stage",
+          "role": "bid",
+          "amount": "$37,247,071.64",
+          "basis": "plus_HST",
+          "status": "not_stated",
+          "evidence": [
+            "Halton Recycling Ltd.",
+            "$37,247,071.64"
+          ]
+        },
+        {
+          "supplier": "GFL Environmental Inc.",
+          "contract": "Doc4553928310",
+          "stage": "single_stage",
+          "role": "award",
+          "amount": "$284,250,333",
+          "basis": "net_of_taxes",
+          "status": null,
+          "evidence": [
+            "GFL Environmental Inc.",
+            "$284,250,333 net of all applicable taxes and charges"
+          ]
+        }
+      ],
+      "review_notes": "Agent labels from Table 2 and recommendation. Footnote markers excluded from names and money. Bid excludes HST and contingency; recommended award includes contingency. Source disagrees about whether $284,250,333 includes optional years; preserve that disagreement, do not derive an alternative initial-term value.",
+      "difficult": true,
+      "adjudications": [
+        {
+          "status": "unresolved",
+          "reason": "Recommendation calls $284,250,333 a five-year amount while FINANCIAL IMPACT says including optional years. Full amount/term assurance awaits source adjudication."
+        }
+      ],
+      "scope_complete": true
+    },
+    {
+      "id": "trca-D01",
+      "corpus": "trca",
+      "text_path": "sources/trca-D01.txt",
+      "text_sha256": "2565a2d8ed65ebbbb95ab9986302bd50373d704f110c6b67d873c57fedae0236",
+      "document_sha256": "4615e3e4ed1c5d6b6c3ff9868da5266e6147273f742532fc0c67be24228741bb",
+      "url": "https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=18300",
+      "review_status": "reviewed",
+      "contracts": [
+        "RFT No. 10040951"
+      ],
+      "relations": [
+        {
+          "supplier": "Buildscapes Construction Ltd.",
+          "contract": "RFT No. 10040951",
+          "stage": "prequalification_then_tender",
+          "role": "prequalified",
+          "amount": null,
+          "basis": null,
+          "status": null,
+          "evidence": [
+            "Buildscapes Construction Ltd."
+          ]
+        },
+        {
+          "supplier": "Pine Valley Corporation",
+          "contract": "RFT No. 10040951",
+          "stage": "prequalification_then_tender",
+          "role": "prequalified",
+          "amount": null,
+          "basis": null,
+          "status": null,
+          "evidence": [
+            "Pine Valley Corporation"
+          ]
+        },
+        {
+          "supplier": "Shoreline Restoration Ltd.",
+          "contract": "RFT No. 10040951",
+          "stage": "prequalification_then_tender",
+          "role": "prequalified",
+          "amount": null,
+          "basis": null,
+          "status": null,
+          "evidence": [
+            "Shoreline Restoration Ltd."
+          ]
+        },
+        {
+          "supplier": "2220742 Ontario Ltd o/a Bronte Construction",
+          "contract": "RFT No. 10040951",
+          "stage": "prequalification_then_tender",
+          "role": "invited_to_tender",
+          "amount": null,
+          "basis": null,
+          "status": null,
+          "evidence": [
+            "2220742 Ontario Ltd o/a Bronte Construction"
+          ]
+        },
+        {
+          "supplier": "560789 Ontario Limited o/a R&M Construction",
+          "contract": "RFT No. 10040951",
+          "stage": "prequalification_then_tender",
+          "role": "invited_to_tender",
+          "amount": null,
+          "basis": null,
+          "status": null,
+          "evidence": [
+            "560789 Ontario Limited o/a R&M Construction"
+          ]
+        },
+        {
+          "supplier": "Dynex Construction Inc.",
+          "contract": "RFT No. 10040951",
+          "stage": "prequalification_then_tender",
+          "role": "invited_to_tender",
+          "amount": null,
+          "basis": null,
+          "status": null,
+          "evidence": [
+            "Dynex Construction Inc."
+          ]
+        },
+        {
+          "supplier": "Dynex Construction Inc.",
+          "contract": "RFT No. 10040951",
+          "stage": "prequalification_then_tender",
+          "role": "bid",
+          "amount": "$2,947,485.00",
+          "basis": "plus_HST",
+          "status": "compliant",
+          "evidence": [
+            "Dynex Construction Inc.",
+            "$2,947,485.00",
+            "Fee (Plus HST)"
+          ]
+        },
+        {
+          "supplier": "560789 Ontario Limited o/a R&M Construction",
+          "contract": "RFT No. 10040951",
+          "stage": "prequalification_then_tender",
+          "role": "bid",
+          "amount": "$3,611,536.80",
+          "basis": "plus_HST",
+          "status": "not_stated",
+          "evidence": [
+            "560789 Ontario Limited o/a R&M Construction",
+            "$3,611,536.80",
+            "Fee (Plus HST)"
+          ]
+        },
+        {
+          "supplier": "2220742 Ontario Limited o/a Bronte Construction",
+          "contract": "RFT No. 10040951",
+          "stage": "prequalification_then_tender",
+          "role": "bid",
+          "amount": "$4,417,565.60",
+          "basis": "plus_HST",
+          "status": "not_stated",
+          "evidence": [
+            "$4,417,565.60",
+            "Fee (Plus HST)",
+            "2220742 Ontario Limited o/a",
+            "Bronte Construction"
+          ]
+        },
+        {
+          "supplier": "Dynex Construction Inc.",
+          "contract": "RFT No. 10040951",
+          "stage": "prequalification_then_tender",
+          "role": "award",
+          "amount": "$2,947,485.00",
+          "basis": "plus_HST",
+          "status": null,
+          "evidence": [
+            "Dynex Construction Inc.",
+            "$2,947,485.00",
+            "plus applicable taxes"
+          ]
+        }
+      ],
+      "review_notes": "Agent review of RATIONALE, opening table and recommendation: six prequalification submissions, three tender invitations and three actual tenders. Different Bronte legal spellings are copied from their respective stages. Contingency $294,748.50 is separate from the recommended award amount. Only Dynex is explicitly confirmed meeting specifications. Existing labels remain untouched. Proposal-versus-decision admission is tracked in #282. The output schema defines prequalified as prequalification-only firms: the three later invited bidders are represented in invited_to_tender and bids, leaving Buildscapes, Pine Valley and Shoreline in prequalified. Use the literal printed RFT No. reference, not a production identity normalization.",
+      "difficult": true,
+      "adjudications": [],
+      "scope_complete": true,
+      "source_counts": [
+        {
+          "reference": "RFT No. 10040951",
+          "submissions": 3,
+          "evidence": [
+            "the following three (3) Proponent(s):",
+            "The Procurement Opening Committee opened the Tenders"
+          ]
+        }
+      ],
+      "count_reviews": {
+        "7c1d7d2a18f452e654587e824c5486ae574956f84dacaf6a1d7b00feddbf09a8": {
+          "disposition": "extractor_stage_mismatch",
+          "reason": "The six submissions refer to prequalification, while only three firms were invited and three priced tenders are tabulated. All three tenders are present; the extracted declaration mixes stages. This explains the warning but does not resolve the extraction error.",
+          "evidence": [
+            "qualification submissions were received from the following Proponent(s):",
+            "the following three (3) Proponent(s):"
+          ]
+        }
+      }
+    },
+    {
+      "id": "trca-D02",
+      "corpus": "trca",
+      "text_path": "sources/trca-D02.txt",
+      "text_sha256": "b3f1e8901ca51e23a838d30e02aa84d60dcb02a92fda559c79645b944ca1c0b9",
+      "document_sha256": "260e2bf00459cd8da33eace914dd3b892b7b9399c030856b3540d90eb416bf5e",
+      "url": "https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=4421",
+      "review_status": "reviewed",
+      "contracts": [
+        "10009905",
+        "10009906"
+      ],
+      "relations": [
+        {
+          "supplier": "CDR Young’s Aggregates Inc.",
+          "contract": "10009905",
+          "stage": "single_stage",
+          "role": "bid",
+          "amount": "$527,000.00",
+          "basis": "plus_HST",
+          "status": "compliant",
+          "evidence": [
+            "10009905",
+            "CDR Young’s Aggregates Inc.",
+            "$527,000.00",
+            "Fee (Plus HST)"
+          ]
+        },
+        {
+          "supplier": "Atlantis Marine Construction",
+          "contract": "10009905",
+          "stage": "single_stage",
+          "role": "bid",
+          "amount": "$590,750.00",
+          "basis": "plus_HST",
+          "status": "not_stated",
+          "evidence": [
+            "10009905",
+            "Atlantis Marine Construction",
+            "$590,750.00",
+            "Fee (Plus HST)"
+          ]
+        },
+        {
+          "supplier": "Glenn Windrem Trucking",
+          "contract": "10009905",
+          "stage": "single_stage",
+          "role": "bid",
+          "amount": "$592,875.00",
+          "basis": "plus_HST",
+          "status": "not_stated",
+          "evidence": [
+            "10009905",
+            "Glenn Windrem Trucking",
+            "$592,875.00",
+            "Fee (Plus HST)"
+          ]
+        },
+        {
+          "supplier": "TACC Construction",
+          "contract": "10009905",
+          "stage": "single_stage",
+          "role": "bid",
+          "amount": "$646,000.00",
+          "basis": "plus_HST",
+          "status": "not_stated",
+          "evidence": [
+            "10009905",
+            "TACC Construction",
+            "$646,000.00",
+            "Fee (Plus HST)"
+          ]
+        },
+        {
+          "supplier": "CDR Young’s Aggregates Inc.",
+          "contract": "10009905",
+          "stage": "single_stage",
+          "role": "award",
+          "amount": "$ 527,000.00",
+          "basis": "plus_HST",
+          "status": null,
+          "evidence": [
+            "10009905",
+            "CDR Young’s Aggregates Inc.",
+            "$ 527,000.00",
+            "plus applicable taxes"
+          ]
+        },
+        {
+          "supplier": "Glenn Windrem Trucking",
+          "contract": "10009906",
+          "stage": "single_stage",
+          "role": "bid",
+          "amount": "$470,000.00",
+          "basis": "plus_HST",
+          "status": "compliant",
+          "evidence": [
+            "10009906",
+            "Glenn Windrem Trucking",
+            "$470,000.00",
+            "Fee (Plus HST)"
+          ]
+        },
+        {
+          "supplier": "CDR Young’s Aggregates Inc.",
+          "contract": "10009906",
+          "stage": "single_stage",
+          "role": "bid",
+          "amount": "$512,000.00",
+          "basis": "plus_HST",
+          "status": "not_stated",
+          "evidence": [
+            "10009906",
+            "CDR Young’s Aggregates Inc.",
+            "$512,000.00",
+            "Fee (Plus HST)"
+          ]
+        },
+        {
+          "supplier": "Atlantis Marine Construction",
+          "contract": "10009906",
+          "stage": "single_stage",
+          "role": "bid",
+          "amount": "$532,000.00",
+          "basis": "plus_HST",
+          "status": "not_stated",
+          "evidence": [
+            "10009906",
+            "Atlantis Marine Construction",
+            "$532,000.00",
+            "Fee (Plus HST)"
+          ]
+        },
+        {
+          "supplier": "TACC Construction",
+          "contract": "10009906",
+          "stage": "single_stage",
+          "role": "bid",
+          "amount": "$608,000.00",
+          "basis": "plus_HST",
+          "status": "not_stated",
+          "evidence": [
+            "10009906",
+            "TACC Construction",
+            "$608,000.00",
+            "Fee (Plus HST)"
+          ]
+        },
+        {
+          "supplier": "Glenn Windrem Trucking",
+          "contract": "10009906",
+          "stage": "single_stage",
+          "role": "award",
+          "amount": "$470,000.00",
+          "basis": "plus_HST",
+          "status": null,
+          "evidence": [
+            "10009906",
+            "Glenn Windrem Trucking",
+            "$470,000.00",
+            "plus applicable taxes"
+          ]
+        }
+      ],
+      "review_notes": "Full held report reviewed: two separate four-bid tender tables share suppliers but have distinct prices and winners. Each winner meets requirements explicitly. Contingencies $52,700/$47,000 are separate from the awarded base prices; award spelling includes a space after the currency symbol on the first contract. A further unnamed proponent declined; do not invent its name or append a fifth priced bid. Printed RFQ/Contract prefixes do not authorize a new production identity join. Benchmark-only reference aliases enumerate the source's printed identifier with its type/No. label or bare shape; they do not infer another identifier, join another document, or change #282 production identity rules. Each normalization is reported alongside the untouched raw response.",
+      "difficult": true,
+      "adjudications": [],
+      "scope_complete": true,
+      "reference_aliases": [
+        {
+          "alias": "RFQ No. 10009905",
+          "canonical": "10009905",
+          "evidence": [
+            "10009905"
+          ]
+        },
+        {
+          "alias": "RFQ No.10009905",
+          "canonical": "10009905",
+          "evidence": [
+            "10009905"
+          ]
+        },
+        {
+          "alias": "RFQ 10009905",
+          "canonical": "10009905",
+          "evidence": [
+            "10009905"
+          ]
+        },
+        {
+          "alias": "RFQ No. 10009906",
+          "canonical": "10009906",
+          "evidence": [
+            "10009906"
+          ]
+        },
+        {
+          "alias": "RFQ No.10009906",
+          "canonical": "10009906",
+          "evidence": [
+            "10009906"
+          ]
+        },
+        {
+          "alias": "RFQ 10009906",
+          "canonical": "10009906",
+          "evidence": [
+            "10009906"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "trca-D04",
+      "corpus": "trca",
+      "text_path": "sources/trca-D04.txt",
+      "text_sha256": "efa0773014bd88d122dcfff32fb7548152864ab781e5d9ccee03d934de5a1142",
+      "document_sha256": "077c734b724f5f39367f52ce8b02b4c467a98fefc06e466262f8bfd1749e9d07",
+      "url": "https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=6095",
+      "review_status": "reviewed",
+      "contracts": [
+        "2104-09-3006",
+        "10032967"
+      ],
+      "relations": [
+        {
+          "supplier": "Aastra Telecom Inc",
+          "contract": "2104-09-3006",
+          "stage": "single_stage",
+          "role": "bid",
+          "amount": null,
+          "basis": null,
+          "status": "not_stated",
+          "evidence": [
+            "Aastra Telecom Inc"
+          ]
+        },
+        {
+          "supplier": "Alcatel-Lucent Canada Inc",
+          "contract": "2104-09-3006",
+          "stage": "single_stage",
+          "role": "bid",
+          "amount": null,
+          "basis": null,
+          "status": "not_stated",
+          "evidence": [
+            "Alcatel-Lucent Canada Inc"
+          ]
+        },
+        {
+          "supplier": "Bell Canada",
+          "contract": "2104-09-3006",
+          "stage": "single_stage",
+          "role": "bid",
+          "amount": null,
+          "basis": null,
+          "status": "not_stated",
+          "evidence": [
+            "Bell Canada"
+          ]
+        },
+        {
+          "supplier": "Cogeco",
+          "contract": "2104-09-3006",
+          "stage": "single_stage",
+          "role": "bid",
+          "amount": null,
+          "basis": null,
+          "status": "not_stated",
+          "evidence": [
+            "Cogeco"
+          ]
+        },
+        {
+          "supplier": "FlexITy Solutions Inc",
+          "contract": "2104-09-3006",
+          "stage": "single_stage",
+          "role": "bid",
+          "amount": null,
+          "basis": null,
+          "status": "not_stated",
+          "evidence": [
+            "FlexITy Solutions Inc"
+          ]
+        },
+        {
+          "supplier": "MTS Allstream Inc",
+          "contract": "2104-09-3006",
+          "stage": "single_stage",
+          "role": "bid",
+          "amount": null,
+          "basis": null,
+          "status": "not_stated",
+          "evidence": [
+            "MTS Allstream Inc"
+          ]
+        },
+        {
+          "supplier": "Quartet Services Inc",
+          "contract": "2104-09-3006",
+          "stage": "single_stage",
+          "role": "bid",
+          "amount": null,
+          "basis": null,
+          "status": "not_stated",
+          "evidence": [
+            "Quartet Services Inc"
+          ]
+        },
+        {
+          "supplier": "Rogers Communications Inc",
+          "contract": "2104-09-3006",
+          "stage": "single_stage",
+          "role": "bid",
+          "amount": null,
+          "basis": null,
+          "status": "not_stated",
+          "evidence": [
+            "Rogers Communications Inc"
+          ]
+        },
+        {
+          "supplier": "Bell Canada",
+          "contract": "2104-09-3006",
+          "stage": "single_stage",
+          "role": "award",
+          "amount": null,
+          "basis": null,
+          "status": null,
+          "evidence": [
+            "Bell Canada",
+            "extend the contract term until 2025"
+          ]
+        },
+        {
+          "supplier": "Ainsworth Inc.",
+          "contract": "10032967",
+          "stage": "single_stage",
+          "role": "bid",
+          "amount": null,
+          "basis": null,
+          "status": "not_stated",
+          "evidence": [
+            "Ainsworth Inc.",
+            "received from the following vendors:"
+          ]
+        },
+        {
+          "supplier": "Black Creek Mechanical Ltd.",
+          "contract": "10032967",
+          "stage": "single_stage",
+          "role": "bid",
+          "amount": null,
+          "basis": null,
+          "status": "not_stated",
+          "evidence": [
+            "Black Creek Mechanical Ltd.",
+            "received from the following vendors:"
+          ]
+        },
+        {
+          "supplier": "R.A Graham Electrical Contractors",
+          "contract": "10032967",
+          "stage": "single_stage",
+          "role": "bid",
+          "amount": null,
+          "basis": null,
+          "status": "not_stated",
+          "evidence": [
+            "R.A Graham Electrical Contractors",
+            "received from the following vendors:"
+          ]
+        },
+        {
+          "supplier": "Electric Group Ltd.",
+          "contract": "10032967",
+          "stage": "single_stage",
+          "role": "bid",
+          "amount": null,
+          "basis": null,
+          "status": "not_stated",
+          "evidence": [
+            "Electric Group Ltd.",
+            "received from the following vendors:"
+          ]
+        },
+        {
+          "supplier": "Beckett Electrical Inc.",
+          "contract": "10032967",
+          "stage": "single_stage",
+          "role": "bid",
+          "amount": null,
+          "basis": null,
+          "status": "not_stated",
+          "evidence": [
+            "Beckett Electrical Inc.",
+            "received from the following vendors:"
+          ]
+        },
+        {
+          "supplier": "Bolton Electric Company Inc",
+          "contract": "10032967",
+          "stage": "single_stage",
+          "role": "bid",
+          "amount": null,
+          "basis": null,
+          "status": "not_stated",
+          "evidence": [
+            "Bolton Electric Company Inc",
+            "received from the following vendors:"
+          ]
+        },
+        {
+          "supplier": "Everbrite Industries",
+          "contract": "10032967",
+          "stage": "single_stage",
+          "role": "bid",
+          "amount": null,
+          "basis": null,
+          "status": "disqualified",
+          "evidence": [
+            "Everbrite Industries",
+            "both disqualified"
+          ]
+        },
+        {
+          "supplier": "RPM Industrial Inc",
+          "contract": "10032967",
+          "stage": "single_stage",
+          "role": "bid",
+          "amount": null,
+          "basis": null,
+          "status": "not_stated",
+          "evidence": [
+            "RPM Industrial Inc",
+            "received from the following vendors:"
+          ]
+        },
+        {
+          "supplier": "Ainsworth Inc.",
+          "contract": "10032967",
+          "stage": "single_stage",
+          "role": "bid",
+          "amount": null,
+          "basis": null,
+          "status": "disqualified",
+          "evidence": [
+            "Ainsworth Inc.",
+            "both disqualified"
+          ]
+        },
+        {
+          "supplier": "Black Creek Mechanical Ltd.",
+          "contract": "10032967",
+          "stage": "single_stage",
+          "role": "bid",
+          "amount": null,
+          "basis": null,
+          "status": "not_stated",
+          "evidence": [
+            "Black Creek Mechanical Ltd.",
+            "received from the following vendors:"
+          ]
+        },
+        {
+          "supplier": "Nortek Mechanical Services",
+          "contract": "10032967",
+          "stage": "single_stage",
+          "role": "bid",
+          "amount": null,
+          "basis": null,
+          "status": "not_stated",
+          "evidence": [
+            "Nortek Mechanical Services",
+            "received from the following vendors:"
+          ]
+        },
+        {
+          "supplier": "Ocean Mechanical Ltd.",
+          "contract": "10032967",
+          "stage": "single_stage",
+          "role": "bid",
+          "amount": null,
+          "basis": null,
+          "status": "not_stated",
+          "evidence": [
+            "Ocean Mechanical Ltd.",
+            "received from the following vendors:"
+          ]
+        },
+        {
+          "supplier": "Pipe-All Plumbing and Heating Ltd.",
+          "contract": "10032967",
+          "stage": "single_stage",
+          "role": "bid",
+          "amount": null,
+          "basis": null,
+          "status": "not_stated",
+          "evidence": [
+            "Pipe-All Plumbing and Heating Ltd.",
+            "received from the following vendors:"
+          ]
+        },
+        {
+          "supplier": "Nor-Line Mechanical Ltd",
+          "contract": "10032967",
+          "stage": "single_stage",
+          "role": "bid",
+          "amount": null,
+          "basis": null,
+          "status": "not_stated",
+          "evidence": [
+            "Nor-Line Mechanical Ltd",
+            "received from the following vendors:"
+          ]
+        },
+        {
+          "supplier": "MSB Mechanical Ltd.",
+          "contract": "10032967",
+          "stage": "single_stage",
+          "role": "bid",
+          "amount": null,
+          "basis": null,
+          "status": "not_stated",
+          "evidence": [
+            "MSB Mechanical Ltd.",
+            "received from the following vendors:"
+          ]
+        },
+        {
+          "supplier": "Litek Mechnical Services Inc.",
+          "contract": "10032967",
+          "stage": "single_stage",
+          "role": "bid",
+          "amount": null,
+          "basis": null,
+          "status": "not_stated",
+          "evidence": [
+            "Litek Mechnical Services Inc.",
+            "received from the following vendors:"
+          ]
+        },
+        {
+          "supplier": "Glen The Plumber",
+          "contract": "10032967",
+          "stage": "single_stage",
+          "role": "bid",
+          "amount": null,
+          "basis": null,
+          "status": "not_stated",
+          "evidence": [
+            "Glen The Plumber",
+            "received from the following vendors:"
+          ]
+        },
+        {
+          "supplier": "RPM Industrial Inc.",
+          "contract": "10032967",
+          "stage": "single_stage",
+          "role": "award",
+          "amount": null,
+          "basis": null,
+          "status": null,
+          "evidence": [
+            "RPM Industrial Inc.",
+            "staff recommends the award of contract No.10032967"
+          ]
+        },
+        {
+          "supplier": "Bolton Electric Company Inc.",
+          "contract": "10032967",
+          "stage": "single_stage",
+          "role": "award",
+          "amount": null,
+          "basis": null,
+          "status": null,
+          "evidence": [
+            "Bolton Electric Company Inc.",
+            "staff recommends the award of contract No.10032967"
+          ]
+        },
+        {
+          "supplier": "Ainsworth Inc.",
+          "contract": "10032967",
+          "stage": "single_stage",
+          "role": "award",
+          "amount": null,
+          "basis": null,
+          "status": null,
+          "evidence": [
+            "Ainsworth Inc.",
+            "staff recommends the award of contract No.10032967"
+          ]
+        },
+        {
+          "supplier": "Black Creek Mechanical Ltd.",
+          "contract": "10032967",
+          "stage": "single_stage",
+          "role": "award",
+          "amount": null,
+          "basis": null,
+          "status": null,
+          "evidence": [
+            "Black Creek Mechanical Ltd.",
+            "staff recommends the award of contract No.10032967"
+          ]
+        },
+        {
+          "supplier": "Ocean Mechanical Ltd.",
+          "contract": "10032967",
+          "stage": "single_stage",
+          "role": "award",
+          "amount": null,
+          "basis": null,
+          "status": null,
+          "evidence": [
+            "Ocean Mechanical Ltd.",
+            "staff recommends the award of contract No.10032967"
+          ]
+        },
+        {
+          "supplier": "MSB Mechanical Ltd.",
+          "contract": "10032967",
+          "stage": "single_stage",
+          "role": "award",
+          "amount": null,
+          "basis": null,
+          "status": null,
+          "evidence": [
+            "MSB Mechanical Ltd.",
+            "staff recommends the award of contract No.10032967"
+          ]
+        },
+        {
+          "supplier": "Black Creek Mechanical Ltd.",
+          "contract": "10032967",
+          "stage": "single_stage",
+          "role": "award",
+          "amount": null,
+          "basis": null,
+          "status": null,
+          "evidence": [
+            "Black Creek Mechanical Ltd.",
+            "staff recommends the award of contract No.10032967"
+          ]
+        },
+        {
+          "supplier": "Glen the Plumber",
+          "contract": "10032967",
+          "stage": "single_stage",
+          "role": "award",
+          "amount": null,
+          "basis": null,
+          "status": null,
+          "evidence": [
+            "Glen the Plumber",
+            "staff recommends the award of contract No.10032967"
+          ]
+        }
+      ],
+      "review_notes": "Reviewed the complete supplied excerpt, not the whole meeting package: B53/20 extends the Bell master agreement; eight original bidders are listed but the failed mandatory-stage bidder is unnamed. Bell's $235,000 is forecast annual ongoing-service cost, not a bid or allocated award. B54/20 names electrical and mechanical VOR submissions: 17 category participations from 15 firms, including Ainsworth and Black Creek in both categories. Mechanical Ainsworth and electrical Everbrite are disqualified; the other category participation remains separate. Four winners per category, with Black Creek twice; the $400,000 estimate is an unallocated demand forecast, not a per-vendor award. B55/20 and visible grant attachments contain funding rather than procurement relationships. Benchmark-only reference aliases enumerate the source's printed identifier with its type/No. label or bare shape; they do not infer another identifier, join another document, or change #282 production identity rules. Each normalization is reported alongside the untouched raw response. The resolution uses Ainsworth and Black Creek Mechanical Ltd while the detailed award rationale uses Ainsworth Inc. and Black Creek Mechanical Ltd. These explicitly source-reviewed within-document spellings are accepted by benchmark-only supplier aliases, with every normalization reported. They do not establish external supplier identity or waive category/status distinctions.",
+      "difficult": true,
+      "adjudications": [
+        {
+          "status": "unresolved",
+          "reason": "This historical benchmark input explicitly omits 59,023 leading and 267,742 trailing package characters. It cannot establish whole-document recall; the report must retain that scope limit."
+        },
+        {
+          "status": "unresolved",
+          "reason": "The schema has no electrical/mechanical category field. Ainsworth's two different statuses and repeated Black Creek claims cannot prove that each relation retained the correct category."
+        },
+        {
+          "status": "source_reviewed",
+          "reason": "The original human Bell $235,000 bid-price label is preserved as a disagreement. Source financial details describe anticipated annual ongoing-service costs; expected submitted price is null, and no human label was changed."
+        }
+      ],
+      "scope_complete": false,
+      "input_scope": "historical meeting-package excerpt",
+      "reference_aliases": [
+        {
+          "alias": "RFP No. 2104-09-3006",
+          "canonical": "2104-09-3006",
+          "evidence": [
+            "2104-09-3006"
+          ]
+        },
+        {
+          "alias": "RFP No.2104-09-3006",
+          "canonical": "2104-09-3006",
+          "evidence": [
+            "2104-09-3006"
+          ]
+        },
+        {
+          "alias": "RFP 2104-09-3006",
+          "canonical": "2104-09-3006",
+          "evidence": [
+            "2104-09-3006"
+          ]
+        },
+        {
+          "alias": "RFP No. 10032967",
+          "canonical": "10032967",
+          "evidence": [
+            "10032967"
+          ]
+        },
+        {
+          "alias": "RFP No.10032967",
+          "canonical": "10032967",
+          "evidence": [
+            "10032967"
+          ]
+        },
+        {
+          "alias": "RFP 10032967",
+          "canonical": "10032967",
+          "evidence": [
+            "10032967"
+          ]
+        }
+      ],
+      "supplier_aliases": [
+        {
+          "alias": "Ainsworth",
+          "canonical": "Ainsworth Inc.",
+          "evidence": [
+            "Ainsworth, Black Creek Mechanical Ltd.",
+            "Bolton Electric Company Inc., Ainsworth Inc., and Black Creek Mechanical Ltd."
+          ]
+        },
+        {
+          "alias": "Black Creek Mechanical Ltd",
+          "canonical": "Black Creek Mechanical Ltd.",
+          "evidence": [
+            "Black Creek Mechanical Ltd, Ocean Mechanical Ltd.",
+            "Black Creek Mechanical Ltd., are the highest scoring"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "waterfront-2017-09",
+      "corpus": "waterfront",
+      "text_path": "sources/waterfront-2017-09.txt",
+      "text_sha256": "11c4a52b1206cd5ddeb966d34c44c09d68cb96a2e280e0980acd1a6a2e2d0a6c",
+      "document_sha256": "766aef29fcf10179870b4f14abf1818b85e81e01be50cfbbcb22ec0d19dabcd2",
+      "url": "https://www.waterfrontoronto.ca/accountability/procurement",
+      "review_status": "reviewed",
+      "contracts": [
+        "934a03cb955bd2a15455b35c0141b62181641e9b7b8f7950695d7ee2c4453379",
+        "9e6912b02441d8f872ac6b278644f6810ab1e5c4fccaca9aa032ec7dbcff0e9a",
+        "0147e6bffea3aed0be0fd89316b0f1c6db250f22db1aecb1e5bd9b4186bc62b5",
+        "686adc8bd58f169571c462f658f5d78f03eb4f2286daef5342663584884bd4f1",
+        "2f17737426f73e02b7cf6e28d5bd9692b4dd8f25312343fdefeff8a29e87c681",
+        "139eacef18229ea7de92946f72ba0e70b4d14be452f8258fd0afc1225a859497",
+        "7d896b0a684f3282b01a30a8829aea36106d06bb5ce6589b0e48b5f41d854164",
+        "430d37893d800744a06a73ff837bc6a344b2fed2ec8864b6d39777b933628c84"
+      ],
+      "relations": [
+        {
+          "supplier": "Ethical Solutions",
+          "contract": "934a03cb955bd2a15455b35c0141b62181641e9b7b8f7950695d7ee2c4453379",
+          "stage": "single_stage",
+          "role": "award",
+          "amount": "$278,100",
+          "basis": null,
+          "status": null,
+          "evidence": [
+            "Ethical Solutions",
+            "$278,100"
+          ]
+        },
+        {
+          "supplier": "Geosyntec Consultants",
+          "contract": "9e6912b02441d8f872ac6b278644f6810ab1e5c4fccaca9aa032ec7dbcff0e9a",
+          "stage": "single_stage",
+          "role": "award",
+          "amount": "$869,110",
+          "basis": null,
+          "status": null,
+          "evidence": [
+            "Geosyntec Consultants",
+            "$869,110"
+          ]
+        },
+        {
+          "supplier": "Groundwater Technology BV",
+          "contract": "0147e6bffea3aed0be0fd89316b0f1c6db250f22db1aecb1e5bd9b4186bc62b5",
+          "stage": "single_stage",
+          "role": "award",
+          "amount": "$313,022",
+          "basis": null,
+          "status": null,
+          "evidence": [
+            "Groundwater Technology BV",
+            "$313,022"
+          ]
+        },
+        {
+          "supplier": "WSP Canada",
+          "contract": "686adc8bd58f169571c462f658f5d78f03eb4f2286daef5342663584884bd4f1",
+          "stage": "single_stage",
+          "role": "award",
+          "amount": "$340,335",
+          "basis": null,
+          "status": null,
+          "evidence": [
+            "WSP Canada",
+            "$340,335"
+          ]
+        },
+        {
+          "supplier": "City of Toronto",
+          "contract": "2f17737426f73e02b7cf6e28d5bd9692b4dd8f25312343fdefeff8a29e87c681",
+          "stage": "single_stage",
+          "role": "award",
+          "amount": "$88,950",
+          "basis": null,
+          "status": null,
+          "evidence": [
+            "City of Toronto",
+            "$88,950"
+          ]
+        },
+        {
+          "supplier": "Axiom Global Canada Inc.",
+          "contract": "139eacef18229ea7de92946f72ba0e70b4d14be452f8258fd0afc1225a859497",
+          "stage": "single_stage",
+          "role": "award",
+          "amount": "$52,000",
+          "basis": null,
+          "status": null,
+          "evidence": [
+            "Axiom Global Canada Inc.",
+            "$52,000"
+          ]
+        },
+        {
+          "supplier": "Greenferd Construction Inc.",
+          "contract": "7d896b0a684f3282b01a30a8829aea36106d06bb5ce6589b0e48b5f41d854164",
+          "stage": "single_stage",
+          "role": "award",
+          "amount": "$186,446",
+          "basis": null,
+          "status": null,
+          "evidence": [
+            "Greenferd Construction Inc.",
+            "$186,446"
+          ]
+        },
+        {
+          "supplier": "SNC-Lavalin Inc.",
+          "contract": "430d37893d800744a06a73ff837bc6a344b2fed2ec8864b6d39777b933628c84",
+          "stage": "single_stage",
+          "role": "award",
+          "amount": "$173,082",
+          "basis": null,
+          "status": null,
+          "evidence": [
+            "SNC-Lavalin Inc.",
+            "$173,082"
+          ]
+        }
+      ],
+      "review_notes": "Source review of the exact selected publication month: each label pairs a literal named recipient and amount with its immutable publication block. Generated model references, construction-manager annotations and publication month are not contract identifiers or exact award dates. Multiple suppliers in one project and repeated suppliers on separate observations remain separate. Tax basis is not published and is not a stored output of this path. Labels were written from source text without using derived archive rows.",
+      "difficult": true,
+      "adjudications": [],
+      "publication_path": "../../../scrapers/tests/fixtures/waterfront/awards.html",
+      "publication_month": "2017-09",
+      "scope_complete": true
+    },
+    {
+      "id": "waterfront-2021-10",
+      "corpus": "waterfront",
+      "text_path": "sources/waterfront-2021-10.txt",
+      "text_sha256": "bba4275dfe67ace53b3f017e71ac3a0200db080c2b64e09696f32ad4c9cb28ae",
+      "document_sha256": "766aef29fcf10179870b4f14abf1818b85e81e01be50cfbbcb22ec0d19dabcd2",
+      "url": "https://www.waterfrontoronto.ca/accountability/procurement",
+      "review_status": "reviewed",
+      "contracts": [
+        "834e2706b80db86a35c856ace7a8c61c47be38194a0ac1a42835c774818d6b49",
+        "c027e81a51ce1a7c70edeadddd9bc047655413acf1ee6e42dde323adf0399067",
+        "985892009fb5f4bea22273869f80eeccd0a3319ed1391e9a8a360f88df535218",
+        "de1132cb2e50b324705013e83f74bca78bcb28180b1d5032a2383319f72bb318",
+        "bc33d95ae3b86d753bb0477ef80fe78484ed87efd0046c8c03676e9db73d1b32",
+        "085ce9f37d27cc14ee85971b7ad98f95e5d70f90a789dd1f1f18c1c2d5c81369",
+        "e3dfc5cee1cca5bfe9910dec651897af6e8801d3bcbe2cf44045e5c94705d1d8",
+        "feafb4a7aa3d9efbb36670c27217c714af19d85ddf200e00b7cfad421daedddf",
+        "96e64af917df203849f64651abc6e6b3380feccceecb07e3df47d49930eb4db4"
+      ],
+      "relations": [
+        {
+          "supplier": "The Treasurer, City of Toronto",
+          "contract": "834e2706b80db86a35c856ace7a8c61c47be38194a0ac1a42835c774818d6b49",
+          "stage": "single_stage",
+          "role": "award",
+          "amount": "$100,507",
+          "basis": null,
+          "status": null,
+          "evidence": [
+            "The Treasurer, City of Toronto",
+            "$100,507"
+          ]
+        },
+        {
+          "supplier": "APE Studio Inc.",
+          "contract": "c027e81a51ce1a7c70edeadddd9bc047655413acf1ee6e42dde323adf0399067",
+          "stage": "single_stage",
+          "role": "award",
+          "amount": "$409,136",
+          "basis": null,
+          "status": null,
+          "evidence": [
+            "APE Studio Inc.",
+            "$409,136"
+          ]
+        },
+        {
+          "supplier": "Earthscape Play Inc.",
+          "contract": "985892009fb5f4bea22273869f80eeccd0a3319ed1391e9a8a360f88df535218",
+          "stage": "single_stage",
+          "role": "award",
+          "amount": "$465,660",
+          "basis": null,
+          "status": null,
+          "evidence": [
+            "Earthscape Play Inc.",
+            "$465,660"
+          ]
+        },
+        {
+          "supplier": "Monstrum APS",
+          "contract": "de1132cb2e50b324705013e83f74bca78bcb28180b1d5032a2383319f72bb318",
+          "stage": "single_stage",
+          "role": "award",
+          "amount": "$416,931",
+          "basis": null,
+          "status": null,
+          "evidence": [
+            "Monstrum APS",
+            "$416,931"
+          ]
+        },
+        {
+          "supplier": "Whole Trees LLC",
+          "contract": "bc33d95ae3b86d753bb0477ef80fe78484ed87efd0046c8c03676e9db73d1b32",
+          "stage": "single_stage",
+          "role": "award",
+          "amount": "$210,880",
+          "basis": null,
+          "status": null,
+          "evidence": [
+            "Whole Trees LLC",
+            "$210,880"
+          ]
+        },
+        {
+          "supplier": "Alliance Verdi Civil Inc.",
+          "contract": "085ce9f37d27cc14ee85971b7ad98f95e5d70f90a789dd1f1f18c1c2d5c81369",
+          "stage": "single_stage",
+          "role": "award",
+          "amount": "$2,915,010",
+          "basis": null,
+          "status": null,
+          "evidence": [
+            "Alliance Verdi Civil Inc.",
+            "$2,915,010"
+          ]
+        },
+        {
+          "supplier": "Guild Electric Limited",
+          "contract": "e3dfc5cee1cca5bfe9910dec651897af6e8801d3bcbe2cf44045e5c94705d1d8",
+          "stage": "single_stage",
+          "role": "award",
+          "amount": "$680,653",
+          "basis": null,
+          "status": null,
+          "evidence": [
+            "Guild Electric Limited",
+            "$680,653"
+          ]
+        },
+        {
+          "supplier": "Urban Forest Associates",
+          "contract": "feafb4a7aa3d9efbb36670c27217c714af19d85ddf200e00b7cfad421daedddf",
+          "stage": "single_stage",
+          "role": "award",
+          "amount": "$249,400",
+          "basis": null,
+          "status": null,
+          "evidence": [
+            "Urban Forest Associates",
+            "$249,400"
+          ]
+        },
+        {
+          "supplier": "Utility Solutions",
+          "contract": "96e64af917df203849f64651abc6e6b3380feccceecb07e3df47d49930eb4db4",
+          "stage": "single_stage",
+          "role": "award",
+          "amount": "$214,108",
+          "basis": null,
+          "status": null,
+          "evidence": [
+            "Utility Solutions",
+            "$214,108"
+          ]
+        }
+      ],
+      "review_notes": "Source review of the exact selected publication month: each label pairs a literal named recipient and amount with its immutable publication block. Generated model references, construction-manager annotations and publication month are not contract identifiers or exact award dates. Multiple suppliers in one project and repeated suppliers on separate observations remain separate. Tax basis is not published and is not a stored output of this path. Labels were written from source text without using derived archive rows.",
+      "difficult": true,
+      "adjudications": [],
+      "publication_path": "../../../scrapers/tests/fixtures/waterfront/awards.html",
+      "publication_month": "2021-10",
+      "scope_complete": true
+    },
+    {
+      "id": "waterfront-2023-03",
+      "corpus": "waterfront",
+      "text_path": "sources/waterfront-2023-03.txt",
+      "text_sha256": "398fdaf47133f54582203644f8f4735bb517fbcc4ad5a5ec4028be6a1fab537d",
+      "document_sha256": "766aef29fcf10179870b4f14abf1818b85e81e01be50cfbbcb22ec0d19dabcd2",
+      "url": "https://www.waterfrontoronto.ca/accountability/procurement",
+      "review_status": "reviewed",
+      "contracts": [
+        "5687748c86466be5adc33b9ca27c17fcff332ad54e8f439e1fad71c34c7635c6",
+        "3525bf0868192eab952f8ed9c2f7e999d1c48364ba72166a7878f9b4e9f8b913",
+        "f97c1390944fcfcd453d924efb5f8ca30011606b524fd8d65934664a0b2ee68d",
+        "edf87129a0034c11490a770f3d87bcc96ab52dd7e098ff751c5d1f52779220d7",
+        "9d1e6afd47834cd33c2730452ecd3bcb4ed36769af63506defd7b1ec8987a203"
+      ],
+      "relations": [
+        {
+          "supplier": "Bespoke Cultural Collective",
+          "contract": "5687748c86466be5adc33b9ca27c17fcff332ad54e8f439e1fad71c34c7635c6",
+          "stage": "single_stage",
+          "role": "award",
+          "amount": "$55,312",
+          "basis": null,
+          "status": null,
+          "evidence": [
+            "Bespoke Cultural Collective",
+            "$55,312"
+          ]
+        },
+        {
+          "supplier": "Sarens Canada",
+          "contract": "3525bf0868192eab952f8ed9c2f7e999d1c48364ba72166a7878f9b4e9f8b913",
+          "stage": "single_stage",
+          "role": "award",
+          "amount": "$80,000",
+          "basis": null,
+          "status": null,
+          "evidence": [
+            "Sarens Canada",
+            "$80,000"
+          ]
+        },
+        {
+          "supplier": "Guild Electric Limited",
+          "contract": "f97c1390944fcfcd453d924efb5f8ca30011606b524fd8d65934664a0b2ee68d",
+          "stage": "single_stage",
+          "role": "award",
+          "amount": "$3,892,098",
+          "basis": null,
+          "status": null,
+          "evidence": [
+            "Guild Electric Limited",
+            "$3,892,098"
+          ]
+        },
+        {
+          "supplier": "Guild Electric Limited",
+          "contract": "edf87129a0034c11490a770f3d87bcc96ab52dd7e098ff751c5d1f52779220d7",
+          "stage": "single_stage",
+          "role": "award",
+          "amount": "$761,108",
+          "basis": null,
+          "status": null,
+          "evidence": [
+            "Guild Electric Limited",
+            "$761,108"
+          ]
+        },
+        {
+          "supplier": "WJ Groundwater",
+          "contract": "9d1e6afd47834cd33c2730452ecd3bcb4ed36769af63506defd7b1ec8987a203",
+          "stage": "single_stage",
+          "role": "award",
+          "amount": "$313,750",
+          "basis": null,
+          "status": null,
+          "evidence": [
+            "Dewatering System for Chamber CC6567 Rebuild Operations",
+            "$313,750",
+            "TPBR182-Dewaltering System for Chamber CC6567 Rebuild Operations (WJ Groundwater) CM#2023-03"
+          ]
+        }
+      ],
+      "review_notes": "Source review of the exact selected publication month: each label pairs a literal named recipient and amount with its immutable publication block. Generated model references, construction-manager annotations and publication month are not contract identifiers or exact award dates. Multiple suppliers in one project and repeated suppliers on separate observations remain separate. Tax basis is not published and is not a stored output of this path. Labels were written from source text without using derived archive rows. Supplementary publisher dashboard page 27 independently identifies WJ Groundwater for TPBR182 / CM#2023-03. Verify the held PDF excerpt hash against the pre-existing reviewed source registry and retain its own original document hash. Use the primary publication price $313,750; the dashboard's estimates and contingency values are not substitutes. The production recipient proof is bound to one exact historical model result and must not silently transfer to another response.",
+      "difficult": true,
+      "adjudications": [
+        {
+          "status": "source_reviewed",
+          "reason": "Primary publication omits the recipient, but the same publisher's already-reviewed package/month dashboard names WJ Groundwater. The source defect is preserved; the supplemental recipient evidence is explicit."
+        },
+        {
+          "status": "unresolved",
+          "reason": "Current production recipient evidence binds a specific extraction fingerprint. Historical qualification responses with other fingerprints fail that source-context gate and require #282 review; do not weaken the gate for evaluation.",
+          "issue": "https://github.com/CivicTechTO/toronto-bids/issues/282"
+        }
+      ],
+      "publication_path": "../../../scrapers/tests/fixtures/waterfront/awards.html",
+      "publication_month": "2023-03",
+      "scope_complete": true,
+      "additional_evidence": [
+        {
+          "text_path": "sources/waterfront-2023-03-dashboard.txt",
+          "text_sha256": "bd892c61930121d60982410cf06f82e47434c385b29bc67b9c253cd8575737ec",
+          "pdf_path": "../../../scrapers/tests/fixtures/waterfront/cc6567-source-27.pdf",
+          "held_pdf_sha256": "fb83fbb66377aa5b5064225f17c18a6e6db1dab389bbb3b1f7f8a884a5982221",
+          "original_document_sha256": "d0dfeab3bbc5a064eeefd495235227cacd344ad4371132c6bec3009770700e01",
+          "url": "https://www.waterfrontoronto.ca/sites/default/files/2023-05/Meeting%20Book%20-%20Finance%2C%20Audit%20%26%20Risk%20Management%20Committee%20-%20May%2029%2C%202023_0.pdf",
+          "page": 27
+        }
+      ]
+    }
+  ]
+}

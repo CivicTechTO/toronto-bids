@@ -1,0 +1,5404 @@
+{
+  "campaign": "2026-11-15-sonnet-revised",
+  "cohort_sha256": "ae7a5d53db7dd92daf03ff19f47f379ebf8ddf1ebe3ba5e59dd24dc1d570fb58",
+  "prompt_version": "eval-8a5ebb8c14aa",
+  "partitions": {
+    "held_out": {
+      "requests": 28,
+      "states": {
+        "success": 28
+      },
+      "exact_relations": {
+        "expected": 88,
+        "observed": 88,
+        "correct": 65,
+        "omissions": 23,
+        "attribute_errors": 0,
+        "false_joins": 23,
+        "fabrications": 0,
+        "duplicates": 0,
+        "planned_expected": 88
+      },
+      "numeric_correct": 65,
+      "exact_documents": 19,
+      "provenance_issues": 0,
+      "charged_microdollars": 226562,
+      "by_mode": {
+        "sync": {
+          "requests": 14,
+          "states": {
+            "success": 14
+          },
+          "exact_relations": {
+            "expected": 44,
+            "observed": 44,
+            "correct": 29,
+            "omissions": 15,
+            "attribute_errors": 0,
+            "false_joins": 15,
+            "fabrications": 0,
+            "duplicates": 0,
+            "planned_expected": 44
+          },
+          "numeric_correct": 29,
+          "exact_documents": 9,
+          "provenance_issues": 0,
+          "charged_microdollars": 149262
+        },
+        "batch": {
+          "requests": 14,
+          "states": {
+            "success": 14
+          },
+          "exact_relations": {
+            "expected": 44,
+            "observed": 44,
+            "correct": 36,
+            "omissions": 8,
+            "attribute_errors": 0,
+            "false_joins": 8,
+            "fabrications": 0,
+            "duplicates": 0,
+            "planned_expected": 44
+          },
+          "numeric_correct": 36,
+          "exact_documents": 10,
+          "provenance_issues": 0,
+          "charged_microdollars": 77300
+        }
+      }
+    },
+    "regression": {
+      "requests": 40,
+      "states": {
+        "success": 40
+      },
+      "exact_relations": {
+        "expected": 332,
+        "observed": 334,
+        "correct": 321,
+        "omissions": 11,
+        "attribute_errors": 7,
+        "false_joins": 6,
+        "fabrications": 0,
+        "duplicates": 0,
+        "planned_expected": 332
+      },
+      "numeric_correct": 321,
+      "exact_documents": 31,
+      "provenance_issues": 0,
+      "charged_microdollars": 560230,
+      "by_mode": {
+        "sync": {
+          "requests": 20,
+          "states": {
+            "success": 20
+          },
+          "exact_relations": {
+            "expected": 166,
+            "observed": 166,
+            "correct": 163,
+            "omissions": 3,
+            "attribute_errors": 1,
+            "false_joins": 2,
+            "fabrications": 0,
+            "duplicates": 0,
+            "planned_expected": 166
+          },
+          "numeric_correct": 163,
+          "exact_documents": 17,
+          "provenance_issues": 0,
+          "charged_microdollars": 374730
+        },
+        "batch": {
+          "requests": 20,
+          "states": {
+            "success": 20
+          },
+          "exact_relations": {
+            "expected": 166,
+            "observed": 168,
+            "correct": 158,
+            "omissions": 8,
+            "attribute_errors": 6,
+            "false_joins": 4,
+            "fabrications": 0,
+            "duplicates": 0,
+            "planned_expected": 166
+          },
+          "numeric_correct": 158,
+          "exact_documents": 14,
+          "provenance_issues": 0,
+          "charged_microdollars": 185500
+        }
+      }
+    }
+  },
+  "total": {
+    "requests": 68,
+    "states": {
+      "success": 68
+    },
+    "exact_relations": {
+      "expected": 420,
+      "observed": 422,
+      "correct": 386,
+      "omissions": 34,
+      "attribute_errors": 7,
+      "false_joins": 29,
+      "fabrications": 0,
+      "duplicates": 0,
+      "planned_expected": 420
+    },
+    "numeric_correct": 386,
+    "exact_documents": 50,
+    "provenance_issues": 0,
+    "charged_microdollars": 786792
+  },
+  "unique_response_ids": 68,
+  "per_document": [
+    {
+      "document": "held-ep-av",
+      "partition": "held_out",
+      "relationship_variants": 1,
+      "observations": [
+        {
+          "mode": "sync",
+          "repeat": 1,
+          "state": "success",
+          "contracts_match": true,
+          "metrics": {
+            "expected": 2,
+            "observed": 2,
+            "correct": 2,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "numeric_metrics": {
+            "expected": 2,
+            "observed": 2,
+            "correct": 2,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "reference_normalizations": [],
+          "supplier_normalizations": [],
+          "contract_extras": [],
+          "contract_omissions": [],
+          "count_discrepancies": []
+        },
+        {
+          "mode": "sync",
+          "repeat": 2,
+          "state": "success",
+          "contracts_match": true,
+          "metrics": {
+            "expected": 2,
+            "observed": 2,
+            "correct": 2,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "numeric_metrics": {
+            "expected": 2,
+            "observed": 2,
+            "correct": 2,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "reference_normalizations": [],
+          "supplier_normalizations": [],
+          "contract_extras": [],
+          "contract_omissions": [],
+          "count_discrepancies": []
+        },
+        {
+          "mode": "batch",
+          "repeat": 1,
+          "state": "success",
+          "contracts_match": true,
+          "metrics": {
+            "expected": 2,
+            "observed": 2,
+            "correct": 2,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "numeric_metrics": {
+            "expected": 2,
+            "observed": 2,
+            "correct": 2,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "reference_normalizations": [],
+          "supplier_normalizations": [],
+          "contract_extras": [],
+          "contract_omissions": [],
+          "count_discrepancies": []
+        },
+        {
+          "mode": "batch",
+          "repeat": 2,
+          "state": "success",
+          "contracts_match": true,
+          "metrics": {
+            "expected": 2,
+            "observed": 2,
+            "correct": 2,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "numeric_metrics": {
+            "expected": 2,
+            "observed": 2,
+            "correct": 2,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "reference_normalizations": [],
+          "supplier_normalizations": [],
+          "contract_extras": [],
+          "contract_omissions": [],
+          "count_discrepancies": []
+        }
+      ]
+    },
+    {
+      "document": "held-ep-fence",
+      "partition": "held_out",
+      "relationship_variants": 1,
+      "observations": [
+        {
+          "mode": "sync",
+          "repeat": 1,
+          "state": "success",
+          "contracts_match": false,
+          "metrics": {
+            "expected": 4,
+            "observed": 4,
+            "correct": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "omissions": [
+              {
+                "supplier": "powell fence limited",
+                "contract": "EP110-2023",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": "$1,484,065.00",
+                "basis": "plus_HST",
+                "status": "compliant"
+              },
+              {
+                "supplier": "m.j.k. construction incorporated",
+                "contract": "EP110-2023",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": "$1,619,001.00",
+                "basis": "plus_HST",
+                "status": "compliant"
+              },
+              {
+                "supplier": "clearway construction incorporated",
+                "contract": "EP110-2023",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": "$1,851,100.00",
+                "basis": "plus_HST",
+                "status": "compliant"
+              },
+              {
+                "supplier": "powell fence limited",
+                "contract": "EP110-2023",
+                "stage": "single_stage",
+                "role": "award",
+                "amount": "$1,484,065.00",
+                "basis": "plus_HST",
+                "status": null
+              }
+            ],
+            "false_joins": [
+              {
+                "supplier": "powell fence limited",
+                "contract": "Contract No. 23-079-37912 (RFT No. EP110-2023)",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": "$1,484,065.00",
+                "basis": "plus_HST",
+                "status": "compliant"
+              },
+              {
+                "supplier": "m.j.k. construction incorporated",
+                "contract": "Contract No. 23-079-37912 (RFT No. EP110-2023)",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": "$1,619,001.00",
+                "basis": "plus_HST",
+                "status": "compliant"
+              },
+              {
+                "supplier": "clearway construction incorporated",
+                "contract": "Contract No. 23-079-37912 (RFT No. EP110-2023)",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": "$1,851,100.00",
+                "basis": "plus_HST",
+                "status": "compliant"
+              },
+              {
+                "supplier": "powell fence limited",
+                "contract": "Contract No. 23-079-37912 (RFT No. EP110-2023)",
+                "stage": "single_stage",
+                "role": "award",
+                "amount": "$1,484,065.00",
+                "basis": "plus_HST",
+                "status": null
+              }
+            ],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "numeric_metrics": {
+            "expected": 4,
+            "observed": 4,
+            "correct": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "omissions": [
+              {
+                "supplier": "powell fence limited",
+                "contract": "EP110-2023",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": "1484065.0",
+                "basis": "plus_HST",
+                "status": "compliant"
+              },
+              {
+                "supplier": "m.j.k. construction incorporated",
+                "contract": "EP110-2023",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": "1619001.0",
+                "basis": "plus_HST",
+                "status": "compliant"
+              },
+              {
+                "supplier": "clearway construction incorporated",
+                "contract": "EP110-2023",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": "1851100.0",
+                "basis": "plus_HST",
+                "status": "compliant"
+              },
+              {
+                "supplier": "powell fence limited",
+                "contract": "EP110-2023",
+                "stage": "single_stage",
+                "role": "award",
+                "amount": "1484065.0",
+                "basis": "plus_HST",
+                "status": null
+              }
+            ],
+            "false_joins": [
+              {
+                "supplier": "powell fence limited",
+                "contract": "Contract No. 23-079-37912 (RFT No. EP110-2023)",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": "1484065.0",
+                "basis": "plus_HST",
+                "status": "compliant"
+              },
+              {
+                "supplier": "m.j.k. construction incorporated",
+                "contract": "Contract No. 23-079-37912 (RFT No. EP110-2023)",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": "1619001.0",
+                "basis": "plus_HST",
+                "status": "compliant"
+              },
+              {
+                "supplier": "clearway construction incorporated",
+                "contract": "Contract No. 23-079-37912 (RFT No. EP110-2023)",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": "1851100.0",
+                "basis": "plus_HST",
+                "status": "compliant"
+              },
+              {
+                "supplier": "powell fence limited",
+                "contract": "Contract No. 23-079-37912 (RFT No. EP110-2023)",
+                "stage": "single_stage",
+                "role": "award",
+                "amount": "1484065.0",
+                "basis": "plus_HST",
+                "status": null
+              }
+            ],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "reference_normalizations": [],
+          "supplier_normalizations": [],
+          "contract_extras": [
+            "Contract No. 23-079-37912 (RFT No. EP110-2023)"
+          ],
+          "contract_omissions": [
+            "EP110-2023"
+          ],
+          "count_discrepancies": []
+        },
+        {
+          "mode": "sync",
+          "repeat": 2,
+          "state": "success",
+          "contracts_match": false,
+          "metrics": {
+            "expected": 4,
+            "observed": 4,
+            "correct": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "omissions": [
+              {
+                "supplier": "powell fence limited",
+                "contract": "EP110-2023",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": "$1,484,065.00",
+                "basis": "plus_HST",
+                "status": "compliant"
+              },
+              {
+                "supplier": "m.j.k. construction incorporated",
+                "contract": "EP110-2023",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": "$1,619,001.00",
+                "basis": "plus_HST",
+                "status": "compliant"
+              },
+              {
+                "supplier": "clearway construction incorporated",
+                "contract": "EP110-2023",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": "$1,851,100.00",
+                "basis": "plus_HST",
+                "status": "compliant"
+              },
+              {
+                "supplier": "powell fence limited",
+                "contract": "EP110-2023",
+                "stage": "single_stage",
+                "role": "award",
+                "amount": "$1,484,065.00",
+                "basis": "plus_HST",
+                "status": null
+              }
+            ],
+            "false_joins": [
+              {
+                "supplier": "powell fence limited",
+                "contract": "Contract No. 23-079-37912 (RFT No. EP110-2023)",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": "$1,484,065.00",
+                "basis": "plus_HST",
+                "status": "compliant"
+              },
+              {
+                "supplier": "m.j.k. construction incorporated",
+                "contract": "Contract No. 23-079-37912 (RFT No. EP110-2023)",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": "$1,619,001.00",
+                "basis": "plus_HST",
+                "status": "compliant"
+              },
+              {
+                "supplier": "clearway construction incorporated",
+                "contract": "Contract No. 23-079-37912 (RFT No. EP110-2023)",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": "$1,851,100.00",
+                "basis": "plus_HST",
+                "status": "compliant"
+              },
+              {
+                "supplier": "powell fence limited",
+                "contract": "Contract No. 23-079-37912 (RFT No. EP110-2023)",
+                "stage": "single_stage",
+                "role": "award",
+                "amount": "$1,484,065.00",
+                "basis": "plus_HST",
+                "status": null
+              }
+            ],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "numeric_metrics": {
+            "expected": 4,
+            "observed": 4,
+            "correct": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "omissions": [
+              {
+                "supplier": "powell fence limited",
+                "contract": "EP110-2023",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": "1484065.0",
+                "basis": "plus_HST",
+                "status": "compliant"
+              },
+              {
+                "supplier": "m.j.k. construction incorporated",
+                "contract": "EP110-2023",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": "1619001.0",
+                "basis": "plus_HST",
+                "status": "compliant"
+              },
+              {
+                "supplier": "clearway construction incorporated",
+                "contract": "EP110-2023",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": "1851100.0",
+                "basis": "plus_HST",
+                "status": "compliant"
+              },
+              {
+                "supplier": "powell fence limited",
+                "contract": "EP110-2023",
+                "stage": "single_stage",
+                "role": "award",
+                "amount": "1484065.0",
+                "basis": "plus_HST",
+                "status": null
+              }
+            ],
+            "false_joins": [
+              {
+                "supplier": "powell fence limited",
+                "contract": "Contract No. 23-079-37912 (RFT No. EP110-2023)",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": "1484065.0",
+                "basis": "plus_HST",
+                "status": "compliant"
+              },
+              {
+                "supplier": "m.j.k. construction incorporated",
+                "contract": "Contract No. 23-079-37912 (RFT No. EP110-2023)",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": "1619001.0",
+                "basis": "plus_HST",
+                "status": "compliant"
+              },
+              {
+                "supplier": "clearway construction incorporated",
+                "contract": "Contract No. 23-079-37912 (RFT No. EP110-2023)",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": "1851100.0",
+                "basis": "plus_HST",
+                "status": "compliant"
+              },
+              {
+                "supplier": "powell fence limited",
+                "contract": "Contract No. 23-079-37912 (RFT No. EP110-2023)",
+                "stage": "single_stage",
+                "role": "award",
+                "amount": "1484065.0",
+                "basis": "plus_HST",
+                "status": null
+              }
+            ],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "reference_normalizations": [],
+          "supplier_normalizations": [],
+          "contract_extras": [
+            "Contract No. 23-079-37912 (RFT No. EP110-2023)"
+          ],
+          "contract_omissions": [
+            "EP110-2023"
+          ],
+          "count_discrepancies": []
+        },
+        {
+          "mode": "batch",
+          "repeat": 1,
+          "state": "success",
+          "contracts_match": false,
+          "metrics": {
+            "expected": 4,
+            "observed": 4,
+            "correct": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "omissions": [
+              {
+                "supplier": "powell fence limited",
+                "contract": "EP110-2023",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": "$1,484,065.00",
+                "basis": "plus_HST",
+                "status": "compliant"
+              },
+              {
+                "supplier": "m.j.k. construction incorporated",
+                "contract": "EP110-2023",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": "$1,619,001.00",
+                "basis": "plus_HST",
+                "status": "compliant"
+              },
+              {
+                "supplier": "clearway construction incorporated",
+                "contract": "EP110-2023",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": "$1,851,100.00",
+                "basis": "plus_HST",
+                "status": "compliant"
+              },
+              {
+                "supplier": "powell fence limited",
+                "contract": "EP110-2023",
+                "stage": "single_stage",
+                "role": "award",
+                "amount": "$1,484,065.00",
+                "basis": "plus_HST",
+                "status": null
+              }
+            ],
+            "false_joins": [
+              {
+                "supplier": "powell fence limited",
+                "contract": "Contract No. 23-079-37912 (RFT No. EP110-2023)",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": "$1,484,065.00",
+                "basis": "plus_HST",
+                "status": "compliant"
+              },
+              {
+                "supplier": "m.j.k. construction incorporated",
+                "contract": "Contract No. 23-079-37912 (RFT No. EP110-2023)",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": "$1,619,001.00",
+                "basis": "plus_HST",
+                "status": "compliant"
+              },
+              {
+                "supplier": "clearway construction incorporated",
+                "contract": "Contract No. 23-079-37912 (RFT No. EP110-2023)",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": "$1,851,100.00",
+                "basis": "plus_HST",
+                "status": "compliant"
+              },
+              {
+                "supplier": "powell fence limited",
+                "contract": "Contract No. 23-079-37912 (RFT No. EP110-2023)",
+                "stage": "single_stage",
+                "role": "award",
+                "amount": "$1,484,065.00",
+                "basis": "plus_HST",
+                "status": null
+              }
+            ],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "numeric_metrics": {
+            "expected": 4,
+            "observed": 4,
+            "correct": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "omissions": [
+              {
+                "supplier": "powell fence limited",
+                "contract": "EP110-2023",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": "1484065.0",
+                "basis": "plus_HST",
+                "status": "compliant"
+              },
+              {
+                "supplier": "m.j.k. construction incorporated",
+                "contract": "EP110-2023",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": "1619001.0",
+                "basis": "plus_HST",
+                "status": "compliant"
+              },
+              {
+                "supplier": "clearway construction incorporated",
+                "contract": "EP110-2023",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": "1851100.0",
+                "basis": "plus_HST",
+                "status": "compliant"
+              },
+              {
+                "supplier": "powell fence limited",
+                "contract": "EP110-2023",
+                "stage": "single_stage",
+                "role": "award",
+                "amount": "1484065.0",
+                "basis": "plus_HST",
+                "status": null
+              }
+            ],
+            "false_joins": [
+              {
+                "supplier": "powell fence limited",
+                "contract": "Contract No. 23-079-37912 (RFT No. EP110-2023)",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": "1484065.0",
+                "basis": "plus_HST",
+                "status": "compliant"
+              },
+              {
+                "supplier": "m.j.k. construction incorporated",
+                "contract": "Contract No. 23-079-37912 (RFT No. EP110-2023)",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": "1619001.0",
+                "basis": "plus_HST",
+                "status": "compliant"
+              },
+              {
+                "supplier": "clearway construction incorporated",
+                "contract": "Contract No. 23-079-37912 (RFT No. EP110-2023)",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": "1851100.0",
+                "basis": "plus_HST",
+                "status": "compliant"
+              },
+              {
+                "supplier": "powell fence limited",
+                "contract": "Contract No. 23-079-37912 (RFT No. EP110-2023)",
+                "stage": "single_stage",
+                "role": "award",
+                "amount": "1484065.0",
+                "basis": "plus_HST",
+                "status": null
+              }
+            ],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "reference_normalizations": [],
+          "supplier_normalizations": [],
+          "contract_extras": [
+            "Contract No. 23-079-37912 (RFT No. EP110-2023)"
+          ],
+          "contract_omissions": [
+            "EP110-2023"
+          ],
+          "count_discrepancies": []
+        },
+        {
+          "mode": "batch",
+          "repeat": 2,
+          "state": "success",
+          "contracts_match": false,
+          "metrics": {
+            "expected": 4,
+            "observed": 4,
+            "correct": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "omissions": [
+              {
+                "supplier": "powell fence limited",
+                "contract": "EP110-2023",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": "$1,484,065.00",
+                "basis": "plus_HST",
+                "status": "compliant"
+              },
+              {
+                "supplier": "m.j.k. construction incorporated",
+                "contract": "EP110-2023",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": "$1,619,001.00",
+                "basis": "plus_HST",
+                "status": "compliant"
+              },
+              {
+                "supplier": "clearway construction incorporated",
+                "contract": "EP110-2023",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": "$1,851,100.00",
+                "basis": "plus_HST",
+                "status": "compliant"
+              },
+              {
+                "supplier": "powell fence limited",
+                "contract": "EP110-2023",
+                "stage": "single_stage",
+                "role": "award",
+                "amount": "$1,484,065.00",
+                "basis": "plus_HST",
+                "status": null
+              }
+            ],
+            "false_joins": [
+              {
+                "supplier": "powell fence limited",
+                "contract": "Contract No. 23-079-37912 (RFT No. EP110-2023)",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": "$1,484,065.00",
+                "basis": "plus_HST",
+                "status": "compliant"
+              },
+              {
+                "supplier": "m.j.k. construction incorporated",
+                "contract": "Contract No. 23-079-37912 (RFT No. EP110-2023)",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": "$1,619,001.00",
+                "basis": "plus_HST",
+                "status": "compliant"
+              },
+              {
+                "supplier": "clearway construction incorporated",
+                "contract": "Contract No. 23-079-37912 (RFT No. EP110-2023)",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": "$1,851,100.00",
+                "basis": "plus_HST",
+                "status": "compliant"
+              },
+              {
+                "supplier": "powell fence limited",
+                "contract": "Contract No. 23-079-37912 (RFT No. EP110-2023)",
+                "stage": "single_stage",
+                "role": "award",
+                "amount": "$1,484,065.00",
+                "basis": "plus_HST",
+                "status": null
+              }
+            ],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "numeric_metrics": {
+            "expected": 4,
+            "observed": 4,
+            "correct": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "omissions": [
+              {
+                "supplier": "powell fence limited",
+                "contract": "EP110-2023",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": "1484065.0",
+                "basis": "plus_HST",
+                "status": "compliant"
+              },
+              {
+                "supplier": "m.j.k. construction incorporated",
+                "contract": "EP110-2023",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": "1619001.0",
+                "basis": "plus_HST",
+                "status": "compliant"
+              },
+              {
+                "supplier": "clearway construction incorporated",
+                "contract": "EP110-2023",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": "1851100.0",
+                "basis": "plus_HST",
+                "status": "compliant"
+              },
+              {
+                "supplier": "powell fence limited",
+                "contract": "EP110-2023",
+                "stage": "single_stage",
+                "role": "award",
+                "amount": "1484065.0",
+                "basis": "plus_HST",
+                "status": null
+              }
+            ],
+            "false_joins": [
+              {
+                "supplier": "powell fence limited",
+                "contract": "Contract No. 23-079-37912 (RFT No. EP110-2023)",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": "1484065.0",
+                "basis": "plus_HST",
+                "status": "compliant"
+              },
+              {
+                "supplier": "m.j.k. construction incorporated",
+                "contract": "Contract No. 23-079-37912 (RFT No. EP110-2023)",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": "1619001.0",
+                "basis": "plus_HST",
+                "status": "compliant"
+              },
+              {
+                "supplier": "clearway construction incorporated",
+                "contract": "Contract No. 23-079-37912 (RFT No. EP110-2023)",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": "1851100.0",
+                "basis": "plus_HST",
+                "status": "compliant"
+              },
+              {
+                "supplier": "powell fence limited",
+                "contract": "Contract No. 23-079-37912 (RFT No. EP110-2023)",
+                "stage": "single_stage",
+                "role": "award",
+                "amount": "1484065.0",
+                "basis": "plus_HST",
+                "status": null
+              }
+            ],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "reference_normalizations": [],
+          "supplier_normalizations": [],
+          "contract_extras": [
+            "Contract No. 23-079-37912 (RFT No. EP110-2023)"
+          ],
+          "contract_omissions": [
+            "EP110-2023"
+          ],
+          "count_discrepancies": []
+        }
+      ]
+    },
+    {
+      "document": "held-ep-status",
+      "partition": "held_out",
+      "relationship_variants": 1,
+      "observations": [
+        {
+          "mode": "sync",
+          "repeat": 1,
+          "state": "success",
+          "contracts_match": false,
+          "metrics": {
+            "expected": 0,
+            "observed": 0,
+            "correct": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "numeric_metrics": {
+            "expected": 0,
+            "observed": 0,
+            "correct": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "reference_normalizations": [],
+          "supplier_normalizations": [],
+          "contract_extras": [
+            null
+          ],
+          "contract_omissions": [],
+          "count_discrepancies": []
+        },
+        {
+          "mode": "sync",
+          "repeat": 2,
+          "state": "success",
+          "contracts_match": false,
+          "metrics": {
+            "expected": 0,
+            "observed": 0,
+            "correct": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "numeric_metrics": {
+            "expected": 0,
+            "observed": 0,
+            "correct": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "reference_normalizations": [],
+          "supplier_normalizations": [],
+          "contract_extras": [
+            null
+          ],
+          "contract_omissions": [],
+          "count_discrepancies": []
+        },
+        {
+          "mode": "batch",
+          "repeat": 1,
+          "state": "success",
+          "contracts_match": false,
+          "metrics": {
+            "expected": 0,
+            "observed": 0,
+            "correct": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "numeric_metrics": {
+            "expected": 0,
+            "observed": 0,
+            "correct": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "reference_normalizations": [],
+          "supplier_normalizations": [],
+          "contract_extras": [
+            null
+          ],
+          "contract_omissions": [],
+          "count_discrepancies": []
+        },
+        {
+          "mode": "batch",
+          "repeat": 2,
+          "state": "success",
+          "contracts_match": false,
+          "metrics": {
+            "expected": 0,
+            "observed": 0,
+            "correct": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "numeric_metrics": {
+            "expected": 0,
+            "observed": 0,
+            "correct": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "reference_normalizations": [],
+          "supplier_normalizations": [],
+          "contract_extras": [
+            null
+          ],
+          "contract_omissions": [],
+          "count_discrepancies": []
+        }
+      ]
+    },
+    {
+      "document": "held-trca-gates",
+      "partition": "held_out",
+      "relationship_variants": 2,
+      "observations": [
+        {
+          "mode": "sync",
+          "repeat": 1,
+          "state": "success",
+          "contracts_match": true,
+          "metrics": {
+            "expected": 7,
+            "observed": 7,
+            "correct": 7,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "numeric_metrics": {
+            "expected": 7,
+            "observed": 7,
+            "correct": 7,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "reference_normalizations": [],
+          "supplier_normalizations": [],
+          "contract_extras": [],
+          "contract_omissions": [],
+          "count_discrepancies": []
+        },
+        {
+          "mode": "sync",
+          "repeat": 2,
+          "state": "success",
+          "contracts_match": false,
+          "metrics": {
+            "expected": 7,
+            "observed": 7,
+            "correct": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "omissions": [
+              {
+                "supplier": "hawkins contracting services ltd.",
+                "contract": "10008808",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": "$123,863",
+                "basis": "plus_HST",
+                "status": "compliant"
+              },
+              {
+                "supplier": "csl group",
+                "contract": "10008808",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": "$125,455",
+                "basis": "plus_HST",
+                "status": "not_stated"
+              },
+              {
+                "supplier": "mopal construction",
+                "contract": "10008808",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": "$142,290",
+                "basis": "plus_HST",
+                "status": "not_stated"
+              },
+              {
+                "supplier": "key west gates",
+                "contract": "10008808",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": null,
+                "basis": null,
+                "status": "no_bid"
+              },
+              {
+                "supplier": "ontario parking systems",
+                "contract": "10008808",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": null,
+                "basis": null,
+                "status": "no_bid"
+              },
+              {
+                "supplier": "roma advanced entry systems",
+                "contract": "10008808",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": null,
+                "basis": null,
+                "status": "no_bid"
+              },
+              {
+                "supplier": "hawkins contracting services ltd.",
+                "contract": "10008808",
+                "stage": "single_stage",
+                "role": "award",
+                "amount": "$123,863",
+                "basis": "plus_HST",
+                "status": null
+              }
+            ],
+            "false_joins": [
+              {
+                "supplier": "hawkins contracting services ltd.",
+                "contract": "#10008808",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": "$123,863",
+                "basis": "plus_HST",
+                "status": "compliant"
+              },
+              {
+                "supplier": "csl group",
+                "contract": "#10008808",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": "$125,455",
+                "basis": "plus_HST",
+                "status": "not_stated"
+              },
+              {
+                "supplier": "mopal construction",
+                "contract": "#10008808",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": "$142,290",
+                "basis": "plus_HST",
+                "status": "not_stated"
+              },
+              {
+                "supplier": "key west gates",
+                "contract": "#10008808",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": null,
+                "basis": null,
+                "status": "no_bid"
+              },
+              {
+                "supplier": "ontario parking systems",
+                "contract": "#10008808",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": null,
+                "basis": null,
+                "status": "no_bid"
+              },
+              {
+                "supplier": "roma advanced entry systems",
+                "contract": "#10008808",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": null,
+                "basis": null,
+                "status": "no_bid"
+              },
+              {
+                "supplier": "hawkins contracting services ltd.",
+                "contract": "#10008808",
+                "stage": "single_stage",
+                "role": "award",
+                "amount": "$123,863",
+                "basis": "plus_HST",
+                "status": null
+              }
+            ],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "numeric_metrics": {
+            "expected": 7,
+            "observed": 7,
+            "correct": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "omissions": [
+              {
+                "supplier": "hawkins contracting services ltd.",
+                "contract": "10008808",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": "123863.0",
+                "basis": "plus_HST",
+                "status": "compliant"
+              },
+              {
+                "supplier": "csl group",
+                "contract": "10008808",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": "125455.0",
+                "basis": "plus_HST",
+                "status": "not_stated"
+              },
+              {
+                "supplier": "mopal construction",
+                "contract": "10008808",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": "142290.0",
+                "basis": "plus_HST",
+                "status": "not_stated"
+              },
+              {
+                "supplier": "key west gates",
+                "contract": "10008808",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": null,
+                "basis": null,
+                "status": "no_bid"
+              },
+              {
+                "supplier": "ontario parking systems",
+                "contract": "10008808",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": null,
+                "basis": null,
+                "status": "no_bid"
+              },
+              {
+                "supplier": "roma advanced entry systems",
+                "contract": "10008808",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": null,
+                "basis": null,
+                "status": "no_bid"
+              },
+              {
+                "supplier": "hawkins contracting services ltd.",
+                "contract": "10008808",
+                "stage": "single_stage",
+                "role": "award",
+                "amount": "123863.0",
+                "basis": "plus_HST",
+                "status": null
+              }
+            ],
+            "false_joins": [
+              {
+                "supplier": "hawkins contracting services ltd.",
+                "contract": "#10008808",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": "123863.0",
+                "basis": "plus_HST",
+                "status": "compliant"
+              },
+              {
+                "supplier": "csl group",
+                "contract": "#10008808",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": "125455.0",
+                "basis": "plus_HST",
+                "status": "not_stated"
+              },
+              {
+                "supplier": "mopal construction",
+                "contract": "#10008808",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": "142290.0",
+                "basis": "plus_HST",
+                "status": "not_stated"
+              },
+              {
+                "supplier": "key west gates",
+                "contract": "#10008808",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": null,
+                "basis": null,
+                "status": "no_bid"
+              },
+              {
+                "supplier": "ontario parking systems",
+                "contract": "#10008808",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": null,
+                "basis": null,
+                "status": "no_bid"
+              },
+              {
+                "supplier": "roma advanced entry systems",
+                "contract": "#10008808",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": null,
+                "basis": null,
+                "status": "no_bid"
+              },
+              {
+                "supplier": "hawkins contracting services ltd.",
+                "contract": "#10008808",
+                "stage": "single_stage",
+                "role": "award",
+                "amount": "123863.0",
+                "basis": "plus_HST",
+                "status": null
+              }
+            ],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "reference_normalizations": [],
+          "supplier_normalizations": [],
+          "contract_extras": [
+            "#10008808"
+          ],
+          "contract_omissions": [
+            "10008808"
+          ],
+          "count_discrepancies": []
+        },
+        {
+          "mode": "batch",
+          "repeat": 1,
+          "state": "success",
+          "contracts_match": true,
+          "metrics": {
+            "expected": 7,
+            "observed": 7,
+            "correct": 7,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "numeric_metrics": {
+            "expected": 7,
+            "observed": 7,
+            "correct": 7,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "reference_normalizations": [],
+          "supplier_normalizations": [],
+          "contract_extras": [],
+          "contract_omissions": [],
+          "count_discrepancies": []
+        },
+        {
+          "mode": "batch",
+          "repeat": 2,
+          "state": "success",
+          "contracts_match": true,
+          "metrics": {
+            "expected": 7,
+            "observed": 7,
+            "correct": 7,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "numeric_metrics": {
+            "expected": 7,
+            "observed": 7,
+            "correct": 7,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "reference_normalizations": [],
+          "supplier_normalizations": [],
+          "contract_extras": [],
+          "contract_omissions": [],
+          "count_discrepancies": []
+        }
+      ]
+    },
+    {
+      "document": "held-trca-appraisal",
+      "partition": "held_out",
+      "relationship_variants": 1,
+      "observations": [
+        {
+          "mode": "sync",
+          "repeat": 1,
+          "state": "success",
+          "contracts_match": true,
+          "metrics": {
+            "expected": 4,
+            "observed": 4,
+            "correct": 4,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "numeric_metrics": {
+            "expected": 4,
+            "observed": 4,
+            "correct": 4,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "reference_normalizations": [
+            {
+              "literal": "RFP No. 10036307",
+              "canonical": "10036307"
+            },
+            {
+              "literal": "RFP No. 10036307",
+              "canonical": "10036307"
+            },
+            {
+              "literal": "RFP No. 10036307",
+              "canonical": "10036307"
+            },
+            {
+              "literal": "RFP No. 10036307",
+              "canonical": "10036307"
+            }
+          ],
+          "supplier_normalizations": [],
+          "contract_extras": [],
+          "contract_omissions": [],
+          "count_discrepancies": []
+        },
+        {
+          "mode": "sync",
+          "repeat": 2,
+          "state": "success",
+          "contracts_match": true,
+          "metrics": {
+            "expected": 4,
+            "observed": 4,
+            "correct": 4,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "numeric_metrics": {
+            "expected": 4,
+            "observed": 4,
+            "correct": 4,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "reference_normalizations": [
+            {
+              "literal": "RFP No. 10036307",
+              "canonical": "10036307"
+            },
+            {
+              "literal": "RFP No. 10036307",
+              "canonical": "10036307"
+            },
+            {
+              "literal": "RFP No. 10036307",
+              "canonical": "10036307"
+            },
+            {
+              "literal": "RFP No. 10036307",
+              "canonical": "10036307"
+            }
+          ],
+          "supplier_normalizations": [],
+          "contract_extras": [],
+          "contract_omissions": [],
+          "count_discrepancies": []
+        },
+        {
+          "mode": "batch",
+          "repeat": 1,
+          "state": "success",
+          "contracts_match": true,
+          "metrics": {
+            "expected": 4,
+            "observed": 4,
+            "correct": 4,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "numeric_metrics": {
+            "expected": 4,
+            "observed": 4,
+            "correct": 4,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "reference_normalizations": [
+            {
+              "literal": "RFP No. 10036307",
+              "canonical": "10036307"
+            },
+            {
+              "literal": "RFP No. 10036307",
+              "canonical": "10036307"
+            },
+            {
+              "literal": "RFP No. 10036307",
+              "canonical": "10036307"
+            },
+            {
+              "literal": "RFP No. 10036307",
+              "canonical": "10036307"
+            }
+          ],
+          "supplier_normalizations": [],
+          "contract_extras": [],
+          "contract_omissions": [],
+          "count_discrepancies": []
+        },
+        {
+          "mode": "batch",
+          "repeat": 2,
+          "state": "success",
+          "contracts_match": true,
+          "metrics": {
+            "expected": 4,
+            "observed": 4,
+            "correct": 4,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "numeric_metrics": {
+            "expected": 4,
+            "observed": 4,
+            "correct": 4,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "reference_normalizations": [
+            {
+              "literal": "RFP No. 10036307",
+              "canonical": "10036307"
+            },
+            {
+              "literal": "RFP No. 10036307",
+              "canonical": "10036307"
+            },
+            {
+              "literal": "RFP No. 10036307",
+              "canonical": "10036307"
+            },
+            {
+              "literal": "RFP No. 10036307",
+              "canonical": "10036307"
+            }
+          ],
+          "supplier_normalizations": [],
+          "contract_extras": [],
+          "contract_omissions": [],
+          "count_discrepancies": []
+        }
+      ]
+    },
+    {
+      "document": "held-zoo-walrus",
+      "partition": "held_out",
+      "relationship_variants": 1,
+      "observations": [
+        {
+          "mode": "sync",
+          "repeat": 1,
+          "state": "success",
+          "contracts_match": true,
+          "metrics": {
+            "expected": 3,
+            "observed": 3,
+            "correct": 3,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "numeric_metrics": {
+            "expected": 3,
+            "observed": 3,
+            "correct": 3,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "reference_normalizations": [],
+          "supplier_normalizations": [],
+          "contract_extras": [],
+          "contract_omissions": [],
+          "count_discrepancies": []
+        },
+        {
+          "mode": "sync",
+          "repeat": 2,
+          "state": "success",
+          "contracts_match": true,
+          "metrics": {
+            "expected": 3,
+            "observed": 3,
+            "correct": 3,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "numeric_metrics": {
+            "expected": 3,
+            "observed": 3,
+            "correct": 3,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "reference_normalizations": [],
+          "supplier_normalizations": [],
+          "contract_extras": [],
+          "contract_omissions": [],
+          "count_discrepancies": []
+        },
+        {
+          "mode": "batch",
+          "repeat": 1,
+          "state": "success",
+          "contracts_match": true,
+          "metrics": {
+            "expected": 3,
+            "observed": 3,
+            "correct": 3,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "numeric_metrics": {
+            "expected": 3,
+            "observed": 3,
+            "correct": 3,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "reference_normalizations": [],
+          "supplier_normalizations": [],
+          "contract_extras": [],
+          "contract_omissions": [],
+          "count_discrepancies": []
+        },
+        {
+          "mode": "batch",
+          "repeat": 2,
+          "state": "success",
+          "contracts_match": true,
+          "metrics": {
+            "expected": 3,
+            "observed": 3,
+            "correct": 3,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "numeric_metrics": {
+            "expected": 3,
+            "observed": 3,
+            "correct": 3,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "reference_normalizations": [],
+          "supplier_normalizations": [],
+          "contract_extras": [],
+          "contract_omissions": [],
+          "count_discrepancies": []
+        }
+      ]
+    },
+    {
+      "document": "held-zoo-energy",
+      "partition": "held_out",
+      "relationship_variants": 1,
+      "observations": [
+        {
+          "mode": "sync",
+          "repeat": 1,
+          "state": "success",
+          "contracts_match": true,
+          "metrics": {
+            "expected": 2,
+            "observed": 2,
+            "correct": 2,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "numeric_metrics": {
+            "expected": 2,
+            "observed": 2,
+            "correct": 2,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "reference_normalizations": [
+            {
+              "literal": "RFP 18 (2018-03)",
+              "canonical": "18 (2018-03)"
+            },
+            {
+              "literal": "RFP 18 (2018-03)",
+              "canonical": "18 (2018-03)"
+            }
+          ],
+          "supplier_normalizations": [
+            {
+              "literal": "Ecosystem Services Inc.",
+              "canonical": "Ecosystem Energy Services Inc."
+            }
+          ],
+          "contract_extras": [],
+          "contract_omissions": [],
+          "count_discrepancies": [
+            {
+              "reference": "RFP 18 (2018-03)",
+              "declared": 3,
+              "actual": 1,
+              "delta": -2,
+              "review_key": "4c6e6f96c48a6a6ae48d40d4dbca24e92e2962552138f82d7d6b21f380d981f9",
+              "review": null,
+              "resolved": false
+            }
+          ]
+        },
+        {
+          "mode": "sync",
+          "repeat": 2,
+          "state": "success",
+          "contracts_match": true,
+          "metrics": {
+            "expected": 2,
+            "observed": 2,
+            "correct": 2,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "numeric_metrics": {
+            "expected": 2,
+            "observed": 2,
+            "correct": 2,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "reference_normalizations": [
+            {
+              "literal": "RFP 18 (2018-03)",
+              "canonical": "18 (2018-03)"
+            },
+            {
+              "literal": "RFP 18 (2018-03)",
+              "canonical": "18 (2018-03)"
+            }
+          ],
+          "supplier_normalizations": [
+            {
+              "literal": "Ecosystem Services Inc.",
+              "canonical": "Ecosystem Energy Services Inc."
+            }
+          ],
+          "contract_extras": [],
+          "contract_omissions": [],
+          "count_discrepancies": [
+            {
+              "reference": "RFP 18 (2018-03)",
+              "declared": 3,
+              "actual": 1,
+              "delta": -2,
+              "review_key": "b09aecbf95de68e2ea301a54a846de6799a1ec2ee5167af5373a2408c0617afc",
+              "review": null,
+              "resolved": false
+            }
+          ]
+        },
+        {
+          "mode": "batch",
+          "repeat": 1,
+          "state": "success",
+          "contracts_match": true,
+          "metrics": {
+            "expected": 2,
+            "observed": 2,
+            "correct": 2,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "numeric_metrics": {
+            "expected": 2,
+            "observed": 2,
+            "correct": 2,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "reference_normalizations": [
+            {
+              "literal": "RFP 18 (2018-03)",
+              "canonical": "18 (2018-03)"
+            },
+            {
+              "literal": "RFP 18 (2018-03)",
+              "canonical": "18 (2018-03)"
+            }
+          ],
+          "supplier_normalizations": [],
+          "contract_extras": [],
+          "contract_omissions": [],
+          "count_discrepancies": [
+            {
+              "reference": "RFP 18 (2018-03)",
+              "declared": 3,
+              "actual": 1,
+              "delta": -2,
+              "review_key": "aa429a01182dcee3dffd691450b07280c81cc8c038bde19fb630b2845869b49c",
+              "review": null,
+              "resolved": false
+            }
+          ]
+        },
+        {
+          "mode": "batch",
+          "repeat": 2,
+          "state": "success",
+          "contracts_match": true,
+          "metrics": {
+            "expected": 2,
+            "observed": 2,
+            "correct": 2,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "numeric_metrics": {
+            "expected": 2,
+            "observed": 2,
+            "correct": 2,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "reference_normalizations": [
+            {
+              "literal": "RFP 18 (2018-03)",
+              "canonical": "18 (2018-03)"
+            },
+            {
+              "literal": "RFP 18 (2018-03)",
+              "canonical": "18 (2018-03)"
+            }
+          ],
+          "supplier_normalizations": [],
+          "contract_extras": [],
+          "contract_omissions": [],
+          "count_discrepancies": [
+            {
+              "reference": "RFP 18 (2018-03)",
+              "declared": 3,
+              "actual": 1,
+              "delta": -2,
+              "review_key": "d44c3859ad7c0087529e3d5815f3902ec640ac2814872e83f500c9ff430c02c7",
+              "review": null,
+              "resolved": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "document": "award-summary",
+      "partition": "regression",
+      "relationship_variants": 1,
+      "observations": [
+        {
+          "mode": "sync",
+          "repeat": 1,
+          "state": "success",
+          "contracts_match": true,
+          "metrics": {
+            "expected": 2,
+            "observed": 2,
+            "correct": 2,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "numeric_metrics": {
+            "expected": 2,
+            "observed": 2,
+            "correct": 2,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "reference_normalizations": [],
+          "supplier_normalizations": [],
+          "contract_extras": [],
+          "contract_omissions": [],
+          "count_discrepancies": []
+        },
+        {
+          "mode": "sync",
+          "repeat": 2,
+          "state": "success",
+          "contracts_match": true,
+          "metrics": {
+            "expected": 2,
+            "observed": 2,
+            "correct": 2,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "numeric_metrics": {
+            "expected": 2,
+            "observed": 2,
+            "correct": 2,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "reference_normalizations": [],
+          "supplier_normalizations": [],
+          "contract_extras": [],
+          "contract_omissions": [],
+          "count_discrepancies": []
+        },
+        {
+          "mode": "batch",
+          "repeat": 1,
+          "state": "success",
+          "contracts_match": true,
+          "metrics": {
+            "expected": 2,
+            "observed": 2,
+            "correct": 2,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "numeric_metrics": {
+            "expected": 2,
+            "observed": 2,
+            "correct": 2,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "reference_normalizations": [],
+          "supplier_normalizations": [],
+          "contract_extras": [],
+          "contract_omissions": [],
+          "count_discrepancies": []
+        },
+        {
+          "mode": "batch",
+          "repeat": 2,
+          "state": "success",
+          "contracts_match": true,
+          "metrics": {
+            "expected": 2,
+            "observed": 2,
+            "correct": 2,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "numeric_metrics": {
+            "expected": 2,
+            "observed": 2,
+            "correct": 2,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "reference_normalizations": [],
+          "supplier_normalizations": [],
+          "contract_extras": [],
+          "contract_omissions": [],
+          "count_discrepancies": []
+        }
+      ]
+    },
+    {
+      "document": "bd-report",
+      "partition": "regression",
+      "relationship_variants": 1,
+      "observations": [
+        {
+          "mode": "sync",
+          "repeat": 1,
+          "state": "success",
+          "contracts_match": true,
+          "metrics": {
+            "expected": 8,
+            "observed": 8,
+            "correct": 8,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "numeric_metrics": {
+            "expected": 8,
+            "observed": 8,
+            "correct": 8,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "reference_normalizations": [
+            {
+              "literal": "Tender No. 243-2013",
+              "canonical": "243-2013"
+            },
+            {
+              "literal": "Tender No. 243-2013",
+              "canonical": "243-2013"
+            },
+            {
+              "literal": "Tender No. 243-2013",
+              "canonical": "243-2013"
+            },
+            {
+              "literal": "Tender No. 243-2013",
+              "canonical": "243-2013"
+            },
+            {
+              "literal": "Tender No. 243-2013",
+              "canonical": "243-2013"
+            },
+            {
+              "literal": "Tender No. 243-2013",
+              "canonical": "243-2013"
+            },
+            {
+              "literal": "Tender No. 243-2013",
+              "canonical": "243-2013"
+            },
+            {
+              "literal": "Tender No. 243-2013",
+              "canonical": "243-2013"
+            }
+          ],
+          "supplier_normalizations": [],
+          "contract_extras": [],
+          "contract_omissions": [],
+          "count_discrepancies": []
+        },
+        {
+          "mode": "sync",
+          "repeat": 2,
+          "state": "success",
+          "contracts_match": true,
+          "metrics": {
+            "expected": 8,
+            "observed": 8,
+            "correct": 8,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "numeric_metrics": {
+            "expected": 8,
+            "observed": 8,
+            "correct": 8,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "reference_normalizations": [
+            {
+              "literal": "Tender No. 243-2013",
+              "canonical": "243-2013"
+            },
+            {
+              "literal": "Tender No. 243-2013",
+              "canonical": "243-2013"
+            },
+            {
+              "literal": "Tender No. 243-2013",
+              "canonical": "243-2013"
+            },
+            {
+              "literal": "Tender No. 243-2013",
+              "canonical": "243-2013"
+            },
+            {
+              "literal": "Tender No. 243-2013",
+              "canonical": "243-2013"
+            },
+            {
+              "literal": "Tender No. 243-2013",
+              "canonical": "243-2013"
+            },
+            {
+              "literal": "Tender No. 243-2013",
+              "canonical": "243-2013"
+            },
+            {
+              "literal": "Tender No. 243-2013",
+              "canonical": "243-2013"
+            }
+          ],
+          "supplier_normalizations": [],
+          "contract_extras": [],
+          "contract_omissions": [],
+          "count_discrepancies": []
+        },
+        {
+          "mode": "batch",
+          "repeat": 1,
+          "state": "success",
+          "contracts_match": true,
+          "metrics": {
+            "expected": 8,
+            "observed": 8,
+            "correct": 8,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "numeric_metrics": {
+            "expected": 8,
+            "observed": 8,
+            "correct": 8,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "reference_normalizations": [
+            {
+              "literal": "Tender No. 243-2013",
+              "canonical": "243-2013"
+            },
+            {
+              "literal": "Tender No. 243-2013",
+              "canonical": "243-2013"
+            },
+            {
+              "literal": "Tender No. 243-2013",
+              "canonical": "243-2013"
+            },
+            {
+              "literal": "Tender No. 243-2013",
+              "canonical": "243-2013"
+            },
+            {
+              "literal": "Tender No. 243-2013",
+              "canonical": "243-2013"
+            },
+            {
+              "literal": "Tender No. 243-2013",
+              "canonical": "243-2013"
+            },
+            {
+              "literal": "Tender No. 243-2013",
+              "canonical": "243-2013"
+            },
+            {
+              "literal": "Tender No. 243-2013",
+              "canonical": "243-2013"
+            }
+          ],
+          "supplier_normalizations": [],
+          "contract_extras": [],
+          "contract_omissions": [],
+          "count_discrepancies": []
+        },
+        {
+          "mode": "batch",
+          "repeat": 2,
+          "state": "success",
+          "contracts_match": true,
+          "metrics": {
+            "expected": 8,
+            "observed": 8,
+            "correct": 8,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "numeric_metrics": {
+            "expected": 8,
+            "observed": 8,
+            "correct": 8,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "reference_normalizations": [
+            {
+              "literal": "Tender No. 243-2013",
+              "canonical": "243-2013"
+            },
+            {
+              "literal": "Tender No. 243-2013",
+              "canonical": "243-2013"
+            },
+            {
+              "literal": "Tender No. 243-2013",
+              "canonical": "243-2013"
+            },
+            {
+              "literal": "Tender No. 243-2013",
+              "canonical": "243-2013"
+            },
+            {
+              "literal": "Tender No. 243-2013",
+              "canonical": "243-2013"
+            },
+            {
+              "literal": "Tender No. 243-2013",
+              "canonical": "243-2013"
+            },
+            {
+              "literal": "Tender No. 243-2013",
+              "canonical": "243-2013"
+            },
+            {
+              "literal": "Tender No. 243-2013",
+              "canonical": "243-2013"
+            }
+          ],
+          "supplier_normalizations": [],
+          "contract_extras": [],
+          "contract_omissions": [],
+          "count_discrepancies": []
+        }
+      ]
+    },
+    {
+      "document": "ep-bus-duct",
+      "partition": "regression",
+      "relationship_variants": 1,
+      "observations": [
+        {
+          "mode": "sync",
+          "repeat": 1,
+          "state": "success",
+          "contracts_match": true,
+          "metrics": {
+            "expected": 6,
+            "observed": 6,
+            "correct": 6,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "numeric_metrics": {
+            "expected": 6,
+            "observed": 6,
+            "correct": 6,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "reference_normalizations": [],
+          "supplier_normalizations": [],
+          "contract_extras": [],
+          "contract_omissions": [],
+          "count_discrepancies": []
+        },
+        {
+          "mode": "sync",
+          "repeat": 2,
+          "state": "success",
+          "contracts_match": true,
+          "metrics": {
+            "expected": 6,
+            "observed": 6,
+            "correct": 6,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "numeric_metrics": {
+            "expected": 6,
+            "observed": 6,
+            "correct": 6,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "reference_normalizations": [],
+          "supplier_normalizations": [],
+          "contract_extras": [],
+          "contract_omissions": [],
+          "count_discrepancies": []
+        },
+        {
+          "mode": "batch",
+          "repeat": 1,
+          "state": "success",
+          "contracts_match": true,
+          "metrics": {
+            "expected": 6,
+            "observed": 6,
+            "correct": 6,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "numeric_metrics": {
+            "expected": 6,
+            "observed": 6,
+            "correct": 6,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "reference_normalizations": [],
+          "supplier_normalizations": [],
+          "contract_extras": [],
+          "contract_omissions": [],
+          "count_discrepancies": []
+        },
+        {
+          "mode": "batch",
+          "repeat": 2,
+          "state": "success",
+          "contracts_match": true,
+          "metrics": {
+            "expected": 6,
+            "observed": 6,
+            "correct": 6,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "numeric_metrics": {
+            "expected": 6,
+            "observed": 6,
+            "correct": 6,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "reference_normalizations": [],
+          "supplier_normalizations": [],
+          "contract_extras": [],
+          "contract_omissions": [],
+          "count_discrepancies": []
+        }
+      ]
+    },
+    {
+      "document": "ep-negative",
+      "partition": "regression",
+      "relationship_variants": 1,
+      "observations": [
+        {
+          "mode": "sync",
+          "repeat": 1,
+          "state": "success",
+          "contracts_match": true,
+          "metrics": {
+            "expected": 0,
+            "observed": 0,
+            "correct": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "numeric_metrics": {
+            "expected": 0,
+            "observed": 0,
+            "correct": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "reference_normalizations": [],
+          "supplier_normalizations": [],
+          "contract_extras": [],
+          "contract_omissions": [],
+          "count_discrepancies": []
+        },
+        {
+          "mode": "sync",
+          "repeat": 2,
+          "state": "success",
+          "contracts_match": true,
+          "metrics": {
+            "expected": 0,
+            "observed": 0,
+            "correct": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "numeric_metrics": {
+            "expected": 0,
+            "observed": 0,
+            "correct": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "reference_normalizations": [],
+          "supplier_normalizations": [],
+          "contract_extras": [],
+          "contract_omissions": [],
+          "count_discrepancies": []
+        },
+        {
+          "mode": "batch",
+          "repeat": 1,
+          "state": "success",
+          "contracts_match": true,
+          "metrics": {
+            "expected": 0,
+            "observed": 0,
+            "correct": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "numeric_metrics": {
+            "expected": 0,
+            "observed": 0,
+            "correct": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "reference_normalizations": [],
+          "supplier_normalizations": [],
+          "contract_extras": [],
+          "contract_omissions": [],
+          "count_discrepancies": []
+        },
+        {
+          "mode": "batch",
+          "repeat": 2,
+          "state": "success",
+          "contracts_match": true,
+          "metrics": {
+            "expected": 0,
+            "observed": 0,
+            "correct": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "numeric_metrics": {
+            "expected": 0,
+            "observed": 0,
+            "correct": 0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "reference_normalizations": [],
+          "supplier_normalizations": [],
+          "contract_extras": [],
+          "contract_omissions": [],
+          "count_discrepancies": []
+        }
+      ]
+    },
+    {
+      "document": "zoo-fence",
+      "partition": "regression",
+      "relationship_variants": 2,
+      "observations": [
+        {
+          "mode": "sync",
+          "repeat": 1,
+          "state": "success",
+          "contracts_match": true,
+          "metrics": {
+            "expected": 2,
+            "observed": 2,
+            "correct": 1,
+            "precision": 0.5,
+            "recall": 0.5,
+            "omissions": [
+              {
+                "supplier": "imperial fence inc.",
+                "contract": "RFT-42",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": null,
+                "basis": null,
+                "status": "compliant"
+              }
+            ],
+            "false_joins": [
+              {
+                "supplier": "imperial fence, inc.",
+                "contract": "RFT-42",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": null,
+                "basis": null,
+                "status": "compliant"
+              }
+            ],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "numeric_metrics": {
+            "expected": 2,
+            "observed": 2,
+            "correct": 1,
+            "precision": 0.5,
+            "recall": 0.5,
+            "omissions": [
+              {
+                "supplier": "imperial fence inc.",
+                "contract": "RFT-42",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": null,
+                "basis": null,
+                "status": "compliant"
+              }
+            ],
+            "false_joins": [
+              {
+                "supplier": "imperial fence, inc.",
+                "contract": "RFT-42",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": null,
+                "basis": null,
+                "status": "compliant"
+              }
+            ],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "reference_normalizations": [],
+          "supplier_normalizations": [],
+          "contract_extras": [],
+          "contract_omissions": [],
+          "count_discrepancies": [
+            {
+              "reference": "RFT-42",
+              "declared": 4,
+              "actual": 1,
+              "delta": -3,
+              "review_key": "ad2344bf277defeb788457d89841a9011ec6a5812fcedbebefca89c647f6e72f",
+              "review": null,
+              "resolved": false
+            }
+          ]
+        },
+        {
+          "mode": "sync",
+          "repeat": 2,
+          "state": "success",
+          "contracts_match": true,
+          "metrics": {
+            "expected": 2,
+            "observed": 2,
+            "correct": 1,
+            "precision": 0.5,
+            "recall": 0.5,
+            "omissions": [
+              {
+                "supplier": "imperial fence inc.",
+                "contract": "RFT-42",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": null,
+                "basis": null,
+                "status": "compliant"
+              }
+            ],
+            "false_joins": [
+              {
+                "supplier": "imperial fence, inc.",
+                "contract": "RFT-42",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": "$1,639,615.00",
+                "basis": "plus_HST",
+                "status": "compliant"
+              }
+            ],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "numeric_metrics": {
+            "expected": 2,
+            "observed": 2,
+            "correct": 1,
+            "precision": 0.5,
+            "recall": 0.5,
+            "omissions": [
+              {
+                "supplier": "imperial fence inc.",
+                "contract": "RFT-42",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": null,
+                "basis": null,
+                "status": "compliant"
+              }
+            ],
+            "false_joins": [
+              {
+                "supplier": "imperial fence, inc.",
+                "contract": "RFT-42",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": "1639615.0",
+                "basis": "plus_HST",
+                "status": "compliant"
+              }
+            ],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "reference_normalizations": [],
+          "supplier_normalizations": [],
+          "contract_extras": [],
+          "contract_omissions": [],
+          "count_discrepancies": [
+            {
+              "reference": "RFT-42",
+              "declared": 4,
+              "actual": 1,
+              "delta": -3,
+              "review_key": "78088e8a0b0505e12466d99458644afcd7f80e8b588bbc20cdce883d8e7a7d59",
+              "review": null,
+              "resolved": false
+            }
+          ]
+        },
+        {
+          "mode": "batch",
+          "repeat": 1,
+          "state": "success",
+          "contracts_match": true,
+          "metrics": {
+            "expected": 2,
+            "observed": 2,
+            "correct": 1,
+            "precision": 0.5,
+            "recall": 0.5,
+            "omissions": [
+              {
+                "supplier": "imperial fence inc.",
+                "contract": "RFT-42",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": null,
+                "basis": null,
+                "status": "compliant"
+              }
+            ],
+            "false_joins": [
+              {
+                "supplier": "imperial fence, inc.",
+                "contract": "RFT-42",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": null,
+                "basis": null,
+                "status": "compliant"
+              }
+            ],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "numeric_metrics": {
+            "expected": 2,
+            "observed": 2,
+            "correct": 1,
+            "precision": 0.5,
+            "recall": 0.5,
+            "omissions": [
+              {
+                "supplier": "imperial fence inc.",
+                "contract": "RFT-42",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": null,
+                "basis": null,
+                "status": "compliant"
+              }
+            ],
+            "false_joins": [
+              {
+                "supplier": "imperial fence, inc.",
+                "contract": "RFT-42",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": null,
+                "basis": null,
+                "status": "compliant"
+              }
+            ],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "reference_normalizations": [],
+          "supplier_normalizations": [],
+          "contract_extras": [],
+          "contract_omissions": [],
+          "count_discrepancies": [
+            {
+              "reference": "RFT-42",
+              "declared": 4,
+              "actual": 1,
+              "delta": -3,
+              "review_key": "1431531850bcc9bc921bc7d72bfe6fc25b164890a9495278367edc98984a71ac",
+              "review": null,
+              "resolved": false
+            }
+          ]
+        },
+        {
+          "mode": "batch",
+          "repeat": 2,
+          "state": "success",
+          "contracts_match": true,
+          "metrics": {
+            "expected": 2,
+            "observed": 2,
+            "correct": 1,
+            "precision": 0.5,
+            "recall": 0.5,
+            "omissions": [
+              {
+                "supplier": "imperial fence inc.",
+                "contract": "RFT-42",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": null,
+                "basis": null,
+                "status": "compliant"
+              }
+            ],
+            "false_joins": [
+              {
+                "supplier": "imperial fence, inc.",
+                "contract": "RFT-42",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": null,
+                "basis": null,
+                "status": "compliant"
+              }
+            ],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "numeric_metrics": {
+            "expected": 2,
+            "observed": 2,
+            "correct": 1,
+            "precision": 0.5,
+            "recall": 0.5,
+            "omissions": [
+              {
+                "supplier": "imperial fence inc.",
+                "contract": "RFT-42",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": null,
+                "basis": null,
+                "status": "compliant"
+              }
+            ],
+            "false_joins": [
+              {
+                "supplier": "imperial fence, inc.",
+                "contract": "RFT-42",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": null,
+                "basis": null,
+                "status": "compliant"
+              }
+            ],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "reference_normalizations": [],
+          "supplier_normalizations": [],
+          "contract_extras": [],
+          "contract_omissions": [],
+          "count_discrepancies": [
+            {
+              "reference": "RFT-42",
+              "declared": 4,
+              "actual": 1,
+              "delta": -3,
+              "review_key": "1431531850bcc9bc921bc7d72bfe6fc25b164890a9495278367edc98984a71ac",
+              "review": null,
+              "resolved": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "document": "composite",
+      "partition": "regression",
+      "relationship_variants": 1,
+      "observations": [
+        {
+          "mode": "sync",
+          "repeat": 1,
+          "state": "success",
+          "contracts_match": true,
+          "metrics": {
+            "expected": 8,
+            "observed": 8,
+            "correct": 8,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "numeric_metrics": {
+            "expected": 8,
+            "observed": 8,
+            "correct": 8,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "reference_normalizations": [],
+          "supplier_normalizations": [],
+          "contract_extras": [],
+          "contract_omissions": [],
+          "count_discrepancies": [
+            {
+              "reference": "6302-12-0219",
+              "declared": 6,
+              "actual": 1,
+              "delta": -5,
+              "review_key": "3da46b429bc6294b39c8392b1f45e5079a777a979739e8d4a40b3c850dd7eb52",
+              "review": null,
+              "resolved": false
+            },
+            {
+              "reference": "3917-12-7226",
+              "declared": 2,
+              "actual": 1,
+              "delta": -1,
+              "review_key": "7de7cdeddbe41a983bf7f5b37b99851626bb1673ce536468d9c9884d0b0d00a9",
+              "review": null,
+              "resolved": false
+            },
+            {
+              "reference": "192-2012",
+              "declared": 11,
+              "actual": 1,
+              "delta": -10,
+              "review_key": "d20b5ca11ffdbbf0c39732cbb6ea1a91236f3670d02119f2fefb460ef58cb5c9",
+              "review": null,
+              "resolved": false
+            }
+          ]
+        },
+        {
+          "mode": "sync",
+          "repeat": 2,
+          "state": "success",
+          "contracts_match": true,
+          "metrics": {
+            "expected": 8,
+            "observed": 8,
+            "correct": 8,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "numeric_metrics": {
+            "expected": 8,
+            "observed": 8,
+            "correct": 8,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "reference_normalizations": [],
+          "supplier_normalizations": [],
+          "contract_extras": [],
+          "contract_omissions": [],
+          "count_discrepancies": [
+            {
+              "reference": "6302-12-0219",
+              "declared": 6,
+              "actual": 1,
+              "delta": -5,
+              "review_key": "abd14ad4598adb46e54db52a00a6ac60a59df50c69303fb0922f3db571d0d951",
+              "review": null,
+              "resolved": false
+            },
+            {
+              "reference": "3917-12-7226",
+              "declared": 2,
+              "actual": 1,
+              "delta": -1,
+              "review_key": "4b82eaeddb0b6dbf6ecf4a28623c6930995a16fb266337da8a522a9027713546",
+              "review": null,
+              "resolved": false
+            },
+            {
+              "reference": "192-2012",
+              "declared": 11,
+              "actual": 1,
+              "delta": -10,
+              "review_key": "44151dc8ee29e33bf4016c078618f3d32af0098108676567be6111546d5f0a48",
+              "review": null,
+              "resolved": false
+            }
+          ]
+        },
+        {
+          "mode": "batch",
+          "repeat": 1,
+          "state": "success",
+          "contracts_match": true,
+          "metrics": {
+            "expected": 8,
+            "observed": 8,
+            "correct": 8,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "numeric_metrics": {
+            "expected": 8,
+            "observed": 8,
+            "correct": 8,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "reference_normalizations": [],
+          "supplier_normalizations": [],
+          "contract_extras": [],
+          "contract_omissions": [],
+          "count_discrepancies": [
+            {
+              "reference": "6302-12-0219",
+              "declared": 6,
+              "actual": 1,
+              "delta": -5,
+              "review_key": "de5a3c86082877af4f9de64244ff333adcd404791e5217749fe4aabd266832c4",
+              "review": null,
+              "resolved": false
+            },
+            {
+              "reference": "3917-12-7226",
+              "declared": 2,
+              "actual": 1,
+              "delta": -1,
+              "review_key": "46fe859875bdc59620c4c22758144e07d5a0698488e509849acfd4fa1492a3e7",
+              "review": null,
+              "resolved": false
+            },
+            {
+              "reference": "192-2012",
+              "declared": 11,
+              "actual": 1,
+              "delta": -10,
+              "review_key": "b7b828ba3874edf60eaef846f5a85ba7a9f1f7c6c11cc18f9b7851b427fbe6c7",
+              "review": null,
+              "resolved": false
+            }
+          ]
+        },
+        {
+          "mode": "batch",
+          "repeat": 2,
+          "state": "success",
+          "contracts_match": true,
+          "metrics": {
+            "expected": 8,
+            "observed": 8,
+            "correct": 8,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "numeric_metrics": {
+            "expected": 8,
+            "observed": 8,
+            "correct": 8,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "reference_normalizations": [],
+          "supplier_normalizations": [],
+          "contract_extras": [],
+          "contract_omissions": [],
+          "count_discrepancies": [
+            {
+              "reference": "6302-12-0219",
+              "declared": 6,
+              "actual": 1,
+              "delta": -5,
+              "review_key": "330278567de653fc3e52d153591abc64de303fb15b94153932dadb39f77b928c",
+              "review": null,
+              "resolved": false
+            },
+            {
+              "reference": "3917-12-7226",
+              "declared": 2,
+              "actual": 1,
+              "delta": -1,
+              "review_key": "1a11e9db78bf8aa80d5085d6463f16cd9cb46351ed9aa1b1b8ac39f84a6b620e",
+              "review": null,
+              "resolved": false
+            },
+            {
+              "reference": "192-2012",
+              "declared": 11,
+              "actual": 1,
+              "delta": -10,
+              "review_key": "96c9b759945ba2186e33db4f8ec4a24330f99738efa7287de228ff94a72044b5",
+              "review": null,
+              "resolved": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "document": "committee",
+      "partition": "regression",
+      "relationship_variants": 1,
+      "observations": [
+        {
+          "mode": "sync",
+          "repeat": 1,
+          "state": "success",
+          "contracts_match": true,
+          "metrics": {
+            "expected": 3,
+            "observed": 3,
+            "correct": 3,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "numeric_metrics": {
+            "expected": 3,
+            "observed": 3,
+            "correct": 3,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "reference_normalizations": [],
+          "supplier_normalizations": [],
+          "contract_extras": [],
+          "contract_omissions": [],
+          "count_discrepancies": []
+        },
+        {
+          "mode": "sync",
+          "repeat": 2,
+          "state": "success",
+          "contracts_match": true,
+          "metrics": {
+            "expected": 3,
+            "observed": 3,
+            "correct": 3,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "numeric_metrics": {
+            "expected": 3,
+            "observed": 3,
+            "correct": 3,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "reference_normalizations": [],
+          "supplier_normalizations": [],
+          "contract_extras": [],
+          "contract_omissions": [],
+          "count_discrepancies": []
+        },
+        {
+          "mode": "batch",
+          "repeat": 1,
+          "state": "success",
+          "contracts_match": true,
+          "metrics": {
+            "expected": 3,
+            "observed": 3,
+            "correct": 3,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "numeric_metrics": {
+            "expected": 3,
+            "observed": 3,
+            "correct": 3,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "reference_normalizations": [],
+          "supplier_normalizations": [],
+          "contract_extras": [],
+          "contract_omissions": [],
+          "count_discrepancies": []
+        },
+        {
+          "mode": "batch",
+          "repeat": 2,
+          "state": "success",
+          "contracts_match": true,
+          "metrics": {
+            "expected": 3,
+            "observed": 3,
+            "correct": 3,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "numeric_metrics": {
+            "expected": 3,
+            "observed": 3,
+            "correct": 3,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "reference_normalizations": [],
+          "supplier_normalizations": [],
+          "contract_extras": [],
+          "contract_omissions": [],
+          "count_discrepancies": []
+        }
+      ]
+    },
+    {
+      "document": "trca-D01",
+      "partition": "regression",
+      "relationship_variants": 3,
+      "observations": [
+        {
+          "mode": "sync",
+          "repeat": 1,
+          "state": "success",
+          "contracts_match": true,
+          "metrics": {
+            "expected": 10,
+            "observed": 10,
+            "correct": 10,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "numeric_metrics": {
+            "expected": 10,
+            "observed": 10,
+            "correct": 10,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "reference_normalizations": [],
+          "supplier_normalizations": [],
+          "contract_extras": [],
+          "contract_omissions": [],
+          "count_discrepancies": []
+        },
+        {
+          "mode": "sync",
+          "repeat": 2,
+          "state": "success",
+          "contracts_match": true,
+          "metrics": {
+            "expected": 10,
+            "observed": 10,
+            "correct": 10,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "numeric_metrics": {
+            "expected": 10,
+            "observed": 10,
+            "correct": 10,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "reference_normalizations": [],
+          "supplier_normalizations": [],
+          "contract_extras": [],
+          "contract_omissions": [],
+          "count_discrepancies": []
+        },
+        {
+          "mode": "batch",
+          "repeat": 1,
+          "state": "success",
+          "contracts_match": true,
+          "metrics": {
+            "expected": 10,
+            "observed": 10,
+            "correct": 9,
+            "precision": 0.9,
+            "recall": 0.9,
+            "omissions": [
+              {
+                "supplier": "dynex construction inc.",
+                "contract": "RFT No. 10040951",
+                "stage": "prequalification_then_tender",
+                "role": "award",
+                "amount": "$2,947,485.00",
+                "basis": "plus_HST",
+                "status": null
+              }
+            ],
+            "false_joins": [],
+            "attribute_errors": [
+              {
+                "supplier": "dynex construction inc.",
+                "contract": "RFT No. 10040951",
+                "stage": "prequalification_then_tender",
+                "role": "award",
+                "amount": "$2,947,485.00",
+                "basis": "unknown",
+                "status": null
+              }
+            ],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "numeric_metrics": {
+            "expected": 10,
+            "observed": 10,
+            "correct": 9,
+            "precision": 0.9,
+            "recall": 0.9,
+            "omissions": [
+              {
+                "supplier": "dynex construction inc.",
+                "contract": "RFT No. 10040951",
+                "stage": "prequalification_then_tender",
+                "role": "award",
+                "amount": "2947485.0",
+                "basis": "plus_HST",
+                "status": null
+              }
+            ],
+            "false_joins": [],
+            "attribute_errors": [
+              {
+                "supplier": "dynex construction inc.",
+                "contract": "RFT No. 10040951",
+                "stage": "prequalification_then_tender",
+                "role": "award",
+                "amount": "2947485.0",
+                "basis": "unknown",
+                "status": null
+              }
+            ],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "reference_normalizations": [],
+          "supplier_normalizations": [],
+          "contract_extras": [],
+          "contract_omissions": [],
+          "count_discrepancies": []
+        },
+        {
+          "mode": "batch",
+          "repeat": 2,
+          "state": "success",
+          "contracts_match": true,
+          "metrics": {
+            "expected": 10,
+            "observed": 12,
+            "correct": 9,
+            "precision": 0.75,
+            "recall": 0.9,
+            "omissions": [
+              {
+                "supplier": "dynex construction inc.",
+                "contract": "RFT No. 10040951",
+                "stage": "prequalification_then_tender",
+                "role": "award",
+                "amount": "$2,947,485.00",
+                "basis": "plus_HST",
+                "status": null
+              }
+            ],
+            "false_joins": [
+              {
+                "supplier": "560789 ontario limited o/a r&m construction",
+                "contract": "RFT No. 10040951",
+                "stage": "prequalification_then_tender",
+                "role": "prequalified",
+                "amount": null,
+                "basis": null,
+                "status": null
+              },
+              {
+                "supplier": "2220742 ontario ltd o/a bronte construction",
+                "contract": "RFT No. 10040951",
+                "stage": "prequalification_then_tender",
+                "role": "prequalified",
+                "amount": null,
+                "basis": null,
+                "status": null
+              }
+            ],
+            "attribute_errors": [
+              {
+                "supplier": "dynex construction inc.",
+                "contract": "RFT No. 10040951",
+                "stage": "prequalification_then_tender",
+                "role": "award",
+                "amount": "$2,947,485.00",
+                "basis": "unknown",
+                "status": null
+              }
+            ],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "numeric_metrics": {
+            "expected": 10,
+            "observed": 12,
+            "correct": 9,
+            "precision": 0.75,
+            "recall": 0.9,
+            "omissions": [
+              {
+                "supplier": "dynex construction inc.",
+                "contract": "RFT No. 10040951",
+                "stage": "prequalification_then_tender",
+                "role": "award",
+                "amount": "2947485.0",
+                "basis": "plus_HST",
+                "status": null
+              }
+            ],
+            "false_joins": [
+              {
+                "supplier": "560789 ontario limited o/a r&m construction",
+                "contract": "RFT No. 10040951",
+                "stage": "prequalification_then_tender",
+                "role": "prequalified",
+                "amount": null,
+                "basis": null,
+                "status": null
+              },
+              {
+                "supplier": "2220742 ontario ltd o/a bronte construction",
+                "contract": "RFT No. 10040951",
+                "stage": "prequalification_then_tender",
+                "role": "prequalified",
+                "amount": null,
+                "basis": null,
+                "status": null
+              }
+            ],
+            "attribute_errors": [
+              {
+                "supplier": "dynex construction inc.",
+                "contract": "RFT No. 10040951",
+                "stage": "prequalification_then_tender",
+                "role": "award",
+                "amount": "2947485.0",
+                "basis": "unknown",
+                "status": null
+              }
+            ],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "reference_normalizations": [],
+          "supplier_normalizations": [],
+          "contract_extras": [],
+          "contract_omissions": [],
+          "count_discrepancies": []
+        }
+      ]
+    },
+    {
+      "document": "trca-D02",
+      "partition": "regression",
+      "relationship_variants": 2,
+      "observations": [
+        {
+          "mode": "sync",
+          "repeat": 1,
+          "state": "success",
+          "contracts_match": true,
+          "metrics": {
+            "expected": 10,
+            "observed": 10,
+            "correct": 10,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "numeric_metrics": {
+            "expected": 10,
+            "observed": 10,
+            "correct": 10,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "reference_normalizations": [
+            {
+              "literal": "RFQ No. 10009905",
+              "canonical": "10009905"
+            },
+            {
+              "literal": "RFQ No. 10009905",
+              "canonical": "10009905"
+            },
+            {
+              "literal": "RFQ No. 10009905",
+              "canonical": "10009905"
+            },
+            {
+              "literal": "RFQ No. 10009905",
+              "canonical": "10009905"
+            },
+            {
+              "literal": "RFQ No. 10009905",
+              "canonical": "10009905"
+            },
+            {
+              "literal": "RFQ No. 10009906",
+              "canonical": "10009906"
+            },
+            {
+              "literal": "RFQ No. 10009906",
+              "canonical": "10009906"
+            },
+            {
+              "literal": "RFQ No. 10009906",
+              "canonical": "10009906"
+            },
+            {
+              "literal": "RFQ No. 10009906",
+              "canonical": "10009906"
+            },
+            {
+              "literal": "RFQ No. 10009906",
+              "canonical": "10009906"
+            }
+          ],
+          "supplier_normalizations": [],
+          "contract_extras": [],
+          "contract_omissions": [],
+          "count_discrepancies": []
+        },
+        {
+          "mode": "sync",
+          "repeat": 2,
+          "state": "success",
+          "contracts_match": true,
+          "metrics": {
+            "expected": 10,
+            "observed": 10,
+            "correct": 10,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "numeric_metrics": {
+            "expected": 10,
+            "observed": 10,
+            "correct": 10,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "reference_normalizations": [
+            {
+              "literal": "RFQ No. 10009905",
+              "canonical": "10009905"
+            },
+            {
+              "literal": "RFQ No. 10009905",
+              "canonical": "10009905"
+            },
+            {
+              "literal": "RFQ No. 10009905",
+              "canonical": "10009905"
+            },
+            {
+              "literal": "RFQ No. 10009905",
+              "canonical": "10009905"
+            },
+            {
+              "literal": "RFQ No. 10009905",
+              "canonical": "10009905"
+            },
+            {
+              "literal": "RFQ No. 10009906",
+              "canonical": "10009906"
+            },
+            {
+              "literal": "RFQ No. 10009906",
+              "canonical": "10009906"
+            },
+            {
+              "literal": "RFQ No. 10009906",
+              "canonical": "10009906"
+            },
+            {
+              "literal": "RFQ No. 10009906",
+              "canonical": "10009906"
+            },
+            {
+              "literal": "RFQ No. 10009906",
+              "canonical": "10009906"
+            }
+          ],
+          "supplier_normalizations": [],
+          "contract_extras": [],
+          "contract_omissions": [],
+          "count_discrepancies": []
+        },
+        {
+          "mode": "batch",
+          "repeat": 1,
+          "state": "success",
+          "contracts_match": true,
+          "metrics": {
+            "expected": 10,
+            "observed": 10,
+            "correct": 8,
+            "precision": 0.8,
+            "recall": 0.8,
+            "omissions": [
+              {
+                "supplier": "cdr young's aggregates inc.",
+                "contract": "10009905",
+                "stage": "single_stage",
+                "role": "award",
+                "amount": "$ 527,000.00",
+                "basis": "plus_HST",
+                "status": null
+              },
+              {
+                "supplier": "glenn windrem trucking",
+                "contract": "10009906",
+                "stage": "single_stage",
+                "role": "award",
+                "amount": "$470,000.00",
+                "basis": "plus_HST",
+                "status": null
+              }
+            ],
+            "false_joins": [],
+            "attribute_errors": [
+              {
+                "supplier": "cdr young's aggregates inc.",
+                "contract": "10009905",
+                "stage": "single_stage",
+                "role": "award",
+                "amount": "$ 527,000.00",
+                "basis": "unknown",
+                "status": null
+              },
+              {
+                "supplier": "glenn windrem trucking",
+                "contract": "10009906",
+                "stage": "single_stage",
+                "role": "award",
+                "amount": "$470,000.00",
+                "basis": "unknown",
+                "status": null
+              }
+            ],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "numeric_metrics": {
+            "expected": 10,
+            "observed": 10,
+            "correct": 8,
+            "precision": 0.8,
+            "recall": 0.8,
+            "omissions": [
+              {
+                "supplier": "cdr young's aggregates inc.",
+                "contract": "10009905",
+                "stage": "single_stage",
+                "role": "award",
+                "amount": "527000.0",
+                "basis": "plus_HST",
+                "status": null
+              },
+              {
+                "supplier": "glenn windrem trucking",
+                "contract": "10009906",
+                "stage": "single_stage",
+                "role": "award",
+                "amount": "470000.0",
+                "basis": "plus_HST",
+                "status": null
+              }
+            ],
+            "false_joins": [],
+            "attribute_errors": [
+              {
+                "supplier": "cdr young's aggregates inc.",
+                "contract": "10009905",
+                "stage": "single_stage",
+                "role": "award",
+                "amount": "527000.0",
+                "basis": "unknown",
+                "status": null
+              },
+              {
+                "supplier": "glenn windrem trucking",
+                "contract": "10009906",
+                "stage": "single_stage",
+                "role": "award",
+                "amount": "470000.0",
+                "basis": "unknown",
+                "status": null
+              }
+            ],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "reference_normalizations": [
+            {
+              "literal": "RFQ No. 10009905",
+              "canonical": "10009905"
+            },
+            {
+              "literal": "RFQ No. 10009905",
+              "canonical": "10009905"
+            },
+            {
+              "literal": "RFQ No. 10009905",
+              "canonical": "10009905"
+            },
+            {
+              "literal": "RFQ No. 10009905",
+              "canonical": "10009905"
+            },
+            {
+              "literal": "RFQ No. 10009905",
+              "canonical": "10009905"
+            },
+            {
+              "literal": "RFQ No. 10009906",
+              "canonical": "10009906"
+            },
+            {
+              "literal": "RFQ No. 10009906",
+              "canonical": "10009906"
+            },
+            {
+              "literal": "RFQ No. 10009906",
+              "canonical": "10009906"
+            },
+            {
+              "literal": "RFQ No. 10009906",
+              "canonical": "10009906"
+            },
+            {
+              "literal": "RFQ No. 10009906",
+              "canonical": "10009906"
+            }
+          ],
+          "supplier_normalizations": [],
+          "contract_extras": [],
+          "contract_omissions": [],
+          "count_discrepancies": []
+        },
+        {
+          "mode": "batch",
+          "repeat": 2,
+          "state": "success",
+          "contracts_match": true,
+          "metrics": {
+            "expected": 10,
+            "observed": 10,
+            "correct": 8,
+            "precision": 0.8,
+            "recall": 0.8,
+            "omissions": [
+              {
+                "supplier": "cdr young's aggregates inc.",
+                "contract": "10009905",
+                "stage": "single_stage",
+                "role": "award",
+                "amount": "$ 527,000.00",
+                "basis": "plus_HST",
+                "status": null
+              },
+              {
+                "supplier": "glenn windrem trucking",
+                "contract": "10009906",
+                "stage": "single_stage",
+                "role": "award",
+                "amount": "$470,000.00",
+                "basis": "plus_HST",
+                "status": null
+              }
+            ],
+            "false_joins": [],
+            "attribute_errors": [
+              {
+                "supplier": "cdr young's aggregates inc.",
+                "contract": "10009905",
+                "stage": "single_stage",
+                "role": "award",
+                "amount": "$ 527,000.00",
+                "basis": "unknown",
+                "status": null
+              },
+              {
+                "supplier": "glenn windrem trucking",
+                "contract": "10009906",
+                "stage": "single_stage",
+                "role": "award",
+                "amount": "$470,000.00",
+                "basis": "unknown",
+                "status": null
+              }
+            ],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "numeric_metrics": {
+            "expected": 10,
+            "observed": 10,
+            "correct": 8,
+            "precision": 0.8,
+            "recall": 0.8,
+            "omissions": [
+              {
+                "supplier": "cdr young's aggregates inc.",
+                "contract": "10009905",
+                "stage": "single_stage",
+                "role": "award",
+                "amount": "527000.0",
+                "basis": "plus_HST",
+                "status": null
+              },
+              {
+                "supplier": "glenn windrem trucking",
+                "contract": "10009906",
+                "stage": "single_stage",
+                "role": "award",
+                "amount": "470000.0",
+                "basis": "plus_HST",
+                "status": null
+              }
+            ],
+            "false_joins": [],
+            "attribute_errors": [
+              {
+                "supplier": "cdr young's aggregates inc.",
+                "contract": "10009905",
+                "stage": "single_stage",
+                "role": "award",
+                "amount": "527000.0",
+                "basis": "unknown",
+                "status": null
+              },
+              {
+                "supplier": "glenn windrem trucking",
+                "contract": "10009906",
+                "stage": "single_stage",
+                "role": "award",
+                "amount": "470000.0",
+                "basis": "unknown",
+                "status": null
+              }
+            ],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "reference_normalizations": [
+            {
+              "literal": "RFQ No. 10009905",
+              "canonical": "10009905"
+            },
+            {
+              "literal": "RFQ No. 10009905",
+              "canonical": "10009905"
+            },
+            {
+              "literal": "RFQ No. 10009905",
+              "canonical": "10009905"
+            },
+            {
+              "literal": "RFQ No. 10009905",
+              "canonical": "10009905"
+            },
+            {
+              "literal": "RFQ No. 10009905",
+              "canonical": "10009905"
+            },
+            {
+              "literal": "RFQ No. 10009906",
+              "canonical": "10009906"
+            },
+            {
+              "literal": "RFQ No. 10009906",
+              "canonical": "10009906"
+            },
+            {
+              "literal": "RFQ No. 10009906",
+              "canonical": "10009906"
+            },
+            {
+              "literal": "RFQ No. 10009906",
+              "canonical": "10009906"
+            },
+            {
+              "literal": "RFQ No. 10009906",
+              "canonical": "10009906"
+            }
+          ],
+          "supplier_normalizations": [],
+          "contract_extras": [],
+          "contract_omissions": [],
+          "count_discrepancies": []
+        }
+      ]
+    },
+    {
+      "document": "trca-D04",
+      "partition": "regression",
+      "relationship_variants": 2,
+      "observations": [
+        {
+          "mode": "sync",
+          "repeat": 1,
+          "state": "success",
+          "contracts_match": true,
+          "metrics": {
+            "expected": 34,
+            "observed": 34,
+            "correct": 33,
+            "precision": 0.9705882352941176,
+            "recall": 0.9705882352941176,
+            "omissions": [
+              {
+                "supplier": "bell canada",
+                "contract": "2104-09-3006",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": null,
+                "basis": null,
+                "status": "not_stated"
+              }
+            ],
+            "false_joins": [],
+            "attribute_errors": [
+              {
+                "supplier": "bell canada",
+                "contract": "2104-09-3006",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": null,
+                "basis": null,
+                "status": "compliant"
+              }
+            ],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "numeric_metrics": {
+            "expected": 34,
+            "observed": 34,
+            "correct": 33,
+            "precision": 0.9705882352941176,
+            "recall": 0.9705882352941176,
+            "omissions": [
+              {
+                "supplier": "bell canada",
+                "contract": "2104-09-3006",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": null,
+                "basis": null,
+                "status": "not_stated"
+              }
+            ],
+            "false_joins": [],
+            "attribute_errors": [
+              {
+                "supplier": "bell canada",
+                "contract": "2104-09-3006",
+                "stage": "single_stage",
+                "role": "bid",
+                "amount": null,
+                "basis": null,
+                "status": "compliant"
+              }
+            ],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "reference_normalizations": [],
+          "supplier_normalizations": [],
+          "contract_extras": [],
+          "contract_omissions": [],
+          "count_discrepancies": []
+        },
+        {
+          "mode": "sync",
+          "repeat": 2,
+          "state": "success",
+          "contracts_match": true,
+          "metrics": {
+            "expected": 34,
+            "observed": 34,
+            "correct": 34,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "numeric_metrics": {
+            "expected": 34,
+            "observed": 34,
+            "correct": 34,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "reference_normalizations": [
+            {
+              "literal": "RFP No. 2104-09-3006",
+              "canonical": "2104-09-3006"
+            },
+            {
+              "literal": "RFP No. 2104-09-3006",
+              "canonical": "2104-09-3006"
+            },
+            {
+              "literal": "RFP No. 2104-09-3006",
+              "canonical": "2104-09-3006"
+            },
+            {
+              "literal": "RFP No. 2104-09-3006",
+              "canonical": "2104-09-3006"
+            },
+            {
+              "literal": "RFP No. 2104-09-3006",
+              "canonical": "2104-09-3006"
+            },
+            {
+              "literal": "RFP No. 2104-09-3006",
+              "canonical": "2104-09-3006"
+            },
+            {
+              "literal": "RFP No. 2104-09-3006",
+              "canonical": "2104-09-3006"
+            },
+            {
+              "literal": "RFP No. 2104-09-3006",
+              "canonical": "2104-09-3006"
+            },
+            {
+              "literal": "RFP No. 2104-09-3006",
+              "canonical": "2104-09-3006"
+            },
+            {
+              "literal": "RFP No. 10032967",
+              "canonical": "10032967"
+            },
+            {
+              "literal": "RFP No. 10032967",
+              "canonical": "10032967"
+            },
+            {
+              "literal": "RFP No. 10032967",
+              "canonical": "10032967"
+            },
+            {
+              "literal": "RFP No. 10032967",
+              "canonical": "10032967"
+            },
+            {
+              "literal": "RFP No. 10032967",
+              "canonical": "10032967"
+            },
+            {
+              "literal": "RFP No. 10032967",
+              "canonical": "10032967"
+            },
+            {
+              "literal": "RFP No. 10032967",
+              "canonical": "10032967"
+            },
+            {
+              "literal": "RFP No. 10032967",
+              "canonical": "10032967"
+            },
+            {
+              "literal": "RFP No. 10032967",
+              "canonical": "10032967"
+            },
+            {
+              "literal": "RFP No. 10032967",
+              "canonical": "10032967"
+            },
+            {
+              "literal": "RFP No. 10032967",
+              "canonical": "10032967"
+            },
+            {
+              "literal": "RFP No. 10032967",
+              "canonical": "10032967"
+            },
+            {
+              "literal": "RFP No. 10032967",
+              "canonical": "10032967"
+            },
+            {
+              "literal": "RFP No. 10032967",
+              "canonical": "10032967"
+            },
+            {
+              "literal": "RFP No. 10032967",
+              "canonical": "10032967"
+            },
+            {
+              "literal": "RFP No. 10032967",
+              "canonical": "10032967"
+            },
+            {
+              "literal": "RFP No. 10032967",
+              "canonical": "10032967"
+            },
+            {
+              "literal": "RFP No. 10032967",
+              "canonical": "10032967"
+            },
+            {
+              "literal": "RFP No. 10032967",
+              "canonical": "10032967"
+            },
+            {
+              "literal": "RFP No. 10032967",
+              "canonical": "10032967"
+            },
+            {
+              "literal": "RFP No. 10032967",
+              "canonical": "10032967"
+            },
+            {
+              "literal": "RFP No. 10032967",
+              "canonical": "10032967"
+            },
+            {
+              "literal": "RFP No. 10032967",
+              "canonical": "10032967"
+            },
+            {
+              "literal": "RFP No. 10032967",
+              "canonical": "10032967"
+            },
+            {
+              "literal": "RFP No. 10032967",
+              "canonical": "10032967"
+            }
+          ],
+          "supplier_normalizations": [
+            {
+              "literal": "Ainsworth",
+              "canonical": "Ainsworth Inc."
+            },
+            {
+              "literal": "Black Creek Mechanical Ltd",
+              "canonical": "Black Creek Mechanical Ltd."
+            }
+          ],
+          "contract_extras": [],
+          "contract_omissions": [],
+          "count_discrepancies": []
+        },
+        {
+          "mode": "batch",
+          "repeat": 1,
+          "state": "success",
+          "contracts_match": true,
+          "metrics": {
+            "expected": 34,
+            "observed": 34,
+            "correct": 34,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "numeric_metrics": {
+            "expected": 34,
+            "observed": 34,
+            "correct": 34,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "reference_normalizations": [],
+          "supplier_normalizations": [],
+          "contract_extras": [],
+          "contract_omissions": [],
+          "count_discrepancies": []
+        },
+        {
+          "mode": "batch",
+          "repeat": 2,
+          "state": "success",
+          "contracts_match": true,
+          "metrics": {
+            "expected": 34,
+            "observed": 34,
+            "correct": 34,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "numeric_metrics": {
+            "expected": 34,
+            "observed": 34,
+            "correct": 34,
+            "precision": 1.0,
+            "recall": 1.0,
+            "omissions": [],
+            "false_joins": [],
+            "attribute_errors": [],
+            "fabrications": [],
+            "duplicates": []
+          },
+          "reference_normalizations": [
+            {
+              "literal": "RFP No. 2104-09-3006",
+              "canonical": "2104-09-3006"
+            },
+            {
+              "literal": "RFP No. 2104-09-3006",
+              "canonical": "2104-09-3006"
+            },
+            {
+              "literal": "RFP No. 2104-09-3006",
+              "canonical": "2104-09-3006"
+            },
+            {
+              "literal": "RFP No. 2104-09-3006",
+              "canonical": "2104-09-3006"
+            },
+            {
+              "literal": "RFP No. 2104-09-3006",
+              "canonical": "2104-09-3006"
+            },
+            {
+              "literal": "RFP No. 2104-09-3006",
+              "canonical": "2104-09-3006"
+            },
+            {
+              "literal": "RFP No. 2104-09-3006",
+              "canonical": "2104-09-3006"
+            },
+            {
+              "literal": "RFP No. 2104-09-3006",
+              "canonical": "2104-09-3006"
+            },
+            {
+              "literal": "RFP No. 2104-09-3006",
+              "canonical": "2104-09-3006"
+            },
+            {
+              "literal": "RFP No. 10032967",
+              "canonical": "10032967"
+            },
+            {
+              "literal": "RFP No. 10032967",
+              "canonical": "10032967"
+            },
+            {
+              "literal": "RFP No. 10032967",
+              "canonical": "10032967"
+            },
+            {
+              "literal": "RFP No. 10032967",
+              "canonical": "10032967"
+            },
+            {
+              "literal": "RFP No. 10032967",
+              "canonical": "10032967"
+            },
+            {
+              "literal": "RFP No. 10032967",
+              "canonical": "10032967"
+            },
+            {
+              "literal": "RFP No. 10032967",
+              "canonical": "10032967"
+            },
+            {
+              "literal": "RFP No. 10032967",
+              "canonical": "10032967"
+            },
+            {
+              "literal": "RFP No. 10032967",
+              "canonical": "10032967"
+            },
+            {
+              "literal": "RFP No. 10032967",
+              "canonical": "10032967"
+            },
+            {
+              "literal": "RFP No. 10032967",
+              "canonical": "10032967"
+            },
+            {
+              "literal": "RFP No. 10032967",
+              "canonical": "10032967"
+            },
+            {
+              "literal": "RFP No. 10032967",
+              "canonical": "10032967"
+            },
+            {
+              "literal": "RFP No. 10032967",
+              "canonical": "10032967"
+            },
+            {
+              "literal": "RFP No. 10032967",
+              "canonical": "10032967"
+            },
+            {
+              "literal": "RFP No. 10032967",
+              "canonical": "10032967"
+            },
+            {
+              "literal": "RFP No. 10032967",
+              "canonical": "10032967"
+            },
+            {
+              "literal": "RFP No. 10032967",
+              "canonical": "10032967"
+            },
+            {
+              "literal": "RFP No. 10032967",
+              "canonical": "10032967"
+            },
+            {
+              "literal": "RFP No. 10032967",
+              "canonical": "10032967"
+            },
+            {
+              "literal": "RFP No. 10032967",
+              "canonical": "10032967"
+            },
+            {
+              "literal": "RFP No. 10032967",
+              "canonical": "10032967"
+            },
+            {
+              "literal": "RFP No. 10032967",
+              "canonical": "10032967"
+            },
+            {
+              "literal": "RFP No. 10032967",
+              "canonical": "10032967"
+            },
+            {
+              "literal": "RFP No. 10032967",
+              "canonical": "10032967"
+            }
+          ],
+          "supplier_normalizations": [],
+          "contract_extras": [],
+          "contract_omissions": [],
+          "count_discrepancies": []
+        }
+      ]
+    }
+  ],
+  "production_qualified": false,
+  "supplementary_source_reviewed": {
+    "held_out": {
+      "requests": 28,
+      "states": {
+        "success": 28
+      },
+      "exact_relations": {
+        "expected": 88,
+        "observed": 88,
+        "correct": 88,
+        "omissions": 0,
+        "attribute_errors": 0,
+        "false_joins": 0,
+        "fabrications": 0,
+        "duplicates": 0,
+        "planned_expected": 88
+      },
+      "numeric_correct": 88,
+      "exact_documents": 24,
+      "provenance_issues": 0,
+      "charged_microdollars": 226562,
+      "by_mode": {
+        "sync": {
+          "requests": 14,
+          "states": {
+            "success": 14
+          },
+          "exact_relations": {
+            "expected": 44,
+            "observed": 44,
+            "correct": 44,
+            "omissions": 0,
+            "attribute_errors": 0,
+            "false_joins": 0,
+            "fabrications": 0,
+            "duplicates": 0,
+            "planned_expected": 44
+          },
+          "numeric_correct": 44,
+          "exact_documents": 12,
+          "provenance_issues": 0,
+          "charged_microdollars": 149262
+        },
+        "batch": {
+          "requests": 14,
+          "states": {
+            "success": 14
+          },
+          "exact_relations": {
+            "expected": 44,
+            "observed": 44,
+            "correct": 44,
+            "omissions": 0,
+            "attribute_errors": 0,
+            "false_joins": 0,
+            "fabrications": 0,
+            "duplicates": 0,
+            "planned_expected": 44
+          },
+          "numeric_correct": 44,
+          "exact_documents": 12,
+          "provenance_issues": 0,
+          "charged_microdollars": 77300
+        }
+      }
+    },
+    "regression": {
+      "requests": 40,
+      "states": {
+        "success": 40
+      },
+      "exact_relations": {
+        "expected": 332,
+        "observed": 334,
+        "correct": 324,
+        "omissions": 8,
+        "attribute_errors": 8,
+        "false_joins": 2,
+        "fabrications": 0,
+        "duplicates": 0,
+        "planned_expected": 332
+      },
+      "numeric_correct": 324,
+      "exact_documents": 34,
+      "provenance_issues": 0,
+      "charged_microdollars": 560230,
+      "by_mode": {
+        "sync": {
+          "requests": 20,
+          "states": {
+            "success": 20
+          },
+          "exact_relations": {
+            "expected": 166,
+            "observed": 166,
+            "correct": 164,
+            "omissions": 2,
+            "attribute_errors": 2,
+            "false_joins": 0,
+            "fabrications": 0,
+            "duplicates": 0,
+            "planned_expected": 166
+          },
+          "numeric_correct": 164,
+          "exact_documents": 18,
+          "provenance_issues": 0,
+          "charged_microdollars": 374730
+        },
+        "batch": {
+          "requests": 20,
+          "states": {
+            "success": 20
+          },
+          "exact_relations": {
+            "expected": 166,
+            "observed": 168,
+            "correct": 160,
+            "omissions": 6,
+            "attribute_errors": 6,
+            "false_joins": 2,
+            "fabrications": 0,
+            "duplicates": 0,
+            "planned_expected": 166
+          },
+          "numeric_correct": 160,
+          "exact_documents": 16,
+          "provenance_issues": 0,
+          "charged_microdollars": 185500
+        }
+      }
+    }
+  },
+  "protected_unpriced_participations": [
+    {
+      "mode": "sync",
+      "repeat": 1,
+      "document": "zoo-fence",
+      "supplier": "Imperial Fence Inc.",
+      "contract": "RFT-42",
+      "named_participation_present": true,
+      "correctly_unpriced": true,
+      "unsupported_priced_observations": 0
+    },
+    {
+      "mode": "sync",
+      "repeat": 1,
+      "document": "composite",
+      "supplier": "Guillevin International Co.",
+      "contract": "6302-12-0219",
+      "named_participation_present": true,
+      "correctly_unpriced": true,
+      "unsupported_priced_observations": 0
+    },
+    {
+      "mode": "sync",
+      "repeat": 1,
+      "document": "composite",
+      "supplier": "Accrue Contracting Ltd.",
+      "contract": "3917-12-7226",
+      "named_participation_present": true,
+      "correctly_unpriced": true,
+      "unsupported_priced_observations": 0
+    },
+    {
+      "mode": "sync",
+      "repeat": 1,
+      "document": "composite",
+      "supplier": "Steelcore Construction Ltd.",
+      "contract": "192-2012",
+      "named_participation_present": true,
+      "correctly_unpriced": true,
+      "unsupported_priced_observations": 0
+    },
+    {
+      "mode": "sync",
+      "repeat": 1,
+      "document": "composite",
+      "supplier": "Jones & Bartlett Learning",
+      "contract": "3001-12-3202",
+      "named_participation_present": true,
+      "correctly_unpriced": true,
+      "unsupported_priced_observations": 0
+    },
+    {
+      "mode": "sync",
+      "repeat": 2,
+      "document": "zoo-fence",
+      "supplier": "Imperial Fence Inc.",
+      "contract": "RFT-42",
+      "named_participation_present": true,
+      "correctly_unpriced": false,
+      "unsupported_priced_observations": 1
+    },
+    {
+      "mode": "sync",
+      "repeat": 2,
+      "document": "composite",
+      "supplier": "Guillevin International Co.",
+      "contract": "6302-12-0219",
+      "named_participation_present": true,
+      "correctly_unpriced": true,
+      "unsupported_priced_observations": 0
+    },
+    {
+      "mode": "sync",
+      "repeat": 2,
+      "document": "composite",
+      "supplier": "Accrue Contracting Ltd.",
+      "contract": "3917-12-7226",
+      "named_participation_present": true,
+      "correctly_unpriced": true,
+      "unsupported_priced_observations": 0
+    },
+    {
+      "mode": "sync",
+      "repeat": 2,
+      "document": "composite",
+      "supplier": "Steelcore Construction Ltd.",
+      "contract": "192-2012",
+      "named_participation_present": true,
+      "correctly_unpriced": true,
+      "unsupported_priced_observations": 0
+    },
+    {
+      "mode": "sync",
+      "repeat": 2,
+      "document": "composite",
+      "supplier": "Jones & Bartlett Learning",
+      "contract": "3001-12-3202",
+      "named_participation_present": true,
+      "correctly_unpriced": true,
+      "unsupported_priced_observations": 0
+    },
+    {
+      "mode": "batch",
+      "repeat": 1,
+      "document": "zoo-fence",
+      "supplier": "Imperial Fence Inc.",
+      "contract": "RFT-42",
+      "named_participation_present": true,
+      "correctly_unpriced": true,
+      "unsupported_priced_observations": 0
+    },
+    {
+      "mode": "batch",
+      "repeat": 1,
+      "document": "composite",
+      "supplier": "Guillevin International Co.",
+      "contract": "6302-12-0219",
+      "named_participation_present": true,
+      "correctly_unpriced": true,
+      "unsupported_priced_observations": 0
+    },
+    {
+      "mode": "batch",
+      "repeat": 1,
+      "document": "composite",
+      "supplier": "Accrue Contracting Ltd.",
+      "contract": "3917-12-7226",
+      "named_participation_present": true,
+      "correctly_unpriced": true,
+      "unsupported_priced_observations": 0
+    },
+    {
+      "mode": "batch",
+      "repeat": 1,
+      "document": "composite",
+      "supplier": "Steelcore Construction Ltd.",
+      "contract": "192-2012",
+      "named_participation_present": true,
+      "correctly_unpriced": true,
+      "unsupported_priced_observations": 0
+    },
+    {
+      "mode": "batch",
+      "repeat": 1,
+      "document": "composite",
+      "supplier": "Jones & Bartlett Learning",
+      "contract": "3001-12-3202",
+      "named_participation_present": true,
+      "correctly_unpriced": true,
+      "unsupported_priced_observations": 0
+    },
+    {
+      "mode": "batch",
+      "repeat": 2,
+      "document": "zoo-fence",
+      "supplier": "Imperial Fence Inc.",
+      "contract": "RFT-42",
+      "named_participation_present": true,
+      "correctly_unpriced": true,
+      "unsupported_priced_observations": 0
+    },
+    {
+      "mode": "batch",
+      "repeat": 2,
+      "document": "composite",
+      "supplier": "Guillevin International Co.",
+      "contract": "6302-12-0219",
+      "named_participation_present": true,
+      "correctly_unpriced": true,
+      "unsupported_priced_observations": 0
+    },
+    {
+      "mode": "batch",
+      "repeat": 2,
+      "document": "composite",
+      "supplier": "Accrue Contracting Ltd.",
+      "contract": "3917-12-7226",
+      "named_participation_present": true,
+      "correctly_unpriced": true,
+      "unsupported_priced_observations": 0
+    },
+    {
+      "mode": "batch",
+      "repeat": 2,
+      "document": "composite",
+      "supplier": "Steelcore Construction Ltd.",
+      "contract": "192-2012",
+      "named_participation_present": true,
+      "correctly_unpriced": true,
+      "unsupported_priced_observations": 0
+    },
+    {
+      "mode": "batch",
+      "repeat": 2,
+      "document": "composite",
+      "supplier": "Jones & Bartlett Learning",
+      "contract": "3001-12-3202",
+      "named_participation_present": true,
+      "correctly_unpriced": true,
+      "unsupported_priced_observations": 0
+    }
+  ],
+  "supplementary_mode_comparisons": [
+    {
+      "document": "held-ep-av",
+      "successful_observations": 4,
+      "relationship_variants": 1,
+      "mode_variant_counts": {
+        "sync": 1,
+        "batch": 1
+      },
+      "observed_mode_sets_agree": true
+    },
+    {
+      "document": "held-ep-fence",
+      "successful_observations": 4,
+      "relationship_variants": 1,
+      "mode_variant_counts": {
+        "sync": 1,
+        "batch": 1
+      },
+      "observed_mode_sets_agree": true
+    },
+    {
+      "document": "held-ep-status",
+      "successful_observations": 4,
+      "relationship_variants": 1,
+      "mode_variant_counts": {
+        "sync": 1,
+        "batch": 1
+      },
+      "observed_mode_sets_agree": true
+    },
+    {
+      "document": "held-trca-gates",
+      "successful_observations": 4,
+      "relationship_variants": 1,
+      "mode_variant_counts": {
+        "sync": 1,
+        "batch": 1
+      },
+      "observed_mode_sets_agree": true
+    },
+    {
+      "document": "held-trca-appraisal",
+      "successful_observations": 4,
+      "relationship_variants": 1,
+      "mode_variant_counts": {
+        "sync": 1,
+        "batch": 1
+      },
+      "observed_mode_sets_agree": true
+    },
+    {
+      "document": "held-zoo-walrus",
+      "successful_observations": 4,
+      "relationship_variants": 1,
+      "mode_variant_counts": {
+        "sync": 1,
+        "batch": 1
+      },
+      "observed_mode_sets_agree": true
+    },
+    {
+      "document": "held-zoo-energy",
+      "successful_observations": 4,
+      "relationship_variants": 1,
+      "mode_variant_counts": {
+        "sync": 1,
+        "batch": 1
+      },
+      "observed_mode_sets_agree": true
+    },
+    {
+      "document": "award-summary",
+      "successful_observations": 4,
+      "relationship_variants": 1,
+      "mode_variant_counts": {
+        "sync": 1,
+        "batch": 1
+      },
+      "observed_mode_sets_agree": true
+    },
+    {
+      "document": "bd-report",
+      "successful_observations": 4,
+      "relationship_variants": 1,
+      "mode_variant_counts": {
+        "sync": 1,
+        "batch": 1
+      },
+      "observed_mode_sets_agree": true
+    },
+    {
+      "document": "ep-bus-duct",
+      "successful_observations": 4,
+      "relationship_variants": 1,
+      "mode_variant_counts": {
+        "sync": 1,
+        "batch": 1
+      },
+      "observed_mode_sets_agree": true
+    },
+    {
+      "document": "ep-negative",
+      "successful_observations": 4,
+      "relationship_variants": 1,
+      "mode_variant_counts": {
+        "sync": 1,
+        "batch": 1
+      },
+      "observed_mode_sets_agree": true
+    },
+    {
+      "document": "zoo-fence",
+      "successful_observations": 4,
+      "relationship_variants": 2,
+      "mode_variant_counts": {
+        "sync": 2,
+        "batch": 1
+      },
+      "observed_mode_sets_agree": false
+    },
+    {
+      "document": "composite",
+      "successful_observations": 4,
+      "relationship_variants": 1,
+      "mode_variant_counts": {
+        "sync": 1,
+        "batch": 1
+      },
+      "observed_mode_sets_agree": true
+    },
+    {
+      "document": "committee",
+      "successful_observations": 4,
+      "relationship_variants": 1,
+      "mode_variant_counts": {
+        "sync": 1,
+        "batch": 1
+      },
+      "observed_mode_sets_agree": true
+    },
+    {
+      "document": "trca-D01",
+      "successful_observations": 4,
+      "relationship_variants": 3,
+      "mode_variant_counts": {
+        "sync": 1,
+        "batch": 2
+      },
+      "observed_mode_sets_agree": false
+    },
+    {
+      "document": "trca-D02",
+      "successful_observations": 4,
+      "relationship_variants": 2,
+      "mode_variant_counts": {
+        "sync": 1,
+        "batch": 1
+      },
+      "observed_mode_sets_agree": false
+    },
+    {
+      "document": "trca-D04",
+      "successful_observations": 4,
+      "relationship_variants": 2,
+      "mode_variant_counts": {
+        "sync": 2,
+        "batch": 1
+      },
+      "observed_mode_sets_agree": false
+    }
+  ],
+  "limitations": [
+    "Purposive source-level holdout, not random archive sample.",
+    "Agent-reviewed source labels, not independent human adjudication.",
+    "Held-out sources cover EP, TRCA and Zoo only.",
+    "Prompt frozen from the prior comparison; no tuning after outputs."
+  ]
+}

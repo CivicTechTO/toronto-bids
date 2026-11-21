@@ -1,0 +1,698 @@
+[
+  {
+    "finding": {
+      "url": "https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=18300",
+      "document_sha256": "4615e3e4ed1c5d6b6c3ff9868da5266e6147273f742532fc0c67be24228741bb",
+      "prompt_version": "v1-b63aa8c835ae",
+      "reference": "RFT No. 10040951",
+      "declared": 6,
+      "actual": 3,
+      "delta": -3,
+      "review_key": "a2e3c59f7870a5fc688f29b02f65793b43ea363e9442267ffbeec992d33d3ec3",
+      "review": null,
+      "resolved": false
+    },
+    "source_text_sha256": "2565a2d8ed65ebbbb95ab9986302bd50373d704f110c6b67d873c57fedae0236",
+    "response_sha256": "e2fc87422d1f3f5e5d57d0f59c6a365a1d063d0cc806da1cede7a95775e57167",
+    "extraction": {
+      "contracts": [
+        {
+          "reference": "RFT No. 10040951",
+          "solicitation_type": "RFT",
+          "title": "Channel Works in Yellow Creek near Heath Street Project",
+          "buyer": "Toronto and Region Conservation Authority (TRCA)",
+          "posted_date": "2024-02-26",
+          "closed_date": "2024-03-19",
+          "documents_taken": 17,
+          "declared_submissions": 6,
+          "declared_compliant": null,
+          "stage": "prequalification_then_tender",
+          "prequalified": [
+            "2220742 Ontario Ltd o/a Bronte Construction",
+            "560789 Ontario Limited o/a R&M Construction",
+            "Buildscapes Construction Ltd.",
+            "Dynex Construction Inc.",
+            "Pine Valley Corporation",
+            "Shoreline Restoration Ltd."
+          ],
+          "invited_to_tender": [
+            "2220742 Ontario Ltd o/a Bronte Construction",
+            "560789 Ontario Limited o/a R&M Construction",
+            "Dynex Construction Inc."
+          ],
+          "bids": [
+            {
+              "supplier_name": "Dynex Construction Inc.",
+              "amount_raw": "$2,947,485.00",
+              "amount_basis": "plus_HST",
+              "status": "compliant",
+              "rank": 1
+            },
+            {
+              "supplier_name": "560789 Ontario Limited o/a R&M Construction",
+              "amount_raw": "$3,611,536.80",
+              "amount_basis": "plus_HST",
+              "status": "not_stated",
+              "rank": 2
+            },
+            {
+              "supplier_name": "2220742 Ontario Limited o/a Bronte Construction",
+              "amount_raw": "$4,417,565.60",
+              "amount_basis": "plus_HST",
+              "status": "not_stated",
+              "rank": 3
+            }
+          ],
+          "awards": [
+            {
+              "supplier_name": "Dynex Construction Inc.",
+              "amount_raw": "$2,947,485.00",
+              "amount_basis": "plus_HST",
+              "contingency_raw": "$294,748.50 (approximately 10% of the project cost)",
+              "value_confidential": false
+            }
+          ],
+          "funding_source": "2025 City of Toronto capital budget for Valley Erosion Hazards Projects",
+          "decision_date": "2025-02-07",
+          "decision_body": "Board of Directors"
+        }
+      ],
+      "_flags": [
+        {
+          "reference": "RFT No. 10040951",
+          "declared": 6,
+          "actual": 3,
+          "delta": -3
+        }
+      ]
+    },
+    "provider": "not recorded; not a Claude qualification input"
+  },
+  {
+    "finding": {
+      "url": "https://www.toronto.ca/legdocs/mmis/2012/bd/bgrd/backgroundfile-52208.pdf",
+      "document_sha256": "f3ab0f9a9140dd2c7e074355469c2e3745808a2779c1dbd3bddb06722eda480e",
+      "prompt_version": "v1-b63aa8c835ae",
+      "reference": "Request for Quotation 6302-12-0219",
+      "declared": 6,
+      "actual": 1,
+      "delta": -5,
+      "review_key": "05a743b0c3cf72b06c528b80d5c413ec50db6fb785fe122888c88d6dafdf26bc",
+      "review": null,
+      "resolved": false
+    },
+    "source_text_sha256": "8c215821c896b6040f971bba85cd7108b36174060e0cab3c78854d860060072c",
+    "response_sha256": "e6a501e9856b5afdb6bf260cf21a2c8cdd9ea0ade29c9fc7608d353ff5b3aff3",
+    "extraction": {
+      "contracts": [
+        {
+          "reference": "Request for Quotation 6302-12-0219",
+          "solicitation_type": "RFQ",
+          "title": "non-exclusive supply and delivery of various shop supplies to various Purchasing and Materials Management (Stores) locations",
+          "buyer": "City of Toronto",
+          "posted_date": "2012-10-01",
+          "closed_date": "2012-10-22",
+          "documents_taken": null,
+          "declared_submissions": 6,
+          "declared_compliant": null,
+          "stage": "single_stage",
+          "prequalified": [],
+          "invited_to_tender": [],
+          "bids": [
+            {
+              "supplier_name": "Guillevin International Co.",
+              "amount_raw": "$284,752.25 net of all applicable taxes and charges",
+              "amount_basis": "net_of_taxes",
+              "status": "compliant",
+              "rank": 1
+            }
+          ],
+          "awards": [
+            {
+              "supplier_name": "Guillevin International Co.",
+              "amount_raw": "$284,752.25 net of all applicable taxes and charges",
+              "amount_basis": "net_of_taxes",
+              "contingency_raw": null,
+              "value_confidential": false
+            }
+          ],
+          "funding_source": "PMMD Stores inventory holding Balance Sheet accounts (160004, 160026, 160049, 160067, 160068, 160082, 160083, 160085)",
+          "decision_date": "2012-11-21",
+          "decision_body": "Bid Committee"
+        },
+        {
+          "reference": "Request for Quotation 3917-12-7226",
+          "solicitation_type": "RFQ",
+          "title": "non exclusive provision of emergency and planned Concrete Cutting Services complete with Operator as required by Toronto Water District Operations on lands and road allowances in Etobicoke York, Toronto East York, North York and Scarborough Districts",
+          "buyer": "City of Toronto",
+          "posted_date": "2012-10-05",
+          "closed_date": "2012-10-24",
+          "documents_taken": null,
+          "declared_submissions": 2,
+          "declared_compliant": null,
+          "stage": "single_stage",
+          "prequalified": [],
+          "invited_to_tender": [],
+          "bids": [
+            {
+              "supplier_name": "Accrue Contracting Ltd.",
+              "amount_raw": "$420,000.00 net of all applicable taxes and charges",
+              "amount_basis": "net_of_taxes",
+              "status": "compliant",
+              "rank": 1
+            }
+          ],
+          "awards": [
+            {
+              "supplier_name": "Accrue Contracting Ltd.",
+              "amount_raw": "$420,000.00 net of all applicable taxes and charges",
+              "amount_basis": "net_of_taxes",
+              "contingency_raw": null,
+              "value_confidential": false
+            }
+          ],
+          "funding_source": "2012 Approved Operating Budget for Toronto Water; 2013 Recommended Operating Budget for Toronto Water",
+          "decision_date": "2012-11-21",
+          "decision_body": "Bid Committee"
+        },
+        {
+          "reference": "Tender Call 192-2012",
+          "solicitation_type": "RFT",
+          "title": "State of Good Repair Work at York Civic Centre, 2700 Eglinton Ave West, Toronto, Ontario",
+          "buyer": "City of Toronto",
+          "posted_date": "2012-08-24",
+          "closed_date": "2012-09-25",
+          "documents_taken": null,
+          "declared_submissions": 11,
+          "declared_compliant": null,
+          "stage": "single_stage",
+          "prequalified": [],
+          "invited_to_tender": [],
+          "bids": [
+            {
+              "supplier_name": "Steelcore Construction Ltd.",
+              "amount_raw": "$1,269,000.00 net of all applicable taxes and charges",
+              "amount_basis": "net_of_taxes",
+              "status": "compliant",
+              "rank": 1
+            }
+          ],
+          "awards": [
+            {
+              "supplier_name": "Steelcore Construction Ltd.",
+              "amount_raw": "$1,269,000.00 net of all applicable taxes and charges",
+              "amount_basis": "net_of_taxes",
+              "contingency_raw": null,
+              "value_confidential": false
+            }
+          ],
+          "funding_source": "2012 Approved Capital Budget for Facilities and Real Estate Management: CCA 187-06, CCA 186-05, CCA 195-03",
+          "decision_date": "2012-11-21",
+          "decision_body": "Bid Committee"
+        },
+        {
+          "reference": "Request for Quotations 3001-12-3202",
+          "solicitation_type": "RFQ",
+          "title": "supply and delivery of student and instructor manuals for First Aid, CPR, AED and Health Care Provider CPR for the Safe City Program, a section of the City of Toronto’s Emergency Medical Services Division (EMS)",
+          "buyer": "City of Toronto",
+          "posted_date": "2012-10-16",
+          "closed_date": "2012-10-31",
+          "documents_taken": null,
+          "declared_submissions": 1,
+          "declared_compliant": null,
+          "stage": "single_stage",
+          "prequalified": [],
+          "invited_to_tender": [],
+          "bids": [
+            {
+              "supplier_name": "Jones & Bartlett Learning",
+              "amount_raw": "$187,480.00 net of all applicable taxes and charges",
+              "amount_basis": "net_of_taxes",
+              "status": "compliant",
+              "rank": 1
+            }
+          ],
+          "awards": [
+            {
+              "supplier_name": "Jones & Bartlett Learning",
+              "amount_raw": "$187,480.00 net of all applicable taxes and charges",
+              "amount_basis": "net_of_taxes",
+              "contingency_raw": null,
+              "value_confidential": false
+            }
+          ],
+          "funding_source": "2012 Approved Operating Budget for Emergency Medical Services, Cost Centre B22040, Cost Element 4825; 2013 Operating Budget Submission for Emergency Medical Services, Cost Element 2600",
+          "decision_date": "2012-11-21",
+          "decision_body": "Bid Committee"
+        }
+      ],
+      "_flags": [
+        {
+          "reference": "Request for Quotation 6302-12-0219",
+          "declared": 6,
+          "actual": 1,
+          "delta": -5
+        },
+        {
+          "reference": "Request for Quotation 3917-12-7226",
+          "declared": 2,
+          "actual": 1,
+          "delta": -1
+        },
+        {
+          "reference": "Tender Call 192-2012",
+          "declared": 11,
+          "actual": 1,
+          "delta": -10
+        }
+      ]
+    },
+    "provider": "not recorded; not a Claude qualification input"
+  },
+  {
+    "finding": {
+      "url": "https://www.toronto.ca/legdocs/mmis/2012/bd/bgrd/backgroundfile-52208.pdf",
+      "document_sha256": "f3ab0f9a9140dd2c7e074355469c2e3745808a2779c1dbd3bddb06722eda480e",
+      "prompt_version": "v1-b63aa8c835ae",
+      "reference": "Request for Quotation 3917-12-7226",
+      "declared": 2,
+      "actual": 1,
+      "delta": -1,
+      "review_key": "a095b01d47b500e3567ecc4e271fbe1239835d4ed90b07bf64ee672cd0283531",
+      "review": null,
+      "resolved": false
+    },
+    "source_text_sha256": "8c215821c896b6040f971bba85cd7108b36174060e0cab3c78854d860060072c",
+    "response_sha256": "e6a501e9856b5afdb6bf260cf21a2c8cdd9ea0ade29c9fc7608d353ff5b3aff3",
+    "extraction": {
+      "contracts": [
+        {
+          "reference": "Request for Quotation 6302-12-0219",
+          "solicitation_type": "RFQ",
+          "title": "non-exclusive supply and delivery of various shop supplies to various Purchasing and Materials Management (Stores) locations",
+          "buyer": "City of Toronto",
+          "posted_date": "2012-10-01",
+          "closed_date": "2012-10-22",
+          "documents_taken": null,
+          "declared_submissions": 6,
+          "declared_compliant": null,
+          "stage": "single_stage",
+          "prequalified": [],
+          "invited_to_tender": [],
+          "bids": [
+            {
+              "supplier_name": "Guillevin International Co.",
+              "amount_raw": "$284,752.25 net of all applicable taxes and charges",
+              "amount_basis": "net_of_taxes",
+              "status": "compliant",
+              "rank": 1
+            }
+          ],
+          "awards": [
+            {
+              "supplier_name": "Guillevin International Co.",
+              "amount_raw": "$284,752.25 net of all applicable taxes and charges",
+              "amount_basis": "net_of_taxes",
+              "contingency_raw": null,
+              "value_confidential": false
+            }
+          ],
+          "funding_source": "PMMD Stores inventory holding Balance Sheet accounts (160004, 160026, 160049, 160067, 160068, 160082, 160083, 160085)",
+          "decision_date": "2012-11-21",
+          "decision_body": "Bid Committee"
+        },
+        {
+          "reference": "Request for Quotation 3917-12-7226",
+          "solicitation_type": "RFQ",
+          "title": "non exclusive provision of emergency and planned Concrete Cutting Services complete with Operator as required by Toronto Water District Operations on lands and road allowances in Etobicoke York, Toronto East York, North York and Scarborough Districts",
+          "buyer": "City of Toronto",
+          "posted_date": "2012-10-05",
+          "closed_date": "2012-10-24",
+          "documents_taken": null,
+          "declared_submissions": 2,
+          "declared_compliant": null,
+          "stage": "single_stage",
+          "prequalified": [],
+          "invited_to_tender": [],
+          "bids": [
+            {
+              "supplier_name": "Accrue Contracting Ltd.",
+              "amount_raw": "$420,000.00 net of all applicable taxes and charges",
+              "amount_basis": "net_of_taxes",
+              "status": "compliant",
+              "rank": 1
+            }
+          ],
+          "awards": [
+            {
+              "supplier_name": "Accrue Contracting Ltd.",
+              "amount_raw": "$420,000.00 net of all applicable taxes and charges",
+              "amount_basis": "net_of_taxes",
+              "contingency_raw": null,
+              "value_confidential": false
+            }
+          ],
+          "funding_source": "2012 Approved Operating Budget for Toronto Water; 2013 Recommended Operating Budget for Toronto Water",
+          "decision_date": "2012-11-21",
+          "decision_body": "Bid Committee"
+        },
+        {
+          "reference": "Tender Call 192-2012",
+          "solicitation_type": "RFT",
+          "title": "State of Good Repair Work at York Civic Centre, 2700 Eglinton Ave West, Toronto, Ontario",
+          "buyer": "City of Toronto",
+          "posted_date": "2012-08-24",
+          "closed_date": "2012-09-25",
+          "documents_taken": null,
+          "declared_submissions": 11,
+          "declared_compliant": null,
+          "stage": "single_stage",
+          "prequalified": [],
+          "invited_to_tender": [],
+          "bids": [
+            {
+              "supplier_name": "Steelcore Construction Ltd.",
+              "amount_raw": "$1,269,000.00 net of all applicable taxes and charges",
+              "amount_basis": "net_of_taxes",
+              "status": "compliant",
+              "rank": 1
+            }
+          ],
+          "awards": [
+            {
+              "supplier_name": "Steelcore Construction Ltd.",
+              "amount_raw": "$1,269,000.00 net of all applicable taxes and charges",
+              "amount_basis": "net_of_taxes",
+              "contingency_raw": null,
+              "value_confidential": false
+            }
+          ],
+          "funding_source": "2012 Approved Capital Budget for Facilities and Real Estate Management: CCA 187-06, CCA 186-05, CCA 195-03",
+          "decision_date": "2012-11-21",
+          "decision_body": "Bid Committee"
+        },
+        {
+          "reference": "Request for Quotations 3001-12-3202",
+          "solicitation_type": "RFQ",
+          "title": "supply and delivery of student and instructor manuals for First Aid, CPR, AED and Health Care Provider CPR for the Safe City Program, a section of the City of Toronto’s Emergency Medical Services Division (EMS)",
+          "buyer": "City of Toronto",
+          "posted_date": "2012-10-16",
+          "closed_date": "2012-10-31",
+          "documents_taken": null,
+          "declared_submissions": 1,
+          "declared_compliant": null,
+          "stage": "single_stage",
+          "prequalified": [],
+          "invited_to_tender": [],
+          "bids": [
+            {
+              "supplier_name": "Jones & Bartlett Learning",
+              "amount_raw": "$187,480.00 net of all applicable taxes and charges",
+              "amount_basis": "net_of_taxes",
+              "status": "compliant",
+              "rank": 1
+            }
+          ],
+          "awards": [
+            {
+              "supplier_name": "Jones & Bartlett Learning",
+              "amount_raw": "$187,480.00 net of all applicable taxes and charges",
+              "amount_basis": "net_of_taxes",
+              "contingency_raw": null,
+              "value_confidential": false
+            }
+          ],
+          "funding_source": "2012 Approved Operating Budget for Emergency Medical Services, Cost Centre B22040, Cost Element 4825; 2013 Operating Budget Submission for Emergency Medical Services, Cost Element 2600",
+          "decision_date": "2012-11-21",
+          "decision_body": "Bid Committee"
+        }
+      ],
+      "_flags": [
+        {
+          "reference": "Request for Quotation 6302-12-0219",
+          "declared": 6,
+          "actual": 1,
+          "delta": -5
+        },
+        {
+          "reference": "Request for Quotation 3917-12-7226",
+          "declared": 2,
+          "actual": 1,
+          "delta": -1
+        },
+        {
+          "reference": "Tender Call 192-2012",
+          "declared": 11,
+          "actual": 1,
+          "delta": -10
+        }
+      ]
+    },
+    "provider": "not recorded; not a Claude qualification input"
+  },
+  {
+    "finding": {
+      "url": "https://www.toronto.ca/legdocs/mmis/2012/bd/bgrd/backgroundfile-52208.pdf",
+      "document_sha256": "f3ab0f9a9140dd2c7e074355469c2e3745808a2779c1dbd3bddb06722eda480e",
+      "prompt_version": "v1-b63aa8c835ae",
+      "reference": "Tender Call 192-2012",
+      "declared": 11,
+      "actual": 1,
+      "delta": -10,
+      "review_key": "19734d0aaff51a50621fb5244c16dd2b8986f45de2f0eb3363525cd783d5eaea",
+      "review": null,
+      "resolved": false
+    },
+    "source_text_sha256": "8c215821c896b6040f971bba85cd7108b36174060e0cab3c78854d860060072c",
+    "response_sha256": "e6a501e9856b5afdb6bf260cf21a2c8cdd9ea0ade29c9fc7608d353ff5b3aff3",
+    "extraction": {
+      "contracts": [
+        {
+          "reference": "Request for Quotation 6302-12-0219",
+          "solicitation_type": "RFQ",
+          "title": "non-exclusive supply and delivery of various shop supplies to various Purchasing and Materials Management (Stores) locations",
+          "buyer": "City of Toronto",
+          "posted_date": "2012-10-01",
+          "closed_date": "2012-10-22",
+          "documents_taken": null,
+          "declared_submissions": 6,
+          "declared_compliant": null,
+          "stage": "single_stage",
+          "prequalified": [],
+          "invited_to_tender": [],
+          "bids": [
+            {
+              "supplier_name": "Guillevin International Co.",
+              "amount_raw": "$284,752.25 net of all applicable taxes and charges",
+              "amount_basis": "net_of_taxes",
+              "status": "compliant",
+              "rank": 1
+            }
+          ],
+          "awards": [
+            {
+              "supplier_name": "Guillevin International Co.",
+              "amount_raw": "$284,752.25 net of all applicable taxes and charges",
+              "amount_basis": "net_of_taxes",
+              "contingency_raw": null,
+              "value_confidential": false
+            }
+          ],
+          "funding_source": "PMMD Stores inventory holding Balance Sheet accounts (160004, 160026, 160049, 160067, 160068, 160082, 160083, 160085)",
+          "decision_date": "2012-11-21",
+          "decision_body": "Bid Committee"
+        },
+        {
+          "reference": "Request for Quotation 3917-12-7226",
+          "solicitation_type": "RFQ",
+          "title": "non exclusive provision of emergency and planned Concrete Cutting Services complete with Operator as required by Toronto Water District Operations on lands and road allowances in Etobicoke York, Toronto East York, North York and Scarborough Districts",
+          "buyer": "City of Toronto",
+          "posted_date": "2012-10-05",
+          "closed_date": "2012-10-24",
+          "documents_taken": null,
+          "declared_submissions": 2,
+          "declared_compliant": null,
+          "stage": "single_stage",
+          "prequalified": [],
+          "invited_to_tender": [],
+          "bids": [
+            {
+              "supplier_name": "Accrue Contracting Ltd.",
+              "amount_raw": "$420,000.00 net of all applicable taxes and charges",
+              "amount_basis": "net_of_taxes",
+              "status": "compliant",
+              "rank": 1
+            }
+          ],
+          "awards": [
+            {
+              "supplier_name": "Accrue Contracting Ltd.",
+              "amount_raw": "$420,000.00 net of all applicable taxes and charges",
+              "amount_basis": "net_of_taxes",
+              "contingency_raw": null,
+              "value_confidential": false
+            }
+          ],
+          "funding_source": "2012 Approved Operating Budget for Toronto Water; 2013 Recommended Operating Budget for Toronto Water",
+          "decision_date": "2012-11-21",
+          "decision_body": "Bid Committee"
+        },
+        {
+          "reference": "Tender Call 192-2012",
+          "solicitation_type": "RFT",
+          "title": "State of Good Repair Work at York Civic Centre, 2700 Eglinton Ave West, Toronto, Ontario",
+          "buyer": "City of Toronto",
+          "posted_date": "2012-08-24",
+          "closed_date": "2012-09-25",
+          "documents_taken": null,
+          "declared_submissions": 11,
+          "declared_compliant": null,
+          "stage": "single_stage",
+          "prequalified": [],
+          "invited_to_tender": [],
+          "bids": [
+            {
+              "supplier_name": "Steelcore Construction Ltd.",
+              "amount_raw": "$1,269,000.00 net of all applicable taxes and charges",
+              "amount_basis": "net_of_taxes",
+              "status": "compliant",
+              "rank": 1
+            }
+          ],
+          "awards": [
+            {
+              "supplier_name": "Steelcore Construction Ltd.",
+              "amount_raw": "$1,269,000.00 net of all applicable taxes and charges",
+              "amount_basis": "net_of_taxes",
+              "contingency_raw": null,
+              "value_confidential": false
+            }
+          ],
+          "funding_source": "2012 Approved Capital Budget for Facilities and Real Estate Management: CCA 187-06, CCA 186-05, CCA 195-03",
+          "decision_date": "2012-11-21",
+          "decision_body": "Bid Committee"
+        },
+        {
+          "reference": "Request for Quotations 3001-12-3202",
+          "solicitation_type": "RFQ",
+          "title": "supply and delivery of student and instructor manuals for First Aid, CPR, AED and Health Care Provider CPR for the Safe City Program, a section of the City of Toronto’s Emergency Medical Services Division (EMS)",
+          "buyer": "City of Toronto",
+          "posted_date": "2012-10-16",
+          "closed_date": "2012-10-31",
+          "documents_taken": null,
+          "declared_submissions": 1,
+          "declared_compliant": null,
+          "stage": "single_stage",
+          "prequalified": [],
+          "invited_to_tender": [],
+          "bids": [
+            {
+              "supplier_name": "Jones & Bartlett Learning",
+              "amount_raw": "$187,480.00 net of all applicable taxes and charges",
+              "amount_basis": "net_of_taxes",
+              "status": "compliant",
+              "rank": 1
+            }
+          ],
+          "awards": [
+            {
+              "supplier_name": "Jones & Bartlett Learning",
+              "amount_raw": "$187,480.00 net of all applicable taxes and charges",
+              "amount_basis": "net_of_taxes",
+              "contingency_raw": null,
+              "value_confidential": false
+            }
+          ],
+          "funding_source": "2012 Approved Operating Budget for Emergency Medical Services, Cost Centre B22040, Cost Element 4825; 2013 Operating Budget Submission for Emergency Medical Services, Cost Element 2600",
+          "decision_date": "2012-11-21",
+          "decision_body": "Bid Committee"
+        }
+      ],
+      "_flags": [
+        {
+          "reference": "Request for Quotation 6302-12-0219",
+          "declared": 6,
+          "actual": 1,
+          "delta": -5
+        },
+        {
+          "reference": "Request for Quotation 3917-12-7226",
+          "declared": 2,
+          "actual": 1,
+          "delta": -1
+        },
+        {
+          "reference": "Tender Call 192-2012",
+          "declared": 11,
+          "actual": 1,
+          "delta": -10
+        }
+      ]
+    },
+    "provider": "not recorded; not a Claude qualification input"
+  },
+  {
+    "finding": {
+      "url": "https://www.toronto.ca/legdocs/mmis/2025/zb/bgrd/backgroundfile-260182.pdf",
+      "document_sha256": "5f74dcf0051c760b21de8fffcf5aa6b058f1cb90ac17f13bfb130ea6260a12a6",
+      "prompt_version": "v1-b63aa8c835ae",
+      "reference": "RFT-42",
+      "declared": 4,
+      "actual": 1,
+      "delta": -3,
+      "review_key": "26bee33cc2c49c257b74aa6b1167e37c97bd8f343e9ca2ac8c2787c3d07e071c",
+      "review": null,
+      "resolved": false
+    },
+    "source_text_sha256": "ec85b8f4fadc6db957f8abafcd0ceab21995426e71561bf1b51fbb501caf8275",
+    "response_sha256": "f17fbc6225aa749c5312e69383e91cd7adff32d68fa0f031c15fdff45d4fbdfb",
+    "extraction": {
+      "contracts": [
+        {
+          "reference": "RFT-42",
+          "solicitation_type": "RFT",
+          "title": "Construction of Perimeter Fence Project",
+          "buyer": "Toronto Zoo",
+          "posted_date": null,
+          "closed_date": null,
+          "documents_taken": null,
+          "declared_submissions": 4,
+          "declared_compliant": null,
+          "stage": "single_stage",
+          "prequalified": [],
+          "invited_to_tender": [],
+          "bids": [
+            {
+              "supplier_name": "Imperial Fence, Inc.",
+              "amount_raw": "$1,639,615.00",
+              "amount_basis": "net_of_taxes",
+              "status": "compliant",
+              "rank": 1
+            }
+          ],
+          "awards": [
+            {
+              "supplier_name": "Imperial Fence, Inc.",
+              "amount_raw": "$1,639,615.00",
+              "amount_basis": "net_of_taxes",
+              "contingency_raw": null,
+              "value_confidential": false
+            }
+          ],
+          "funding_source": "Grounds & Visitor Improvements Project of the approved 2025-2034 capital budget",
+          "decision_date": "2025-11-14",
+          "decision_body": "Board of Management of Toronto Zoo"
+        }
+      ],
+      "_flags": [
+        {
+          "reference": "RFT-42",
+          "declared": 4,
+          "actual": 1,
+          "delta": -3
+        }
+      ]
+    },
+    "provider": "not recorded; not a Claude qualification input"
+  }
+]

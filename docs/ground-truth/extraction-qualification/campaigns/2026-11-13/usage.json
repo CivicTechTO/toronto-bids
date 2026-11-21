@@ -1,0 +1,67 @@
+{
+  "requests": 48,
+  "charged_microdollars": 670469,
+  "tokens": {
+    "input_tokens": 139452,
+    "cache_creation_input_tokens": 5732,
+    "cache_read_input_tokens": 131836,
+    "output_tokens": 58865
+  },
+  "runs": [
+    {
+      "run": "2026-11-13-sonnet-high-reviewed-batch-1",
+      "mode": "batch",
+      "repeat": 1,
+      "requests": 15,
+      "charged_microdollars": 123228,
+      "tokens": {
+        "input_tokens": 39143,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 42990,
+        "output_tokens": 16385
+      }
+    },
+    {
+      "run": "2026-11-13-sonnet-high-reviewed-batch-2",
+      "mode": "batch",
+      "repeat": 2,
+      "requests": 9,
+      "charged_microdollars": 101413,
+      "tokens": {
+        "input_tokens": 30583,
+        "cache_creation_input_tokens": 2866,
+        "cache_read_input_tokens": 22928,
+        "output_tokens": 13219
+      }
+    },
+    {
+      "run": "2026-11-13-sonnet-high-reviewed-sync-1",
+      "mode": "sync",
+      "repeat": 1,
+      "requests": 15,
+      "charged_microdollars": 249549,
+      "tokens": {
+        "input_tokens": 39143,
+        "cache_creation_input_tokens": 2866,
+        "cache_read_input_tokens": 40124,
+        "output_tokens": 16008
+      }
+    },
+    {
+      "run": "2026-11-13-sonnet-high-reviewed-sync-2",
+      "mode": "sync",
+      "repeat": 2,
+      "requests": 9,
+      "charged_microdollars": 196279,
+      "tokens": {
+        "input_tokens": 30583,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 25794,
+        "output_tokens": 13253
+      }
+    }
+  ],
+  "unsettled_reservations": 0,
+  "pricing": "Reviewed local rates; usage-based estimate, not a provider invoice",
+  "extra_trials_requested": 0
+}

@@ -1,0 +1,51 @@
+[
+  {
+    "document": "held-ep-av",
+    "url": "https://www.toronto.ca/legdocs/mmis/2019/ep/bgrd/backgroundfile-131331.pdf",
+    "document_sha256": "2f3967557c4afbdf81c311ca967bdb6b0096a4b6b50522dda2787a5cc3e0862a",
+    "text_sha256": "96ee9cb1be29b04098f3e51a6ec58f0fed51d9f8dda46de44284fd232fadbbba",
+    "verification": "Held PDF SHA-256 and fresh pdftotext -layout rendering both match frozen source input."
+  },
+  {
+    "document": "held-ep-fence",
+    "url": "https://www.toronto.ca/legdocs/mmis/2023/ep/bgrd/backgroundfile-240943.pdf",
+    "document_sha256": "94c0383b9a9a9c8404bf9a82779885e48bf120d6f8a645bdaaa3cc27a0698062",
+    "text_sha256": "68ae0c64fb3b78e738e77ed1d8234f7b31fad279334e25a95bd866cc8fc3f3f4",
+    "verification": "Held PDF SHA-256 and fresh pdftotext -layout rendering both match frozen source input."
+  },
+  {
+    "document": "held-ep-status",
+    "url": "https://www.toronto.ca/legdocs/mmis/2023/ep/bgrd/backgroundfile-230442.pdf",
+    "document_sha256": "ba11015e4751cae699611e3137879646550f5a65e988a30dce37be3949b81086",
+    "text_sha256": "74ae4c188d8d892aea93e55fd146326dc717b99dd0acb78d641f9ff93dcbc584",
+    "verification": "Held PDF SHA-256 and fresh pdftotext -layout rendering both match frozen source input."
+  },
+  {
+    "document": "held-trca-gates",
+    "url": "https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=3250",
+    "document_sha256": "ce6925b1c02b35c224181e12d480b1b381c4f00eb56b1dafbdc21956f754d181",
+    "text_sha256": "c45c234ca4e3f88bcdcdbc1fcb9d96c1f752ea56fd17413c4c021518d15ac163",
+    "verification": "Held PDF SHA-256 and fresh pdftotext -layout rendering both match frozen source input."
+  },
+  {
+    "document": "held-trca-appraisal",
+    "url": "https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=7894",
+    "document_sha256": "79882bd9a77fd2b5daf2dacca79880755adae2f6be040ee0fb85d8d77f19665c",
+    "text_sha256": "a25b53b093007cdc657a79abf7c195b8285f4c7ac60c5b000bb398abd0ff982b",
+    "verification": "Held PDF SHA-256 and fresh pdftotext -layout rendering both match frozen source input."
+  },
+  {
+    "document": "held-zoo-walrus",
+    "url": "https://www.toronto.ca/legdocs/mmis/2020/zb/bgrd/backgroundfile-147308.pdf",
+    "document_sha256": "f0a9232052be0a37b9fee449953745c3e7484d0e4991bae1a29ca16bab54ad5d",
+    "text_sha256": "51274278746001f76b6f8016fdb0912f0b3e8ec6bc2321ba6462e5f5e2e2926d",
+    "verification": "Held PDF SHA-256 and fresh pdftotext -layout rendering both match frozen source input."
+  },
+  {
+    "document": "held-zoo-energy",
+    "url": "https://www.toronto.ca/legdocs/mmis/2019/zb/bgrd/backgroundfile-124313.pdf",
+    "document_sha256": "04cf30191f3481ffdef06cb19c5a200a2f81db70a35684f34d2dee1b4d44b57a",
+    "text_sha256": "191ed04ecf59214618964b13c2d46e0d759e82d99a0778af87637dc90bd3f37e",
+    "verification": "Held PDF SHA-256 and fresh pdftotext -layout rendering both match frozen source input."
+  }
+]

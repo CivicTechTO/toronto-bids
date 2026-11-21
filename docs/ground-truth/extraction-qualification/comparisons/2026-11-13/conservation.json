@@ -1,0 +1,12 @@
+{
+  "requests": 80,
+  "unique_response_ids": 80,
+  "charged_microdollars": 2058287,
+  "unsettled_reservations": 0,
+  "production_cache_before": "584490b7a696d40cea1a39c42fe77b3d311c960b02c825e3d1d9726b8130adb6",
+  "production_cache_after": "584490b7a696d40cea1a39c42fe77b3d311c960b02c825e3d1d9726b8130adb6",
+  "production_cache_unchanged": true,
+  "production_prompt_version": "v1-b63aa8c835ae",
+  "production_prompt_unchanged": true,
+  "unused_batch_manifests_never_submitted": true
+}

@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "timing": "Retrospective source review after synchronous responses; frozen primary labels, requests and scores remain unchanged.",
+  "reference_aliases": [
+    {
+      "document": "held-ep-fence",
+      "alias": "Contract No. 23-079-37912 (RFT No. EP110-2023)",
+      "canonical": "EP110-2023",
+      "evidence": ["Contract No. 23-079-37912 (RFT No. EP110-2023)"],
+      "reason": "Full printed co-reference phrase identifies the same tender; the predeclared aliases covered each identifier separately. Benchmark-local equivalence only."
+    },
+    {
+      "document": "held-trca-gates",
+      "alias": "#10008808",
+      "canonical": "10008808",
+      "evidence": ["Contract #10008808", "Request for Quotations (RFQ) #10008808"],
+      "reason": "Printed hash prefix is a contract label, not a distinct identifier. Benchmark-local equivalence only."
+    }
+  ],
+  "supplier_aliases": [
+    {
+      "document": "zoo-fence",
+      "alias": "Imperial Fence, Inc.",
+      "canonical": "Imperial Fence Inc.",
+      "evidence": ["Imperial Fence, Inc.", "Imperial Fence Inc."],
+      "reason": "Both source-printed spellings identify the same named tenderer and recommended awardee. This was also disclosed in the preceding comparison, but its frozen strict labels remain unchanged."
+    }
+  ],
+  "unresolved": [
+    {
+      "document": "trca-D01",
+      "reason": "Frozen award basis is plus_HST, inferred from the matching submitted amount in a Fee (Plus HST) table; the award clause itself says plus applicable taxes. Both batch repeats use unknown for the award while retaining plus_HST for the bid. Revised instructions forbid inferring basis from another amount. Retain this as a source-label/prompt-policy interpretation dispute, not a definite factual tax error; frozen labels and strict scores stay unchanged."
+    },
+    {
+      "document": "trca-D02",
+      "reason": "Both frozen award labels are plus_HST using matching amounts in Fee (Plus HST) bid tables, while each award recommendation says plus applicable taxes. Both batch repeats use unknown only for the awards. The same source-label/prompt-policy interpretation dispute applies as D01. No retrospective basis correction or score repair."
+    },
+    {
+      "document": "held-ep-status",
+      "reason": "Frozen negative contract-array expectation is empty. Model emits an unnumbered ongoing Design-Build procurement with no bids or awards. Source explicitly describes that procurement, so this is an output-scope disagreement, not an invented supplier or price. The schema has no pending-procurement/award-status field. Keep the structural control failure visible; do not retrospectively change the expected contract list."
+    }
+  ]
+}

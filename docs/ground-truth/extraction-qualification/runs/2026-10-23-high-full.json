@@ -1,0 +1,1619 @@
+{
+  "id": "2026-10-23-high-full",
+  "attempts": {
+    "waterfront-2017-09": {
+      "state": "success",
+      "extraction": {
+        "contracts": [
+          {
+            "reference": null,
+            "solicitation_type": "unknown",
+            "title": "Port Lands Area – Soil & Groundwater Remediation and Treatment Technologies – Part B: Field-Scale Pilot Testing: surfactant enhanced injection combined with chemical oxidation technology",
+            "buyer": "Waterfront Toronto",
+            "posted_date": null,
+            "closed_date": null,
+            "documents_taken": null,
+            "declared_submissions": null,
+            "declared_compliant": null,
+            "stage": "single_stage",
+            "prequalified": [],
+            "invited_to_tender": [],
+            "bids": [],
+            "awards": [
+              {
+                "supplier_name": "Ethical Solutions",
+                "amount_raw": "$278,100",
+                "amount_basis": "unknown",
+                "contingency_raw": null,
+                "value_confidential": false
+              }
+            ],
+            "funding_source": null,
+            "decision_date": null,
+            "decision_body": null
+          },
+          {
+            "reference": null,
+            "solicitation_type": "unknown",
+            "title": "Port Lands Area – Soil & Groundwater Remediation and Treatment Technologies – Part B: Field-Scale Pilot Testing: demonstration of self-sustaining smouldering remediation in both in-situ and ex-situ environments technology",
+            "buyer": "Waterfront Toronto",
+            "posted_date": null,
+            "closed_date": null,
+            "documents_taken": null,
+            "declared_submissions": null,
+            "declared_compliant": null,
+            "stage": "single_stage",
+            "prequalified": [],
+            "invited_to_tender": [],
+            "bids": [],
+            "awards": [
+              {
+                "supplier_name": "Geosyntec Consultants",
+                "amount_raw": "$869,110",
+                "amount_basis": "unknown",
+                "contingency_raw": null,
+                "value_confidential": false
+              }
+            ],
+            "funding_source": null,
+            "decision_date": null,
+            "decision_body": null
+          },
+          {
+            "reference": null,
+            "solicitation_type": "unknown",
+            "title": "Port Lands Area – Soil & Groundwater Remediation and Treatment Technologies – Part B: Field-Scale Pilot Testing: in-situ biological cementation using urea-based solution to enhance geotechnical stability of soils technology",
+            "buyer": "Waterfront Toronto",
+            "posted_date": null,
+            "closed_date": null,
+            "documents_taken": null,
+            "declared_submissions": null,
+            "declared_compliant": null,
+            "stage": "single_stage",
+            "prequalified": [],
+            "invited_to_tender": [],
+            "bids": [],
+            "awards": [
+              {
+                "supplier_name": "Groundwater Technology BV",
+                "amount_raw": "$313,022",
+                "amount_basis": "unknown",
+                "contingency_raw": null,
+                "value_confidential": false
+              }
+            ],
+            "funding_source": null,
+            "decision_date": null,
+            "decision_body": null
+          },
+          {
+            "reference": null,
+            "solicitation_type": "unknown",
+            "title": "Port Lands Area – Soil & Groundwater Remediation and Treatment Technologies – Part B: Field-Scale Pilot Testing: Block and Absorb and Enhanced Aerobic Biodegration technology",
+            "buyer": "Waterfront Toronto",
+            "posted_date": null,
+            "closed_date": null,
+            "documents_taken": null,
+            "declared_submissions": null,
+            "declared_compliant": null,
+            "stage": "single_stage",
+            "prequalified": [],
+            "invited_to_tender": [],
+            "bids": [],
+            "awards": [
+              {
+                "supplier_name": "WSP Canada",
+                "amount_raw": "$340,335",
+                "amount_basis": "unknown",
+                "contingency_raw": null,
+                "value_confidential": false
+              }
+            ],
+            "funding_source": null,
+            "decision_date": null,
+            "decision_body": null
+          },
+          {
+            "reference": null,
+            "solicitation_type": "sole_source",
+            "title": "Engineering and Inspection Fees for Services for Bayside Phase II",
+            "buyer": "Waterfront Toronto",
+            "posted_date": null,
+            "closed_date": null,
+            "documents_taken": null,
+            "declared_submissions": null,
+            "declared_compliant": null,
+            "stage": "single_stage",
+            "prequalified": [],
+            "invited_to_tender": [],
+            "bids": [],
+            "awards": [
+              {
+                "supplier_name": "City of Toronto",
+                "amount_raw": "$88,950",
+                "amount_basis": "unknown",
+                "contingency_raw": null,
+                "value_confidential": false
+              }
+            ],
+            "funding_source": null,
+            "decision_date": null,
+            "decision_body": null
+          },
+          {
+            "reference": null,
+            "solicitation_type": "sole_source",
+            "title": "Legal Services to Assist with Board/Corporate Governance Matters",
+            "buyer": "Waterfront Toronto",
+            "posted_date": null,
+            "closed_date": null,
+            "documents_taken": null,
+            "declared_submissions": null,
+            "declared_compliant": null,
+            "stage": "single_stage",
+            "prequalified": [],
+            "invited_to_tender": [],
+            "bids": [],
+            "awards": [
+              {
+                "supplier_name": "Axiom Global Canada Inc.",
+                "amount_raw": "$52,000",
+                "amount_basis": "unknown",
+                "contingency_raw": null,
+                "value_confidential": false
+              }
+            ],
+            "funding_source": null,
+            "decision_date": null,
+            "decision_body": null
+          },
+          {
+            "reference": null,
+            "solicitation_type": "unknown",
+            "title": "Interior Design-Build Services for Waterfront Toronto’s Corporate Office",
+            "buyer": "Waterfront Toronto",
+            "posted_date": null,
+            "closed_date": null,
+            "documents_taken": null,
+            "declared_submissions": null,
+            "declared_compliant": null,
+            "stage": "single_stage",
+            "prequalified": [],
+            "invited_to_tender": [],
+            "bids": [],
+            "awards": [
+              {
+                "supplier_name": "Greenferd Construction Inc.",
+                "amount_raw": "$186,446",
+                "amount_basis": "unknown",
+                "contingency_raw": null,
+                "value_confidential": false
+              }
+            ],
+            "funding_source": null,
+            "decision_date": null,
+            "decision_body": null
+          },
+          {
+            "reference": null,
+            "solicitation_type": "unknown",
+            "title": "East Bayfront Dockside Block 1 - Dockwall Reinforcing Design and Contract Administration",
+            "buyer": "Waterfront Toronto",
+            "posted_date": null,
+            "closed_date": null,
+            "documents_taken": null,
+            "declared_submissions": null,
+            "declared_compliant": null,
+            "stage": "single_stage",
+            "prequalified": [],
+            "invited_to_tender": [],
+            "bids": [],
+            "awards": [
+              {
+                "supplier_name": "SNC-Lavalin Inc.",
+                "amount_raw": "$173,082",
+                "amount_basis": "unknown",
+                "contingency_raw": null,
+                "value_confidential": false
+              }
+            ],
+            "funding_source": null,
+            "decision_date": null,
+            "decision_body": null
+          }
+        ]
+      },
+      "usage": {
+        "input_tokens": 473,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 2866,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 2102,
+        "output_tokens_details": {
+          "thinking_tokens": 0
+        },
+        "service_tier": "standard",
+        "inference_geo": "global",
+        "speed": "standard"
+      },
+      "charged_microdollars": 22253,
+      "provenance": {
+        "document_sha256": "766aef29fcf10179870b4f14abf1818b85e81e01be50cfbbcb22ec0d19dabcd2",
+        "text_sha256": "11c4a52b1206cd5ddeb966d34c44c09d68cb96a2e280e0980acd1a6a2e2d0a6c",
+        "prompt_version": "v1-b63aa8c835ae",
+        "model": "claude-sonnet-5-5",
+        "effort": "high",
+        "mode": "sync",
+        "response_id": "msg_011CgKGmj2yN2B8d2SQya16d",
+        "response_sha256": "4d341eb101986fc5b1205dedc6dbf506517531ef70be7445e059f9cd69ddefe6",
+        "schema_sha256": null,
+        "request_sha256": null,
+        "request": null,
+        "raw_response_sha256": "88a8bebb487112fc4ab94b99c7334320bedebcf6bf2c74199d9284459dd17a36"
+      },
+      "origin": "claude-validation-2026-10-23/high-full/claude-sonnet-5-5--waterfront-2017-09.json",
+      "raw_response": {
+        "model": "claude-sonnet-5-5",
+        "id": "msg_011CgKGmj2yN2B8d2SQya16d",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"contracts\":[{\"reference\":null,\"solicitation_type\":\"unknown\",\"title\":\"Port Lands Area – Soil & Groundwater Remediation and Treatment Technologies – Part B: Field-Scale Pilot Testing: surfactant enhanced injection combined with chemical oxidation technology\",\"buyer\":\"Waterfront Toronto\",\"posted_date\":null,\"closed_date\":null,\"documents_taken\":null,\"declared_submissions\":null,\"declared_compliant\":null,\"stage\":\"single_stage\",\"prequalified\":[],\"invited_to_tender\":[],\"bids\":[],\"awards\":[{\"supplier_name\":\"Ethical Solutions\",\"amount_raw\":\"$278,100\",\"amount_basis\":\"unknown\",\"contingency_raw\":null,\"value_confidential\":false}],\"funding_source\":null,\"decision_date\":null,\"decision_body\":null}, {\"reference\":null,\"solicitation_type\":\"unknown\",\"title\":\"Port Lands Area – Soil & Groundwater Remediation and Treatment Technologies – Part B: Field-Scale Pilot Testing: demonstration of self-sustaining smouldering remediation in both in-situ and ex-situ environments technology\",\"buyer\":\"Waterfront Toronto\",\"posted_date\":null,\"closed_date\":null,\"documents_taken\":null,\"declared_submissions\":null,\"declared_compliant\":null,\"stage\":\"single_stage\",\"prequalified\":[],\"invited_to_tender\":[],\"bids\":[],\"awards\":[{\"supplier_name\":\"Geosyntec Consultants\",\"amount_raw\":\"$869,110\",\"amount_basis\":\"unknown\",\"contingency_raw\":null,\"value_confidential\":false}],\"funding_source\":null,\"decision_date\":null,\"decision_body\":null}, {\"reference\":null,\"solicitation_type\":\"unknown\",\"title\":\"Port Lands Area – Soil & Groundwater Remediation and Treatment Technologies – Part B: Field-Scale Pilot Testing: in-situ biological cementation using urea-based solution to enhance geotechnical stability of soils technology\",\"buyer\":\"Waterfront Toronto\",\"posted_date\":null,\"closed_date\":null,\"documents_taken\":null,\"declared_submissions\":null,\"declared_compliant\":null,\"stage\":\"single_stage\",\"prequalified\":[],\"invited_to_tender\":[],\"bids\":[],\"awards\":[{\"supplier_name\":\"Groundwater Technology BV\",\"amount_raw\":\"$313,022\",\"amount_basis\":\"unknown\",\"contingency_raw\":null,\"value_confidential\":false}],\"funding_source\":null,\"decision_date\":null,\"decision_body\":null}, {\"reference\":null,\"solicitation_type\":\"unknown\",\"title\":\"Port Lands Area – Soil & Groundwater Remediation and Treatment Technologies – Part B: Field-Scale Pilot Testing: Block and Absorb and Enhanced Aerobic Biodegration technology\",\"buyer\":\"Waterfront Toronto\",\"posted_date\":null,\"closed_date\":null,\"documents_taken\":null,\"declared_submissions\":null,\"declared_compliant\":null,\"stage\":\"single_stage\",\"prequalified\":[],\"invited_to_tender\":[],\"bids\":[],\"awards\":[{\"supplier_name\":\"WSP Canada\",\"amount_raw\":\"$340,335\",\"amount_basis\":\"unknown\",\"contingency_raw\":null,\"value_confidential\":false}],\"funding_source\":null,\"decision_date\":null,\"decision_body\":null}, {\"reference\":null,\"solicitation_type\":\"sole_source\",\"title\":\"Engineering and Inspection Fees for Services for Bayside Phase II\",\"buyer\":\"Waterfront Toronto\",\"posted_date\":null,\"closed_date\":null,\"documents_taken\":null,\"declared_submissions\":null,\"declared_compliant\":null,\"stage\":\"single_stage\",\"prequalified\":[],\"invited_to_tender\":[],\"bids\":[],\"awards\":[{\"supplier_name\":\"City of Toronto\",\"amount_raw\":\"$88,950\",\"amount_basis\":\"unknown\",\"contingency_raw\":null,\"value_confidential\":false}],\"funding_source\":null,\"decision_date\":null,\"decision_body\":null}, {\"reference\":null,\"solicitation_type\":\"sole_source\",\"title\":\"Legal Services to Assist with Board/Corporate Governance Matters\",\"buyer\":\"Waterfront Toronto\",\"posted_date\":null,\"closed_date\":null,\"documents_taken\":null,\"declared_submissions\":null,\"declared_compliant\":null,\"stage\":\"single_stage\",\"prequalified\":[],\"invited_to_tender\":[],\"bids\":[],\"awards\":[{\"supplier_name\":\"Axiom Global Canada Inc.\",\"amount_raw\":\"$52,000\",\"amount_basis\":\"unknown\",\"contingency_raw\":null,\"value_confidential\":false}],\"funding_source\":null,\"decision_date\":null,\"decision_body\":null}, {\"reference\":null,\"solicitation_type\":\"unknown\",\"title\":\"Interior Design-Build Services for Waterfront Toronto’s Corporate Office\",\"buyer\":\"Waterfront Toronto\",\"posted_date\":null,\"closed_date\":null,\"documents_taken\":null,\"declared_submissions\":null,\"declared_compliant\":null,\"stage\":\"single_stage\",\"prequalified\":[],\"invited_to_tender\":[],\"bids\":[],\"awards\":[{\"supplier_name\":\"Greenferd Construction Inc.\",\"amount_raw\":\"$186,446\",\"amount_basis\":\"unknown\",\"contingency_raw\":null,\"value_confidential\":false}],\"funding_source\":null,\"decision_date\":null,\"decision_body\":null}, {\"reference\":null,\"solicitation_type\":\"unknown\",\"title\":\"East Bayfront Dockside Block 1 - Dockwall Reinforcing Design and Contract Administration\",\"buyer\":\"Waterfront Toronto\",\"posted_date\":null,\"closed_date\":null,\"documents_taken\":null,\"declared_submissions\":null,\"declared_compliant\":null,\"stage\":\"single_stage\",\"prequalified\":[],\"invited_to_tender\":[],\"bids\":[],\"awards\":[{\"supplier_name\":\"SNC-Lavalin Inc.\",\"amount_raw\":\"$173,082\",\"amount_basis\":\"unknown\",\"contingency_raw\":null,\"value_confidential\":false}],\"funding_source\":null,\"decision_date\":null,\"decision_body\":null}]}"
+          }
+        ],
+        "container": null,
+        "stop_reason": "end_turn",
+        "stop_sequence": null,
+        "stop_details": null,
+        "usage": {
+          "input_tokens": 473,
+          "cache_creation_input_tokens": 0,
+          "cache_read_input_tokens": 2866,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 0
+          },
+          "output_tokens": 2102,
+          "output_tokens_details": {
+            "thinking_tokens": 0
+          },
+          "service_tier": "standard",
+          "inference_geo": "global",
+          "speed": "standard"
+        },
+        "diagnostics": null
+      }
+    },
+    "waterfront-2021-10": {
+      "state": "success",
+      "extraction": {
+        "contracts": [
+          {
+            "reference": null,
+            "solicitation_type": "sole_source",
+            "title": "Water Service Connections from the Property line to the Watermain and Sewers for Love Park in Central Waterfront",
+            "buyer": "Waterfront Toronto",
+            "posted_date": null,
+            "closed_date": null,
+            "documents_taken": null,
+            "declared_submissions": null,
+            "declared_compliant": null,
+            "stage": "single_stage",
+            "prequalified": [],
+            "invited_to_tender": [],
+            "bids": [],
+            "awards": [
+              {
+                "supplier_name": "The Treasurer, City of Toronto",
+                "amount_raw": "$100,507",
+                "amount_basis": "unknown",
+                "contingency_raw": null,
+                "value_confidential": false
+              }
+            ],
+            "funding_source": null,
+            "decision_date": null,
+            "decision_body": null
+          },
+          {
+            "reference": null,
+            "solicitation_type": "unknown",
+            "title": "Design and Supply of Play Equipment Phase 1 for Port Lands Flood Protection Project",
+            "buyer": "Waterfront Toronto",
+            "posted_date": null,
+            "closed_date": null,
+            "documents_taken": null,
+            "declared_submissions": null,
+            "declared_compliant": null,
+            "stage": "single_stage",
+            "prequalified": [],
+            "invited_to_tender": [],
+            "bids": [],
+            "awards": [
+              {
+                "supplier_name": "APE Studio Inc.",
+                "amount_raw": "$409,136",
+                "amount_basis": "unknown",
+                "contingency_raw": null,
+                "value_confidential": false
+              },
+              {
+                "supplier_name": "Earthscape Play Inc.",
+                "amount_raw": "$465,660",
+                "amount_basis": "unknown",
+                "contingency_raw": null,
+                "value_confidential": false
+              },
+              {
+                "supplier_name": "Monstrum APS",
+                "amount_raw": "$416,931",
+                "amount_basis": "unknown",
+                "contingency_raw": null,
+                "value_confidential": false
+              },
+              {
+                "supplier_name": "Whole Trees LLC",
+                "amount_raw": "$210,880",
+                "amount_basis": "unknown",
+                "contingency_raw": null,
+                "value_confidential": false
+              }
+            ],
+            "funding_source": null,
+            "decision_date": null,
+            "decision_body": null
+          },
+          {
+            "reference": null,
+            "solicitation_type": "unknown",
+            "title": "CIP Concrete (SPS, OGS1, SWTF, Outfall) for Port Lands Flood Protection Project",
+            "buyer": "Ellis Don Civil Ltd on behalf of Waterfront Toronto",
+            "posted_date": null,
+            "closed_date": null,
+            "documents_taken": null,
+            "declared_submissions": null,
+            "declared_compliant": null,
+            "stage": "single_stage",
+            "prequalified": [],
+            "invited_to_tender": [],
+            "bids": [],
+            "awards": [
+              {
+                "supplier_name": "Alliance Verdi Civil Inc.",
+                "amount_raw": "$2,915,010",
+                "amount_basis": "unknown",
+                "contingency_raw": null,
+                "value_confidential": false
+              }
+            ],
+            "funding_source": null,
+            "decision_date": null,
+            "decision_body": null
+          },
+          {
+            "reference": null,
+            "solicitation_type": "unknown",
+            "title": "Dry Utilities for New Cherry St and Lakeshore for Port Lands Flood Protection Project",
+            "buyer": "Ellis Don Civil Ltd on behalf of Waterfront Toronto",
+            "posted_date": null,
+            "closed_date": null,
+            "documents_taken": null,
+            "declared_submissions": null,
+            "declared_compliant": null,
+            "stage": "single_stage",
+            "prequalified": [],
+            "invited_to_tender": [],
+            "bids": [],
+            "awards": [
+              {
+                "supplier_name": "Guild Electric Limited",
+                "amount_raw": "$680,653",
+                "amount_basis": "unknown",
+                "contingency_raw": null,
+                "value_confidential": false
+              }
+            ],
+            "funding_source": null,
+            "decision_date": null,
+            "decision_body": null
+          },
+          {
+            "reference": null,
+            "solicitation_type": "unknown",
+            "title": "Bioengineering Supervision Services for Port Lands Flood Protection Project",
+            "buyer": "Ellis Don Civil Ltd on behalf of Waterfront Toronto",
+            "posted_date": null,
+            "closed_date": null,
+            "documents_taken": null,
+            "declared_submissions": null,
+            "declared_compliant": null,
+            "stage": "single_stage",
+            "prequalified": [],
+            "invited_to_tender": [],
+            "bids": [],
+            "awards": [
+              {
+                "supplier_name": "Urban Forest Associates",
+                "amount_raw": "$249,400",
+                "amount_basis": "unknown",
+                "contingency_raw": null,
+                "value_confidential": false
+              }
+            ],
+            "funding_source": null,
+            "decision_date": null,
+            "decision_body": null
+          },
+          {
+            "reference": null,
+            "solicitation_type": "unknown",
+            "title": "Temporary Street Lighting Design for Port Lands Flood Protection Project",
+            "buyer": "Ellis Don Civil Ltd on behalf of Waterfront Toronto",
+            "posted_date": null,
+            "closed_date": null,
+            "documents_taken": null,
+            "declared_submissions": null,
+            "declared_compliant": null,
+            "stage": "single_stage",
+            "prequalified": [],
+            "invited_to_tender": [],
+            "bids": [],
+            "awards": [
+              {
+                "supplier_name": "Utility Solutions",
+                "amount_raw": "$214,108",
+                "amount_basis": "unknown",
+                "contingency_raw": null,
+                "value_confidential": false
+              }
+            ],
+            "funding_source": null,
+            "decision_date": null,
+            "decision_body": null
+          }
+        ]
+      },
+      "usage": {
+        "input_tokens": 549,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 2866,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 2102,
+        "output_tokens_details": {
+          "thinking_tokens": 389
+        },
+        "service_tier": "standard",
+        "inference_geo": "global",
+        "speed": "standard"
+      },
+      "charged_microdollars": 22405,
+      "provenance": {
+        "document_sha256": "766aef29fcf10179870b4f14abf1818b85e81e01be50cfbbcb22ec0d19dabcd2",
+        "text_sha256": "bba4275dfe67ace53b3f017e71ac3a0200db080c2b64e09696f32ad4c9cb28ae",
+        "prompt_version": "v1-b63aa8c835ae",
+        "model": "claude-sonnet-5-5",
+        "effort": "high",
+        "mode": "sync",
+        "response_id": "msg_011CgKGp7NDCVfCDnR3d2sa9",
+        "response_sha256": "3ad30e2dbe7740a7776945e15d9b3f31fecbcc3a1331e9f04d3525d39f268432",
+        "schema_sha256": null,
+        "request_sha256": null,
+        "request": null,
+        "raw_response_sha256": "c8fc090968f834fc892e33a005a4f61edf706d90b8f6b842d0efd31dd88210cb"
+      },
+      "origin": "claude-validation-2026-10-23/high-full/claude-sonnet-5-5--waterfront-2021-10.json",
+      "raw_response": {
+        "model": "claude-sonnet-5-5",
+        "id": "msg_011CgKGp7NDCVfCDnR3d2sa9",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "thinking",
+            "thinking": "",
+            "signature": "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"
+          },
+          {
+            "type": "text",
+            "text": "{\"contracts\":[{\"reference\":null,\"solicitation_type\":\"sole_source\",\"title\":\"Water Service Connections from the Property line to the Watermain and Sewers for Love Park in Central Waterfront\",\"buyer\":\"Waterfront Toronto\",\"posted_date\":null,\"closed_date\":null,\"documents_taken\":null,\"declared_submissions\":null,\"declared_compliant\":null,\"stage\":\"single_stage\",\"prequalified\":[],\"invited_to_tender\":[],\"bids\":[],\"awards\":[{\"supplier_name\":\"The Treasurer, City of Toronto\",\"amount_raw\":\"$100,507\",\"amount_basis\":\"unknown\",\"contingency_raw\":null,\"value_confidential\":false}],\"funding_source\":null,\"decision_date\":null,\"decision_body\":null},{\"reference\":null,\"solicitation_type\":\"unknown\",\"title\":\"Design and Supply of Play Equipment Phase 1 for Port Lands Flood Protection Project\",\"buyer\":\"Waterfront Toronto\",\"posted_date\":null,\"closed_date\":null,\"documents_taken\":null,\"declared_submissions\":null,\"declared_compliant\":null,\"stage\":\"single_stage\",\"prequalified\":[],\"invited_to_tender\":[],\"bids\":[],\"awards\":[{\"supplier_name\":\"APE Studio Inc.\",\"amount_raw\":\"$409,136\",\"amount_basis\":\"unknown\",\"contingency_raw\":null,\"value_confidential\":false},{\"supplier_name\":\"Earthscape Play Inc.\",\"amount_raw\":\"$465,660\",\"amount_basis\":\"unknown\",\"contingency_raw\":null,\"value_confidential\":false},{\"supplier_name\":\"Monstrum APS\",\"amount_raw\":\"$416,931\",\"amount_basis\":\"unknown\",\"contingency_raw\":null,\"value_confidential\":false},{\"supplier_name\":\"Whole Trees LLC\",\"amount_raw\":\"$210,880\",\"amount_basis\":\"unknown\",\"contingency_raw\":null,\"value_confidential\":false}],\"funding_source\":null,\"decision_date\":null,\"decision_body\":null},{\"reference\":null,\"solicitation_type\":\"unknown\",\"title\":\"CIP Concrete (SPS, OGS1, SWTF, Outfall) for Port Lands Flood Protection Project\",\"buyer\":\"Ellis Don Civil Ltd on behalf of Waterfront Toronto\",\"posted_date\":null,\"closed_date\":null,\"documents_taken\":null,\"declared_submissions\":null,\"declared_compliant\":null,\"stage\":\"single_stage\",\"prequalified\":[],\"invited_to_tender\":[],\"bids\":[],\"awards\":[{\"supplier_name\":\"Alliance Verdi Civil Inc.\",\"amount_raw\":\"$2,915,010\",\"amount_basis\":\"unknown\",\"contingency_raw\":null,\"value_confidential\":false}],\"funding_source\":null,\"decision_date\":null,\"decision_body\":null},{\"reference\":null,\"solicitation_type\":\"unknown\",\"title\":\"Dry Utilities for New Cherry St and Lakeshore for Port Lands Flood Protection Project\",\"buyer\":\"Ellis Don Civil Ltd on behalf of Waterfront Toronto\",\"posted_date\":null,\"closed_date\":null,\"documents_taken\":null,\"declared_submissions\":null,\"declared_compliant\":null,\"stage\":\"single_stage\",\"prequalified\":[],\"invited_to_tender\":[],\"bids\":[],\"awards\":[{\"supplier_name\":\"Guild Electric Limited\",\"amount_raw\":\"$680,653\",\"amount_basis\":\"unknown\",\"contingency_raw\":null,\"value_confidential\":false}],\"funding_source\":null,\"decision_date\":null,\"decision_body\":null},{\"reference\":null,\"solicitation_type\":\"unknown\",\"title\":\"Bioengineering Supervision Services for Port Lands Flood Protection Project\",\"buyer\":\"Ellis Don Civil Ltd on behalf of Waterfront Toronto\",\"posted_date\":null,\"closed_date\":null,\"documents_taken\":null,\"declared_submissions\":null,\"declared_compliant\":null,\"stage\":\"single_stage\",\"prequalified\":[],\"invited_to_tender\":[],\"bids\":[],\"awards\":[{\"supplier_name\":\"Urban Forest Associates\",\"amount_raw\":\"$249,400\",\"amount_basis\":\"unknown\",\"contingency_raw\":null,\"value_confidential\":false}],\"funding_source\":null,\"decision_date\":null,\"decision_body\":null},{\"reference\":null,\"solicitation_type\":\"unknown\",\"title\":\"Temporary Street Lighting Design for Port Lands Flood Protection Project\",\"buyer\":\"Ellis Don Civil Ltd on behalf of Waterfront Toronto\",\"posted_date\":null,\"closed_date\":null,\"documents_taken\":null,\"declared_submissions\":null,\"declared_compliant\":null,\"stage\":\"single_stage\",\"prequalified\":[],\"invited_to_tender\":[],\"bids\":[],\"awards\":[{\"supplier_name\":\"Utility Solutions\",\"amount_raw\":\"$214,108\",\"amount_basis\":\"unknown\",\"contingency_raw\":null,\"value_confidential\":false}],\"funding_source\":null,\"decision_date\":null,\"decision_body\":null}]}"
+          }
+        ],
+        "container": null,
+        "stop_reason": "end_turn",
+        "stop_sequence": null,
+        "stop_details": null,
+        "usage": {
+          "input_tokens": 549,
+          "cache_creation_input_tokens": 0,
+          "cache_read_input_tokens": 2866,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 0
+          },
+          "output_tokens": 2102,
+          "output_tokens_details": {
+            "thinking_tokens": 389
+          },
+          "service_tier": "standard",
+          "inference_geo": "global",
+          "speed": "standard"
+        },
+        "diagnostics": null
+      }
+    },
+    "waterfront-2023-03": {
+      "state": "success",
+      "extraction": {
+        "contracts": [
+          {
+            "reference": null,
+            "solicitation_type": "sole_source",
+            "title": "Delivery of Waterfront Toronto’s Integrated Annual Report 2022-2023",
+            "buyer": "Waterfront Toronto",
+            "posted_date": null,
+            "closed_date": null,
+            "documents_taken": null,
+            "declared_submissions": null,
+            "declared_compliant": null,
+            "stage": "single_stage",
+            "prequalified": [],
+            "invited_to_tender": [],
+            "bids": [],
+            "awards": [
+              {
+                "supplier_name": "Bespoke Cultural Collective",
+                "amount_raw": "$55,312",
+                "amount_basis": "unknown",
+                "contingency_raw": null,
+                "value_confidential": false
+              }
+            ],
+            "funding_source": null,
+            "decision_date": null,
+            "decision_body": null
+          },
+          {
+            "reference": null,
+            "solicitation_type": "unknown",
+            "title": "Old Cherry Street Bridge Early Engineering Costs for Port Lands Flood Protection Project",
+            "buyer": "Ellis Don Civil Ltd on behalf of Waterfront Toronto",
+            "posted_date": null,
+            "closed_date": null,
+            "documents_taken": null,
+            "declared_submissions": null,
+            "declared_compliant": null,
+            "stage": "single_stage",
+            "prequalified": [],
+            "invited_to_tender": [],
+            "bids": [],
+            "awards": [
+              {
+                "supplier_name": "Sarens Canada",
+                "amount_raw": "$80,000",
+                "amount_basis": "unknown",
+                "contingency_raw": null,
+                "value_confidential": false
+              }
+            ],
+            "funding_source": null,
+            "decision_date": null,
+            "decision_body": null
+          },
+          {
+            "reference": null,
+            "solicitation_type": "unknown",
+            "title": "Street Lighting, Pedestrian Lighting, Traffic Control Signals and RESCU for Lake Shore Boulevard East",
+            "buyer": "Ellis Don Civil Ltd on behalf of Waterfront Toronto",
+            "posted_date": null,
+            "closed_date": null,
+            "documents_taken": null,
+            "declared_submissions": null,
+            "declared_compliant": null,
+            "stage": "single_stage",
+            "prequalified": [],
+            "invited_to_tender": [],
+            "bids": [],
+            "awards": [
+              {
+                "supplier_name": "Guild Electric Limited",
+                "amount_raw": "$3,892,098",
+                "amount_basis": "unknown",
+                "contingency_raw": null,
+                "value_confidential": false
+              }
+            ],
+            "funding_source": null,
+            "decision_date": null,
+            "decision_body": null
+          },
+          {
+            "reference": null,
+            "solicitation_type": "unknown",
+            "title": "Traffic Control Signals for Port Lands Flood Protection Project",
+            "buyer": "Ellis Don Civil Ltd on behalf of Waterfront Toronto",
+            "posted_date": null,
+            "closed_date": null,
+            "documents_taken": null,
+            "declared_submissions": null,
+            "declared_compliant": null,
+            "stage": "single_stage",
+            "prequalified": [],
+            "invited_to_tender": [],
+            "bids": [],
+            "awards": [
+              {
+                "supplier_name": "Guild Electric Limited",
+                "amount_raw": "$761,108",
+                "amount_basis": "unknown",
+                "contingency_raw": null,
+                "value_confidential": false
+              }
+            ],
+            "funding_source": null,
+            "decision_date": null,
+            "decision_body": null
+          },
+          {
+            "reference": null,
+            "solicitation_type": "unknown",
+            "title": "Dewatering System for Chamber CC6567 Rebuild Operations for Port Lands Flood Protection",
+            "buyer": "Ellis Don Civil Ltd on behalf of Waterfront Toronto",
+            "posted_date": null,
+            "closed_date": null,
+            "documents_taken": null,
+            "declared_submissions": null,
+            "declared_compliant": null,
+            "stage": "single_stage",
+            "prequalified": [],
+            "invited_to_tender": [],
+            "bids": [],
+            "awards": [],
+            "funding_source": null,
+            "decision_date": null,
+            "decision_body": null
+          }
+        ]
+      },
+      "usage": {
+        "input_tokens": 442,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 2866,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 1526,
+        "output_tokens_details": {
+          "thinking_tokens": 294
+        },
+        "service_tier": "standard",
+        "inference_geo": "global",
+        "speed": "standard"
+      },
+      "charged_microdollars": 16431,
+      "provenance": {
+        "document_sha256": "766aef29fcf10179870b4f14abf1818b85e81e01be50cfbbcb22ec0d19dabcd2",
+        "text_sha256": "398fdaf47133f54582203644f8f4735bb517fbcc4ad5a5ec4028be6a1fab537d",
+        "prompt_version": "v1-b63aa8c835ae",
+        "model": "claude-sonnet-5-5",
+        "effort": "high",
+        "mode": "sync",
+        "response_id": "msg_011CgKGqYz73Ro1CJiGc4PBM",
+        "response_sha256": "9c5a92e2f22597a17c21aa0c7208be96668e98c8a6a8fba97a3c1b2923296a3d",
+        "schema_sha256": null,
+        "request_sha256": null,
+        "request": null,
+        "raw_response_sha256": "1acb69feaa16b5e6b5f770ca2c932417edb0566933c3fddab0054e5ee0c3436b"
+      },
+      "origin": "claude-validation-2026-10-23/high-full/claude-sonnet-5-5--waterfront-2023-03.json",
+      "raw_response": {
+        "model": "claude-sonnet-5-5",
+        "id": "msg_011CgKGqYz73Ro1CJiGc4PBM",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "thinking",
+            "thinking": "",
+            "signature": "CAQSwwoKEAgTGAI4AUIIdGhpbmtpbmcSDOMr3YZRn5cmyU7VSBoMEmL/za1Tc3gHAnHNIjBe1r1Ub5JN/W2lZcgOOevpfREyCvvZN013k5NwlP1b3/Po5jDjk948G+doKvlR1acq4An4T4+XsH2GvSnoRydYXNkoJ6tnctt/l0L8R+yJg0+fOiCQoJj9D5mtsizX561Um7OsR9lwyC/Gi/qMekAkW6DdfpWfz31OS7p6yhTOpaXIFWfMl0VsyKhr2ekotdUJwdOQH9eEncIXEwLaRWgRGWumaQ43eERnoVFhFK5Yr/ifj6mFdRQJ9cNZ/jyYNjXIQ7yMbnzkzNsj+6zfEFexji8UF9p4HxWtSal3kowSqDy46XoeqZOdCeN+iX8VovF7o8/+N/RUssP29BB+8bWlNHSv96jGEU4yxbVQwpUeSaAr8sAlziElkhwEfF9/AxKChNo3PCQUBgPK0jGAI6fXUVKEqZ8mdyIFNmXaCxWMmnxUxXT0bahcxMQFBGO/CQq4A8OlfhwvITP/5Nn5G2ev2NxCjqkCjqpzXqxtxjjRCOpRTTHtwQdEAe4NxbXaKDZ/VkCsQOYkLFQkPydEwoW9LkEmVB/vLccVDCFRklej/3nx0Y5ukrkKITtHZ7d4kvxJrZT4iQDtKMtqjZmtRpjfXaNM7hsmci1c2D8CYc1xfZrRswcCfmEjJuKSEVBjTeX9+xS17Khv4XFxwcaATY67dwHpghOI91jVxoZQ724qiVBJDepctYOlV7Fy7nlz3BOKZCKlo0QXuVgxjnOkmLrQC8f752P7qR6ZYqqKrJdtj3eGBj0NmvtL8kpBrsvu2uNy8aJSFG1t/AIP8E1YekF4vHomv0r6P5f7f2+TKFCXSW1BTA4/6dMmo5Ntfd8nmFeQCnkDWn9/TiK24ft7ZVWfxDVjhGD19g+NzgAvP66pODXM+NhVxglsrCf7xY2im7r4zpPxcqlMmExbXdUU3kKtqFKDxHXkjbY1JJ6+ZTcQWZ1u5DySlOfMx4rFVKFsq1vPQD9GtfmpMplWcwDaWPq4oKtu6uGETLQpMe97bsTjsgsKcgukuchg140CxdVW9DA/rHZO8l489TK9lFpmAD+NvEbdLpFWgZjFJgkirPXiKFYJUoVs02kkF+e0jfw6FLXcYZU2CC3bbbhP1xFxcVEaJkzHjhM/UlwNYVp5FqoMH018g4qqa6LBB/k5Z5JJ86hHuoZEXmPLx58yl9/YOlAE7DiqgxMPZoLj4damlQjOnxK+gZH24XjwBQZx72xHLS0jpboyMepM7ukjvwqa4XNERoUH/Ifa41si5GAeHrmfdKb+R2+LhbWhk07S2iz9Ng2REVoHL9v3d3WjjY07LW/RudEWjyBWaO6ocloat6xjNkHu5hy4yRKbywX8w8OSi66wsIqnaJCpGE96ViGAp1kJZKk4q2vbI0kUNXPIwv6rWjB57F5axhkWoDNxy+53wsOdhBGh/WrsVORHgO5i5GybIU+78WdyK7QTKSUSlfxW9cfpfhKpkG/ZJnOAsD56pCoCSm59siJRvPQz6va060V1cLNtl9eLt4uEXToXkBzsVq870JdsvNFwfcJmAQ/PpPIzX2/JJoJzUokv38G+ZJ9RUvOEuxEhj7s7v+0CfuzbVlOvKPy4mZv1AAn7Ap4dVrTblRri7ZhrY4XRrZXHb+F+6cV3+kG81hT0j/wbpRstq1yDyF74AaoJMnKVghK4/szAk1Ev5ZUurVJ37xFlUPjZeurK8Y0d8CqCQQlFVgtdfNKQCgpJ5i71bjPHSh0ECOzR3WwYAQ=="
+          },
+          {
+            "type": "text",
+            "text": "{\"contracts\":[{\"reference\":null,\"solicitation_type\":\"sole_source\",\"title\":\"Delivery of Waterfront Toronto’s Integrated Annual Report 2022-2023\",\"buyer\":\"Waterfront Toronto\",\"posted_date\":null,\"closed_date\":null,\"documents_taken\":null,\"declared_submissions\":null,\"declared_compliant\":null,\"stage\":\"single_stage\",\"prequalified\":[],\"invited_to_tender\":[],\"bids\":[],\"awards\":[{\"supplier_name\":\"Bespoke Cultural Collective\",\"amount_raw\":\"$55,312\",\"amount_basis\":\"unknown\",\"contingency_raw\":null,\"value_confidential\":false}],\"funding_source\":null,\"decision_date\":null,\"decision_body\":null},{\"reference\":null,\"solicitation_type\":\"unknown\",\"title\":\"Old Cherry Street Bridge Early Engineering Costs for Port Lands Flood Protection Project\",\"buyer\":\"Ellis Don Civil Ltd on behalf of Waterfront Toronto\",\"posted_date\":null,\"closed_date\":null,\"documents_taken\":null,\"declared_submissions\":null,\"declared_compliant\":null,\"stage\":\"single_stage\",\"prequalified\":[],\"invited_to_tender\":[],\"bids\":[],\"awards\":[{\"supplier_name\":\"Sarens Canada\",\"amount_raw\":\"$80,000\",\"amount_basis\":\"unknown\",\"contingency_raw\":null,\"value_confidential\":false}],\"funding_source\":null,\"decision_date\":null,\"decision_body\":null},{\"reference\":null,\"solicitation_type\":\"unknown\",\"title\":\"Street Lighting, Pedestrian Lighting, Traffic Control Signals and RESCU for Lake Shore Boulevard East\",\"buyer\":\"Ellis Don Civil Ltd on behalf of Waterfront Toronto\",\"posted_date\":null,\"closed_date\":null,\"documents_taken\":null,\"declared_submissions\":null,\"declared_compliant\":null,\"stage\":\"single_stage\",\"prequalified\":[],\"invited_to_tender\":[],\"bids\":[],\"awards\":[{\"supplier_name\":\"Guild Electric Limited\",\"amount_raw\":\"$3,892,098\",\"amount_basis\":\"unknown\",\"contingency_raw\":null,\"value_confidential\":false}],\"funding_source\":null,\"decision_date\":null,\"decision_body\":null},{\"reference\":null,\"solicitation_type\":\"unknown\",\"title\":\"Traffic Control Signals for Port Lands Flood Protection Project\",\"buyer\":\"Ellis Don Civil Ltd on behalf of Waterfront Toronto\",\"posted_date\":null,\"closed_date\":null,\"documents_taken\":null,\"declared_submissions\":null,\"declared_compliant\":null,\"stage\":\"single_stage\",\"prequalified\":[],\"invited_to_tender\":[],\"bids\":[],\"awards\":[{\"supplier_name\":\"Guild Electric Limited\",\"amount_raw\":\"$761,108\",\"amount_basis\":\"unknown\",\"contingency_raw\":null,\"value_confidential\":false}],\"funding_source\":null,\"decision_date\":null,\"decision_body\":null},{\"reference\":null,\"solicitation_type\":\"unknown\",\"title\":\"Dewatering System for Chamber CC6567 Rebuild Operations for Port Lands Flood Protection\",\"buyer\":\"Ellis Don Civil Ltd on behalf of Waterfront Toronto\",\"posted_date\":null,\"closed_date\":null,\"documents_taken\":null,\"declared_submissions\":null,\"declared_compliant\":null,\"stage\":\"single_stage\",\"prequalified\":[],\"invited_to_tender\":[],\"bids\":[],\"awards\":[],\"funding_source\":null,\"decision_date\":null,\"decision_body\":null}]}"
+          }
+        ],
+        "container": null,
+        "stop_reason": "end_turn",
+        "stop_sequence": null,
+        "stop_details": null,
+        "usage": {
+          "input_tokens": 442,
+          "cache_creation_input_tokens": 0,
+          "cache_read_input_tokens": 2866,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 0
+          },
+          "output_tokens": 1526,
+          "output_tokens_details": {
+            "thinking_tokens": 294
+          },
+          "service_tier": "standard",
+          "inference_geo": "global",
+          "speed": "standard"
+        },
+        "diagnostics": null
+      }
+    },
+    "trca-D01": {
+      "state": "success",
+      "extraction": {
+        "contracts": [
+          {
+            "reference": "RFT No. 10040951",
+            "solicitation_type": "RFT",
+            "title": "Channel Works in Yellow Creek near Heath Street Project",
+            "buyer": "Toronto and Region Conservation Authority (TRCA)",
+            "posted_date": "2024-02-26",
+            "closed_date": "2024-12-20",
+            "documents_taken": 17,
+            "declared_submissions": 6,
+            "declared_compliant": null,
+            "stage": "prequalification_then_tender",
+            "prequalified": [
+              "Buildscapes Construction Ltd.",
+              "Pine Valley Corporation",
+              "Shoreline Restoration Ltd."
+            ],
+            "invited_to_tender": [
+              "2220742 Ontario Ltd o/a Bronte Construction",
+              "560789 Ontario Limited o/a R&M Construction",
+              "Dynex Construction Inc."
+            ],
+            "bids": [
+              {
+                "supplier_name": "Dynex Construction Inc.",
+                "amount_raw": "$2,947,485.00",
+                "amount_basis": "plus_HST",
+                "status": "not_stated",
+                "rank": 1
+              },
+              {
+                "supplier_name": "560789 Ontario Limited o/a R&M Construction",
+                "amount_raw": "$3,611,536.80",
+                "amount_basis": "plus_HST",
+                "status": "not_stated",
+                "rank": 2
+              },
+              {
+                "supplier_name": "2220742 Ontario Limited o/a Bronte Construction",
+                "amount_raw": "$4,417,565.60",
+                "amount_basis": "plus_HST",
+                "status": "not_stated",
+                "rank": 3
+              }
+            ],
+            "awards": [
+              {
+                "supplier_name": "Dynex Construction Inc.",
+                "amount_raw": "$2,947,485.00",
+                "amount_basis": "plus_HST",
+                "contingency_raw": "$294,748.50",
+                "value_confidential": false
+              }
+            ],
+            "funding_source": "2025 City of Toronto capital budget for Valley Erosion Hazards Projects",
+            "decision_date": "2025-02-07",
+            "decision_body": "Board of Directors"
+          }
+        ]
+      },
+      "usage": {
+        "input_tokens": 2365,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 2866,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 626,
+        "output_tokens_details": {
+          "thinking_tokens": 0
+        },
+        "service_tier": "standard",
+        "inference_geo": "global",
+        "speed": "standard"
+      },
+      "charged_microdollars": 11277,
+      "provenance": {
+        "document_sha256": "4615e3e4ed1c5d6b6c3ff9868da5266e6147273f742532fc0c67be24228741bb",
+        "text_sha256": "2565a2d8ed65ebbbb95ab9986302bd50373d704f110c6b67d873c57fedae0236",
+        "prompt_version": "v1-b63aa8c835ae",
+        "model": "claude-sonnet-5-5",
+        "effort": "high",
+        "mode": "sync",
+        "response_id": "msg_011CgKGreGd9YgE5tQUUEkwK",
+        "response_sha256": "56de6498d362d34b5e1873236d5c2d105a232840c4848f6019e891b4215657e6",
+        "schema_sha256": null,
+        "request_sha256": null,
+        "request": null,
+        "raw_response_sha256": "85a5af5e463863a6b51ac90abd6d61c1ed0d3bc207c9e2c0c6fa6d4121d770cb"
+      },
+      "origin": "claude-validation-2026-10-23/high-full/claude-sonnet-5-5--trca-D01.json",
+      "raw_response": {
+        "model": "claude-sonnet-5-5",
+        "id": "msg_011CgKGreGd9YgE5tQUUEkwK",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"contracts\":[{\"reference\":\"RFT No. 10040951\",\"solicitation_type\":\"RFT\",\"title\":\"Channel Works in Yellow Creek near Heath Street Project\",\"buyer\":\"Toronto and Region Conservation Authority (TRCA)\",\"posted_date\":\"2024-02-26\",\"closed_date\":\"2024-12-20\",\"documents_taken\":17,\"declared_submissions\":6,\"declared_compliant\":null,\"stage\":\"prequalification_then_tender\",\"prequalified\":[\"Buildscapes Construction Ltd.\",\"Pine Valley Corporation\",\"Shoreline Restoration Ltd.\"],\"invited_to_tender\":[\"2220742 Ontario Ltd o/a Bronte Construction\",\"560789 Ontario Limited o/a R&M Construction\",\"Dynex Construction Inc.\"],\"bids\":[{\"supplier_name\":\"Dynex Construction Inc.\",\"amount_raw\":\"$2,947,485.00\",\"amount_basis\":\"plus_HST\",\"status\":\"not_stated\",\"rank\":1},{\"supplier_name\":\"560789 Ontario Limited o/a R&M Construction\",\"amount_raw\":\"$3,611,536.80\",\"amount_basis\":\"plus_HST\",\"status\":\"not_stated\",\"rank\":2},{\"supplier_name\":\"2220742 Ontario Limited o/a Bronte Construction\",\"amount_raw\":\"$4,417,565.60\",\"amount_basis\":\"plus_HST\",\"status\":\"not_stated\",\"rank\":3}],\"awards\":[{\"supplier_name\":\"Dynex Construction Inc.\",\"amount_raw\":\"$2,947,485.00\",\"amount_basis\":\"plus_HST\",\"contingency_raw\":\"$294,748.50\",\"value_confidential\":false}],\"funding_source\":\"2025 City of Toronto capital budget for Valley Erosion Hazards Projects\",\"decision_date\":\"2025-02-07\",\"decision_body\":\"Board of Directors\"}]}"
+          }
+        ],
+        "container": null,
+        "stop_reason": "end_turn",
+        "stop_sequence": null,
+        "stop_details": null,
+        "usage": {
+          "input_tokens": 2365,
+          "cache_creation_input_tokens": 0,
+          "cache_read_input_tokens": 2866,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 0
+          },
+          "output_tokens": 626,
+          "output_tokens_details": {
+            "thinking_tokens": 0
+          },
+          "service_tier": "standard",
+          "inference_geo": "global",
+          "speed": "standard"
+        },
+        "diagnostics": null
+      }
+    },
+    "trca-D02": {
+      "state": "success",
+      "extraction": {
+        "contracts": [
+          {
+            "reference": "RFQ No. 10009905",
+            "solicitation_type": "RFQ",
+            "title": "Supply and Delivery of Approximately 8500 Tonnes of 2 – 5 Tonne Stackable Armourstone to the Lakeview Waterfront Connection Project",
+            "buyer": "Toronto and Region Conservation Authority (TRCA)",
+            "posted_date": "2019-01-07",
+            "closed_date": "2019-01-18",
+            "documents_taken": 9,
+            "declared_submissions": 4,
+            "declared_compliant": null,
+            "stage": "single_stage",
+            "prequalified": [],
+            "invited_to_tender": [],
+            "bids": [
+              {
+                "supplier_name": "CDR Young’s Aggregates Inc.",
+                "amount_raw": "$527,000.00",
+                "amount_basis": "plus_HST",
+                "status": "compliant",
+                "rank": 1
+              },
+              {
+                "supplier_name": "Atlantis Marine Construction",
+                "amount_raw": "$590,750.00",
+                "amount_basis": "plus_HST",
+                "status": "not_stated",
+                "rank": 2
+              },
+              {
+                "supplier_name": "Glenn Windrem Trucking",
+                "amount_raw": "$592,875.00",
+                "amount_basis": "plus_HST",
+                "status": "not_stated",
+                "rank": 3
+              },
+              {
+                "supplier_name": "TACC Construction",
+                "amount_raw": "$646,000.00",
+                "amount_basis": "plus_HST",
+                "status": "not_stated",
+                "rank": 4
+              }
+            ],
+            "awards": [
+              {
+                "supplier_name": "CDR Young’s Aggregates Inc.",
+                "amount_raw": "$527,000.00",
+                "amount_basis": "plus_HST",
+                "contingency_raw": "$52,700.00 (approximately 10%), plus applicable taxes",
+                "value_confidential": false
+              }
+            ],
+            "funding_source": "Region of Peel capital budget, Account 252-52",
+            "decision_date": "2019-04-05",
+            "decision_body": "Executive Committee"
+          },
+          {
+            "reference": "RFQ No. 10009906",
+            "solicitation_type": "RFQ",
+            "title": "Supply and Delivery of Approximately 8000 Tonnes of 3 – 5 Tonne Non-Stackable Armourstone to the Lakeview Waterfront Connection Project",
+            "buyer": "Toronto and Region Conservation Authority (TRCA)",
+            "posted_date": "2019-01-07",
+            "closed_date": "2019-01-18",
+            "documents_taken": 9,
+            "declared_submissions": 4,
+            "declared_compliant": null,
+            "stage": "single_stage",
+            "prequalified": [],
+            "invited_to_tender": [],
+            "bids": [
+              {
+                "supplier_name": "Glenn Windrem Trucking",
+                "amount_raw": "$470,000.00",
+                "amount_basis": "plus_HST",
+                "status": "compliant",
+                "rank": 1
+              },
+              {
+                "supplier_name": "CDR Young’s Aggregates Inc.",
+                "amount_raw": "$512,000.00",
+                "amount_basis": "plus_HST",
+                "status": "not_stated",
+                "rank": 2
+              },
+              {
+                "supplier_name": "Atlantis Marine Construction",
+                "amount_raw": "$532,000.00",
+                "amount_basis": "plus_HST",
+                "status": "not_stated",
+                "rank": 3
+              },
+              {
+                "supplier_name": "TACC Construction",
+                "amount_raw": "$608,000.00",
+                "amount_basis": "plus_HST",
+                "status": "not_stated",
+                "rank": 4
+              }
+            ],
+            "awards": [
+              {
+                "supplier_name": "Glenn Windrem Trucking",
+                "amount_raw": "$470,000.00",
+                "amount_basis": "plus_HST",
+                "contingency_raw": "$47,000 (approximately 10%), plus applicable taxes",
+                "value_confidential": false
+              }
+            ],
+            "funding_source": "Region of Peel capital budget, Account 252-52",
+            "decision_date": "2019-04-05",
+            "decision_body": "Executive Committee"
+          }
+        ]
+      },
+      "usage": {
+        "input_tokens": 3099,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 2866,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 1214,
+        "output_tokens_details": {
+          "thinking_tokens": 0
+        },
+        "service_tier": "standard",
+        "inference_geo": "global",
+        "speed": "standard"
+      },
+      "charged_microdollars": 18625,
+      "provenance": {
+        "document_sha256": "260e2bf00459cd8da33eace914dd3b892b7b9399c030856b3540d90eb416bf5e",
+        "text_sha256": "b3f1e8901ca51e23a838d30e02aa84d60dcb02a92fda559c79645b944ca1c0b9",
+        "prompt_version": "v1-b63aa8c835ae",
+        "model": "claude-sonnet-5-5",
+        "effort": "high",
+        "mode": "sync",
+        "response_id": "msg_011CgKGryL63Apk4ja4khosi",
+        "response_sha256": "603a79bcf601ea862231881b502955b5e47e3754f8ef997fd23149ba59db4794",
+        "schema_sha256": null,
+        "request_sha256": null,
+        "request": null,
+        "raw_response_sha256": "968abd201551c39d2bd4f816c3f3c866ae7bf5e5c393a96c8b8f4e87d737fc83"
+      },
+      "origin": "claude-validation-2026-10-23/high-full/claude-sonnet-5-5--trca-D02.json",
+      "raw_response": {
+        "model": "claude-sonnet-5-5",
+        "id": "msg_011CgKGryL63Apk4ja4khosi",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"contracts\":[{\"reference\":\"RFQ No. 10009905\",\"solicitation_type\":\"RFQ\",\"title\":\"Supply and Delivery of Approximately 8500 Tonnes of 2 – 5 Tonne Stackable Armourstone to the Lakeview Waterfront Connection Project\",\"buyer\":\"Toronto and Region Conservation Authority (TRCA)\",\"posted_date\":\"2019-01-07\",\"closed_date\":\"2019-01-18\",\"documents_taken\":9,\"declared_submissions\":4,\"declared_compliant\":null,\"stage\":\"single_stage\",\"prequalified\":[],\"invited_to_tender\":[],\"bids\":[{\"supplier_name\":\"CDR Young’s Aggregates Inc.\",\"amount_raw\":\"$527,000.00\",\"amount_basis\":\"plus_HST\",\"status\":\"compliant\",\"rank\":1},{\"supplier_name\":\"Atlantis Marine Construction\",\"amount_raw\":\"$590,750.00\",\"amount_basis\":\"plus_HST\",\"status\":\"not_stated\",\"rank\":2},{\"supplier_name\":\"Glenn Windrem Trucking\",\"amount_raw\":\"$592,875.00\",\"amount_basis\":\"plus_HST\",\"status\":\"not_stated\",\"rank\":3},{\"supplier_name\":\"TACC Construction\",\"amount_raw\":\"$646,000.00\",\"amount_basis\":\"plus_HST\",\"status\":\"not_stated\",\"rank\":4}],\"awards\":[{\"supplier_name\":\"CDR Young’s Aggregates Inc.\",\"amount_raw\":\"$527,000.00\",\"amount_basis\":\"plus_HST\",\"contingency_raw\":\"$52,700.00 (approximately 10%), plus applicable taxes\",\"value_confidential\":false}],\"funding_source\":\"Region of Peel capital budget, Account 252-52\",\"decision_date\":\"2019-04-05\",\"decision_body\":\"Executive Committee\"},{\"reference\":\"RFQ No. 10009906\",\"solicitation_type\":\"RFQ\",\"title\":\"Supply and Delivery of Approximately 8000 Tonnes of 3 – 5 Tonne Non-Stackable Armourstone to the Lakeview Waterfront Connection Project\",\"buyer\":\"Toronto and Region Conservation Authority (TRCA)\",\"posted_date\":\"2019-01-07\",\"closed_date\":\"2019-01-18\",\"documents_taken\":9,\"declared_submissions\":4,\"declared_compliant\":null,\"stage\":\"single_stage\",\"prequalified\":[],\"invited_to_tender\":[],\"bids\":[{\"supplier_name\":\"Glenn Windrem Trucking\",\"amount_raw\":\"$470,000.00\",\"amount_basis\":\"plus_HST\",\"status\":\"compliant\",\"rank\":1},{\"supplier_name\":\"CDR Young’s Aggregates Inc.\",\"amount_raw\":\"$512,000.00\",\"amount_basis\":\"plus_HST\",\"status\":\"not_stated\",\"rank\":2},{\"supplier_name\":\"Atlantis Marine Construction\",\"amount_raw\":\"$532,000.00\",\"amount_basis\":\"plus_HST\",\"status\":\"not_stated\",\"rank\":3},{\"supplier_name\":\"TACC Construction\",\"amount_raw\":\"$608,000.00\",\"amount_basis\":\"plus_HST\",\"status\":\"not_stated\",\"rank\":4}],\"awards\":[{\"supplier_name\":\"Glenn Windrem Trucking\",\"amount_raw\":\"$470,000.00\",\"amount_basis\":\"plus_HST\",\"contingency_raw\":\"$47,000 (approximately 10%), plus applicable taxes\",\"value_confidential\":false}],\"funding_source\":\"Region of Peel capital budget, Account 252-52\",\"decision_date\":\"2019-04-05\",\"decision_body\":\"Executive Committee\"}]}"
+          }
+        ],
+        "container": null,
+        "stop_reason": "end_turn",
+        "stop_sequence": null,
+        "stop_details": null,
+        "usage": {
+          "input_tokens": 3099,
+          "cache_creation_input_tokens": 0,
+          "cache_read_input_tokens": 2866,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 0
+          },
+          "output_tokens": 1214,
+          "output_tokens_details": {
+            "thinking_tokens": 0
+          },
+          "service_tier": "standard",
+          "inference_geo": "global",
+          "speed": "standard"
+        },
+        "diagnostics": null
+      }
+    },
+    "trca-D04": {
+      "state": "success",
+      "extraction": {
+        "contracts": [
+          {
+            "reference": "2104-09-3006",
+            "solicitation_type": "RFP",
+            "title": "Integrated Telecommunications Infrastructure, including telephony and connectivity services (Bell Canada Master Agreement, Amending Agreement No. 11)",
+            "buyer": "City of Toronto",
+            "posted_date": "2009-01-28",
+            "closed_date": "2009-04-22",
+            "documents_taken": 29,
+            "declared_submissions": 8,
+            "declared_compliant": 7,
+            "stage": "single_stage",
+            "prequalified": [],
+            "invited_to_tender": [],
+            "bids": [
+              {
+                "supplier_name": "Aastra Telecom Inc",
+                "amount_raw": null,
+                "amount_basis": null,
+                "status": "not_stated",
+                "rank": null
+              },
+              {
+                "supplier_name": "Alcatel-Lucent Canada Inc",
+                "amount_raw": null,
+                "amount_basis": null,
+                "status": "not_stated",
+                "rank": null
+              },
+              {
+                "supplier_name": "Bell Canada",
+                "amount_raw": null,
+                "amount_basis": null,
+                "status": "compliant",
+                "rank": 1
+              },
+              {
+                "supplier_name": "Cogeco",
+                "amount_raw": null,
+                "amount_basis": null,
+                "status": "not_stated",
+                "rank": null
+              },
+              {
+                "supplier_name": "FlexITy Solutions Inc",
+                "amount_raw": null,
+                "amount_basis": null,
+                "status": "not_stated",
+                "rank": null
+              },
+              {
+                "supplier_name": "MTS Allstream Inc",
+                "amount_raw": null,
+                "amount_basis": null,
+                "status": "not_stated",
+                "rank": null
+              },
+              {
+                "supplier_name": "Quartet Services Inc",
+                "amount_raw": null,
+                "amount_basis": null,
+                "status": "not_stated",
+                "rank": null
+              },
+              {
+                "supplier_name": "Rogers Communications Inc",
+                "amount_raw": null,
+                "amount_basis": null,
+                "status": "not_stated",
+                "rank": null
+              }
+            ],
+            "awards": [
+              {
+                "supplier_name": "Bell Canada",
+                "amount_raw": "$235,000",
+                "amount_basis": "plus_HST",
+                "contingency_raw": null,
+                "value_confidential": false
+              }
+            ],
+            "funding_source": "IT Infrastructure and various Business Unit Operating accounts",
+            "decision_date": null,
+            "decision_body": "Board of Directors"
+          },
+          {
+            "reference": "10032967",
+            "solicitation_type": "RFP",
+            "title": "Vendor of Record arrangement for on-call electrical and mechanical contractor services 2020 - 2021",
+            "buyer": "Toronto and Region Conservation Authority",
+            "posted_date": "2020-06-03",
+            "closed_date": "2020-06-17",
+            "documents_taken": 36,
+            "declared_submissions": 15,
+            "declared_compliant": null,
+            "stage": "single_stage",
+            "prequalified": [],
+            "invited_to_tender": [],
+            "bids": [
+              {
+                "supplier_name": "Ainsworth Inc.",
+                "amount_raw": null,
+                "amount_basis": null,
+                "status": "not_stated",
+                "rank": null
+              },
+              {
+                "supplier_name": "Black Creek Mechanical Ltd.",
+                "amount_raw": null,
+                "amount_basis": null,
+                "status": "not_stated",
+                "rank": null
+              },
+              {
+                "supplier_name": "R.A Graham Electrical Contractors",
+                "amount_raw": null,
+                "amount_basis": null,
+                "status": "not_stated",
+                "rank": null
+              },
+              {
+                "supplier_name": "Electric Group Ltd.",
+                "amount_raw": null,
+                "amount_basis": null,
+                "status": "not_stated",
+                "rank": null
+              },
+              {
+                "supplier_name": "Beckett Electrical Inc.",
+                "amount_raw": null,
+                "amount_basis": null,
+                "status": "not_stated",
+                "rank": null
+              },
+              {
+                "supplier_name": "Bolton Electric Company Inc",
+                "amount_raw": null,
+                "amount_basis": null,
+                "status": "not_stated",
+                "rank": null
+              },
+              {
+                "supplier_name": "Everbrite Industries",
+                "amount_raw": null,
+                "amount_basis": null,
+                "status": "disqualified",
+                "rank": null
+              },
+              {
+                "supplier_name": "RPM Industrial Inc",
+                "amount_raw": null,
+                "amount_basis": null,
+                "status": "not_stated",
+                "rank": null
+              },
+              {
+                "supplier_name": "Nortek Mechanical Services",
+                "amount_raw": null,
+                "amount_basis": null,
+                "status": "not_stated",
+                "rank": null
+              },
+              {
+                "supplier_name": "Ocean Mechanical Ltd.",
+                "amount_raw": null,
+                "amount_basis": null,
+                "status": "not_stated",
+                "rank": null
+              },
+              {
+                "supplier_name": "Pipe-All Plumbing and Heating Ltd.",
+                "amount_raw": null,
+                "amount_basis": null,
+                "status": "not_stated",
+                "rank": null
+              },
+              {
+                "supplier_name": "Nor-Line Mechanical Ltd",
+                "amount_raw": null,
+                "amount_basis": null,
+                "status": "not_stated",
+                "rank": null
+              },
+              {
+                "supplier_name": "MSB Mechanical Ltd.",
+                "amount_raw": null,
+                "amount_basis": null,
+                "status": "not_stated",
+                "rank": null
+              },
+              {
+                "supplier_name": "Litek Mechnical Services Inc.",
+                "amount_raw": null,
+                "amount_basis": null,
+                "status": "not_stated",
+                "rank": null
+              },
+              {
+                "supplier_name": "Glen The Plumber",
+                "amount_raw": null,
+                "amount_basis": null,
+                "status": "not_stated",
+                "rank": null
+              }
+            ],
+            "awards": [
+              {
+                "supplier_name": "RPM Industrial Inc.",
+                "amount_raw": null,
+                "amount_basis": null,
+                "contingency_raw": null,
+                "value_confidential": false
+              },
+              {
+                "supplier_name": "Bolton Electric Company Inc.",
+                "amount_raw": null,
+                "amount_basis": null,
+                "contingency_raw": null,
+                "value_confidential": false
+              },
+              {
+                "supplier_name": "Ainsworth",
+                "amount_raw": null,
+                "amount_basis": null,
+                "contingency_raw": null,
+                "value_confidential": false
+              },
+              {
+                "supplier_name": "Black Creek Mechanical Ltd.",
+                "amount_raw": null,
+                "amount_basis": null,
+                "contingency_raw": null,
+                "value_confidential": false
+              },
+              {
+                "supplier_name": "Ocean Mechanical Ltd.",
+                "amount_raw": null,
+                "amount_basis": null,
+                "contingency_raw": null,
+                "value_confidential": false
+              },
+              {
+                "supplier_name": "MSB Mechanical Ltd.",
+                "amount_raw": null,
+                "amount_basis": null,
+                "contingency_raw": null,
+                "value_confidential": false
+              },
+              {
+                "supplier_name": "Black Creek Mechanical Ltd",
+                "amount_raw": null,
+                "amount_basis": null,
+                "contingency_raw": null,
+                "value_confidential": false
+              },
+              {
+                "supplier_name": "Glen the Plumber",
+                "amount_raw": null,
+                "amount_basis": null,
+                "contingency_raw": null,
+                "value_confidential": false
+              }
+            ],
+            "funding_source": "various divisional operating accounts",
+            "decision_date": null,
+            "decision_body": "Board of Directors"
+          }
+        ]
+      },
+      "usage": {
+        "input_tokens": 7983,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 2866,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 3546,
+        "output_tokens_details": {
+          "thinking_tokens": 1353
+        },
+        "service_tier": "standard",
+        "inference_geo": "global",
+        "speed": "standard"
+      },
+      "charged_microdollars": 51713,
+      "provenance": {
+        "document_sha256": "077c734b724f5f39367f52ce8b02b4c467a98fefc06e466262f8bfd1749e9d07",
+        "text_sha256": "efa0773014bd88d122dcfff32fb7548152864ab781e5d9ccee03d934de5a1142",
+        "prompt_version": "v1-b63aa8c835ae",
+        "model": "claude-sonnet-5-5",
+        "effort": "high",
+        "mode": "sync",
+        "response_id": "msg_011CgKGsftNyszAQLKa2e1Ed",
+        "response_sha256": "53b3c0b622aaedb6623901158dc116c14a722c72f1d9f28ebb3d3db4ce02e92b",
+        "schema_sha256": null,
+        "request_sha256": null,
+        "request": null,
+        "raw_response_sha256": "9577c5db4fe75310ef3145449b73c9b1adabbce2d22e05797abd5a31ba16f164"
+      },
+      "origin": "claude-validation-2026-10-23/high-full/claude-sonnet-5-5--trca-D04.json",
+      "raw_response": {
+        "model": "claude-sonnet-5-5",
+        "id": "msg_011CgKGsftNyszAQLKa2e1Ed",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "thinking",
+            "thinking": "",
+            "signature": "CAQS/BwKEAgTGAI4AUIIdGhpbmtpbmcSDB4JyEncfMrkGbucUhoMl22OqyjBtIvVbJ8ZIjCLAR5GIBJqU2X/ZETAQiBCJ7NXH4E7yzFdw/nTcSdDa/BOZU5rGNFHjpLGzv0TfIIqmRyOrRG/cYt7X9R0iyUPVYZXiZKDRIcII/7knNPszkidyvMPFWCtraPCIWLwpE9+qknL6XZWOSNlrftKxQB69Bxmu8diuEhsFORReo1CZYtJp3QW3aHqzNNIgjGyPMMml0IhaMsM3dCuEFio7mHjB6+9+0Y3+/J+1TbOXhP9Bu4NOrUs1Vs/gDyp3WwexFVaNvDe2DLnvMSN7SXiqt6cXFwgwOHTWKILJPJHOKsuNGkMhuWW9KpMpco4DAdrbMZVq3eza08Q1Qiih7cBctDD9MpIXB9SeVlyAcrLfAXUd94u3QCzO5hatDRqbXd1vai2nSsc0hELczYorYeR6NDxSAPCYukXbldorYxMqcWbG43sGkfMMrayId2/0IwXzlnhKy5ZCCtJaI9xP8gdWX9QMyNMt+ajFT743c0sMlxHBW27cl/vHq8d587uqSPvMQlNiWTuZEWUl0KLDTrLiZ1aFtZdA3iSUCVCp9KJdyDzQDtFJJi8LXqFQUwPzvprct+FTh5feFdWqAzb8fk4V0q/b48Fm91CkbXNEiadEBsvgVAyGiDrCV2HBhIV9Unel74peueT+XJ936yjEcT8ODEXvrjL5tPg9hFlWxERbyQIB8k0W8pHLA4ISuq80chm48eoSoRX2YQL8e1MAlQwqTUk/dj6Fk+IfNYiDguLFJoLSI927DjAdJFDDIBD8Hd/v4oloPm/fG5icrml+U9fj7QKCDhaSMSEr5WNYWJpTtiVgAyYprx5Pxb7FzErzG+6Hjzt1dFwEAMaPD0f8afuVYJu8AtItnWk/DxrgpkgNe4dGdlEymPoYq0EuHH+gV0geQajsBQAKRyHRGaWtNgFseCzqOdMbVZKwFd9rHByPs8gXY2nJ7pmn6XLrnZEaBfQQA5NzcCmQ5C0CnBVQK0P1JdwZKHdeL0C3QmtdhG3U1dIVK8cWikm1Qda1cSN4yIet8YQaOMkMUft9+MbdrxaGFWhPDpln2Shhx22qsw6liXPHB5KEH2JCtZUJiInVwvxqriPfJ/FaxKvDiuBWqhn0FTyM5YWFYFeJ0n9XDd4NTjA2XgCO3kxAsawTnQsuKPxJ8NhJxzwVtnre6nN6k1Cn8r2ivyuwcoOxWt/WzsarwgR5An4ha2IOtbZ3B6+7mEiK9z9QStUyITFUew0QtWNW+ROIu6V9HVbON8ITlmPeKaFsS4uU6zuQrANF6Akr2olY24TG6r7tPnT4PSLZUNxVwoLZWvViYTkEm2joOWYeEJKOlgCH5OWOkbsYeSvL1vkwyQy/taJkMBzex79xqCtE9wlFz0USe2xm5C5uJzX6LT2s2InB9iay1sxgbhfXzheMW5CWk0Br9lTFZwWNsSHVQNDmoVC3rPDmxWro/TcjZx06xyEpxeHrpCuGojC+cvjx8P7bhn3LQcn0uAxY6JceQ3/iYErfRx1tfhdbRRPmQ4+drdcC0k7RGyZFnHmhxLmHJZh1FwgfonYnKcR8A6vPRBEBmIWCCSMphZbVFcVPOlepPTxwGY3Co5WAD4sg0Xh2W7eZ+RMGEEUzyUl2YHMeKC4rw9anc1PfqY1d7QwQT3moHVZX0lNOZpnJ40n3uJImcUErXKMjCvLlKua0WLw6+Io4256r4icjEK15iQkiIdZ2DMiMh/C6P/+9K2bJsHVy1BWwxf9sJgkJJ9x3IuBMdGitof6PiwOkkKilx5tQJiGiIdvElruhBXfDTE8HB9ajygS13T0HsKEEMs88eJbBZrlTTR/4I6T/3dElPsajRFrZuS6T6ySoI+vNW/IxvSNNrpmqMqAWoun3EeWS7kxxrVC3nLCMnaIyBI5O1X/wZpc5qBsaG2zFBmMQTSTTZU5+wxP1iM2eqpGdA4hq3er0g4QuEeiOYnfOHedMlKsCmp9u0YWcC2MUZOCjhAYZbwRy9uBhizkiuKT906zTHcpx2F8ZoTZtI75lLEiYr6qq+UCTnsk0Qjqav+uh7BvuTlM2tHLekGKQ4g1RL95uvhStFEjtKQB+uDBrslinbjArUv8c252rI77yIrI22m4NGJiEf7FSUhTfOHO9+h3hZgiAbEBpDQAHhRCj4q0pbD+RINaFvTRtn0xIlTXfHcP+sJIGOaPX/wKWnMYNZFjrKpt06eSlrW1HncWrN4scZtQ62eYYBcub/nrJY9paQA8BzvcR/kez1oUBDtiTIlEUkoErAz+pI5zfEMqtlqqLWBZ1Cz2502ik1ciiolqd+hhN6E4ok3k1Chcrjuks4GDuBVNmmrBjrLw1ppdvasqUh96HxvvHw6Dl06uSjHiazUCJcae8TjR9xMQoy6nATKlziKiGXLk18utnWkb64k44Wguzzd38IX5RDM+z3zlSYW57+k437DP8X5rDi+NuCEvJifvtr9cV9y56M0i8loddiIb93FEyPznKe6n3PrR2lnC7RvvvhB8pZhxyhs/A+RvGMdOyfYMWAfx9lZSJ3Pjjm+s3yWJ36hzsKIHwSKzILNlQnqRKOsKKg4FZfmqszP45QQo8rV8rWeHObwkg7CCvCpV5Eejoz55JhUbpEqF0fogc+7uZBDIEHkY5twbXjrXnSWiYkMxjIKSlwRgbWzrWQxXlzCmtzgwmOOEWMpFfDiZI/2bejxEycWbUIBfyG79qEmvgZPj9nt0GqaLUQqpQe5KsJw0foH9A8Z1xq8DMTRtQ1T+cv2dxKdOrZyJ2YrfnV2+BPLOB/T4gU7LwKS8b9eQtnU7ktZzvIxh/gTh5CARD0256VYP+DaBAcy6btlDp7zKF2emqZIn/MHWdIO+a7T81axt7oGAkaTL47kqqna3z/oJMyDrBzHh3ldmWtV3yhlnOW75L05NotNsKfs8B1DVwKCX0Ok2g8AeflSYKwSn2eCLxCk6Z+t50YrN/lj1nw59NT7WolhvVhYMi3KUNBYAgmhRtjDd+4YVXYdbKvIWP7AzEzlwbVhQ9SgCpHgclPThNcKu4PnhDzTs5dA3daURpH/Z/87UlhfPY/FGv9fPdoz748hxelyeZaYQWqYJFCkAuMHsutP/vNUiYFMKTPoekMNvhCeezBU1dSoSLtHq1GUuNvHMsA8ccSOnUuLrT6qAj5SuknsEo3UNSwxTQ6/vrELrTr9Wg2plw15RmFdMUvlvM0i2KFcNQOmFUyGO+giA8Mn4u94njP3beMUbW+Wh9udHh+j9rdQ4UxqiAq2ZPqteTIPLNmXg9Wn2Ru0Zr42RWLGZsj8meNTVmWkqYsGKRiV6Kp1GOJj+GdXaZMWjPKnYmCrR4u+qWhkoKPTq2eExtqTRn4cM3je+D+V8UxYE8aBFJZJBhykJvQ255Fpm72NcevQSwuTjLCewl/bS6m9J2oWZGosyvedvLJ1llx5NfKjCab7Od6Hn48/te2FFRs42tyeyaTtd2bolQ9dR7qHLLSUMNqiHH8iA09Xjp6YVKechjMq9VGDICFXBvsObIrEurawNdgTl4Yr60lOY6BRCDLdidzYbTJqJ25NxWKU7EGn5SdpqVdZ88VtmDwr4XXrtwgvZf0p43tQE093OmnEfgo58PrTkkLXyqNLeSqbFx32eNOOGw4iC4uUdRY0XfaS4L/94WUoRkUmCqCs1tV6ve/AKs+79KkRsiwqGNMeoTf8PNQClmwgtqjc6JQiGPYYjrdNT/lj/CJn01Vj0ID8eCJl5lhp4eN3t+3+p86Al3oe++1yO4ekQLat7xMQaSdNM44JU/3JjxQ3VqQC68Gphy7LWBm5ZvRxXmhnoiP5eo+piRB0+Sa/Jyki/kO7y7Jrpu5ZVUhPoq5dKnGbtLyY1KQttFC8ELaTvggbVVPtJBB4ihT4/UnRIk0o2OeTMry4mSrZqI8jfOlpwCg6uU20zaC2ViUyMZzzT1BB6wrVk962aoD5PKqetDyG4apqN9+3LxFljGgCnikZX7ECKwmiFvPJgylwrmEhjuJH/MY0siydijqpFninOUwmGUcc1vcmPGd8R+2MaoOnsJA+83WSCrVpcbgltcefToT9RVvaGnBboAJgMS7TfcCB+czyqOp81YtmeDNRol/laOnOBkCPjxezACyDElva0G2A3NNJRliYQFSgEsevFSBy/MUKzJ0jrvD/MUMBZdl1cD4d8DE0PRQ4j3W4GMp1NtOWFbi3YXSrHuhJ8Wi0H6cr95jMfAiTuuUK8uJlSdEm6fN/wumpDMD4wsRZvYWvs9lfzJomnVAn8pihQmJfPv8bQI49Jvvo5bEoHaeLcu6RCJgfDpqZSTRnUfZkxgLflUcrtzPV4Coii6G0LUCP7YpnPylHsGAo9knHS2HQYIFkoCkEYBUHO881IpBembB+XGyiZyMypgYZZZtrc08/M3mJyG+eREUSaMqi0QaCN+GjgpV6z9ED1HnbMkkiVUrmRJw2ia+/4a+x2e5cdUVf8QCa0zbc26GSYPz7AA2aTTapeMGoSpZOeqK0siF5FkwIiynIaQ0bz6x9mmWVhrUNN1sjSYtBQ0Q26ifk5gojcxJtNJwmR6kFrmr5mutY0Z2ilXt3RH1V76uJCp0u2R/BPYSlRxaKiR58wNJ7vjRl6PeBmEiYntgNFivKHuhBIfa4lXDUuoz1Zfgw2gAyXo1sgv2d4Kcot7U0viHFrtQIGNgkrvX3e2ZkvXbgzJbQrI9MlKvAOKifJionuT4UjYbbFRh17Tx2VWtJU2r0hgE2mQBCHkzbdLmbGE34olaUyYIIAyz8gEz3R6N71o68FUS8Q7wyW5/bLWRPGDj7kdyiaixL2D1tLp2CZeCk6QTlwRe8nemaa3eKOHYMtJRFgTiAzEm8leGeSnfSpOdK3VynyXv1aH7j+GEQYAQ=="
+          },
+          {
+            "type": "text",
+            "text": "{\"contracts\":[{\"reference\":\"2104-09-3006\",\"solicitation_type\":\"RFP\",\"title\":\"Integrated Telecommunications Infrastructure, including telephony and connectivity services (Bell Canada Master Agreement, Amending Agreement No. 11)\",\"buyer\":\"City of Toronto\",\"posted_date\":\"2009-01-28\",\"closed_date\":\"2009-04-22\",\"documents_taken\":29,\"declared_submissions\":8,\"declared_compliant\":7,\"stage\":\"single_stage\",\"prequalified\":[],\"invited_to_tender\":[],\"bids\":[{\"supplier_name\":\"Aastra Telecom Inc\",\"amount_raw\":null,\"amount_basis\":null,\"status\":\"not_stated\",\"rank\":null},{\"supplier_name\":\"Alcatel-Lucent Canada Inc\",\"amount_raw\":null,\"amount_basis\":null,\"status\":\"not_stated\",\"rank\":null},{\"supplier_name\":\"Bell Canada\",\"amount_raw\":null,\"amount_basis\":null,\"status\":\"compliant\",\"rank\":1},{\"supplier_name\":\"Cogeco\",\"amount_raw\":null,\"amount_basis\":null,\"status\":\"not_stated\",\"rank\":null},{\"supplier_name\":\"FlexITy Solutions Inc\",\"amount_raw\":null,\"amount_basis\":null,\"status\":\"not_stated\",\"rank\":null},{\"supplier_name\":\"MTS Allstream Inc\",\"amount_raw\":null,\"amount_basis\":null,\"status\":\"not_stated\",\"rank\":null},{\"supplier_name\":\"Quartet Services Inc\",\"amount_raw\":null,\"amount_basis\":null,\"status\":\"not_stated\",\"rank\":null},{\"supplier_name\":\"Rogers Communications Inc\",\"amount_raw\":null,\"amount_basis\":null,\"status\":\"not_stated\",\"rank\":null}],\"awards\":[{\"supplier_name\":\"Bell Canada\",\"amount_raw\":\"$235,000\",\"amount_basis\":\"plus_HST\",\"contingency_raw\":null,\"value_confidential\":false}],\"funding_source\":\"IT Infrastructure and various Business Unit Operating accounts\",\"decision_date\":null,\"decision_body\":\"Board of Directors\"},{\"reference\":\"10032967\",\"solicitation_type\":\"RFP\",\"title\":\"Vendor of Record arrangement for on-call electrical and mechanical contractor services 2020 - 2021\",\"buyer\":\"Toronto and Region Conservation Authority\",\"posted_date\":\"2020-06-03\",\"closed_date\":\"2020-06-17\",\"documents_taken\":36,\"declared_submissions\":15,\"declared_compliant\":null,\"stage\":\"single_stage\",\"prequalified\":[],\"invited_to_tender\":[],\"bids\":[{\"supplier_name\":\"Ainsworth Inc.\",\"amount_raw\":null,\"amount_basis\":null,\"status\":\"not_stated\",\"rank\":null},{\"supplier_name\":\"Black Creek Mechanical Ltd.\",\"amount_raw\":null,\"amount_basis\":null,\"status\":\"not_stated\",\"rank\":null},{\"supplier_name\":\"R.A Graham Electrical Contractors\",\"amount_raw\":null,\"amount_basis\":null,\"status\":\"not_stated\",\"rank\":null},{\"supplier_name\":\"Electric Group Ltd.\",\"amount_raw\":null,\"amount_basis\":null,\"status\":\"not_stated\",\"rank\":null},{\"supplier_name\":\"Beckett Electrical Inc.\",\"amount_raw\":null,\"amount_basis\":null,\"status\":\"not_stated\",\"rank\":null},{\"supplier_name\":\"Bolton Electric Company Inc\",\"amount_raw\":null,\"amount_basis\":null,\"status\":\"not_stated\",\"rank\":null},{\"supplier_name\":\"Everbrite Industries\",\"amount_raw\":null,\"amount_basis\":null,\"status\":\"disqualified\",\"rank\":null},{\"supplier_name\":\"RPM Industrial Inc\",\"amount_raw\":null,\"amount_basis\":null,\"status\":\"not_stated\",\"rank\":null},{\"supplier_name\":\"Nortek Mechanical Services\",\"amount_raw\":null,\"amount_basis\":null,\"status\":\"not_stated\",\"rank\":null},{\"supplier_name\":\"Ocean Mechanical Ltd.\",\"amount_raw\":null,\"amount_basis\":null,\"status\":\"not_stated\",\"rank\":null},{\"supplier_name\":\"Pipe-All Plumbing and Heating Ltd.\",\"amount_raw\":null,\"amount_basis\":null,\"status\":\"not_stated\",\"rank\":null},{\"supplier_name\":\"Nor-Line Mechanical Ltd\",\"amount_raw\":null,\"amount_basis\":null,\"status\":\"not_stated\",\"rank\":null},{\"supplier_name\":\"MSB Mechanical Ltd.\",\"amount_raw\":null,\"amount_basis\":null,\"status\":\"not_stated\",\"rank\":null},{\"supplier_name\":\"Litek Mechnical Services Inc.\",\"amount_raw\":null,\"amount_basis\":null,\"status\":\"not_stated\",\"rank\":null},{\"supplier_name\":\"Glen The Plumber\",\"amount_raw\":null,\"amount_basis\":null,\"status\":\"not_stated\",\"rank\":null}],\"awards\":[{\"supplier_name\":\"RPM Industrial Inc.\",\"amount_raw\":null,\"amount_basis\":null,\"contingency_raw\":null,\"value_confidential\":false},{\"supplier_name\":\"Bolton Electric Company Inc.\",\"amount_raw\":null,\"amount_basis\":null,\"contingency_raw\":null,\"value_confidential\":false},{\"supplier_name\":\"Ainsworth\",\"amount_raw\":null,\"amount_basis\":null,\"contingency_raw\":null,\"value_confidential\":false},{\"supplier_name\":\"Black Creek Mechanical Ltd.\",\"amount_raw\":null,\"amount_basis\":null,\"contingency_raw\":null,\"value_confidential\":false},{\"supplier_name\":\"Ocean Mechanical Ltd.\",\"amount_raw\":null,\"amount_basis\":null,\"contingency_raw\":null,\"value_confidential\":false},{\"supplier_name\":\"MSB Mechanical Ltd.\",\"amount_raw\":null,\"amount_basis\":null,\"contingency_raw\":null,\"value_confidential\":false},{\"supplier_name\":\"Black Creek Mechanical Ltd\",\"amount_raw\":null,\"amount_basis\":null,\"contingency_raw\":null,\"value_confidential\":false},{\"supplier_name\":\"Glen the Plumber\",\"amount_raw\":null,\"amount_basis\":null,\"contingency_raw\":null,\"value_confidential\":false}],\"funding_source\":\"various divisional operating accounts\",\"decision_date\":null,\"decision_body\":\"Board of Directors\"}]}"
+          }
+        ],
+        "container": null,
+        "stop_reason": "end_turn",
+        "stop_sequence": null,
+        "stop_details": null,
+        "usage": {
+          "input_tokens": 7983,
+          "cache_creation_input_tokens": 0,
+          "cache_read_input_tokens": 2866,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 0
+          },
+          "output_tokens": 3546,
+          "output_tokens_details": {
+            "thinking_tokens": 1353
+          },
+          "service_tier": "standard",
+          "inference_geo": "global",
+          "speed": "standard"
+        },
+        "diagnostics": null
+      }
+    },
+    "ep-bus-duct": {
+      "state": "success",
+      "extraction": {
+        "contracts": [
+          {
+            "reference": "19-081-98116",
+            "solicitation_type": "RFT",
+            "title": "Food Building Electrical Bus Duct Replacement",
+            "buyer": "Exhibition Place",
+            "posted_date": "2019-08-02",
+            "closed_date": "2019-08-26",
+            "documents_taken": null,
+            "declared_submissions": 5,
+            "declared_compliant": null,
+            "stage": "single_stage",
+            "prequalified": [],
+            "invited_to_tender": [],
+            "bids": [
+              {
+                "supplier_name": "Sutherland-Schultz Ltd.",
+                "amount_raw": "$418,854.47",
+                "amount_basis": "net_of_taxes",
+                "status": "compliant",
+                "rank": 1
+              },
+              {
+                "supplier_name": "Ontario Electrical Construction Co. Ltd.",
+                "amount_raw": "$461,522.00",
+                "amount_basis": "net_of_taxes",
+                "status": "not_stated",
+                "rank": 2
+              },
+              {
+                "supplier_name": "Modern Niagara Toronto Inc.",
+                "amount_raw": "$470,700.00*",
+                "amount_basis": "net_of_taxes",
+                "status": "not_stated",
+                "rank": 3
+              },
+              {
+                "supplier_name": "Stevens & Black Electrical Contractors Ltd.",
+                "amount_raw": "$518,000.00",
+                "amount_basis": "net_of_taxes",
+                "status": "not_stated",
+                "rank": 4
+              },
+              {
+                "supplier_name": "Rogol Electric Company Limited",
+                "amount_raw": "$546,350.00",
+                "amount_basis": "net_of_taxes",
+                "status": "not_stated",
+                "rank": 5
+              }
+            ],
+            "awards": [
+              {
+                "supplier_name": "Sutherland-Schultz Ltd.",
+                "amount_raw": "$403,854.47",
+                "amount_basis": "net_of_taxes",
+                "contingency_raw": "$10,000.00",
+                "value_confidential": false
+              }
+            ],
+            "funding_source": "Exhibition Place Capital Works Program 2019, sub-account #081-98116 – Food Building Bus Duct Replacement",
+            "decision_date": null,
+            "decision_body": "Board of Governors of Exhibition Place"
+          }
+        ]
+      },
+      "usage": {
+        "input_tokens": 2698,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 2866,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 664,
+        "output_tokens_details": {
+          "thinking_tokens": 0
+        },
+        "service_tier": "standard",
+        "inference_geo": "global",
+        "speed": "standard"
+      },
+      "charged_microdollars": 12323,
+      "provenance": {
+        "document_sha256": "fedcc9cbe1a6422b8fd1e23df2c25299aff925f3c91ea57896a5193a7bc8ea03",
+        "text_sha256": "766203113a8e808d11a48f46e03b4e0d335fc4c15faa4b30adb8c1f700f0b53b",
+        "prompt_version": "v1-b63aa8c835ae",
+        "model": "claude-sonnet-5-5",
+        "effort": "high",
+        "mode": "sync",
+        "response_id": "msg_011CgKGu6ffkJXZ2F9c8Xt2R",
+        "response_sha256": "d0ed1dda1235be9bd0c6143795b1f569db4441c879745c095eea7b31a5e1ea56",
+        "schema_sha256": null,
+        "request_sha256": null,
+        "request": null,
+        "raw_response_sha256": "62533d8b752c5148a736073c2a19a444fbbfa18bd34622877268e0c2c236c813"
+      },
+      "origin": "claude-validation-2026-10-23/high-full/claude-sonnet-5-5--ep-distinct-bid-and-award.json",
+      "raw_response": {
+        "model": "claude-sonnet-5-5",
+        "id": "msg_011CgKGu6ffkJXZ2F9c8Xt2R",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"contracts\":[{\"reference\":\"19-081-98116\",\"solicitation_type\":\"RFT\",\"title\":\"Food Building Electrical Bus Duct Replacement\",\"buyer\":\"Exhibition Place\",\"posted_date\":\"2019-08-02\",\"closed_date\":\"2019-08-26\",\"documents_taken\":null,\"declared_submissions\":5,\"declared_compliant\":null,\"stage\":\"single_stage\",\"prequalified\":[],\"invited_to_tender\":[],\"bids\":[{\"supplier_name\":\"Sutherland-Schultz Ltd.\",\"amount_raw\":\"$418,854.47\",\"amount_basis\":\"net_of_taxes\",\"status\":\"compliant\",\"rank\":1},{\"supplier_name\":\"Ontario Electrical Construction Co. Ltd.\",\"amount_raw\":\"$461,522.00\",\"amount_basis\":\"net_of_taxes\",\"status\":\"not_stated\",\"rank\":2},{\"supplier_name\":\"Modern Niagara Toronto Inc.\",\"amount_raw\":\"$470,700.00*\",\"amount_basis\":\"net_of_taxes\",\"status\":\"not_stated\",\"rank\":3},{\"supplier_name\":\"Stevens & Black Electrical Contractors Ltd.\",\"amount_raw\":\"$518,000.00\",\"amount_basis\":\"net_of_taxes\",\"status\":\"not_stated\",\"rank\":4},{\"supplier_name\":\"Rogol Electric Company Limited\",\"amount_raw\":\"$546,350.00\",\"amount_basis\":\"net_of_taxes\",\"status\":\"not_stated\",\"rank\":5}],\"awards\":[{\"supplier_name\":\"Sutherland-Schultz Ltd.\",\"amount_raw\":\"$403,854.47\",\"amount_basis\":\"net_of_taxes\",\"contingency_raw\":\"$10,000.00\",\"value_confidential\":false}],\"funding_source\":\"Exhibition Place Capital Works Program 2019, sub-account #081-98116 – Food Building Bus Duct Replacement\",\"decision_date\":null,\"decision_body\":\"Board of Governors of Exhibition Place\"}]}"
+          }
+        ],
+        "container": null,
+        "stop_reason": "end_turn",
+        "stop_sequence": null,
+        "stop_details": null,
+        "usage": {
+          "input_tokens": 2698,
+          "cache_creation_input_tokens": 0,
+          "cache_read_input_tokens": 2866,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 0
+          },
+          "output_tokens": 664,
+          "output_tokens_details": {
+            "thinking_tokens": 0
+          },
+          "service_tier": "standard",
+          "inference_geo": "global",
+          "speed": "standard"
+        },
+        "diagnostics": null
+      }
+    },
+    "ep-negative": {
+      "state": "success",
+      "extraction": {
+        "contracts": []
+      },
+      "usage": {
+        "input_tokens": 3124,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 2866,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 11,
+        "output_tokens_details": {
+          "thinking_tokens": 0
+        },
+        "service_tier": "standard",
+        "inference_geo": "global",
+        "speed": "standard"
+      },
+      "charged_microdollars": 6645,
+      "provenance": {
+        "document_sha256": "32bcb544ac0bc3c518fd7fa61be158edce67caf9d2ea78ff9a87768c9d066530",
+        "text_sha256": "28efa93da8deec87939c0c214fbad3c35b04ba78a3a12f75c94186fbe248053a",
+        "prompt_version": "v1-b63aa8c835ae",
+        "model": "claude-sonnet-5-5",
+        "effort": "high",
+        "mode": "sync",
+        "response_id": "msg_011CgKGuQ2wo7C29gakSSPcX",
+        "response_sha256": "3312b062bb7ccfa55b0b7d0aba9f02f1876e292d3da750d7baac18e579416a51",
+        "schema_sha256": null,
+        "request_sha256": null,
+        "request": null,
+        "raw_response_sha256": "dc79fdb568aa222fc77ed5aaebe5b67f7c5661d4568cda3699128b5f0b99b08c"
+      },
+      "origin": "claude-validation-2026-10-23/high-full/claude-sonnet-5-5--ep-non-procurement-wsib.json",
+      "raw_response": {
+        "model": "claude-sonnet-5-5",
+        "id": "msg_011CgKGuQ2wo7C29gakSSPcX",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"contracts\":[]}"
+          }
+        ],
+        "container": null,
+        "stop_reason": "end_turn",
+        "stop_sequence": null,
+        "stop_details": null,
+        "usage": {
+          "input_tokens": 3124,
+          "cache_creation_input_tokens": 0,
+          "cache_read_input_tokens": 2866,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 0
+          },
+          "output_tokens": 11,
+          "output_tokens_details": {
+            "thinking_tokens": 0
+          },
+          "service_tier": "standard",
+          "inference_geo": "global",
+          "speed": "standard"
+        },
+        "diagnostics": null
+      }
+    }
+  }
+}

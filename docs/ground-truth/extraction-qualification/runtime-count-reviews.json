@@ -1,0 +1,65 @@
+{
+  "a2e3c59f7870a5fc688f29b02f65793b43ea363e9442267ffbeec992d33d3ec3": {
+    "disposition": "extractor_stage_mismatch",
+    "reason": "All three priced tenders are present, but the six declared submissions refer to prequalification. This is a stage-count declaration error, not three missing tenderers; it remains unresolved.",
+    "evidence": [
+      "qualification submissions were received from the following Proponent(s):",
+      "the following three (3) Proponent(s):"
+    ],
+    "scope": "count only"
+  },
+  "05a743b0c3cf72b06c528b80d5c413ec50db6fb785fe122888c88d6dafdf26bc": {
+    "disposition": "published_subset",
+    "reason": "Only the recommended bidder Guillevin International Co. is named for this call; the source publishes an aggregate count of 6 without the other 5 bidder names. Its supported named participant is present in this exact cached result. This resolves the count gap only.",
+    "evidence": [
+      "6302-12-0219",
+      "Guillevin International Co.",
+      "Number of Bids:",
+      "lowest bidder meeting specifications"
+    ],
+    "scope": "count only; no approval of bid prices or other facts",
+    "other_material_issues": [
+      "The cached submitted-bid price copies a contract-award value; the source does not establish an individual submitted price. Do not treat count resolution as extraction qualification."
+    ]
+  },
+  "a095b01d47b500e3567ecc4e271fbe1239835d4ed90b07bf64ee672cd0283531": {
+    "disposition": "published_subset",
+    "reason": "Only the recommended bidder Accrue Contracting Ltd. is named for this call; the source publishes an aggregate count of 2 without the other 1 bidder names. Its supported named participant is present in this exact cached result. This resolves the count gap only.",
+    "evidence": [
+      "3917-12-7226",
+      "Accrue Contracting Ltd.",
+      "Number of Bids:",
+      "lowest bidder meeting specifications"
+    ],
+    "scope": "count only; no approval of bid prices or other facts",
+    "other_material_issues": [
+      "The cached submitted-bid price copies a contract-award value; the source does not establish an individual submitted price. Do not treat count resolution as extraction qualification."
+    ]
+  },
+  "19734d0aaff51a50621fb5244c16dd2b8986f45de2f0eb3363525cd783d5eaea": {
+    "disposition": "published_subset",
+    "reason": "Only the recommended bidder Steelcore Construction Ltd. is named for this call; the source publishes an aggregate count of 11 without the other 10 bidder names. Its supported named participant is present in this exact cached result. This resolves the count gap only.",
+    "evidence": [
+      "192-2012",
+      "Steelcore Construction Ltd.",
+      "Number of Bids:",
+      "lowest bidder meeting specifications"
+    ],
+    "scope": "count only; no approval of bid prices or other facts",
+    "other_material_issues": [
+      "The cached submitted-bid price copies a contract-award value; the source does not establish an individual submitted price. Do not treat count resolution as extraction qualification."
+    ]
+  },
+  "26bee33cc2c49c257b74aa6b1167e37c97bd8f343e9ca2ac8c2787c3d07e071c": {
+    "disposition": "unpublished_bidders",
+    "reason": "Four received bids are stated, but only Imperial Fence is publicly named. This exact cached response preserves that named participant; the other three names are unpublished. This resolves the count gap only.",
+    "evidence": [
+      "the lowest bid among all four received",
+      "the bid from Imperial Fence Inc. to be the lowest meeting specifications"
+    ],
+    "scope": "count only; no approval of bid prices or other facts",
+    "other_material_issues": [
+      "The public $1,639,615 award cap does not establish a submitted tender price. The cached bid price is unsupported by this source."
+    ]
+  }
+}

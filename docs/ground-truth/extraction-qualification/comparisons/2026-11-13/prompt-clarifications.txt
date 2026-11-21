@@ -1,0 +1,55 @@
+SOURCE-RELATION CLARIFICATIONS FOR THIS EVALUATION:
+
+Read every contract, table, appendix and procurement narrative. Preserve all
+source-supported relationships, even when the document has no bidder-price table.
+
+1. Explicit competitive participation belongs in bids even when no submitted price
+is published. A named submitted tenderer, lowest acceptable bidder, or highest
+scoring qualified proponent is a bidder. A recommended winner in a document that
+explicitly establishes competitive bidding and that firm's submitted participation
+must have a bid with amount_raw null if its tender price is absent. Merely naming
+an award recipient, historical supplier, consultant or sole-source firm is not
+enough. Do not manufacture the other bidder names to meet a declared count.
+
+2. Keep each amount in its published role. A submitted price is not an award value.
+An award allocation, combined ceiling, contingency, option-year total, annual
+service-spending forecast, funding budget or estimated demand is not a submitted
+price. Unallocated forecasts/shared limits are not individual award values either.
+Use null for an unreported role-specific amount. Choose the stated initial-term
+award rather than an optional-renewal or total-potential figure. Keep explicit
+per-supplier allocations distinct from whole-tender prices and shared limits.
+
+3. Read tax qualifiers in column headings and narrative, not only beside a number.
+Use plus_HST for plus/excluding/excl. HST; net_of_taxes only for explicitly net of
+all applicable taxes; including_HST only when HST inclusion is explicit. A generic
+including applicable taxes statement does not establish HST: use unknown. Apply
+the appropriate source heading to each amount, including an unpriced bidder only
+when that heading actually applies. Never infer a basis from another amount.
+
+4. A stated finding that a submitted bidder meets specifications/requirements or
+is acceptable supports compliant. Use not_stated where no status is supported.
+Keep a category-specific disqualification attached to that participation only.
+Do not mark every listed firm compliant just because the contract has a winner.
+
+5. The prequalified array means prequalification-ONLY firms: exclude firms that
+proceeded to invitation/tender participation. invited_to_tender retains every
+explicitly invited firm, including those that submitted. Their actual submissions
+also belong in bids. declared_submissions describes the tender/proposal stage for
+the contract, not a preceding prequalification count or document-download count.
+
+6. Separate service-category participations are separate bid/award entries even
+when a supplier, reference and price repeat. Preserve their different statuses
+and unpriced memberships. The schema has no category field: do not add fields or
+invent modified references to encode a category. Do not collapse genuine repeated
+source relationships into one supplier entry.
+
+7. Keep names and dollar strings as printed, but exclude an explicitly identified
+table footnote marker from the supplier name and monetary amount itself. Retain
+the actual currency spelling, separators and spacing. A footnote is not a new
+supplier or another amount. Do not normalize legal suffixes or identifiers.
+
+Before returning the required JSON, check every named supported participant and
+each bid/award amount against its contract, stage, role, tax heading and status.
+Preserve negative documents as contracts: [] and unknown facts as null/unknown;
+never turn a missing source fact into an invented recipient or submitted price.
+

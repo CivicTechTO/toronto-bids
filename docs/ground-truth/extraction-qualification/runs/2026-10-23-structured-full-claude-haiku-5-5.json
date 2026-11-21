@@ -1,0 +1,1580 @@
+{
+  "id": "2026-10-23-structured-full-claude-haiku-5-5",
+  "attempts": {
+    "waterfront-2017-09": {
+      "state": "success",
+      "extraction": {
+        "contracts": [
+          {
+            "reference": null,
+            "solicitation_type": "unknown",
+            "title": "Port Lands Area – Soil & Groundwater Remediation and Treatment Technologies – Part B: Field-Scale Pilot Testing",
+            "buyer": "Waterfront Toronto",
+            "posted_date": null,
+            "closed_date": null,
+            "documents_taken": null,
+            "declared_submissions": null,
+            "declared_compliant": null,
+            "stage": "single_stage",
+            "prequalified": [],
+            "invited_to_tender": [],
+            "bids": [],
+            "awards": [
+              {
+                "supplier_name": "Ethical Solutions",
+                "amount_raw": "$278,100",
+                "amount_basis": "unknown",
+                "contingency_raw": null,
+                "value_confidential": false
+              },
+              {
+                "supplier_name": "Geosyntec Consultants",
+                "amount_raw": "$869,110",
+                "amount_basis": "unknown",
+                "contingency_raw": null,
+                "value_confidential": false
+              },
+              {
+                "supplier_name": "Groundwater Technology BV",
+                "amount_raw": "$313,022",
+                "amount_basis": "unknown",
+                "contingency_raw": null,
+                "value_confidential": false
+              },
+              {
+                "supplier_name": "WSP Canada",
+                "amount_raw": "$340,335",
+                "amount_basis": "unknown",
+                "contingency_raw": null,
+                "value_confidential": false
+              }
+            ],
+            "funding_source": null,
+            "decision_date": null,
+            "decision_body": null
+          },
+          {
+            "reference": null,
+            "solicitation_type": "sole_source",
+            "title": "Engineering and Inspection Fees for Services for Bayside Phase II",
+            "buyer": "Waterfront Toronto",
+            "posted_date": null,
+            "closed_date": null,
+            "documents_taken": null,
+            "declared_submissions": null,
+            "declared_compliant": null,
+            "stage": "single_stage",
+            "prequalified": [],
+            "invited_to_tender": [],
+            "bids": [],
+            "awards": [
+              {
+                "supplier_name": "City of Toronto",
+                "amount_raw": "$88,950",
+                "amount_basis": "unknown",
+                "contingency_raw": null,
+                "value_confidential": false
+              }
+            ],
+            "funding_source": null,
+            "decision_date": null,
+            "decision_body": null
+          },
+          {
+            "reference": null,
+            "solicitation_type": "sole_source",
+            "title": "Legal Services to Assist with Board/Corporate Governance Matters",
+            "buyer": "Waterfront Toronto",
+            "posted_date": null,
+            "closed_date": null,
+            "documents_taken": null,
+            "declared_submissions": null,
+            "declared_compliant": null,
+            "stage": "single_stage",
+            "prequalified": [],
+            "invited_to_tender": [],
+            "bids": [],
+            "awards": [
+              {
+                "supplier_name": "Axiom Global Canada Inc.",
+                "amount_raw": "$52,000",
+                "amount_basis": "unknown",
+                "contingency_raw": null,
+                "value_confidential": false
+              }
+            ],
+            "funding_source": null,
+            "decision_date": null,
+            "decision_body": null
+          },
+          {
+            "reference": null,
+            "solicitation_type": "unknown",
+            "title": "Interior Design-Build Services for Waterfront Toronto’s Corporate Office",
+            "buyer": "Waterfront Toronto",
+            "posted_date": null,
+            "closed_date": null,
+            "documents_taken": null,
+            "declared_submissions": null,
+            "declared_compliant": null,
+            "stage": "single_stage",
+            "prequalified": [],
+            "invited_to_tender": [],
+            "bids": [],
+            "awards": [
+              {
+                "supplier_name": "Greenferd Construction Inc.",
+                "amount_raw": "$186,446",
+                "amount_basis": "unknown",
+                "contingency_raw": null,
+                "value_confidential": false
+              }
+            ],
+            "funding_source": null,
+            "decision_date": null,
+            "decision_body": null
+          },
+          {
+            "reference": null,
+            "solicitation_type": "unknown",
+            "title": "East Bayfront Dockside Block 1 - Dockwall Reinforcing Design and Contract Administration",
+            "buyer": "Waterfront Toronto",
+            "posted_date": null,
+            "closed_date": null,
+            "documents_taken": null,
+            "declared_submissions": null,
+            "declared_compliant": null,
+            "stage": "single_stage",
+            "prequalified": [],
+            "invited_to_tender": [],
+            "bids": [],
+            "awards": [
+              {
+                "supplier_name": "SNC-Lavalin Inc.",
+                "amount_raw": "$173,082",
+                "amount_basis": "unknown",
+                "contingency_raw": null,
+                "value_confidential": false
+              }
+            ],
+            "funding_source": null,
+            "decision_date": null,
+            "decision_body": null
+          }
+        ]
+      },
+      "usage": {
+        "input_tokens": 473,
+        "cache_creation_input_tokens": 2866,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 2866,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 2171,
+        "output_tokens_details": {
+          "thinking_tokens": 778
+        },
+        "service_tier": "standard",
+        "inference_geo": "global",
+        "speed": "standard"
+      },
+      "charged_microdollars": 1492,
+      "provenance": {
+        "document_sha256": "766aef29fcf10179870b4f14abf1818b85e81e01be50cfbbcb22ec0d19dabcd2",
+        "text_sha256": "11c4a52b1206cd5ddeb966d34c44c09d68cb96a2e280e0980acd1a6a2e2d0a6c",
+        "prompt_version": "v1-b63aa8c835ae",
+        "model": "claude-haiku-5-5",
+        "effort": "medium",
+        "mode": "sync",
+        "response_id": "msg_011CgKGVjMsX7acbJ6NbAfGk",
+        "response_sha256": "3d60dece0c66407ef49517324d8af8a83632f5a6308158fd4c57ee5c625377f4",
+        "schema_sha256": null,
+        "request_sha256": null,
+        "request": null,
+        "raw_response_sha256": "7f37cddf3ae433efa8787ce987ecb75f6f1b2154dbb71734ebdf7586ad556254"
+      },
+      "origin": "claude-validation-2026-10-23/structured-full/claude-haiku-5-5--waterfront-2017-09.json",
+      "raw_response": {
+        "model": "claude-haiku-5-5",
+        "id": "msg_011CgKGVjMsX7acbJ6NbAfGk",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "thinking",
+            "thinking": "",
+            "signature": "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"
+          },
+          {
+            "type": "text",
+            "text": "{\"contracts\":[{\"reference\":null,\"solicitation_type\":\"unknown\",\"title\":\"Port Lands Area – Soil & Groundwater Remediation and Treatment Technologies – Part B: Field-Scale Pilot Testing\",\"buyer\":\"Waterfront Toronto\",\"posted_date\":null,\"closed_date\":null,\"documents_taken\":null,\"declared_submissions\":null,\"declared_compliant\":null,\"stage\":\"single_stage\",\"prequalified\":[],\"invited_to_tender\":[],\"bids\":[],\"awards\":[{\"supplier_name\":\"Ethical Solutions\",\"amount_raw\":\"$278,100\",\"amount_basis\":\"unknown\",\"contingency_raw\":null,\"value_confidential\":false},{\"supplier_name\":\"Geosyntec Consultants\",\"amount_raw\":\"$869,110\",\"amount_basis\":\"unknown\",\"contingency_raw\":null,\"value_confidential\":false},{\"supplier_name\":\"Groundwater Technology BV\",\"amount_raw\":\"$313,022\",\"amount_basis\":\"unknown\",\"contingency_raw\":null,\"value_confidential\":false},{\"supplier_name\":\"WSP Canada\",\"amount_raw\":\"$340,335\",\"amount_basis\":\"unknown\",\"contingency_raw\":null,\"value_confidential\":false}],\"funding_source\":null,\"decision_date\":null,\"decision_body\":null},{\"reference\":null,\"solicitation_type\":\"sole_source\",\"title\":\"Engineering and Inspection Fees for Services for Bayside Phase II\",\"buyer\":\"Waterfront Toronto\",\"posted_date\":null,\"closed_date\":null,\"documents_taken\":null,\"declared_submissions\":null,\"declared_compliant\":null,\"stage\":\"single_stage\",\"prequalified\":[],\"invited_to_tender\":[],\"bids\":[],\"awards\":[{\"supplier_name\":\"City of Toronto\",\"amount_raw\":\"$88,950\",\"amount_basis\":\"unknown\",\"contingency_raw\":null,\"value_confidential\":false}],\"funding_source\":null,\"decision_date\":null,\"decision_body\":null},{\"reference\":null,\"solicitation_type\":\"sole_source\",\"title\":\"Legal Services to Assist with Board/Corporate Governance Matters\",\"buyer\":\"Waterfront Toronto\",\"posted_date\":null,\"closed_date\":null,\"documents_taken\":null,\"declared_submissions\":null,\"declared_compliant\":null,\"stage\":\"single_stage\",\"prequalified\":[],\"invited_to_tender\":[],\"bids\":[],\"awards\":[{\"supplier_name\":\"Axiom Global Canada Inc.\",\"amount_raw\":\"$52,000\",\"amount_basis\":\"unknown\",\"contingency_raw\":null,\"value_confidential\":false}],\"funding_source\":null,\"decision_date\":null,\"decision_body\":null},{\"reference\":null,\"solicitation_type\":\"unknown\",\"title\":\"Interior Design-Build Services for Waterfront Toronto’s Corporate Office\",\"buyer\":\"Waterfront Toronto\",\"posted_date\":null,\"closed_date\":null,\"documents_taken\":null,\"declared_submissions\":null,\"declared_compliant\":null,\"stage\":\"single_stage\",\"prequalified\":[],\"invited_to_tender\":[],\"bids\":[],\"awards\":[{\"supplier_name\":\"Greenferd Construction Inc.\",\"amount_raw\":\"$186,446\",\"amount_basis\":\"unknown\",\"contingency_raw\":null,\"value_confidential\":false}],\"funding_source\":null,\"decision_date\":null,\"decision_body\":null},{\"reference\":null,\"solicitation_type\":\"unknown\",\"title\":\"East Bayfront Dockside Block 1 - Dockwall Reinforcing Design and Contract Administration\",\"buyer\":\"Waterfront Toronto\",\"posted_date\":null,\"closed_date\":null,\"documents_taken\":null,\"declared_submissions\":null,\"declared_compliant\":null,\"stage\":\"single_stage\",\"prequalified\":[],\"invited_to_tender\":[],\"bids\":[],\"awards\":[{\"supplier_name\":\"SNC-Lavalin Inc.\",\"amount_raw\":\"$173,082\",\"amount_basis\":\"unknown\",\"contingency_raw\":null,\"value_confidential\":false}],\"funding_source\":null,\"decision_date\":null,\"decision_body\":null}]}"
+          }
+        ],
+        "container": null,
+        "stop_reason": "end_turn",
+        "stop_sequence": null,
+        "stop_details": null,
+        "usage": {
+          "input_tokens": 473,
+          "cache_creation_input_tokens": 2866,
+          "cache_read_input_tokens": 0,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 2866,
+            "ephemeral_1h_input_tokens": 0
+          },
+          "output_tokens": 2171,
+          "output_tokens_details": {
+            "thinking_tokens": 778
+          },
+          "service_tier": "standard",
+          "inference_geo": "global",
+          "speed": "standard"
+        },
+        "diagnostics": null
+      }
+    },
+    "waterfront-2021-10": {
+      "state": "success",
+      "extraction": {
+        "contracts": [
+          {
+            "reference": null,
+            "solicitation_type": "sole_source",
+            "title": "Water Service Connections from the Property line to the Watermain and Sewers for Love Park in Central Waterfront",
+            "buyer": "Waterfront Toronto",
+            "posted_date": null,
+            "closed_date": null,
+            "documents_taken": null,
+            "declared_submissions": null,
+            "declared_compliant": null,
+            "stage": "single_stage",
+            "prequalified": [],
+            "invited_to_tender": [],
+            "bids": [],
+            "awards": [
+              {
+                "supplier_name": "The Treasurer, City of Toronto",
+                "amount_raw": "$100,507",
+                "amount_basis": "unknown",
+                "contingency_raw": null,
+                "value_confidential": false
+              }
+            ],
+            "funding_source": null,
+            "decision_date": null,
+            "decision_body": null
+          },
+          {
+            "reference": null,
+            "solicitation_type": "unknown",
+            "title": "Design and Supply of Play Equipment Phase 1 for Port Lands Flood Protection Project",
+            "buyer": "Waterfront Toronto",
+            "posted_date": null,
+            "closed_date": null,
+            "documents_taken": null,
+            "declared_submissions": null,
+            "declared_compliant": null,
+            "stage": "single_stage",
+            "prequalified": [],
+            "invited_to_tender": [],
+            "bids": [],
+            "awards": [
+              {
+                "supplier_name": "APE Studio Inc.",
+                "amount_raw": "$409,136",
+                "amount_basis": "unknown",
+                "contingency_raw": null,
+                "value_confidential": false
+              },
+              {
+                "supplier_name": "Earthscape Play Inc.",
+                "amount_raw": "$465,660",
+                "amount_basis": "unknown",
+                "contingency_raw": null,
+                "value_confidential": false
+              },
+              {
+                "supplier_name": "Monstrum APS",
+                "amount_raw": "$416,931",
+                "amount_basis": "unknown",
+                "contingency_raw": null,
+                "value_confidential": false
+              },
+              {
+                "supplier_name": "Whole Trees LLC",
+                "amount_raw": "$210,880",
+                "amount_basis": "unknown",
+                "contingency_raw": null,
+                "value_confidential": false
+              }
+            ],
+            "funding_source": null,
+            "decision_date": null,
+            "decision_body": null
+          },
+          {
+            "reference": null,
+            "solicitation_type": "unknown",
+            "title": "CIP Concrete (SPS, OGS1, SWTF, Outfall) for Port Lands Flood Protection Project",
+            "buyer": "Ellis Don Civil Ltd on behalf of Waterfront Toronto",
+            "posted_date": null,
+            "closed_date": null,
+            "documents_taken": null,
+            "declared_submissions": null,
+            "declared_compliant": null,
+            "stage": "single_stage",
+            "prequalified": [],
+            "invited_to_tender": [],
+            "bids": [],
+            "awards": [
+              {
+                "supplier_name": "Alliance Verdi Civil Inc.",
+                "amount_raw": "$2,915,010",
+                "amount_basis": "unknown",
+                "contingency_raw": null,
+                "value_confidential": false
+              }
+            ],
+            "funding_source": null,
+            "decision_date": null,
+            "decision_body": null
+          },
+          {
+            "reference": null,
+            "solicitation_type": "unknown",
+            "title": "Dry Utilities for New Cherry St and Lakeshore for Port Lands Flood Protection Project",
+            "buyer": "Ellis Don Civil Ltd on behalf of Waterfront Toronto",
+            "posted_date": null,
+            "closed_date": null,
+            "documents_taken": null,
+            "declared_submissions": null,
+            "declared_compliant": null,
+            "stage": "single_stage",
+            "prequalified": [],
+            "invited_to_tender": [],
+            "bids": [],
+            "awards": [
+              {
+                "supplier_name": "Guild Electric Limited",
+                "amount_raw": "$680,653",
+                "amount_basis": "unknown",
+                "contingency_raw": null,
+                "value_confidential": false
+              }
+            ],
+            "funding_source": null,
+            "decision_date": null,
+            "decision_body": null
+          },
+          {
+            "reference": null,
+            "solicitation_type": "unknown",
+            "title": "Bioengineering Supervision Services for Port Lands Flood Protection Project",
+            "buyer": "Ellis Don Civil Ltd on behalf of Waterfront Toronto",
+            "posted_date": null,
+            "closed_date": null,
+            "documents_taken": null,
+            "declared_submissions": null,
+            "declared_compliant": null,
+            "stage": "single_stage",
+            "prequalified": [],
+            "invited_to_tender": [],
+            "bids": [],
+            "awards": [
+              {
+                "supplier_name": "Urban Forest Associates",
+                "amount_raw": "$249,400",
+                "amount_basis": "unknown",
+                "contingency_raw": null,
+                "value_confidential": false
+              }
+            ],
+            "funding_source": null,
+            "decision_date": null,
+            "decision_body": null
+          },
+          {
+            "reference": null,
+            "solicitation_type": "unknown",
+            "title": "Temporary Street Lighting Design for Port Lands Flood Protection Project",
+            "buyer": "Ellis Don Civil Ltd on behalf of Waterfront Toronto",
+            "posted_date": null,
+            "closed_date": null,
+            "documents_taken": null,
+            "declared_submissions": null,
+            "declared_compliant": null,
+            "stage": "single_stage",
+            "prequalified": [],
+            "invited_to_tender": [],
+            "bids": [],
+            "awards": [
+              {
+                "supplier_name": "Utility Solutions",
+                "amount_raw": "$214,108",
+                "amount_basis": "unknown",
+                "contingency_raw": null,
+                "value_confidential": false
+              }
+            ],
+            "funding_source": null,
+            "decision_date": null,
+            "decision_body": null
+          }
+        ]
+      },
+      "usage": {
+        "input_tokens": 549,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 2866,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 2651,
+        "output_tokens_details": {
+          "thinking_tokens": 938
+        },
+        "service_tier": "standard",
+        "inference_geo": "global",
+        "speed": "standard"
+      },
+      "charged_microdollars": 1410,
+      "provenance": {
+        "document_sha256": "766aef29fcf10179870b4f14abf1818b85e81e01be50cfbbcb22ec0d19dabcd2",
+        "text_sha256": "bba4275dfe67ace53b3f017e71ac3a0200db080c2b64e09696f32ad4c9cb28ae",
+        "prompt_version": "v1-b63aa8c835ae",
+        "model": "claude-haiku-5-5",
+        "effort": "medium",
+        "mode": "sync",
+        "response_id": "msg_011CgKGXc4eDa2CtkoZSMniX",
+        "response_sha256": "3ad30e2dbe7740a7776945e15d9b3f31fecbcc3a1331e9f04d3525d39f268432",
+        "schema_sha256": null,
+        "request_sha256": null,
+        "request": null,
+        "raw_response_sha256": "c7113437adcbe88da34d95d5d6cc67c2575290c1267875fdb998e22b92a34107"
+      },
+      "origin": "claude-validation-2026-10-23/structured-full/claude-haiku-5-5--waterfront-2021-10.json",
+      "raw_response": {
+        "model": "claude-haiku-5-5",
+        "id": "msg_011CgKGXc4eDa2CtkoZSMniX",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "thinking",
+            "thinking": "",
+            "signature": "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"
+          },
+          {
+            "type": "text",
+            "text": "{\"contracts\":[{\"reference\":null,\"solicitation_type\":\"sole_source\",\"title\":\"Water Service Connections from the Property line to the Watermain and Sewers for Love Park in Central Waterfront\",\"buyer\":\"Waterfront Toronto\",\"posted_date\":null,\"closed_date\":null,\"documents_taken\":null,\"declared_submissions\":null,\"declared_compliant\":null,\"stage\":\"single_stage\",\"prequalified\":[],\"invited_to_tender\":[],\"bids\":[],\"awards\":[{\"supplier_name\":\"The Treasurer, City of Toronto\",\"amount_raw\":\"$100,507\",\"amount_basis\":\"unknown\",\"contingency_raw\":null,\"value_confidential\":false}],\"funding_source\":null,\"decision_date\":null,\"decision_body\":null},{\"reference\":null,\"solicitation_type\":\"unknown\",\"title\":\"Design and Supply of Play Equipment Phase 1 for Port Lands Flood Protection Project\",\"buyer\":\"Waterfront Toronto\",\"posted_date\":null,\"closed_date\":null,\"documents_taken\":null,\"declared_submissions\":null,\"declared_compliant\":null,\"stage\":\"single_stage\",\"prequalified\":[],\"invited_to_tender\":[],\"bids\":[],\"awards\":[{\"supplier_name\":\"APE Studio Inc.\",\"amount_raw\":\"$409,136\",\"amount_basis\":\"unknown\",\"contingency_raw\":null,\"value_confidential\":false},{\"supplier_name\":\"Earthscape Play Inc.\",\"amount_raw\":\"$465,660\",\"amount_basis\":\"unknown\",\"contingency_raw\":null,\"value_confidential\":false},{\"supplier_name\":\"Monstrum APS\",\"amount_raw\":\"$416,931\",\"amount_basis\":\"unknown\",\"contingency_raw\":null,\"value_confidential\":false},{\"supplier_name\":\"Whole Trees LLC\",\"amount_raw\":\"$210,880\",\"amount_basis\":\"unknown\",\"contingency_raw\":null,\"value_confidential\":false}],\"funding_source\":null,\"decision_date\":null,\"decision_body\":null},{\"reference\":null,\"solicitation_type\":\"unknown\",\"title\":\"CIP Concrete (SPS, OGS1, SWTF, Outfall) for Port Lands Flood Protection Project\",\"buyer\":\"Ellis Don Civil Ltd on behalf of Waterfront Toronto\",\"posted_date\":null,\"closed_date\":null,\"documents_taken\":null,\"declared_submissions\":null,\"declared_compliant\":null,\"stage\":\"single_stage\",\"prequalified\":[],\"invited_to_tender\":[],\"bids\":[],\"awards\":[{\"supplier_name\":\"Alliance Verdi Civil Inc.\",\"amount_raw\":\"$2,915,010\",\"amount_basis\":\"unknown\",\"contingency_raw\":null,\"value_confidential\":false}],\"funding_source\":null,\"decision_date\":null,\"decision_body\":null},{\"reference\":null,\"solicitation_type\":\"unknown\",\"title\":\"Dry Utilities for New Cherry St and Lakeshore for Port Lands Flood Protection Project\",\"buyer\":\"Ellis Don Civil Ltd on behalf of Waterfront Toronto\",\"posted_date\":null,\"closed_date\":null,\"documents_taken\":null,\"declared_submissions\":null,\"declared_compliant\":null,\"stage\":\"single_stage\",\"prequalified\":[],\"invited_to_tender\":[],\"bids\":[],\"awards\":[{\"supplier_name\":\"Guild Electric Limited\",\"amount_raw\":\"$680,653\",\"amount_basis\":\"unknown\",\"contingency_raw\":null,\"value_confidential\":false}],\"funding_source\":null,\"decision_date\":null,\"decision_body\":null},{\"reference\":null,\"solicitation_type\":\"unknown\",\"title\":\"Bioengineering Supervision Services for Port Lands Flood Protection Project\",\"buyer\":\"Ellis Don Civil Ltd on behalf of Waterfront Toronto\",\"posted_date\":null,\"closed_date\":null,\"documents_taken\":null,\"declared_submissions\":null,\"declared_compliant\":null,\"stage\":\"single_stage\",\"prequalified\":[],\"invited_to_tender\":[],\"bids\":[],\"awards\":[{\"supplier_name\":\"Urban Forest Associates\",\"amount_raw\":\"$249,400\",\"amount_basis\":\"unknown\",\"contingency_raw\":null,\"value_confidential\":false}],\"funding_source\":null,\"decision_date\":null,\"decision_body\":null},{\"reference\":null,\"solicitation_type\":\"unknown\",\"title\":\"Temporary Street Lighting Design for Port Lands Flood Protection Project\",\"buyer\":\"Ellis Don Civil Ltd on behalf of Waterfront Toronto\",\"posted_date\":null,\"closed_date\":null,\"documents_taken\":null,\"declared_submissions\":null,\"declared_compliant\":null,\"stage\":\"single_stage\",\"prequalified\":[],\"invited_to_tender\":[],\"bids\":[],\"awards\":[{\"supplier_name\":\"Utility Solutions\",\"amount_raw\":\"$214,108\",\"amount_basis\":\"unknown\",\"contingency_raw\":null,\"value_confidential\":false}],\"funding_source\":null,\"decision_date\":null,\"decision_body\":null}]}"
+          }
+        ],
+        "container": null,
+        "stop_reason": "end_turn",
+        "stop_sequence": null,
+        "stop_details": null,
+        "usage": {
+          "input_tokens": 549,
+          "cache_creation_input_tokens": 0,
+          "cache_read_input_tokens": 2866,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 0
+          },
+          "output_tokens": 2651,
+          "output_tokens_details": {
+            "thinking_tokens": 938
+          },
+          "service_tier": "standard",
+          "inference_geo": "global",
+          "speed": "standard"
+        },
+        "diagnostics": null
+      }
+    },
+    "waterfront-2023-03": {
+      "state": "success",
+      "extraction": {
+        "contracts": [
+          {
+            "reference": null,
+            "solicitation_type": "sole_source",
+            "title": "Delivery of Waterfront Toronto’s Integrated Annual Report 2022-2023",
+            "buyer": "Waterfront Toronto",
+            "posted_date": null,
+            "closed_date": null,
+            "documents_taken": null,
+            "declared_submissions": null,
+            "declared_compliant": null,
+            "stage": "single_stage",
+            "prequalified": [],
+            "invited_to_tender": [],
+            "bids": [],
+            "awards": [
+              {
+                "supplier_name": "Bespoke Cultural Collective",
+                "amount_raw": "$55,312",
+                "amount_basis": "unknown",
+                "contingency_raw": null,
+                "value_confidential": false
+              }
+            ],
+            "funding_source": null,
+            "decision_date": null,
+            "decision_body": null
+          },
+          {
+            "reference": null,
+            "solicitation_type": "unknown",
+            "title": "Old Cherry Street Bridge Early Engineering Costs for Port Lands Flood Protection Project",
+            "buyer": "Waterfront Toronto (contract awarded by Ellis Don Civil Ltd on behalf of Waterfront Toronto)",
+            "posted_date": null,
+            "closed_date": null,
+            "documents_taken": null,
+            "declared_submissions": null,
+            "declared_compliant": null,
+            "stage": "single_stage",
+            "prequalified": [],
+            "invited_to_tender": [],
+            "bids": [],
+            "awards": [
+              {
+                "supplier_name": "Sarens Canada",
+                "amount_raw": "$80,000",
+                "amount_basis": "unknown",
+                "contingency_raw": null,
+                "value_confidential": false
+              }
+            ],
+            "funding_source": null,
+            "decision_date": null,
+            "decision_body": null
+          },
+          {
+            "reference": null,
+            "solicitation_type": "unknown",
+            "title": "Street Lighting, Pedestrian Lighting, Traffic Control Signals and RESCU for Lake Shore Boulevard East",
+            "buyer": "Waterfront Toronto (contract awarded by Ellis Don Civil Ltd on behalf of Waterfront Toronto)",
+            "posted_date": null,
+            "closed_date": null,
+            "documents_taken": null,
+            "declared_submissions": null,
+            "declared_compliant": null,
+            "stage": "single_stage",
+            "prequalified": [],
+            "invited_to_tender": [],
+            "bids": [],
+            "awards": [
+              {
+                "supplier_name": "Guild Electric Limited",
+                "amount_raw": "$3,892,098",
+                "amount_basis": "unknown",
+                "contingency_raw": null,
+                "value_confidential": false
+              }
+            ],
+            "funding_source": null,
+            "decision_date": null,
+            "decision_body": null
+          },
+          {
+            "reference": null,
+            "solicitation_type": "unknown",
+            "title": "Traffic Control Signals for Port Lands Flood Protection Project",
+            "buyer": "Waterfront Toronto (contract awarded by Ellis Don Civil Ltd on behalf of Waterfront Toronto)",
+            "posted_date": null,
+            "closed_date": null,
+            "documents_taken": null,
+            "declared_submissions": null,
+            "declared_compliant": null,
+            "stage": "single_stage",
+            "prequalified": [],
+            "invited_to_tender": [],
+            "bids": [],
+            "awards": [
+              {
+                "supplier_name": "Guild Electric Limited",
+                "amount_raw": "$761,108",
+                "amount_basis": "unknown",
+                "contingency_raw": null,
+                "value_confidential": false
+              }
+            ],
+            "funding_source": null,
+            "decision_date": null,
+            "decision_body": null
+          },
+          {
+            "reference": null,
+            "solicitation_type": "unknown",
+            "title": "Dewatering System for Chamber CC6567 Rebuild Operations for Port Lands Flood Protection",
+            "buyer": "Waterfront Toronto (contract awarded by Ellis Don Civil Ltd on behalf of Waterfront Toronto)",
+            "posted_date": null,
+            "closed_date": null,
+            "documents_taken": null,
+            "declared_submissions": null,
+            "declared_compliant": null,
+            "stage": "single_stage",
+            "prequalified": [],
+            "invited_to_tender": [],
+            "bids": [],
+            "awards": [
+              {
+                "supplier_name": "Ellis Don Civil Ltd",
+                "amount_raw": "$313,750",
+                "amount_basis": "unknown",
+                "contingency_raw": null,
+                "value_confidential": false
+              }
+            ],
+            "funding_source": null,
+            "decision_date": null,
+            "decision_body": null
+          }
+        ]
+      },
+      "usage": {
+        "input_tokens": 442,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 2866,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 1901,
+        "output_tokens_details": {
+          "thinking_tokens": 537
+        },
+        "service_tier": "standard",
+        "inference_geo": "global",
+        "speed": "standard"
+      },
+      "charged_microdollars": 1024,
+      "provenance": {
+        "document_sha256": "766aef29fcf10179870b4f14abf1818b85e81e01be50cfbbcb22ec0d19dabcd2",
+        "text_sha256": "398fdaf47133f54582203644f8f4735bb517fbcc4ad5a5ec4028be6a1fab537d",
+        "prompt_version": "v1-b63aa8c835ae",
+        "model": "claude-haiku-5-5",
+        "effort": "medium",
+        "mode": "sync",
+        "response_id": "msg_011CgKGYp4EGzTpYdaTcHZiZ",
+        "response_sha256": "ce9ed0f53238240ffa435f1819ccb111673c22aa99e2620e872c5059b5834355",
+        "schema_sha256": null,
+        "request_sha256": null,
+        "request": null,
+        "raw_response_sha256": "f945e6817a1ebdb3110b8f97fe65adf155343bbe58bad03ad6a4dc6cf5f22a6a"
+      },
+      "origin": "claude-validation-2026-10-23/structured-full/claude-haiku-5-5--waterfront-2023-03.json",
+      "raw_response": {
+        "model": "claude-haiku-5-5",
+        "id": "msg_011CgKGYp4EGzTpYdaTcHZiZ",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "thinking",
+            "thinking": "",
+            "signature": "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"
+          },
+          {
+            "type": "text",
+            "text": "{\"contracts\":[{\"reference\":null,\"solicitation_type\":\"sole_source\",\"title\":\"Delivery of Waterfront Toronto’s Integrated Annual Report 2022-2023\",\"buyer\":\"Waterfront Toronto\",\"posted_date\":null,\"closed_date\":null,\"documents_taken\":null,\"declared_submissions\":null,\"declared_compliant\":null,\"stage\":\"single_stage\",\"prequalified\":[],\"invited_to_tender\":[],\"bids\":[],\"awards\":[{\"supplier_name\":\"Bespoke Cultural Collective\",\"amount_raw\":\"$55,312\",\"amount_basis\":\"unknown\",\"contingency_raw\":null,\"value_confidential\":false}],\"funding_source\":null,\"decision_date\":null,\"decision_body\":null},{\"reference\":null,\"solicitation_type\":\"unknown\",\"title\":\"Old Cherry Street Bridge Early Engineering Costs for Port Lands Flood Protection Project\",\"buyer\":\"Waterfront Toronto (contract awarded by Ellis Don Civil Ltd on behalf of Waterfront Toronto)\",\"posted_date\":null,\"closed_date\":null,\"documents_taken\":null,\"declared_submissions\":null,\"declared_compliant\":null,\"stage\":\"single_stage\",\"prequalified\":[],\"invited_to_tender\":[],\"bids\":[],\"awards\":[{\"supplier_name\":\"Sarens Canada\",\"amount_raw\":\"$80,000\",\"amount_basis\":\"unknown\",\"contingency_raw\":null,\"value_confidential\":false}],\"funding_source\":null,\"decision_date\":null,\"decision_body\":null},{\"reference\":null,\"solicitation_type\":\"unknown\",\"title\":\"Street Lighting, Pedestrian Lighting, Traffic Control Signals and RESCU for Lake Shore Boulevard East\",\"buyer\":\"Waterfront Toronto (contract awarded by Ellis Don Civil Ltd on behalf of Waterfront Toronto)\",\"posted_date\":null,\"closed_date\":null,\"documents_taken\":null,\"declared_submissions\":null,\"declared_compliant\":null,\"stage\":\"single_stage\",\"prequalified\":[],\"invited_to_tender\":[],\"bids\":[],\"awards\":[{\"supplier_name\":\"Guild Electric Limited\",\"amount_raw\":\"$3,892,098\",\"amount_basis\":\"unknown\",\"contingency_raw\":null,\"value_confidential\":false}],\"funding_source\":null,\"decision_date\":null,\"decision_body\":null},{\"reference\":null,\"solicitation_type\":\"unknown\",\"title\":\"Traffic Control Signals for Port Lands Flood Protection Project\",\"buyer\":\"Waterfront Toronto (contract awarded by Ellis Don Civil Ltd on behalf of Waterfront Toronto)\",\"posted_date\":null,\"closed_date\":null,\"documents_taken\":null,\"declared_submissions\":null,\"declared_compliant\":null,\"stage\":\"single_stage\",\"prequalified\":[],\"invited_to_tender\":[],\"bids\":[],\"awards\":[{\"supplier_name\":\"Guild Electric Limited\",\"amount_raw\":\"$761,108\",\"amount_basis\":\"unknown\",\"contingency_raw\":null,\"value_confidential\":false}],\"funding_source\":null,\"decision_date\":null,\"decision_body\":null},{\"reference\":null,\"solicitation_type\":\"unknown\",\"title\":\"Dewatering System for Chamber CC6567 Rebuild Operations for Port Lands Flood Protection\",\"buyer\":\"Waterfront Toronto (contract awarded by Ellis Don Civil Ltd on behalf of Waterfront Toronto)\",\"posted_date\":null,\"closed_date\":null,\"documents_taken\":null,\"declared_submissions\":null,\"declared_compliant\":null,\"stage\":\"single_stage\",\"prequalified\":[],\"invited_to_tender\":[],\"bids\":[],\"awards\":[{\"supplier_name\":\"Ellis Don Civil Ltd\",\"amount_raw\":\"$313,750\",\"amount_basis\":\"unknown\",\"contingency_raw\":null,\"value_confidential\":false}],\"funding_source\":null,\"decision_date\":null,\"decision_body\":null}]}"
+          }
+        ],
+        "container": null,
+        "stop_reason": "end_turn",
+        "stop_sequence": null,
+        "stop_details": null,
+        "usage": {
+          "input_tokens": 442,
+          "cache_creation_input_tokens": 0,
+          "cache_read_input_tokens": 2866,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 0
+          },
+          "output_tokens": 1901,
+          "output_tokens_details": {
+            "thinking_tokens": 537
+          },
+          "service_tier": "standard",
+          "inference_geo": "global",
+          "speed": "standard"
+        },
+        "diagnostics": null
+      }
+    },
+    "trca-D01": {
+      "state": "success",
+      "extraction": {
+        "contracts": [
+          {
+            "reference": "RFT No. 10040951",
+            "solicitation_type": "RFT",
+            "title": "Channel Works in Yellow Creek near Heath Street Project",
+            "buyer": "Toronto and Region Conservation Authority (TRCA)",
+            "posted_date": null,
+            "closed_date": "2024-12-20",
+            "documents_taken": 17,
+            "declared_submissions": null,
+            "declared_compliant": null,
+            "stage": "prequalification_then_tender",
+            "prequalified": [
+              "Buildscapes Construction Ltd.",
+              "Pine Valley Corporation",
+              "Shoreline Restoration Ltd."
+            ],
+            "invited_to_tender": [
+              "2220742 Ontario Ltd o/a Bronte Construction",
+              "560789 Ontario Limited o/a R&M Construction",
+              "Dynex Construction Inc."
+            ],
+            "bids": [
+              {
+                "supplier_name": "Dynex Construction Inc.",
+                "amount_raw": "$2,947,485.00",
+                "amount_basis": "plus_HST",
+                "status": "compliant",
+                "rank": 1
+              },
+              {
+                "supplier_name": "560789 Ontario Limited o/a R&M Construction",
+                "amount_raw": "$3,611,536.80",
+                "amount_basis": "plus_HST",
+                "status": "not_stated",
+                "rank": 2
+              },
+              {
+                "supplier_name": "2220742 Ontario Limited o/a Bronte Construction",
+                "amount_raw": "$4,417,565.60",
+                "amount_basis": "plus_HST",
+                "status": "not_stated",
+                "rank": 3
+              }
+            ],
+            "awards": [
+              {
+                "supplier_name": "Dynex Construction Inc.",
+                "amount_raw": "$2,947,485.00",
+                "amount_basis": "plus_HST",
+                "contingency_raw": "$294,748.50 (approximately 10% of the project cost), plus applicable taxes",
+                "value_confidential": false
+              }
+            ],
+            "funding_source": "2025 City of Toronto capital budget for Valley Erosion Hazards Projects",
+            "decision_date": "2025-02-07",
+            "decision_body": "Board of Directors"
+          }
+        ]
+      },
+      "usage": {
+        "input_tokens": 2365,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 2866,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 1890,
+        "output_tokens_details": {
+          "thinking_tokens": 1248
+        },
+        "service_tier": "standard",
+        "inference_geo": "global",
+        "speed": "standard"
+      },
+      "charged_microdollars": 1211,
+      "provenance": {
+        "document_sha256": "4615e3e4ed1c5d6b6c3ff9868da5266e6147273f742532fc0c67be24228741bb",
+        "text_sha256": "2565a2d8ed65ebbbb95ab9986302bd50373d704f110c6b67d873c57fedae0236",
+        "prompt_version": "v1-b63aa8c835ae",
+        "model": "claude-haiku-5-5",
+        "effort": "medium",
+        "mode": "sync",
+        "response_id": "msg_011CgKGZvFaVjwycwLuEKsYw",
+        "response_sha256": "3b507786f49cfb9a2a675ef7956a874c227049309524cae06fc593a1d8bca1bb",
+        "schema_sha256": null,
+        "request_sha256": null,
+        "request": null,
+        "raw_response_sha256": "068a2f03675980a95bd88ef7ad9184f0ae835a056a9329b90e90765b2b4aec48"
+      },
+      "origin": "claude-validation-2026-10-23/structured-full/claude-haiku-5-5--trca-D01.json",
+      "raw_response": {
+        "model": "claude-haiku-5-5",
+        "id": "msg_011CgKGZvFaVjwycwLuEKsYw",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "thinking",
+            "thinking": "",
+            "signature": "CAQS9h0KEAgTGAI4AUIIdGhpbmtpbmcSDNvC14xaA/6qx7QV3hoM+y+ktSIECphM5ZfoIjCCFaEol3E4KofVU4j7bIkHt8UQ3k9oNn7AwHh5JzjN2mPOfe9ak04UdJjbFN9ozjsqkx1bPKEIuyVg48Jb9OzYDDT3zbLFqShoHzdrNuWLc8J8XeQ4MMHqFjI0lrqxow3ELnfs9qw87ItgpUj5xQHddSQCSATRClGSa/Gt0eNvl7vWu4FGv4DRKCa3oZS91X7ZNMv+FsMMuS6b3UZ42l2mk76r3lLXNZYrvjv+34EJs8ilPi19Q+Q0zAj/i6RZru5Jm6SZQqtfcxNTK3VhDbuaPfe1OiwYNWyxzToZdrEuzBMHzhRYuXGGvw65U2W+l+SMRUueGeFTRRdiJFNPlyad3WZJtxGu4YHSa6L5CjtYn1F6tfCBbUuKOlmzbfgsotEAv2xU/NCR9HYh18/4d5+mNIU/e1nXxuocrtt8l74NQB9NlVK3XTmPFVNbMv5IQyuICKU74swVksNXLsiDuDDvTop9JvZR1pvyKId3jKmPKbuJjlMt+ARtJ77QJ2jf1khktfp/YqZAey7jLeDHK8gREKM0sxTsjTeK7oce0ImXnBqrBFw/s0Dyg9H//wRDofSFWAwuJIUDfR9DgO74Ev7+eXaHMBDvrXPsNyOdbNviTqLVFfXZgeQbuOhcsj2/5cerKcFA9BKyd7r7MSLePDsoilbCndjfpmzeFG1BSw45vKD/D1ZUL+9DjbTGvtQ3haxZU8oZW+DCnoB8TrnZ/uh7rpSf0uFJVVN6I3cTilyuoHdiuU2PbJILMlyU0H0kqAsKqknuYzfGkKfw6iVW/OVUDAjIxGYuGIk7oIjCQXRKYcwZCk0AxNCG2I+kbk7xWR7idFne1DGhs0YBNDDJXC5s5lGTeVavHDFqW4Ri24/vAwGXwN9CvVLB2o8J0C2UKt+Yone0ZRPXP0eUjVik4mwxId2GMYboXxZr2h4QZbkcRFNU+r8C3nJv6ESrew2Fsb5teABeofxjEIMxH+YaR05S4zvfvRq7NZTtRUDBML7Ghj7NNEIESO+TXjar9L56y4FDKUvIkVL3D3fuCbY9NGDVD6W2Efulm34fi5eQogb8e2rH3h+5X0SavmmSDfC+23B/8ErLYgzFnY2d3HLELBTEbHLIXECNoT8DuUyEUeV+Pa1K4evBSA9F6HHoPL0xa3oTTVZnYc4mAxbeEU/tnx5bsCQ6LrmzgSTW36so6Z+d0N3peEWbRvVTPbkdhcHvtyDg2ST2F6P2TwtBP8kVWWAdcoui1mIYbr1w0b53xkw5uO2A1XJ+34/O8V58XG+prE/ly7lbjF4HzBgZdh/Yg5YY1gutBbsHu1ART/EqjopG5w7dRBtzB0/K9SLwUHE7jgOEjeKO+L7Rdbj0ioiLhfBFQuBILOP65+Gay0t7RjBBJfWWKOSV2eUafM2zq5QN0SJlC4jf6feiEySBdBdKM5Xg0SuBm8f1pQG5cztbBQQAnzJWgVSF06meokF5QcRg1OUNuah702yMBzR7cWUjeFTISIg00oL8WqlcJF46MyVDewdNZmtingKuJzHSv+aQbTePgpWfTAXE16Ca8chpvFOY1InDXBx2SgM2gtyd6zZexdapBO4yw/le1iHq/TrY+ApUNU+AKJTxMO1PSGdyf2MAnyJRZO7CJs2q9v8Pj8//P0/dOoPpIPyHjNjWB04KqLAZxZy9cqnw1IHESyC85wN1qTXQA4K6UwVzktWMmLumhbliRpdBq0SokV2bFTRRPtw8xjknHJUbg/G3ELsvaHDDHWMvpxxc/eIFr2Gstq0mLSjIYWTxY1oCptSENgaBxNpp4EF2Q78B1ND/KUYA0TxChXRKw9aGWuM5eXnaOPGBe0TdAxhjYf8H8KzV0rvptVwY98l3O6XQDtgEqyp51CXdNFiyucG2JkE9jvZS0qJ7ZCNB2SUf+JkROH/10ExLK2wEsKUxMlb0koTsEPDzqs4dZ9ygYosJQEVCw1kJUm7h8QlAZUtAGhzHDtkvdQFjQx2PiFUBvKuYYYaxEOF2MA05zaa4bgM/kUfsKhl1jrUQNQE9Z+ZT7Uz9WyFF85Awwu0fS7Y2HAJSFJ2mwx9nhq5u04ZGjmNfpJdVX22ZPv4McAKb+XOKEu3bDmPvULN8AXtbooyCEbzje5zoZSQ+fyG4IapX4mkeRy8FSV85LH7NahaJZUdrV0JbofK+fNz1W3jNeG3Mogfm6dVxoyECiF8jnTpTySWcUBMb4mqRd0m9wEi6un37ObaoQUiUY9/6l8Fm/yI1dlTfHN3sN1+6OiaK2WtegSnewFfZO0ukGoVh0B814iH3cKqQRjXKAB4MP+SmfiSYm12WmFLIMGniBh+0OhXqTujn0FJYD8mEFIkBO8gBaYc3TrK8aDu9YjctlxKnu6oCszkuj6Bh180R3JoDD0SJIMOh4qWar1Q9E3+PSOwz8LP/MTS9zvbtkINcGtrO1Yu98FF27kZBx895ykoqUSdc9le9Xttp/hjXLK9DAZ2lgGcBkhYsqNCMEoS52Yhhun5VIU1bnWDKWoxfyKysYQNdw83T7BQ2I4JYJhdnStF8kpQ3+o61A1ZDmDcSFr8PIehtot7L9vR0b9FZftuN3A4wYnGxV4wqwoMXQNi+TiMN//7eNLRLhQ5HzDO1/E5XGqGmtUNUtJwjlM47tMdZCAX2aRtPux9wTnuXX7hsnEC7A0pvBTsoP8QYnkFq8XFVPk7YAKlacPiCgfX6xYwzGdwdVw17wfg6u6frzbnugidNSKhp2zIyrk2N5ZUW9dU7Y0v/J88bS0ONoZSjaisf0XS6EJ1y/Yu6j5V2BXboeSccj2DL+viI4BilwiL98n1brgw2f4qF3ar+GmWe8RR462b/EQHMjJCW8wnyrJ+w8cKDTFgV8MEDeeTL05lbkUGmQsnTrxN8dPZIgs54uRZNS9oMpmOB2ylM/QaKjA6MN74GhpeY/N4IbOQ1KmGL9DU3Jw1Gtg3xSoW7T17+jaI1kQZIk39DPzGAZdmkXuqCerWBCYJEUUb8f4U78a0Nk255Dj5RnnUDZ5w5Nc4s225Q1QCTJGwBCPB9G+KxXCVuL48iXLaQEZtXjTA1J4L97ZQeHR/ZuhqfnAcLme5eB1UT265JCt4N/QO7nONXVRkAIOvn8esf7TOBFI1N7t7wkbFVhg19b9spSNr+vLLWCumVdFQ7Jl3gXyY3X4tX3F4ttKTXfzIopqywdynyxaF5cd3y83p4UoO47rVEYBhL+XoDRmo4Kt5gaIynZ8UBLLGrVaPN3t+aSPcSqyvFGSrVUkTyhglQ0TGI0PM2a6Hb6ZhAL3ju1VmJd/R4qoUfj4zSFfcvupdQM4SLKnrIx0sdwU4w6/LXtD2wB6KciZgHK8qEgtIMh+jymv6MqzW9skYNJrwPNMggtrgppR5pJEaLZXmxcNUre6hgOroJJEea+AIZxl1BVO/uVLrrK/RmfLmOPqEqUfmW6ginKUaRoeTJAxE/qUgAZIChrjCRGcINQ2G1dNXRcWReoaEF6PtMVsC0ErWxXyd2zXPyu2yeofD+QL65lv+eR6tc+7xY2F2XDF8zKJDAI3780gJAjUgs5KggWaD2tPOtzZzOUHfitzHdqoYChvUKF2UIY5bIvYKLp2XNMMbfOlcyNCFfBBL1ZGNE1F4qu3r4X0mPmuBQfsKpNrbeev9Voo0+hXRf5xrdnWbhPDOAWzeD4paOoQRJxQmqOxVgjwGIBnBi7cYZwasQYWR8dowPICSqCHpSGsadyo7/HRtkp4SokNUBsBsJp2TtChhCrieMtgcXuB+TiR33+BB1kC40BeTp/Yg/FxC9FQ3i5XHYOB2KbRzEqZ86O/siOTYUY6OJILd5oAg3hcGe2eVrAo1XeJ73ngoVKcES/zEMWdIJSl7N21bRuU/OJwhGi5hzBGaffnlwn2d6i6drEpm+3MKyTEw1LSap0kQ5X7gFjtM1CesQrNA+vWREbdF0kZDLZ3t9fTxpvTKNqTyzfVgBRLnfMTva61a9r6uPm+gJPflGc3YcStJvGBMQIjBhSUXKR4Exg0I8KfodDcD+TtUDf5toUR7spVdik2YcImdPY6ZOqRAVEWXubwn2xog4Zfs9/5gBT/yCNGbCBBi4FbnxPQ2NQeHFWnqEAMF6cWmKeE8eaGQzSHfQH+IhsxygJQ+owKTtgz6/m8nQpO9knTPLJMP9+5tgOHJgTCXNGATh3EP38KJbHFmkY8bOPFCDypR+TF+PwzCt8nqsxgVCUxsbhqT2BJFM/hxHXRJ2MGwVkBZ6qvNJhTbgY+WDkTh3ESn8FeUgd7OSg550yjkioDFRP73qTFqA4VjnYGPqHSoCD91J33CRDpxjdTOetgM8IwGvZmrHymZxM2Fj0oj4Wjsp2tNVsFqVE5HCB01OUnFm3T8nYasFOEsDdtU4oVZt7ABVpwCquPmS8FzslHAIpfHoV5HQe/1kNi7LxwumWacP4BlGNzBQKzgHo2J3nn0GEXt2rr7Il6FI0XJnEnaJatZeJdrbEvpwqYf2n+pHXz3Qliesub/Met35ZCoyDb1pBmHXVdbymqG0ZL9U8xWERyL5w9vnOvlWM4z/2aFl1YBJR9fYgwyKsHJnQ8vHQD3B/9gd0RYJoT0sSvnROwWSGIxapPy/CQu7ggNurjoHmljwGoxvULAPIb5qxno12dKSXBuLy78rsSfFVEmNRnmaHAJ2NgWETUd7UZcucUxH5GXCQ+uUFT7YQ/DOb30dcQUX8Bi2o8NcETNZB1x0wORjJ9HcoBUK0qL3xTYYCCPBWGjn2t0ul4ctrg2nqvhLh0vyBJralss2AQwC1KXT0Kqeuhr4x6Haf210FeL2OUMe44r4mR1VTuMEExu9rbiRXLKlt4xBm6oImosFaE8anL159nnj93Kti0H/cvI9Fq74hkYGqHXbLgTeLnqfARqvBHzJHeLyw0bbdVRbrND+u0g8oubddLRsgGp/f0M19YY+47p5YiRw6sfx3p7V9b0BHe6cw/HI2i4Z3DQK8aW9jsRl9m0t7XhMEZ0ckYIsPoEKwKUhdY9IHZrdgzk7Jts90ilKvdfezS7DrxgB"
+          },
+          {
+            "type": "text",
+            "text": "{\"contracts\":[{\"reference\":\"RFT No. 10040951\",\"solicitation_type\":\"RFT\",\"title\":\"Channel Works in Yellow Creek near Heath Street Project\",\"buyer\":\"Toronto and Region Conservation Authority (TRCA)\",\"posted_date\":null,\"closed_date\":\"2024-12-20\",\"documents_taken\":17,\"declared_submissions\":null,\"declared_compliant\":null,\"stage\":\"prequalification_then_tender\",\"prequalified\":[\"Buildscapes Construction Ltd.\",\"Pine Valley Corporation\",\"Shoreline Restoration Ltd.\"],\"invited_to_tender\":[\"2220742 Ontario Ltd o/a Bronte Construction\",\"560789 Ontario Limited o/a R&M Construction\",\"Dynex Construction Inc.\"],\"bids\":[{\"supplier_name\":\"Dynex Construction Inc.\",\"amount_raw\":\"$2,947,485.00\",\"amount_basis\":\"plus_HST\",\"status\":\"compliant\",\"rank\":1},{\"supplier_name\":\"560789 Ontario Limited o/a R&M Construction\",\"amount_raw\":\"$3,611,536.80\",\"amount_basis\":\"plus_HST\",\"status\":\"not_stated\",\"rank\":2},{\"supplier_name\":\"2220742 Ontario Limited o/a Bronte Construction\",\"amount_raw\":\"$4,417,565.60\",\"amount_basis\":\"plus_HST\",\"status\":\"not_stated\",\"rank\":3}],\"awards\":[{\"supplier_name\":\"Dynex Construction Inc.\",\"amount_raw\":\"$2,947,485.00\",\"amount_basis\":\"plus_HST\",\"contingency_raw\":\"$294,748.50 (approximately 10% of the project cost), plus applicable taxes\",\"value_confidential\":false}],\"funding_source\":\"2025 City of Toronto capital budget for Valley Erosion Hazards Projects\",\"decision_date\":\"2025-02-07\",\"decision_body\":\"Board of Directors\"}]}"
+          }
+        ],
+        "container": null,
+        "stop_reason": "end_turn",
+        "stop_sequence": null,
+        "stop_details": null,
+        "usage": {
+          "input_tokens": 2365,
+          "cache_creation_input_tokens": 0,
+          "cache_read_input_tokens": 2866,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 0
+          },
+          "output_tokens": 1890,
+          "output_tokens_details": {
+            "thinking_tokens": 1248
+          },
+          "service_tier": "standard",
+          "inference_geo": "global",
+          "speed": "standard"
+        },
+        "diagnostics": null
+      }
+    },
+    "trca-D02": {
+      "state": "success",
+      "extraction": {
+        "contracts": [
+          {
+            "reference": "10009905",
+            "solicitation_type": "RFQ",
+            "title": "Supply and Delivery of 8,500 tonnes of 2 – 5 Tonne Stackable Armourstone for the Lakeview Waterfront Connection Project",
+            "buyer": "Toronto and Region Conservation Authority (TRCA)",
+            "posted_date": "2019-01-07",
+            "closed_date": "2019-01-18",
+            "documents_taken": 9,
+            "declared_submissions": 4,
+            "declared_compliant": null,
+            "stage": "single_stage",
+            "prequalified": [],
+            "invited_to_tender": [],
+            "bids": [
+              {
+                "supplier_name": "CDR Young’s Aggregates Inc.",
+                "amount_raw": "$527,000.00",
+                "amount_basis": "plus_HST",
+                "status": "not_stated",
+                "rank": 1
+              },
+              {
+                "supplier_name": "Atlantis Marine Construction",
+                "amount_raw": "$590,750.00",
+                "amount_basis": "plus_HST",
+                "status": "not_stated",
+                "rank": 2
+              },
+              {
+                "supplier_name": "Glenn Windrem Trucking",
+                "amount_raw": "$592,875.00",
+                "amount_basis": "plus_HST",
+                "status": "not_stated",
+                "rank": 3
+              },
+              {
+                "supplier_name": "TACC Construction",
+                "amount_raw": "$646,000.00",
+                "amount_basis": "plus_HST",
+                "status": "not_stated",
+                "rank": 4
+              }
+            ],
+            "awards": [
+              {
+                "supplier_name": "CDR Young’s Aggregates Inc.",
+                "amount_raw": "$527,000.00",
+                "amount_basis": "unknown",
+                "contingency_raw": "$52,700.00 (approximately 10%), plus applicable taxes",
+                "value_confidential": false
+              }
+            ],
+            "funding_source": "Region of Peel capital budget, Account, 252-52",
+            "decision_date": "2019-04-05",
+            "decision_body": "Executive Committee"
+          },
+          {
+            "reference": "10009906",
+            "solicitation_type": "RFQ",
+            "title": "Supply and Delivery of 8,000 tonnes of 3 – 5 Tonne Non-Stackable Armourstone for the Lakeview Waterfront Connection Project",
+            "buyer": "Toronto and Region Conservation Authority (TRCA)",
+            "posted_date": "2019-01-07",
+            "closed_date": "2019-01-18",
+            "documents_taken": 9,
+            "declared_submissions": 4,
+            "declared_compliant": null,
+            "stage": "single_stage",
+            "prequalified": [],
+            "invited_to_tender": [],
+            "bids": [
+              {
+                "supplier_name": "Glenn Windrem Trucking",
+                "amount_raw": "$470,000.00",
+                "amount_basis": "plus_HST",
+                "status": "not_stated",
+                "rank": 1
+              },
+              {
+                "supplier_name": "CDR Young’s Aggregates Inc.",
+                "amount_raw": "$512,000.00",
+                "amount_basis": "plus_HST",
+                "status": "not_stated",
+                "rank": 2
+              },
+              {
+                "supplier_name": "Atlantis Marine Construction",
+                "amount_raw": "$532,000.00",
+                "amount_basis": "plus_HST",
+                "status": "not_stated",
+                "rank": 3
+              },
+              {
+                "supplier_name": "TACC Construction",
+                "amount_raw": "$608,000.00",
+                "amount_basis": "plus_HST",
+                "status": "not_stated",
+                "rank": 4
+              }
+            ],
+            "awards": [
+              {
+                "supplier_name": "Glenn Windrem Trucking",
+                "amount_raw": "$470,000.00",
+                "amount_basis": "unknown",
+                "contingency_raw": "$47,000 (approximately 10%), plus applicable taxes",
+                "value_confidential": false
+              }
+            ],
+            "funding_source": "Region of Peel capital budget, Account, 252-52",
+            "decision_date": "2019-04-05",
+            "decision_body": "Executive Committee"
+          }
+        ]
+      },
+      "usage": {
+        "input_tokens": 3099,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 2866,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 2322,
+        "output_tokens_details": {
+          "thinking_tokens": 1130
+        },
+        "service_tier": "standard",
+        "inference_geo": "global",
+        "speed": "standard"
+      },
+      "charged_microdollars": 1500,
+      "provenance": {
+        "document_sha256": "260e2bf00459cd8da33eace914dd3b892b7b9399c030856b3540d90eb416bf5e",
+        "text_sha256": "b3f1e8901ca51e23a838d30e02aa84d60dcb02a92fda559c79645b944ca1c0b9",
+        "prompt_version": "v1-b63aa8c835ae",
+        "model": "claude-haiku-5-5",
+        "effort": "medium",
+        "mode": "sync",
+        "response_id": "msg_011CgKGaVsuEdrUfTVpp3dhk",
+        "response_sha256": "9790d7a81c223c831d90bbe59bbe340804dc5c051f6275b37696b1c36023138d",
+        "schema_sha256": null,
+        "request_sha256": null,
+        "request": null,
+        "raw_response_sha256": "2730d8d1224ce07493708f5f16085308c924d77d565ad213da566721ef234fc7"
+      },
+      "origin": "claude-validation-2026-10-23/structured-full/claude-haiku-5-5--trca-D02.json",
+      "raw_response": {
+        "model": "claude-haiku-5-5",
+        "id": "msg_011CgKGaVsuEdrUfTVpp3dhk",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "thinking",
+            "thinking": "",
+            "signature": "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"
+          },
+          {
+            "type": "text",
+            "text": "{\"contracts\":[{\"reference\":\"10009905\",\"solicitation_type\":\"RFQ\",\"title\":\"Supply and Delivery of 8,500 tonnes of 2 – 5 Tonne Stackable Armourstone for the Lakeview Waterfront Connection Project\",\"buyer\":\"Toronto and Region Conservation Authority (TRCA)\",\"posted_date\":\"2019-01-07\",\"closed_date\":\"2019-01-18\",\"documents_taken\":9,\"declared_submissions\":4,\"declared_compliant\":null,\"stage\":\"single_stage\",\"prequalified\":[],\"invited_to_tender\":[],\"bids\":[{\"supplier_name\":\"CDR Young’s Aggregates Inc.\",\"amount_raw\":\"$527,000.00\",\"amount_basis\":\"plus_HST\",\"status\":\"not_stated\",\"rank\":1},{\"supplier_name\":\"Atlantis Marine Construction\",\"amount_raw\":\"$590,750.00\",\"amount_basis\":\"plus_HST\",\"status\":\"not_stated\",\"rank\":2},{\"supplier_name\":\"Glenn Windrem Trucking\",\"amount_raw\":\"$592,875.00\",\"amount_basis\":\"plus_HST\",\"status\":\"not_stated\",\"rank\":3},{\"supplier_name\":\"TACC Construction\",\"amount_raw\":\"$646,000.00\",\"amount_basis\":\"plus_HST\",\"status\":\"not_stated\",\"rank\":4}],\"awards\":[{\"supplier_name\":\"CDR Young’s Aggregates Inc.\",\"amount_raw\":\"$527,000.00\",\"amount_basis\":\"unknown\",\"contingency_raw\":\"$52,700.00 (approximately 10%), plus applicable taxes\",\"value_confidential\":false}],\"funding_source\":\"Region of Peel capital budget, Account, 252-52\",\"decision_date\":\"2019-04-05\",\"decision_body\":\"Executive Committee\"},{\"reference\":\"10009906\",\"solicitation_type\":\"RFQ\",\"title\":\"Supply and Delivery of 8,000 tonnes of 3 – 5 Tonne Non-Stackable Armourstone for the Lakeview Waterfront Connection Project\",\"buyer\":\"Toronto and Region Conservation Authority (TRCA)\",\"posted_date\":\"2019-01-07\",\"closed_date\":\"2019-01-18\",\"documents_taken\":9,\"declared_submissions\":4,\"declared_compliant\":null,\"stage\":\"single_stage\",\"prequalified\":[],\"invited_to_tender\":[],\"bids\":[{\"supplier_name\":\"Glenn Windrem Trucking\",\"amount_raw\":\"$470,000.00\",\"amount_basis\":\"plus_HST\",\"status\":\"not_stated\",\"rank\":1},{\"supplier_name\":\"CDR Young’s Aggregates Inc.\",\"amount_raw\":\"$512,000.00\",\"amount_basis\":\"plus_HST\",\"status\":\"not_stated\",\"rank\":2},{\"supplier_name\":\"Atlantis Marine Construction\",\"amount_raw\":\"$532,000.00\",\"amount_basis\":\"plus_HST\",\"status\":\"not_stated\",\"rank\":3},{\"supplier_name\":\"TACC Construction\",\"amount_raw\":\"$608,000.00\",\"amount_basis\":\"plus_HST\",\"status\":\"not_stated\",\"rank\":4}],\"awards\":[{\"supplier_name\":\"Glenn Windrem Trucking\",\"amount_raw\":\"$470,000.00\",\"amount_basis\":\"unknown\",\"contingency_raw\":\"$47,000 (approximately 10%), plus applicable taxes\",\"value_confidential\":false}],\"funding_source\":\"Region of Peel capital budget, Account, 252-52\",\"decision_date\":\"2019-04-05\",\"decision_body\":\"Executive Committee\"}]}"
+          }
+        ],
+        "container": null,
+        "stop_reason": "end_turn",
+        "stop_sequence": null,
+        "stop_details": null,
+        "usage": {
+          "input_tokens": 3099,
+          "cache_creation_input_tokens": 0,
+          "cache_read_input_tokens": 2866,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 0
+          },
+          "output_tokens": 2322,
+          "output_tokens_details": {
+            "thinking_tokens": 1130
+          },
+          "service_tier": "standard",
+          "inference_geo": "global",
+          "speed": "standard"
+        },
+        "diagnostics": null
+      }
+    },
+    "trca-D04": {
+      "state": "success",
+      "extraction": {
+        "contracts": [
+          {
+            "reference": "2104-09-3006",
+            "solicitation_type": "RFP",
+            "title": "Integrated Telecommunications Infrastructure (Bell Canada Master Agreement; TRCA adoption of Amending Agreement No. 11 extending term to 2025)",
+            "buyer": "City of Toronto",
+            "posted_date": "2009-01-28",
+            "closed_date": "2009-04-22",
+            "documents_taken": 29,
+            "declared_submissions": 8,
+            "declared_compliant": null,
+            "stage": "single_stage",
+            "prequalified": [],
+            "invited_to_tender": [],
+            "bids": [
+              {
+                "supplier_name": "Aastra Telecom Inc",
+                "amount_raw": null,
+                "amount_basis": null,
+                "status": "not_stated",
+                "rank": null
+              },
+              {
+                "supplier_name": "Alcatel-Lucent Canada Inc",
+                "amount_raw": null,
+                "amount_basis": null,
+                "status": "not_stated",
+                "rank": null
+              },
+              {
+                "supplier_name": "Bell Canada",
+                "amount_raw": null,
+                "amount_basis": null,
+                "status": "not_stated",
+                "rank": 1
+              },
+              {
+                "supplier_name": "Cogeco",
+                "amount_raw": null,
+                "amount_basis": null,
+                "status": "not_stated",
+                "rank": null
+              },
+              {
+                "supplier_name": "FlexITy Solutions Inc",
+                "amount_raw": null,
+                "amount_basis": null,
+                "status": "not_stated",
+                "rank": null
+              },
+              {
+                "supplier_name": "MTS Allstream Inc",
+                "amount_raw": null,
+                "amount_basis": null,
+                "status": "not_stated",
+                "rank": null
+              },
+              {
+                "supplier_name": "Quartet Services Inc",
+                "amount_raw": null,
+                "amount_basis": null,
+                "status": "not_stated",
+                "rank": null
+              },
+              {
+                "supplier_name": "Rogers Communications Inc",
+                "amount_raw": null,
+                "amount_basis": null,
+                "status": "not_stated",
+                "rank": null
+              }
+            ],
+            "awards": [
+              {
+                "supplier_name": "Bell Canada",
+                "amount_raw": null,
+                "amount_basis": null,
+                "contingency_raw": null,
+                "value_confidential": false
+              }
+            ],
+            "funding_source": "IT Infrastructure and various Business Unit Operating accounts",
+            "decision_date": "2020-08-05",
+            "decision_body": "Board of Directors"
+          },
+          {
+            "reference": "10032967",
+            "solicitation_type": "RFP",
+            "title": "Vendor of Record arrangement for on-call electrical and mechanical contractor services 2020-2021",
+            "buyer": "Toronto and Region Conservation Authority",
+            "posted_date": "2020-06-03",
+            "closed_date": "2020-06-17",
+            "documents_taken": 36,
+            "declared_submissions": 15,
+            "declared_compliant": null,
+            "stage": "single_stage",
+            "prequalified": [],
+            "invited_to_tender": [],
+            "bids": [
+              {
+                "supplier_name": "Ainsworth Inc.",
+                "amount_raw": null,
+                "amount_basis": null,
+                "status": "not_stated",
+                "rank": null
+              },
+              {
+                "supplier_name": "Black Creek Mechanical Ltd.",
+                "amount_raw": null,
+                "amount_basis": null,
+                "status": "not_stated",
+                "rank": null
+              },
+              {
+                "supplier_name": "R.A Graham Electrical Contractors",
+                "amount_raw": null,
+                "amount_basis": null,
+                "status": "not_stated",
+                "rank": null
+              },
+              {
+                "supplier_name": "Nortek Mechanical Services",
+                "amount_raw": null,
+                "amount_basis": null,
+                "status": "not_stated",
+                "rank": null
+              },
+              {
+                "supplier_name": "Electric Group Ltd.",
+                "amount_raw": null,
+                "amount_basis": null,
+                "status": "not_stated",
+                "rank": null
+              },
+              {
+                "supplier_name": "Ocean Mechanical Ltd.",
+                "amount_raw": null,
+                "amount_basis": null,
+                "status": "not_stated",
+                "rank": null
+              },
+              {
+                "supplier_name": "Beckett Electrical Inc.",
+                "amount_raw": null,
+                "amount_basis": null,
+                "status": "not_stated",
+                "rank": null
+              },
+              {
+                "supplier_name": "Pipe-All Plumbing and Heating Ltd.",
+                "amount_raw": null,
+                "amount_basis": null,
+                "status": "not_stated",
+                "rank": null
+              },
+              {
+                "supplier_name": "Bolton Electric Company Inc",
+                "amount_raw": null,
+                "amount_basis": null,
+                "status": "not_stated",
+                "rank": null
+              },
+              {
+                "supplier_name": "Nor-Line Mechanical Ltd",
+                "amount_raw": null,
+                "amount_basis": null,
+                "status": "not_stated",
+                "rank": null
+              },
+              {
+                "supplier_name": "Everbrite Industries",
+                "amount_raw": null,
+                "amount_basis": null,
+                "status": "disqualified",
+                "rank": null
+              },
+              {
+                "supplier_name": "MSB Mechanical Ltd.",
+                "amount_raw": null,
+                "amount_basis": null,
+                "status": "not_stated",
+                "rank": null
+              },
+              {
+                "supplier_name": "RPM Industrial Inc",
+                "amount_raw": null,
+                "amount_basis": null,
+                "status": "not_stated",
+                "rank": null
+              },
+              {
+                "supplier_name": "Litek Mechnical Services Inc.",
+                "amount_raw": null,
+                "amount_basis": null,
+                "status": "not_stated",
+                "rank": null
+              },
+              {
+                "supplier_name": "Glen The Plumber",
+                "amount_raw": null,
+                "amount_basis": null,
+                "status": "not_stated",
+                "rank": null
+              }
+            ],
+            "awards": [
+              {
+                "supplier_name": "RPM Industrial Inc.",
+                "amount_raw": null,
+                "amount_basis": null,
+                "contingency_raw": null,
+                "value_confidential": false
+              },
+              {
+                "supplier_name": "Bolton Electric Company Inc.",
+                "amount_raw": null,
+                "amount_basis": null,
+                "contingency_raw": null,
+                "value_confidential": false
+              },
+              {
+                "supplier_name": "Ainsworth",
+                "amount_raw": null,
+                "amount_basis": null,
+                "contingency_raw": null,
+                "value_confidential": false
+              },
+              {
+                "supplier_name": "Black Creek Mechanical Ltd.",
+                "amount_raw": null,
+                "amount_basis": null,
+                "contingency_raw": null,
+                "value_confidential": false
+              },
+              {
+                "supplier_name": "Ocean Mechanical Ltd.",
+                "amount_raw": null,
+                "amount_basis": null,
+                "contingency_raw": null,
+                "value_confidential": false
+              },
+              {
+                "supplier_name": "MSB Mechanical Ltd.",
+                "amount_raw": null,
+                "amount_basis": null,
+                "contingency_raw": null,
+                "value_confidential": false
+              },
+              {
+                "supplier_name": "Glen the Plumber",
+                "amount_raw": null,
+                "amount_basis": null,
+                "contingency_raw": null,
+                "value_confidential": false
+              }
+            ],
+            "funding_source": "various divisional operating accounts",
+            "decision_date": "2020-08-11",
+            "decision_body": "Board of Directors"
+          }
+        ]
+      },
+      "usage": {
+        "input_tokens": 7983,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 2866,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 4323,
+        "output_tokens_details": {
+          "thinking_tokens": 2183
+        },
+        "service_tier": "standard",
+        "inference_geo": "global",
+        "speed": "standard"
+      },
+      "charged_microdollars": 2989,
+      "provenance": {
+        "document_sha256": "077c734b724f5f39367f52ce8b02b4c467a98fefc06e466262f8bfd1749e9d07",
+        "text_sha256": "efa0773014bd88d122dcfff32fb7548152864ab781e5d9ccee03d934de5a1142",
+        "prompt_version": "v1-b63aa8c835ae",
+        "model": "claude-haiku-5-5",
+        "effort": "medium",
+        "mode": "sync",
+        "response_id": "msg_011CgKGb8gUcPdoSwPLGQAhB",
+        "response_sha256": "9b3cf6233779e55ff6161b0b2a617f08d28768896a15d3ce6ee7866c78ca586d",
+        "schema_sha256": null,
+        "request_sha256": null,
+        "request": null,
+        "raw_response_sha256": "2aae22caf30b70514a6d49f667e483a39080a1085675e2db54950b2f149902fc"
+      },
+      "origin": "claude-validation-2026-10-23/structured-full/claude-haiku-5-5--trca-D04.json",
+      "raw_response": {
+        "model": "claude-haiku-5-5",
+        "id": "msg_011CgKGb8gUcPdoSwPLGQAhB",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "thinking",
+            "thinking": "",
+            "signature": "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"
+          },
+          {
+            "type": "text",
+            "text": "{\"contracts\":[{\"reference\":\"2104-09-3006\",\"solicitation_type\":\"RFP\",\"title\":\"Integrated Telecommunications Infrastructure (Bell Canada Master Agreement; TRCA adoption of Amending Agreement No. 11 extending term to 2025)\",\"buyer\":\"City of Toronto\",\"posted_date\":\"2009-01-28\",\"closed_date\":\"2009-04-22\",\"documents_taken\":29,\"declared_submissions\":8,\"declared_compliant\":null,\"stage\":\"single_stage\",\"prequalified\":[],\"invited_to_tender\":[],\"bids\":[{\"supplier_name\":\"Aastra Telecom Inc\",\"amount_raw\":null,\"amount_basis\":null,\"status\":\"not_stated\",\"rank\":null},{\"supplier_name\":\"Alcatel-Lucent Canada Inc\",\"amount_raw\":null,\"amount_basis\":null,\"status\":\"not_stated\",\"rank\":null},{\"supplier_name\":\"Bell Canada\",\"amount_raw\":null,\"amount_basis\":null,\"status\":\"not_stated\",\"rank\":1},{\"supplier_name\":\"Cogeco\",\"amount_raw\":null,\"amount_basis\":null,\"status\":\"not_stated\",\"rank\":null},{\"supplier_name\":\"FlexITy Solutions Inc\",\"amount_raw\":null,\"amount_basis\":null,\"status\":\"not_stated\",\"rank\":null},{\"supplier_name\":\"MTS Allstream Inc\",\"amount_raw\":null,\"amount_basis\":null,\"status\":\"not_stated\",\"rank\":null},{\"supplier_name\":\"Quartet Services Inc\",\"amount_raw\":null,\"amount_basis\":null,\"status\":\"not_stated\",\"rank\":null},{\"supplier_name\":\"Rogers Communications Inc\",\"amount_raw\":null,\"amount_basis\":null,\"status\":\"not_stated\",\"rank\":null}],\"awards\":[{\"supplier_name\":\"Bell Canada\",\"amount_raw\":null,\"amount_basis\":null,\"contingency_raw\":null,\"value_confidential\":false}],\"funding_source\":\"IT Infrastructure and various Business Unit Operating accounts\",\"decision_date\":\"2020-08-05\",\"decision_body\":\"Board of Directors\"},{\"reference\":\"10032967\",\"solicitation_type\":\"RFP\",\"title\":\"Vendor of Record arrangement for on-call electrical and mechanical contractor services 2020-2021\",\"buyer\":\"Toronto and Region Conservation Authority\",\"posted_date\":\"2020-06-03\",\"closed_date\":\"2020-06-17\",\"documents_taken\":36,\"declared_submissions\":15,\"declared_compliant\":null,\"stage\":\"single_stage\",\"prequalified\":[],\"invited_to_tender\":[],\"bids\":[{\"supplier_name\":\"Ainsworth Inc.\",\"amount_raw\":null,\"amount_basis\":null,\"status\":\"not_stated\",\"rank\":null},{\"supplier_name\":\"Black Creek Mechanical Ltd.\",\"amount_raw\":null,\"amount_basis\":null,\"status\":\"not_stated\",\"rank\":null},{\"supplier_name\":\"R.A Graham Electrical Contractors\",\"amount_raw\":null,\"amount_basis\":null,\"status\":\"not_stated\",\"rank\":null},{\"supplier_name\":\"Nortek Mechanical Services\",\"amount_raw\":null,\"amount_basis\":null,\"status\":\"not_stated\",\"rank\":null},{\"supplier_name\":\"Electric Group Ltd.\",\"amount_raw\":null,\"amount_basis\":null,\"status\":\"not_stated\",\"rank\":null},{\"supplier_name\":\"Ocean Mechanical Ltd.\",\"amount_raw\":null,\"amount_basis\":null,\"status\":\"not_stated\",\"rank\":null},{\"supplier_name\":\"Beckett Electrical Inc.\",\"amount_raw\":null,\"amount_basis\":null,\"status\":\"not_stated\",\"rank\":null},{\"supplier_name\":\"Pipe-All Plumbing and Heating Ltd.\",\"amount_raw\":null,\"amount_basis\":null,\"status\":\"not_stated\",\"rank\":null},{\"supplier_name\":\"Bolton Electric Company Inc\",\"amount_raw\":null,\"amount_basis\":null,\"status\":\"not_stated\",\"rank\":null},{\"supplier_name\":\"Nor-Line Mechanical Ltd\",\"amount_raw\":null,\"amount_basis\":null,\"status\":\"not_stated\",\"rank\":null},{\"supplier_name\":\"Everbrite Industries\",\"amount_raw\":null,\"amount_basis\":null,\"status\":\"disqualified\",\"rank\":null},{\"supplier_name\":\"MSB Mechanical Ltd.\",\"amount_raw\":null,\"amount_basis\":null,\"status\":\"not_stated\",\"rank\":null},{\"supplier_name\":\"RPM Industrial Inc\",\"amount_raw\":null,\"amount_basis\":null,\"status\":\"not_stated\",\"rank\":null},{\"supplier_name\":\"Litek Mechnical Services Inc.\",\"amount_raw\":null,\"amount_basis\":null,\"status\":\"not_stated\",\"rank\":null},{\"supplier_name\":\"Glen The Plumber\",\"amount_raw\":null,\"amount_basis\":null,\"status\":\"not_stated\",\"rank\":null}],\"awards\":[{\"supplier_name\":\"RPM Industrial Inc.\",\"amount_raw\":null,\"amount_basis\":null,\"contingency_raw\":null,\"value_confidential\":false},{\"supplier_name\":\"Bolton Electric Company Inc.\",\"amount_raw\":null,\"amount_basis\":null,\"contingency_raw\":null,\"value_confidential\":false},{\"supplier_name\":\"Ainsworth\",\"amount_raw\":null,\"amount_basis\":null,\"contingency_raw\":null,\"value_confidential\":false},{\"supplier_name\":\"Black Creek Mechanical Ltd.\",\"amount_raw\":null,\"amount_basis\":null,\"contingency_raw\":null,\"value_confidential\":false},{\"supplier_name\":\"Ocean Mechanical Ltd.\",\"amount_raw\":null,\"amount_basis\":null,\"contingency_raw\":null,\"value_confidential\":false},{\"supplier_name\":\"MSB Mechanical Ltd.\",\"amount_raw\":null,\"amount_basis\":null,\"contingency_raw\":null,\"value_confidential\":false},{\"supplier_name\":\"Glen the Plumber\",\"amount_raw\":null,\"amount_basis\":null,\"contingency_raw\":null,\"value_confidential\":false}],\"funding_source\":\"various divisional operating accounts\",\"decision_date\":\"2020-08-11\",\"decision_body\":\"Board of Directors\"}]}"
+          }
+        ],
+        "container": null,
+        "stop_reason": "end_turn",
+        "stop_sequence": null,
+        "stop_details": null,
+        "usage": {
+          "input_tokens": 7983,
+          "cache_creation_input_tokens": 0,
+          "cache_read_input_tokens": 2866,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 0
+          },
+          "output_tokens": 4323,
+          "output_tokens_details": {
+            "thinking_tokens": 2183
+          },
+          "service_tier": "standard",
+          "inference_geo": "global",
+          "speed": "standard"
+        },
+        "diagnostics": null
+      }
+    },
+    "ep-bus-duct": {
+      "state": "success",
+      "extraction": {
+        "contracts": [
+          {
+            "reference": "19-081-98116",
+            "solicitation_type": "RFT",
+            "title": "Food Building Electrical Bus Duct Replacement",
+            "buyer": "City of Toronto Purchasing and Material Management Division",
+            "posted_date": "2019-08-02",
+            "closed_date": "2019-08-26",
+            "documents_taken": null,
+            "declared_submissions": 5,
+            "declared_compliant": null,
+            "stage": "single_stage",
+            "prequalified": [],
+            "invited_to_tender": [],
+            "bids": [
+              {
+                "supplier_name": "Sutherland-Schultz Ltd.",
+                "amount_raw": "$418,854.47",
+                "amount_basis": "plus_HST",
+                "status": "not_stated",
+                "rank": 1
+              },
+              {
+                "supplier_name": "Ontario Electrical Construction Co. Ltd.",
+                "amount_raw": "$461,522.00",
+                "amount_basis": "plus_HST",
+                "status": "not_stated",
+                "rank": 2
+              },
+              {
+                "supplier_name": "Modern Niagara Toronto Inc.",
+                "amount_raw": "$470,700.00",
+                "amount_basis": "plus_HST",
+                "status": "not_stated",
+                "rank": 3
+              },
+              {
+                "supplier_name": "Stevens & Black Electrical Contractors Ltd.",
+                "amount_raw": "$518,000.00",
+                "amount_basis": "plus_HST",
+                "status": "not_stated",
+                "rank": 4
+              },
+              {
+                "supplier_name": "Rogol Electric Company Limited",
+                "amount_raw": "$546,350.00",
+                "amount_basis": "plus_HST",
+                "status": "not_stated",
+                "rank": 5
+              }
+            ],
+            "awards": [
+              {
+                "supplier_name": "Sutherland-Schultz Ltd.",
+                "amount_raw": "$403,854.47",
+                "amount_basis": "plus_HST",
+                "contingency_raw": "reduced contingency allowance of $10,000.00",
+                "value_confidential": false
+              }
+            ],
+            "funding_source": "Exhibition Place Capital Works Program 2019 (sub-account #081-98116)",
+            "decision_date": null,
+            "decision_body": "Board of Governors of Exhibition Place"
+          }
+        ]
+      },
+      "usage": {
+        "input_tokens": 2698,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 2866,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 1871,
+        "output_tokens_details": {
+          "thinking_tokens": 1212
+        },
+        "service_tier": "standard",
+        "inference_geo": "global",
+        "speed": "standard"
+      },
+      "charged_microdollars": 1234,
+      "provenance": {
+        "document_sha256": "fedcc9cbe1a6422b8fd1e23df2c25299aff925f3c91ea57896a5193a7bc8ea03",
+        "text_sha256": "766203113a8e808d11a48f46e03b4e0d335fc4c15faa4b30adb8c1f700f0b53b",
+        "prompt_version": "v1-b63aa8c835ae",
+        "model": "claude-haiku-5-5",
+        "effort": "medium",
+        "mode": "sync",
+        "response_id": "msg_011CgKGcKfJSaNPaKPT2RSeM",
+        "response_sha256": "3273b1ff48da3b3b45e07e24e15332c84f85f571aaa66974b33d0a4e4285005b",
+        "schema_sha256": null,
+        "request_sha256": null,
+        "request": null,
+        "raw_response_sha256": "350dda730307f5242cdbcd3dfcfe0d3b308cbdfb55cb7d1143a076f839839adc"
+      },
+      "origin": "claude-validation-2026-10-23/structured-full/claude-haiku-5-5--ep-distinct-bid-and-award.json",
+      "raw_response": {
+        "model": "claude-haiku-5-5",
+        "id": "msg_011CgKGcKfJSaNPaKPT2RSeM",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "thinking",
+            "thinking": "",
+            "signature": "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"
+          },
+          {
+            "type": "text",
+            "text": "{\"contracts\":[{\"reference\":\"19-081-98116\",\"solicitation_type\":\"RFT\",\"title\":\"Food Building Electrical Bus Duct Replacement\",\"buyer\":\"City of Toronto Purchasing and Material Management Division\",\"posted_date\":\"2019-08-02\",\"closed_date\":\"2019-08-26\",\"documents_taken\":null,\"declared_submissions\":5,\"declared_compliant\":null,\"stage\":\"single_stage\",\"prequalified\":[],\"invited_to_tender\":[],\"bids\":[{\"supplier_name\":\"Sutherland-Schultz Ltd.\",\"amount_raw\":\"$418,854.47\",\"amount_basis\":\"plus_HST\",\"status\":\"not_stated\",\"rank\":1},{\"supplier_name\":\"Ontario Electrical Construction Co. Ltd.\",\"amount_raw\":\"$461,522.00\",\"amount_basis\":\"plus_HST\",\"status\":\"not_stated\",\"rank\":2},{\"supplier_name\":\"Modern Niagara Toronto Inc.\",\"amount_raw\":\"$470,700.00\",\"amount_basis\":\"plus_HST\",\"status\":\"not_stated\",\"rank\":3},{\"supplier_name\":\"Stevens & Black Electrical Contractors Ltd.\",\"amount_raw\":\"$518,000.00\",\"amount_basis\":\"plus_HST\",\"status\":\"not_stated\",\"rank\":4},{\"supplier_name\":\"Rogol Electric Company Limited\",\"amount_raw\":\"$546,350.00\",\"amount_basis\":\"plus_HST\",\"status\":\"not_stated\",\"rank\":5}],\"awards\":[{\"supplier_name\":\"Sutherland-Schultz Ltd.\",\"amount_raw\":\"$403,854.47\",\"amount_basis\":\"plus_HST\",\"contingency_raw\":\"reduced contingency allowance of $10,000.00\",\"value_confidential\":false}],\"funding_source\":\"Exhibition Place Capital Works Program 2019 (sub-account #081-98116)\",\"decision_date\":null,\"decision_body\":\"Board of Governors of Exhibition Place\"}]}"
+          }
+        ],
+        "container": null,
+        "stop_reason": "end_turn",
+        "stop_sequence": null,
+        "stop_details": null,
+        "usage": {
+          "input_tokens": 2698,
+          "cache_creation_input_tokens": 0,
+          "cache_read_input_tokens": 2866,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 0
+          },
+          "output_tokens": 1871,
+          "output_tokens_details": {
+            "thinking_tokens": 1212
+          },
+          "service_tier": "standard",
+          "inference_geo": "global",
+          "speed": "standard"
+        },
+        "diagnostics": null
+      }
+    },
+    "ep-negative": {
+      "state": "success",
+      "extraction": {
+        "contracts": []
+      },
+      "usage": {
+        "input_tokens": 3124,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 2866,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 10,
+        "output_tokens_details": {
+          "thinking_tokens": 0
+        },
+        "service_tier": "standard",
+        "inference_geo": "global",
+        "speed": "standard"
+      },
+      "charged_microdollars": 347,
+      "provenance": {
+        "document_sha256": "32bcb544ac0bc3c518fd7fa61be158edce67caf9d2ea78ff9a87768c9d066530",
+        "text_sha256": "28efa93da8deec87939c0c214fbad3c35b04ba78a3a12f75c94186fbe248053a",
+        "prompt_version": "v1-b63aa8c835ae",
+        "model": "claude-haiku-5-5",
+        "effort": "medium",
+        "mode": "sync",
+        "response_id": "msg_011CgKGct7v3jxKxCSxksAoh",
+        "response_sha256": "3312b062bb7ccfa55b0b7d0aba9f02f1876e292d3da750d7baac18e579416a51",
+        "schema_sha256": null,
+        "request_sha256": null,
+        "request": null,
+        "raw_response_sha256": "e7ffb0feb55918942fcf1adc18d7e7d9e838f24298db5c0c8d0792c786fb261f"
+      },
+      "origin": "claude-validation-2026-10-23/structured-full/claude-haiku-5-5--ep-non-procurement-wsib.json",
+      "raw_response": {
+        "model": "claude-haiku-5-5",
+        "id": "msg_011CgKGct7v3jxKxCSxksAoh",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"contracts\": []}"
+          }
+        ],
+        "container": null,
+        "stop_reason": "end_turn",
+        "stop_sequence": null,
+        "stop_details": null,
+        "usage": {
+          "input_tokens": 3124,
+          "cache_creation_input_tokens": 0,
+          "cache_read_input_tokens": 2866,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 0
+          },
+          "output_tokens": 10,
+          "output_tokens_details": {
+            "thinking_tokens": 0
+          },
+          "service_tier": "standard",
+          "inference_geo": "global",
+          "speed": "standard"
+        },
+        "diagnostics": null
+      }
+    }
+  }
+}
