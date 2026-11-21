@@ -285,6 +285,16 @@ def test_capture_attachments_reports_a_failed_event_and_keeps_going(conn, monkey
     # Omitting `failures` keeps the old behaviour for other callers.
     assert aa.capture_attachments(conn, dest_dir=tmp_path) == 0
 
+    # #304: `only` restricts one targeted attempt to the named open events.
+    import pytest
+    seen.clear()
+    assert aa.capture_attachments(conn, dest_dir=tmp_path, only=["2222222222"]) == 0
+    assert seen == ["2222222222"]
+    # A document that is not an open, pending event is refused before any browser work.
+    with pytest.raises(ValueError, match="9999999999"):
+        aa.capture_attachments(conn, dest_dir=tmp_path, only=["9999999999"])
+    assert seen == ["2222222222"]
+
 
 def test_cli_capture_threads_virtual_display(tmp_path, monkeypatch):
     # --virtual-display must reach capture_attachments (the flag a headless server needs).
@@ -295,7 +305,8 @@ def test_cli_capture_threads_virtual_display(tmp_path, monkeypatch):
 
     seen = {}
 
-    def fake_capture(conn, log=lambda _m: None, headless=False, virtual_display=False):
+    def fake_capture(conn, log=lambda _m: None, headless=False, virtual_display=False,
+                     only=None):
         seen["virtual_display"] = virtual_display
         return 0
 

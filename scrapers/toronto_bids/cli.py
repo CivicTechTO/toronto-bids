@@ -130,6 +130,13 @@ def build_parser() -> argparse.ArgumentParser:
         help="Run --capture's headed Chromium under Xvfb (headless servers; needs Xvfb "
         "installed). Ignored by the offline --ingest/--reindex modes.",
     )
+    p_ariba.add_argument(
+        "--document",
+        action="append",
+        metavar="N",
+        help="With --capture, attempt only this open document number (repeatable); refused "
+        "unless the event is open and still pending capture (#304).",
+    )
 
     p_titles.add_argument(
         "--reports",
@@ -830,12 +837,17 @@ def _cmd_enrich_ariba_attachments(args) -> int:
             )
         elif args.capture:
             print("Capturing open-solicitation attachment bundles (headed browser):")
-            n = aa.capture_attachments(
-                conn,
-                log=out,
-                headless=args.headless,
-                virtual_display=args.virtual_display,
-            )
+            try:
+                n = aa.capture_attachments(
+                    conn,
+                    log=out,
+                    headless=args.headless,
+                    virtual_display=args.virtual_display,
+                    only=args.document,
+                )
+            except ValueError as exc:
+                print(f"  refused --document: {exc}", file=sys.stderr)
+                return 2
             print(f"  bundles captured: {n}")
         else:
             open_n = len(aa.open_solicitation_events(conn))
