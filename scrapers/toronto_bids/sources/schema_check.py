@@ -24,7 +24,7 @@ stable key-set across 500 records each, so a missing key means real drift, not a
 from itertools import islice
 
 from toronto_bids import config
-from toronto_bids.sources.ckan import fetch_datastore, resolve_resource_id
+from toronto_bids.sources.ckan import decode_award_entries, fetch_datastore, resolve_resource_id
 from toronto_bids.sources.odata import fetch_entityset
 
 # entityset -> (top-level fields, fields of each nested Awarded_Suppliers dict).
@@ -49,8 +49,7 @@ _CKAN = {
     "ckan_awarded": (config.CKAN_AWARDED_SLUG, {
         "Document Number", "RFx (Solicitation) Type", "High Level Category",
         "Solicitation Document Description", "Division", "Buyer Name", "Buyer Email",
-        "Buyer Phone Number", "Successful Supplier", "Award",
-        "Award Authority Obtained Date",
+        "Buyer Phone Number", "Award",
     }),
     "ckan_open": (config.CKAN_OPEN_SLUG, {
         "Document Number", "RFx (Solicitation) Type",
@@ -69,12 +68,10 @@ _CKAN = {
         "Sourcing Type", "Estimated Range", "Estimated Contract Term (Months)",
     }),
 }
+_CKAN_AWARD_ENTRY = {"Successful_Bidder", "Award_Amount", "Date_Awarded", "AwardedDate"}
 
 
-# Records to sample per OData feed. One is not enough: the feed carries not-yet-awarded
-# solicitations whose Awarded_Suppliers is empty, and record #1 is one of them today, so
-# sampling a single record would leave the nested fields silently unchecked. 15 of the
-# first 50 carry a supplier (measured 2026-07-16).
+# Sample past the first record on feeds with nested awards, which can be empty.
 _SAMPLE = 50
 
 
@@ -107,12 +104,40 @@ def check_odata(http, feed: str, entityset: str, expected: set, supplier_expecte
 
 def check_ckan(http, feed: str, slug: str, expected: set) -> list[str]:
     resource_id = resolve_resource_id(http, slug)
+    if feed == "ckan_awarded":
+        records = list(islice(fetch_datastore(http, resource_id, page_size=_SAMPLE), _SAMPLE))
+        return check_ckan_awards(feed, records, expected)
     record = next(iter(fetch_datastore(http, resource_id, page_size=1)), None)
     return missing_fields(feed, record, expected)
 
 
+def check_ckan_awards(feed: str, records: list[dict], expected: set) -> list[str]:
+    if not records:
+        return missing_fields(feed, None, expected)
+    checked_award = False
+    for record_number, record in enumerate(records, start=1):
+        problems = missing_fields(f"{feed} (sample record {record_number})", record, expected)
+        if problems:
+            return problems
+        entries = decode_award_entries(record["Award"])
+        if entries is None:
+            return [f"{feed}.Award (sample record {record_number}): expected a JSON array"]
+        for index, entry in enumerate(entries):
+            location = f"{feed}.Award[{index}] (sample record {record_number})"
+            if not isinstance(entry, dict):
+                return [f"{location}: expected an object"]
+            problems = missing_fields(location, entry, _CKAN_AWARD_ENTRY)
+            if problems:
+                return problems
+            checked_award = True
+    if not checked_award:
+        return [f"{feed}.Award: no award entries in the first {len(records)} records, so "
+                f"{sorted(_CKAN_AWARD_ENTRY)} went unchecked"]
+    return []
+
+
 class SchemaCheckSource:
-    """Samples one record per feed and fails the run if a field we read has gone missing."""
+    """Samples each feed and fails the check if a field we read has gone missing."""
 
     name = "schema_check"
     overwrite = True

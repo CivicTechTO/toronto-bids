@@ -64,9 +64,9 @@ look first when a number seems wrong.
 ### Feed drift
 
 `sources/schema_check.py` declares the fields each normalizer reads out of the City's
-OData and CKAN feeds, and a `schema_check` source samples one record per feed on every
-sync to confirm they're still there. If the City renames or drops a field, the run fails
-loudly instead of quietly NULLing that column across every row.
+current OData and CKAN feeds. The `schema_check` source samples each feed on every sync,
+including fields inside the JSON list in CKAN's `Award` column. The check reports missing
+fields through `sync_run`, stderr and the sync exit code.
 
 It's an ordinary source, so per-source isolation applies deliberately: **drift is reported
 without stopping ingestion**. A renamed buyer-phone field should never cost us the archive
