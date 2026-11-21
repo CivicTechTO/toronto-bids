@@ -59,6 +59,14 @@ changing, duplicate or clamped pages fail validation. Already validated query
 batches remain held; an invalid batch writes no partial listings. Coverage is
 computed from this attempt, never from accumulated database row counts.
 
+Each validated listing query and each notice detail commits as soon as it completes.
+Procurement identity is resolved once per buyer capture, after the run or its
+failure and before the coverage report is written (#305). A full resolution pass
+covers the whole archive, so running it per section and per notice made the nightly
+step several times slower than its requests. A failed final pass is recorded as a
+coverage failure; the committed facts remain and take their identities on the next
+pass (the export resolves again before writing).
+
 A failed capture, incomplete backfill, exhausted request budget or requested gated
 detail produces exit code 1. A normal incremental window is not an error simply
 because historical coverage is partial. Reports distinguish that scope explicitly.
