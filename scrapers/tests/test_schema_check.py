@@ -3,12 +3,14 @@
 The failure being caught: a renamed City field makes every normalizer's .get() return
 None, so the column NULLs out across all rows and the run still reports success.
 """
+import json
+
 import pytest
 
 from toronto_bids import config, pipeline
 from toronto_bids.sources.schema_check import SchemaCheckSource, missing_fields
 
-# One record per feed, shaped like the real thing (verified live 2026-07-16). Only the
+# One record per feed, shaped like the real thing. Only the
 # fields the normalizers read plus a little noise — the real feeds carry ~63.
 ODATA_SOLICITATION = {
     "Solicitation_Document_Number": "3303123110", "Status": "Awarded",
@@ -36,7 +38,10 @@ CKAN_AWARDED = {
     "Document Number": "3303123110", "RFx (Solicitation) Type": "RFQ",
     "High Level Category": "Goods", "Solicitation Document Description": "Widgets",
     "Division": "Fleet", "Buyer Name": "A Buyer", "Buyer Email": "b@toronto.ca",
-    "Buyer Phone Number": "416", "Successful Supplier": "Acme", "Award": "100",
+    "Buyer Phone Number": "416", "Award": json.dumps([
+        {"Successful_Bidder": "Acme", "Award_Amount": "100",
+         "Date_Awarded": "2025-02-02", "AwardedDate": None},
+    ]),
     "Award Authority Obtained Date": "2025-02-02", "_id": 1,
 }
 CKAN_OPEN = {
@@ -116,9 +121,19 @@ def test_detects_a_renamed_odata_field():
 
 def test_detects_a_renamed_ckan_column():
     drifted = {**CKAN_AWARDED}
-    drifted["Winning Supplier"] = drifted.pop("Successful Supplier")
-    with pytest.raises(ValueError, match="Successful Supplier"):
+    drifted["Purchasing Division"] = drifted.pop("Division")
+    with pytest.raises(ValueError, match="Division"):
         SchemaCheckSource().fetch(FakeHttp(awarded=drifted))
+
+
+def test_checks_ckan_award_fields_after_empty_records_and_valid_entries():
+    empty = {**CKAN_AWARDED, "Award": "[]"}
+    valid, = json.loads(CKAN_AWARDED["Award"])
+    drifted = {**valid, "Amount": valid["Award_Amount"]}
+    del drifted["Award_Amount"]
+    awarded = {**CKAN_AWARDED, "Award": json.dumps([valid, drifted])}
+    with pytest.raises(ValueError, match=r"ckan_awarded\.Award.*missing.*Award_Amount"):
+        SchemaCheckSource().fetch(FakeHttp(awarded=[empty, CKAN_AWARDED, awarded]))
 
 
 def test_detects_drift_in_the_nested_supplier_dict():
@@ -198,6 +213,9 @@ def test_declared_schema_matches_what_the_normalizers_actually_read():
             declared = top | supplier
         else:
             _, declared = schema_check._CKAN[feed]
+            if feed == "ckan_awarded":
+                legacy_fields = {"Successful Supplier", "Award Authority Obtained Date"}
+                declared = declared | schema_check._CKAN_AWARD_ENTRY | legacy_fields
         assert actually_read == declared, (
             f"{module}:{func_name} and the declared schema for {feed} have diverged.\n"
             f"  read but not declared (drift here goes undetected): {sorted(actually_read - declared)}\n"

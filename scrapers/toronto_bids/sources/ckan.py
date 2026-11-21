@@ -1,3 +1,5 @@
+import json
+import logging
 import re
 from typing import Iterable, Iterator
 
@@ -5,6 +7,8 @@ from toronto_bids import config
 from toronto_bids.linking.document_number import normalize_document_number
 from toronto_bids.models import Award, CapitalProject, NonCompetitive, Solicitation
 from toronto_bids.sources.base import Row
+
+_LOG = logging.getLogger(__name__)
 
 
 def resolve_resource_id(http, slug: str) -> str:
@@ -49,7 +53,17 @@ def _clean(value):
     return text
 
 
-def normalize_awarded(raw: dict):
+def decode_award_entries(value: object) -> list[object] | None:
+    """Decode the CKAN Award array, returning None for a non-array value."""
+    if isinstance(value, str):
+        try:
+            value = json.loads(value)
+        except json.JSONDecodeError:
+            return None
+    return value if isinstance(value, list) else None
+
+
+def normalize_awarded(raw: dict) -> Iterable[Row]:
     doc = normalize_document_number(raw.get("Document Number"))
     if doc is None:
         return
@@ -65,13 +79,40 @@ def normalize_awarded(raw: dict):
         buyer_phone=_clean(raw.get("Buyer Phone Number")),
         source="ckan_awarded",
     )
-    supplier = _clean(raw.get("Successful Supplier"))
-    if supplier is not None:
+    value = raw.get("Award")
+    entries = decode_award_entries(value)
+    if entries is None:
+        structured_value = isinstance(value, dict) or (
+            isinstance(value, str) and value.lstrip().startswith(("[", "{"))
+        )
+        if "Successful Supplier" not in raw or structured_value:
+            _LOG.warning("CKAN %s: Award must be a JSON array", doc)
+            return
+        # Older captures used one scalar award per record.
+        supplier = _clean(raw.get("Successful Supplier"))
+        if supplier is not None:
+            yield Award(
+                document_number=doc,
+                supplier_name_raw=supplier,
+                award_amount=_clean(value),
+                award_date=_clean(raw.get("Award Authority Obtained Date")),
+                source="ckan_awarded",
+            )
+        return
+
+    for index, entry in enumerate(entries):
+        if not isinstance(entry, dict):
+            _LOG.warning("CKAN %s: Award[%d] must be an object", doc, index)
+            continue
+        supplier = _clean(entry.get("Successful_Bidder"))
+        if supplier is None:
+            _LOG.warning("CKAN %s: Award[%d] has no Successful_Bidder", doc, index)
+            continue
         yield Award(
             document_number=doc,
             supplier_name_raw=supplier,
-            award_amount=_clean(raw.get("Award")),
-            award_date=_clean(raw.get("Award Authority Obtained Date")),
+            award_amount=_clean(entry.get("Award_Amount")),
+            award_date=_clean(entry.get("Date_Awarded")) or _clean(entry.get("AwardedDate")),
             source="ckan_awarded",
         )
 

@@ -70,7 +70,7 @@ The same lesson recurs at every level of the nightly, and the pattern is fixed:
 
 ### Schema drift detection (`sources/schema_check.py`)
 
-Normalizers read feed fields with `raw.get(...)`, so a field the City renames silently NULLs a column forever. `schema_check.py` declares exactly the fields the OData and CKAN normalizers read and samples those feeds on each sync, failing loudly on missing keys. When a normalizer starts reading a new field, add it to the declared sets in the same change. Ariba and suspended-firms are outside its coverage (suspended-firms parsing raises on header drift itself; Ariba field drift is unguarded).
+`schema_check.py` samples the current OData and CKAN feeds on each sync and reports missing keys, including fields inside OData's `Awarded_Suppliers` and CKAN's `Award` lists. When a normalizer starts reading a new feed field, add it to the declared schema in the same change. Suspended-firms parsing checks its own headers. Ariba is outside schema-check coverage.
 
 ### Reviewed City identity crosswalks
 

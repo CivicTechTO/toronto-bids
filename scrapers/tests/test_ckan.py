@@ -62,6 +62,41 @@ def test_normalize_awarded_yields_solicitation_and_award():
     assert award.award_date == "2012-10-04"
 
 
+def test_awarded_source_uses_each_nested_award_line(caplog):
+    src = ckan.CkanSource(name="ckan_awarded", slug="tobids-awarded-contracts", kind="awarded")
+    raw = {
+        "Document Number": "3303123110",
+        "Award Authority Obtained Date": "2025-01-01",
+        "Award": json.dumps([
+            {"Successful_Bidder": "Acme", "Award_Amount": "1,000.00",
+             "Date_Awarded": "2025-02-02", "AwardedDate": None},
+            None,
+            {"Successful_Bidder": "Acme", "Award_Amount": "400",
+             "Date_Awarded": "2025-03-03", "AwardedDate": "2025-03-04"},
+            {"Successful_Bidder": "Other Ltd", "Award_Amount": None,
+             "Date_Awarded": None, "AwardedDate": "2025-04-04",
+             "Initial_Contract_Val": "500"},
+        ]),
+    }
+    solicitation, *awards = src.normalize(raw)
+    assert isinstance(solicitation, Solicitation)
+    assert solicitation.status == "Awarded"
+    assert awards == [
+        Award("3303123110", "Acme", "1,000.00", "2025-02-02", "ckan_awarded"),
+        Award("3303123110", "Acme", "400", "2025-03-03", "ckan_awarded"),
+        Award("3303123110", "Other Ltd", None, "2025-04-04", "ckan_awarded"),
+    ]
+    assert "3303123110: Award[1] must be an object" in caplog.text
+
+
+def test_awarded_source_refuses_a_truncated_award_array_with_legacy_columns(caplog):
+    raw = {**_records("ckan_awarded.json")[0], "Award": '[{"Successful_Bidder":'}
+    rows = list(ckan.normalize_awarded(raw))
+    assert len(rows) == 1
+    assert isinstance(rows[0], Solicitation)
+    assert "3303123110: Award must be a JSON array" in caplog.text
+
+
 def test_normalize_awarded_skips_invalid_document_number():
     rows = list(ckan.normalize_awarded(_records("ckan_awarded.json")[1]))  # "xxxxxxxx"
     assert rows == []
