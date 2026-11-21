@@ -329,7 +329,7 @@ def parse_awards(content, buyer_id, page_url, source_url, notice_id):
 
 
 def capture_details(conn, session, listing, detail_url, notice_id, *, fetch=None, observations=None):
-    """Fetch a notice detail page and any advertised bid-results/award AJAX tabs, then upsert atomically."""
+    """Fetch a notice detail page and advertised bid-results/award AJAX tabs; caller resolves procurement identity after the batch (#305)."""
     # Legacy interception links are account-gated; keep the public listing only.
     if '/public/supplier/interception/' in urlsplit(detail_url).path:
         raise PermissionError('legacy detail entitlement unverified; public listing retained')
@@ -361,7 +361,6 @@ def capture_details(conn, session, listing, detail_url, notice_id, *, fetch=None
             db.upsert_row(conn, replace(listing, native_ref=native_ref), overwrite=True)
         for row in rows:
             db.upsert_row(conn, row, overwrite=True)
-        resolve_procurements(conn)
     conn.commit()
     if observations is not None:
         observations.extend(notes)
@@ -371,7 +370,7 @@ def capture_details(conn, session, listing, detail_url, notice_id, *, fetch=None
 def capture_portal(conn, portal, *, backfill=False, resume=False, details=False, sections=None,
                    queries=(), keyword=None, max_requests=300, client=None, data_dir=None,
                    sleep=time.sleep, clock=lambda: datetime.now(timezone.utc), log=lambda m: None):
-    """Capture listings (and optionally detail tabs) for one enabled MERX buyer portal."""
+    """Capture listings (and optionally detail tabs) for one enabled MERX buyer portal, resolving procurement identity once in finally (#305)."""
     if not portal.get('enabled') or not portal.get('permission'):
         raise PermissionError('MERX capture requires recorded permission and enabled buyer')
     if not re.fullmatch(r'https://www\.merx\.com/[a-z0-9]+', portal['portal_url']):
@@ -428,7 +427,6 @@ def capture_portal(conn, portal, *, backfill=False, resume=False, details=False,
                 conn.execute('INSERT OR IGNORE INTO merx_notice VALUES(?,?,?)',
                              (buyer_id, nid, row.portal_url))
                 db.upsert_row(conn, row, overwrite=True)
-            resolve_procurements(conn)
         conn.commit()
         all_listings.update(rows); all_links.update(links)
         if not window and backfill and len(rows) != total:
@@ -490,6 +488,16 @@ def capture_portal(conn, portal, *, backfill=False, resume=False, details=False,
                     if not isinstance(exc, ValueError):
                         break
     finally:
+        # Failed resolution rolls back to its savepoint; committed rows wait for the next pass.
+        interrupted = None
+        try:
+            resolve_procurements(conn)
+            conn.commit()
+        except Exception as exc:
+            report['failures'].append(f'procurement resolution: {exc}')
+        except BaseException as exc:
+            report['failures'].append(f'procurement resolution interrupted: {exc!r}')
+            interrupted = exc
         report['requests'] = session.requests
         report['finished_at'] = clock().isoformat()
         report['listings'] = len(all_listings)
@@ -504,6 +512,8 @@ def capture_portal(conn, portal, *, backfill=False, resume=False, details=False,
             (buyer_id, report['finished_at'], report['mode'], int(report['complete']), encoded))
         conn.commit()
         session.close()
+        if interrupted is not None:
+            raise interrupted
     return report
 
 

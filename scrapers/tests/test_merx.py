@@ -168,7 +168,9 @@ def test_real_detail_tabs_bind_to_notice_page_identity(conn, tmp_path):
     with httpx.Client(transport=httpx.MockTransport(handler)) as c:
         session = mx.PublicSession(tmp_path,c,sleep=lambda n:None)
         assert mx.capture_details(conn,session,listing,page['links'][nid],nid) == 8
-    assert len({r[0] for r in conn.execute('SELECT procurement_id FROM agency_bid UNION SELECT procurement_id FROM portal_listing')}) == 1
+    mx.resolve_procurements(conn);conn.commit()
+    ids = {r[0] for r in conn.execute('SELECT procurement_id FROM agency_bid UNION SELECT procurement_id FROM portal_listing')}
+    assert len(ids) == 1 and None not in ids
     assert conn.execute('SELECT native_ref FROM portal_listing').fetchone()[0] == 'T06BI26617'
     assert not conn.execute('SELECT * FROM agency_award').fetchall()
 
@@ -298,3 +300,79 @@ def test_nightly_runner_captures_details_and_isolates_buyers(conn,monkeypatch):
     assert results[config.MERX_PORTALS[0]['slug']]['failures']==['source unavailable']
     assert all(opts['details'] is True and not opts.get('backfill') for slug,opts in calls)
     assert results[config.MERX_PORTALS[1]['slug']]['listings']==1
+
+
+GOOD_NOTICE = '0000333265'
+
+
+def detail_handler(fail_after_good=None):
+    """Results listing -> one real detail (+ bid fragment); any other notice detail -> `fail_after_good`."""
+    def handler(req):
+        path = req.url.path
+        if path.endswith('/abstract/bid-results'):
+            return httpx.Response(200, content=body('bid-fragment.js'))
+        if path.endswith('/' + GOOD_NOTICE):
+            return httpx.Response(200, content=body('result-detail.html'))
+        if path.rsplit('/', 1)[-1].isdigit():
+            return fail_after_good or httpx.Response(200, content=body('result-detail.html'))
+        return httpx.Response(200, content=body('bidresults.html'))
+    return handler
+
+
+def resolve_spy(monkeypatch):
+    calls = []
+    real = mx.resolve_procurements
+    def spy(conn):
+        calls.append(1)
+        return real(conn)
+    monkeypatch.setattr(mx, 'resolve_procurements', spy)
+    return calls
+
+
+def merx_bid_ids(conn):
+    return [r[0] for r in conn.execute("SELECT procurement_id FROM agency_bid WHERE source='merx'")]
+
+
+def test_capture_resolves_identity_once_per_buyer_run(conn, tmp_path, monkeypatch):
+    passes = resolve_spy(monkeypatch)
+    report, calls, waits = run(conn, tmp_path, detail_handler(), sections=['results'], details=True)
+    assert report['detail_facts'] == 8 and len(calls) > 3
+    assert passes == [1]
+    listing_id = conn.execute('SELECT procurement_id FROM portal_listing WHERE portal_url LIKE ?',
+                              ('%' + GOOD_NOTICE,)).fetchone()[0]
+    assert listing_id is not None and set(merx_bid_ids(conn)) == {listing_id}
+    assert waits == [5.2] * len(calls)
+
+
+def test_mid_run_failure_keeps_completed_notices_resolved_and_reported(conn, tmp_path, monkeypatch):
+    passes = resolve_spy(monkeypatch)
+    report, _, _ = run(conn, tmp_path, detail_handler(httpx.Response(403)), sections=['results'], details=True)
+    assert report['detail_facts'] == 8
+    assert any(f.startswith('detail:') for f in report['failures']) and not report['complete']
+    ids = merx_bid_ids(conn)
+    assert len(ids) == 8 and None not in ids
+    assert passes == [1]
+    held = conn.execute('SELECT complete, report_json FROM merx_capture').fetchone()
+    assert held[0] == 0 and 'detail:' in held[1]
+
+
+def test_failed_final_resolution_is_a_visible_failure_not_lost_facts(conn, tmp_path, monkeypatch):
+    def broken(conn):
+        raise RuntimeError('identity conflict')
+    monkeypatch.setattr(mx, 'resolve_procurements', broken)
+    report, _, _ = run(conn, tmp_path, detail_handler(), sections=['results'], details=True)
+    assert any('procurement resolution' in f and 'identity conflict' in f for f in report['failures'])
+    assert not report['complete']
+    assert len(merx_bid_ids(conn)) == 8
+    assert conn.execute('SELECT complete FROM merx_capture').fetchone()[0] == 0
+
+
+def test_interrupted_final_resolution_still_writes_the_coverage_report(conn, tmp_path, monkeypatch):
+    def interrupted(conn):
+        raise KeyboardInterrupt
+    monkeypatch.setattr(mx, 'resolve_procurements', interrupted)
+    with pytest.raises(KeyboardInterrupt):
+        run(conn, tmp_path, detail_handler(), sections=['results'], details=True)
+    held = conn.execute('SELECT complete, report_json FROM merx_capture').fetchone()
+    assert held[0] == 0 and 'procurement resolution interrupted' in held[1]
+    assert len(merx_bid_ids(conn)) == 8
