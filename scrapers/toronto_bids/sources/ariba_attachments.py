@@ -2016,6 +2016,8 @@ def capture_attachments(conn, dest_dir=None, log=lambda _m: None, headless=False
     dest_dir = Path(dest_dir if dest_dir is not None else config.ARIBA_ATTACHMENTS_DIR)
     events = open_solicitation_events(conn)
     pending = [e for e in events if not bundle_complete(dest_dir, e["document_number"])]
+    log(f"  open events: {len(events)}  complete: {len(events) - len(pending)}  "
+        f"to capture: {len(pending)}")
     if only is not None:
         wanted = {str(n) for n in only}
         unknown = wanted - {e["document_number"] for e in pending}
@@ -2024,8 +2026,7 @@ def capture_attachments(conn, dest_dir=None, log=lambda _m: None, headless=False
                 "not an open event still pending capture (unknown, closed, or already "
                 f"complete; give the bare 10-digit number): {', '.join(sorted(unknown))}")
         pending = [e for e in pending if e["document_number"] in wanted]
-    log(f"  open events: {len(events)}  complete: {len(events) - len(pending)}  "
-        f"to capture: {len(pending)}")
+        log(f"  targeted (--document): {len(pending)}")
     if not pending:
         return 0
 
