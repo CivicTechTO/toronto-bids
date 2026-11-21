@@ -338,7 +338,11 @@ def parse_awards(content, buyer_id, page_url, source_url, notice_id):
 
 
 def capture_details(conn, session, listing, detail_url, notice_id, *, fetch=None, observations=None):
-    """Only tabs advertised by this notice's public detail, never guessed tab IDs."""
+    """Only tabs advertised by this notice's public detail, never guessed tab IDs.
+
+    Commits this notice's facts but does not resolve procurement identity; the caller
+    resolves once after the batch (#305).
+    """
     # Legacy published links lead to an account gate; preserve the known gap without
     # repeatedly requesting it. Modern public listing routes are fetched directly.
     if '/public/supplier/interception/' in urlsplit(detail_url).path:
@@ -371,7 +375,6 @@ def capture_details(conn, session, listing, detail_url, notice_id, *, fetch=None
             db.upsert_row(conn, replace(listing, native_ref=native_ref), overwrite=True)
         for row in rows:
             db.upsert_row(conn, row, overwrite=True)
-        resolve_procurements(conn)
     conn.commit()
     if observations is not None:
         observations.extend(notes)
@@ -385,6 +388,11 @@ def capture_portal(conn, portal, *, backfill=False, resume=False, details=False,
 
     Full-mode reconciliation uses this run's union only, never accumulated DB counts.
     Query matches may overlap; neither prefix syntax nor disjointness is assumed.
+
+    Each listing query and notice detail commits as it completes. Procurement identity
+    is resolved ONCE, after the run or its failure and before the coverage report is
+    written (#305): a full pass costs seconds over the whole archive, and running it per
+    section and per notice dominated the nightly step. A failed pass is a report failure.
     """
     if not portal.get('enabled') or not portal.get('permission'):
         raise PermissionError('MERX capture requires recorded permission and enabled buyer')
@@ -443,7 +451,6 @@ def capture_portal(conn, portal, *, backfill=False, resume=False, details=False,
                 conn.execute('INSERT OR IGNORE INTO merx_notice VALUES(?,?,?)',
                              (buyer_id, nid, row.portal_url))
                 db.upsert_row(conn, row, overwrite=True)
-            resolve_procurements(conn)
         conn.commit()
         all_listings.update(rows); all_links.update(links)
         if not window and backfill and len(rows) != total:
@@ -506,6 +513,17 @@ def capture_portal(conn, portal, *, backfill=False, resume=False, details=False,
                     if not isinstance(exc, ValueError):
                         break
     finally:
+        # The pass rolls itself back to its savepoint on failure; committed facts stay and
+        # take their identities on the next pass. An interrupt still gets its report.
+        interrupted = None
+        try:
+            resolve_procurements(conn)
+            conn.commit()
+        except Exception as exc:
+            report['failures'].append(f'procurement resolution: {exc}')
+        except BaseException as exc:
+            report['failures'].append(f'procurement resolution interrupted: {exc!r}')
+            interrupted = exc
         report['requests'] = session.requests
         report['finished_at'] = clock().isoformat()
         report['listings'] = len(all_listings)
@@ -520,6 +538,8 @@ def capture_portal(conn, portal, *, backfill=False, resume=False, details=False,
             (buyer_id, report['finished_at'], report['mode'], int(report['complete']), encoded))
         conn.commit()
         session.close()
+        if interrupted is not None:
+            raise interrupted
     return report
 
 
