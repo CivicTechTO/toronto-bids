@@ -830,3 +830,40 @@ def test_nightly_surfaces_rejected_award_summary_downloads(nightly, conn, monkey
         "SELECT status FROM sync_run WHERE source='award summaries' ORDER BY id DESC LIMIT 1"
     ).fetchone()[0]
     assert status == "failed"
+
+
+def test_nightly_timer_covers_sunday_and_monday_firsts_and_toronto_date():
+    from datetime import datetime, timezone
+    from pathlib import Path
+    import shutil
+    import subprocess
+
+    timer = Path(__file__).resolve().parents[2] / "deploy" / "tb-nightly.timer"
+    calendars = [
+        line.split("=", 1)[1].strip()
+        for line in timer.read_text().splitlines()
+        if line.strip().startswith("OnCalendar=")
+    ]
+    assert calendars == [
+        "Tue..Sat *-*-* 05:30:00 America/Toronto",
+        "*-*-01 05:30:00 America/Toronto",
+    ]
+    # Verify Toronto calendar date gating even when given UTC timestamps across midnight.
+    assert cli._is_first_of_month(datetime(2026, 11, 1, 10, 30, tzinfo=timezone.utc)) is True   # Sun Nov 1 05:30 EST
+    assert cli._is_first_of_month(datetime(2027, 2, 1, 10, 30, tzinfo=timezone.utc)) is True    # Mon Feb 1 05:30 EST
+    assert cli._is_first_of_month(datetime(2026, 12, 1, 2, 0, tzinfo=timezone.utc)) is False    # Nov 30 21:00 EST
+    assert cli._is_first_of_month(datetime(2026, 12, 2, 3, 0, tzinfo=timezone.utc)) is True     # Dec 1 22:00 EST
+
+    if shutil.which("systemd-analyze"):
+        # Confirm systemd parses both schedules and includes Sunday (2027-08-01) and Monday (2027-02-01) firsts.
+        res = subprocess.run(
+            ["systemd-analyze", "calendar", "--iterations=12", "*-*-01 05:30:00 America/Toronto"],
+            capture_output=True, text=True, check=True,
+        )
+        assert "Mon 2027-02-01" in res.stdout
+        assert "Sun 2027-08-01" in res.stdout
+        regular = subprocess.run(
+            ["systemd-analyze", "calendar", "--iterations=7", "Tue..Sat *-*-* 05:30:00 America/Toronto"],
+            capture_output=True, text=True, check=True,
+        )
+        assert "Sun " not in regular.stdout and "Mon " not in regular.stdout

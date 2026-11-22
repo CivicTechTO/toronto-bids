@@ -458,3 +458,55 @@ def test_export_writes_utf8_content(conn, tmp_path):
     out = tmp_path / "bids.json"
     export_json(conn, out, generated_at="t")
     assert "Café Réno" in out.read_text(encoding="utf-8")
+
+
+def test_build_export_document_reads_only_pdf_metadata_and_preserves_council_pdfs(conn):
+    db.upsert_row(conn, CouncilItem(reference="2025.GG1.1", title="Item 1"), overwrite=True)
+    db.upsert_row(
+        conn,
+        BackgroundPdf(
+            url="https://www.toronto.ca/legdocs/mmis/2025/gg/bgrd/b1.pdf",
+            reference="2025.GG1.1",
+            kind="bgrd",
+            local_path="/private/path/b1.pdf",
+            sha256="sha-b1",
+            text="HUGE PDF TEXT THAT MUST NOT BE QUERIED",
+        ),
+        overwrite=True,
+    )
+    db.upsert_row(
+        conn,
+        BackgroundPdf(
+            url="https://www.toronto.ca/legdocs/mmis/2025/gg/bgrd/a1.pdf",
+            reference="2025.GG1.1",
+            kind="bgrd",
+            local_path="/private/path/a1.pdf",
+            sha256="sha-a1",
+            text="ANOTHER HUGE PDF TEXT",
+        ),
+        overwrite=True,
+    )
+    conn.commit()
+
+    sql_log = []
+    conn.set_trace_callback(sql_log.append)
+    try:
+        doc = build_export_document(conn, generated_at="fixed")
+    finally:
+        conn.set_trace_callback(None)
+
+    bg_queries = [q for q in sql_log if "FROM background_pdf" in q and "COUNT(*)" not in q]
+    assert bg_queries
+    for query in bg_queries:
+        select_clause = query.split("FROM background_pdf", 1)[0]
+        assert "*" not in select_clause
+        assert "text" not in select_clause.split()
+        assert "local_path" not in select_clause
+
+    pdfs = doc["council_items"][0]["background_pdfs"]
+    assert [p["url"] for p in pdfs] == [
+        "https://www.toronto.ca/legdocs/mmis/2025/gg/bgrd/a1.pdf",
+        "https://www.toronto.ca/legdocs/mmis/2025/gg/bgrd/b1.pdf",
+    ]
+    assert all("text" not in p and "local_path" not in p and "id" not in p for p in pdfs)
+    assert [p["sha256"] for p in pdfs] == ["sha-a1", "sha-b1"]

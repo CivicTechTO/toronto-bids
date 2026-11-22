@@ -76,3 +76,47 @@ def test_parquet_roundtrips_rows_and_types(conn, tmp_path):
     by_supplier = {r["supplier_name_raw"]: r for r in table}
     assert by_supplier["Acme"]["award_amount_numeric"] == 1000.0
     assert by_supplier["Beta"]["award_amount_numeric"] is None
+
+
+def test_parquet_column_types_stay_stable_across_empty_all_null_and_populated_exports(conn, tmp_path):
+    import pyarrow as pa
+
+    empty_dir = tmp_path / "empty"
+    write_parquet_files(conn, empty_dir)
+    empty_award = pq.read_schema(empty_dir / "award.parquet")
+    assert empty_award.field("award_amount_numeric").type == pa.float64()
+    assert empty_award.field("supplier_id").type == pa.int64()
+    assert empty_award.field("supplier_name_raw").type == pa.string()
+
+    # Insert an award with NULL numeric & NULL supplier_id (all-null columns).
+    db.upsert_row(conn, Award(document_number="1000000001", supplier_name_raw="Null Co",
+                              award_amount="not a number", source="odata"), overwrite=True)
+    conn.commit()
+    null_dir = tmp_path / "all_null"
+    write_parquet_files(conn, null_dir)
+    null_award = pq.read_schema(null_dir / "award.parquet")
+    assert null_award == empty_award
+
+    # Now add a populated numeric award: schema stays identical across all three exports.
+    db.upsert_row(conn, Award(document_number="1000000002", supplier_name_raw="Num Co",
+                              award_amount="1234.50", source="odata"), overwrite=True)
+    conn.commit()
+    pop_dir = tmp_path / "populated"
+    write_parquet_files(conn, pop_dir)
+    pop_award = pq.read_schema(pop_dir / "award.parquet")
+    assert pop_award == empty_award == null_award
+
+    # Verify integer, real, text, and blob SQLite types all round-trip with nulls preserved.
+    conn.execute("CREATE TABLE _blob_check (id INTEGER, score REAL, label TEXT, raw BLOB)")
+    conn.execute("INSERT INTO _blob_check VALUES (1, 2.5, 'ok', X'00FF'), (NULL, NULL, NULL, NULL)")
+    conn.commit()
+    from toronto_bids.export import tabular_export as te
+    schema = te._table_schema(conn, "_blob_check")
+    assert [f.type for f in schema] == [pa.int64(), pa.float64(), pa.string(), pa.binary()]
+    cols, rows = te._read_table(conn, "_blob_check")
+    tbl = pa.table({c: [r[i] for r in rows] for i, c in enumerate(cols)}, schema=schema)
+    out = tmp_path / "_blob_check.parquet"
+    pq.write_table(tbl, out)
+    rt = pq.read_table(out).to_pylist()
+    assert {"id": 1, "score": 2.5, "label": "ok", "raw": b"\x00\xff"} in rt
+    assert {"id": None, "score": None, "label": None, "raw": None} in rt
