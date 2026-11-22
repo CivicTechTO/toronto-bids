@@ -9,6 +9,7 @@ import sys
 import pytest
 
 from tests.helpers_deploy import BASH, DEPLOY
+from toronto_bids.export.bundle import COMPLETE_MARKER, write_complete_marker
 from toronto_bids.store import db
 
 pytestmark = pytest.mark.skipif(
@@ -17,26 +18,50 @@ pytestmark = pytest.mark.skipif(
 )
 
 
-def _publish(tmp_path, error="", dry_run=False, r2=False, r2_error="", upload_errors=()):
+def _publish(
+    tmp_path,
+    error="",
+    dry_run=False,
+    r2=False,
+    r2_error="",
+    upload_errors=(),
+    day="20",
+    write_marker=True,
+    tamper_after_marker=None,
+):
     data = tmp_path / "data"
     export = data / "export"
     export.mkdir(parents=True)
-    (export / "bids.json").write_text(json.dumps({"meta": {"generated_at": "2026-10-20T13:00:00Z"}}))
-    (export / "schema.json").write_text("{}")
+    generated_at = "2026-10-20T13:00:00Z"
+    (export / "bids.json").write_text(json.dumps({"meta": {"generated_at": generated_at}}))
+    (export / "schema.json").write_text(json.dumps({"generated_at": generated_at, "tables": {}}))
     (export / "bids-csv.zip").write_bytes(b"csv fixture")
     (export / "ariba_posting.parquet").write_bytes(b"parquet fixture")
+    if write_marker:
+        write_complete_marker(
+            export,
+            generated_at,
+            ["bids.json", "schema.json", "bids-csv.zip", "ariba_posting.parquet"],
+        )
+    if tamper_after_marker is not None:
+        tamper_after_marker(export)
     conn = db.connect(data / "bids.sqlite")
     db.init_db(conn)
     conn.close()
+    uploads_dir = tmp_path / "uploaded_sqlite"
+    uploads_dir.mkdir()
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir()
     # These are the only network clients the publish script uses with R2 disabled. Both
     # are executables on a private PATH; notification payloads never reach a real webhook.
     gh = bin_dir / "gh"
     gh.write_text(f'''#!{sys.executable}
-import json,os,sys
+import json,os,shutil,sys
+from pathlib import Path
 with open(os.environ['COMMANDS'], 'a') as f:
     f.write(json.dumps(['gh', *sys.argv[1:]])+'\\n')
+if sys.argv[1:3] == ['release', 'view'] and len(sys.argv) > 3 and sys.argv[3].startswith('snapshot-'):
+    sys.exit(1)
 if sys.argv[1:3] == ['release','upload']:
     path=os.path.join(os.environ['TB_DATA_DIR'],'upload_attempts')
     try: n=int(open(path).read())
@@ -46,6 +71,13 @@ if sys.argv[1:3] == ['release','upload']:
     if n<len(errors) and errors[n]:
         print(errors[n],file=sys.stderr)
         sys.exit(1)
+    for arg in sys.argv[3:]:
+        if os.path.basename(arg) == 'bids.sqlite' and os.path.isfile(arg):
+            shutil.copy2(arg, os.path.join(os.environ['UPLOADS_DIR'], 'latest-bids.sqlite'))
+if sys.argv[1:3] == ['release','create']:
+    for arg in sys.argv[3:]:
+        if os.path.basename(arg) == 'bids.sqlite' and os.path.isfile(arg):
+            shutil.copy2(arg, os.path.join(os.environ['UPLOADS_DIR'], 'snapshot-bids.sqlite'))
 if sys.argv[1:3] == ['workflow','run']:
     error=os.environ.get('DISPATCH_ERROR','')
     if error:
@@ -61,7 +93,9 @@ from pathlib import Path
 with open(os.environ['COMMANDS'], 'a') as f:
     f.write(json.dumps(['curl', *sys.argv[1:]])+'\\n')
 if '-sIL' in sys.argv:
-    print('HTTP/2 200\\r\\nContent-Length: '+str((Path(os.environ['TB_DATA_DIR'])/'bids.sqlite').stat().st_size)+'\\r\\n')
+    uploaded = Path(os.environ['UPLOADS_DIR']) / 'latest-bids.sqlite'
+    target = uploaded if uploaded.exists() else Path(os.environ['TB_DATA_DIR']) / 'bids.sqlite'
+    print('HTTP/2 200\\r\\nContent-Length: '+str(target.stat().st_size)+'\\r\\n')
 else:
     payload=sys.argv[sys.argv.index('--data')+1]
     with open(os.environ['NOTIFICATIONS'],'a') as f:
@@ -70,10 +104,13 @@ else:
     curl.chmod(0o755)
     uv = bin_dir / 'uv'
     uv.write_text(f'''#!{sys.executable}
-import json,os,sys
+import json,os,shutil,sys
 if 'toronto_bids.r2_mirror' in sys.argv:
     with open(os.environ['COMMANDS'],'a') as f:
         f.write(json.dumps(['uv',*sys.argv[1:]])+'\\n')
+    file_arg = sys.argv[sys.argv.index('--file') + 1]
+    if os.path.isfile(file_arg):
+        shutil.copy2(file_arg, os.path.join(os.environ['UPLOADS_DIR'], 'r2-bids.sqlite'))
     error=os.environ.get('R2_ERROR','')
     if error:
         print(error,file=sys.stderr)
@@ -91,10 +128,12 @@ os.execv(real,[real,*sys.argv[1:]])
         "PATH": str(bin_dir) + os.pathsep + os.environ["PATH"],
         "TB_DATA_DIR": str(data), "TB_NIGHTLY_UV": str(uv),
         "TB_SLACK_WEBHOOK": "https://hooks.example.invalid/test",
-        "CLOUDFLARE_API_TOKEN": "fixture" if r2 else "", "TB_PUBLISH_DAY": "20",
+        "CLOUDFLARE_API_TOKEN": "fixture" if r2 else "", "TB_PUBLISH_DAY": day,
+        "TB_PUBLISH_DATE": "2026-10-01" if day == "01" else "2026-10-20",
         "TB_PUBLISH_DRY_RUN": "1" if dry_run else "0",
         "COMMANDS": str(tmp_path / "commands.jsonl"),
         "NOTIFICATIONS": str(tmp_path / "notifications.jsonl"),
+        "UPLOADS_DIR": str(uploads_dir),
         "DISPATCH_ERROR": error,
         "R2_ERROR": r2_error,
         "UPLOAD_ERRORS": json.dumps(upload_errors),
@@ -214,3 +253,107 @@ def test_manifest_upload_failure_does_not_dispatch_frontend(tmp_path):
     assert any('manifest.json' in arg for arg in uploads[1])
     assert not any(c[:3]==['gh','workflow','run'] for c in commands)
     assert rows[-1][0:2]==('publish','failed')
+
+
+def test_missing_completion_marker_refuses_publish_even_with_old_artifacts(tmp_path):
+    result, rows, _, commands = _publish(tmp_path, write_marker=False)
+    assert result.returncode == 1
+    assert "incomplete or inconsistent" in result.stderr
+    assert not any(c[:3] == ["gh", "release", "upload"] for c in commands)
+    assert not any(c[:3] == ["gh", "workflow", "run"] for c in commands)
+    assert rows[-1][0:2] == ("publish", "failed")
+
+
+def test_mixed_fresh_json_and_old_tabular_artifacts_refuses_publish(tmp_path):
+    def mix_fresh_json(export):
+        (export / "bids.json").write_text(json.dumps({"meta": {"generated_at": "2026-10-21T00:00:00Z"}}))
+
+    result, rows, _, commands = _publish(tmp_path, tamper_after_marker=mix_fresh_json)
+    assert result.returncode == 1
+    assert not any(c[:3] == ["gh", "release", "upload"] for c in commands)
+    assert rows[-1][0:2] == ("publish", "failed")
+
+
+def test_rolling_r2_and_monthly_snapshot_upload_identical_frozen_sqlite_bytes(tmp_path):
+    result, rows, _, commands = _publish(tmp_path, r2=True, day="01")
+    assert result.returncode == 0, result.stdout + result.stderr
+    # Publish-time operational steps wrote sync_run rows into the working database between uploads.
+    assert ("r2_mirror", "ok", None) in rows
+    assert ("github_release_freshness", "ok", None) in rows
+    assert ("r2_freshness", "ok", None) in rows
+    assert rows[-1] == ("publish", "ok", None)
+
+    uploads_dir = tmp_path / "uploaded_sqlite"
+    latest_bytes = (uploads_dir / "latest-bids.sqlite").read_bytes()
+    r2_bytes = (uploads_dir / "r2-bids.sqlite").read_bytes()
+    snapshot_bytes = (uploads_dir / "snapshot-bids.sqlite").read_bytes()
+    working_bytes = (tmp_path / "data" / "bids.sqlite").read_bytes()
+
+    assert latest_bytes == r2_bytes == snapshot_bytes
+    assert working_bytes != latest_bytes, "working database must have changed from publish-time sync_run writes"
+    manifest = json.loads((tmp_path / "data" / "export" / "manifest.json").read_text())
+    sqlite_entry = next(a for a in manifest["artifacts"] if a["name"] == "bids.sqlite")
+    assert sqlite_entry["bytes"] == len(latest_bytes)
+    assert list((tmp_path / "data").glob(".publish-stage.*")) == []
+
+
+def test_nightly_wrapper_blocks_publish_on_failed_export_and_publishes_after_upstream_failure(tmp_path):
+    if shutil.which("flock") is None:
+        pytest.skip("needs flock")
+
+    def run_wrapper(case_dir, *, nightly_rc, write_fresh_marker):
+        repo = case_dir / "repo"
+        deploy = repo / "deploy"
+        deploy.mkdir(parents=True)
+        (repo / "scrapers").mkdir()
+        shutil.copy2(DEPLOY / "tb-nightly-run.sh", deploy)
+
+        data = case_dir / "data"
+        export = data / "export"
+        export.mkdir(parents=True)
+        (export / "bids.json").write_text('{"meta":{"generated_at":"old"}}')
+        (export / COMPLETE_MARKER).write_text('{"version":1,"generated_at":"old"}')
+
+        uv = case_dir / "uv"
+        uv.write_text(f"""#!{sys.executable}
+import os, sys
+from pathlib import Path
+if os.environ['WRITE_FRESH_MARKER'] == '1':
+    (Path(os.environ['TB_DATA_DIR']) / 'export' / {COMPLETE_MARKER!r}).write_text('{{"version":1,"generated_at":"new"}}')
+sys.exit(int(os.environ['NIGHTLY_RC']))
+""")
+        uv.chmod(0o755)
+
+        published = case_dir / "published.txt"
+        pub = deploy / "publish-data.sh"
+        pub.write_text(f"""#!/usr/bin/env bash
+if [ ! -f "$TB_DATA_DIR/export/{COMPLETE_MARKER}" ]; then
+  echo "missing marker" >&2
+  exit 1
+fi
+cat "$TB_DATA_DIR/export/{COMPLETE_MARKER}" > "$PUBLISHED_OUT"
+exit 0
+""")
+        pub.chmod(0o755)
+
+        env = dict(
+            os.environ,
+            TB_NIGHTLY_UV=str(uv),
+            TB_DATA_DIR=str(data),
+            NIGHTLY_RC=str(nightly_rc),
+            WRITE_FRESH_MARKER="1" if write_fresh_marker else "0",
+            PUBLISHED_OUT=str(published),
+        )
+        res = subprocess.run([BASH, str(deploy / "tb-nightly-run.sh")], env=env, capture_output=True, text=True)
+        return res, published
+
+    # Case 1: failed export leaves old artifacts on disk without fresh marker -> publish refused.
+    res1, pub1 = run_wrapper(tmp_path / "failed_export", nightly_rc=1, write_fresh_marker=False)
+    assert res1.returncode == 1
+    assert not pub1.exists()
+    assert "missing marker" in res1.stderr
+
+    # Case 2: upstream capture failed (nightly_rc=1) but export completed -> publish succeeds, unit exits 1.
+    res2, pub2 = run_wrapper(tmp_path / "upstream_fail", nightly_rc=1, write_fresh_marker=True)
+    assert res2.returncode == 1
+    assert pub2.exists() and '"new"' in pub2.read_text()

@@ -14,6 +14,10 @@ flock 9 || exit 1
 
 cd "$HERE/../scrapers" || exit 1
 
+# Invalidate any previous run's export completion marker so a failed/aborted nightly export
+# cannot cause publish-data.sh to re-publish stale artifacts from an earlier run.
+rm -f "$DATA_ROOT/export/.export-complete.json"
+
 "$UV" run tb nightly
 nightly_rc=$?
 

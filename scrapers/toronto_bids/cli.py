@@ -3,6 +3,7 @@ import sys
 from datetime import UTC
 
 from toronto_bids import __version__, config, pipeline
+from toronto_bids.export.bundle import export_all
 from toronto_bids.export.json_export import export_json, export_schema
 from toronto_bids.export.tabular_export import write_csv_zip, write_parquet_files
 from toronto_bids.http import HttpClient
@@ -509,7 +510,6 @@ def _cmd_status(args) -> int:
 
 
 def _cmd_export(args) -> int:
-    from datetime import datetime
     from pathlib import Path
 
     conn = _open_db()
@@ -517,13 +517,8 @@ def _cmd_export(args) -> int:
         out_path = (
             Path(args.out) if args.out else config.DATA_DIR / "export" / "bids.json"
         )
-        generated_at = datetime.now(UTC).isoformat()
-        written = export_json(conn, out_path, generated_at)
-        schema_path = out_path.parent / "schema.json"
-        export_schema(conn, schema_path, generated_at)
-        write_parquet_files(conn, out_path.parent)
-        write_csv_zip(conn, out_path.parent / "bids-csv.zip")
-        print(f"Wrote Parquet + CSV bulk exports to {out_path.parent}")
+        result = export_all(conn, out_path)
+        print(f"Wrote Parquet + CSV bulk exports to {result['export_dir']}")
         counts = db.counts(conn)
         # Include buyer count when seeded so agency-only exports do not report 0.
         buyers = counts.get("buyer", 0)
@@ -532,8 +527,8 @@ def _cmd_export(args) -> int:
             if buyers
             else f"{counts['solicitation']} solicitations"
         )
-        print(f"Exported {detail} to {written}")
-        print(f"Wrote schema dictionary to {schema_path}")
+        print(f"Exported {detail} to {result['json_path']}")
+        print(f"Wrote schema dictionary to {result['schema_path']}")
     finally:
         conn.close()
     return 0
@@ -1089,16 +1084,8 @@ def _run_nightly(args) -> int:
 
         def _export():
             nonlocal export_bytes
-            from datetime import datetime
-
-            export_dir = Path(config.DATA_DIR) / "export"
-            generated_at = datetime.now(UTC).isoformat()
-            written = export_json(conn, export_dir / "bids.json", generated_at)
-            # Emit schema.json with the same timestamp as bids.json for publish-data.sh.
-            export_schema(conn, export_dir / "schema.json", generated_at)
-            write_parquet_files(conn, export_dir)
-            write_csv_zip(conn, export_dir / "bids-csv.zip")
-            export_bytes = written.stat().st_size
+            result = export_all(conn, Path(config.DATA_DIR) / "export" / "bids.json")
+            export_bytes = result["json_bytes"]
             return f"{export_bytes / 1_048_576:.1f} MiB"
 
         _run_step(steps, failures, "export", _export, conn=conn)
@@ -1598,7 +1585,12 @@ def _cmd_extraction_batches(args):
                     if not args.manifest:
                         raise ValueError('refresh requires --manifest for publication acknowledgement')
                     from toronto_bids.batch_refresh import refresh
-                    result = refresh(queue, conn, export=lambda: _cmd_export(argparse.Namespace(out=None)),
+
+                    def _batch_export():
+                        export_all(conn)
+                        return 0
+
+                    result = refresh(queue, conn, export=_batch_export,
                                      manifest_path=args.manifest)
                 else:
                     result = queue.collect(conn)
