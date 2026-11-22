@@ -13,13 +13,14 @@ For individual agency adapters, see:
 - [document-extraction.md](document-extraction.md) (for `agency_derivation`, coverage checks, and reviewed agency identities)
 - [permissions/](permissions/) (for written archival permissions and access rules)
 
-## Board reports (TRCA, Toronto Zoo, Exhibition Place, TCHC)
+## Board reports (TRCA, Toronto Zoo, Exhibition Place, TCHC, TPL)
 
-Implemented in `buyers.py`, `sources/trca_board.py`, `sources/zoo_board.py`, `sources/ep_board.py`, and `sources/tchc_board.py` (#103, #135, #332).
+Implemented in `buyers.py`, `sources/trca_board.py`, `sources/zoo_board.py`, `sources/ep_board.py`, `sources/tchc_board.py`, and `sources/tpl_board.py` (#103, #135, #332, #333).
 
 - **TRCA**: Discovered via eSCRIBE over plain HTTP (`GetCalendarMeetings` POST, then meeting detail pages).
 - **Toronto Zoo (`ZB`) and Exhibition Place (`EP`)**: Discovered via TMMIS using the shared headed-Chromium prober; PDFs download over plain HTTP from legdocs.
 - **TCHC**: Discovered over plain HTTP from `torontohousing.ca/board-and-governance/past-board-and-committee-meetings` (public BIFAC and Board of Directors meetings from 2021+, where Drupal hosts individual PDF attachments). Captures Quarterly PAC Awards reports (`$500K–$5M` awards, direct awards, and bid counts) plus individual BIFAC/Board Vendor/Contractor/Direct Award and Change Order reports, skipping combined meeting packages, agendas, minutes, deputations, charters, audits, and spend reconciliations. Historical meeting HTML older than the previous calendar year is cached locally under `TCHC_MEETINGS_DIR`.
+- **TPL**: Discovered over plain HTTP from `tpl.ca/about-the-library/board/meetings/` (current year plus `board-meetings-YYYY/` archives from 2014+, aligned with TPL's Bonfire history). Skips unheld future meetings and non-procurement subcommittees (naming, performance review, selection, strategic planning), and indexes individual staff PDFs on `bibliocms.com` (site 164) for contract/tender awards, extensions, increases, and sole-source reports while excluding consolidated packages, agendas, minutes, deputations, and policies. Historical year/meeting HTML older than the previous calendar year is cached locally under `TPL_MEETINGS_DIR`.
 - Most EP board reports are not procurement awards; the document classifier and shared extraction prompt filter them.
 - Reports that put contract values in a confidential attachment set `value_confidential = 1` rather than leaving an unexplained `NULL`.
 - Exhibition Place has two separate keyspaces: pre-2019 records on the City OData spine (`Client_Division = "Exhibition Place"`) and post-2019 Board of Governors reports (#130).

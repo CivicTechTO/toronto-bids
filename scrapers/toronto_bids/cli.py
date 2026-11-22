@@ -21,14 +21,14 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_parser("status", help="Show row counts in the local store")
 
     p_coverage = sub.add_parser('agency-coverage', help='Inspect agency identity decisions and coverage as JSON (#257)')
-    p_coverage.add_argument('--only', choices=['trca', 'zoo', 'ep', 'ttc', 'tchc'])
+    p_coverage.add_argument('--only', choices=['trca', 'zoo', 'ep', 'ttc', 'tchc', 'tpl'])
     p_coverage.add_argument('--baseline', help='Read-only SQLite baseline for prior-fact reconciliation')
     p_coverage.add_argument('--out', help='Write report to this path instead of stdout')
 
     p_known = sub.add_parser('known-gaps', help="Record reviewed gaps the nightly reports as known (#283)")
     p_known.add_argument('action', choices=['record-refusals'])
-    p_known.add_argument('--only', choices=['trca', 'zoo', 'ep', 'tchc'], action='append',
-                         help='Corpus to record (repeatable; default: trca, zoo, ep and tchc)')
+    p_known.add_argument('--only', choices=['trca', 'zoo', 'ep', 'tchc', 'tpl'], action='append',
+                         help='Corpus to record (repeatable; default: trca, zoo, ep, tchc and tpl)')
     p_known.add_argument('--out', help='Write here instead of the packaged known_agency_refusals.json')
 
     p_export = sub.add_parser(
@@ -207,7 +207,7 @@ def build_parser() -> argparse.ArgumentParser:
         "portal (gated on written permission, see docs/permissions/).",
     )
     p_ag.add_argument(
-        "--only", choices=["zoo", "trca", "ep", "tchc"], help="Run one body instead of all"
+        "--only", choices=["zoo", "trca", "ep", "tchc", "tpl"], help="Run one body instead of all"
     )
     p_ag.add_argument(
         "--fetch",
@@ -257,6 +257,7 @@ def build_parser() -> argparse.ArgumentParser:
             "zoo",
             "ttc",
             "tchc",
+            "tpl",
             "award_summary",
             "committee",
             "composite",
@@ -1003,7 +1004,7 @@ def _run_nightly(args) -> int:
                     failures.extend(
                         _capture_agency_bodies(
                             conn,
-                            bodies=["trca", "zoo", "ep", "tchc"],
+                            bodies=["trca", "zoo", "ep", "tchc", "tpl"],
                             fetch=True,
                             scrape=True,
                             virtual_display=True,
@@ -1287,6 +1288,32 @@ def _capture_agency_bodies(conn, *, bodies, fetch, scrape, virtual_display, out)
         except Exception as exc:
             failures.append(("tchc", str(exc)))
 
+    if "tpl" in bodies:
+        try:
+            from toronto_bids.sources.tpl_board import (
+                download_tpl_reports,
+                store_tpl_reports,
+            )
+
+            if fetch:
+                http = HttpClient()
+                try:
+                    print(
+                        f"  tpl reports fetched  : "
+                        f"{download_tpl_reports(conn, http, log=out, failures=failures)}"
+                    )
+                finally:
+                    http.close()
+            before = _source_row_counts(conn, "tpl_board")
+            got = store_tpl_reports(conn, log=out, failures=failures)
+            print(
+                _stored_line(
+                    "tpl", got, before, _source_row_counts(conn, "tpl_board")
+                )
+            )
+        except Exception as exc:
+            failures.append(("tpl", str(exc)))
+
     return failures
 
 
@@ -1299,7 +1326,7 @@ def _cmd_enrich_agencies(args) -> int:
     failures: list[tuple[str, str]] = []
     try:
         seed_buyers(conn)  # extraction backfill looks up buyers by slug
-        bodies = [args.only] if args.only else ["trca", "zoo", "ep", "tchc"]
+        bodies = [args.only] if args.only else ["trca", "zoo", "ep", "tchc", "tpl"]
 
         failures.extend(
             _capture_agency_bodies(
@@ -1665,7 +1692,7 @@ def main(argv: list[str] | None = None) -> int:
         conn = _open_db()
         try:
             out = args.out or known_gaps.REFUSALS_PATH
-            counts = known_gaps.record_refusals(conn, args.only or ['trca', 'zoo', 'ep', 'tchc'], out)
+            counts = known_gaps.record_refusals(conn, args.only or ['trca', 'zoo', 'ep', 'tchc', 'tpl'], out)
         finally:
             conn.close()
         print(f"recorded {', '.join(f'{c} {n}' for c, n in counts.items())} refused contract(s) to {out}")

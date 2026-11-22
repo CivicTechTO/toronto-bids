@@ -126,6 +126,11 @@ TCHC_MEETINGS_DIR = DATA_DIR / "agencies" / "tchc" / "meetings"
 TCHC_REPORTS_DIR = DATA_DIR / "agencies" / "tchc"
 TCHC_MIN_YEAR = 2021
 
+TPL_MEETINGS_URL = "https://tpl.ca/about-the-library/board/meetings/"
+TPL_MEETINGS_DIR = DATA_DIR / "agencies" / "tpl" / "meetings"
+TPL_REPORTS_DIR = DATA_DIR / "agencies" / "tpl"
+TPL_MIN_YEAR = 2014
+
 _REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 CLASSIFICATION_LABELS_PATH = (
     _REPO_ROOT

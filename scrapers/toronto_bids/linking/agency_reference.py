@@ -9,6 +9,11 @@ _TCHC_RFX = re.compile(
     r"(?:[\s-]+(PP))?\b",
     re.I,
 )
+_TPL_MODERN_RFX = re.compile(
+    r"\b(\d{2,4}-\d{2}-TPL-RF(?:P|T|Q|SQ|VQ|PQ|I|EOI))\b",
+    re.I,
+)
+_TPL_LEGACY_RFX = re.compile(r"\bTPL[\s-]+(\d{2,4}-20\d{2})\b", re.I)
 
 
 def normalize_agency_reference(buyer_slug, raw):
@@ -53,6 +58,13 @@ def normalize_agency_reference(buyer_slug, raw):
             refs.add(canon)
         if len(refs) > 1:
             raise ValueError(f"ambiguous TCHC reference {text!r}")
+        if refs:
+            return refs.pop()
+    elif buyer_slug == "toronto-public-library":
+        refs = {m.upper() for m in _TPL_MODERN_RFX.findall(text)}
+        refs.update(f"TPL {m.upper()}" for m in _TPL_LEGACY_RFX.findall(text))
+        if len(refs) > 1:
+            raise ValueError(f"ambiguous TPL reference {text!r}")
         if refs:
             return refs.pop()
     return text.upper()

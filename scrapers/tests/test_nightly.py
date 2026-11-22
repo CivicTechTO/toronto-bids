@@ -352,7 +352,7 @@ def test_agency_store_extraction_errors_reach_the_agencies_failures(monkeypatch,
 def test_real_identity_refusal_marks_nightly_and_history_incomplete(
         nightly, monkeypatch, conn, tmp_path):
     from tests.test_agency_extraction_fields import cache, contract
-    from toronto_bids.sources import ep_board, tchc_board, trca_board, zoo_board
+    from toronto_bids.sources import ep_board, tchc_board, tpl_board, trca_board, zoo_board
     import toronto_bids.extract as extract
 
     cache(conn, "trca", [contract("10008808"), contract(None)])
@@ -361,6 +361,7 @@ def test_real_identity_refusal_marks_nightly_and_history_incomplete(
     monkeypatch.setattr(zoo_board, "scrape_zb_agendas", lambda **k: {})
     monkeypatch.setattr(ep_board, "scrape_ep_agendas", lambda **k: {})
     monkeypatch.setattr(tchc_board, "download_tchc_reports", lambda *a, **k: 0)
+    monkeypatch.setattr(tpl_board, "download_tpl_reports", lambda *a, **k: 0)
     monkeypatch.setattr(cli, "_capture_agency_bodies", _real_agency_capture)
     monkeypatch.setattr(cli, "_open_db", lambda: _KeepOpen(conn))
     posted = {}
