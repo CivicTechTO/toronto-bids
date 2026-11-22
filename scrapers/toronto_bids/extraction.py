@@ -837,7 +837,7 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
                     continue
                 withheld_awards_reason = (identity_evidence.get('withheld_awards_reason')
                                           if identity_evidence is not None else None)
-                if corpus == 'ttc' and contract.get('awards'):
+                if corpus == 'ttc' and contract.get('awards') and claim_admission is None:
                     # TTC reports are recommendations; withhold awards until minutes/decisions are verified.
                     withheld_awards_reason = 'TTC report award recommendation requires independent decision verification'
                     identity_evidence = dict(identity_evidence or {}, withheld_awards_reason=withheld_awards_reason)

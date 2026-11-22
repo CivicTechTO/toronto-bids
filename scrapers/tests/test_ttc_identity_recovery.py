@@ -202,11 +202,17 @@ def test_source_reviewed_bid_metadata_recovery(conn, monkeypatch):
     db.mark_extracted(conn, existing['sha256'], EXTRACTOR_VERSION, existing['result_json'])
     conn.commit()
     ev = agency_identity._evidence()
+    # This fixture tests bid-metadata withholding on report-only rows (no decision PDFs held);
+    # full TTC decision-bound award admission is tested in test_ttc_award_decisions.py.
+    bid_only_ev = {
+        k: {fk: fv for fk, fv in v.items() if fk != 'award_review'}
+        for k, v in ev.items()
+    }
     with monkeypatch.context() as patch:
         patch.setattr(
             agency_identity,
             '_evidence',
-            lambda: {k: v for k, v in ev.items() if v['document_sha256'] != existing['sha256']},
+            lambda: {k: v for k, v in bid_only_ev.items() if v['document_sha256'] != existing['sha256']},
         )
         backfill_from_extraction(conn, 'ttc')
     previous = {r['id']: dict(r) for r in conn.execute('SELECT * FROM agency_bid')}
@@ -232,6 +238,7 @@ def test_source_reviewed_bid_metadata_recovery(conn, monkeypatch):
             ))
     conn.commit()
     raw = [tuple(r) for r in conn.execute('SELECT * FROM extraction_cache ORDER BY sha256')]
+    monkeypatch.setattr(agency_identity, '_evidence', lambda: bid_only_ev)
     backfill_from_extraction(conn, 'ttc')
     found = {tuple(r) for r in conn.execute('SELECT native_ref,bidder_name_raw,bid_price,hst_basis,status,report_url FROM agency_bid')}
     assert len(found) == 129 and found == expected

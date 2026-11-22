@@ -1,22 +1,109 @@
 """Source-bound participation and individual award admissions; raw extraction is immutable."""
 from datetime import date
+import re
 
 from toronto_bids.linking.agency_identity import IdentityReviewRequired
 
 
 _CONTEXT = {'report_url', 'contract_index', 'contract_count', 'result_sha256'}
 _ROLES = {'prequalification_submissions', 'qualified_for_tender', 'invited_to_tender', 'tender_submissions'}
+_TTC_APPROVAL_RE = re.compile(r'\b(?:approved|adopted|carried)\b', re.I)
+_TTC_DISQUALIFYING_RE = re.compile(
+    r'\b(?:recommendations?\s+be\s+amended|amended\s+to\s+award|deferred|defeated|'
+    r'not\s+approved|withdrawn|received\s+this\s+item\s+for\s+information)\b',
+    re.I,
+)
+_LEGAL_SUFFIX_RE = re.compile(
+    r'\b(?:limited|ltd|incorporated|inc|corporation|corp|company|co|llc|llp|lp)\b\.?',
+    re.I,
+)
+_MONEY_RE = re.compile(r'\$\s*([\d,.]+)(?:\s*(million|billion|m|b)\b)?', re.I)
+
+
+def _norm_alnum(text):
+    return re.sub(r'[^a-z0-9]+', '', (text or '').lower())
+
+
+def _money_values(text):
+    values = set()
+    for match in _MONEY_RE.finditer(text or ''):
+        raw_num = match.group(1).rstrip('.,')
+        if not raw_num:
+            continue
+        # Fix occasional PDF period-for-comma typo (e.g. "$32.500,000.00").
+        fixed = re.sub(r'(\d)\.(\d{3}),(\d{3})', r'\1,\2,\3', raw_num).replace(',', '')
+        try:
+            amount = float(fixed)
+        except ValueError:
+            continue
+        unit = (match.group(2) or '').lower()
+        if unit in ('million', 'm'):
+            amount *= 1_000_000
+        elif unit in ('billion', 'b'):
+            amount *= 1_000_000_000
+        values.add(round(amount, 2))
+    return values
+
+
+def _ttc_supplier_in_decision(supplier, decision, report_passages):
+    dec_alnum = _norm_alnum(decision)
+    sup_alnum = _norm_alnum(supplier)
+    if sup_alnum and sup_alnum in dec_alnum:
+        return True
+    core = _norm_alnum(_LEGAL_SUFFIX_RE.sub(' ', supplier))
+    if len(core) >= 4 and core in dec_alnum:
+        return True
+    stop = {'and', 'the', 'for', 'division', 'of', 'inc', 'ltd', 'limited', 'corp', 'corporation', 'company', 'co'}
+    words = [w.lower() for w in re.findall(r'[A-Za-z0-9]{3,}', supplier) if w.lower() not in stop]
+    if words and all(w in dec_alnum for w in words):
+        return True
+    # Allow explicit parenthetical short names defined in the bound staff report (e.g. "... (Wood)", "... (J.J. McGuire)").
+    prefix = re.escape(supplier[:16])
+    for match in re.finditer(prefix + r'[^(]{0,120}\(([^)]{2,30})\)', report_passages, re.I):
+        short = match.group(1).strip()
+        short_alnum = _norm_alnum(short)
+        if len(short_alnum) >= 3 and (
+            re.search(rf'\b{re.escape(short)}\b', decision, re.I)
+            or (len(short_alnum) >= 6 and short_alnum in dec_alnum)
+        ):
+            return True
+    return False
+
+
+def _ttc_decision_binds(decision, report_passages, proof, award):
+    if not _TTC_APPROVAL_RE.search(decision) or _TTC_DISQUALIFYING_RE.search(decision):
+        return False
+    supplier = award.get('supplier_name')
+    if supplier and not _ttc_supplier_in_decision(supplier, decision, report_passages):
+        return False
+    amount = award.get('amount_raw')
+    if amount:
+        award_vals = _money_values(amount)
+        dec_vals = _money_values(decision)
+        if not award_vals or not (award_vals & dec_vals):
+            return False
+    ref = proof['native_ref']
+    if not ref.startswith('https://'):
+        ref_alnum = _norm_alnum(ref)
+        if ref_alnum not in _norm_alnum(decision) and ref_alnum not in _norm_alnum(report_passages):
+            return False
+    return True
 
 
 def validate_review(proof):
     """Validate optional review vocabulary after the enclosing source context is validated."""
     if not {'award_review', 'participation_review'}.intersection(proof):
         return
-    if (proof['corpus'] != 'trca' or not _CONTEXT.issubset(proof)
+    if (proof['corpus'] not in {'trca', 'ttc'} or not _CONTEXT.issubset(proof)
+            or type(proof.get('contract_index')) is not int or proof['contract_index'] < 0
+            or type(proof.get('contract_count')) is not int or proof['contract_count'] <= proof['contract_index']
+            or not re.fullmatch('[a-f0-9]{64}', str(proof.get('result_sha256') or ''))
             or proof.get('withheld_awards_reason') or proof.get('representative_source')):
-        raise ValueError('claim review requires an exact TRCA context without conflicting contract-wide withholding')
+        raise ValueError('claim review requires an exact reviewed context without conflicting contract-wide withholding')
     participation = proof.get('participation_review')
     if participation is not None:
+        if proof['corpus'] != 'trca':
+            raise ValueError('participation review is only supported for TRCA')
         if not isinstance(participation, dict) or set(participation) != _ROLES:
             raise ValueError('participation review requires explicit procurement roles')
         for role, names in participation.items():
@@ -74,6 +161,12 @@ def admit_claims(conn, contract, proof):
     raw = contract.get('awards', [])
     if {c['award_index'] for c in review} != set(range(len(raw))):
         raise IdentityReviewRequired('review must account for every raw award claim; re-review required')
+    report_passages = ' '.join(
+        ' '.join(p.split())
+        for s in proof['sources']
+        if s.get('role') != 'decision'
+        for p in s['passages']
+    )
     result = {'accepted': [], 'withheld': [], 'amounts_withheld': []}
     for claim in review:
         index = claim['award_index']
@@ -82,9 +175,13 @@ def admit_claims(conn, contract, proof):
             continue
         award = dict(raw[index])
         decision = ' '.join(' '.join(p.split()) for p in proof['sources'][claim['decision_source']]['passages'])
-        subjects = [proof['native_ref'], award.get('supplier_name'), award.get('amount_raw')]
-        if ('carried' not in decision.casefold() or any(value and ' '.join(value.split()) not in decision for value in subjects)):
-            raise IdentityReviewRequired('reviewed carried decision does not bind this award claim; re-review required')
+        if proof['corpus'] == 'ttc':
+            if not _ttc_decision_binds(decision, report_passages, proof, award):
+                raise IdentityReviewRequired('reviewed TTC Board decision does not bind this award claim; re-review required')
+        else:
+            subjects = [proof['native_ref'], award.get('supplier_name'), award.get('amount_raw')]
+            if ('carried' not in decision.casefold() or any(value and ' '.join(value.split()) not in decision for value in subjects)):
+                raise IdentityReviewRequired('reviewed carried decision does not bind this award claim; re-review required')
         if claim['disposition'] == 'shared_limit':
             if award.get('amount_raw') is None:
                 raise IdentityReviewRequired('reviewed shared limit no longer has its expected raw amount')
