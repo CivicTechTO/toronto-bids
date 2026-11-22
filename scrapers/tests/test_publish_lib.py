@@ -7,16 +7,12 @@ import threading
 
 import pytest
 
-from tests.helpers_deploy import PUBLISH_LIB, SCRAPERS_DIR, run_publish_lib
+from tests.helpers_deploy import SCRAPERS_DIR, run_publish_lib
 
 pytestmark = pytest.mark.skipif(
     shutil.which("bash") is None or shutil.which("curl") is None or shutil.which("uv") is None,
     reason="publish-lib.sh needs bash, curl and uv",
 )
-
-
-def test_the_library_exists():
-    assert PUBLISH_LIB.exists(), f"missing {PUBLISH_LIB}"
 
 
 class _HeadServer:

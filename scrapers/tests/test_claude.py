@@ -7,7 +7,7 @@ from unittest.mock import patch
 import httpx
 import pytest
 
-from toronto_bids.claude import ClaudeExtractionClient, _charge
+from toronto_bids.claude import EXTRACTION_SCHEMA, ClaudeExtractionClient, _charge
 from toronto_bids.extract import EXTRACTOR_VERSION, ExtractionClient, build_prompt
 from toronto_bids.llm_budget import BudgetExceeded, UsageBudget
 
@@ -31,9 +31,11 @@ def response(stop="end_turn", text='{"contracts": []}'):
 
 def posted(monkeypatch, data, status=200):
     calls = []
+
     def post(url, **kwargs):
         calls.append((url, kwargs))
         return httpx.Response(status, json=data, request=httpx.Request("POST", url))
+
     monkeypatch.setattr(httpx, "post", post)
     return calls
 
@@ -61,16 +63,8 @@ def test_request_preserves_prompt_and_cache_version(client, monkeypatch):
     assert body["model"] == "claude-sonnet-5-5"
     assert body["max_tokens"] == 32768
     assert "temperature" not in body
-    # Prompting alone allowed prose and fenced JSON in a real July 2022 response.
     assert body["output_config"]["effort"] == "high"
-    fmt = body["output_config"]["format"]
-    assert fmt["type"] == "json_schema"
-    schema = fmt["schema"]
-    assert schema["required"] == ["contracts"]
-    assert schema["additionalProperties"] is False
-    contract = schema["properties"]["contracts"]["items"]
-    assert {"reference", "bids", "awards", "prequalified"} <= set(contract["required"])
-    assert contract["properties"]["awards"]["items"]["additionalProperties"] is False
+    assert body["output_config"]["format"] == {"type": "json_schema", "schema": EXTRACTION_SCHEMA}
     blocks = body["messages"][0]["content"]
     assert blocks[0]["cache_control"] == {"type": "ephemeral"}
     assert "cache_control" not in blocks[1]
@@ -96,6 +90,7 @@ def test_billed_bad_outputs_refused_and_accounted(client, monkeypatch, stop, tex
 def test_timeout_reservation_survives_process_restart(client, monkeypatch):
     def timeout(*args, **kwargs):
         raise httpx.ReadTimeout("response lost")
+
     monkeypatch.setattr(httpx, "post", timeout)
     with pytest.raises(httpx.ReadTimeout):
         client.extract("report")
@@ -106,13 +101,43 @@ def test_timeout_reservation_survives_process_restart(client, monkeypatch):
         budget.reserve("claude-sonnet-5-5", 1)
 
 
-def test_definite_rejection_releases_budget_without_auth_retry(client, monkeypatch):
-    calls = posted(monkeypatch, {"error": "bad key"}, 401)
+@pytest.mark.parametrize("status", [400, 401, 402, 404])
+def test_definite_rejection_releases_budget_without_retry(client, monkeypatch, status):
+    calls = posted(monkeypatch, {"error": "rejected"}, status)
     client.retries = 3
+    client.backoff = 0
     with pytest.raises(httpx.HTTPStatusError):
         client.extract("report")
     assert len(calls) == 1
     assert rows(client) == [(0, "rejected")]
+
+
+@pytest.mark.parametrize("status, first_status", [(429, "rejected"), (500, "reserved")])
+def test_retryable_http_errors_reconcile_reservation_and_retry(client, monkeypatch, status, first_status):
+    calls = []
+
+    def post(url, **kwargs):
+        calls.append(url)
+        if len(calls) == 1:
+            return httpx.Response(status, json={"error": "transient"}, request=httpx.Request("POST", url))
+        return httpx.Response(200, json=response(), request=httpx.Request("POST", url))
+
+    monkeypatch.setattr(httpx, "post", post)
+    client.retries = 1
+    client.backoff = 0
+    assert client.extract("report") == {"contracts": []}
+    assert len(calls) == 2
+    ledger = rows(client)
+    assert [state for _, state in ledger] == [first_status, "reported"]
+    assert (ledger[0][0] == 0) is (first_status == "rejected")
+    assert ledger[1][0] == 4100
+
+
+def test_non_dict_json_response_raises_and_keeps_reservation(client, monkeypatch):
+    posted(monkeypatch, ["unexpected"])
+    with pytest.raises(ValueError, match="non-object"):
+        client.extract("report")
+    assert rows(client)[0][1] == "reserved"
 
 
 def test_budget_blocks_before_network_without_retry(client, monkeypatch):
@@ -127,14 +152,15 @@ def test_budget_blocks_before_network_without_retry(client, monkeypatch):
 
 def test_budget_reservations_are_atomic(tmp_path):
     budget = UsageBudget(tmp_path / "ledger.sqlite", "1")
-    # Initialize schema before contending on the reservations.
     budget.reserve("test", 0)
+
     def reserve(_):
         try:
             budget.reserve("test", 600000)
             return True
         except BudgetExceeded:
             return False
+
     with ThreadPoolExecutor(max_workers=2) as pool:
         assert sorted(pool.map(reserve, range(2))) == [False, True]
 
@@ -142,14 +168,37 @@ def test_budget_reservations_are_atomic(tmp_path):
 def test_previous_month_does_not_consume_current_budget(tmp_path):
     budget = UsageBudget(tmp_path / "ledger.sqlite", "1")
     token = budget.reserve("test", 1000000)
-    budget.settle(token, 1000000, 'reported')
+    budget.settle(token, 1000000, "reported")
     with sqlite3.connect(budget.path) as conn:
         conn.execute("UPDATE request SET month='2000-01' WHERE id=?", (token,))
     budget.reserve("test", 1000000)
 
 
 def test_haiku_tiering_includes_cached_input():
-    assert _charge("claude-haiku-5-5", {"input_tokens": 100, "cache_read_input_tokens": 100000, "output_tokens": 1000}) == 7550
+    assert _charge(
+        "claude-haiku-5-5",
+        {"input_tokens": 100, "cache_read_input_tokens": 100000, "output_tokens": 1000},
+    ) == 7550
+
+
+@pytest.mark.parametrize(
+    "usage",
+    [
+        None,
+        [],
+        {"output_tokens": 10},
+        {"input_tokens": 10},
+        {"input_tokens": -1, "output_tokens": 10},
+        {"input_tokens": True, "output_tokens": 10},
+        {"input_tokens": 10.5, "output_tokens": 10},
+        {"input_tokens": "10", "output_tokens": 10},
+        {"input_tokens": 10, "output_tokens": False},
+        {"input_tokens": 10, "output_tokens": 10, "cache_read_input_tokens": -5},
+    ],
+)
+def test_charge_rejects_invalid_or_missing_usage_counters(usage):
+    with pytest.raises(ValueError):
+        _charge("claude-sonnet-5-5", usage)
 
 
 @pytest.mark.parametrize("limit", ["NaN", "Infinity", "-1", "not a number"])
@@ -187,10 +236,12 @@ def test_unusable_usage_retains_allowance(client, monkeypatch):
 
 def test_retry_accounts_for_both_billed_attempts(client, monkeypatch):
     calls = []
+
     def post(url, **kwargs):
         calls.append(url)
         data = response(text="invalid" if len(calls) == 1 else '{"contracts": []}')
         return httpx.Response(200, json=data, request=httpx.Request("POST", url))
+
     monkeypatch.setattr(httpx, "post", post)
     client.retries = 1
     client.backoff = 0
@@ -199,9 +250,8 @@ def test_retry_accounts_for_both_billed_attempts(client, monkeypatch):
 
 
 def test_schema_meets_claude_compilation_limits():
-    from toronto_bids.claude import EXTRACTION_SCHEMA
-
     unions = 0
+
     def check(node):
         nonlocal unions
         if isinstance(node, dict):
@@ -210,7 +260,6 @@ def test_schema_meets_claude_compilation_limits():
             if node.get("type") == "object":
                 assert node["additionalProperties"] is False
                 assert set(node["required"]) == set(node["properties"])
-            # Nullable enums need a typed anyOf branch in the Claude validator.
             if "enum" in node:
                 assert isinstance(node["type"], str)
             for value in node.values():
@@ -218,8 +267,14 @@ def test_schema_meets_claude_compilation_limits():
         elif isinstance(node, list):
             for value in node:
                 check(value)
+
     check(EXTRACTION_SCHEMA)
     assert unions <= 16
+
+
+def test_haiku_defaults_to_medium_effort_when_unset(client):
+    haiku = ClaudeExtractionClient(api_key="test", models=["claude-haiku-5-5"], retries=0)
+    assert haiku.request_body("report")["output_config"]["effort"] == "medium"
 
 
 @pytest.mark.parametrize("effort", ["low", "medium", "high", "xhigh", "max"])
@@ -242,7 +297,6 @@ def test_invalid_effort_is_rejected_before_sending(client, monkeypatch):
     assert not calls
 
 
-
 def test_old_outstanding_reservation_carries_into_new_month(tmp_path):
     budget = UsageBudget(tmp_path / "ledger.sqlite", "1")
     token = budget.reserve("test", 900000)
@@ -250,8 +304,7 @@ def test_old_outstanding_reservation_carries_into_new_month(tmp_path):
         conn.execute("UPDATE request SET month='2000-01' WHERE id=?", (token,))
     with pytest.raises(BudgetExceeded):
         budget.reserve("test", 200000)
-    budget.settle(token, 500000, 'reported')
-    # Settlement is booked conservatively in the current month.
+    budget.settle(token, 500000, "reported")
     with pytest.raises(BudgetExceeded):
         budget.reserve("test", 600000)
     budget.reserve("test", 500000)

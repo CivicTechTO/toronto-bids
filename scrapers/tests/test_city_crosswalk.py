@@ -457,3 +457,103 @@ def test_recommended_role_replay_checks_current_ambiguity(conn,tmp_path,monkeypa
     db.upsert_row(conn,Solicitation('9999999999',issue_date='2014-03-01',submission_deadline='2014-03-20',rfx_type='RFQ'),overwrite=True)
     db.upsert_row(conn,Award('9999999999',supplier_name_raw='Alpha Construction Limited',award_amount='100000.55',source='odata'),overwrite=True)
     with pytest.raises(ValueError,match='ambiguous'):resolve_procurements(conn)
+
+
+def _seed_review_context(conn, tmp_path, row=None):
+    row = row or record()
+    (tmp_path / '2014.BD1.html').write_bytes(HTML)
+    db.upsert_row(
+        conn,
+        Solicitation(
+            row['Solicitation_Document_Number'],
+            issue_date=row['Issue_Date'],
+            submission_deadline=row['Closing_Date'],
+            rfx_type=row['Solicitation_Document_Type'],
+            odata_id=row['id'],
+        ),
+        overwrite=True,
+    )
+    db.upsert_row(
+        conn,
+        Award(
+            row['Solicitation_Document_Number'],
+            supplier_name_raw='Alpha Construction Limited',
+            award_amount='100000.55',
+            source='odata',
+        ),
+        overwrite=True,
+    )
+    db.upsert_row(conn, CouncilItem(REF, title=TITLE), overwrite=True)
+    db.upsert_row(conn, Bid('Losing bidder', reference=REF, source='original'), overwrite=True)
+    conn.commit()
+    return row
+
+
+def test_review_accepts_proposal_skips_zero_bids_and_summarizes_counts(conn, tmp_path):
+    from toronto_bids.city_crosswalk import review
+
+    row = _seed_review_context(conn, tmp_path)
+    candidates = [
+        dict(document_number=DOC, encoded_call_refs=[REF], bids_on_candidate_refs=1),
+        dict(document_number='9999999999', encoded_call_refs=['2014.BD9.9'], bids_on_candidate_refs=0),
+        dict(document_number='8888888888', encoded_call_refs=['2014.BD8.1', '2014.BD8.2'], bids_on_candidate_refs=2),
+    ]
+    report = review(conn, [row], candidates, tmp_path, 'snapshot')
+    assert len(report['proposals']) == 1
+    assert report['proposals'][0]['document_number'] == DOC
+    assert report['proposals'][0]['proof_class'] == 'corroborated_compound'
+    assert len(report['refusals']) == 1
+    assert report['refusals'][0]['reason'] == 'multiple council contexts for native call'
+    assert report['summary'] == dict(
+        candidates=2,
+        proposed=1,
+        refused=1,
+        proof_classes={'corroborated_compound': 1},
+        refusal_reasons={'multiple council contexts for native call': 1},
+    )
+
+
+@pytest.mark.parametrize(
+    'case,expected_reason',
+    [
+        ('multiple_refs', 'multiple council contexts for native call'),
+        ('missing_publisher', 'publisher document record missing or repeated'),
+        ('repeated_publisher', 'publisher document record missing or repeated'),
+        ('missing_agenda', 'held original agenda context absent'),
+        ('spine_mismatch', 'stored spine and current publisher context disagree'),
+        ('other_council_item', 'native call also appears in another council context'),
+    ],
+)
+def test_review_refuses_invalid_or_ambiguous_candidates(conn, tmp_path, case, expected_reason):
+    from toronto_bids.city_crosswalk import review
+
+    row = _seed_review_context(conn, tmp_path)
+    records = [row]
+    refs = [REF]
+    if case == 'multiple_refs':
+        refs = [REF, '2014.BD1.2']
+    elif case == 'missing_publisher':
+        records = []
+    elif case == 'repeated_publisher':
+        records = [row, dict(row, id='duplicate-row')]
+    elif case == 'missing_agenda':
+        (tmp_path / '2014.BD1.html').unlink()
+    elif case == 'spine_mismatch':
+        conn.execute('UPDATE solicitation SET issue_date=? WHERE document_number=?', ('2014-03-02', DOC))
+        conn.commit()
+    elif case == 'other_council_item':
+        db.upsert_row(conn, CouncilItem('2014.BD2.1', title=TITLE), overwrite=True)
+        conn.commit()
+
+    candidates = [dict(document_number=DOC, encoded_call_refs=refs, bids_on_candidate_refs=1)]
+    report = review(conn, records, candidates, tmp_path, 'snapshot')
+    assert report['proposals'] == []
+    assert len(report['refusals']) == 1
+    assert report['refusals'][0]['reason'] == expected_reason
+    assert report['summary'] == dict(
+        candidates=1,
+        proposed=0,
+        refused=1,
+        proof_classes={},
+        refusal_reasons={expected_reason: 1},
+    )

@@ -154,6 +154,20 @@ def test_detects_a_feed_that_returns_nothing():
         SchemaCheckSource().fetch(FakeHttp(open_={}))
 
 
+def test_check_ckan_awards_reports_malformed_or_empty_award_arrays():
+    non_array = {**CKAN_AWARDED, "Award": "{}"}
+    with pytest.raises(ValueError, match="expected a JSON array"):
+        SchemaCheckSource().fetch(FakeHttp(awarded=non_array))
+
+    non_object = {**CKAN_AWARDED, "Award": json.dumps(["not-an-object"])}
+    with pytest.raises(ValueError, match="expected an object"):
+        SchemaCheckSource().fetch(FakeHttp(awarded=non_object))
+
+    empty_only = {**CKAN_AWARDED, "Award": "[]"}
+    with pytest.raises(ValueError, match="went unchecked"):
+        SchemaCheckSource().fetch(FakeHttp(awarded=[empty_only]))
+
+
 def test_declared_schema_matches_what_the_normalizers_actually_read():
     import ast
     import pathlib
@@ -166,6 +180,7 @@ def test_declared_schema_matches_what_the_normalizers_actually_read():
         ("ckan.py", "normalize_awarded"): "ckan_awarded",
         ("ckan.py", "normalize_open"): "ckan_open",
         ("ckan.py", "normalize_noncompetitive"): "ckan_noncomp",
+        ("ckan.py", "normalize_capital_project"): "ckan_pipeline",
     }
     src_dir = pathlib.Path(schema_check.__file__).parent
     for (module, func_name), feed in reads.items():

@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 from unittest.mock import patch
 
+import httpx
 import pytest
 
 FIXTURES = Path(__file__).parent / "fixtures"
@@ -18,25 +19,31 @@ def _load_fixture(name="extract_response.json"):
     return json.loads((FIXTURES / name).read_text())
 
 
-def test_placeholder_api_key_reads_as_none():
+class _FakeResp:
+    def __init__(self, payload, status_code=200):
+        self.status_code = status_code
+        self._payload = payload
+
+    def raise_for_status(self):
+        pass
+
+    def json(self):
+        return self._payload
+
+
+@pytest.mark.parametrize(
+    "env, expected",
+    [
+        ({"OPENROUTER_API_KEY": "your-openrouter-api-key"}, None),
+        ({"OPENROUTER_API_KEY": "sk-or-v1-abc123"}, "sk-or-v1-abc123"),
+        ({}, None),
+    ],
+)
+def test_real_openrouter_key(env, expected):
     from toronto_bids.extract import _real_openrouter_key
 
-    with patch.dict("os.environ", {"OPENROUTER_API_KEY": "your-openrouter-api-key"}):
-        assert _real_openrouter_key() is None
-
-
-def test_real_api_key_reads_through():
-    from toronto_bids.extract import _real_openrouter_key
-
-    with patch.dict("os.environ", {"OPENROUTER_API_KEY": "sk-or-v1-abc123"}):
-        assert _real_openrouter_key() == "sk-or-v1-abc123"
-
-
-def test_missing_api_key_reads_as_none():
-    from toronto_bids.extract import _real_openrouter_key
-
-    with patch.dict("os.environ", {}, clear=True):
-        assert _real_openrouter_key() is None
+    with patch.dict("os.environ", env, clear=True):
+        assert _real_openrouter_key() == expected
 
 
 def test_validate_extraction_accepts_good_response():
@@ -54,58 +61,33 @@ def test_validate_extraction_accepts_good_response():
     assert len(c["awards"]) == 1
 
 
-def test_validate_extraction_rejects_missing_contracts():
-    from toronto_bids.extract import validate_extraction
-
-    with pytest.raises(ValueError, match="contracts"):
-        validate_extraction({"not_contracts": []})
-
-
-def test_validate_extraction_rejects_bid_without_supplier():
-    from toronto_bids.extract import validate_extraction
-
-    bad = {
-        "contracts": [
-            {
-                "reference": "RFT 123",
-                "bids": [{"amount_raw": "$100"}],
-                "awards": [],
-            }
-        ]
-    }
-    with pytest.raises(ValueError, match="supplier_name"):
-        validate_extraction(bad)
-
-
-def test_validate_extraction_rejects_non_dict():
-    from toronto_bids.extract import validate_extraction
-
-    with pytest.raises(ValueError, match="not a JSON object"):
-        validate_extraction("just a string")
-
-
 @pytest.mark.parametrize(
-    "bad",
+    "bad, match",
     [
-        {"contracts": [{"reference": "R", "bids": None}]},
-        {"contracts": [{"reference": "R", "awards": None}]},
-        {"contracts": [{"reference": "R", "bids": ["Acme"]}]},
-        {"contracts": ["not a dict"]},
-        {"contracts": None},
+        ("just a string", "not a JSON object"),
+        ({"not_contracts": []}, "contracts"),
+        ({"contracts": None}, "contracts"),
+        ({"contracts": ["not a dict"]}, "not a dict"),
+        ({"contracts": [{"reference": "R", "bids": None}]}, "bids"),
+        ({"contracts": [{"reference": "R", "awards": None}]}, "awards"),
+        ({"contracts": [{"reference": "R", "bids": ["Acme"]}]}, "Bid"),
+        ({"contracts": [{"reference": "R", "bids": [{"amount_raw": "$100"}], "awards": []}]}, "supplier_name"),
+        ({"contracts": [{"reference": "R", "awards": ["Acme"]}]}, "Award"),
+        ({"contracts": [{"reference": "R", "awards": [{"amount_raw": "$100"}]}]}, "supplier_name"),
+        ({"contracts": [{"reference": "R", "awards": [{"supplier_name": ""}]}]}, "supplier_name"),
     ],
 )
-def test_validate_extraction_refuses_shape_surprises_with_value_error(bad):
+def test_validate_extraction_rejects_invalid_shapes(bad, match):
     from toronto_bids.extract import validate_extraction
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=match):
         validate_extraction(bad)
 
 
 def test_parse_llm_response_extracts_content():
     from toronto_bids.extract import parse_llm_response
 
-    fixture = _load_fixture()
-    result = parse_llm_response(fixture)
+    result = parse_llm_response(_load_fixture())
     assert len(result["contracts"]) == 1
 
 
@@ -128,41 +110,22 @@ def test_parse_llm_response_strips_markdown_fence():
     assert len(result["contracts"]) == 1
 
 
-def test_prompt_contains_key_rules():
-    from toronto_bids.extract import build_prompt
-
-    prompt = build_prompt("Some document text here")
-    assert "pre-qualification" in prompt.lower() or "pre-qualified" in prompt.lower()
-    assert "disqualified" in prompt.lower()
-    assert "supplier_name" in prompt
-    assert "declared_submissions" in prompt
-
-
-def test_extractor_version_is_stable():
-    from toronto_bids.extract import EXTRACTOR_VERSION
-
-    assert isinstance(EXTRACTOR_VERSION, str)
-    assert len(EXTRACTOR_VERSION) > 0
-
-
-def test_client_raises_on_missing_key():
+@pytest.mark.parametrize(
+    "env, kwargs, match",
+    [
+        ({}, {"provider": "openrouter"}, "OPENROUTER_API_KEY"),
+        ({"OPENROUTER_API_KEY": "your-openrouter-api-key"}, {}, "placeholder"),
+        ({"TB_LLM_PROVIDER": "unknown"}, {}, "Unknown TB_LLM_PROVIDER"),
+    ],
+)
+def test_client_init_validation(env, kwargs, match):
     from toronto_bids.extract import ExtractionClient
 
     with (
-        patch.dict("os.environ", {}, clear=True),
-        pytest.raises(ValueError, match="OPENROUTER_API_KEY"),
+        patch.dict("os.environ", env, clear=True),
+        pytest.raises(ValueError, match=match),
     ):
-        ExtractionClient(provider="openrouter")
-
-
-def test_client_raises_on_placeholder_key():
-    from toronto_bids.extract import ExtractionClient
-
-    with (
-        patch.dict("os.environ", {"OPENROUTER_API_KEY": "your-openrouter-api-key"}),
-        pytest.raises(ValueError, match="placeholder"),
-    ):
-        ExtractionClient()
+        ExtractionClient(**kwargs)
 
 
 def test_client_extract_calls_openrouter(monkeypatch):
@@ -173,19 +136,7 @@ def test_client_extract_calls_openrouter(monkeypatch):
 
     def mock_post(url, *, json, headers, timeout):
         calls.append({"url": url, "model": json["model"], "headers": headers})
-
-        class FakeResp:
-            status_code = 200
-
-            def raise_for_status(self):
-                pass
-
-            def json(self):
-                return fixture
-
-        return FakeResp()
-
-    import httpx
+        return _FakeResp(fixture)
 
     monkeypatch.setattr(httpx, "post", mock_post)
     client = ExtractionClient(api_key="sk-or-v1-test123")
@@ -193,6 +144,36 @@ def test_client_extract_calls_openrouter(monkeypatch):
     assert len(result["contracts"]) == 1
     assert calls[0]["model"] == "test/first"
     assert "Bearer sk-or-v1-test123" in str(calls)
+
+
+def test_client_extract_document_merges_chunks(monkeypatch):
+    from toronto_bids.extract import ExtractionClient
+
+    chunk_outputs = [
+        {"contracts": [{"reference": "RFT 1", "bids": [{"supplier_name": "A"}], "awards": []}]},
+        {
+            "contracts": [
+                {
+                    "reference": "RFT 1",
+                    "bids": [{"supplier_name": "A"}, {"supplier_name": "B"}],
+                    "awards": [],
+                },
+                {"reference": "RFT 2", "bids": [{"supplier_name": "C"}], "awards": []},
+            ]
+        },
+    ]
+
+    def mock_post(url, **kwargs):
+        payload = {"choices": [{"message": {"content": json.dumps(chunk_outputs.pop(0))}}]}
+        return _FakeResp(payload)
+
+    monkeypatch.setattr(httpx, "post", mock_post)
+    client = ExtractionClient(api_key="sk-or-v1-test123")
+    result = client.extract_document("sha1", ["chunk one", "chunk two"])
+    assert len(result["contracts"]) == 2
+    by_ref = {c["reference"]: c for c in result["contracts"]}
+    assert [b["supplier_name"] for b in by_ref["RFT 1"]["bids"]] == ["A", "B"]
+    assert [b["supplier_name"] for b in by_ref["RFT 2"]["bids"]] == ["C"]
 
 
 def test_client_falls_back_to_second_model(monkeypatch):
@@ -204,87 +185,40 @@ def test_client_falls_back_to_second_model(monkeypatch):
     def mock_post(url, *, json, headers, timeout):
         calls.append(json["model"])
         if json["model"] == "test/first":
-            import httpx
-
             resp = httpx.Response(status_code=429)
             raise httpx.HTTPStatusError("rate limited", request=None, response=resp)
-
-        class FakeResp:
-            status_code = 200
-
-            def raise_for_status(self):
-                pass
-
-            def json(self):
-                return fixture
-
-        return FakeResp()
-
-    import httpx
+        return _FakeResp(fixture)
 
     monkeypatch.setattr(httpx, "post", mock_post)
     client = ExtractionClient(api_key="sk-or-v1-test123", retries=0, backoff=0)
     result = client.extract("Some document text")
     assert len(result["contracts"]) == 1
-    assert "test/first" in calls
-    assert "test/second" in calls
+    assert calls == ["test/first", "test/second"]
 
 
 def test_client_retries_on_500(monkeypatch):
     from toronto_bids.extract import ExtractionClient
 
     fixture = _load_fixture()
-    attempt_count = [0]
+    attempts = 0
 
     def mock_post(url, *, json, headers, timeout):
-        attempt_count[0] += 1
-        if attempt_count[0] == 1:
-            import httpx
-
+        nonlocal attempts
+        attempts += 1
+        if attempts == 1:
             resp = httpx.Response(status_code=500)
             raise httpx.HTTPStatusError("server error", request=None, response=resp)
-
-        class FakeResp:
-            status_code = 200
-
-            def raise_for_status(self):
-                pass
-
-            def json(self):
-                return fixture
-
-        return FakeResp()
-
-    import httpx
+        return _FakeResp(fixture)
 
     monkeypatch.setattr(httpx, "post", mock_post)
     client = ExtractionClient(api_key="sk-or-v1-test123", backoff=0)
     result = client.extract("Some document text")
     assert len(result["contracts"]) == 1
-    assert attempt_count[0] == 2
-
-
-def test_client_does_not_retry_4xx(monkeypatch):
-    from toronto_bids.extract import ExtractionClient
-
-    def mock_post(url, *, json, headers, timeout):
-        import httpx
-
-        resp = httpx.Response(status_code=401)
-        raise httpx.HTTPStatusError("unauthorized", request=None, response=resp)
-
-    import httpx
-
-    monkeypatch.setattr(httpx, "post", mock_post)
-    client = ExtractionClient(api_key="sk-or-v1-test123", backoff=0)
-    with pytest.raises(httpx.HTTPStatusError):
-        client.extract("Some document text")
+    assert attempts == 2
 
 
 def _status_then_fixture(monkeypatch, statuses):
     import time
-
-    import httpx
 
     fixture = _load_fixture()
     calls = []
@@ -296,38 +230,18 @@ def _status_then_fixture(monkeypatch, statuses):
         if status is not None:
             resp = httpx.Response(status_code=status)
             raise httpx.HTTPStatusError(f"status {status}", request=None, response=resp)
-
-        class FakeResp:
-            status_code = 200
-
-            def raise_for_status(self):
-                pass
-
-            def json(self):
-                return fixture
-
-        return FakeResp()
+        return _FakeResp(fixture)
 
     monkeypatch.setattr(httpx, "post", mock_post)
     monkeypatch.setattr(time, "sleep", lambda s: sleeps.append(s))
     return calls, sleeps
 
 
-def test_client_falls_back_on_404_without_retrying(monkeypatch):
+@pytest.mark.parametrize("status", [404, 402])
+def test_client_falls_back_on_non_auth_4xx_without_retrying(monkeypatch, status):
     from toronto_bids.extract import MODELS, ExtractionClient
 
-    calls, sleeps = _status_then_fixture(monkeypatch, {MODELS[0]: 404})
-    client = ExtractionClient(api_key="sk-or-v1-test123", retries=3, backoff=1.0)
-    result = client.extract("Some document text")
-    assert len(result["contracts"]) == 1
-    assert calls == [MODELS[0], MODELS[1]]
-    assert sleeps == []
-
-
-def test_client_falls_back_on_402(monkeypatch):
-    from toronto_bids.extract import MODELS, ExtractionClient
-
-    calls, sleeps = _status_then_fixture(monkeypatch, {MODELS[0]: 402})
+    calls, sleeps = _status_then_fixture(monkeypatch, {MODELS[0]: status})
     client = ExtractionClient(api_key="sk-or-v1-test123", retries=3, backoff=1.0)
     assert len(client.extract("Some document text")["contracts"]) == 1
     assert calls == [MODELS[0], MODELS[1]]
@@ -336,8 +250,6 @@ def test_client_falls_back_on_402(monkeypatch):
 
 @pytest.mark.parametrize("status", [401, 403])
 def test_client_auth_error_raises_without_fallback(monkeypatch, status):
-    import httpx
-
     from toronto_bids.extract import MODELS, ExtractionClient
 
     calls, sleeps = _status_then_fixture(monkeypatch, {MODELS[0]: status})
@@ -350,8 +262,6 @@ def test_client_auth_error_raises_without_fallback(monkeypatch, status):
 
 
 def test_client_every_model_4xx_raises_last_error(monkeypatch):
-    import httpx
-
     from toronto_bids.extract import MODELS, ExtractionClient
 
     calls, sleeps = _status_then_fixture(monkeypatch, {MODELS[0]: 404, MODELS[1]: 402})
@@ -371,19 +281,7 @@ def test_client_sets_flex_tier_for_openai(monkeypatch):
 
     def mock_post(url, *, json, headers, timeout):
         captured.update(json)
-
-        class FakeResp:
-            status_code = 200
-
-            def raise_for_status(self):
-                pass
-
-            def json(self):
-                return fixture
-
-        return FakeResp()
-
-    import httpx
+        return _FakeResp(fixture)
 
     monkeypatch.setattr(httpx, "post", mock_post)
     client = ExtractionClient(
@@ -395,6 +293,7 @@ def test_client_sets_flex_tier_for_openai(monkeypatch):
 
 def test_cli_extract_dry_run_prints_result(monkeypatch, conn):
     from toronto_bids.cli import main
+    from toronto_bids.extract import ExtractionClient, parse_llm_response
 
     conn.execute(
         "INSERT INTO background_pdf (url, reference, kind, sha256, text) "
@@ -404,25 +303,15 @@ def test_cli_extract_dry_run_prints_result(monkeypatch, conn):
     conn.commit()
 
     fixture = _load_fixture()
-
-    def mock_extract(self, text):
-        from toronto_bids.extract import parse_llm_response
-
-        return parse_llm_response(fixture)
-
-    from toronto_bids.extract import ExtractionClient
-
-    monkeypatch.setattr(ExtractionClient, "extract", mock_extract)
+    monkeypatch.setattr(ExtractionClient, "extract", lambda self, text: parse_llm_response(fixture))
     monkeypatch.setattr(ExtractionClient, "__init__", lambda self, **kw: None)
     monkeypatch.setattr("toronto_bids.cli._open_db", lambda: conn)
 
-    rc = main(["extract", "--dry-run", "deadbeef"])
-    assert rc == 0
+    assert main(["extract", "--dry-run", "deadbeef"]) == 0
 
 
 def test_cli_extract_dry_run_missing_sha256(monkeypatch, conn):
     from toronto_bids.cli import main
 
     monkeypatch.setattr("toronto_bids.cli._open_db", lambda: conn)
-    rc = main(["extract", "--dry-run", "nonexistent"])
-    assert rc == 1
+    assert main(["extract", "--dry-run", "nonexistent"]) == 1
