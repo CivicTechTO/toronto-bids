@@ -439,3 +439,73 @@ def test_original_native_list_receipt_count_limits_names_without_model_count(con
     setup_archive(conn,tmp_path,monkeypatch);row=native_report()
     row['text']='Award of RFP 3905-14-0097\n'+receipt+' from the following firms:\nAlberici Constructors Ltd.\nMaple Reinders Limited\n'
     assert not city_bulk.propose(conn,row)[0]
+
+
+def test_queue_targets_proven_native_calls_and_skips_covered_or_unproved(tmp_path,monkeypatch):
+    a=archive()
+    a.execute("INSERT INTO solicitation VALUES('1111111111',2)")
+    a.execute("INSERT INTO award VALUES('1111111111','odata')")
+    a.execute("INSERT INTO solicitation VALUES('2222222222',3)")
+    a.execute("INSERT INTO award VALUES('2222222222','odata')")
+    a.execute("INSERT INTO bid VALUES('2222222222',3)")
+
+    class FakeNative:
+        def resolve(self,call):
+            if call=='235-2017':return '1111111111',{'call_number':call}
+            if call=='48-2016':return '2222222222',{'call_number':call}
+            raise ValueError('native_call_has_no_unique_original_award_identity')
+
+    specs=[
+        ('missing.pdf','Award of Tender Call 235-2017\nSUMMARY\nTwo bids were received.','Award of Tender Call 235-2017'),
+        ('covered.pdf','Award of Tender Call 48-2016\nSUMMARY\nTwo bids were received.','Award of Tender Call 48-2016'),
+        ('unproved.pdf','Award of Tender Call 97-2016\nSUMMARY\nTwo bids were received.','Award of Tender Call 97-2016'),
+        ('footer.pdf','Award of Tender Call 235-2017\nSUMMARY\nTwo bids were received.\fOther Tender 99-2017\nPage 2 of 2','Award of Tender Call 235-2017'),
+    ]
+    rows=[]
+    for name,text,title in specs:
+        p=tmp_path/name;p.write_bytes(text.encode())
+        rows.append(dict(url='https://www.toronto.ca/'+name,sha256=hashlib.sha256(p.read_bytes()).hexdigest(),
+            local_path=str(p),text=text,screen='eligible',items=[dict(title=title)]))
+    monkeypatch.setattr(city_bulk,'inventory',lambda *a:rows)
+
+    class Client:
+        calls=[]
+        def extract_document(self,sha,*a,**k):
+            self.calls.append(sha);raise ExtractionPending('queued')
+
+    client=Client()
+    stats=city_bulk.queue(tmp_path,a,client=client,native_identities=FakeNative())
+    assert stats['pending']==1
+    assert stats['outside_missing_population']==1
+    assert stats['identity_discovery_deferred']==2
+    assert client.calls==[rows[0]['sha256']]
+
+
+def test_responded_to_rfp_as_follows_list_admits_clean_native_proponents(conn,tmp_path,monkeypatch):
+    from tests.test_city_archived_awards import setup_archive
+    setup_archive(conn,tmp_path,monkeypatch)
+    row=native_report()
+    row['text']=(
+        'Award of RFP 3905-14-0097\nSUMMARY\n'
+        'Evaluation of the Proposal Submissions\n'
+        'A total of two (2) proponents responded to the RFP as follows:\n'
+        '1.\n2.\n\nAlberici Constructors Ltd.\nMaple Reinders Limited\n'
+        'The evaluation process consisted of four distinct steps.\n'
+    )
+    accepted,held=city_bulk.propose(conn,row)
+    assert not held and accepted[0]['names']==['Alberici Constructors Ltd.','Maple Reinders Limited']
+    assert accepted[0]['witness']['kind']=='submitted_firm_list'
+    # Count bound still rejects when observed names exceed stated count.
+    row['text']=row['text'].replace('two (2)','one (1)')
+    assert not city_bulk.propose(conn,row)[0]
+
+
+def test_native_tender_opened_following_tenders_admits_priced_rows_and_excludes_no_bid(conn,tmp_path,monkeypatch):
+    from tests.test_city_archived_awards import setup_archive
+    setup_archive(conn,tmp_path,monkeypatch)
+    row=tender_report()
+    row['text']=row['text'].replace('opened the following Tender submissions:','opened the following Tenders:')
+    accepted,held=city_bulk.propose(conn,row)
+    assert not held and accepted[0]['names']==['Alberici Constructors Ltd.','Maple Reinders Limited']
+    assert accepted[0]['witness']['kind']=='native_tender_received_table'
+    assert [e['name'] for e in accepted[0]['witness']['excluded_no_bid']]==['Other Firm']

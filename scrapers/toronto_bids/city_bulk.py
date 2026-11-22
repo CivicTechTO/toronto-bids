@@ -18,6 +18,7 @@ _NATIVE_PARTICIPATION=re.compile(r'\breceipt\b.{0,100}\b(?:bids?|proposals?|subm
 _DOC=re.compile(r'\b(?:Doc(?:ument)?\.?(?:\s+(?:Number|No\.?))?|RFP|RFQ|RFT)\s*[:#]?\s*(\d{10})(?!\d)',re.I)
 _LIST=re.compile(r'\bfollowing\b(?=[^:]{0,160}\b(?:firms?|bidders?|proponents?|suppliers?|submissions?)\b)[^:]{0,160}:\s*\n',re.I)
 _SOURCE_COUNT=r'(?:[A-Za-z]+(?:-[A-Za-z]+)?\s*\(\d+\)|\d+)'
+_RESPONDED_LIST=re.compile(r'\b(?:(?P<count>'+_SOURCE_COUNT+r')\s+)?(?:firms?|bidders?|proponents?|suppliers?)\s+responded\s+to\s+the\s+(?:RFP|RFT|RFQ|Call|Tender|Solicitation|Request\s+for\s+(?:Proposals?|Quotations?|Tenders?))\b[^:\n]{0,80}\bas\s+follows:\s*\n',re.I)
 _RECEIVED_LIST_COUNT=re.compile(r'\b(?P<count>'+_SOURCE_COUNT+r')\s+(?:bids?|proposals?|submissions?|responses?)\b.{0,100}\breceived\b|\breceipt\s+of\s+(?:a\s+total\s+of\s+)?(?P<receipt>'+_SOURCE_COUNT+r')\s+(?:bids?|proposals?|submissions?)\b',re.I)
 _TABLE=re.compile(r'\bTable\s+\d+\s*:\s*Summary\s+(?:of\s+)?(?:(?P<count>'+_SOURCE_COUNT+r')\s+)?(?:Bids|Proposals|Submissions)\s+Received\b[^\n]*(?:\n|$)',re.I)
 _RESPONDED_TABLE=re.compile(r'\bTable\s+(?P<table>\d+)\s*:\s*Suppliers\s+and\s+Fixed\s+Bid\s+Prices\b[^\n]*(?:\n|$)',re.I)
@@ -97,6 +98,7 @@ def propose(archive, row, native_identities=None):
             if not tender and any(b.get('status')=='no_bid' for b in raw):raise ValueError('no_bid_outcome_requires_review')
             witness=tender[1] if tender else None
             markers=sorted([(m,'submitted_firm_list') for m in _LIST.finditer(text)]+
+                           [(m,'submitted_firm_list') for m in _RESPONDED_LIST.finditer(text)]+
                            [(m,'submitted_bid_table') for m in _TABLE.finditer(text)]+
                            [(m,'submitted_bid_table') for m in _RESPONDED_TABLE.finditer(text)],key=lambda pair:pair[0].start())
             for marker,kind in ([] if tender else markers):
@@ -107,7 +109,7 @@ def propose(archive, row, native_identities=None):
                     response=_RESPONDED_LEAD.search(clean(text[max(0,marker.start()-350):marker.start()]))
                     if not response or response['table']!=marker['table'] or set(_DOC.findall(marker[0]))!={doc}:continue
                     count_quotation=response['count']
-                elif not (_PARTICIPATION.search(lead) or (call and _NATIVE_PARTICIPATION.search(lead))):continue
+                elif marker.re is not _RESPONDED_LIST and not (_PARTICIPATION.search(lead) or (call and _NATIVE_PARTICIPATION.search(lead))):continue
                 counts=[count_quotation] if count_quotation else []
                 if call and marker.re is _LIST:
                     counts.extend(m['count'] or m['receipt'] for m in _RECEIVED_LIST_COUNT.finditer(lead))
@@ -170,18 +172,45 @@ def inventory(directory, archive):
     finally:conn.close()
 
 
-def queue(directory, archive, *, client, limit=50, include_unlocated=False, log=lambda m:None):
+def _native_call_target(row, native_identities):
+    """Resolve a unique primary-subject/agenda-title native Call Number via archived-award proofs."""
+    text=row['text'] or ''
+    if _DOC.findall(text):return None
+    calls=find_call_numbers(_primary_heading(text))
+    if len(calls)!=1:return None
+    call=next(iter(calls))
+    items=[i for i in row['items'] if find_call_numbers(i['title'])=={call} and not _DOC.findall(i['title'])]
+    if not items:return None
+    for page in text.split('\f'):
+        tail='\n'.join([line for line in page.splitlines() if line.strip()][-2:])
+        if re.search(r'\bPage\s+\d+\s+of\s+\d+\b',tail,re.I) and find_call_numbers(tail)-{call}:
+            return None
+    try:
+        doc,_=native_identities.resolve(call)
+    except ValueError:
+        return None
+    return doc
+
+
+def queue(directory, archive, *, client, limit=50, include_unlocated=False, native_identities=None, log=lambda m:None):
     """Queue eligible unique PDF hashes via the shared batch client without submitting or writing facts."""
     missing={r[0] for r in archive.execute("SELECT s.document_number FROM solicitation s WHERE "
         "EXISTS(SELECT 1 FROM award a WHERE a.document_number=s.document_number AND a.source='odata') AND "
         "NOT EXISTS(SELECT 1 FROM bid b WHERE b.document_number=s.document_number OR b.procurement_id=s.procurement_id)")}
+    if native_identities is None:
+        from toronto_bids.linking.city_bulk_identity import NativeCallIdentities
+        native_identities=NativeCallIdentities(archive)
     rows=inventory(directory,archive)
     def priority(row):
         printed=set(_DOC.findall(row['text'] or ''))
         primary=set().union(*(set(_DOC.findall(i['title'])) for i in row['items']))
-        row['covered_primary']=bool(primary) and not bool(primary & missing)
-        row['discovery_targets']=(printed|primary)&missing
-        return (not bool(printed & missing),row['covered_primary'],row['url'])
+        native_doc=None
+        if not printed and not primary and row['screen']=='eligible':
+            native_doc=_native_call_target(row,native_identities)
+        primary_targets=primary|({native_doc} if native_doc else set())
+        row['covered_primary']=bool(primary_targets) and not bool(primary_targets & missing)
+        row['discovery_targets']=(printed|primary_targets)&missing
+        return (not bool((printed|({native_doc} if native_doc else set())) & missing),row['covered_primary'],row['url'])
     rows.sort(key=priority)
     counts=Counter();seen=set();queued=0
     for row in rows:

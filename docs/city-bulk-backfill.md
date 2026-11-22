@@ -28,7 +28,7 @@ uv run python -m toronto_bids.city_bulk run \
 
 - Point `--budget-database` at the installation's shared `llm-usage.sqlite` so all spending shares one queue and monthly cap.
 - Preparation deduplicates PDF hashes, reuses existing cache entries, and filters out maps or documents without participation language.
-- By default, only reports whose printed or agenda Doc number targets an awarded City solicitation currently missing bids are sent to Claude. Pass `--include-unlocated` only for bounded research cohorts.
+- By default, only reports whose printed/agenda Doc number or proven historical Call Number (`NativeCallIdentities`, matching primary report subject and agenda title with no conflicting footers) targets an awarded City solicitation currently missing bids are sent to Claude. Pass `--include-unlocated` only for bounded research cohorts.
 - Collect results through the normal operational command against the authoritative database (holding `.pipeline.lock`):
 
 ```sh
