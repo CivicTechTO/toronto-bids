@@ -33,7 +33,9 @@ _AWARD_CEILING_RE = re.compile(
 def _build_candidate_schema():
     schema = copy.deepcopy(EXTRACTION_SCHEMA)
     bid_schema = schema['properties']['contracts']['items']['properties']['bids']['items']
-    bid_schema['properties']['amount_evidence'] = {'type': ['string', 'null']}
+    # Plain string (empty "" when amount_raw is null) to stay within Anthropic's
+    # 16 union-typed parameter grammar limit (EXTRACTION_SCHEMA already uses 16).
+    bid_schema['properties']['amount_evidence'] = {'type': 'string'}
     bid_schema['required'] = list(bid_schema['properties'])
     return schema
 
@@ -62,8 +64,8 @@ For every entry in bids:
 - If amount_raw is non-null, set amount_evidence to the verbatim literal passage
   from the document text containing the exact amount_raw string and establishing
   it as that bidder's submitted bid/tender price (not an award or upset limit).
-- If no submitted bid price is published for that bidder, set BOTH amount_raw and
-  amount_evidence to null. Never copy an award value or "for up to" award ceiling
+- If no submitted bid price is published for that bidder, set amount_raw to null
+  and amount_evidence to "". Never copy an award value or "for up to" award ceiling
   into bids[].amount_raw unless the document explicitly states that exact figure
   as the bidder's submitted bid price.
 Choose the stated initial-term award rather than an optional-renewal or
@@ -233,7 +235,7 @@ def validate_candidate_extraction(extraction, source_text):
                 })
                 bid['amount_raw'] = None
                 bid['amount_basis'] = None
-                bid['amount_evidence'] = None
+                bid['amount_evidence'] = ''
 
         kept_contracts.append(contract)
 

@@ -1,6 +1,6 @@
 # Extraction qualification cohort (#302)
 
-The [2026-11-22 evidence-backed candidate campaign](followups/2026-11-22/) is prepared offline (72 requests, 0 sent) with a separately versioned prompt (`eval-3e995e90436c`) and schema adding `bids[].amount_evidence`, applying the settled #302 policy rules (strictly local award tax basis and empty contract arrays for ongoing-procurement status updates) and expanding the untouched holdout across all seven previously absent corpora (`award_summary`, `ba_report`, `bd_report`, `committee`, `composite`, `ttc`, `waterfront`). Reproduce the offline pre-flight summary without credentials or network access:
+The [72-request evidence-backed candidate follow-up](../../extraction-sonnet-evidence-followup-2026-11-22.md) ([artifacts](followups/2026-11-22/)) evaluates a separately versioned prompt (`eval-ba22775bee20`) and 16-union schema (`29ef423d8d1d`, adding `bids[].amount_evidence` as a plain string) across all seven previously absent corpora plus eleven regression/control cases under the settled #302 policy rules. Unpublished-price copying, `prequalified`-only overlaps, and ongoing-procurement stubs dropped to zero across all 72 responses, but over-strict tax/compliance prompt wording and contiguous-substring `amount_evidence` rejections prevent promotion. Reproduce offline without credentials or network access:
 
 ```sh
 uv run --project scrapers python docs/ground-truth/extraction-qualification/followups/2026-11-22/summarize.py

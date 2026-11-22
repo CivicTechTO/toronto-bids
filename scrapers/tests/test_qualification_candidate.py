@@ -117,7 +117,7 @@ def test_validate_submitted_price_evidence_rules():
     for nulled in ('Missing Evidence Co.', 'Fabricated Quote Co.', 'Imperial Fence, Inc.'):
         assert bids[nulled]['amount_raw'] is None
         assert bids[nulled]['amount_basis'] is None
-        assert bids[nulled]['amount_evidence'] is None
+        assert bids[nulled]['amount_evidence'] == ''
     assert len(interventions) == 3
     assert all(i['rule'] == 'submitted_price_evidence' for i in interventions)
 
@@ -311,6 +311,9 @@ def test_2026_11_22_campaign_reproducible_and_disjoint():
     committed = json.loads((CAMPAIGN_22 / 'summary.json').read_text())
     assert reproduced == committed
     assert committed['prompt_only']['total']['requests'] == 72
-    assert committed['prompt_only']['total']['states'] == {'pending': 72}
-    assert committed['prompt_only']['total']['charged_microdollars'] == 0
+    assert committed['prompt_only']['total']['states'] == {'success': 72}
+    assert committed['unique_response_ids'] == 72
+    assert committed['prompt_only']['total']['charged_microdollars'] == 985214
+    assert committed['prompt_only']['total']['exact_relations']['correct'] == 377
+    assert committed['evidence_validated']['total']['exact_relations']['correct'] == 354
     assert committed['production_qualified'] is False

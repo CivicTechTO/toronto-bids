@@ -57,3 +57,4 @@ Reference documentation for the Toronto Bids archive and scraper.
   - [Completed paired Claude qualification](extraction-qualification-live-2026-11-13.md)
   - [Model, effort and prompt comparison](extraction-model-effort-prompt-comparison-2026-11-13.md)
   - [Revised Sonnet prompt: held-out cases, repeats and batch testing](extraction-sonnet-revised-followup-2026-11-15.md)
+  - [Evidence-backed Sonnet candidate and expanded holdout](extraction-sonnet-evidence-followup-2026-11-22.md)

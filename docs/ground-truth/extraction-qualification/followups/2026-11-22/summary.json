@@ -1,158 +1,158 @@
 {
   "campaign": "2026-11-22-sonnet-evidence",
   "cohort_sha256": "6024baeb0c81df79ec2a0c19aeeda0fb7ef4d2d7a4f97fe0cd45cbf4ee022638",
-  "prompt_version": "eval-3e995e90436c",
-  "schema_sha256": "e64065a2d8c3082bbd57a1d360245de9882a75c1007eb2d67b9826b04574d2fb",
+  "prompt_version": "eval-ba22775bee20",
+  "schema_sha256": "29ef423d8d1d4da3795d25a847646b856351017c938ea973f28748a9981791a2",
   "model": "claude-sonnet-5-5",
   "effort": "high",
   "settled_policies": {
     "award_tax_basis": "strictly_local_unknown",
     "ongoing_procurement_scope": "empty_contracts_array"
   },
-  "unique_response_ids": 0,
+  "unique_response_ids": 72,
   "prompt_only": {
     "total": {
       "requests": 72,
       "states": {
-        "pending": 72
+        "success": 72
       },
       "exact_relations": {
-        "expected": 0,
-        "observed": 0,
-        "correct": 0,
-        "omissions": 0,
-        "attribute_errors": 0,
-        "false_joins": 0,
+        "expected": 448,
+        "observed": 448,
+        "correct": 377,
+        "omissions": 71,
+        "attribute_errors": 42,
+        "false_joins": 29,
         "fabrications": 0,
         "duplicates": 0,
         "planned_expected": 448
       },
-      "numeric_correct": 0,
-      "exact_documents": 0,
-      "charged_microdollars": 0
+      "numeric_correct": 385,
+      "exact_documents": 47,
+      "charged_microdollars": 985214
     },
     "partitions": {
       "held_out_new_corpora": {
         "requests": 28,
         "states": {
-          "pending": 28
+          "success": 28
         },
         "exact_relations": {
-          "expected": 0,
-          "observed": 0,
-          "correct": 0,
-          "omissions": 0,
-          "attribute_errors": 0,
+          "expected": 116,
+          "observed": 116,
+          "correct": 95,
+          "omissions": 21,
+          "attribute_errors": 21,
           "false_joins": 0,
           "fabrications": 0,
           "duplicates": 0,
           "planned_expected": 116
         },
-        "numeric_correct": 0,
-        "exact_documents": 0,
-        "charged_microdollars": 0,
+        "numeric_correct": 103,
+        "exact_documents": 15,
+        "charged_microdollars": 322308,
         "by_mode": {
           "sync": {
             "requests": 14,
             "states": {
-              "pending": 14
+              "success": 14
             },
             "exact_relations": {
-              "expected": 0,
-              "observed": 0,
-              "correct": 0,
-              "omissions": 0,
-              "attribute_errors": 0,
+              "expected": 58,
+              "observed": 58,
+              "correct": 47,
+              "omissions": 11,
+              "attribute_errors": 11,
               "false_joins": 0,
               "fabrications": 0,
               "duplicates": 0,
               "planned_expected": 58
             },
-            "numeric_correct": 0,
-            "exact_documents": 0,
-            "charged_microdollars": 0
+            "numeric_correct": 51,
+            "exact_documents": 7,
+            "charged_microdollars": 211281
           },
           "batch": {
             "requests": 14,
             "states": {
-              "pending": 14
+              "success": 14
             },
             "exact_relations": {
-              "expected": 0,
-              "observed": 0,
-              "correct": 0,
-              "omissions": 0,
-              "attribute_errors": 0,
+              "expected": 58,
+              "observed": 58,
+              "correct": 48,
+              "omissions": 10,
+              "attribute_errors": 10,
               "false_joins": 0,
               "fabrications": 0,
               "duplicates": 0,
               "planned_expected": 58
             },
-            "numeric_correct": 0,
-            "exact_documents": 0,
-            "charged_microdollars": 0
+            "numeric_correct": 52,
+            "exact_documents": 8,
+            "charged_microdollars": 111027
           }
         }
       },
       "regression": {
         "requests": 44,
         "states": {
-          "pending": 44
+          "success": 44
         },
         "exact_relations": {
-          "expected": 0,
-          "observed": 0,
-          "correct": 0,
-          "omissions": 0,
-          "attribute_errors": 0,
-          "false_joins": 0,
+          "expected": 332,
+          "observed": 332,
+          "correct": 282,
+          "omissions": 50,
+          "attribute_errors": 21,
+          "false_joins": 29,
           "fabrications": 0,
           "duplicates": 0,
           "planned_expected": 332
         },
-        "numeric_correct": 0,
-        "exact_documents": 0,
-        "charged_microdollars": 0,
+        "numeric_correct": 282,
+        "exact_documents": 32,
+        "charged_microdollars": 662906,
         "by_mode": {
           "sync": {
             "requests": 22,
             "states": {
-              "pending": 22
+              "success": 22
             },
             "exact_relations": {
-              "expected": 0,
-              "observed": 0,
-              "correct": 0,
-              "omissions": 0,
-              "attribute_errors": 0,
-              "false_joins": 0,
+              "expected": 166,
+              "observed": 166,
+              "correct": 132,
+              "omissions": 34,
+              "attribute_errors": 7,
+              "false_joins": 27,
               "fabrications": 0,
               "duplicates": 0,
               "planned_expected": 166
             },
-            "numeric_correct": 0,
-            "exact_documents": 0,
-            "charged_microdollars": 0
+            "numeric_correct": 132,
+            "exact_documents": 17,
+            "charged_microdollars": 438348
           },
           "batch": {
             "requests": 22,
             "states": {
-              "pending": 22
+              "success": 22
             },
             "exact_relations": {
-              "expected": 0,
-              "observed": 0,
-              "correct": 0,
-              "omissions": 0,
-              "attribute_errors": 0,
-              "false_joins": 0,
+              "expected": 166,
+              "observed": 166,
+              "correct": 150,
+              "omissions": 16,
+              "attribute_errors": 14,
+              "false_joins": 2,
               "fabrications": 0,
               "duplicates": 0,
               "planned_expected": 166
             },
-            "numeric_correct": 0,
-            "exact_documents": 0,
-            "charged_microdollars": 0
+            "numeric_correct": 150,
+            "exact_documents": 15,
+            "charged_microdollars": 224558
           }
         }
       }
@@ -162,151 +162,415 @@
     "total": {
       "requests": 72,
       "states": {
-        "pending": 72
+        "success": 72
       },
       "exact_relations": {
-        "expected": 0,
-        "observed": 0,
-        "correct": 0,
-        "omissions": 0,
-        "attribute_errors": 0,
-        "false_joins": 0,
+        "expected": 448,
+        "observed": 448,
+        "correct": 354,
+        "omissions": 94,
+        "attribute_errors": 65,
+        "false_joins": 29,
         "fabrications": 0,
         "duplicates": 0,
         "planned_expected": 448
       },
-      "numeric_correct": 0,
-      "exact_documents": 0,
-      "charged_microdollars": 0
+      "numeric_correct": 362,
+      "exact_documents": 40,
+      "charged_microdollars": 985214
     },
     "partitions": {
       "held_out_new_corpora": {
         "requests": 28,
         "states": {
-          "pending": 28
+          "success": 28
         },
         "exact_relations": {
-          "expected": 0,
-          "observed": 0,
-          "correct": 0,
-          "omissions": 0,
-          "attribute_errors": 0,
+          "expected": 116,
+          "observed": 116,
+          "correct": 95,
+          "omissions": 21,
+          "attribute_errors": 21,
           "false_joins": 0,
           "fabrications": 0,
           "duplicates": 0,
           "planned_expected": 116
         },
-        "numeric_correct": 0,
-        "exact_documents": 0,
-        "charged_microdollars": 0,
+        "numeric_correct": 103,
+        "exact_documents": 15,
+        "charged_microdollars": 322308,
         "by_mode": {
           "sync": {
             "requests": 14,
             "states": {
-              "pending": 14
+              "success": 14
             },
             "exact_relations": {
-              "expected": 0,
-              "observed": 0,
-              "correct": 0,
-              "omissions": 0,
-              "attribute_errors": 0,
+              "expected": 58,
+              "observed": 58,
+              "correct": 47,
+              "omissions": 11,
+              "attribute_errors": 11,
               "false_joins": 0,
               "fabrications": 0,
               "duplicates": 0,
               "planned_expected": 58
             },
-            "numeric_correct": 0,
-            "exact_documents": 0,
-            "charged_microdollars": 0
+            "numeric_correct": 51,
+            "exact_documents": 7,
+            "charged_microdollars": 211281
           },
           "batch": {
             "requests": 14,
             "states": {
-              "pending": 14
+              "success": 14
             },
             "exact_relations": {
-              "expected": 0,
-              "observed": 0,
-              "correct": 0,
-              "omissions": 0,
-              "attribute_errors": 0,
+              "expected": 58,
+              "observed": 58,
+              "correct": 48,
+              "omissions": 10,
+              "attribute_errors": 10,
               "false_joins": 0,
               "fabrications": 0,
               "duplicates": 0,
               "planned_expected": 58
             },
-            "numeric_correct": 0,
-            "exact_documents": 0,
-            "charged_microdollars": 0
+            "numeric_correct": 52,
+            "exact_documents": 8,
+            "charged_microdollars": 111027
           }
         }
       },
       "regression": {
         "requests": 44,
         "states": {
-          "pending": 44
+          "success": 44
         },
         "exact_relations": {
-          "expected": 0,
-          "observed": 0,
-          "correct": 0,
-          "omissions": 0,
-          "attribute_errors": 0,
-          "false_joins": 0,
+          "expected": 332,
+          "observed": 332,
+          "correct": 259,
+          "omissions": 73,
+          "attribute_errors": 44,
+          "false_joins": 29,
           "fabrications": 0,
           "duplicates": 0,
           "planned_expected": 332
         },
-        "numeric_correct": 0,
-        "exact_documents": 0,
-        "charged_microdollars": 0,
+        "numeric_correct": 259,
+        "exact_documents": 25,
+        "charged_microdollars": 662906,
         "by_mode": {
           "sync": {
             "requests": 22,
             "states": {
-              "pending": 22
+              "success": 22
             },
             "exact_relations": {
-              "expected": 0,
-              "observed": 0,
-              "correct": 0,
-              "omissions": 0,
-              "attribute_errors": 0,
-              "false_joins": 0,
+              "expected": 166,
+              "observed": 166,
+              "correct": 120,
+              "omissions": 46,
+              "attribute_errors": 19,
+              "false_joins": 27,
               "fabrications": 0,
               "duplicates": 0,
               "planned_expected": 166
             },
-            "numeric_correct": 0,
-            "exact_documents": 0,
-            "charged_microdollars": 0
+            "numeric_correct": 120,
+            "exact_documents": 13,
+            "charged_microdollars": 438348
           },
           "batch": {
             "requests": 22,
             "states": {
-              "pending": 22
+              "success": 22
             },
             "exact_relations": {
-              "expected": 0,
-              "observed": 0,
-              "correct": 0,
-              "omissions": 0,
-              "attribute_errors": 0,
-              "false_joins": 0,
+              "expected": 166,
+              "observed": 166,
+              "correct": 139,
+              "omissions": 27,
+              "attribute_errors": 25,
+              "false_joins": 2,
               "fabrications": 0,
               "duplicates": 0,
               "planned_expected": 166
             },
-            "numeric_correct": 0,
-            "exact_documents": 0,
-            "charged_microdollars": 0
+            "numeric_correct": 139,
+            "exact_documents": 12,
+            "charged_microdollars": 224558
           }
         }
       }
     }
   },
-  "validation_interventions": [],
+  "validation_interventions": [
+    {
+      "run": "2026-11-22-sonnet-evidence-sync-1",
+      "mode": "sync",
+      "repeat": 1,
+      "document": "award-summary",
+      "interventions": [
+        {
+          "rule": "submitted_price_evidence",
+          "contract": "Doc5349398029",
+          "supplier": "Kemira Water Solutions Canada Inc",
+          "original_amount": "$8,190,439.34",
+          "original_basis": "plus_HST",
+          "original_evidence": "Supplier Name                                                                       Bid Price (Excl. HST)\n* indicates non-compliant Supplier\n\n1. Kemira Water Solutions Canada Inc                                                $8,190,439.34",
+          "reason": "amount_evidence is not a verbatim substring of source text"
+        }
+      ]
+    },
+    {
+      "run": "2026-11-22-sonnet-evidence-sync-1",
+      "mode": "sync",
+      "repeat": 1,
+      "document": "ep-bus-duct",
+      "interventions": [
+        {
+          "rule": "submitted_price_evidence",
+          "contract": "19-081-98116",
+          "supplier": "Sutherland-Schultz Ltd.",
+          "original_amount": "$418,854.47",
+          "original_basis": "plus_HST",
+          "original_evidence": "Five (5) bidders came to the mandatory site tour meeting and five (5) official tenders were received. Their price submissions, excluding HST, are as shown in the following table: Sutherland-Schultz Ltd. $418,854.47 $403,854.47",
+          "reason": "amount_evidence is not a verbatim substring of source text"
+        },
+        {
+          "rule": "submitted_price_evidence",
+          "contract": "19-081-98116",
+          "supplier": "Ontario Electrical Construction Co. Ltd.",
+          "original_amount": "$461,522.00",
+          "original_basis": "plus_HST",
+          "original_evidence": "Their price submissions, excluding HST, are as shown in the following table: Ontario Electrical Construction Co. Ltd. $461,522.00",
+          "reason": "amount_evidence is not a verbatim substring of source text"
+        },
+        {
+          "rule": "submitted_price_evidence",
+          "contract": "19-081-98116",
+          "supplier": "Modern Niagara Toronto Inc.",
+          "original_amount": "$470,700.00",
+          "original_basis": "plus_HST",
+          "original_evidence": "Their price submissions, excluding HST, are as shown in the following table: Modern Niagara Toronto Inc. $470,700.00*",
+          "reason": "amount_evidence is not a verbatim substring of source text"
+        },
+        {
+          "rule": "submitted_price_evidence",
+          "contract": "19-081-98116",
+          "supplier": "Stevens & Black Electrical Contractors Ltd.",
+          "original_amount": "$518,000.00",
+          "original_basis": "plus_HST",
+          "original_evidence": "Their price submissions, excluding HST, are as shown in the following table: Stevens & Black Electrical Contractors Ltd. $518,000.00",
+          "reason": "amount_evidence is not a verbatim substring of source text"
+        },
+        {
+          "rule": "submitted_price_evidence",
+          "contract": "19-081-98116",
+          "supplier": "Rogol Electric Company Limited",
+          "original_amount": "$546,350.00",
+          "original_basis": "plus_HST",
+          "original_evidence": "Their price submissions, excluding HST, are as shown in the following table: Rogol Electric Company Limited $546,350.00",
+          "reason": "amount_evidence is not a verbatim substring of source text"
+        }
+      ]
+    },
+    {
+      "run": "2026-11-22-sonnet-evidence-sync-2",
+      "mode": "sync",
+      "repeat": 2,
+      "document": "award-summary",
+      "interventions": [
+        {
+          "rule": "submitted_price_evidence",
+          "contract": "Doc5349398029",
+          "supplier": "Kemira Water Solutions Canada Inc",
+          "original_amount": "$8,190,439.34",
+          "original_basis": "plus_HST",
+          "original_evidence": "Supplier Name                                                                       Bid Price (Excl. HST)\n1. Kemira Water Solutions Canada Inc                                                $8,190,439.34",
+          "reason": "amount_evidence is not a verbatim substring of source text"
+        }
+      ]
+    },
+    {
+      "run": "2026-11-22-sonnet-evidence-sync-2",
+      "mode": "sync",
+      "repeat": 2,
+      "document": "ep-bus-duct",
+      "interventions": [
+        {
+          "rule": "submitted_price_evidence",
+          "contract": "19-081-98116",
+          "supplier": "Sutherland-Schultz Ltd.",
+          "original_amount": "$418,854.47",
+          "original_basis": "plus_HST",
+          "original_evidence": "Their price submissions, excluding HST, are as shown in the following table: Sutherland-Schultz Ltd. $418,854.47 $403,854.47",
+          "reason": "amount_evidence is not a verbatim substring of source text"
+        },
+        {
+          "rule": "submitted_price_evidence",
+          "contract": "19-081-98116",
+          "supplier": "Ontario Electrical Construction Co. Ltd.",
+          "original_amount": "$461,522.00",
+          "original_basis": "plus_HST",
+          "original_evidence": "Their price submissions, excluding HST, are as shown in the following table: Ontario Electrical Construction Co. Ltd. $461,522.00",
+          "reason": "amount_evidence is not a verbatim substring of source text"
+        },
+        {
+          "rule": "submitted_price_evidence",
+          "contract": "19-081-98116",
+          "supplier": "Modern Niagara Toronto Inc.",
+          "original_amount": "$470,700.00",
+          "original_basis": "plus_HST",
+          "original_evidence": "Their price submissions, excluding HST, are as shown in the following table: Modern Niagara Toronto Inc. $470,700.00* (* Identifies revised tender price after correcting the mathematical/transposing error(s))",
+          "reason": "amount_evidence is not a verbatim substring of source text"
+        },
+        {
+          "rule": "submitted_price_evidence",
+          "contract": "19-081-98116",
+          "supplier": "Stevens & Black Electrical Contractors Ltd.",
+          "original_amount": "$518,000.00",
+          "original_basis": "plus_HST",
+          "original_evidence": "Their price submissions, excluding HST, are as shown in the following table: Stevens & Black Electrical Contractors Ltd. $518,000.00",
+          "reason": "amount_evidence is not a verbatim substring of source text"
+        },
+        {
+          "rule": "submitted_price_evidence",
+          "contract": "19-081-98116",
+          "supplier": "Rogol Electric Company Limited",
+          "original_amount": "$546,350.00",
+          "original_basis": "plus_HST",
+          "original_evidence": "Their price submissions, excluding HST, are as shown in the following table: Rogol Electric Company Limited $546,350.00",
+          "reason": "amount_evidence is not a verbatim substring of source text"
+        }
+      ]
+    },
+    {
+      "run": "2026-11-22-sonnet-evidence-batch-1",
+      "mode": "batch",
+      "repeat": 1,
+      "document": "award-summary",
+      "interventions": [
+        {
+          "rule": "submitted_price_evidence",
+          "contract": "Doc5349398029",
+          "supplier": "Kemira Water Solutions Canada Inc",
+          "original_amount": "$8,190,439.34",
+          "original_basis": "plus_HST",
+          "original_evidence": "Supplier Name                                                                       Bid Price (Excl. HST)",
+          "reason": "amount_raw does not appear inside amount_evidence"
+        }
+      ]
+    },
+    {
+      "run": "2026-11-22-sonnet-evidence-batch-1",
+      "mode": "batch",
+      "repeat": 1,
+      "document": "ep-bus-duct",
+      "interventions": [
+        {
+          "rule": "submitted_price_evidence",
+          "contract": "19-081-98116",
+          "supplier": "Sutherland-Schultz Ltd.",
+          "original_amount": "$418,854.47",
+          "original_basis": "plus_HST",
+          "original_evidence": "Five (5) bidders came to the mandatory site tour meeting and five (5) official tenders were received. Their price submissions, excluding HST, are as shown in the following table: Sutherland-Schultz Ltd. $418,854.47 $403,854.47",
+          "reason": "amount_evidence is not a verbatim substring of source text"
+        },
+        {
+          "rule": "submitted_price_evidence",
+          "contract": "19-081-98116",
+          "supplier": "Ontario Electrical Construction Co. Ltd.",
+          "original_amount": "$461,522.00",
+          "original_basis": "plus_HST",
+          "original_evidence": "Their price submissions, excluding HST, are as shown in the following table: Ontario Electrical Construction Co. Ltd. $461,522.00",
+          "reason": "amount_evidence is not a verbatim substring of source text"
+        },
+        {
+          "rule": "submitted_price_evidence",
+          "contract": "19-081-98116",
+          "supplier": "Modern Niagara Toronto Inc.",
+          "original_amount": "$470,700.00",
+          "original_basis": "plus_HST",
+          "original_evidence": "Their price submissions, excluding HST, are as shown in the following table: Modern Niagara Toronto Inc. $470,700.00*",
+          "reason": "amount_evidence is not a verbatim substring of source text"
+        },
+        {
+          "rule": "submitted_price_evidence",
+          "contract": "19-081-98116",
+          "supplier": "Stevens & Black Electrical Contractors Ltd.",
+          "original_amount": "$518,000.00",
+          "original_basis": "plus_HST",
+          "original_evidence": "Their price submissions, excluding HST, are as shown in the following table: Stevens & Black Electrical Contractors Ltd. $518,000.00",
+          "reason": "amount_evidence is not a verbatim substring of source text"
+        },
+        {
+          "rule": "submitted_price_evidence",
+          "contract": "19-081-98116",
+          "supplier": "Rogol Electric Company Limited",
+          "original_amount": "$546,350.00",
+          "original_basis": "plus_HST",
+          "original_evidence": "Their price submissions, excluding HST, are as shown in the following table: Rogol Electric Company Limited $546,350.00",
+          "reason": "amount_evidence is not a verbatim substring of source text"
+        }
+      ]
+    },
+    {
+      "run": "2026-11-22-sonnet-evidence-batch-2",
+      "mode": "batch",
+      "repeat": 2,
+      "document": "ep-bus-duct",
+      "interventions": [
+        {
+          "rule": "submitted_price_evidence",
+          "contract": "19-081-98116",
+          "supplier": "Sutherland-Schultz Ltd.",
+          "original_amount": "$418,854.47",
+          "original_basis": "plus_HST",
+          "original_evidence": "Five (5) bidders came to the mandatory site tour meeting and five (5) official tenders were received. Their price submissions, excluding HST, are as shown in the following table: Sutherland-Schultz Ltd. $418,854.47 $403,854.47",
+          "reason": "amount_evidence is not a verbatim substring of source text"
+        },
+        {
+          "rule": "submitted_price_evidence",
+          "contract": "19-081-98116",
+          "supplier": "Ontario Electrical Construction Co. Ltd.",
+          "original_amount": "$461,522.00",
+          "original_basis": "plus_HST",
+          "original_evidence": "Their price submissions, excluding HST, are as shown in the following table: Ontario Electrical Construction Co. Ltd. $461,522.00",
+          "reason": "amount_evidence is not a verbatim substring of source text"
+        },
+        {
+          "rule": "submitted_price_evidence",
+          "contract": "19-081-98116",
+          "supplier": "Modern Niagara Toronto Inc.",
+          "original_amount": "$470,700.00",
+          "original_basis": "plus_HST",
+          "original_evidence": "Their price submissions, excluding HST, are as shown in the following table: Modern Niagara Toronto Inc. $470,700.00*",
+          "reason": "amount_evidence is not a verbatim substring of source text"
+        },
+        {
+          "rule": "submitted_price_evidence",
+          "contract": "19-081-98116",
+          "supplier": "Stevens & Black Electrical Contractors Ltd.",
+          "original_amount": "$518,000.00",
+          "original_basis": "plus_HST",
+          "original_evidence": "Their price submissions, excluding HST, are as shown in the following table: Stevens & Black Electrical Contractors Ltd. $518,000.00",
+          "reason": "amount_evidence is not a verbatim substring of source text"
+        },
+        {
+          "rule": "submitted_price_evidence",
+          "contract": "19-081-98116",
+          "supplier": "Rogol Electric Company Limited",
+          "original_amount": "$546,350.00",
+          "original_basis": "plus_HST",
+          "original_evidence": "Their price submissions, excluding HST, are as shown in the following table: Rogol Electric Company Limited $546,350.00",
+          "reason": "amount_evidence is not a verbatim substring of source text"
+        }
+      ]
+    }
+  ],
   "production_qualified": false,
   "limitations": [
     "Purposive source-level holdout across the seven previously absent corpora, not a random archive sample.",

@@ -1,0 +1,18 @@
+{
+  "requests": 72,
+  "unique_response_ids": 72,
+  "unique_reservations": 72,
+  "reported_reservations": 72,
+  "unsettled_reservations": 0,
+  "charged_microdollars": 985214,
+  "sync_charged_microdollars": 649629,
+  "batch_charged_microdollars": 335585,
+  "cache_before": {
+    "rows": 3299,
+    "sha256": "59e1cb00ced2449b02e7a322a044b1158172a8afc647ffa69dc5001deb015866"
+  },
+  "cache_after": {
+    "rows": 3299,
+    "sha256": "59e1cb00ced2449b02e7a322a044b1158172a8afc647ffa69dc5001deb015866"
+  }
+}
