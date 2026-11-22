@@ -119,6 +119,13 @@ PORTAL_RECORDINGS_DIR = DATA_DIR / "agencies" / "portal_recordings"
 EP_AGENDAS_DIR = DATA_DIR / "agencies" / "ep" / "agendas"
 EP_REPORTS_DIR = DATA_DIR / "agencies" / "ep"
 
+TCHC_PAST_MEETINGS_URL = (
+    "https://torontohousing.ca/board-and-governance/past-board-and-committee-meetings"
+)
+TCHC_MEETINGS_DIR = DATA_DIR / "agencies" / "tchc" / "meetings"
+TCHC_REPORTS_DIR = DATA_DIR / "agencies" / "tchc"
+TCHC_MIN_YEAR = 2021
+
 _REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 CLASSIFICATION_LABELS_PATH = (
     _REPO_ROOT

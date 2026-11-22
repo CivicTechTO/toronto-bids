@@ -25,10 +25,10 @@ DEFAULT_BUYERS = [
     Buyer(slug="toronto-community-housing",
           name="Toronto Community Housing and Toronto Seniors Housing", kind="corporation",
           partnered=0, funding_share=None, platform="Bonfire",
-          notes="Shared public TCHC/TSHC portal (#107). Listings include TCHC, TSHC and "
-                "joint departments; this profile groups the portal and does not assign "
-                "each posting to one corporation. Closed/Awarded listing badges do not "
-                "establish supplier or value award facts."),
+          notes="Shared public TCHC/TSHC portal (#107) plus TCHC BIFAC and Board "
+                "procurement award reports from torontohousing.ca (#332). Listings "
+                "include TCHC, TSHC and joint departments; closed/awarded portal "
+                "badges do not establish supplier or value award facts."),
     Buyer(slug="toronto-public-library", name="Toronto Public Library", kind="agency",
           partnered=0, funding_share=None, platform="Bonfire",
           notes="Public Open/Past opportunity listings captured from the Library's "

@@ -16,6 +16,7 @@ CORPORA = {
     "trca": "kind='agency_board' AND url LIKE '%escribemeetings%'",
     "ep": "kind='agency_board' AND url LIKE '%/ep/%'",
     "zoo": "kind='agency_board' AND url LIKE '%/zb/%'",
+    "tchc": "kind='agency_board' AND url LIKE '%torontohousing.ca%'",
     "award_summary": "kind='award_summary'",
     "committee": "kind='committee_award'",
     # 2009-2012 Bid Committee composite reports (keyed on Call Number).
@@ -247,7 +248,7 @@ def dedup_contracts(contracts: list[dict]) -> list[dict]:
 
 
 # Corpora with non-procurement documents that the offline classifier may skip when unlabelled.
-_CLASSIFIER_GATED_CORPORA = frozenset({"trca", "ep", "zoo", "composite"})
+_CLASSIFIER_GATED_CORPORA = frozenset({"trca", "ep", "zoo", "tchc", "composite"})
 
 _DEFAULT_CLASSIFIER = object()
 
@@ -452,6 +453,18 @@ _INCUMBENT_QUERIES = {
             "WHERE aa.source='zoo_board'"
         ),
     },
+    "tchc": {
+        "bids": (
+            "SELECT bp.url, ab.bidder_name_raw FROM agency_bid ab "
+            "JOIN background_pdf bp ON LOWER(bp.url) = LOWER(ab.report_url) "
+            "WHERE ab.source='tchc_board'"
+        ),
+        "awards": (
+            "SELECT bp.url, aa.supplier_name_raw FROM agency_award aa "
+            "JOIN background_pdf bp ON LOWER(bp.url) = LOWER(aa.report_url) "
+            "WHERE aa.source='tchc_board'"
+        ),
+    },
     "award_summary": {
         "bids": (
             "SELECT bp.url, b.bidder_name_raw FROM bid b "
@@ -580,6 +593,7 @@ _CORPUS_SOURCE = {
     "trca": "trca_board",
     "ep": "ep_board",
     "zoo": "zoo_board",
+    "tchc": "tchc_board",
     "award_summary": "award_summary",
     "committee": "committee_award",
     "composite": "bid_committee_composite",
@@ -592,6 +606,7 @@ _CORPUS_BUYER_SLUG = {
     "trca": "trca",
     "ep": "exhibition-place",
     "zoo": "toronto-zoo",
+    "tchc": "toronto-community-housing",
 }
 
 
@@ -711,7 +726,7 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
             statuses_withheld=sum(b.get('status') not in (None,'not_stated') for b in raw)))
         return True
 
-    if corpus in ("trca", "ep", "zoo", "ttc"):
+    if corpus in ("trca", "ep", "zoo", "ttc", "tchc"):
         from toronto_bids.linking.agency_reference import normalize_agency_reference, report_reference
         from toronto_bids.agency_coverage import decision
         from toronto_bids.linking.agency_identity import reviewed_identity, reviewed_bids, reviewed_decision_date, validate_representatives, IdentityReviewRequired
