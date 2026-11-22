@@ -119,6 +119,9 @@ PORTAL_RECORDINGS_DIR = DATA_DIR / "agencies" / "portal_recordings"
 EP_AGENDAS_DIR = DATA_DIR / "agencies" / "ep" / "agendas"
 EP_REPORTS_DIR = DATA_DIR / "agencies" / "ep"
 
+TPA_AGENDAS_DIR = DATA_DIR / "agencies" / "tpa" / "agendas"
+TPA_REPORTS_DIR = DATA_DIR / "agencies" / "tpa"
+
 TCHC_PAST_MEETINGS_URL = (
     "https://torontohousing.ca/board-and-governance/past-board-and-committee-meetings"
 )

@@ -80,7 +80,7 @@ def test_scrape_revalidates_legacy_caps_then_persists_successor_evidence(tmp_pat
     assert not any(r.startswith(('2023.','2024.')) for r in calls)
 
 
-@pytest.mark.parametrize('module,fn',[('ep_board','scrape_ep_agendas'),('zoo_board','scrape_zb_agendas')])
+@pytest.mark.parametrize('module,fn',[('ep_board','scrape_ep_agendas'),('zoo_board','scrape_zb_agendas'),('tpa_board','scrape_pa_agendas')])
 def test_active_body_wrappers_enable_automatic_terms(monkeypatch,module,fn):
     import importlib
     body=importlib.import_module('toronto_bids.sources.'+module)

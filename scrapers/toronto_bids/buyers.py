@@ -6,7 +6,7 @@ DEFAULT_BUYERS = [
     Buyer(slug='toronto-police-service', name='Toronto Police Service', kind='agency', partnered=0, funding_share=None,
           platform="MERX", notes="Public buyer-scoped MERX notices; page identity is independent of printed references."),
     Buyer(slug='toronto-parking-authority', name='Toronto Parking Authority', kind='agency', partnered=0, funding_share=None,
-          platform="MERX", notes="Public buyer-scoped MERX notices; page identity is independent of printed references."),
+          platform="MERX", notes="Public buyer-scoped MERX notices plus TMMIS PA Board of Directors reports on legdocs (#335); page identity is independent of printed references."),
     Buyer(slug='createto', name='CreateTO (Build Toronto, TPLC)', kind='agency', partnered=0, funding_share=None,
           platform="MERX", notes="Public buyer-scoped MERX notices; page identity is independent of printed references."),
     Buyer(slug='toronto-pan-am-sports-centre', name='Toronto Pan Am Sports Centre', kind='corporation', partnered=1, funding_share=None,

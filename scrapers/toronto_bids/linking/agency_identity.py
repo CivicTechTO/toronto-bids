@@ -25,8 +25,8 @@ def _evidence():
         raise ValueError('unsupported agency identity evidence format')
     result = {}
     buyers = {'trca': 'trca', 'ep': 'exhibition-place', 'zoo': 'toronto-zoo',
-              'ttc': 'toronto-transit-commission', 'tchc': 'toronto-community-housing',
-              'tpl': 'toronto-public-library'}
+              'tpa': 'toronto-parking-authority', 'ttc': 'toronto-transit-commission',
+              'tchc': 'toronto-community-housing', 'tpl': 'toronto-public-library'}
     for item in data['decisions']:
         corpus = item['corpus']
         native = item['native_ref']
