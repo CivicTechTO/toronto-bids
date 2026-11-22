@@ -14,6 +14,7 @@ _TPL_MODERN_RFX = re.compile(
     re.I,
 )
 _TPL_LEGACY_RFX = re.compile(r"\bTPL[\s-]+(\d{2,4}-20\d{2})\b", re.I)
+_TPS_RFX = re.compile(r"\b(\d{8})\s*(?:[-–—]|â\x80\x93)\s*(\d{2})\b")
 
 
 def normalize_agency_reference(buyer_slug, raw):
@@ -65,6 +66,12 @@ def normalize_agency_reference(buyer_slug, raw):
         refs.update(f"TPL {m.upper()}" for m in _TPL_LEGACY_RFX.findall(text))
         if len(refs) > 1:
             raise ValueError(f"ambiguous TPL reference {text!r}")
+        if refs:
+            return refs.pop()
+    elif buyer_slug == "toronto-police-service":
+        refs = {f"{num}-{yr}" for num, yr in _TPS_RFX.findall(text)}
+        if len(refs) > 1:
+            raise ValueError(f"ambiguous TPS reference {text!r}")
         if refs:
             return refs.pop()
     return text.upper()

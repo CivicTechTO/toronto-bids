@@ -134,6 +134,11 @@ TPL_MEETINGS_DIR = DATA_DIR / "agencies" / "tpl" / "meetings"
 TPL_REPORTS_DIR = DATA_DIR / "agencies" / "tpl"
 TPL_MIN_YEAR = 2014
 
+TPSB_MEETINGS_URL = "https://tpsb.ca/home/current-and-past-meetings/"
+TPSB_MEETINGS_DIR = DATA_DIR / "agencies" / "tpsb" / "meetings"
+TPSB_REPORTS_DIR = DATA_DIR / "agencies" / "tpsb"
+TPSB_MIN_YEAR = 2015
+
 _REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 CLASSIFICATION_LABELS_PATH = (
     _REPO_ROOT
