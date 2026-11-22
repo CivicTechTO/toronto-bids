@@ -26,6 +26,7 @@ def _evidence():
     result = {}
     buyers = {'trca': 'trca', 'ep': 'exhibition-place', 'zoo': 'toronto-zoo',
               'tpa': 'toronto-parking-authority', 'ttc': 'toronto-transit-commission',
+              'ttc_tmmis': 'toronto-transit-commission',
               'tchc': 'toronto-community-housing', 'tpl': 'toronto-public-library',
               'tpsb': 'toronto-police-service'}
     for item in data['decisions']:

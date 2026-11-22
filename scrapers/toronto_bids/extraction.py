@@ -13,6 +13,7 @@ from toronto_bids.store.db import get_extraction, is_extracted, mark_extracted
 
 CORPORA = {
     "ttc": "kind='ttc_board'",
+    "ttc_tmmis": "kind='agency_board' AND url LIKE '%/legdocs/mmis/%/ttc/%'",
     "trca": "kind='agency_board' AND url LIKE '%escribemeetings%'",
     "ep": "kind='agency_board' AND url LIKE '%/ep/%'",
     "zoo": "kind='agency_board' AND url LIKE '%/zb/%'",
@@ -251,7 +252,7 @@ def dedup_contracts(contracts: list[dict]) -> list[dict]:
 
 
 # Corpora with non-procurement documents that the offline classifier may skip when unlabelled.
-_CLASSIFIER_GATED_CORPORA = frozenset({"trca", "ep", "zoo", "tpa", "tchc", "tpl", "tpsb", "composite"})
+_CLASSIFIER_GATED_CORPORA = frozenset({"trca", "ep", "zoo", "tpa", "ttc_tmmis", "tchc", "tpl", "tpsb", "composite"})
 
 _DEFAULT_CLASSIFIER = object()
 
@@ -468,6 +469,18 @@ _INCUMBENT_QUERIES = {
             "WHERE aa.source='tpa_board'"
         ),
     },
+    "ttc_tmmis": {
+        "bids": (
+            "SELECT bp.url, ab.bidder_name_raw FROM agency_bid ab "
+            "JOIN background_pdf bp ON LOWER(bp.url) = LOWER(ab.report_url) "
+            "WHERE ab.source='ttc_tmmis_board'"
+        ),
+        "awards": (
+            "SELECT bp.url, aa.supplier_name_raw FROM agency_award aa "
+            "JOIN background_pdf bp ON LOWER(bp.url) = LOWER(aa.report_url) "
+            "WHERE aa.source='ttc_tmmis_board'"
+        ),
+    },
     "tchc": {
         "bids": (
             "SELECT bp.url, ab.bidder_name_raw FROM agency_bid ab "
@@ -629,6 +642,7 @@ def _normalize_name(name: str | None) -> str:
 
 _CORPUS_SOURCE = {
     "ttc": "ttc_board",
+    "ttc_tmmis": "ttc_tmmis_board",
     "trca": "trca_board",
     "ep": "ep_board",
     "zoo": "zoo_board",
@@ -645,6 +659,7 @@ _CORPUS_SOURCE = {
 
 _CORPUS_BUYER_SLUG = {
     "ttc": "toronto-transit-commission",
+    "ttc_tmmis": "toronto-transit-commission",
     "trca": "trca",
     "ep": "exhibition-place",
     "zoo": "toronto-zoo",
@@ -771,7 +786,7 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
             statuses_withheld=sum(b.get('status') not in (None,'not_stated') for b in raw)))
         return True
 
-    if corpus in ("trca", "ep", "zoo", "tpa", "ttc", "tchc", "tpl", "tpsb"):
+    if corpus in ("trca", "ep", "zoo", "tpa", "ttc", "ttc_tmmis", "tchc", "tpl", "tpsb"):
         from toronto_bids.linking.agency_reference import normalize_agency_reference, report_reference
         from toronto_bids.agency_coverage import decision
         from toronto_bids.linking.agency_identity import reviewed_identity, reviewed_bids, reviewed_decision_date, validate_representatives, IdentityReviewRequired

@@ -14,7 +14,8 @@ DEFAULT_BUYERS = [
 
     Buyer(slug="toronto-transit-commission", name="Toronto Transit Commission", kind="agency",
           partnered=0, funding_share=None, platform="MERX / Bonfire",
-          notes="Public MERX pages and independent TTC reports. Unofficial bid results "
+          notes="Public MERX pages, open Bonfire listings, 2000–2024 TTC Board reports, and "
+                "2025+ TMMIS TTC Board reports on legdocs (#340). Unofficial bid results "
                 "are distinct from awards; legacy detail and historical coverage gaps "
                 "are reported by capture-merx. Printed references do not establish page identity."),
     Buyer(slug="the-atmospheric-fund", name="The Atmospheric Fund", kind="agency",

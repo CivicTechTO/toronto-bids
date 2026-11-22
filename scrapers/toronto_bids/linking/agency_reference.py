@@ -80,7 +80,7 @@ def normalize_agency_reference(buyer_slug, raw):
 def report_reference(council_reference, url):
     """Return an uppercase council item reference if present, else the report URL."""
     ref = " ".join((council_reference or "").split()).upper()
-    if re.fullmatch(r"\d{4}\.(?:EP|ZB|PA)\d+\.\d+(?:\.\d+)*", ref):
+    if re.fullmatch(r"\d{4}\.(?:EP|ZB|PA|TTC)\d+\.\d+(?:\.\d+)*", ref):
         return ref
     return url
 
