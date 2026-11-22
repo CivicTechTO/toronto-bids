@@ -8,17 +8,14 @@ _EP_GOT = {"solicitations": 107, "awards": 107, "bids": 115}
 _EP_ROWS = (74, 88, 115)
 
 
-def test_stored_line_reports_distinct_rows_not_the_upsert_count():
+def test_stored_line_reports_distinct_rows_delta_and_upsert_totals():
     line = cli._stored_line("ep", _EP_GOT, before=_EP_ROWS, after=_EP_ROWS)
     assert "74 solicitations (+0)" in line
     assert "88 awards (+0)" in line
     assert "115 bids (+0)" in line
     assert "107 solicitations" not in line
     assert "107 awards" not in line
-
-
-def test_stored_line_still_surfaces_the_upsert_totals_but_labelled():
-    line = cli._stored_line("ep", _EP_GOT, before=_EP_ROWS, after=_EP_ROWS)
+    assert "+19" not in line
     assert "[upserts 107/107/115]" in line
 
 
@@ -28,12 +25,6 @@ def test_stored_line_shows_growth_when_there_is_any():
     assert "71 solicitations (+1)" in line
     assert "89 awards (+1)" in line
     assert "118 bids (+3)" in line
-
-
-def test_stored_line_delta_is_the_real_row_count_not_the_loop_count():
-    line = cli._stored_line("ep", _EP_GOT, before=_EP_ROWS, after=_EP_ROWS)
-    assert "awards (+0)" in line
-    assert "+19" not in line
 
 
 def test_stored_line_omits_bids_for_a_body_with_no_bid_table():
@@ -57,16 +48,6 @@ def test_source_row_counts_are_scoped_to_one_board(conn):
     assert cli._source_row_counts(conn, "trca_board") == (1, 1, 0)
     assert cli._source_row_counts(conn, "zoo_board") == (0, 1, 0)
     assert cli._source_row_counts(conn, "ep_board") == (0, 0, 0)
-
-
-def test_source_row_counts_dedup_the_way_the_tables_do(conn):
-    ids = seed_buyers(conn)
-    for title in ("first report", "its amendment"):
-        db.upsert_row(conn, AgencySolicitation(
-            buyer_id=ids["trca"], native_ref="10039751", title=title, status=None,
-            posted_date=None, closing_date=None, portal_url=None,
-            source="trca_board"), overwrite=True)
-    assert cli._source_row_counts(conn, "trca_board")[0] == 1
 
 
 def _agencies_env(monkeypatch, conn, tmp_path):

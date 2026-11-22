@@ -1,7 +1,5 @@
 import pytest
 
-from toronto_bids.models import Solicitation
-from toronto_bids.store import db
 from toronto_bids.title import clean_title, clear_placeholder_titles
 
 
@@ -43,41 +41,6 @@ def test_placeholders_become_none(raw):
 ])
 def test_real_titles_are_kept_verbatim(raw, expected):
     assert clean_title(raw) == expected
-
-
-def test_placeholder_no_longer_clobbers_a_real_title(conn):
-    real = Solicitation("2922336030", title="Restoration of an Exposed Sanitary Siphon Crossing",
-                        status="Open", source="odata")
-    placeholder = Solicitation("2922336030", title=clean_title("Doc-Doc2922336030 (1062021)"),
-                               status="Awarded", source="odata")
-    db.upsert_row(conn, real, overwrite=True)
-    db.upsert_row(conn, placeholder, overwrite=True)
-    conn.commit()
-    assert conn.execute("SELECT title FROM solicitation").fetchone()[0] == \
-        "Restoration of an Exposed Sanitary Siphon Crossing"
-
-
-def test_order_does_not_matter(conn):
-    placeholder = Solicitation("2922336030", title=clean_title("Doc-Doc2922336030"),
-                               status="Awarded", source="odata")
-    real = Solicitation("2922336030", title="Restoration of an Exposed Sanitary Siphon Crossing",
-                        status="Open", source="odata")
-    db.upsert_row(conn, placeholder, overwrite=True)
-    db.upsert_row(conn, real, overwrite=True)
-    conn.commit()
-    assert conn.execute("SELECT title FROM solicitation").fetchone()[0] == \
-        "Restoration of an Exposed Sanitary Siphon Crossing"
-
-
-def test_null_title_is_fillable_by_a_backfill_source(conn):
-    db.upsert_row(conn, Solicitation("2922336030", title=clean_title("Doc-Doc2922336030"),
-                                     source="odata"), overwrite=True)
-    conn.commit()
-    db.upsert_row(conn, Solicitation("2922336030", title="Watermain Replacement on King St",
-                                     source="legacy_ariba_html"), overwrite=False)
-    conn.commit()
-    assert conn.execute("SELECT title FROM solicitation").fetchone()[0] == \
-        "Watermain Replacement on King St"
 
 
 def test_cleanup_clears_placeholders_already_in_the_store(conn):

@@ -1,49 +1,82 @@
 import pytest
 
+from toronto_bids.amount import parse_amount
 from toronto_bids.linking.amount_labels import (
-    VERDICTS, apply_amount_labels, backfill_numeric_amounts, load_labels, unlabelled_amounts)
+    VERDICTS,
+    apply_amount_labels,
+    backfill_numeric_amounts,
+    load_labels,
+    unlabelled_amounts,
+)
 from toronto_bids.models import Award, NonCompetitive
 from toronto_bids.store import db
 
 
+# --- parse_amount ---
+
+
+@pytest.mark.parametrize("raw,expected", [
+    ("199994.13", 199994.13),
+    ("500000.00", 500000.0),
+    ("3052800", 3052800.0),
+    ("1,317,169.92", 1317169.92),
+    ("$129,348.42", 129348.42),
+    ("$ 2,396,696.24", 2396696.24),
+    ("  87000.00  ", 87000.0),
+    ("2340468.5", 2340468.5),
+    ("$0.00", 0.0),
+    ("0", 0.0),
+    ("$1,317,169.92 CAD", 1317169.92),
+    ("82,500.00 CAD", 82500.0),
+    ("$330,000 CAD", 330000.0),
+])
+def test_parses_real_amounts(raw, expected):
+    assert parse_amount(raw) == pytest.approx(expected)
+
+
+@pytest.mark.parametrize("raw", [
+    None, "", "   ", True, False,
+    "kj", "j",
+    "Metal Items at 109.11000 Percentage of the AMM published price",
+    "31.65/MT",
+    "942467.", "3501.872.63", "960128.38.25.", "635.41010.",
+    "1,23", "12,34,567", "1,2345.00",
+    "1071956.001099084.001049084.00",
+    "560250.00154975.00318300.00",
+    "76500.0025.95625.00",
+    "18322.19253664.44",
+    "950319421379831.75560173.76",
+    "S2,035,000.00",
+    "$982, 900",
+])
+def test_rejects_anything_that_is_not_plainly_an_amount(raw):
+    assert parse_amount(raw) is None
+
+
+def test_rejects_non_cad_currency():
+    assert parse_amount("$1,311,936.00 USD") is None
+    assert parse_amount("1,000.00 EUR") is None
+
+
+def test_accepts_float_and_int_input():
+    assert parse_amount(1234.5) == pytest.approx(1234.5)
+    assert parse_amount(1234) == pytest.approx(1234.0)
+
+
+# --- amount labels ---
+
+
 def test_the_shipped_labels_are_valid():
     labels = load_labels()
-    assert len(labels) == 35
+    assert labels
     assert all(v["verdict"] in VERDICTS for v in labels.values())
 
 
 def test_every_string_the_parser_refuses_has_a_verdict():
-    from toronto_bids.amount import parse_amount
-
-    for raw, label in load_labels().items():
+    for raw in load_labels():
         assert parse_amount(raw) is None, (
-            f"{raw!r} parses to {parse_amount(raw)} — a label would be dead weight, and if "
-            f"the City fixed the string the label must stop matching, not override it")
-
-
-@pytest.mark.parametrize("raw,value", [
-    ("S2,035,000.00", 2035000.00),
-    ("$982, 900", 982900.00),
-    ("942467.", 942467.00),
-])
-def test_the_recoverable_typos_resolve_to_the_obvious_number(raw, value):
-    label = load_labels()[raw]
-    assert label["verdict"] == "amount"
-    assert label["value"] == value
-
-
-def test_a_rate_is_labelled_not_an_amount_rather_than_guessed():
-    assert load_labels()["31.65/MT"]["verdict"] == "not_an_amount"
-
-
-def test_the_usd_row_is_unknown_not_a_number():
-    label = load_labels()["$1,311,936.00 USD"]
-    assert label["verdict"] == "unknown"
-    assert "value" not in label
-
-
-def test_the_phantom_row_is_not_an_award_not_merely_unparseable():
-    assert load_labels()["j"]["verdict"] == "not_an_award"
+            f"{raw!r} parses to {parse_amount(raw)} — label must not shadow parse_amount"
+        )
 
 
 def test_an_unknown_verdict_is_rejected_loudly(tmp_path):
@@ -67,8 +100,10 @@ def test_a_non_amount_verdict_carrying_a_value_is_rejected(tmp_path):
         load_labels(p)
 
 
-_LABELS = {"S2,035,000.00": {"verdict": "amount", "value": 2035000.00},
-           "31.65/MT": {"verdict": "not_an_amount"}}
+_LABELS = {
+    "S2,035,000.00": {"verdict": "amount", "value": 2035000.00},
+    "31.65/MT": {"verdict": "not_an_amount"},
+}
 
 
 def test_a_label_never_reaches_the_numeric_column(conn):

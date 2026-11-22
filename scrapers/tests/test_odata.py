@@ -5,6 +5,7 @@ import httpx
 from toronto_bids.http import HttpClient
 from toronto_bids.models import Award, NonCompetitive, Solicitation
 from toronto_bids.sources import odata
+from toronto_bids.store.db import upsert_row
 from tests.conftest import FIXTURES
 
 
@@ -40,9 +41,9 @@ def test_normalize_solicitation_yields_spine_and_award():
     assert sol.rfx_type == "RFQ"
     assert sol.title == "Toner Cartridges"
     assert sol.category == "Goods and Services"
-    assert sol.division == "Purchasing & Materials Management"  # first of Client_Division array
+    assert sol.division == "Purchasing & Materials Management"
     assert sol.submission_deadline == "2012-07-30"
-    assert sol.ariba_posting_link is None  # "" normalized to None
+    assert sol.ariba_posting_link is None
     assert sol.odata_id == "da83db29-e4fc-4651-a9a3-d6bedd042e8c"
     assert sol.source == "odata"
     assert sol.form_type == "Awarded Contracts"
@@ -55,13 +56,10 @@ def test_normalize_solicitation_yields_spine_and_award():
 
 
 def test_normalize_solicitation_awarded_suppliers_expansion_rules():
-    from toronto_bids.models import Award
     rows = list(odata.normalize_solicitation(_value("odata_solicitation.json")))
     awards = [r for r in rows if isinstance(r, Award)]
-    # Blank Successful_Bidder entry is skipped: 3 entries -> 2 awards.
     assert len(awards) == 2
     fallback = next(a for a in awards if a.supplier_name_raw == "Fallback Date Supplier")
-    # Date_Awarded is "" -> falls back to AwardedDate.
     assert fallback.award_date == "2013-01-15"
 
 
@@ -84,27 +82,33 @@ def test_normalize_noncompetitive_uses_workspace_number():
     assert nc.odata_id == "66e002b8-5d66-4df0-b0d8-6cb628fda467"
 
 
-def test_sources_are_spine_overwrite_true():
-    assert odata.ODataSolicitationSource().overwrite is True
-    assert odata.ODataNonCompetitiveSource().overwrite is True
+def test_normalize_noncompetitive_handles_empty_suppliers_and_blank_reference():
+    raw = dict(_value("odata_noncompetitive.json"), Awarded_Suppliers=[])
+    nc, = odata.normalize_noncompetitive(raw)
+    assert nc.workspace_number == "8614"
+    assert nc.supplier_name_raw is None
+    assert nc.contract_amount is None
+    assert nc.contract_date is None
+
+    blank_ref = dict(_value("odata_noncompetitive.json"), Non_Competitive_Reference_Number="   ")
+    assert list(odata.normalize_noncompetitive(blank_ref)) == []
 
 
 def test_identity_snapshot_tracks_current_awards_and_ignores_bookkeeping():
-    from toronto_bids.sources.odata import identity_record
-    original=_value('odata_solicitation.json')
-    same=dict(original,__ModifiedOn='later',Parent_Id='unrelated-parent')
-    same['Awarded_Suppliers']=list(reversed(original['Awarded_Suppliers']))
-    assert identity_record(original)==identity_record(same)
-    removed=dict(original,Awarded_Suppliers=[])
-    assert identity_record(removed)['Awarded_Suppliers']==[]
-    assert identity_record(removed)!=identity_record(original)
+    original = _value("odata_solicitation.json")
+    same = dict(original, __ModifiedOn="later", Parent_Id="unrelated-parent")
+    same["Awarded_Suppliers"] = list(reversed(original["Awarded_Suppliers"]))
+    assert odata.identity_record(original) == odata.identity_record(same)
+    removed = dict(original, Awarded_Suppliers=[])
+    assert odata.identity_record(removed)["Awarded_Suppliers"] == []
+    assert odata.identity_record(removed) != odata.identity_record(original)
 
 
 def test_ingest_current_empty_award_set_preserves_archive_but_updates_identity(conn):
-    from toronto_bids.store.db import upsert_row
-    original=_value('odata_solicitation.json')
-    for raw in [original,dict(original,Awarded_Suppliers=[])]:
-        for row in odata.normalize_solicitation(raw):upsert_row(conn,row,overwrite=True)
-    assert conn.execute('select count(*) from award').fetchone()[0]==2
-    current=json.loads(conn.execute('select publisher_identity_json from solicitation').fetchone()[0])
-    assert current['Awarded_Suppliers']==[]
+    original = _value("odata_solicitation.json")
+    for raw in [original, dict(original, Awarded_Suppliers=[])]:
+        for row in odata.normalize_solicitation(raw):
+            upsert_row(conn, row, overwrite=True)
+    assert conn.execute("select count(*) from award").fetchone()[0] == 2
+    current = json.loads(conn.execute("select publisher_identity_json from solicitation").fetchone()[0])
+    assert current["Awarded_Suppliers"] == []

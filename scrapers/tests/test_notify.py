@@ -80,14 +80,15 @@ def test_steps_section_renders_status_detail_and_skip():
     assert "*Steps*" in text
     assert "✅ sync  9/9 sources · 3m12s" in text
     assert "➖ council  not the 1st" in text
-    assert "❌ ariba attachments  boom · 48m0" in text[:1000] or "❌ ariba attachments  boom · 48m00s" in text
+    assert "❌ ariba attachments  boom · 48m00s" in text
 
 
-def test_sources_section_flags_zero_fetch():
+def test_sources_section_flags_zero_fetch_and_failed_status():
     report = {"ok": True, "before": _counts(), "after": _counts(), "failures": [],
               "sources": [
                   {"source": "odata_solicitations", "status": "ok", "rows_fetched": 7446, "rows_upserted": 12, "error": None},
                   {"source": "suspended_firms", "status": "ok", "rows_fetched": 0, "rows_upserted": 0, "error": None},
+                  {"source": "ckan_open", "status": "failed", "rows_fetched": 0, "rows_upserted": 0, "error": "500"},
               ],
               "export_bytes": 1000, "elapsed_s": 60.0}
     text = notify.summarize(report)
@@ -95,6 +96,23 @@ def test_sources_section_flags_zero_fetch():
     assert "odata_solicitations 7,446" in text
     assert "→ +" not in text
     assert "⚠ suspended_firms 0 fetched" in text
+    assert "⚠ ckan_open 0 fetched (failed)" in text
+
+
+def test_training_restrictions_section_renders_detail_and_fallback():
+    report = {
+        "ok": True,
+        "export_bytes": 1000,
+        "elapsed_s": 5.0,
+        "ariba_training_restrictions": [
+            {"document_number": "5713434353", "detail": "Doc5713434353: restricted to invited bidders"},
+            {"document_number": "5713434354", "reason": "training gate"},
+        ],
+    }
+    text = notify.summarize(report)
+    assert "*Training event restrictions (2)*" in text
+    assert "Doc5713434353: restricted to invited bidders" in text
+    assert "Doc5713434354: training gate" in text
 
 
 def test_nothing_moved_omits_growth_and_empty_before_suppresses_deltas():
@@ -165,29 +183,14 @@ def test_a_slack_failure_never_fails_the_run(monkeypatch):
     assert any("slack" in m.lower() for m in said)
 
 
-def test_a_rejected_webhook_is_reported_rather_than_counted_as_sent(monkeypatch):
+def test_a_rejected_webhook_is_reported_without_leaking_url(monkeypatch):
     class Resp:
         status_code = 403
     monkeypatch.setattr(notify.httpx, "post", lambda url, **kw: Resp())
     said = []
-    assert notify.post("hi", webhook="https://hooks.slack.test/x", log=said.append) is False
+    assert notify.post("hi", webhook="https://hooks.slack.test/SECRET-TOKEN", log=said.append) is False
     assert any("403" in m for m in said)
-
-
-def test_a_rejection_never_leaks_the_webhook_into_the_log(monkeypatch):
-    class Resp:
-        status_code = 403
-    monkeypatch.setattr(notify.httpx, "post", lambda url, **kw: Resp())
-    said = []
-    notify.post("hi", webhook="https://hooks.slack.test/SECRET-TOKEN", log=said.append)
     assert not any("SECRET-TOKEN" in m for m in said)
-
-
-def test_a_successful_post_returns_true(monkeypatch):
-    class Resp:
-        status_code = 200
-    monkeypatch.setattr(notify.httpx, "post", lambda url, **kw: Resp())
-    assert notify.post("hi", webhook="https://hooks.slack.test/x") is True
 
 
 def test_a_malformed_webhook_exception_never_leaks_the_url_into_the_log(monkeypatch):

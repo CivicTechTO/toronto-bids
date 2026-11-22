@@ -1,4 +1,12 @@
-from toronto_bids.export.schema_export import build_schema_document, load_descriptions
+import json
+
+from toronto_bids.export import schema_export
+from toronto_bids.export.json_export import export_schema
+from toronto_bids.export.schema_export import (
+    build_manifest_document,
+    build_schema_document,
+    load_descriptions,
+)
 from toronto_bids.models import Award, Solicitation
 from toronto_bids.store import db
 
@@ -14,7 +22,6 @@ def test_column_type_nullable_and_pk(conn):
     cols = {c["name"]: c for c in doc["tables"]["solicitation"]["columns"]}
     assert cols["document_number"]["type"] == "TEXT"
     assert cols["document_number"]["primary_key"] is True
-    # first_seen is declared NOT NULL -> nullable False; status is nullable
     assert cols["first_seen"]["nullable"] is False
     assert cols["status"]["nullable"] is True
     assert "primary_key" not in cols["status"]
@@ -48,7 +55,7 @@ def test_enum_is_observed_sorted_distinct(conn):
 def test_enum_omitted_when_no_values(conn):
     doc = build_schema_document(conn, generated_at="t")
     cols = {c["name"]: c for c in doc["tables"]["solicitation"]["columns"]}
-    assert "enum" not in cols["status"]  # empty table -> no observed values
+    assert "enum" not in cols["status"]
 
 
 def test_non_enum_column_never_gets_enum(conn):
@@ -57,34 +64,43 @@ def test_non_enum_column_never_gets_enum(conn):
     conn.commit()
     doc = build_schema_document(conn, generated_at="t")
     cols = {c["name"]: c for c in doc["tables"]["solicitation"]["columns"]}
-    assert "enum" not in cols["title"]  # title is not a declared coded column
+    assert "enum" not in cols["title"]
 
 
 def test_description_applied_where_present(conn):
     doc = build_schema_document(conn, generated_at="t")
     cols = {c["name"]: c for c in doc["tables"]["award"]["columns"]}
     assert "verbatim" in cols["award_amount"]["description"]
-    assert "description" not in cols["first_seen"]  # no gloss for bookkeeping columns
+    assert "description" not in cols["first_seen"]
 
 
-def test_every_dictionary_key_resolves_to_a_real_column(conn):
-    # A stale key (renamed/removed column) must surface loudly.
-    real = set()
-    for table in db.EXPORT_TABLES:
-        for row in conn.execute(f"PRAGMA table_info({table})"):
-            real.add(f"{table}.{row[1]}")
+def test_every_dictionary_key_and_enum_column_resolves_to_a_real_column(conn):
+    real_pairs = {
+        (table, row[1])
+        for table in db.EXPORT_TABLES
+        for row in conn.execute(f"PRAGMA table_info({table})")
+    }
+    real_keys = {f"{table}.{col}" for table, col in real_pairs}
     for key in load_descriptions():
-        assert key in real, f"schema_dictionary.toml key {key!r} is not a real column"
+        assert key in real_keys, f"schema_dictionary.toml key {key!r} is not a real column"
+    for pair in schema_export._ENUM_COLUMNS:
+        assert pair in real_pairs, f"_ENUM_COLUMNS entry {pair!r} is not a real column"
 
 
-from pathlib import Path
-
-from toronto_bids.export.schema_export import build_manifest_document
+def test_export_schema_writes_valid_json(conn, tmp_path):
+    out = tmp_path / "schema.json"
+    written = export_schema(conn, out, generated_at="2026-07-20T00:00:00Z")
+    assert written == out
+    doc = json.loads(out.read_text())
+    assert doc["generated_at"] == "2026-07-20T00:00:00Z"
+    assert "solicitation" in doc["tables"]
 
 
 def test_manifest_sizes_and_order(tmp_path):
-    a = tmp_path / "bids.json"; a.write_bytes(b"x" * 10)
-    b = tmp_path / "bids.json.gz"; b.write_bytes(b"y" * 3)
+    a = tmp_path / "bids.json"
+    a.write_bytes(b"x" * 10)
+    b = tmp_path / "bids.json.gz"
+    b.write_bytes(b"y" * 3)
     doc = build_manifest_document([a, b], generated_at="t")
     assert doc["generated_at"] == "t"
     assert doc["artifacts"] == [
@@ -94,7 +110,8 @@ def test_manifest_sizes_and_order(tmp_path):
 
 
 def test_manifest_omits_missing_file(tmp_path):
-    a = tmp_path / "bids.json"; a.write_bytes(b"x" * 5)
+    a = tmp_path / "bids.json"
+    a.write_bytes(b"x" * 5)
     missing = tmp_path / "nope.sqlite"
     doc = build_manifest_document([a, missing], generated_at="t")
     assert [x["name"] for x in doc["artifacts"]] == ["bids.json"]
