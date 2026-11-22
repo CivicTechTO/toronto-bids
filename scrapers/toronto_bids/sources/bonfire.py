@@ -207,11 +207,14 @@ def capture_portal(conn, portal, *, client=None, data_dir=None, sleep=time.sleep
         titles = doc.xpath('//title/text()')
         if len(titles) != 1 or not titles[0].strip().endswith(' - ' + portal['body']):
             raise ValueError('Bonfire unexpected portal/buyer page')
-        for section, endpoint in SECTIONS.items():
+        sections = ('open',) if portal.get('open_only') else ('open', 'past')
+        for section in sections:
+            endpoint = SECTIONS[section]
             if endpoint not in landing.text:
                 raise ValueError('Bonfire public listing endpoint missing from page: ' + section)
         batches = []
-        for section, endpoint in SECTIONS.items():
+        for section in sections:
+            endpoint = SECTIONS[section]
             response = _get(client, base + endpoint, root, sleep=sleep, clock=clock)
             projects, payload = _section(response)
             batches.append((projects, payload))

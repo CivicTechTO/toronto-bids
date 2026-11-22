@@ -329,3 +329,69 @@ def test_remaining_bonfire_buyers_use_real_public_responses(conn, tmp_path, slug
     assert len(buyer['portal_listings']) == expected
     assert any(a['slug'] == slug and a['source_url'] == portal['portal_url'] for a in export['meta']['attribution'])
     assert conn.execute('PRAGMA foreign_key_check').fetchall() == []
+
+
+def test_ttc_open_only_portal_skips_past_coexists_with_merx_and_retains_closed(conn, tmp_path):
+    from toronto_bids.buyers import seed_buyers
+    from toronto_bids.models import PortalListing
+    from toronto_bids.store import db
+
+    portal = next(p for p in config.BONFIRE_PORTALS if p['slug'] == 'toronto-transit-commission')
+    assert portal.get('open_only') is True
+    # Seed an existing MERX listing with a shared printed ReferenceID to verify independence.
+    buyer_id = seed_buyers(conn)['toronto-transit-commission']
+    db.upsert_row(conn, PortalListing(
+        buyer_id=buyer_id,
+        portal_url='https://www.merx.com/ttc/solicitations/P73SM26689/0000319999',
+        native_ref='P73SM26689',
+        title='P73SM26689-SUPPLY OF INDOOR-OUTDOOR FORKLIFT TRUCKS',
+        status='Open', posted_date='2026-10-14', closing_date='2026-11-26', source='merx',
+    ), overwrite=True)
+    conn.commit()
+
+    bodies = {LANDING: (FIXTURES / 'ttc-portal.html').read_bytes(),
+              OPEN: (FIXTURES / 'ttc-open.json').read_bytes()}
+    calls, waits = [], []
+
+    def handle(request):
+        calls.append(str(request.url))
+        if request.url.path == PAST:
+            pytest.fail('open_only portal must not request Past collection')
+        return httpx.Response(200, content=bodies[request.url.path])
+
+    observed = datetime(2026, 11, 22, 15, 45, tzinfo=timezone.utc)
+    with httpx.Client(transport=httpx.MockTransport(handle)) as client:
+        count = bf.capture_portal(conn, portal, client=client, data_dir=tmp_path,
+                                  sleep=waits.append, clock=lambda: observed)
+    assert count == 14 and len(calls) == 2 and waits == [1, 1]
+    assert {httpx.URL(u).path for u in calls} == {LANDING, OPEN}
+    bonfire_rows = [dict(r) for r in conn.execute("SELECT * FROM portal_listing WHERE source='bonfire'")]
+    assert len(bonfire_rows) == 14
+    assert all(r['status'] == 'Open' and r['procurement_id'] for r in bonfire_rows)
+    shared = [dict(r) for r in conn.execute("SELECT * FROM portal_listing WHERE native_ref='P73SM26689'")]
+    assert len(shared) == 2 and {r['source'] for r in shared} == {'merx', 'bonfire'}
+    assert len({r['procurement_id'] for r in shared}) == 2
+    assert len(list((tmp_path / 'agencies' / 'bonfire' / portal['slug']).glob('*.bin'))) == 2
+
+    # Refresh when one opportunity disappears from Open: archived row stays intact.
+    reduced = json.loads(bodies[OPEN])
+    reduced['payload']['projects'].pop('110871')
+    bodies[OPEN] = json.dumps(reduced).encode()
+    with httpx.Client(transport=httpx.MockTransport(handle)) as client:
+        count2 = bf.capture_portal(conn, portal, client=client, data_dir=tmp_path,
+                                   sleep=lambda _: None, clock=lambda: observed)
+    assert count2 == 13
+    assert conn.execute("SELECT COUNT(*) FROM portal_listing WHERE source='bonfire'").fetchone()[0] == 14
+
+    export = build_export_document(conn, generated_at='fixed')
+    ttc = next(b for b in export['buyers'] if b['slug'] == 'toronto-transit-commission')
+    assert len(ttc['portal_listings']) == 15
+    ttc_attr = [a for a in export['meta']['attribution'] if a['slug'] == 'toronto-transit-commission']
+    assert {a['source_url'] for a in ttc_attr} == {'https://ttc.bonfirehub.ca', 'https://www.merx.com/ttc'}
+    assert conn.execute('PRAGMA foreign_key_check').fetchall() == []
+
+
+def test_full_portal_still_fails_on_past_redirect(conn, tmp_path):
+    with pytest.raises(httpx.HTTPStatusError):
+        run(conn, tmp_path, responses={PAST: [(307, {'Location': '/portal'})]})
+    assert conn.execute('SELECT COUNT(*) FROM portal_listing').fetchone()[0] == 0

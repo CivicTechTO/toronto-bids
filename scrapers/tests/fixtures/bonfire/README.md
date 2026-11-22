@@ -37,3 +37,12 @@ Contains 16 Open and 945 Past postings (normalizing to 16 Open, 629 Awarded, 226
 - **Waterfront** (listed under its legal name, Toronto Waterfront Revitalization Corporation): 78 postings (1 Open, 77 Closed).
 - **Exhibition Place**: 94 postings (1 Open, 77 Awarded, 12 Cancelled, 4 Closed), including two distinct pages labelled `EPRFP2025-7745`.
 - **TAF**: 0 Open (empty collection) and 16 Past postings (8 Awarded, 6 Closed, 2 Cancelled).
+
+## Toronto Transit Commission (#313, 2026-11-22)
+
+| Fixture | Source URL | SHA-256 |
+|---|---|---|
+| `ttc-portal.html` | `https://ttc.bonfirehub.ca/portal/?tab=openOpportunities` | `312b55619fff40e20aa76abd474b1ef7a1ef3325c2a52047a47140d3deadec56` |
+| `ttc-open.json` | `https://ttc.bonfirehub.ca/PublicPortal/getOpenPublicOpportunitiesSectionData` | `8dee7b326652718606e2fb63a7e45f2542be7c4b6b99f191565477b4f486684a` |
+
+- **TTC** disables Past Public Opportunities on Bonfire (`getPastPublicOpportunitiesSectionData` returns HTTP 307 to `/portal` and the landing page omits `pastOpportunitiesTabPane`), so TTC is configured `open_only: True`. Contains 14 Open postings.

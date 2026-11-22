@@ -647,6 +647,10 @@ def test_real_bonfire_capture_reaches_nightly_history_and_bulk_exports(nightly, 
                              ("explace.bonfirehub.ca", "exhibition"),
                              ("taf.bonfirehub.ca", "taf")]
     }
+    bodies["ttc.bonfirehub.ca"] = {
+        "/portal/": (fixtures / "ttc-portal.html").read_bytes(),
+        bonfire.SECTIONS["open"]: (fixtures / "ttc-open.json").read_bytes(),
+    }
     requests, waits = [], []
 
     def respond(request):
@@ -664,7 +668,7 @@ def test_real_bonfire_capture_reaches_nightly_history_and_bulk_exports(nightly, 
     monkeypatch.setattr(bonfire, "run_bonfire_capture", _real_bonfire_capture)
     monkeypatch.setattr(cli, "_open_db", lambda: _KeepOpen(conn))
     assert nightly() == 0
-    assert len(requests) == 15 and waits == [1] * 15
+    assert len(requests) == 17 and waits == [1] * 17
     assert conn.execute("SELECT status FROM sync_run WHERE source='bonfire listings'").fetchone()[0] == "ok"
     export = tmp_path / "export"
     doc = json.loads((export / "bids.json").read_text())
@@ -672,12 +676,13 @@ def test_real_bonfire_capture_reaches_nightly_history_and_bulk_exports(nightly, 
     assert len(library["portal_listings"]) == 412 and library["awards"] == library["bids"] == []
     housing = next(b for b in doc["buyers"] if b["slug"] == "toronto-community-housing")
     assert len(housing["portal_listings"]) == 961 and housing["awards"] == housing["bids"] == []
-    for slug, count in [("waterfront-toronto", 78), ("exhibition-place", 94), ("the-atmospheric-fund", 16)]:
+    for slug, count in [("waterfront-toronto", 78), ("exhibition-place", 94),
+                        ("the-atmospheric-fund", 16), ("toronto-transit-commission", 14)]:
         buyer = next(b for b in doc["buyers"] if b["slug"] == slug)
         assert len(buyer["portal_listings"]) == count and buyer["awards"] == buyer["bids"] == []
-    assert pq.read_metadata(export / "portal_listing.parquet").num_rows == 1561
+    assert pq.read_metadata(export / "portal_listing.parquet").num_rows == 1575
     with zipfile.ZipFile(export / "bids-csv.zip") as z:
-        assert len(list(csv.DictReader(io.StringIO(z.read("portal_listing.csv").decode())))) == 1561
+        assert len(list(csv.DictReader(io.StringIO(z.read("portal_listing.csv").decode())))) == 1575
 
 
 def test_nightly_batches_uncached_work_and_reports_pending(nightly, monkeypatch, capsys, tmp_path):

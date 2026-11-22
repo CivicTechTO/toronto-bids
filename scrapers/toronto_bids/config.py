@@ -171,6 +171,15 @@ BONFIRE_PORTALS = [
         'permission': 'docs/permissions/2026-10-22-bonfire.md',
         'attribution': 'Source: The Atmospheric Fund (taf.bonfirehub.ca).',
     },
+    {
+        'slug': 'toronto-transit-commission',
+        'body': 'Toronto Transit Commission',
+        'portal_url': 'https://ttc.bonfirehub.ca',
+        'enabled': True,
+        'open_only': True,
+        'permission': 'docs/permissions/2026-10-22-bonfire.md',
+        'attribution': 'Source: Toronto Transit Commission (ttc.bonfirehub.ca).',
+    },
 ]
 
 MERX_PORTALS = [
