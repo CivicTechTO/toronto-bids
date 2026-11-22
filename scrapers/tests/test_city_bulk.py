@@ -498,3 +498,14 @@ def test_responded_to_rfp_as_follows_list_admits_clean_native_proponents(conn,tm
     # Count bound still rejects when observed names exceed stated count.
     row['text']=row['text'].replace('two (2)','one (1)')
     assert not city_bulk.propose(conn,row)[0]
+
+
+def test_native_tender_opened_following_tenders_admits_priced_rows_and_excludes_no_bid(conn,tmp_path,monkeypatch):
+    from tests.test_city_archived_awards import setup_archive
+    setup_archive(conn,tmp_path,monkeypatch)
+    row=tender_report()
+    row['text']=row['text'].replace('opened the following Tender submissions:','opened the following Tenders:')
+    accepted,held=city_bulk.propose(conn,row)
+    assert not held and accepted[0]['names']==['Alberici Constructors Ltd.','Maple Reinders Limited']
+    assert accepted[0]['witness']['kind']=='native_tender_received_table'
+    assert [e['name'] for e in accepted[0]['witness']['excluded_no_bid']]==['Other Firm']
