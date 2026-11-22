@@ -174,3 +174,53 @@ def test_enrich_requires_pdftotext(conn, tmp_path, monkeypatch):
     monkeypatch.setattr(council_mod.shutil, "which", lambda _name: None)
     with pytest.raises(RuntimeError, match="pdftotext"):
         enrich_council(conn, _http_pdf(), fetch=_stub_fetch, dest_dir=tmp_path)
+
+
+def _blank_valid_pdf() -> bytes:
+    """Build a minimal structurally valid 1-page PDF with no embedded text (scanned-PDF equivalent)."""
+    objs = [
+        b"1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n",
+        b"2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n",
+        b"3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] >>\nendobj\n",
+    ]
+    buf = bytearray(b"%PDF-1.4\n")
+    offsets = [0]
+    for obj in objs:
+        offsets.append(len(buf))
+        buf.extend(obj)
+    xref_pos = len(buf)
+    buf.extend(f"xref\n0 {len(offsets)}\n0000000000 65535 f \n".encode())
+    for off in offsets[1:]:
+        buf.extend(f"{off:010d} 00000 n \n".encode())
+    buf.extend(
+        f"trailer\n<< /Size {len(offsets)} /Root 1 0 R >>\nstartxref\n{xref_pos}\n%%EOF\n".encode()
+    )
+    return bytes(buf)
+
+
+@needs_pdftotext
+def test_download_pdf_rejects_html_and_corrupt_pdf_without_replacing_held_file(tmp_path):
+    pdf = (FIXTURES / "tiny.pdf").read_bytes()
+    url = "https://www.toronto.ca/legdocs/mmis/2025/gg/bgrd/backgroundfile-260581.pdf"
+    held = tmp_path / "backgroundfile-260581.pdf"
+    held.write_bytes(pdf)
+
+    with pytest.raises(ValueError, match="not a PDF"):
+        download_pdf(_http_serving(b"<html><body>Maintenance</body></html>"), url, tmp_path)
+    assert held.read_bytes() == pdf
+
+    with pytest.raises(ValueError):
+        download_pdf(_http_serving(b"%PDF-1.4\nnot actually a valid pdf stream"), url, tmp_path)
+    assert held.read_bytes() == pdf
+    assert [p.name for p in tmp_path.iterdir()] == ["backgroundfile-260581.pdf"]
+
+
+@needs_pdftotext
+def test_download_pdf_accepts_valid_scanned_pdf_with_no_text(tmp_path):
+    blank = _blank_valid_pdf()
+    url = "https://secure.toronto.ca/c3api_upload/retrieve/pmmd_solicitations/scanned123"
+    result = download_pdf(_http_serving(blank), url, tmp_path, layout=True)
+    saved = Path(result["local_path"])
+    assert saved.read_bytes() == blank
+    assert result["sha256"] == hashlib.sha256(blank).hexdigest()
+    assert result["text"] is None

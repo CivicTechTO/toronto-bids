@@ -53,6 +53,9 @@ def refresh(queue, archive, *, export, manifest_path, log=print):
             replay = replay_cached_awards(archive, only_extractions=waterfront, log=log)
             applied.update(replay['processed'])
             recognized.update(replay['processed'])
+            replay_failed = set(replay.get('failed', ()))
+            failed.update(replay_failed)
+            recognized.update(replay_failed)
             result['errors'].extend(f'{name}: {error}' for name, error in replay['failures'])
         except Exception as exc:
             failed.update(waterfront)

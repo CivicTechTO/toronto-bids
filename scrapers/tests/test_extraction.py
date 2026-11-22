@@ -382,6 +382,158 @@ def test_dedup_contracts_merges_on_reference_and_preserves_unreferenced():
     assert no_ref_names == ["D", "E"]
 
 
+def test_dedup_contracts_merges_bids_and_awards_across_chunks():
+    contracts = [
+        {
+            "reference": "RFT 100",
+            "solicitation_type": "RFT",
+            "title": "Watermain Replacement",
+            "bids": [
+                {"supplier_name": "Alpha Ltd.", "amount_raw": "$100,000", "amount_basis": "plus_HST", "status": "compliant", "rank": 1},
+                {"supplier_name": "Beta Inc.", "amount_raw": "$120,000", "amount_basis": "plus_HST", "status": "compliant", "rank": 2},
+            ],
+            "awards": [],
+            "decision_date": None,
+        },
+        {
+            "reference": "RFT 100",
+            "solicitation_type": "unknown",
+            "title": "",
+            "bids": [],
+            "awards": [
+                {"supplier_name": "Alpha Ltd.", "amount_raw": "$100,000", "amount_basis": "plus_HST", "contingency_raw": "10%", "value_confidential": False},
+            ],
+            "decision_date": "2025-05-01",
+        },
+    ]
+    merged = dedup_contracts(contracts)
+    assert len(merged) == 1
+    c = merged[0]
+    assert [b["supplier_name"] for b in c["bids"]] == ["Alpha Ltd.", "Beta Inc."]
+    assert len(c["awards"]) == 1 and c["awards"][0]["supplier_name"] == "Alpha Ltd."
+    assert c["decision_date"] == "2025-05-01"
+    assert c["solicitation_type"] == "RFT"
+    assert "_merge_conflicts" not in c
+
+
+def test_dedup_contracts_dedups_identical_facts_and_keeps_distinct_lines():
+    contracts = [
+        {
+            "reference": "VOR 200",
+            "bids": [
+                {"supplier_name": "Alpha Ltd.", "amount_raw": "$100,000", "amount_basis": "unknown", "status": "not_stated", "rank": None},
+                {"supplier_name": "Beta Inc.", "amount_raw": "$150,000", "amount_basis": "plus_HST", "status": "compliant", "rank": 2},
+            ],
+            "awards": [
+                {"supplier_name": "Alpha Ltd.", "amount_raw": "$100,000", "amount_basis": "plus_HST", "contingency_raw": None, "value_confidential": False},
+                {"supplier_name": "Alpha Ltd.", "amount_raw": "$200,000", "amount_basis": "plus_HST", "contingency_raw": None, "value_confidential": False},
+            ],
+        },
+        {
+            "reference": "VOR 200",
+            "bids": [
+                # Enriches Alpha without double-counting, repeats Beta identically, adds Gamma.
+                {"supplier_name": "Alpha Ltd.", "amount_raw": "$100,000", "amount_basis": "plus_HST", "status": "compliant", "rank": 1},
+                {"supplier_name": "Beta Inc.", "amount_raw": "$150,000", "amount_basis": "plus_HST", "status": "compliant", "rank": 2},
+                {"supplier_name": "Gamma Co.", "amount_raw": "$175,000", "amount_basis": "plus_HST", "status": "compliant", "rank": 3},
+            ],
+            "awards": [
+                # Repeats one Alpha line and adds distinct Beta award line.
+                {"supplier_name": "Alpha Ltd.", "amount_raw": "$100,000", "amount_basis": "plus_HST", "contingency_raw": None, "value_confidential": False},
+                {"supplier_name": "Beta Inc.", "amount_raw": "$150,000", "amount_basis": "plus_HST", "contingency_raw": None, "value_confidential": False},
+            ],
+        },
+    ]
+    merged = dedup_contracts(contracts)
+    assert len(merged) == 1
+    c = merged[0]
+    assert [b["supplier_name"] for b in c["bids"]] == ["Alpha Ltd.", "Beta Inc.", "Gamma Co."]
+    assert c["bids"][0]["amount_basis"] == "plus_HST" and c["bids"][0]["status"] == "compliant" and c["bids"][0]["rank"] == 1
+    assert [(a["supplier_name"], a["amount_raw"]) for a in c["awards"]] == [
+        ("Alpha Ltd.", "$100,000"),
+        ("Alpha Ltd.", "$200,000"),
+        ("Beta Inc.", "$150,000"),
+    ]
+    assert "_merge_conflicts" not in c
+
+
+def test_dedup_contracts_keeps_conflicts_reviewable_without_double_counting():
+    contracts = [
+        {
+            "reference": "RFP 300",
+            "decision_date": "2025-01-10",
+            "bids": [{"supplier_name": "Alpha Ltd.", "amount_raw": "$100,000", "amount_basis": "plus_HST", "status": "compliant", "rank": 1}],
+            "awards": [{"supplier_name": "Alpha Ltd.", "amount_raw": "$100,000", "amount_basis": "plus_HST", "value_confidential": False}],
+        },
+        {
+            "reference": "RFP 300",
+            "decision_date": "2025-02-14",
+            "bids": [{"supplier_name": "Alpha Ltd.", "amount_raw": "$113,000", "amount_basis": "including_HST", "status": "compliant", "rank": 1}],
+            "awards": [{"supplier_name": "Alpha Ltd.", "amount_raw": "$113,000", "amount_basis": "including_HST", "value_confidential": False}],
+        },
+    ]
+    merged = dedup_contracts(contracts)
+    assert len(merged) == 1
+    c = merged[0]
+    # No double-counting in bids or awards.
+    assert len(c["bids"]) == 1 and c["bids"][0]["amount_raw"] == "$100,000"
+    assert len(c["awards"]) == 1 and c["awards"][0]["amount_raw"] == "$100,000"
+    assert c["decision_date"] == "2025-01-10"
+    # Conflicting facts preserved for review.
+    conflicts = c["_merge_conflicts"]
+    by_kind = {entry["kind"]: entry for entry in conflicts}
+    assert set(by_kind) == {"bid", "award", "field"}
+    assert by_kind["bid"]["conflicting"]["amount_raw"] == "$113,000"
+    assert by_kind["bid"]["differing_fields"] == ["amount_basis", "amount_raw"]
+    assert by_kind["award"]["conflicting"]["amount_raw"] == "$113,000"
+    assert by_kind["field"] == {
+        "kind": "field",
+        "field": "decision_date",
+        "kept": "2025-01-10",
+        "conflicting": "2025-02-14",
+    }
+
+
+def test_sync_extract_corpus_split_retains_bids_and_awards(conn):
+    big_text = "\n\n".join(f"Section {i}: " + ("y" * 220) for i in range(4))
+    _insert_pdf(conn, url="https://pub-trca.escribemeetings.com/split-merge.pdf", sha="split-sync", text=big_text)
+
+    client = _SequenceClient(
+        {
+            "contracts": [
+                {
+                    "reference": "RFT 555",
+                    "bids": [
+                        {"supplier_name": "Alpha", "amount_raw": "$100", "status": "compliant"},
+                        {"supplier_name": "Beta", "amount_raw": "$120", "status": "compliant"},
+                    ],
+                    "awards": [],
+                }
+            ]
+        },
+        {
+            "contracts": [
+                {
+                    "reference": "RFT 555",
+                    "bids": [],
+                    "awards": [{"supplier_name": "Alpha", "amount_raw": "$100"}],
+                }
+            ]
+        },
+        {"contracts": []},
+        {"contracts": []},
+    )
+    stats = extract_corpus(
+        conn, "trca", client=client, labels={}, where="kind='agency_board'", max_chars=500, classifier=None
+    )
+    assert stats["split"] == 1
+    cached = json.loads(get_extraction(conn, "split-sync", EXTRACTOR_VERSION))
+    assert len(cached["contracts"]) == 1
+    c = cached["contracts"][0]
+    assert {b["supplier_name"] for b in c["bids"]} == {"Alpha", "Beta"}
+    assert [a["supplier_name"] for a in c["awards"]] == ["Alpha"]
+
+
 def test_backfill_agency_bids_from_extraction(conn):
     conn.execute("INSERT INTO buyer (id, slug, name) VALUES (2, 'trca', 'TRCA')")
     _cache_doc(

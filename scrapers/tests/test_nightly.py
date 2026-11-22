@@ -811,3 +811,22 @@ def test_real_merx_capture_reaches_nightly_history_and_export(nightly, monkeypat
     assert {r["result_stage"] for r in buyer["bids"]} == {"Unofficial Results"}
     assert buyer["awards"][0]["award_date"] == "2026-10-05"
     assert buyer["awards"][0]["publication_date"] == "2026-10-08"
+
+
+def test_nightly_surfaces_rejected_award_summary_downloads(nightly, conn, monkeypatch, capsys):
+    from toronto_bids.sources import award_summary
+
+    def reject_one(_conn, _http, *, log=lambda _m: None, failures=None):
+        if failures is not None:
+            failures.append(("award_summary_download:maint001", "Response is not a PDF"))
+        return 1
+
+    monkeypatch.setattr(award_summary, "download_award_summaries", reject_one)
+    monkeypatch.setattr(cli, "_open_db", lambda: _KeepOpen(conn))
+    assert nightly() == 1
+    out = capsys.readouterr().out
+    assert "award_summary_download:maint001" in out
+    status = conn.execute(
+        "SELECT status FROM sync_run WHERE source='award summaries' ORDER BY id DESC LIMIT 1"
+    ).fetchone()[0]
+    assert status == "failed"

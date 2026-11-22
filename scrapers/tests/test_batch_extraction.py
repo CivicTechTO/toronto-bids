@@ -785,3 +785,146 @@ def test_refresh_isolates_per_corpus_backfill_exceptions(ready, conn, monkeypatc
     assert all_failed['ready_documents'] == []
     assert exports == [] and not path.exists()
     assert any('apply:ep: ep broken' in err for err in all_failed['errors'])
+
+
+def test_waterfront_write_rollback_keeps_result_pending_and_retries_after_clearing(
+    setup, conn, monkeypatch, tmp_path
+):
+    from toronto_bids.sources import waterfront as wf
+
+    queue, api, body = setup
+    blocks = [
+        dict(source_key='block-jan', publication_month='2026-01', raw_text='Jan Works - Alpha Co ($100)',
+             source_position=0, labels='[]'),
+        dict(source_key='block-feb', publication_month='2026-02', raw_text='Feb Works - Beta Inc ($200)',
+             source_position=1, labels='[]'),
+    ]
+    monkeypatch.setattr(wf, 'parse_publication', lambda _: blocks)
+
+    class HeldPage:
+        def get_bytes(self, url):
+            return b'waterfront html snapshot'
+
+    class PendingClient:
+        def extract(self, text):
+            raise batch.ExtractionPending('pending')
+
+    wf.capture_awards(conn, HeldPage(), data_dir=tmp_path, client=PendingClient(), log=lambda _: None)
+
+    jan_text = wf.extraction_text('2026-01', [blocks[0]])
+    feb_text = wf.extraction_text('2026-02', [blocks[1]])
+    jan_sha = hashlib.sha256(jan_text.encode()).hexdigest()
+    feb_sha = hashlib.sha256(feb_text.encode()).hexdigest()
+
+    enqueue(queue, body, doc=jan_sha, text=jan_text, source='waterfront')
+    enqueue(queue, body, doc=feb_sha, text=feb_text, source='waterfront')
+    submitted = queue.submit()
+    req_list = api.requests[submitted['remote_id']]
+    payloads = [
+        {'contracts': [{'title': 'Jan Works', 'awards': [{'supplier_name': 'Alpha Co', 'amount_raw': '($100)'}]}]},
+        {'contracts': [{'title': 'Feb Works', 'awards': [{'supplier_name': 'Beta Inc', 'amount_raw': '($200)'}]}]},
+    ]
+    for req, payload in zip(req_list, payloads):
+        api.outcomes[req['custom_id']] = {
+            'type': 'succeeded',
+            'message': {
+                'model': req['params']['model'],
+                'stop_reason': 'end_turn',
+                'content': [{'type': 'text', 'text': json.dumps(payload)}],
+                'usage': {'input_tokens': 1000, 'output_tokens': 200},
+            },
+        }
+
+    # Force a DB write failure on February's published_award insert only.
+    conn.execute(
+        "CREATE TRIGGER fail_feb_award BEFORE INSERT ON published_award "
+        "WHEN NEW.publication_key = 'block-feb' "
+        "BEGIN SELECT RAISE(ABORT, 'forced award write failure'); END;"
+    )
+    conn.commit()
+
+    path = tmp_path / 'handoff.json'
+    exports = []
+    first = refresh(queue, conn, export=lambda: exports.append('run1'), manifest_path=path)
+    assert any('waterfront:2026-02: forced award write failure' in err for err in first['errors'])
+    assert exports == ['run1'] and path.exists()
+    # Only January committed and entered the publication handoff; February stays pending (not superseded).
+    assert len(first['ready_documents']) == 1
+    assert first['ignored_documents'] == []
+    stored = [r[0] for r in conn.execute('SELECT supplier_name_raw FROM published_award ORDER BY supplier_name_raw')]
+    assert stored == ['Alpha Co']
+
+    # Acknowledge January as published; February remains cached for the next refresh.
+    queue.acknowledge(first['ready_documents'])
+    assert queue.status()['documents'] == {'applied': 1, 'cached': 1}
+    path.unlink()
+
+    # Clear the write failure and refresh again: February now commits and enters handoff.
+    conn.execute('DROP TRIGGER fail_feb_award')
+    conn.commit()
+    exports.clear()
+    second = refresh(queue, conn, export=lambda: exports.append('run2'), manifest_path=path)
+    assert second['errors'] == []
+    assert exports == ['run2'] and path.exists()
+    assert len(second['ready_documents']) == 1
+    stored = [r[0] for r in conn.execute('SELECT supplier_name_raw FROM published_award ORDER BY supplier_name_raw')]
+    assert stored == ['Alpha Co', 'Beta Inc']
+    queue.acknowledge(second['ready_documents'])
+    assert queue.status()['documents'] == {'applied': 2}
+
+
+def test_batch_split_document_merges_bids_awards_and_conflicts(setup, conn):
+    queue, api, body = setup
+    with pytest.raises(batch.ExtractionPending):
+        queue.document('split-doc-sha', EXTRACTOR_VERSION, [body('chunk-1-bids'), body('chunk-2-awards')], source='pdf')
+    submitted = queue.submit()
+    reqs = api.requests[submitted['remote_id']]
+    chunk_results = [
+        {
+            'contracts': [
+                {
+                    'reference': 'RFT 777',
+                    'decision_date': '2025-04-01',
+                    'bids': [
+                        {'supplier_name': 'Alpha Ltd.', 'amount_raw': '$100,000', 'amount_basis': 'plus_HST', 'status': 'compliant'},
+                        {'supplier_name': 'Beta Inc.', 'amount_raw': '$125,000', 'amount_basis': 'plus_HST', 'status': 'compliant'},
+                    ],
+                    'awards': [],
+                }
+            ]
+        },
+        {
+            'contracts': [
+                {
+                    'reference': 'RFT 777',
+                    'decision_date': '2025-04-15',
+                    'bids': [
+                        {'supplier_name': 'Alpha Ltd.', 'amount_raw': '$100,000', 'amount_basis': 'plus_HST', 'status': 'compliant'},
+                    ],
+                    'awards': [
+                        {'supplier_name': 'Alpha Ltd.', 'amount_raw': '$100,000', 'amount_basis': 'plus_HST', 'value_confidential': False},
+                    ],
+                }
+            ]
+        },
+    ]
+    for req, payload in zip(reqs, chunk_results):
+        api.outcomes[req['custom_id']] = {
+            'type': 'succeeded',
+            'message': {
+                'model': req['params']['model'],
+                'stop_reason': 'end_turn',
+                'content': [{'type': 'text', 'text': json.dumps(payload)}],
+                'usage': {'input_tokens': 1000, 'output_tokens': 200},
+            },
+        }
+    collected = queue.collect(conn)
+    assert collected['cached'] == 1 and collected['errors'] == []
+    cached = json.loads(db.get_extraction(conn, 'split-doc-sha', EXTRACTOR_VERSION))
+    assert len(cached['contracts']) == 1
+    c = cached['contracts'][0]
+    assert [b['supplier_name'] for b in c['bids']] == ['Alpha Ltd.', 'Beta Inc.']
+    assert [a['supplier_name'] for a in c['awards']] == ['Alpha Ltd.']
+    assert c['_merge_conflicts'] == [
+        {'kind': 'field', 'field': 'decision_date', 'kept': '2025-04-01', 'conflicting': '2025-04-15'}
+    ]

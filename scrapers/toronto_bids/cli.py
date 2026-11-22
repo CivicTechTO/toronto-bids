@@ -688,6 +688,7 @@ def _cmd_enrich_awards(args) -> int:
     )
 
     conn = _open_db()
+    download_failures: list[tuple[str, str]] = []
     try:
         before = conn.execute("SELECT COUNT(*) FROM bid").fetchone()[0]
         if args.download:
@@ -696,7 +697,7 @@ def _cmd_enrich_awards(args) -> int:
                 out = lambda m: print(m, flush=True)
                 print(
                     f"  award summary forms archived: "
-                    f"{download_award_summaries(conn, http, log=out)}"
+                    f"{download_award_summaries(conn, http, log=out, failures=download_failures)}"
                 )
             finally:
                 http.close()
@@ -722,6 +723,11 @@ def _cmd_enrich_awards(args) -> int:
             "SELECT source, COUNT(*) n FROM bid GROUP BY 1 ORDER BY 2 DESC"
         ):
             print(f"  {r['source']:<22} {r['n']:>6}")
+        if download_failures:
+            print(f"\nRejected downloads ({len(download_failures)}):", file=sys.stderr)
+            for name, err in download_failures:
+                print(f"  {name}: {err}", file=sys.stderr)
+            return 1
     finally:
         conn.close()
     return 0
@@ -914,7 +920,7 @@ def _run_nightly(args) -> int:
                     failures.append(("sync_detail", str(exc)))
 
                 def _awards():
-                    download_award_summaries(conn, http, log=out)
+                    download_award_summaries(conn, http, log=out, failures=failures)
                     # Diff real counts because store_award_summary_bids rebuilds and returns totals.
                     n_before = _bid_count(conn, "award_summary")
                     store_award_summary_bids(conn, log=out, failures=failures)

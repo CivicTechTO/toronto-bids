@@ -153,3 +153,198 @@ def test_store_award_summary_bids_returns_bids_written(conn, monkeypatch):
     assert seen["conn"] is conn
     assert seen["corpus"] == "award_summary"
     assert seen["failures"] is failures
+
+
+def _blank_valid_pdf() -> bytes:
+    objs = [
+        b"1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n",
+        b"2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n",
+        b"3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] >>\nendobj\n",
+    ]
+    buf = bytearray(b"%PDF-1.4\n")
+    offsets = [0]
+    for obj in objs:
+        offsets.append(len(buf))
+        buf.extend(obj)
+    xref_pos = len(buf)
+    buf.extend(f"xref\n0 {len(offsets)}\n0000000000 65535 f \n".encode())
+    for off in offsets[1:]:
+        buf.extend(f"{off:010d} 00000 n \n".encode())
+    buf.extend(
+        f"trailer\n<< /Size {len(offsets)} /Root 1 0 R >>\nstartxref\n{xref_pos}\n%%EOF\n".encode()
+    )
+    return bytes(buf)
+
+
+def test_download_award_summaries_rejects_html_recaptures_invalid_and_keeps_scanned_pdf(
+    conn, tmp_path
+):
+    import hashlib
+    import shutil
+    from pathlib import Path
+
+    import pytest
+    from toronto_bids.models import BackgroundPdf
+    from toronto_bids.sources import award_summary as mod
+    from toronto_bids.store import db
+
+    if shutil.which("pdftotext") is None:
+        pytest.skip("needs pdftotext")
+
+    valid_pdf = (Path(__file__).parent / "fixtures" / "tiny.pdf").read_bytes()
+    scanned_pdf = _blank_valid_pdf()
+    html_page = b"<html><body>Scheduled maintenance</body></html>"
+
+    # 1) Valid scanned PDF (text=None) already on disk must NOT be re-downloaded.
+    scanned_path = tmp_path / "scanned001"
+    scanned_path.write_bytes(scanned_pdf)
+    db.upsert_row(
+        conn,
+        BackgroundPdf(
+            url=mod._UPLOAD + "scanned001",
+            kind="award_summary",
+            document_number="1000000001",
+            local_path=str(scanned_path),
+            sha256=hashlib.sha256(scanned_pdf).hexdigest(),
+            text=None,
+        ),
+        overwrite=True,
+    )
+
+    # 2) Existing invalid cached form (maintenance HTML saved previously) must be recaptured.
+    stale_html_path = tmp_path / "stalehtml"
+    stale_html_path.write_bytes(html_page)
+    db.upsert_row(
+        conn,
+        BackgroundPdf(
+            url=mod._UPLOAD + "stalehtml",
+            kind="award_summary",
+            document_number="1000000002",
+            local_path=str(stale_html_path),
+            sha256=hashlib.sha256(html_page).hexdigest(),
+            text=None,
+        ),
+        overwrite=True,
+    )
+    conn.commit()
+
+    records = [
+        {
+            "Solicitation_Document_Number": "Doc1000000001",
+            "uploadedFilesStaff": [{"bin_id": "scanned001", "name": "Award Summary Form.pdf"}],
+        },
+        {
+            "Solicitation_Document_Number": "Doc1000000002",
+            "uploadedFilesStaff": [{"bin_id": "stalehtml", "name": "Award Summary Form.pdf"}],
+        },
+        {
+            "Solicitation_Document_Number": "Doc1000000003",
+            "uploadedFilesStaff": [{"bin_id": "maintpage", "name": "Award Summary Form.pdf"}],
+        },
+        {
+            "Solicitation_Document_Number": "Doc1000000004",
+            "uploadedFilesStaff": [{"bin_id": "freshgood", "name": "Award Summary Form.pdf"}],
+        },
+    ]
+
+    responses = {
+        "stalehtml": valid_pdf,
+        "maintpage": html_page,
+        "freshgood": valid_pdf,
+    }
+    fetched = []
+
+    class FakeHttp:
+        def get_json(self, _url):
+            return {"value": records, "@odata.count": len(records)}
+
+        def get_bytes(self, url):
+            bid = url.rsplit("/", 1)[-1]
+            fetched.append(bid)
+            return responses[bid]
+
+    failures = []
+    stored = mod.download_award_summaries(conn, FakeHttp(), dest_dir=tmp_path, failures=failures)
+    assert stored == 2
+    assert fetched == ["stalehtml", "maintpage", "freshgood"]
+    assert len(failures) == 1 and failures[0][0] == "award_summary_download:maintpage"
+
+    rows = {r["url"]: dict(r) for r in conn.execute("SELECT * FROM background_pdf")}
+    assert mod._UPLOAD + "maintpage" not in rows
+    assert rows[mod._UPLOAD + "stalehtml"]["sha256"] == hashlib.sha256(valid_pdf).hexdigest()
+    assert "HELLO PDF" in rows[mod._UPLOAD + "stalehtml"]["text"]
+    assert rows[mod._UPLOAD + "freshgood"]["sha256"] == hashlib.sha256(valid_pdf).hexdigest()
+
+    # On retry, once the maintenance page clears, maintpage is downloaded and stored.
+    responses["maintpage"] = valid_pdf
+    fetched.clear()
+    retry_failures = []
+    stored_retry = mod.download_award_summaries(
+        conn, FakeHttp(), dest_dir=tmp_path, failures=retry_failures
+    )
+    assert stored_retry == 1
+    assert fetched == ["maintpage"]
+    assert retry_failures == []
+    row = conn.execute(
+        "SELECT sha256, text FROM background_pdf WHERE url=?", (mod._UPLOAD + "maintpage",)
+    ).fetchone()
+    assert row["sha256"] == hashlib.sha256(valid_pdf).hexdigest() and "HELLO PDF" in row["text"]
+
+
+def test_enrich_awards_standalone_exits_nonzero_on_rejected_download(
+    conn, tmp_path, monkeypatch, capsys
+):
+    import shutil
+    from pathlib import Path
+
+    import pytest
+    from toronto_bids import cli, config
+    from toronto_bids.sources import award_summary as mod
+
+    if shutil.which("pdftotext") is None:
+        pytest.skip("needs pdftotext")
+
+    valid_pdf = (Path(__file__).parent / "fixtures" / "tiny.pdf").read_bytes()
+    records = [
+        {
+            "Solicitation_Document_Number": "Doc1000000010",
+            "uploadedFilesStaff": [{"bin_id": "badhtml", "name": "Award Summary Form.pdf"}],
+        },
+        {
+            "Solicitation_Document_Number": "Doc1000000011",
+            "uploadedFilesStaff": [{"bin_id": "goodpdf", "name": "Award Summary Form.pdf"}],
+        },
+    ]
+
+    class FakeHttp:
+        def get_json(self, _url):
+            return {"value": records, "@odata.count": len(records)}
+
+        def get_bytes(self, url):
+            return b"<html>maintenance</html>" if url.endswith("badhtml") else valid_pdf
+
+        def close(self):
+            pass
+
+    class KeepOpen:
+        def __init__(self, inner):
+            self._inner = inner
+
+        def __getattr__(self, name):
+            return getattr(self._inner, name)
+
+        def close(self):
+            pass
+
+    monkeypatch.setattr(config, "AWARD_SUMMARY_DIR", tmp_path)
+    monkeypatch.setattr(cli, "_open_db", lambda: KeepOpen(conn))
+    monkeypatch.setattr(cli, "HttpClient", FakeHttp)
+    monkeypatch.setattr(mod, "store_award_summary_bids", lambda *a, **k: 0)
+
+    rc = cli.main(["enrich-awards", "--download"])
+    assert rc == 1
+    err = capsys.readouterr().err
+    assert "award_summary_download:badhtml" in err
+    # Valid sibling form was still archived.
+    urls = {r[0] for r in conn.execute("SELECT url FROM background_pdf")}
+    assert urls == {mod._UPLOAD + "goodpdf"}
