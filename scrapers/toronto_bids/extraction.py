@@ -1,5 +1,6 @@
 """Orchestrate corpus extraction, classification gating, caching, and store backfill."""
 
+import copy
 import json
 import hashlib
 from pathlib import Path
@@ -60,20 +61,188 @@ def split_document(text: str, max_chars: int = _DEFAULT_MAX_CHARS) -> list[str]:
     return chunks
 
 
+def _norm_val(value):
+    if isinstance(value, str):
+        return " ".join(value.split())
+    return value
+
+
+def _same_val(a, b) -> bool:
+    if isinstance(a, bool) or isinstance(b, bool):
+        return type(a) is type(b) and a == b
+    return _norm_val(a) == _norm_val(b)
+
+
+def _is_placeholder(field: str, value, *, kind: str) -> bool:
+    if value is None:
+        return True
+    if isinstance(value, str) and not value.strip():
+        return True
+    if kind == "contract" and field == "solicitation_type" and value == "unknown":
+        return True
+    if kind in ("bid", "award") and field == "amount_basis" and value == "unknown":
+        return True
+    if kind == "bid" and field == "status" and value == "not_stated":
+        return True
+    return False
+
+
+def _canonical_record(item: dict) -> str:
+    normalized = {k: _norm_val(v) for k, v in item.items()}
+    return json.dumps(normalized, sort_keys=True, ensure_ascii=False)
+
+
+def _append_conflict(conflicts: list[dict], entry: dict) -> None:
+    sig = json.dumps(entry, sort_keys=True, ensure_ascii=False)
+    if all(json.dumps(c, sort_keys=True, ensure_ascii=False) != sig for c in conflicts):
+        conflicts.append(entry)
+
+
+def _merge_fact_list(
+    existing: list[dict],
+    incoming: list[dict],
+    *,
+    kind: str,
+    conflicts: list[dict],
+) -> None:
+    """Merge bid or award facts from another chunk into existing without double-counting or silent loss."""
+    used: set[int] = set()
+    unmatched: list[dict] = []
+
+    # Pass 1: exact canonical matches across chunks appear once.
+    existing_canon = [_canonical_record(item) for item in existing]
+    for item in incoming:
+        canon = _canonical_record(item)
+        match = next(
+            (i for i, c in enumerate(existing_canon) if i not in used and c == canon),
+            None,
+        )
+        if match is not None:
+            used.add(match)
+        else:
+            unmatched.append(item)
+
+    # Pass 2: compatible same-supplier enrichment (no concrete field disagrees).
+    still_unmatched: list[dict] = []
+    for item in unmatched:
+        sup = _norm_val(item.get("supplier_name") or "")
+        match = None
+        for i, prev in enumerate(existing):
+            if i in used or _norm_val(prev.get("supplier_name") or "") != sup:
+                continue
+            keys = set(prev) | set(item)
+            if all(
+                _is_placeholder(k, prev.get(k), kind=kind)
+                or _is_placeholder(k, item.get(k), kind=kind)
+                or _same_val(prev.get(k), item.get(k))
+                for k in keys
+            ):
+                match = i
+                break
+        if match is not None:
+            used.add(match)
+            target = existing[match]
+            for k, v in item.items():
+                if _is_placeholder(k, target.get(k), kind=kind) and not _is_placeholder(k, v, kind=kind):
+                    target[k] = copy.deepcopy(v)
+            existing_canon[match] = _canonical_record(target)
+        else:
+            still_unmatched.append(item)
+
+    # Pass 3: remaining same-supplier items conflict with an unused prior observation; new suppliers or
+    # additional lines beyond those already matched in this chunk are appended as distinct observations.
+    for item in still_unmatched:
+        sup = _norm_val(item.get("supplier_name") or "")
+        conflict_idx = next(
+            (i for i, prev in enumerate(existing) if i not in used and _norm_val(prev.get("supplier_name") or "") == sup),
+            None,
+        )
+        if conflict_idx is not None:
+            used.add(conflict_idx)
+            kept = existing[conflict_idx]
+            diff = sorted(
+                k
+                for k in (set(kept) | set(item))
+                if not _is_placeholder(k, kept.get(k), kind=kind)
+                and not _is_placeholder(k, item.get(k), kind=kind)
+                and not _same_val(kept.get(k), item.get(k))
+            )
+            _append_conflict(
+                conflicts,
+                {
+                    "kind": kind,
+                    "supplier_name": kept.get("supplier_name"),
+                    "kept": copy.deepcopy(kept),
+                    "conflicting": copy.deepcopy(item),
+                    "differing_fields": diff,
+                },
+            )
+        else:
+            existing.append(copy.deepcopy(item))
+
+
+def _merge_contract(target: dict, incoming: dict) -> None:
+    """Combine compatible contract metadata, bids, and awards from incoming into target."""
+    conflicts: list[dict] = target.setdefault("_merge_conflicts", [])
+
+    # Merge string lists (prequalified, invited_to_tender) preserving order.
+    for list_key in ("prequalified", "invited_to_tender"):
+        if list_key in incoming and isinstance(incoming[list_key], list):
+            cur = target.setdefault(list_key, [])
+            seen = {_norm_val(x) for x in cur}
+            for name in incoming[list_key]:
+                norm = _norm_val(name)
+                if norm not in seen:
+                    cur.append(name)
+                    seen.add(norm)
+
+    # Merge bids and awards.
+    target.setdefault("bids", [])
+    target.setdefault("awards", [])
+    _merge_fact_list(target["bids"], incoming.get("bids", []), kind="bid", conflicts=conflicts)
+    _merge_fact_list(target["awards"], incoming.get("awards", []), kind="award", conflicts=conflicts)
+
+    # Merge scalar metadata fields.
+    skip = {"reference", "bids", "awards", "prequalified", "invited_to_tender", "_merge_conflicts"}
+    for key in set(target) | set(incoming):
+        if key in skip:
+            continue
+        cur_val = target.get(key)
+        inc_val = incoming.get(key)
+        if _is_placeholder(key, inc_val, kind="contract"):
+            continue
+        if _is_placeholder(key, cur_val, kind="contract"):
+            target[key] = copy.deepcopy(inc_val)
+        elif not _same_val(cur_val, inc_val):
+            _append_conflict(
+                conflicts,
+                {
+                    "kind": "field",
+                    "field": key,
+                    "kept": copy.deepcopy(cur_val),
+                    "conflicting": copy.deepcopy(inc_val),
+                },
+            )
+
+    if not conflicts:
+        target.pop("_merge_conflicts", None)
+
+
 def dedup_contracts(contracts: list[dict]) -> list[dict]:
-    """Deduplicate contracts by reference, keeping the one with more bids."""
+    """Merge contracts sharing a non-empty reference across chunks while preserving unreferenced ones."""
     by_ref: dict[str, dict] = {}
     no_ref = []
     for contract in contracts:
         ref = contract.get("reference")
-        if not ref:
-            no_ref.append(contract)
+        ref_key = ref.strip() if isinstance(ref, str) else ""
+        if not ref_key:
+            no_ref.append(copy.deepcopy(contract))
             continue
-        existing = by_ref.get(ref)
-        if existing is None or len(contract.get("bids", [])) > len(
-            existing.get("bids", [])
-        ):
-            by_ref[ref] = contract
+        existing = by_ref.get(ref_key)
+        if existing is None:
+            by_ref[ref_key] = copy.deepcopy(contract)
+        else:
+            _merge_contract(existing, contract)
     return list(by_ref.values()) + no_ref
 
 

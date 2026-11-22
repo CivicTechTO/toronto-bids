@@ -1,7 +1,9 @@
 import hashlib
+import os
 import re
 import shutil
 import subprocess
+import tempfile
 from pathlib import Path
 
 from lxml import html as _html
@@ -56,21 +58,55 @@ def pdf_kind(url: str) -> str:
     return "bgrd" if "/bgrd/" in url else ("comm" if "/comm/" in url else "other")
 
 
+def validate_pdf_file(path: Path, *, layout: bool = False, check_text: bool = False) -> str | None:
+    """Validate %PDF- header and Poppler parseability; return extracted text when check_text=True.
+
+    Valid scanned PDFs with no embedded text pass validation and return None.
+    Raises ValueError on non-PDF or corrupt responses.
+    """
+    with path.open("rb") as stream:
+        if stream.read(5) != b"%PDF-":
+            raise ValueError("Response is not a PDF")
+    if shutil.which("pdfinfo") is not None:
+        info_proc = subprocess.run(["pdfinfo", str(path)], capture_output=True)
+        if info_proc.returncode != 0:
+            raise ValueError("PDF structure could not be read")
+    if not check_text:
+        return None
+    proc = subprocess.run(
+        ["pdftotext", "-q", *(["-layout"] if layout else []), str(path), "-"],
+        capture_output=True,
+        text=True,
+    )
+    if proc.returncode != 0:
+        detail = (proc.stderr or "").strip() or f"exit code {proc.returncode}"
+        raise ValueError(f"PDF text extraction failed: {detail}")
+    return proc.stdout.strip() or None
+
+
 def download_pdf(http, url: str, dest_dir, layout: bool = False) -> dict:
-    """Download a PDF, save and hash it, and extract text with pdftotext.
+    """Download a PDF, validate it, atomically save and hash it, and extract text with pdftotext.
 
     Pass layout=True (-layout) for columnar forms such as Award Summary Forms.
+    Raises ValueError without replacing any existing file if the response is not a valid PDF.
     """
     data = http.get_bytes(url)
+    if not data.startswith(b"%PDF-"):
+        raise ValueError("Response is not a PDF")
     dest_dir = Path(dest_dir)
     dest_dir.mkdir(parents=True, exist_ok=True)
     name = url.rsplit("/", 1)[-1]
     path = dest_dir / name
-    path.write_bytes(data)
-    digest = hashlib.sha256(data).hexdigest()
-    proc = subprocess.run(["pdftotext", "-q", *(["-layout"] if layout else []), str(path), "-"],
-                          capture_output=True, text=True)
-    text = proc.stdout.strip() or None
+    with tempfile.NamedTemporaryFile(dir=dest_dir, prefix=f".{name}.", suffix=".tmp", delete=False) as tmp:
+        tmp_path = Path(tmp.name)
+        try:
+            tmp.write(data)
+            tmp.close()
+            text = validate_pdf_file(tmp_path, layout=layout, check_text=True)
+            digest = hashlib.sha256(data).hexdigest()
+            os.replace(tmp_path, path)
+        finally:
+            tmp_path.unlink(missing_ok=True)
     return {"local_path": str(path), "sha256": digest, "text": text}
 
 

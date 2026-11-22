@@ -1,5 +1,6 @@
 """Download Award Summary Form PDFs from the Toronto Bids OData API (post-BAP, >= 2025-10-01)."""
 
+from pathlib import Path
 from urllib.parse import quote
 
 from toronto_bids import config
@@ -48,15 +49,36 @@ def award_summary_files(record: dict) -> list:
     return out
 
 
-def download_award_summaries(conn, http, dest_dir=None, log=lambda _m: None) -> int:
-    """Download and archive uncached Award Summary Form PDFs. Idempotent."""
+def _held_award_summary_is_valid(row, log=lambda _m: None) -> bool:
+    """Return False when a cached Award Summary Form on disk is corrupt/non-PDF so it can be recaptured."""
+    from toronto_bids.sources.council import validate_pdf_file
+
+    local_path = row["local_path"]
+    if not local_path:
+        return True
+    path = Path(local_path)
+    if not path.is_file():
+        return row["text"] is not None
+    try:
+        # Validate structure; also run pdftotext when text is NULL to distinguish scanned PDFs from corrupt ones.
+        validate_pdf_file(path, layout=True, check_text=(row["text"] is None))
+        return True
+    except ValueError as exc:
+        log(f"    invalid cached form {row['url'].rsplit('/', 1)[-1]} ({exc}); scheduling recapture")
+        return False
+
+
+def download_award_summaries(conn, http, dest_dir=None, log=lambda _m: None, failures=None) -> int:
+    """Download and archive uncached or invalid Award Summary Form PDFs. Idempotent."""
     from toronto_bids.sources.council import download_pdf
 
     dest_dir = dest_dir if dest_dir is not None else config.AWARD_SUMMARY_DIR
-    have = {
-        r["url"]
-        for r in conn.execute("SELECT url FROM background_pdf WHERE sha256 IS NOT NULL")
-    }
+    have = set()
+    for r in conn.execute(
+        "SELECT url, kind, local_path, text FROM background_pdf WHERE sha256 IS NOT NULL"
+    ):
+        if r["kind"] != "award_summary" or _held_award_summary_is_valid(r, log=log):
+            have.add(r["url"])
     log("  award summary forms: querying the portal")
     records = fetch_awarded_records(http, log=log)
     wanted = [
@@ -89,7 +111,10 @@ def download_award_summaries(conn, http, dest_dir=None, log=lambda _m: None) -> 
             stored += 1
         except Exception as exc:  # noqa: BLE001
             conn.rollback()
-            log(f"    skipped {url.rsplit('/', 1)[-1]}: {exc}")
+            bin_id = url.rsplit("/", 1)[-1]
+            log(f"    skipped {bin_id}: {exc}")
+            if failures is not None:
+                failures.append((f"award_summary_download:{bin_id}", str(exc)))
         if i % 25 == 0:
             log(f"    {i}/{len(wanted)}")
     return stored

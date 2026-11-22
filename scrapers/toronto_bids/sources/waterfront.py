@@ -246,7 +246,7 @@ def capture_awards(conn, http, *, data_dir=None, client=None, limit=None, log=pr
         finally:
             temporary.unlink(missing_ok=True)
     requests, failures, accepted, pending = 0, [], 0, 0
-    processed = []
+    processed, failed = [], []
     for month, blocks in by_month.items():
         text = extraction_text(month, blocks)
         digest = _sha(text)
@@ -270,7 +270,6 @@ def capture_awards(conn, http, *, data_dir=None, client=None, limit=None, log=pr
                 db.mark_extracted(conn, digest, EXTRACTOR_VERSION, json.dumps(result, ensure_ascii=False))
             else:
                 result = json.loads(cached)
-            processed.append(digest)
             claims, errors = verified_claims(blocks, result)
             # Retire stale published_award rows for a month only when verification has no errors.
             conn.execute('SAVEPOINT waterfront_month')
@@ -289,7 +288,13 @@ def capture_awards(conn, http, *, data_dir=None, client=None, limit=None, log=pr
                              (claim['source_key'], claim['publication_key'], buyer_id, claim['supplier_name_raw'], claim['award_amount'],
                               claim['award_amount_numeric'], claim['title_extracted'], digest, EXTRACTOR_VERSION,claim['evidence_json']))
             conn.execute('RELEASE waterfront_month')
+            conn.execute('INSERT INTO publication_extraction (buyer_id,publication_month,extraction_sha256,extractor_version,status,errors) '
+                         'VALUES (?,?,?,?,?,?) ON CONFLICT(buyer_id,publication_month) DO UPDATE SET '
+                         "extraction_sha256=excluded.extraction_sha256,extractor_version=excluded.extractor_version,status=excluded.status,errors=excluded.errors,last_seen=datetime('now')",
+                         (buyer_id, month, digest, EXTRACTOR_VERSION, 'incomplete' if errors else 'ok', json.dumps(errors)))
+            conn.commit()
             accepted += len(claims)
+            processed.append(digest)
         except ExtractionPending as exc:
             pending += 1
             conn.execute('INSERT INTO publication_extraction (buyer_id,publication_month,extraction_sha256,extractor_version,status,errors) '
@@ -302,16 +307,21 @@ def capture_awards(conn, http, *, data_dir=None, client=None, limit=None, log=pr
         except Exception as exc:
             if conn.in_transaction:
                 conn.rollback()
+            failed.append(digest)
             errors = [str(exc)]
-        conn.execute('INSERT INTO publication_extraction (buyer_id,publication_month,extraction_sha256,extractor_version,status,errors) '
-                     'VALUES (?,?,?,?,?,?) ON CONFLICT(buyer_id,publication_month) DO UPDATE SET '
-                     "extraction_sha256=excluded.extraction_sha256,extractor_version=excluded.extractor_version,status=excluded.status,errors=excluded.errors,last_seen=datetime('now')",
-                     (buyer_id, month, digest, EXTRACTOR_VERSION, 'incomplete' if errors else 'ok', json.dumps(errors)))
-        conn.commit()
+            try:
+                conn.execute('INSERT INTO publication_extraction (buyer_id,publication_month,extraction_sha256,extractor_version,status,errors) '
+                             'VALUES (?,?,?,?,?,?) ON CONFLICT(buyer_id,publication_month) DO UPDATE SET '
+                             "extraction_sha256=excluded.extraction_sha256,extractor_version=excluded.extractor_version,status=excluded.status,errors=excluded.errors,last_seen=datetime('now')",
+                             (buyer_id, month, digest, EXTRACTOR_VERSION, 'incomplete', json.dumps(errors)))
+                conn.commit()
+            except Exception:
+                if conn.in_transaction:
+                    conn.rollback()
         if errors:
             failures.append((f'waterfront:{month}', '; '.join(errors)))
         log(f'Waterfront {month}: {len(blocks)} source blocks; {"incomplete" if errors else "verified"}')
-    return dict(blocks=len(rows), months=len(by_month), awards=accepted, requests=requests, failures=failures, pending=pending, processed=processed)
+    return dict(blocks=len(rows), months=len(by_month), awards=accepted, requests=requests, failures=failures, pending=pending, processed=processed, failed=failed)
 
 
 
