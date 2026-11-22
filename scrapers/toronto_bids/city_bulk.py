@@ -21,7 +21,7 @@ _SOURCE_COUNT=r'(?:[A-Za-z]+(?:-[A-Za-z]+)?\s*\(\d+\)|\d+)'
 _RESPONDED_LIST=re.compile(r'\b(?:(?P<count>'+_SOURCE_COUNT+r')\s+)?(?:firms?|bidders?|proponents?|suppliers?)\s+responded\s+to\s+the\s+(?:RFP|RFT|RFQ|Call|Tender|Solicitation|Request\s+for\s+(?:Proposals?|Quotations?|Tenders?))\b[^:\n]{0,80}\bas\s+follows:\s*\n',re.I)
 _RECEIVED_LIST_COUNT=re.compile(r'\b(?P<count>'+_SOURCE_COUNT+r')\s+(?:bids?|proposals?|submissions?|responses?)\b.{0,100}\breceived\b|\breceipt\s+of\s+(?:a\s+total\s+of\s+)?(?P<receipt>'+_SOURCE_COUNT+r')\s+(?:bids?|proposals?|submissions?)\b',re.I)
 _TABLE=re.compile(r'\bTable\s+\d+\s*[:.\-]\s*(?:Summary\s+(?:of\s+)?(?:(?P<count>'+_SOURCE_COUNT+r')\s+)?(?:Bids?|Proposals?|Submissions?)\s+Received|List\s+of\s+(?:the\s+)?Suppliers\s+Who\s+Submitted\s+(?:a\s+)?(?:Proposals?|Bids?|Tenders?))\b[^\n]*(?:\n|$)',re.I)
-_RESPONDED_TABLE=re.compile(r'\bTable\s+(?P<table>\d+)\s*[:.]\s*Suppliers\s+and\s+(?:Fixed\s+)?Bid\s+Prices\b[^\n]*(?:\n[^\n]{0,80})?(?:\n|$)',re.I)
+_RESPONDED_TABLE=re.compile(r'\bTable\s+(?P<table>\d+)\s*[:.]\s*Suppliers\s+and\s+(?:Fixed\s+)?Bid\s+Prices\b[^\n]*(?:\n|$)',re.I)
 _RESPONDED_LEAD=re.compile(r'\b(?:A\s+total\s+(?:of\s+)?)?(?P<count>'+_SOURCE_COUNT+r')\s+(?:bidders?\s+responded|suppliers?\s+submitted\s+their\s+fixed\s+priced\s+bids?|bids?\s+were\s+submitted[^.\n]{0,80}?\bfrom\s+the\s+Suppliers)\b[^.\n:]{0,60}?\blisted\s+in\s+Table\s+(?P<table>\d+)\s+below\s*[:.]',re.I)
 
 
@@ -110,7 +110,8 @@ def propose(archive, row, native_identities=None):
                 count_quotation=marker.groupdict().get('count')
                 if marker.re is _RESPONDED_TABLE:
                     response=_RESPONDED_LEAD.search(clean(text[max(0,marker.start()-550):marker.start()]))
-                    if not response or response['table']!=marker['table'] or set(_DOC.findall(marker[0]))!={doc}:continue
+                    heading_docs=set(_DOC.findall(marker[0])) or set(_DOC.findall(text[marker.start():marker.end()+80]))
+                    if not response or response['table']!=marker['table'] or heading_docs!={doc}:continue
                     count_quotation=response['count']
                 elif marker.re is not _RESPONDED_LIST and not (_PARTICIPATION.search(lead) or (call and _NATIVE_PARTICIPATION.search(lead))):continue
                 counts=[count_quotation] if count_quotation else []

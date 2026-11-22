@@ -4,7 +4,7 @@ import re
 from toronto_bids.linking.call_number import find_call_numbers
 from toronto_bids.sources.city_agendas import clean
 
-_OPENED=re.compile(r'\bopened\s+the\s+(?:following\b[^:]{0,160}\b(?:(?:Tender\s+)?submissions?|Tenders?|bids?)|tender\s+submissions?)\b[^:]{0,100}:\s*\n',re.I)
+_OPENED=re.compile(r'\bopened\s+the\s+(?:following\b[^:]{0,160}\b(?:(?:Tender\s+)?submissions?|Tenders?)|tender\s+submissions?)\b[^:]{0,100}:\s*\n',re.I)
 _TABLE=re.compile(r'\bTable\s+\d+\s*[:.\-]\s*Summary\s+of\s+Bids\s+received\b[^\n]*\n',re.I)
 _NO_BID=re.compile(r'\b(?:No\s+bid(?:\s+submitted)?|Did\s+not\s+bid)\b',re.I)
 _DOC=re.compile(r'\b(?:Doc(?:ument)?\.?(?:\s+(?:Number|No\.?))?|RFP|RFQ|RFT)\s*[:#]?\s*(\d{10})(?!\d)',re.I)
