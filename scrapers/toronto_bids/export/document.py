@@ -32,7 +32,7 @@ def _ext(name: str | None) -> str | None:
 
 
 def _attribution() -> list[dict]:
-    """Collect attribution statements for enabled portals, sorted by slug."""
+    """Collect attribution statements for enabled portals, sorted by slug and URL."""
     return [
         {
             "slug": p["slug"],
@@ -41,7 +41,10 @@ def _attribution() -> list[dict]:
             "source_url": p["portal_url"],
             "permission": p["permission"],
         }
-        for p in sorted(config.BIDS_TENDERS_PORTALS + config.BONFIRE_PORTALS + config.MERX_PORTALS, key=lambda p: p["slug"])
+        for p in sorted(
+            config.BIDS_TENDERS_PORTALS + config.BONFIRE_PORTALS + config.MERX_PORTALS,
+            key=lambda p: (p["slug"], p["portal_url"]),
+        )
         if p["enabled"] and p.get("attribution")
     ]
 

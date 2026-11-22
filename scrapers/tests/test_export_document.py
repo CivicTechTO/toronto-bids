@@ -50,7 +50,8 @@ def test_meta_carries_the_attribution_the_grants_require(conn):
     for entry in attribution:
         assert entry["statement"] and entry["body"] and entry["source_url"]
         assert (repo_root / entry["permission"]).is_file()
-    assert [a["slug"] for a in attribution] == sorted(by_slug)
+    keys = [(a["slug"], a["source_url"]) for a in attribution]
+    assert keys == sorted(keys) and len(keys) == len(set(keys))
     assert build_export_document(conn, generated_at="2026-07-15T00:00:00Z") == doc
 
 

@@ -9,6 +9,7 @@ Enabled buyers are configured in `BONFIRE_PORTALS` (with written permission reco
 - Waterfront Toronto (`waterfrontoronto.bonfirehub.ca`)
 - Exhibition Place (`explace.bonfirehub.ca`)
 - The Atmospheric Fund (`taf.bonfirehub.ca`)
+- Toronto Transit Commission (`ttc.bonfirehub.ca`, configured with `open_only: True` because TTC disables Past Public Opportunities and 307-redirects that endpoint to `/portal`; #313)
 
 Other Bonfire buyers can be added after checking their live portal responses and updating config and fixtures.
 
@@ -17,13 +18,13 @@ Other Bonfire buyers can be added after checking their live portal responses and
 Bonfire's public portal JS (`BFUtil.loadSection`) loads complete Open and Past collections with two anonymous GET requests (no server-side pagination):
 
 - `/PublicPortal/getOpenPublicOpportunitiesSectionData`
-- `/PublicPortal/getPastPublicOpportunitiesSectionData`
+- `/PublicPortal/getPastPublicOpportunitiesSectionData` (skipped only when a portal is explicitly configured `open_only: True`)
 
 The adapter checks `success == 1`, the project map, required fields, public visibility, dates, and known workflow codes. Unknown envelope fields fail validation so newly introduced pagination cannot be missed silently. Empty collections are valid; missing collections, login HTML, redirects, or `success = false` fail the capture.
 
 ## Rate limits and backoff
 
-- Each buyer capture makes three serial GET requests (landing page, Open, Past) with at least 1 second between requests (including retries) and an identifying project `User-Agent`.
+- Each buyer capture makes three serial GET requests (landing page, Open, Past — or two for `open_only` portals) with at least 1 second between requests (including retries) and an identifying project `User-Agent`.
 - Transport errors, 429s, and 5xx errors retry up to 3 times with 2s, 4s, and 8s backoff, extended by `Retry-After` if present. Delays over 60 seconds abort with a failure and persist the deadline in `retry-not-before.txt` so subsequent runs wait. Other 4xx errors and redirects stop immediately.
 - Although `robots.txt` generally disallows bots, access is covered by explicit permission. The adapter never logs in or downloads bid documents, private opportunities, or submissions.
 
