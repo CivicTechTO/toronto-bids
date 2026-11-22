@@ -563,3 +563,78 @@ def test_singular_bid_received_and_submitted_suppliers_list_tables(heading):
     )
     accepted,held=city_bulk.propose(archive(),row)
     assert not held and accepted[0]['names']==['Alberici Constructors Ltd.']
+
+
+def test_missing_awarded_documents_matches_legacy_semantics_without_correlated_bid_scan(conn):
+    # Seed edge cases: doc-number match, procurement_id-only match, NULL procurement_id, unlinked bids, CKAN-only award.
+    for pid in (1, 2, 3):
+        conn.execute("INSERT INTO procurement (id) VALUES (?)", (pid,))
+    sols = [
+        ("1000000001", 1),     # excluded by bid.document_number
+        ("1000000002", 2),     # excluded by bid.procurement_id only (bid.document_number is NULL)
+        ("1000000003", 3),     # missing (awarded, no matching bid)
+        ("1000000004", None),  # missing (awarded, NULL procurement_id; unlinked bid also has NULL procurement_id)
+        ("1000000005", None),  # excluded by bid.document_number even with NULL procurement_id
+        ("1000000006", None),  # CKAN-only award -> not OData-awarded
+    ]
+    conn.executemany(
+        "INSERT INTO solicitation (document_number, procurement_id, source) VALUES (?, ?, 'odata')", sols
+    )
+    for doc in ("1000000001", "1000000002", "1000000003", "1000000004", "1000000005"):
+        conn.execute(
+            "INSERT INTO award (document_number, supplier_name_raw, source) VALUES (?, 'Winner', 'odata')",
+            (doc,),
+        )
+    conn.execute(
+        "INSERT INTO award (document_number, supplier_name_raw, source) VALUES ('1000000006', 'Winner', 'ckan_awarded')"
+    )
+    conn.executemany(
+        "INSERT INTO bid (document_number, procurement_id, bidder_name_raw, source) VALUES (?, ?, ?, 'bap')",
+        [
+            ("1000000001", None, "Bidder-1"),
+            (None, 2, "Bidder-2"),
+            (None, None, "Bidder-unlinked"),  # unlinked bid must not exclude NULL-procurement solicitations
+            ("1000000005", None, "Bidder-5"),
+        ],
+    )
+    conn.commit()
+
+    legacy = {
+        r[0]
+        for r in conn.execute(
+            "SELECT s.document_number FROM solicitation s WHERE "
+            "EXISTS(SELECT 1 FROM award a WHERE a.document_number=s.document_number AND a.source='odata') AND "
+            "NOT EXISTS(SELECT 1 FROM bid b WHERE b.document_number=s.document_number OR b.procurement_id=s.procurement_id)"
+        )
+    }
+    actual = city_bulk._missing_awarded_documents(conn)
+    assert actual == legacy == {"1000000003", "1000000004"}
+
+    # Scale + query-plan check: 6,000 awarded solicitations & 12,000 bids with single-pass bid read.
+    conn.executemany(
+        "INSERT INTO solicitation (document_number, source) VALUES (?, 'odata')",
+        [(f"{2000000000 + i}",) for i in range(6000)],
+    )
+    conn.executemany(
+        "INSERT INTO award (document_number, supplier_name_raw, source) VALUES (?, 'W', 'odata')",
+        [(f"{2000000000 + i}",) for i in range(6000)],
+    )
+    conn.executemany(
+        "INSERT INTO bid (document_number, bidder_name_raw, source) VALUES (?, ?, 'bap')",
+        [(f"{2000000000 + (i // 2)}", f"B-{i % 2}") for i in range(12000)],
+    )
+    conn.commit()
+
+    sql_log = []
+    conn.set_trace_callback(sql_log.append)
+    try:
+        missing = city_bulk._missing_awarded_documents(conn)
+    finally:
+        conn.set_trace_callback(None)
+
+    assert missing == {"1000000003", "1000000004"}
+    assert len(sql_log) == 2
+    assert not any("NOT EXISTS" in q for q in sql_log)
+    for q in sql_log:
+        plan = " ".join(r[3] for r in conn.execute("EXPLAIN QUERY PLAN " + q))
+        assert "CORRELATED" not in plan.upper()

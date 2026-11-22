@@ -196,11 +196,29 @@ def _native_call_target(row, native_identities):
     return doc
 
 
+def _missing_awarded_documents(archive) -> set[str]:
+    """Return document_numbers of OData-awarded solicitations with no matching bid row."""
+    bid_docs: set[str] = set()
+    bid_procs: set[int] = set()
+    for doc, pid in archive.execute("SELECT document_number, procurement_id FROM bid"):
+        if doc is not None:
+            bid_docs.add(doc)
+        if pid is not None:
+            bid_procs.add(pid)
+    return {
+        doc
+        for doc, pid in archive.execute(
+            "SELECT DISTINCT s.document_number, s.procurement_id "
+            "FROM solicitation s "
+            "JOIN award a ON a.document_number = s.document_number AND a.source = 'odata'"
+        )
+        if doc not in bid_docs and (pid is None or pid not in bid_procs)
+    }
+
+
 def queue(directory, archive, *, client, limit=50, include_unlocated=False, native_identities=None, log=lambda m:None):
     """Queue eligible unique PDF hashes via the shared batch client without submitting or writing facts."""
-    missing={r[0] for r in archive.execute("SELECT s.document_number FROM solicitation s WHERE "
-        "EXISTS(SELECT 1 FROM award a WHERE a.document_number=s.document_number AND a.source='odata') AND "
-        "NOT EXISTS(SELECT 1 FROM bid b WHERE b.document_number=s.document_number OR b.procurement_id=s.procurement_id)")}
+    missing=_missing_awarded_documents(archive)
     if native_identities is None:
         from toronto_bids.linking.city_bulk_identity import NativeCallIdentities
         native_identities=NativeCallIdentities(archive)

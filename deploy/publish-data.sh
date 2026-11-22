@@ -23,8 +23,8 @@ CSV_ZIP="$EXPORT_DIR/bids-csv.zip"
 DATA_REPO="${TB_DATA_REPO:-CivicTechTO/toronto-bids-data}"
 FRONTEND_REPO="${TB_FRONTEND_REPO:-CivicTechTO/toronto-bids-frontend}"
 
-DAY="${TB_PUBLISH_DAY:-$(date +%d)}"
-SNAPSHOT_DATE="${TB_PUBLISH_DATE:-$(date +%F)}"
+DAY="${TB_PUBLISH_DAY:-$(TZ=America/Toronto date +%d)}"
+SNAPSHOT_DATE="${TB_PUBLISH_DATE:-$(TZ=America/Toronto date +%F)}"
 DRY_RUN="${TB_PUBLISH_DRY_RUN:-0}"
 
 # Best-effort Slack post; webhook is never logged.

@@ -164,7 +164,7 @@ Updates are manual.
 
 ## Schedule: Tuesday through Saturday (#180)
 
-`deploy/tb-nightly.timer` runs at `05:30 America/Toronto`, Tuesday through Saturday (`OnCalendar=Tue..Sat *-*-* 05:30:00 America/Toronto`). Because a 05:30 run captures the previous day's activity and the City does not publish procurement updates on weekends, Sunday and Monday morning runs produced zero new rows.
+`deploy/tb-nightly.timer` runs at `05:30 America/Toronto`, Tuesday through Saturday (`OnCalendar=Tue..Sat *-*-* 05:30:00 America/Toronto`), plus on the 1st of every month (`OnCalendar=*-*-01 05:30:00 America/Toronto`) so monthly Council enrichment and dated snapshots still run when the 1st falls on a Sunday or Monday. Because a 05:30 run captures the previous day's activity and the City does not publish procurement updates on weekends, ordinary Sunday and Monday mornings are skipped.
 
 - **Tradeoff:** An Ariba posting that opens over a weekend and closes Monday morning has its last capture chance on Saturday morning (~2.5 days early). Already-captured bundles are unaffected.
 - **Timestamp behavior:** Over a weekend, `generated_at` in the published export can be up to 3 days old (Saturday through Tuesday morning).

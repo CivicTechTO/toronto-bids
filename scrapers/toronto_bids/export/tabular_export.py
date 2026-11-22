@@ -46,15 +46,37 @@ def write_csv_zip(conn, out_path) -> Path:
     return out_path
 
 
+def _arrow_type(sqlite_type: str) -> pa.DataType:
+    """Map a SQLite declared column type to a stable Arrow type."""
+    upper = (sqlite_type or "").upper()
+    if "INT" in upper:
+        return pa.int64()
+    if any(token in upper for token in ("REAL", "FLOA", "DOUB", "NUM")):
+        return pa.float64()
+    if "BLOB" in upper:
+        return pa.binary()
+    return pa.string()
+
+
+def _table_schema(conn, table: str) -> pa.Schema:
+    fields = [
+        pa.field(row[1], _arrow_type(row[2]), nullable=True)
+        for row in conn.execute(f"PRAGMA table_info({table})")
+        if (table, row[1]) not in _EXCLUDE_COLUMNS and row[1] != "local_path"
+    ]
+    return pa.schema(fields)
+
+
 def write_parquet_files(conn, out_dir) -> list[Path]:
-    """Write one <table>.parquet per EXPORT_TABLES into out_dir."""
+    """Write one <table>.parquet per EXPORT_TABLES into out_dir with stable column types."""
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     written = []
     for table in db.EXPORT_TABLES:
         cols, rows = _read_table(conn, table)
+        schema = _table_schema(conn, table)
         data = {col: [row[i] for row in rows] for i, col in enumerate(cols)}
-        arrow_table = pa.table(data)
+        arrow_table = pa.table(data, schema=schema)
         path = out_dir / f"{table}.parquet"
         pq.write_table(arrow_table, path)
         written.append(path)

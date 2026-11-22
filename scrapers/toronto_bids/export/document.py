@@ -201,9 +201,18 @@ def build_export_document(conn, generated_at: str | None = None) -> dict:
         "FROM sync_run ORDER BY id",
     )
 
+    pdf_cols = [
+        r[1]
+        for r in conn.execute("PRAGMA table_info(background_pdf)")
+        if r[1] not in ("id", "text", "local_path")
+    ]
     pdfs_by_ref: dict[str, list] = {}
-    for pdf in _rows(conn, "SELECT * FROM background_pdf ORDER BY reference, url"):
-        pdfs_by_ref.setdefault(pdf["reference"], []).append(_drop(pdf, "id", "text", "local_path"))
+    for pdf in _rows(
+        conn,
+        f"SELECT {', '.join(pdf_cols)} FROM background_pdf "
+        "WHERE reference IS NOT NULL ORDER BY reference, url",
+    ):
+        pdfs_by_ref.setdefault(pdf["reference"], []).append(pdf)
 
     council_items = []
     for ci in _rows(conn, "SELECT * FROM council_item ORDER BY reference"):

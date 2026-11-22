@@ -324,11 +324,14 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def _is_first_of_month() -> bool:
-    """Monthly gate for council enrichment (test seam)."""
-    from datetime import date
+def _is_first_of_month(now=None) -> bool:
+    """Monthly gate for council enrichment in America/Toronto time (test seam)."""
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
 
-    return date.today().day == 1
+    toronto = ZoneInfo("America/Toronto")
+    current = datetime.now(toronto) if now is None else now.astimezone(toronto)
+    return current.day == 1
 
 
 def _run_step(steps: list, failures: list, name: str, fn, conn=None):

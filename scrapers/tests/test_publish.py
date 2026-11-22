@@ -357,3 +357,15 @@ exit 0
     res2, pub2 = run_wrapper(tmp_path / "upstream_fail", nightly_rc=1, write_fresh_marker=True)
     assert res2.returncode == 1
     assert pub2.exists() and '"new"' in pub2.read_text()
+
+
+def test_publish_snapshot_date_uses_toronto_timezone_when_host_is_utc(tmp_path):
+    script = (DEPLOY / "publish-data.sh").read_text()
+    assert 'DAY="${TB_PUBLISH_DAY:-$(TZ=America/Toronto date +%d)}"' in script
+    assert 'SNAPSHOT_DATE="${TB_PUBLISH_DATE:-$(TZ=America/Toronto date +%F)}"' in script
+    # Confirm bash with TZ=UTC still computes Toronto date when evaluating that expression.
+    res = subprocess.run(
+        [BASH, "-c", 'TZ=UTC; test "$(TZ=America/Toronto date -d "2026-12-01 02:00:00 UTC" +%F)" = "2026-11-30"'],
+        capture_output=True, text=True,
+    )
+    assert res.returncode == 0, res.stderr

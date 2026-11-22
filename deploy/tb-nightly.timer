@@ -5,6 +5,8 @@ Documentation=https://github.com/CivicTechTO/toronto-bids/blob/main/deploy/READM
 [Timer]
 # Explicit timezone avoids UTC/DST drift. Tue..Sat covers Mon..Fri business days (City posts nothing on weekends).
 OnCalendar=Tue..Sat *-*-* 05:30:00 America/Toronto
+# Always run on the 1st of the month (including Sunday/Monday 1sts) for monthly Council enrichment and snapshots.
+OnCalendar=*-*-01 05:30:00 America/Toronto
 RandomizedDelaySec=30m
 # Run a missed job on next boot.
 Persistent=true
