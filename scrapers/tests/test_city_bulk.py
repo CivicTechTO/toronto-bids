@@ -509,3 +509,57 @@ def test_native_tender_opened_following_tenders_admits_priced_rows_and_excludes_
     assert not held and accepted[0]['names']==['Alberici Constructors Ltd.','Maple Reinders Limited']
     assert accepted[0]['witness']['kind']=='native_tender_received_table'
     assert [e['name'] for e in accepted[0]['witness']['excluded_no_bid']]==['Other Firm']
+
+
+def test_modern_doc_prequalification_then_tender_rft_uses_tender_witness():
+    row=report()
+    row['result']['contracts'][0].update(solicitation_type='RFT',stage='prequalification_then_tender',
+        prequalified=['Other Prequalified Co.'],invited_to_tender=['Alberici Constructors Ltd.','Maple Reinders Limited'])
+    row['text']=(
+        'Award of Doc3987477359\nSUMMARY\n'
+        'Pre-qualified firms:\n1. Other Prequalified Co.\n2. Alberici Constructors Ltd.\n3. Maple Reinders Limited\n'
+        'Request for Tender Number Doc3987477359 closed.\n'
+        'At the time of closing, PMMD received and opened the following bids:\n'
+        'Table 2: Summary of Bids received for Request for Tender Number Doc3987477359:\n'
+        'Supplier Name\nBid Price (excluding HST)\n'
+        'Alberici Constructors Ltd.\n$10,000,000\n'
+        'Maple Reinders Limited\n$20,000,000\n'
+    )
+    accepted,held=city_bulk.propose(archive(),row)
+    assert not held and accepted[0]['names']==['Alberici Constructors Ltd.','Maple Reinders Limited']
+    assert accepted[0]['witness']['kind']=='modern_tender_received_table'
+    # Competing Doc in the local tender context still refuses.
+    row['text']=row['text'].replace('Doc3987477359:','Doc3987477359 / Doc9999999999:')
+    assert not city_bulk.propose(archive(),row)[0]
+
+
+@pytest.mark.parametrize('lead,heading', [
+    ('A total of two (2) suppliers submitted their fixed priced bid as listed in Table 2 below.',
+     'Table 2: Suppliers and Bid Prices for Request for Tender, Ariba Document\nNumber 3987477359'),
+    ('A total of two (2) bids were submitted electronically in Ariba, from the Suppliers listed in Table 2 below.',
+     'Table 2. Suppliers and Bid Prices for Request for Tender, Ariba Document Number\n3987477359'),
+])
+def test_wrapped_suppliers_and_bid_prices_table_with_page_break(lead,heading):
+    row=report()
+    row['text']=(
+        'Award of Doc3987477359\nSUMMARY\n' + lead +
+        '\nAward of Doc3987477359\nPage 3 of 5\n\f' + heading +
+        '\nSupplier Name\nAlberici Constructors Ltd.\n$10\nMaple Reinders Limited\n$20\n'
+    )
+    accepted,held=city_bulk.propose(archive(),row)
+    assert not held and accepted[0]['names']==['Alberici Constructors Ltd.','Maple Reinders Limited']
+
+
+@pytest.mark.parametrize('heading', [
+    'Table 2: Summary of one (1) Bid Received for Request for Quotation Doc3987477359',
+    'Table 5: List of the Suppliers Who Submitted a Proposal',
+])
+def test_singular_bid_received_and_submitted_suppliers_list_tables(heading):
+    row=report()
+    row['result']['contracts'][0]['bids']=[row['result']['contracts'][0]['bids'][0]]
+    row['text']=(
+        'Award of Doc3987477359\nSUMMARY\nOne proposal was submitted.\n'
+        + heading + '\nSupplier Name\n1. Alberici Constructors Ltd.\n$10\n'
+    )
+    accepted,held=city_bulk.propose(archive(),row)
+    assert not held and accepted[0]['names']==['Alberici Constructors Ltd.']
