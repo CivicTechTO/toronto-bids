@@ -61,13 +61,29 @@ gh_run() {
 [ -f "$JSON" ]   || fail "no export at $JSON — nothing to publish"
 [ -f "$SQLITE" ] || fail "no database at $SQLITE"
 
-GENERATED_AT="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["meta"]["generated_at"])' "$JSON")" \
-  || fail "export is not valid JSON with meta.generated_at: $JSON"
+# Verify the export completed cleanly and all artifacts match its completion marker.
+GENERATED_AT="$("$UV" run --project "$SCRAPERS" python -m toronto_bids.export.bundle "$EXPORT_DIR")" \
+  || fail "export in $EXPORT_DIR is incomplete or inconsistent — refusing to publish"
 echo "publish-data: export generated_at=$GENERATED_AT"
 
 if [ "$DRY_RUN" != 1 ] && ! gh auth status >/dev/null 2>&1; then
   fail "gh is not authenticated — set GH_TOKEN in ~/.config/toronto-bids/tb.env or run 'gh auth login'"
 fi
+
+# Freeze one consistent SQLite snapshot before any publish-time sync_run writes mutate bids.sqlite.
+STAGE_DIR="$(mktemp -d "$DATA_DIR/.publish-stage.XXXXXX")" || fail "could not create publish staging directory"
+trap 'rm -rf "$STAGE_DIR"' EXIT
+FROZEN_SQLITE="$STAGE_DIR/bids.sqlite"
+python3 -c '
+import sqlite3, sys
+src = sqlite3.connect(sys.argv[1])
+dst = sqlite3.connect(sys.argv[2])
+try:
+    src.backup(dst)
+finally:
+    dst.close()
+    src.close()
+' "$SQLITE" "$FROZEN_SQLITE" || fail "could not snapshot database at $SQLITE"
 
 gzip -9 -c "$JSON" > "$GZ" || fail "gzip failed"
 
@@ -76,12 +92,12 @@ gzip -9 -c "$JSON" > "$GZ" || fail "gzip failed"
 PARQUET_FILES=("$EXPORT_DIR"/*.parquet)
 [ -e "${PARQUET_FILES[0]}" ] || fail "no *.parquet in $EXPORT_DIR — did 'tb export' run?"
 
-# Generate manifest from the exact bytes about to be uploaded.
+# Generate manifest from the exact bytes about to be uploaded (using the frozen SQLite snapshot).
 "$UV" run --project "$SCRAPERS" tb manifest \
-  "$JSON" "$GZ" "$SQLITE" "$CSV_ZIP" "${PARQUET_FILES[@]}" --out "$MANIFEST" \
+  "$JSON" "$GZ" "$FROZEN_SQLITE" "$CSV_ZIP" "${PARQUET_FILES[@]}" --out "$MANIFEST" \
   || fail "could not generate manifest.json"
 
-ASSETS=("$JSON" "$GZ" "$SQLITE" "$SCHEMA" "$CSV_ZIP" "${PARQUET_FILES[@]}")
+ASSETS=("$JSON" "$GZ" "$FROZEN_SQLITE" "$SCHEMA" "$CSV_ZIP" "${PARQUET_FILES[@]}")
 
 # Ensure rolling `latest` release exists, then upload assets before manifest.
 if ! gh_run release view latest -R "$DATA_REPO" >/dev/null 2>&1; then
@@ -116,10 +132,10 @@ R2_BUCKET="${TB_R2_BUCKET:-toronto-bids-data}"
 if [ -z "${CLOUDFLARE_API_TOKEN:-}" ]; then
   echo "publish-data: R2 not configured (no CLOUDFLARE_API_TOKEN) — skipping the bucket mirror"
 elif [ "$DRY_RUN" = 1 ]; then
-  echo "DRY-RUN python -m toronto_bids.r2_mirror --bucket $R2_BUCKET --file $SQLITE"
+  echo "DRY-RUN python -m toronto_bids.r2_mirror --bucket $R2_BUCKET --file $FROZEN_SQLITE"
 else
   if _r2_err="$(cd "$SCRAPERS" && "$UV" run --locked python -m toronto_bids.r2_mirror \
-        --bucket "$R2_BUCKET" --file "$SQLITE" 2>&1)"; then
+        --bucket "$R2_BUCKET" --file "$FROZEN_SQLITE" 2>&1)"; then
     echo "publish-data: mirrored bids.sqlite to R2 bucket $R2_BUCKET"
     record_step r2_mirror ok
   else
@@ -129,16 +145,16 @@ else
   fi
 fi
 
-# Verify live public artifact sizes against local bids.sqlite (read-only, best-effort).
+# Verify live public artifact sizes against the frozen bids.sqlite snapshot (read-only, best-effort).
 if [ "$DRY_RUN" = 1 ]; then
   echo "DRY-RUN skip artifact freshness verification"
 else
   verify_artifact_size github_release_freshness \
-    "https://github.com/${DATA_REPO}/releases/download/latest/bids.sqlite" "$SQLITE"
+    "https://github.com/${DATA_REPO}/releases/download/latest/bids.sqlite" "$FROZEN_SQLITE"
   if [ -n "${CLOUDFLARE_API_TOKEN:-}" ]; then
     verify_artifact_size r2_freshness \
       "${TB_R2_PUBLIC_URL:-https://pub-99a890c186c743c19ef7bcd00024dca8.r2.dev}/bids.sqlite" \
-      "$SQLITE"
+      "$FROZEN_SQLITE"
   fi
 fi
 
