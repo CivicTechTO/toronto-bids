@@ -4,7 +4,7 @@ from toronto_bids.store import db
 
 DEFAULT_BUYERS = [
     Buyer(slug='toronto-police-service', name='Toronto Police Service', kind='agency', partnered=0, funding_share=None,
-          platform="MERX", notes="Public buyer-scoped MERX notices; page identity is independent of printed references."),
+          platform="MERX", notes="Public buyer-scoped MERX notices plus Toronto Police Service Board (TPSB) public minutes reports from tpsb.ca (#334); page identity is independent of printed references."),
     Buyer(slug='toronto-parking-authority', name='Toronto Parking Authority', kind='agency', partnered=0, funding_share=None,
           platform="MERX", notes="Public buyer-scoped MERX notices plus TMMIS PA Board of Directors reports on legdocs (#335); page identity is independent of printed references."),
     Buyer(slug='createto', name='CreateTO (Build Toronto, TPLC)', kind='agency', partnered=0, funding_share=None,

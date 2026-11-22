@@ -21,14 +21,14 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_parser("status", help="Show row counts in the local store")
 
     p_coverage = sub.add_parser('agency-coverage', help='Inspect agency identity decisions and coverage as JSON (#257)')
-    p_coverage.add_argument('--only', choices=['trca', 'zoo', 'ep', 'tpa', 'ttc', 'tchc', 'tpl'])
+    p_coverage.add_argument('--only', choices=['trca', 'zoo', 'ep', 'tpa', 'ttc', 'tchc', 'tpl', 'tpsb'])
     p_coverage.add_argument('--baseline', help='Read-only SQLite baseline for prior-fact reconciliation')
     p_coverage.add_argument('--out', help='Write report to this path instead of stdout')
 
     p_known = sub.add_parser('known-gaps', help="Record reviewed gaps the nightly reports as known (#283)")
     p_known.add_argument('action', choices=['record-refusals'])
-    p_known.add_argument('--only', choices=['trca', 'zoo', 'ep', 'tpa', 'tchc', 'tpl'], action='append',
-                         help='Corpus to record (repeatable; default: trca, zoo, ep, tpa, tchc and tpl)')
+    p_known.add_argument('--only', choices=['trca', 'zoo', 'ep', 'tpa', 'tchc', 'tpl', 'tpsb'], action='append',
+                         help='Corpus to record (repeatable; default: trca, zoo, ep, tpa, tchc, tpl and tpsb)')
     p_known.add_argument('--out', help='Write here instead of the packaged known_agency_refusals.json')
 
     p_export = sub.add_parser(
@@ -207,7 +207,7 @@ def build_parser() -> argparse.ArgumentParser:
         "portal (gated on written permission, see docs/permissions/).",
     )
     p_ag.add_argument(
-        "--only", choices=["zoo", "trca", "ep", "tpa", "tchc", "tpl"], help="Run one body instead of all"
+        "--only", choices=["zoo", "trca", "ep", "tpa", "tchc", "tpl", "tpsb"], help="Run one body instead of all"
     )
     p_ag.add_argument(
         "--fetch",
@@ -259,6 +259,7 @@ def build_parser() -> argparse.ArgumentParser:
             "ttc",
             "tchc",
             "tpl",
+            "tpsb",
             "award_summary",
             "committee",
             "composite",
@@ -1005,7 +1006,7 @@ def _run_nightly(args) -> int:
                     failures.extend(
                         _capture_agency_bodies(
                             conn,
-                            bodies=["trca", "zoo", "ep", "tpa", "tchc", "tpl"],
+                            bodies=["trca", "zoo", "ep", "tpa", "tchc", "tpl", "tpsb"],
                             fetch=True,
                             scrape=True,
                             virtual_display=True,
@@ -1352,6 +1353,32 @@ def _capture_agency_bodies(conn, *, bodies, fetch, scrape, virtual_display, out)
         except Exception as exc:
             failures.append(("tpl", str(exc)))
 
+    if "tpsb" in bodies:
+        try:
+            from toronto_bids.sources.tpsb_board import (
+                download_tpsb_reports,
+                store_tpsb_reports,
+            )
+
+            if fetch:
+                http = HttpClient()
+                try:
+                    print(
+                        f"  tpsb reports fetched : "
+                        f"{download_tpsb_reports(conn, http, log=out, failures=failures)}"
+                    )
+                finally:
+                    http.close()
+            before = _source_row_counts(conn, "tpsb_board")
+            got = store_tpsb_reports(conn, log=out, failures=failures)
+            print(
+                _stored_line(
+                    "tpsb", got, before, _source_row_counts(conn, "tpsb_board")
+                )
+            )
+        except Exception as exc:
+            failures.append(("tpsb", str(exc)))
+
     return failures
 
 
@@ -1364,7 +1391,7 @@ def _cmd_enrich_agencies(args) -> int:
     failures: list[tuple[str, str]] = []
     try:
         seed_buyers(conn)  # extraction backfill looks up buyers by slug
-        bodies = [args.only] if args.only else ["trca", "zoo", "ep", "tpa", "tchc", "tpl"]
+        bodies = [args.only] if args.only else ["trca", "zoo", "ep", "tpa", "tchc", "tpl", "tpsb"]
 
         failures.extend(
             _capture_agency_bodies(
@@ -1730,7 +1757,7 @@ def main(argv: list[str] | None = None) -> int:
         conn = _open_db()
         try:
             out = args.out or known_gaps.REFUSALS_PATH
-            counts = known_gaps.record_refusals(conn, args.only or ['trca', 'zoo', 'ep', 'tpa', 'tchc', 'tpl'], out)
+            counts = known_gaps.record_refusals(conn, args.only or ['trca', 'zoo', 'ep', 'tpa', 'tchc', 'tpl', 'tpsb'], out)
         finally:
             conn.close()
         print(f"recorded {', '.join(f'{c} {n}' for c, n in counts.items())} refused contract(s) to {out}")

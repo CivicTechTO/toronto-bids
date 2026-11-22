@@ -26,7 +26,8 @@ def _evidence():
     result = {}
     buyers = {'trca': 'trca', 'ep': 'exhibition-place', 'zoo': 'toronto-zoo',
               'tpa': 'toronto-parking-authority', 'ttc': 'toronto-transit-commission',
-              'tchc': 'toronto-community-housing', 'tpl': 'toronto-public-library'}
+              'tchc': 'toronto-community-housing', 'tpl': 'toronto-public-library',
+              'tpsb': 'toronto-police-service'}
     for item in data['decisions']:
         corpus = item['corpus']
         native = item['native_ref']
