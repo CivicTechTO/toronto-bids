@@ -1,8 +1,4 @@
-"""Derived text for image-only PDFs; original captures and prompt/cache keys stay intact.
-
-Native text remains the first choice. OCR is a bounded local preparation step, not
-an extractor of bid facts. Its page words retain coordinates for source review.
-"""
+"""Native and OCR text extraction for held PDFs, preserving word coordinates for review."""
 import csv
 from functools import lru_cache
 import gzip
@@ -36,12 +32,12 @@ def _bundled():
 
 
 def record_for(conn, sha256):
-    """Read accepted or shipped review evidence without altering the archive."""
+    """Return stored or bundled pdf_text record for sha256, or None."""
     return conn.execute('SELECT * FROM pdf_text WHERE sha256=?',(sha256,)).fetchone() or _bundled().get(sha256)
 
 
 def persist_record(conn, record):
-    """Preserve first acceptance; a conflicting derivative requires explicit repair."""
+    """Insert a pdf_text record and raise if an existing row for the same sha256 differs."""
     columns=('sha256','method','text','text_sha256','provenance_json','proof_sha256')
     conn.execute('INSERT OR IGNORE INTO pdf_text ('+','.join(columns)+') VALUES (?,?,?,?,?,?)',
                  tuple(record[k] for k in columns))
@@ -59,7 +55,7 @@ def _run(args, *, timeout=180):
 
 
 def read_pdf(path):
-    """Return complete native or OCR text with provenance, or fail without partial output."""
+    """Extract native pdftotext or bounded Tesseract OCR text and word-box provenance."""
     path = Path(path)
     native = _run(['pdftotext', '-layout', str(path), '-']).strip()
     if native:
@@ -102,7 +98,6 @@ def read_pdf(path):
             if text and not words:raise ValueError(f'OCR page {page} has text but no word geometry')
             provenance['pages'].append(dict(page=page, text=text, text_sha256=_digest(text), words=words))
             texts.append(text)
-            # Each page is rendered/recognized serially; temporary images are bounded.
             for suffix in ('.png', '.txt', '.tsv'):
                 base.with_suffix(suffix).unlink()
     text = '\n\f\n'.join(texts)
@@ -112,11 +107,9 @@ def read_pdf(path):
 
 
 def source_text(conn, row, *, recover=False):
-    """Resolve immutable derived text; optionally prepare a held textless original.
+    """Resolve derived or native text for a PDF row; optionally run OCR when recover=True.
 
-    A missing local file is an ordinary portable-archive gap. A present but changed
-    original, failed OCR or changed accepted text is a visible failure. Callers own
-    transactions; no procurement facts or raw capture fields are changed here.
+    Missing local files return None; hash mismatches or conflicts raise ValueError.
     """
     sha = row['sha256']
     stored = record_for(conn,sha)
@@ -147,7 +140,7 @@ def source_text(conn, row, *, recover=False):
     result = read_pdf(path)
     if not result['text'].strip():
         raise ValueError('PDF text preparation returned empty text')
-    # Detect a concurrent file replacement even if the renderer succeeded.
+    # Re-check hash to catch concurrent file modification.
     if hashlib.sha256(path.read_bytes()).hexdigest() != sha:
         raise ValueError('Held PDF bytes changed during text recovery')
     proof = dict(sha256=sha, method=result['method'], text_sha256=_digest(result['text']),

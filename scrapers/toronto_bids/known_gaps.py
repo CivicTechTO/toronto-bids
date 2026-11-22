@@ -1,17 +1,7 @@
-"""Reviewed source gaps the nightly reports as known rather than failed (#283).
+"""Classify nightly failures against reviewed gap baselines.
 
-A failure is known only when it matches reviewed evidence exactly; anything else stays a
-failure. Standalone commands keep their strict exit codes — only the nightly verdict reads
-this, so a step that fails for the same reviewed reasons every night still turns red the
-first night it fails for a new one.
-
-- `download:trca` — an original document reviewed in `trca_document_gaps.json` (#259).
-- `coverage:<corpus>` — award claims withheld by reviewed identity evidence (#258).
-- `identity:<corpus>` — every currently refused contract is in the recorded baseline
-  `known_agency_refusals.json` (#282). The baseline is keyed on the extraction cache, so a
-  prompt change re-flags every refusal for review, as it should.
-- `waterfront:<month>` — every verifier error for that month is recorded verbatim in
-  `known_gaps.json`.
+Only exact matches to recorded evidence (TRCA document gaps, agency coverage/refusal baselines,
+Waterfront verifier errors) are downgraded from failure to known gap. Standalone commands ignore this.
 """
 import json
 import re
@@ -33,7 +23,6 @@ def _load(path):
 def load_registry():
     from toronto_bids.sources.trca_document_recovery import load_documents
     gaps = _load(GAPS_PATH)
-    # No baseline recorded yet means no refusal is known.
     refusals = _load(REFUSALS_PATH)
     return {
         'trca_documents': {d['document_id'] for d in load_documents()},
@@ -48,15 +37,13 @@ def _key(row):
 
 
 def refused_contracts(conn, corpus):
-    """Active identity refusals, one per (document, version, result, contract) — the same
-    dedup `agency_coverage.summarize` counts by. Reviewed withholdings are not refusals."""
+    """Active identity refusals deduplicated by (sha256, version, result, contract_index), excluding reviewed withholdings."""
     out = {}
     for row in conn.execute(
             'SELECT * FROM agency_derivation WHERE corpus=? AND active=1 AND reason IS NOT NULL '
             'ORDER BY id', (corpus,)):
         proof = json.loads(row['identity_evidence_json'] or 'null')
-        # A verified native identity with individual award admissions is an award
-        # evidence gap, just like the older contract-wide withholding format.
+        # Verified native identity with individual award admissions is an award gap, not an identity refusal.
         if proof and (proof.get('withheld_awards_reason') or
                       (row['native_ref'] and proof.get('award_admission'))):
             continue
@@ -107,9 +94,7 @@ def classify(conn, failures, registry=None):
 
 
 def record_refusals(conn, corpora, path=REFUSALS_PATH):
-    """Write the current refusals as the reviewed baseline. Run after a #282 review pass,
-    then commit the file: the nightly treats exactly these contracts as known. Corpora
-    not named keep their recorded baseline."""
+    """Write current refusals for corpora to the reviewed baseline JSON, preserving unlisted corpora."""
     path = Path(path)
     held = json.loads(path.read_text()) if path.is_file() else {}
     payload = {

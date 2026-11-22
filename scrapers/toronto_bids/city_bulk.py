@@ -1,9 +1,4 @@
-"""Bulk report screening and extraction against the durable City agenda inventory.
-
-Discovery and model output never establish identities. This module queues the
-shared extraction contract and emits source-bound participation proposals. Its
-exception ledger is intended to be processed in cohorts, not report by report.
-"""
+"""Bulk report screening, batch queueing, and participation backfill against the City agenda inventory."""
 from collections import Counter
 from collections import defaultdict
 import hashlib
@@ -36,9 +31,7 @@ def _primary_heading(text):
 def _identity_role(doc,text):
     published=set(_DOC.findall(text))
     if published=={doc}:return 'unique_published_document'
-    # A staff report can discuss an older event. That is different from a
-    # conflicting current-event header/footer. Mixed reports need both a unique
-    # primary subject and an explicitly labelled local submitted-firm context.
+    # Mixed reports must have a unique primary subject Doc and no conflicting page-footer Docs.
     if set(_DOC.findall(_primary_heading(text)))!={doc}:raise ValueError('conflicting_source_document_roles')
     for page in text.split('\f'):
         tail='\n'.join([line for line in page.splitlines() if line.strip()][-4:])
@@ -48,12 +41,7 @@ def _identity_role(doc,text):
 
 
 def propose(archive, row, native_identities=None):
-    """Conservative programmatic participation admission; no handwritten report rules.
-
-    Supported projections bind one independently proven City event to a literal
-    received-firm list or named received-bid table. Stage conflicts and complex tables
-    remain explicit exceptions. No price, compliance or award is inferred.
-    """
+    """Emit source-bound participation proposals and structured exceptions for one screened report."""
     proposals=[];exceptions=[]
     if native_identities is None:
         from toronto_bids.linking.city_bulk_identity import NativeCallIdentities
@@ -82,7 +70,6 @@ def propose(archive, row, native_identities=None):
             else:
                 if len(docs)!=1:raise ValueError('historical_or_unresolved_contract_identity')
                 doc=next(iter(docs))
-                # Conflicting footer/header IDs cannot be repaired by frequency.
                 identity_role=_identity_role(doc,text)
                 items=[i for i in row['items'] if set(_DOC.findall(i['title']))=={doc}]
                 identity_anchor='agenda_title'
@@ -126,14 +113,11 @@ def propose(archive, row, native_identities=None):
                     counts.extend(m['count'] or m['receipt'] for m in _RECEIVED_LIST_COUNT.finditer(lead))
                 if any(len(names)>int(re.search(r'\d+',q)[0]) for q in counts):continue
                 if re.search(r'pre[- ]?qualif|invited to',marker[0] if call else context,re.I):continue
-                # The complete report and primary agenda title already agree
-                # on one Doc. A list need not repeat it on the same page, but
-                # a nearby historical native call is a competing event role.
+                # Reject lists whose surrounding context cites a competing historical call number.
                 if find_call_numbers(context)-({call} if call else set()):continue
                 if identity_role=='primary_subject_and_local_document' and set(_DOC.findall(context))!={doc}:continue
                 section=text[marker.end():marker.end()+1800]
-                # Keep the literal list separate from subsequent evaluation,
-                # consultant descriptions and recommended award discussions.
+                # Trim section before evaluation or recommendation boilerplate.
                 boundary=re.search(r'\n\s*(?:As required|A selection|The selection|The evaluation|All\s+\w+\s+\([^)]*\)\s+technical|Contract Award|Financial Impact|CONTACT|RECOMMENDATIONS)\b',section,re.I)
                 if boundary:section=section[:boundary.start()]
                 if re.search(r'^\s*no[- ]+bid\s*$',section,re.I|re.M):continue
@@ -168,7 +152,7 @@ def propose(archive, row, native_identities=None):
 
 
 def inventory(directory, archive):
-    """Screen native text and reuse the current whole-document extraction cache."""
+    """Screen held agenda reports and join them with cached extractions and candidate items."""
     conn=connect(directory)
     try:
         rows=[]
@@ -187,12 +171,7 @@ def inventory(directory, archive):
 
 
 def queue(directory, archive, *, client, limit=50, include_unlocated=False, log=lambda m:None):
-    """Queue eligible unique PDF hashes through the installation's shared batch client.
-
-    Does not submit, collect, write facts, or create a second spending authority.
-    Callers collect into the authoritative operational archive before copying
-    immutable cache entries into a validation archive.
-    """
+    """Queue eligible unique PDF hashes via the shared batch client without submitting or writing facts."""
     missing={r[0] for r in archive.execute("SELECT s.document_number FROM solicitation s WHERE "
         "EXISTS(SELECT 1 FROM award a WHERE a.document_number=s.document_number AND a.source='odata') AND "
         "NOT EXISTS(SELECT 1 FROM bid b WHERE b.document_number=s.document_number OR b.procurement_id=s.procurement_id)")}
@@ -221,8 +200,7 @@ def queue(directory, archive, *, client, limit=50, include_unlocated=False, log=
             counts['changed_source']+=1;continue
         queued+=1
         try:
-            # A ready queue result is still collected operationally, never cached
-            # into the private archive as a side effect of this preparation step.
+            # Ready results are imported via collect, not cached here.
             client.extract_document(row['sha256'],split_document(row['text']),source='city_agenda_bulk')
             counts['ready_in_queue']+=1
         except ExtractionPending:counts['pending']+=1
@@ -232,7 +210,7 @@ def queue(directory, archive, *, client, limit=50, include_unlocated=False, log=
 
 
 def write_inventory(directory, archive, output):
-    """One resumable-workload scoreboard, including unresolved and screened reports."""
+    """Write screening states, proposals, and exceptions to output JSON."""
     rows=inventory(directory,archive)
     proposals=[];exceptions=[]
     from toronto_bids.linking.city_bulk_identity import NativeCallIdentities
@@ -249,13 +227,7 @@ def write_inventory(directory, archive, output):
 
 
 def backfill(directory, archive):
-    """Admit supported participation atomically; preserve other sources and row IDs.
-
-    Run on a validation archive first. The caller initializes the schema, owns
-    commit, and resolves canonical identities before measuring/exporting coverage.
-    Existing evidence must remain reproducible; source/cache changes require an
-    explicit correction rather than silently retaining or deleting accepted facts.
-    """
+    """Validate and atomically admit bulk participation rows and evidence (caller owns commit)."""
     from toronto_bids.models import Bid, BackgroundPdf
     from toronto_bids.store import db
     from toronto_bids.linking.city_crosswalk import canonical,digest
@@ -290,16 +262,14 @@ def backfill(directory, archive):
     managed_urls={row['url'] for row in rows}
     prior_rows=list(archive.execute('SELECT * FROM city_bulk_bid_evidence'))
     def retained_context(old,current):
-        # Later Council consideration can add another capture of the same item.
-        # Provenance grows; existing identical participation remains supported.
+        # Allow provenance items list to grow when Council reconsiders the same report.
         old_core={k:v for k,v in old.items() if k!='items'}
         current_core={k:v for k,v in current.items() if k!='items'}
         return (old_core==current_core and
                 {canonical(i) for i in old.get('items',[])}<={canonical(i) for i in current.get('items',[])})
     pinned=defaultdict(set)
     for old in prior_rows:
-        # Revalidate this inventory's previously admitted reports. Immutable
-        # evidence from other historical jobs survives a new term's workload.
+        # Revalidate previously admitted reports in this inventory; other inventories stay untouched.
         value=json.loads(old['proof_json'])
         if digest(value)!=old['proof_sha256'] or (old['report_url'] in managed_urls and old['proof_sha256'] not in expected and
                 not any(retained_context(value,current) for current,_ in accepted)):
@@ -307,9 +277,7 @@ def backfill(directory, archive):
         if any(old[k]!=value[k] for k in ('document_number','report_url','report_sha256')):
             raise ValueError('Stored bulk evidence columns disagree with proof')
         pinned[old['document_number']].add(old['report_url'])
-    # Several supplements can name the same participants differently. Do not
-    # invent supplier aliases or inflate participation by unioning those lists.
-    # Choose one coherent list per event and preserve that choice on resume.
+    # Pick one coherent list per document_number and preserve the pinned report_url on resume.
     groups=defaultdict(list)
     for proof,row in accepted:groups[proof['document_number']].append((proof,row))
     selected=[]
@@ -349,12 +317,7 @@ def backfill(directory, archive):
 
 def run(directory, archive, *, http, browser, client=None, meeting_limit=None,
         report_limit=None, extraction_limit=50, include_unlocated=False, submit=False, log=lambda m:None):
-    """One resumable all-term discovery/acquisition/extraction workload.
-
-    Source deferrals do not discard already held work. Paid submission is
-    explicit, bounded and guarded by the caller's installation-wide budget.
-    Collection and validated backfill are separate operational transitions.
-    """
+    """Run schedule seeding, agenda/report capture, optional batch queueing/submission, and screening."""
     from toronto_bids.sources.city_agendas import seed_schedules,capture,capture_reports,InventoryBusy,CaptureDeferred,status
     directory=Path(directory)
     seed_schedules(directory,http=http)

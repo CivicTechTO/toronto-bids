@@ -22,8 +22,8 @@ class Solicitation:
     wards: str | None = None
     ariba_posting_link: str | None = None
     odata_id: str | None = None
-    publisher_identity_json: str | None = None  # latest original OData identity fields, separate from archived award lines
-    publisher_award_identity_json: str | None = None  # current publisher award publication dates and pairs
+    publisher_identity_json: str | None = None
+    publisher_award_identity_json: str | None = None
     source: str = ""
 
 
@@ -31,10 +31,9 @@ class Solicitation:
 class Award:
     document_number: str
     supplier_name_raw: str | None = None
-    award_amount: str | None = None          # the City's string, verbatim — never summable
+    award_amount: str | None = None
     award_date: str | None = None
     source: str = ""
-    # Derived, not passed: see NonCompetitive.__post_init__ for why it lives here.
     award_amount_numeric: float | None = field(init=False, default=None)
 
     def __post_init__(self):
@@ -46,7 +45,7 @@ class NonCompetitive:
     workspace_number: str
     supplier_name_raw: str | None = None
     reason: str | None = None
-    contract_amount: str | None = None       # the City's string, verbatim — never summable
+    contract_amount: str | None = None
     contract_date: str | None = None
     division: str | None = None
     council_authority_link: str | None = None
@@ -55,10 +54,7 @@ class NonCompetitive:
     contract_amount_numeric: float | None = field(init=False, default=None)
 
     def __post_init__(self):
-        # Derived on the model rather than at each normalizer's call site (odata + ckan, two
-        # each): every source that sets the raw string gets the number for free, and a new
-        # one cannot forget it and silently NULL the column — the same failure mode
-        # sources/schema_check.py exists to catch.
+        # Derived on the model so every source populates *_numeric consistently.
         object.__setattr__(self, "contract_amount_numeric", parse_amount(self.contract_amount))
 
 
@@ -67,19 +63,19 @@ class AribaPosting:
     rfx_id: str
     document_number: str | None = None
     title: str | None = None
-    posting_type: str | None = None      # detail 'type' field — unreliable (often "RFI")
+    posting_type: str | None = None  # detail 'type' field (unreliable, often "RFI")
     status: str | None = None
     customer_name: str | None = None
     posted_date: str | None = None
     close_date: str | None = None
-    categories: str | None = None        # JSON array of category names
+    categories: str | None = None  # JSON array
     amount_min: str | None = None
     amount_max: str | None = None
     currency: str | None = None
     public_posting_url: str | None = None
-    sourcing_url: str | None = None      # authenticated event URL (for a later attachments phase)
-    external_rfx_id: str | None = None   # raw e.g. "Doc5672751291"
-    raw_json: str | None = None          # detail JSON snapshot, or None if the detail call failed
+    sourcing_url: str | None = None
+    external_rfx_id: str | None = None
+    raw_json: str | None = None
     source: str = ""
 
 
@@ -103,14 +99,9 @@ class Supplier:
 
 @dataclass(frozen=True)
 class CapitalProject:
-    """A solicitation the City intends to issue but has not yet (#69).
-
-    Forward-looking, so it has no document_number and never joins the spine — a project
-    only gets one when it is actually solicited. Keyed on the City's combined name+contract
-    string because 'No.' is a row index that churns on every refresh.
-    """
+    """Forward-looking capital project (no document_number; keyed on name)."""
     name: str
-    contract_number: str | None = None    # e.g. '25ECS-MI-02SW', teased out of `name`
+    contract_number: str | None = None
     type_of_work: str | None = None
     scope: str | None = None
     delivery_division: str | None = None
@@ -125,27 +116,16 @@ class CapitalProject:
 
 @dataclass(frozen=True)
 class Bid:
-    """One bid on one solicitation — including the ones that lost (#84).
-
-    Rewrite spec §2.5.2 called these "never published anywhere. **Unrecoverable.**" They are
-    on every Bid Award Panel agenda. This is what makes the archive answer whether a
-    procurement was actually competitive, not merely what it cost.
-    """
+    """Single bid on a solicitation (winning or losing)."""
     bidder_name_raw: str
-    # Both identifiers are partial, and which one is present says where the bid came from.
-    # A Bid Award Panel bid always has a council item and had no document number before 2019
-    # (Toronto had no Ariba). An Award Summary Form bid (#114) is the reverse: it is keyed on
-    # the document number and has no council item at all — the panel that produced council
-    # items was abolished on 2025-10-01. So neither can be required, and `bid_key` COALESCEs
-    # both.
-    reference: str | None = None         # council item, e.g. '2022.BA189.2'
-    document_number: str | None = None   # NULL pre-2019: Toronto had no Ariba doc numbers yet
-    bid_price: str | None = None         # verbatim, footnote marker and all
-    # 'including' | 'excluding' | None. NOT decoration: 5,752 bids are quoted including HST
-    # and 4,083 excluding it, so a bare price is two incomparable things in one column.
+    # reference is NULL for post-2025-10-01 Award Summary Forms; document_number is NULL pre-2019.
+    reference: str | None = None
+    document_number: str | None = None
+    bid_price: str | None = None
+    # 'including' | 'excluding' | None; required to compare prices across rows.
     hst_basis: str | None = None
-    price_header: str | None = None      # the column header verbatim — provenance for hst_basis
-    status: str | None = None            # extracted compliance/outcome, independent of price
+    price_header: str | None = None
+    status: str | None = None
     source: str = ""
     bid_price_numeric: float | None = field(init=False, default=None)
 
@@ -207,7 +187,7 @@ class CouncilItem:
 @dataclass(frozen=True)
 class BackgroundPdf:
     url: str
-    reference: str | None = None         # council item; NULL for kind='award_summary' (#114)
+    reference: str | None = None         # council item; NULL for kind='award_summary'
     document_number: str | None = None   # set for kind='award_summary'; NULL for council PDFs
     kind: str | None = None
     local_path: str | None = None
@@ -218,22 +198,13 @@ class BackgroundPdf:
 
 @dataclass(frozen=True)
 class CompositeAward:
-    """One award line from a 2009-2012 Bid Committee composite report's appendices (#96).
-
-    A third keyspace. These predate Ariba, so they carry a Call Number and no
-    document_number, and nothing joins them to `solicitation` — see the composite_award
-    comment in schema.sql. For 2009-2011 this is the only record the archive has: the City's
-    feed publishes 0, 1 and 12 awards for those years against the 799 sitting in these
-    reports.
-    """
-    call_number: str                     # normalized, e.g. '3905-10-0097' / '317-2010'
-    call_number_raw: str | None = None   # as council wrote it, prefix vocabulary and all
-    reference: str | None = None         # the council item that carried it, e.g. '2011.BD5.1'
+    """Award line from a 2009-2012 Bid Committee composite report (keyed on call_number)."""
+    call_number: str
+    call_number_raw: str | None = None
+    reference: str | None = None
     title: str | None = None
     supplier_name_raw: str | None = None
-    # Verbatim, as `award.award_amount` is. The numeric is the FIRST net-of-taxes figure —
-    # the initial term, excluding option years. Confirmed against the feed on 137 of 139
-    # appendices it also published.
+    # Initial-term net-of-taxes figure (excludes option years).
     award_value: str | None = None
     source: str = ""
     award_value_numeric: float | None = field(init=False, default=None)
@@ -244,13 +215,7 @@ class CompositeAward:
 
 @dataclass(frozen=True)
 class AribaAttachment:
-    """One file inside the document bundle behind a solicitation's Ariba "Respond" gate (#117).
-
-    document_number is the Ariba event and joins solicitation.document_number. The bytes live
-    on disk under <DATA_DIR>/ariba/attachments/; this row is the index. file_size and crc32
-    come from the zip central directory (no decompression); zip_sha256 fingerprints the whole
-    bundle.
-    """
+    """Index entry for one file inside an Ariba attachment zip bundle on disk."""
     document_number: str
     filename: str
     path: str | None = None
@@ -262,10 +227,10 @@ class AribaAttachment:
 
 @dataclass(frozen=True)
 class Buyer:
-    """One procuring body outside the City's PMMD feed (#135, #103)."""
+    """Procuring agency or corporation outside the City PMMD feed."""
     slug: str
     name: str | None = None
-    kind: str | None = None            # 'agency' | 'corporation'
+    kind: str | None = None  # 'agency' | 'corporation'
     partnered: int = 0
     funding_share: float | None = None
     platform: str | None = None
@@ -289,7 +254,7 @@ class AgencyAward:
     buyer_id: int
     native_ref: str
     supplier_name_raw: str | None = None
-    award_amount: str | None = None      # extracted dollar token, verbatim — never summable
+    award_amount: str | None = None
     value_confidential: int = 0
     award_date: str | None = None
     publication_date: str | None = None

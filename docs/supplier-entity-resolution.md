@@ -1,159 +1,48 @@
 # Supplier entity resolution (`supplier_key`)
 
-`toronto_bids/linking/supplier.py:supplier_key` is the key used by
-`build_supplier_dimension` to group raw supplier-name strings (drawn from
-`award`, `noncompetitive`, `suspended_firm`, `bid`, `composite_award`,
-`agency_award`, `agency_bid`) into one `supplier` dimension row per real firm.
-The same legal entity is frequently written differently across sources and
-years — a numbered Ontario company under its trade name, a named firm under
-an `o/a`/`dba` alias, or a name wrapped in scraper noise ("Appendix C",
-"* Non-compliant") — and the naive normalization (lowercase, strip
-punctuation, collapse whitespace, keep legal suffixes) that predates this
-work does not fold those together. `supplier_key` adds three staged rules on
-top of that baseline, applied first-match-wins, before falling back to it.
+`toronto_bids/linking/supplier.py:supplier_key` maps raw supplier strings across `award`, `noncompetitive`, `suspended_firm`, `bid`, `composite_award`, `agency_award`, and `agency_bid` to one canonical `supplier` row per firm.
 
-## The four rules
+Raw names vary across sources and years (numbered Ontario companies under trade names, `o/a`/`dba` aliases, or scraper artifacts like `"Appendix C"` and `"* Non-compliant"`). `supplier_key` applies four staged rules in order (first match wins) and never raises; it returns `""` for blank or non-firm rows, which callers skip.
 
-1. **Salvage noise wrappers, then exclude pure footnotes.** Scraped rows
-   sometimes carry a real firm name buried in noise — an appendix/price-form
-   marker, a trailing `* Non-compliant` — and sometimes carry no firm name at
-   all, just administrative prose or a multi-firm list-blob. `_salvage`
-   strips the noise wrappers first; only what remains is tested against an
-   anchored footnote pattern (`_FOOTNOTE`) and, if it matches, excluded
-   (`supplier_key` returns `""` and the caller skips the row).
-   Example: `'Fermar Paving Limited* Non-compliant'` salvages to `'Fermar
-   Paving Limited'` and keys normally; `'Please see Scope for Award
-   Details'` has no firm name to salvage and is excluded.
+## Resolution rules
 
-2. **Numbered company → `#<number>`.** A 6-7 digit Ontario/Canada
-   corporation number adjacent to a province token, found anywhere in the
-   string, *is* the legal identity — the Inc/Ltd/Incorporated suffix and any
-   `o/a`/`dba` trade name around it are noise by comparison, and don't need
-   to agree across records for the same firm to be recognized.
-   Example: `'2489960 ONTARIO INC'`, `'2489960 Ontario Inc. o/a Kore
-   Infrastructure Group'`, and `'2489960 ONTARIO INCORPORATED'` all key to
-   `#2489960`.
+1. **Strip noise wrappers, then exclude pure footnotes.** `_salvage` strips administrative wrappers (appendix markers, trailing `* Non-compliant`). What remains is checked against `_FOOTNOTE`; if it matches, `supplier_key` returns `""`.
+   - `'Fermar Paving Limited* Non-compliant'` -> salvaged to `'Fermar Paving Limited'` and keyed normally.
+   - `'Please see Scope for Award Details'` -> excluded (`""`).
+2. **Numbered companies -> `#<number>`.** A 6-7 digit Ontario/Canada corporation number adjacent to a province token (`Ontario`, `Ont`, `Canada`) anywhere in the string anchors the firm regardless of legal suffix or trade name.
+   - `'2489960 ONTARIO INC'`, `'2489960 Ontario Inc. o/a Kore Infrastructure Group'`, and `'2489960 ONTARIO INCORPORATED'` -> `#2489960`.
+3. **Named-company trade-name folding (guarded).** Without a corporation number, a trailing `o/a`, `dba`, `operating as`, or `trading as` clause is dropped so the legal base becomes the key, provided the base is not a generic fragment (`_GENERIC_BASE`, such as `"ontario ltd"` or `"inc"`) and contains a non-suffix word.
+   - `'Corporate Express Canada Inc., operating as Staples Business Advantage'` and `'Corporate Express Canada Inc. (operating as Staples Advantage Canada)'` -> `'corporate express canada inc'`.
+   - `'Ontario Ltd. o/a Trans Canada Construction'` is not folded to `'ontario ltd'`.
+4. **Default normalization.** Lowercase, keep only `[a-z0-9 ]`, collapse whitespace, and strip `(Submitted by: ...)`. Legal suffixes (`Inc`, `Ltd`, `Limited`) are kept so `'Capital Sewer Services Inc.'` and `'Capital Sewer Services Ltd.'` stay distinct.
 
-3. **Named-company trade-name folding, guarded.** When a name has no
-   corporation number but does carry a trailing `o/a`/`dba`/`operating
-   as`/`trading as` marker, the trade name after the marker is dropped and
-   the legal base before it becomes the key — but only when that base is not
-   itself a generic fragment (`_GENERIC_BASE`: `"ontario ltd"`, `"inc"`,
-   etc.) and still contains a non-suffix word. This guard exists because
-   stripping the marker from `'Ontario Ltd. o/a Trans Canada Construction'`
-   would otherwise leave the bare fragment `'ontario ltd'`, which is shared
-   by hundreds of unrelated numbered companies and would over-merge badly.
-   Example: `'Corporate Express Canada Inc., operating as Staples Business
-   Advantage'` and `'Corporate Express Canada Inc. (operating as Staples
-   Advantage Canada)'` both key to `'corporate express canada inc'`.
+## Joint ventures
 
-4. **Default: today's conservative normalization.** Lowercase, strip
-   everything but `[a-z0-9 ]`, collapse whitespace, drop a `(Submitted by:
-   ...)` note. Legal suffixes (`Inc`, `Ltd`, `Limited`, ...) are
-   deliberately *kept*, so `'Capital Sewer Services Inc.'` and `'Capital
-   Sewer Services Ltd.'` stay distinct keys — there is no reliable way to
-   tell whether that's the same firm re-incorporating or two firms, and
-   merging them risks combining different legal entities.
+A joint venture or trade-name alias fronted by a numbered company folds into that corporation's `#<number>` key regardless of word order (for example, `'614128 ONTARIO LTD, O/A TRISAN CONSTRUCTION'` and `'TRISAN CONSTRUCTION O/A 614128 ONTARIO LTD.'` both map to `#614128`). Unincorporated multi-firm joint ventures without a shared corporation number fall through to Rule 4.
 
-`supplier_key` is pure and total (never raises) and returns `""` for
-blank/garbage/footnote input; callers skip rows with an empty key.
+## Known limits
 
-## Measured figures (live run against `~/tb-data/bids.sqlite`, 2026-07-19)
+- **Legal suffixes stay separate on named firms:** `'Inc'` and `'Ltd'` are not merged without a corporation number to avoid combining unrelated companies.
+- **Multi-firm list strings are excluded, not split:** Concatenated strings like `'Part A: Econolite Canada Incorporated Orange Traffic Tacel Ltd. Fortran Traffic'` have no reliable delimiter and return `""` (those firms still appear if present in single-firm rows elsewhere).
+- **Non-numbered JVs are not folded:** Only numbered-lead JVs match Rule 2.
+- **Numbered companies without a province token:** `'614128 o/a Trisan Construction'` lacks a province token and falls through to Rule 3 (`'614128'`) instead of `#614128`.
 
-Command: the Step-1 audit script below, run with
-`TB_DATA_DIR="$HOME/tb-data" uv run python -` from `scrapers/`.
+## Baseline audit (2026-07-19, `~/tb-data/bids.sqlite`)
 
-| metric | value |
+| Metric | Value |
 |---|---|
-| supplier rows (raw `display_name` values) | 8,022 |
-| distinct keys after resolution | 7,732 |
-| rows excluded (pure footnote / no firm identity) | 51 |
-| keys that merge more than one raw name | 128 |
-| — of which numbered-company merges (`#<number>`) | 44 |
-| — of which named trade-name-marker merges | 84 |
-| NAMED false-merge candidates (no shared token between merged names) | **0** |
-| excluded rows containing a strong firm word (false-exclude candidates) | 13 — all genuine (multi-part list-blobs, see below) |
-| flagship: `2489960 ONTARIO INC` variant members | 12 |
-
-8,022 raw names collapse to 7,732 real-world entities: 128 keys absorb more
-than one raw variant. Measuring the duplication those merges recover: of the
-8,022 raw rows, 51 are excluded as pure footnotes, leaving 7,971 keyed rows
-against 7,732 distinct keys — `(8,022 − 51 excluded) − 7,732 distinct keys =
-239 rows collapsed` into an existing key that the earlier conservative-only
-key kept apart. 51 rows that carried no recoverable firm identity are
-excluded rather than polluting the dimension with garbage keys.
-
-### Audit adjudication
-
-**NAMED false-merge audit (0 candidates):** the script flags any named
-(non-numbered) merge group where the merged raw names share no significant
-token in common — a proxy for "these might be two different firms glued
-together by an over-eager regex." The live run found **zero** such groups:
-every one of the 84 named merges shares at least one significant word (e.g.
-`corporate express canada inc` / `staples business advantage` merges because
-the trade-name marker rule keys on the shared legal base `corporate express
-canada inc`, not the trade name). No fix needed.
-
-**False-exclude audit (13 candidates, all genuine):** the script flags
-excluded rows containing a common firm-indicating word
-(`construction|paving|electric|architect|engineering|inc|ltd|limited|group|
-services`) as a sanity check that a real single firm wasn't dropped. All 13
-hits are **multi-firm list-blobs** — scraped rows that concatenate several
-bidders' names under a `"Part A:"` / `"Part B:"` / etc. label from a
-multi-lot award (e.g. `'Part A: Econolite Canada Incorporated Orange Traffic
-Tacel Ltd. Fortran Traffic'`, listing four traffic-signal suppliers in one
-string) or a rowspan artifact (`'Part B: Neil Vanderkruk Holdings Inc
-Dutchmaster Nurseries Ltd Uxbridge Nurseries Baker Fo...'`). These are
-exactly the "multi-firm list-blob" case the footnote rule is designed to
-exclude — there is no single real firm being wrongly dropped, and splitting
-the blob into its constituent bidders is out of scope for this key (see
-Residual known limits). No fix needed; both audits are clean and the
-figures above stand unchanged from the first run.
-
-## JV attribution
-
-A joint venture or trade-name alias fronted by a numbered lead company folds
-into the lead firm's key, not into a separate "JV" identity. The example
-below is illustrative — drawn from the rule's spec, not a pair pulled from
-the live audit run. For example `'614128 ONTARIO LTD, O/A TRISAN
-CONSTRUCTION'` and `'TRISAN CONSTRUCTION O/A 614128 ONTARIO LTD.'`
-(trade-name-first ordering) both key to
-`#614128` — the corporation number is the legal identity regardless of which
-side of the string it appears on, or what trade/JV name surrounds it. This
-is a deliberate simplification: a two-firm joint venture that has *not*
-incorporated under a shared numbered entity is not detected as a JV at all
-and its members stay as separate suppliers under Rule 4 (default).
-
-## Residual known limits
-
-- **Named firms are still split by `Inc` vs `Ltd`.** There is no corporation
-  number to anchor a named (non-numbered) entity the way Rule 1 anchors a
-  numbered one, so `'Capital Sewer Services Inc.'` and `'Capital Sewer
-  Services Ltd.'` remain two distinct keys. This is deliberate: merging on
-  legal-suffix-agnostic name alone risks folding two genuinely different
-  entities together with no way to verify it from the string alone.
-- **Multi-firm list-blobs are excluded, not split.** Rows like `'Part A:
-  Econolite Canada Incorporated Orange Traffic Tacel Ltd. Fortran Traffic'`
-  name several real firms concatenated into one string with no reliable
-  per-firm delimiter; `supplier_key` excludes the whole row rather than
-  guess at a split, so those firms are not represented under this key from
-  that row (they may still appear correctly if they occur elsewhere as
-  single-firm rows).
-- **A non-numbered, non-incorporated joint venture is not folded.** See JV
-  attribution above — only a numbered-lead JV is recognized.
-- **A numbered company with a trade-name marker but no province token is not
-  caught by the corp-number rule.** Rule 1 requires the number to sit
-  adjacent to a province token (`Ontario`/`Ont`/`Canada`); `'614128 o/a
-  Trisan Construction'` has none, so it falls through to the named
-  trade-name rule and keys as `614128` instead of `#614128` — splitting
-  from the province-bearing variant (`'614128 Ontario Ltd o/a Trisan'` →
-  `#614128`). Not observed in the current corpus (real rows carry the
-  province token), but it is a real residual limit of the anchoring rule.
-- **Any group the audit would flag stays unmerged/unexcluded until fixed.**
-  The two audits below (false-merge, false-exclude) are the trip-wire for
-  this; both are currently clean (see Measured figures).
+| Raw `display_name` rows | 8,022 |
+| Distinct keys after resolution | 7,732 |
+| Excluded rows (footnotes / multi-firm blobs) | 51 |
+| Keys merging >1 raw name | 128 (44 numbered, 84 named) |
+| Duplicate rows collapsed | 239 |
+| Named false-merge candidates (no shared word) | 0 |
+| Excluded rows containing a firm word | 13 (all multi-firm `Part A:` / `Part B:` blobs) |
+| Variants merged into `#2489960` | 12 |
 
 ## Re-running the audit
+
+Run from `scrapers/`:
 
 ```bash
 cd scrapers && TB_DATA_DIR="$HOME/tb-data" uv run python - <<'PY'

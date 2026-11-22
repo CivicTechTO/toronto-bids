@@ -1,97 +1,55 @@
-# Document classification — human ground truth (2026-07-31)
+# Document classification ground truth (2026-07-31)
 
-Stage one of the two-stage extraction design: decide what a document IS, so that extraction runs
-only on the procurement subset. 125 documents from every source the archive collects, labelled
-blind.
+Blind human labels for 125 documents sampled across all archive sources, used to evaluate stage-one classification (deciding which PDFs contain procurement records before running extraction).
 
 ## Files
 
-| file | what it is |
+| File | Contents |
 |---|---|
-| `labels-alex.json` | 125 documents, human-labelled — the ground truth |
-| `documents.json` | the header blocks as shown to the labeller (source attribution withheld) |
-| `rules-baseline-guesses.json` | what the rules classifier said, and the true source — **withheld from the labeller** |
-| `llm-predictions.json` | per-document LLM predictions, so re-scoring never needs a re-run |
-| `classify-rules.py` | the rules baseline |
-| `classify-models.py` | scores LLM classifiers against the labels |
-| `bow-classify.py` | bag-of-words / linear baselines, cross-validated |
-| `confusion.py` | confusion matrices, and accuracy grouped by what the archive DOES with each class |
-| `labelling-tool.template.html` | the labelling UI (`__DATA__` ← `documents.json`) |
+| `labels-alex.json` | 125 human-labelled documents (ground truth) |
+| `documents.json` | Document header blocks shown to the labeller (source withheld) |
+| `rules-baseline-guesses.json` | Rules-baseline predictions and true sources (withheld from the labeller) |
+| `llm-predictions.json` | Saved per-document LLM predictions for offline re-scoring |
+| `classify-rules.py` | Rules baseline script |
+| `classify-models.py` | Scores LLM classifiers against ground truth |
+| `bow-classify.py` | Cross-validated bag-of-words and linear baselines |
+| `confusion.py` | Confusion matrices and archive-action accuracy |
+| `labelling-tool.template.html` | Labelling UI (`__DATA__` replaced with `documents.json`) |
 
 ## Method
 
-- **Stratified across (source × apparent type)**, 3 per cell, then shuffled. Tests the range of
-  the classifier, so the label distribution does **not** estimate real prevalence.
-- **Source attribution withheld.** Knowing a document came from `bgrd` gives away that it is
-  probably a contract award — and a deployed classifier will not have that hint either.
-- **The rules guess was never shown**, since the rules are wrong in ways a labeller would anchor
-  on.
-- **"Other" was free text.** It came back **empty across all 125 documents** — the 13-category
-  taxonomy covers this corpus, which is the strongest single result here.
-- A separate `contains_bid_or_award` flag, independent of class, to measure the escape hatch:
-  does classify-then-skip silently discard procurement data?
+- **Stratified sample:** 3 documents per `(source, apparent type)` cell, shuffled. Because of stratification, class frequencies here do not represent overall corpus prevalence.
+- **Blind labelling:** Source attribution and rules-baseline guesses were withheld so the labeller could not anchor on them.
+- **Taxonomy check:** The free-text "Other" field came back empty on all 125 documents, confirming the 13-class taxonomy covers the sample.
+- **Independent bid/award flag:** `contains_bid_or_award` was labelled separately from class to test whether classify-then-skip misses procurement data inside other document types.
 
 ## Results
 
-`proc-recall` is the metric that governs the design: a missed procurement award is never
-extracted and **nothing downstream notices**. Everything else is mostly harmless, because the
-schema treats most other classes identically (extract nothing).
+`proc-recall` is the key metric because a missed procurement award is skipped silently, whereas most non-procurement classes share the same action (extract nothing).
 
-| approach | class acc | acc on *what the archive does* | proc-recall | cost | deterministic |
-|---|---|---|---|---|---|
-| majority class | 24% | — | 0/22 | — | yes |
-| rules baseline | 36% | — | 12/22 | free | yes |
-| **char 3-5gram + LinearSVC** | **65%** | 70% | **22/22** (CV) | **free** | **yes** |
-| word 1-2gram + LogReg | 58% | — | 21/22 (CV) | free | yes |
-| Nemotron 3 Ultra (free) | 61–64% | 79% | **19–22/22, varies** | free | **no** |
-| GPT-5.6 Luna (high) | 67% | — | 21/22 | $0.009 | no |
-| GPT-5.6 Luna (xhigh) | 66% | — | 20/22 | $0.010 | no |
-| GPT-5.6 Luna (max) | 63% | — | 20/22 | $0.013 | no |
-| GPT-5.2-Codex (xhigh) | 62% | — | 21/22 | **$1.37** | no |
+| Approach | Class acc | Action acc | `proc-recall` | Cost | Deterministic |
+|---|---:|---:|---:|---:|---|
+| Majority class | 24% | - | 0/22 | - | Yes |
+| Rules baseline | 36% | - | 12/22 | $0 | Yes |
+| Char 3-5gram + LinearSVC | 65% | 70% | 22/22 (CV) | $0 | Yes |
+| Word 1-2gram + LogReg | 58% | - | 21/22 (CV) | $0 | Yes |
+| Nemotron 3 Ultra (free) | 61-64% | 79% | 19-22/22 (varies) | $0 | No |
+| GPT-5.6 Luna (high) | 67% | - | 21/22 | $0.009 | No |
+| GPT-5.6 Luna (xhigh) | 66% | - | 20/22 | $0.010 | No |
+| GPT-5.6 Luna (max) | 63% | - | 20/22 | $0.013 | No |
+| GPT-5.2-Codex (xhigh) | 62% | - | 21/22 | $1.37 | No |
 
-### Findings
+### Key findings
 
-**A bag-of-words linear model matches the LLMs.** Cross-validated on 125 documents (2-fold, so
-each model trained on ~62), a character n-gram SVM gets 22/22 procurement awards with **zero
-leakage in either direction** — nothing else was called a procurement award, and no award was
-called anything else. The features it learns are the procurement idiom this archive already
-documents: `award, contract, tender, bid, request for, net of applicable taxes, bidder`.
-
-**Reasoning effort makes classification worse, monotonically.** Luna high 67% → xhigh 66% → max
-63%, proc-recall 21→20→20, cost +50%. AA-LCR ranks those variants in the opposite order
-(0.69 / 0.696 / 0.74) — a long-context reasoning benchmark does not transfer to a 2,500-character
-header. More deliberation talks the model out of correct first answers.
-
-**The most expensive model is the worst.** GPT-5.2-Codex at 160× Luna scores lowest on every
-column.
-
-**LLM results vary run to run.** Nemotron scored 22/22 on one run and 19/21 on a repeat — same
-model, same documents, same prompt, and one call failed outright even at concurrency 2. A single
-run is not a measurement. The SVM's 22/22 is cross-validated and repeats exactly.
-
-**The two methods fail differently, which was not the expectation.** The SVM collapses toward the
-majority class (`status_update`); the LLM collapses toward `attachment_or_map` and scored **0/7**
-on `empty_or_unreadable`, where the SVM got 5/7. A near-blank page reads as "an attachment with
-little text" to a model and as a distinctive n-gram signature to the SVM. The errors are
-complementary, not shared.
-
-**One confusion is shared and is probably definitional.** `governance_finance` ↔ `status_update`
-(SVM 5+5, LLM 7+3). Two independent methods disagreeing symmetrically on the same pair suggests a
-genuinely fuzzy boundary — a budget update is both. Both classes extract nothing, so it costs the
-archive nothing, and chasing it would be chasing a definitions problem.
-
-**Classify-then-skip did not silently discard procurement data.** Of 25 documents flagged as
-containing bid/award information, 22 are `procurement_award`, 1 is `procurement_other` and **2 are
-`minutes`** — exactly as the schema predicts, which is why minutes are a cross-check source rather
-than a skip. No governance, status or attachment document hid an award. *Caveat: stratified
-sample, so this does not bound the rate across the full 6,179.*
+- **A linear char n-gram SVM matched the LLMs.** In 2-fold CV (training on ~62 docs per fold), LinearSVC reached 22/22 `proc-recall` with zero false positives on `procurement_award`, learning standard procurement terms (`award`, `contract`, `tender`, `bid`, `request for`, `net of applicable taxes`, `bidder`).
+- **Higher reasoning effort hurt classification.** Luna accuracy dropped from 67% (`high`) to 66% (`xhigh`) to 63% (`max`), with `proc-recall` falling from 21/22 to 20/22 and cost rising 50%.
+- **Cost did not help.** GPT-5.2-Codex cost ~160x more than Luna and scored lower across the board.
+- **LLM runs varied.** Nemotron scored 22/22 on one run and 19/21 on a repeat (with one API failure at concurrency 2). The SVM is deterministic.
+- **Error modes differed.** The SVM tended to fall back to the majority class (`status_update`), while LLMs fell back to `attachment_or_map` and scored 0/7 on `empty_or_unreadable` (vs 5/7 for the SVM). Both methods confused `governance_finance` and `status_update` symmetrically (SVM 5+5, LLM 7+3), a blurry boundary where both classes extract nothing.
+- **Escape-hatch check:** Of the 25 documents flagged `contains_bid_or_award = true`, 22 were `procurement_award`, 1 was `procurement_other`, and 2 were `minutes`. None were hidden in governance, status, or attachment documents (caveat: stratified sample of 125 out of 6,179).
 
 ## Limits
 
-- **125 documents, 2-fold CV.** Two classes have <5 examples so `k` collapsed to 2; each model
-  trained on ~62. Pessimistic, and noisy — gaps under ~10 points are not meaningful.
-- **11 of 13 classes appeared.** `agenda` and `meeting_package` are untested by either method.
-  That is exactly where a supervised model would fail confidently and an LLM would likely cope.
-- **The free tier throttles.** 20 requests/minute; `CONC=6` trips it and produced a run the
-  harness correctly reported as INVALID rather than scoring as 0%. Free models run at
-  concurrency 2 here, which puts the full corpus at ~50 minutes rather than a few.
+- **Small 2-fold CV:** Two classes had fewer than 5 examples, limiting CV to 2 folds (~62 training docs); differences under ~10 points are noisy.
+- **Missing classes:** Only 11 of 13 classes appeared (`agenda` and `meeting_package` were absent and untested).
+- **Free-tier rate limits:** 20 req/min; concurrency 6 triggered rate limits and produced an invalid run, so free models ran at concurrency 2 (~50 minutes for the full corpus).

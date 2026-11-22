@@ -7,7 +7,6 @@ from toronto_bids.models import Award, NonCompetitive, Solicitation
 from toronto_bids.sources.base import Row
 from toronto_bids.title import clean_title
 
-# odata.metadata=none returns {"@odata.count": N, "value": [...]}, records in "value".
 _FORMAT = "application/json;odata.metadata=none"
 
 
@@ -38,11 +37,9 @@ def fetch_entityset(http, entityset: str, page_size: int = 1000) -> Iterator[dic
 
 
 def identity_record(raw: dict) -> dict:
-    """Current publisher fields used for identity, preserving supplier/value pairs.
+    """Project publisher identity fields and sorted (supplier, amount) pairs.
 
-    Capture removals too: an empty current supplier array must replace the prior
-    projection even though the independent award archive retains its older rows.
-    Source bookkeeping and contract-execution dates are not identity evidence.
+    Retains empty Awarded_Suppliers arrays so removals replace prior projections.
     """
     awards=[{'Successful_Bidder':a.get('Successful_Bidder'),'Award_Amount':a.get('Award_Amount')}
             for a in raw.get('Awarded_Suppliers') or []]
@@ -58,11 +55,7 @@ def identity_record(raw: dict) -> dict:
 
 
 def award_identity_record(raw: dict) -> dict:
-    """Current award publication facts; never interpreted as council decision dates.
-
-    Keep both date fields, including removals, so archived award rows cannot hide
-    a correction. Ordinary source proofs retain their established projection.
-    """
+    """Like identity_record, including Date_Awarded and AwardedDate on each supplier."""
     record=identity_record(raw)
     awards=[{k:a.get(k) for k in ('Successful_Bidder','Award_Amount','Date_Awarded','AwardedDate')}
             for a in raw.get('Awarded_Suppliers') or []]
@@ -80,7 +73,7 @@ def normalize_solicitation(raw: dict) -> Iterable[Row]:
         rfx_type=_clean(raw.get("Solicitation_Document_Type")),
         noip_type=None,
         form_type=_clean(raw.get("Solicitation_Form_Type")),
-        # A placeholder title is spelled NULL so COALESCE stops it winning (#70).
+        # clean_title turns placeholders into NULL so COALESCE does not keep them.
         title=clean_title(_clean(raw.get("Posting_Title"))),
         description=_clean(raw.get("Solicitation_Document_Description")),
         issue_date=_clean(raw.get("Issue_Date")),

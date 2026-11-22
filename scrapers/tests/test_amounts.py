@@ -1,0 +1,219 @@
+import pytest
+
+from toronto_bids.amount import parse_amount
+from toronto_bids.linking.amount_labels import (
+    VERDICTS,
+    apply_amount_labels,
+    backfill_numeric_amounts,
+    load_labels,
+    unlabelled_amounts,
+)
+from toronto_bids.models import Award, NonCompetitive
+from toronto_bids.store import db
+
+
+# --- parse_amount ---
+
+
+@pytest.mark.parametrize("raw,expected", [
+    ("199994.13", 199994.13),
+    ("500000.00", 500000.0),
+    ("3052800", 3052800.0),
+    ("1,317,169.92", 1317169.92),
+    ("$129,348.42", 129348.42),
+    ("$ 2,396,696.24", 2396696.24),
+    ("  87000.00  ", 87000.0),
+    ("2340468.5", 2340468.5),
+    ("$0.00", 0.0),
+    ("0", 0.0),
+    ("$1,317,169.92 CAD", 1317169.92),
+    ("82,500.00 CAD", 82500.0),
+    ("$330,000 CAD", 330000.0),
+])
+def test_parses_real_amounts(raw, expected):
+    assert parse_amount(raw) == pytest.approx(expected)
+
+
+@pytest.mark.parametrize("raw", [
+    None, "", "   ", True, False,
+    "kj", "j",
+    "Metal Items at 109.11000 Percentage of the AMM published price",
+    "31.65/MT",
+    "942467.", "3501.872.63", "960128.38.25.", "635.41010.",
+    "1,23", "12,34,567", "1,2345.00",
+    "1071956.001099084.001049084.00",
+    "560250.00154975.00318300.00",
+    "76500.0025.95625.00",
+    "18322.19253664.44",
+    "950319421379831.75560173.76",
+    "S2,035,000.00",
+    "$982, 900",
+])
+def test_rejects_anything_that_is_not_plainly_an_amount(raw):
+    assert parse_amount(raw) is None
+
+
+def test_rejects_non_cad_currency():
+    assert parse_amount("$1,311,936.00 USD") is None
+    assert parse_amount("1,000.00 EUR") is None
+
+
+def test_accepts_float_and_int_input():
+    assert parse_amount(1234.5) == pytest.approx(1234.5)
+    assert parse_amount(1234) == pytest.approx(1234.0)
+
+
+# --- amount labels ---
+
+
+def test_the_shipped_labels_are_valid():
+    labels = load_labels()
+    assert labels
+    assert all(v["verdict"] in VERDICTS for v in labels.values())
+
+
+def test_every_string_the_parser_refuses_has_a_verdict():
+    for raw in load_labels():
+        assert parse_amount(raw) is None, (
+            f"{raw!r} parses to {parse_amount(raw)} — label must not shadow parse_amount"
+        )
+
+
+def test_an_unknown_verdict_is_rejected_loudly(tmp_path):
+    p = tmp_path / "l.toml"
+    p.write_text('["x"]\nverdict = "recoverable"\n')
+    with pytest.raises(ValueError, match="unknown verdict"):
+        load_labels(p)
+
+
+def test_an_amount_verdict_without_a_value_is_rejected(tmp_path):
+    p = tmp_path / "l.toml"
+    p.write_text('["x"]\nverdict = "amount"\n')
+    with pytest.raises(ValueError, match="no numeric `value`"):
+        load_labels(p)
+
+
+def test_a_non_amount_verdict_carrying_a_value_is_rejected(tmp_path):
+    p = tmp_path / "l.toml"
+    p.write_text('["x"]\nverdict = "corrupt"\nvalue = 1.0\n')
+    with pytest.raises(ValueError, match="must not"):
+        load_labels(p)
+
+
+_LABELS = {
+    "S2,035,000.00": {"verdict": "amount", "value": 2035000.00},
+    "31.65/MT": {"verdict": "not_an_amount"},
+}
+
+
+def test_a_label_never_reaches_the_numeric_column(conn):
+    db.upsert_row(conn, Award("1234567890", supplier_name_raw="Acme",
+                              award_amount="S2,035,000.00", source="odata"), overwrite=True)
+    conn.commit()
+    apply_amount_labels(conn, _LABELS)
+    row = conn.execute("SELECT award_amount, award_amount_numeric, award_amount_labelled, "
+                       "award_amount_verdict FROM award").fetchone()
+    assert row["award_amount"] == "S2,035,000.00"
+    assert row["award_amount_numeric"] is None
+    assert row["award_amount_labelled"] == 2035000.00
+    assert row["award_amount_verdict"] == "amount"
+
+
+def test_a_non_amount_verdict_records_the_judgement_but_no_number(conn):
+    db.upsert_row(conn, Award("1234567890", supplier_name_raw="Acme",
+                              award_amount="31.65/MT", source="odata"), overwrite=True)
+    conn.commit()
+    apply_amount_labels(conn, _LABELS)
+    row = conn.execute("SELECT award_amount_labelled, award_amount_verdict FROM award").fetchone()
+    assert row["award_amount_labelled"] is None
+    assert row["award_amount_verdict"] == "not_an_amount"
+
+
+def test_one_label_covers_every_row_carrying_that_string(conn):
+    for source in ("odata", "ckan_awarded"):
+        db.upsert_row(conn, Award("1234567890", supplier_name_raw="Acme",
+                                  award_amount="S2,035,000.00", source=source), overwrite=True)
+    conn.commit()
+    assert apply_amount_labels(conn, _LABELS) == 2
+    assert conn.execute("SELECT COUNT(*) FROM award "
+                        "WHERE award_amount_labelled = 2035000.0").fetchone()[0] == 2
+
+
+def test_labels_reach_noncompetitive_too(conn):
+    db.upsert_row(conn, NonCompetitive(workspace_number="W1",
+                                       contract_amount="S2,035,000.00", source="odata"),
+                  overwrite=True)
+    conn.commit()
+    apply_amount_labels(conn, _LABELS)
+    row = conn.execute("SELECT contract_amount_labelled, contract_amount_verdict "
+                       "FROM noncompetitive").fetchone()
+    assert row["contract_amount_labelled"] == 2035000.00
+    assert row["contract_amount_verdict"] == "amount"
+
+
+def test_applying_labels_is_idempotent(conn):
+    db.upsert_row(conn, Award("1234567890", supplier_name_raw="Acme",
+                              award_amount="S2,035,000.00", source="odata"), overwrite=True)
+    conn.commit()
+    apply_amount_labels(conn, _LABELS)
+    apply_amount_labels(conn, _LABELS)
+    assert conn.execute("SELECT COUNT(*) FROM award").fetchone()[0] == 1
+
+
+def test_a_sync_cannot_clobber_a_label(conn):
+    db.upsert_row(conn, Award("1234567890", supplier_name_raw="Acme",
+                              award_amount="S2,035,000.00", source="odata"), overwrite=True)
+    conn.commit()
+    apply_amount_labels(conn, _LABELS)
+    db.upsert_row(conn, Award("1234567890", supplier_name_raw="Acme",
+                              award_amount="S2,035,000.00", source="odata"), overwrite=True)
+    conn.commit()
+    row = conn.execute("SELECT award_amount_labelled, award_amount_verdict FROM award").fetchone()
+    assert row["award_amount_labelled"] == 2035000.00
+    assert row["award_amount_verdict"] == "amount"
+
+
+def test_backfill_fills_a_row_written_before_the_parser_existed(conn):
+    conn.execute("INSERT INTO award (document_number, supplier_name_raw, award_amount, source) "
+                 "VALUES ('1234567890', 'Acme', '776,022.90', 'odata')")
+    conn.commit()
+    assert backfill_numeric_amounts(conn) == 1
+    assert conn.execute("SELECT award_amount_numeric FROM award").fetchone()[0] == 776022.90
+
+
+def test_backfill_never_touches_a_string_the_parser_refuses(conn):
+    conn.execute("INSERT INTO award (document_number, supplier_name_raw, award_amount, source) "
+                 "VALUES ('1234567890', 'Acme', 'S2,035,000.00', 'odata')")
+    conn.commit()
+    assert backfill_numeric_amounts(conn) == 0
+    assert conn.execute("SELECT award_amount_numeric FROM award").fetchone()[0] is None
+
+
+def test_backfill_is_idempotent(conn):
+    conn.execute("INSERT INTO award (document_number, supplier_name_raw, award_amount, source) "
+                 "VALUES ('1234567890', 'Acme', '776,022.90', 'odata')")
+    conn.commit()
+    assert backfill_numeric_amounts(conn) == 1
+    assert backfill_numeric_amounts(conn) == 0
+
+
+def test_an_unlabelled_reject_surfaces(conn):
+    db.upsert_row(conn, Award("1234567890", supplier_name_raw="Acme",
+                              award_amount="!!! nonsense !!!", source="odata"), overwrite=True)
+    conn.commit()
+    pending = unlabelled_amounts(conn)
+    assert [(p["table"], p["raw"]) for p in pending] == [("award", "!!! nonsense !!!")]
+
+
+def test_a_labelled_reject_does_not_surface(conn):
+    db.upsert_row(conn, Award("1234567890", supplier_name_raw="Acme",
+                              award_amount="31.65/MT", source="odata"), overwrite=True)
+    conn.commit()
+    assert unlabelled_amounts(conn) == []
+
+
+def test_a_parseable_amount_never_surfaces(conn):
+    db.upsert_row(conn, Award("1234567890", supplier_name_raw="Acme",
+                              award_amount="$1,075.00", source="odata"), overwrite=True)
+    conn.commit()
+    assert unlabelled_amounts(conn) == []

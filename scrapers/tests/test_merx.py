@@ -168,7 +168,9 @@ def test_real_detail_tabs_bind_to_notice_page_identity(conn, tmp_path):
     with httpx.Client(transport=httpx.MockTransport(handler)) as c:
         session = mx.PublicSession(tmp_path,c,sleep=lambda n:None)
         assert mx.capture_details(conn,session,listing,page['links'][nid],nid) == 8
-    assert len({r[0] for r in conn.execute('SELECT procurement_id FROM agency_bid UNION SELECT procurement_id FROM portal_listing')}) == 1
+    mx.resolve_procurements(conn);conn.commit()
+    ids = {r[0] for r in conn.execute('SELECT procurement_id FROM agency_bid UNION SELECT procurement_id FROM portal_listing')}
+    assert len(ids) == 1 and None not in ids
     assert conn.execute('SELECT native_ref FROM portal_listing').fetchone()[0] == 'T06BI26617'
     assert not conn.execute('SELECT * FROM agency_award').fetchall()
 
@@ -298,3 +300,367 @@ def test_nightly_runner_captures_details_and_isolates_buyers(conn,monkeypatch):
     assert results[config.MERX_PORTALS[0]['slug']]['failures']==['source unavailable']
     assert all(opts['details'] is True and not opts.get('backfill') for slug,opts in calls)
     assert results[config.MERX_PORTALS[1]['slug']]['listings']==1
+
+
+GOOD_NOTICE = '0000333265'
+
+
+def detail_handler(fail_after_good=None):
+    """Results listing -> one real detail (+ bid fragment); any other notice detail -> `fail_after_good`."""
+    def handler(req):
+        path = req.url.path
+        if path.endswith('/abstract/bid-results'):
+            return httpx.Response(200, content=body('bid-fragment.js'))
+        if path.endswith('/' + GOOD_NOTICE):
+            return httpx.Response(200, content=body('result-detail.html'))
+        if path.rsplit('/', 1)[-1].isdigit():
+            return fail_after_good or httpx.Response(200, content=body('result-detail.html'))
+        return httpx.Response(200, content=body('bidresults.html'))
+    return handler
+
+
+def resolve_spy(monkeypatch):
+    calls = []
+    real = mx.resolve_procurements
+    def spy(conn):
+        calls.append(1)
+        return real(conn)
+    monkeypatch.setattr(mx, 'resolve_procurements', spy)
+    return calls
+
+
+def merx_bid_ids(conn):
+    return [r[0] for r in conn.execute("SELECT procurement_id FROM agency_bid WHERE source='merx'")]
+
+
+def test_capture_resolves_identity_once_per_buyer_run(conn, tmp_path, monkeypatch):
+    passes = resolve_spy(monkeypatch)
+    report, calls, waits = run(conn, tmp_path, detail_handler(), sections=['results'], details=True)
+    assert report['detail_facts'] == 8 and len(calls) > 3
+    assert passes == [1]
+    listing_id = conn.execute('SELECT procurement_id FROM portal_listing WHERE portal_url LIKE ?',
+                              ('%' + GOOD_NOTICE,)).fetchone()[0]
+    assert listing_id is not None and set(merx_bid_ids(conn)) == {listing_id}
+    assert waits == [5.2] * len(calls)
+
+
+def test_mid_run_failure_keeps_completed_notices_resolved_and_reported(conn, tmp_path, monkeypatch):
+    passes = resolve_spy(monkeypatch)
+    report, _, _ = run(conn, tmp_path, detail_handler(httpx.Response(403)), sections=['results'], details=True)
+    assert report['detail_facts'] == 8
+    assert any(f.startswith('detail:') for f in report['failures']) and not report['complete']
+    ids = merx_bid_ids(conn)
+    assert len(ids) == 8 and None not in ids
+    assert passes == [1]
+    held = conn.execute('SELECT complete, report_json FROM merx_capture').fetchone()
+    assert held[0] == 0 and 'detail:' in held[1]
+
+
+def test_failed_final_resolution_is_a_visible_failure_not_lost_facts(conn, tmp_path, monkeypatch):
+    def broken(conn):
+        raise RuntimeError('identity conflict')
+    monkeypatch.setattr(mx, 'resolve_procurements', broken)
+    report, _, _ = run(conn, tmp_path, detail_handler(), sections=['results'], details=True)
+    assert any('procurement resolution' in f and 'identity conflict' in f for f in report['failures'])
+    assert not report['complete']
+    assert len(merx_bid_ids(conn)) == 8
+    assert conn.execute('SELECT complete FROM merx_capture').fetchone()[0] == 0
+
+
+def test_interrupted_final_resolution_still_writes_the_coverage_report(conn, tmp_path, monkeypatch):
+    def interrupted(conn):
+        raise KeyboardInterrupt
+    monkeypatch.setattr(mx, 'resolve_procurements', interrupted)
+    with pytest.raises(KeyboardInterrupt):
+        run(conn, tmp_path, detail_handler(), sections=['results'], details=True)
+    held = conn.execute('SELECT complete, report_json FROM merx_capture').fetchone()
+    assert held[0] == 0 and 'procurement resolution interrupted' in held[1]
+    assert len(merx_bid_ids(conn)) == 8
+
+
+def test_real_marked_empty_publication_has_no_fabricated_bidders():
+    assert mx.parse_bids(body('bids-empty-publication.js'), 1, 'page', 'fragment') == []
+
+
+@pytest.mark.parametrize('change', ['remove_table', 'hide_marker', 'add_file'])
+def test_unmarked_or_nonempty_document_only_results_remain_refused(change):
+    import ast
+    import re
+    import warnings
+
+    raw = (F / 'bids-empty-publication.js').read_text()
+    literal = re.search(r'\.html\((\'(?:\\.|[^\'\\])*\')\);', raw)[1]
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', SyntaxWarning)
+        text = ast.literal_eval(literal).replace('\\/', '/')
+    tree = html.fromstring(text)
+    table = tree.xpath('//table[@id="tblBidResultDocument"]')[0]
+    if change == 'remove_table':
+        table.drop_tree()
+    elif change == 'hide_marker':
+        table.xpath('./tbody/tr')[0].set('class', 'mets-table-row-empty')
+    else:
+        table.xpath('./tbody')[0].append(
+            html.fromstring('<tr class="mets-table-row"><td><a href="/actual-file">Results PDF</a></td></tr>')
+        )
+    modified = '$("#innerTabContent").html(' + repr(html.tostring(tree, encoding='unicode')) + ');'
+    with pytest.raises(ValueError):
+        mx.parse_bids(modified.encode(), 1, 'page', 'fragment')
+
+
+def test_empty_publication_preserves_note_and_still_captures_advertised_award(conn):
+    from toronto_bids.store import db
+
+    manifest = json.loads((F / 'empty-results-manifest.json').read_text())
+    buyer = seed_buyers(conn)[PORTAL['slug']]
+    listing = mx.PortalListing(
+        buyer_id=buyer, portal_url=manifest['detail_url'], title='Green Bus Technology', source='merx'
+    )
+    db.upsert_row(conn, listing, overwrite=True)
+    conn.commit()
+    detail = body('empty-result-detail.html').replace(
+        b'</body>', b'<a data-ajax-url="/public/solicitations/526480708/abstract/award">Award</a></body>'
+    )
+    award = body('award-fragment.js').replace(b'0000331101', b'0000065665')
+    calls, notes = [], []
+
+    def fetch(url):
+        calls.append(url)
+        if url.endswith('/bid-results'):
+            return body('bids-empty-publication.js')
+        if url.endswith('/award'):
+            return award
+        return detail
+
+    assert mx.capture_details(
+        conn, None, listing, manifest['detail_url'], manifest['notice_id'], fetch=fetch, observations=notes
+    ) == 1
+    assert calls[-1].endswith('/award')
+    assert not conn.execute('SELECT * FROM agency_bid').fetchall()
+    assert conn.execute('SELECT count(*) FROM agency_award').fetchone()[0] == 1
+    assert notes == [
+        dict(
+            notice_id=manifest['notice_id'],
+            kind='no_bidder_disclosure',
+            source_url=manifest['fragment_url'],
+            reason='Public result tab contains no bidder entries and explicitly reports no result files.',
+        )
+    ]
+
+
+@pytest.mark.parametrize('name,nid', [
+    ('duplicate-location.html', '0000334741'),
+    ('duplicate-events.html', '0000329486'),
+    ('duplicate-pricing.html', '0000334413'),
+])
+def test_incidental_repeated_fields_do_not_refuse_notice_identity(name, nid):
+    fields = mx._fields(mx._tree(body(name)), {'Reference Number', 'Solicitation Number'})
+    assert fields['Reference Number'] == nid and fields['Solicitation Number']
+
+
+@pytest.mark.parametrize('name,count,stage', [
+    ('bids-na.js', 3, 'Unofficial Results'),
+    ('bids-names-only.js', 4, 'Unofficial Results'),
+    ('bids-generic-stage.js', 1, 'Bid Results'),
+])
+def test_named_bidders_survive_unpublished_prices(name, count, stage):
+    rows = mx.parse_bids(body(name), 1, 'held-notice', 'public-result')
+    assert len(rows) == count
+    assert all(r.bid_price is None and r.status is None and r.result_stage == stage for r in rows)
+    assert all(r.bidder_name_raw for r in rows)
+    if name == 'bids-names-only.js':
+        assert all(r.price_header is None for r in rows)
+
+
+@pytest.mark.parametrize('name,nid', [
+    ('no-award-ttc.js', '0000329037'),
+    ('no-award-parking.js', '0000309923'),
+])
+def test_explicit_no_award_tabs_do_not_create_awards_or_identity_errors(name, nid):
+    assert mx.parse_awards(body(name), 1, 'held-notice', 'public-award', nid) == []
+
+
+def test_empty_202_is_not_successful_html_or_immediate_retry(tmp_path):
+    calls = []
+
+    def handle(request):
+        calls.append(request)
+        return httpx.Response(202, content=b'', headers={'x-amzn-waf-action': 'challenge'})
+
+    with httpx.Client(transport=httpx.MockTransport(handle)) as c:
+        class UnavailableBrowser:
+            def get(self, *a, **k):
+                raise RuntimeError('HTTP 202: incomplete browser response')
+
+            def close(self):
+                pass
+
+        session = mx.PublicSession(tmp_path / 'merx', c, sleep=lambda n: None, browser_factory=UnavailableBrowser)
+        with pytest.raises(RuntimeError, match='202'):
+            session.get('https://www.merx.com/ttc')
+    assert len(calls) == 1
+
+
+def test_202_fallback_is_bounded_paced_recorded_and_reuses_anonymous_state(tmp_path):
+    waits, calls, browser_calls = [], [], []
+
+    class Reader:
+        def get(self, url, **kw):
+            browser_calls.append(url)
+            kw['before_request']()
+            result = httpx.Response(200, content=body('ttc.html'), request=httpx.Request('GET', url))
+            kw['record'](result)
+            return result
+
+        def cookies(self):
+            return [dict(name='anonymous-state', value='test-value', domain='www.merx.com', path='/')]
+
+        def close(self):
+            pass
+
+    def handle(request):
+        calls.append(request)
+        if len(calls) == 1:
+            return httpx.Response(
+                202, content=b'', headers={'x-amzn-waf-action': 'challenge', 'set-cookie': 'not-in-diagnostics'}
+            )
+        assert 'anonymous-state=test-value' in request.headers['cookie']
+        return httpx.Response(200, content=b'held document')
+
+    with httpx.Client(transport=httpx.MockTransport(handle)) as c:
+        session = mx.PublicSession(tmp_path / 'merx', c, sleep=waits.append, browser_factory=Reader)
+        assert session.get('https://www.merx.com/ttc').content
+        assert session.get('https://www.merx.com/ttc').content == b'held document'
+        assert session.requests == 3
+    assert len(calls) == 2 and len(browser_calls) == 1 and waits == [5.2, 60, 5.2, 5.2]
+    diagnostics = list((tmp_path / 'merx/diagnostics').glob('*.json'))
+    assert diagnostics and all('set-cookie' not in p.read_text() and 'test-value' not in p.read_text() for p in diagnostics)
+
+
+def test_long_202_deadline_defers_browser_and_next_buyer(tmp_path):
+    calls = []
+
+    def handle(request):
+        calls.append(request)
+        return httpx.Response(202, headers={'Retry-After': '120'})
+
+    def never():
+        raise AssertionError('browser must not start before server deadline')
+
+    with httpx.Client(transport=httpx.MockTransport(handle)) as c:
+        one = mx.PublicSession(tmp_path / 'one', c, sleep=lambda n: None, browser_factory=never)
+        two = mx.PublicSession(tmp_path / 'two', c, sleep=lambda n: None, browser_factory=never)
+        with pytest.raises(RuntimeError, match='202'):
+            one.get('https://www.merx.com/ttc')
+        with pytest.raises(RuntimeError, match='deadline'):
+            two.get('https://www.merx.com/torontopolice')
+    assert len(calls) == 1
+
+
+def test_required_identity_duplicates_are_still_refused():
+    from copy import deepcopy
+
+    tree = mx._tree(body('duplicate-location.html'))
+    fields = tree.xpath(
+        '//*[' + mx._class('mets-field') + '][./*[' + mx._class('mets-field-label') + ' and normalize-space(.)="Reference Number"]]'
+    )
+    fields[0].getparent().append(deepcopy(fields[0]))
+    with pytest.raises(ValueError, match='Reference Number'):
+        mx._fields(tree, {'Reference Number'})
+
+
+def test_202_cannot_launch_browser_after_request_budget_is_spent(tmp_path):
+    waits = []
+
+    def never():
+        raise AssertionError('request budget is exhausted')
+
+    with httpx.Client(transport=httpx.MockTransport(lambda r: httpx.Response(202))) as c:
+        session = mx.PublicSession(tmp_path / 'merx', c, sleep=waits.append, browser_factory=never, max_requests=1)
+        with pytest.raises(RuntimeError, match='budget exhausted'):
+            session.get('https://www.merx.com/ttc')
+    assert waits == [5.2]
+
+
+def test_browser_readiness_uses_navigation_status_not_buyer_title():
+    from types import SimpleNamespace
+    from toronto_bids.sources.merx_browser import BrowserReader
+
+    class Response:
+        url = 'https://www.merx.com/ttc/solicitations/title/0000329490'
+
+        def __init__(self, status):
+            self.status = status
+            self.request = SimpleNamespace(is_navigation_request=lambda: True)
+            self.frame = 'main'
+
+        def body(self):
+            return b'public notice' if self.status == 200 else b'ordinary JavaScript check'
+
+        def all_headers(self):
+            return {'x-amzn-waf-action': 'challenge'} if self.status == 202 else {}
+
+    class Page:
+        main_frame = 'main'
+
+        def on(self, event, callback):
+            self.callback = callback
+
+        def remove_listener(self, *a):
+            pass
+
+        def goto(self, *a, **kw):
+            response = Response(202)
+            self.callback(response)
+            return response
+
+        def wait_for_function(self, *a, **kw):
+            raise AssertionError('Solicitation titles do not start MERX :')
+
+        def wait_for_event(self, event, **kw):
+            response = Response(200)
+            assert kw['predicate'](response)
+            self.callback(response)
+            return response
+
+    reader = BrowserReader.__new__(BrowserReader)
+    reader.page = Page()
+    recorded = []
+    result = reader.get(Response.url, prepare=None, before_request=lambda: None, record=recorded.append)
+    assert result.content == b'public notice' and [r.status_code for r in recorded] == [202, 200]
+
+
+def test_browser_fragment_uses_apiresponse_headers_property():
+    from types import SimpleNamespace
+    from toronto_bids.sources.merx_browser import BrowserReader
+
+    class Page:
+        main_frame = 'main'
+
+        def on(self, *a):
+            pass
+
+        def remove_listener(self, *a):
+            pass
+
+        def goto(self, url, **kw):
+            return SimpleNamespace(status=200, body=lambda: b'detail', url=url, all_headers=lambda: {})
+
+    reader = BrowserReader.__new__(BrowserReader)
+    reader.page = Page()
+    reader.context = SimpleNamespace(
+        request=SimpleNamespace(
+            get=lambda url, **kw: SimpleNamespace(
+                status=200, body=lambda: b'public fragment', url=url, headers={'content-type': 'text/javascript'}
+            )
+        )
+    )
+    held = []
+    result = reader.get(
+        'https://www.merx.com/public/solicitations/123/abstract/award',
+        prepare='https://www.merx.com/ttc/solicitations/notice/0000329490',
+        before_request=lambda: None,
+        record=held.append,
+    )
+    assert result.content == b'public fragment' and result.headers['content-type'] == 'text/javascript'
+    assert len(held) == 2

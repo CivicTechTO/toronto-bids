@@ -1,11 +1,4 @@
-"""Operational notification for the nightly job (deployment spec §3.4).
-
-The v1 design dropped Slack notifications from scope ("these can wrap the CLI later if
-wanted"); this is that wrapper, and it carries no data — only whether the run worked.
-
-The split is deliberate: `summarize` is pure, so the entire message is tested offline against
-fixture counts, and `post` is one HTTP call with nothing to get wrong.
-"""
+"""Build and post nightly run summaries to Slack."""
 import os
 import re
 
@@ -21,7 +14,6 @@ def _elapsed(seconds: float) -> str:
 
 _STEP_ICON = {"ok": "✅", "fail": "❌", "skip": "➖", "pending": "⏳"}
 
-# Nicer labels for the Growth section; unlisted tables fall back to the raw key.
 _LABELS = {
     "solicitation": "solicitations", "award": "awards", "bid": "bids", "supplier": "suppliers",
     "noncompetitive": "noncompetitive", "ariba_posting": "ariba postings",
@@ -35,7 +27,6 @@ _LABELS = {
     "bid_response_price": "scoped price values",
     "city_scoped_bid_evidence": "scoped source reviews",
 }
-# Housekeeping tables whose growth is noise in a report about the archive.
 _GROWTH_SKIP = {"sync_run", "buyer"}
 
 _TORONTO_ODATA = "secure.toronto.ca/c3api_data/v2/DataAccess.svc/"
@@ -50,8 +41,7 @@ def _odata_server_status(error: str) -> str | None:
 
 
 def _growth(before: dict, after: dict) -> list[str]:
-    """'solicitations 7,446 (+12)' for every table that grew. Empty `before` (the count step
-    failed) yields nothing — a delta against a zero nobody measured is a fabricated number."""
+    """Format table growth deltas; returns empty list if before counts are missing."""
     if not before:
         return []
     out = []
@@ -64,8 +54,6 @@ def _growth(before: dict, after: dict) -> list[str]:
     return out
 
 
-# Cap on the near-close list; the rest collapse into a "+N more" tail so one bad week cannot
-# bury the rest of the message.
 NEAR_CLOSE_MAX_LINES = 10
 
 
@@ -74,12 +62,9 @@ def _days(n: int) -> str:
 
 
 def _near_close(items: list[dict], error: str | None) -> list[str]:
-    """Open Ariba postings about to close with missing or incomplete bundles (#223/#243) — a WARNING section.
+    """Format warning lines for open Ariba postings closing soon without complete bundles.
 
-    Respond is disabled once a posting closes, so these are documents about to be lost for
-    good. It never changes the header icon (a still-open posting can be captured tomorrow), and
-    it is omitted entirely on a night with nothing to say. A check that itself raised says so
-    rather than vanishing — an absent section must keep meaning "nothing closing uncaptured".
+    Surface check errors explicitly so an omitted section means nothing is closing uncaptured.
     """
     if error:
         return ["", f"⚠ Ariba near-close check failed: {error}"]
@@ -95,9 +80,7 @@ def _near_close(items: list[dict], error: str | None) -> list[str]:
 
 
 def _known_gaps(gaps: list[dict]) -> list[str]:
-    """Failures matching reviewed evidence (#283) — one line per name and reason, so eleven
-    unavailable TRCA originals read as one known fact rather than eleven alarms. Never
-    changes the header icon; omitted when empty."""
+    """Group reviewed known gaps by (name, reason) without changing the header status."""
     if not gaps:
         return []
     groups: dict[tuple[str, str], int] = {}
@@ -111,10 +94,7 @@ def _known_gaps(gaps: list[dict]) -> list[str]:
 
 
 def summarize(report: dict) -> str:
-    """The nightly message — multi-section Slack mrkdwn. Pure and total over a partial report:
-    a missing/empty section is simply omitted, never a KeyError, because the report itself must
-    never be the thing that fails the run it exists to make visible.
-    """
+    """Render a nightly run report as Slack mrkdwn, tolerating partial or missing sections."""
     before = report.get("before", {})
     after = report.get("after", {})
     failures = report.get("failures", [])
@@ -145,9 +125,7 @@ def summarize(report: dict) -> str:
         lines += ['', f'*Extraction pending* · {pending} batch request(s); prior archive facts retained']
 
     if sources:
-        # Fetched rows per data source — did each City feed respond, and with how much. NOT
-        # rows_upserted: that is written-rows (a COALESCE upsert, one record → many rows), which
-        # exceeds fetched and is not "new". The Growth section owns the real new-record counts.
+        # Show rows_fetched for feed health; Growth tracks net new rows.
         lines += ["", "*Sources* (fetched)"]
         ok_segs, warns = [], []
         for r in sources:
@@ -200,27 +178,18 @@ def summarize(report: dict) -> str:
 
 
 def post(text: str, webhook: str | None = None, log=lambda _m: None) -> bool:
-    """Post to Slack. Returns True if it went out.
-
-    No webhook -> a silent no-op, so a dev machine and CI need no separate code path.
-    A failed post is logged and swallowed: the archive outranks the notification, and a dead
-    webhook must never turn a good sync into a failed unit.
-    """
+    """Post text to Slack webhook; returns False if unset or on failure without raising."""
     webhook = webhook or os.environ.get("TB_SLACK_WEBHOOK")
     if not webhook:
         return False
     try:
         response = httpx.post(webhook, json={"text": text}, timeout=_SLACK_TIMEOUT)
-        # Status read by hand, not response.raise_for_status(): that exception's message
-        # embeds the request URL — the webhook IS the credential, and this repo is public.
-        # log() goes to journald, so raise_for_status() here would write the credential to
-        # the system log. Log the status code alone.
+        # Avoid raise_for_status() so the webhook URL is never written to logs.
         if response.status_code >= 400:
             log(f"  slack post rejected: HTTP {response.status_code}")
             return False
         return True
     except Exception as exc:
-        # Log the exception TYPE, not str(exc): httpx.InvalidURL and UnsupportedProtocol embed
-        # the request URL in their message, same leak the status-code branch above avoids.
+        # Log exception type only so httpx errors do not leak the webhook URL.
         log(f"  slack post failed: {type(exc).__name__}")
         return False

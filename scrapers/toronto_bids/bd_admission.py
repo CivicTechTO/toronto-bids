@@ -1,8 +1,6 @@
-"""Admission of historical BD observations; no encoded City document aliases.
+"""Admission rules for extracted historical BD report bids.
 
-A report's council item is the stored identity. The independently printed Call
-Number must agree with its agenda title before any model observations derive.
-Raw cache results remain intact, including facts the bid schema cannot represent.
+Requires agreement between the extracted Call Number, agenda title, and report text.
 """
 
 import re
@@ -10,14 +8,10 @@ import re
 from toronto_bids.linking.call_number import find_call_numbers
 from toronto_bids.models import Bid
 
-# A bid row has no lot dimension. Refuse the report even if the model flattened
-# its table to one apparent contract. A lettered/numbered part or lot is enough
-# to prove the scope cannot safely be represented by that row.
+# Refuse multi-part/lot reports; the bid schema has no lot dimension.
 _PART = re.compile(r"\b(?:parts?|lots?)\s*[-–:]?\s*[\"'“”‘’]?([A-Z]|\d+)\b", re.I)
-# Submission-role annotations cannot be admitted as part of a supplier identity.
 _ROLE_IN_NAME = re.compile(r"\b(?:informal|non[-_ ]?compliant|disqualified|withdrawn|no[-_ ]?bid)\s*$", re.I)
-# These prices carry qualifications not represented by amount_basis. Recover
-# participation, but retain these prices only in the raw extraction/source.
+# Prices with these qualifications are withheld; participation is still admitted.
 _QUALIFIED_PRICE = re.compile(r"\bmiscellaneous\b|\bprompt\s+payment\b|\bunit\s+(?:prices?|rates?)\b", re.I)
 
 
@@ -77,8 +71,7 @@ def admit_report(*, reference, title, text, result):
             return refuse('bid price is not literal evidence in the held text')
         withheld = bool(raw and qualified_price)
         decision['prices_withheld'] += int(withheld)
-        # The pilot inferred compliance for firms the source merely listed.
-        # Participation admission does not qualify those separate status claims.
+        # Status is withheld because extraction can over-infer compliance.
         decision['statuses_withheld'] += int(bid.get('status') not in (None, 'not_stated'))
         derived.append(Bid(
             reference=reference, document_number=None,

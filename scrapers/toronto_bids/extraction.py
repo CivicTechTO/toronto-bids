@@ -1,9 +1,4 @@
-"""Extraction orchestrator — classification gate, cache, and corpus iteration.
-
-Ties together the extraction client (#208), the extraction cache (#207), and the
-machine-label classification gate to extract bids from every corpus through
-one prompt.
-"""
+"""Orchestrate corpus extraction, classification gating, caching, and store backfill."""
 
 import json
 import hashlib
@@ -22,13 +17,9 @@ CORPORA = {
     "zoo": "kind='agency_board' AND url LIKE '%/zb/%'",
     "award_summary": "kind='award_summary'",
     "committee": "kind='committee_award'",
-    # The 2009-2012 Bid Committee composite reports: the pre-feed award record, keyed on Call
-    # Number (#96). NOT every `bgrd` PDF — the BA reports below share the kind (#216).
+    # 2009-2012 Bid Committee composite reports (keyed on Call Number).
     "composite": "kind='bgrd' AND substr(reference,1,4) BETWEEN '2009' AND '2012'",
-    # Bid Award Panel (2017-2025) staff reports, fetched for the BA items whose agenda
-    # tabulates no bids (`_BA_REPORTS_WITHOUT_BIDS`). Their bids go to `bid`; their awards
-    # are already on the OData spine, so none are stored (#216). 2013-2016 Bid Committee
-    # reports are admitted separately below; never encode a printed Call Number as an Ariba ID.
+    # Bid Award Panel staff reports (bids only; awards are on OData).
     "ba_report": "kind='bgrd' AND reference LIKE '%.BA%'",
     "bd_report": "kind='bgrd' AND reference LIKE '%.BD%' AND substr(reference,1,4) BETWEEN '2013' AND '2016'",
 }
@@ -86,17 +77,14 @@ def dedup_contracts(contracts: list[dict]) -> list[dict]:
     return list(by_ref.values()) + no_ref
 
 
-# Corpora whose membership does not already imply procurement, so the runtime classifier
-# (#229) may gate documents the label snapshot never saw. An Award Summary Form exists only
-# for an award, and committee reports are chased only for award items naming a solicitation:
-# gating those could only lose bids (the ground truth sampled just 3 of each).
+# Corpora with non-procurement documents that the offline classifier may skip when unlabelled.
 _CLASSIFIER_GATED_CORPORA = frozenset({"trca", "ep", "zoo", "composite"})
 
 _DEFAULT_CLASSIFIER = object()
 
 
 def _resolve_classifier(corpus, classifier):
-    """The classifier to gate `corpus` with: the shipped model by default, None to disable."""
+    """Resolve classifier for corpus (default model for gated corpora, None to disable)."""
     if classifier is not _DEFAULT_CLASSIFIER:
         return classifier
     if corpus not in _CLASSIFIER_GATED_CORPORA:
@@ -107,14 +95,9 @@ def _resolve_classifier(corpus, classifier):
 
 
 def _skip_reason(text, url, labels, classifier=None) -> str | None:
-    """Why a held document is never sent for extraction, or None if it is eligible.
+    """Return skip reason for a document, or None if eligible for extraction.
 
-    Shared by `extract_corpus` and `_count_uncached` so the two cannot drift (#220):
-    a document extraction never caches must never count as uncached.
-
-    The label snapshot wins for any URL it holds. A URL it does not hold is judged by
-    `classifier` (#229), which skips only a CONFIDENTLY non-procurement document — the
-    gate can only reduce extraction, never add to it.
+    Shared by extract_corpus and _count_uncached so cache counts stay aligned. Explicit labels override classifier.
     """
     if not text or not text.strip():
         return "no_text"
@@ -137,13 +120,7 @@ def extract_corpus(
     log=lambda _m: None,
     classifier=_DEFAULT_CLASSIFIER,
 ):
-    """Extract bids from all qualifying documents in a corpus.
-
-    `classifier` gates URLs missing from `labels` (#229): by default the shipped model for
-    the corpora in `_CLASSIFIER_GATED_CORPORA`; pass None to disable it.
-
-    Returns a stats dict with counts of what happened.
-    """
+    """Extract bids from qualifying uncached documents in a corpus and return summary stats."""
     classifier = _resolve_classifier(corpus, classifier)
     sql_where = where or CORPORA.get(corpus)
     if sql_where is None:
@@ -228,8 +205,6 @@ def extract_corpus(
             )
             stats["extracted"] += 1
             log(f"  extracted {url}")
-        # TypeError too (#219): a response of an unexpected shape is one document's
-        # refusal, never a crash that blocks every uncached document after it.
         except ExtractionPending as exc:
             stats["pending"] += 1
             log(f"  PENDING {url}: {exc}")
@@ -241,11 +216,7 @@ def extract_corpus(
 
 
 def _as_count(value) -> int | None:
-    """A declared count as an int, or None when the model gave nothing usable (#219).
-
-    Models sometimes return `"8"` for `8`; that is coerced. Anything else that is not a
-    whole number (`"eight"`, `8.5`, `true`, a list) is ignored rather than guessed at.
-    """
+    """Coerce whole-number int or digit string to int, ignoring bools and non-integers."""
     if isinstance(value, bool):
         return None
     if isinstance(value, int):
@@ -256,12 +227,7 @@ def _as_count(value) -> int | None:
 
 
 def check_declared_counts(extraction: dict) -> list[dict]:
-    """Compare declared_submissions against actual bid count per contract.
-
-    Returns a list of flags for contracts where the bid count falls SHORT
-    of the declared count. Overshoots are kept — the declaration sometimes
-    covers only compliant bids while the table lists everyone.
-    """
+    """Flag contracts whose extracted bid count is below declared_submissions (overshoots allowed)."""
     flags = []
     for contract in extraction.get("contracts", []):
         declared = _as_count(contract.get("declared_submissions"))
@@ -460,21 +426,10 @@ _CORPUS_BUYER_SLUG = {
 }
 
 
-# A swap needs the current extractor version to cover at least this share of the documents
-# that were ever extracted for the corpus. Below it, the cache is mid-migration (a prompt edit
-# bumped EXTRACTOR_VERSION and re-extraction has not caught up — or failed), and swapping would
-# replace the whole archive with whatever fraction was re-extracted. Deliberately low, like
-# ariba_files' _MIN_CAPTURE_RATIO (#182), so a few permanently failing documents cannot freeze
-# the tables; a near-total shortfall can only mean the re-extraction broke.
+# Minimum share of previously extracted corpus docs required at current EXTRACTOR_VERSION before rebuilding.
 _MIN_SWAP_COVERAGE = 0.5
 
-# The model's per-bid `amount_basis` (extract.py's prompt) mapped onto `bid.hst_basis`, whose
-# vocabulary is the deleted award-summary parser's (bid_award_panel._hst_basis): 'including' |
-# 'excluding' | NULL. "Plus HST" is a price stated before HST, i.e. excluding it. "Net of all
-# applicable taxes" is NEITHER — it carries the City's non-rebated HST share — and the old header
-# regex returned None for it too; prompt rule 7 forbids conflating it with plus-HST, so it stays
-# NULL rather than borrowing a bucket. Anything unlisted ('unknown', null, a new value) is NULL,
-# never a guess (#217).
+# Map prompt amount_basis to bid.hst_basis ('net_of_taxes' stays NULL because it includes non-rebated HST).
 _HST_BASIS_FROM_AMOUNT_BASIS = {
     "including_HST": "including",
     "plus_HST": "excluding",
@@ -486,13 +441,7 @@ def _hst_basis(bid: dict) -> str | None:
 
 
 def _contract_document_number(contract: dict, fallback: str | None) -> str | None:
-    """The 10-digit document number a committee contract names, else the PDF's own (#217).
-
-    A committee report can carry several contracts, each its own solicitation. The canonical
-    normalizer is strict — exactly 10 digits — so a reference with a trailing `Contract No.`
-    (a different identifier) strips to more than 10 and is refused, never spliced. A pre-Ariba
-    Call Number (`3905-10-0097`) strips to exactly 10 and is refused by shape.
-    """
+    """Extract a 10-digit document number from contract.reference, rejecting Call Numbers, else fallback."""
     from toronto_bids.linking.call_number import normalize_call_number
     from toronto_bids.linking.document_number import normalize_document_number
 
@@ -503,22 +452,10 @@ def _contract_document_number(contract: dict, fallback: str | None) -> str | Non
 
 
 def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
-    """Populate store tables from cached LLM extractions.
+    """Rebuild derived store tables from cached extractions via mark-and-sweep (db.rebuild_rows).
 
-    The tables are DERIVED from the cache, so each source's rows are rebuilt rather than
-    diff-upserted — the sanctioned exception to "rows are never deleted" that
-    `build_supplier_dimension` and `enrich-ariba-attachments --reindex` also take. This is a
-    permanent contract, not a migration: every parser or prompt fix self-heals by re-deriving.
-    **Derive first, delete only on success.** Every row is built before anything is deleted;
-    a table whose derived set is empty is left untouched (an empty set deletes nothing — a
-    machine holding no cached extractions must not erase the archive); and the upserts +
-    sweep run in one transaction, rolled back on any error. The swap is a mark-and-sweep
-    (`db.rebuild_rows`): a row whose key is derived again keeps its `first_seen` and gets
-    a fresh `last_seen`; only rows no longer derived are deleted (#218).
-
-    Raises RuntimeError, writing nothing, when fewer than `_MIN_SWAP_COVERAGE` of the
-    corpus's previously extracted documents are cached at the current EXTRACTOR_VERSION —
-    the state right after a prompt edit, before re-extraction has caught up.
+    Derives all rows before modifying tables in one transaction; empty derived sets delete nothing.
+    Raises RuntimeError if current EXTRACTOR_VERSION coverage is below _MIN_SWAP_COVERAGE.
     """
     from toronto_bids.models import (
         AgencyAward,
@@ -545,8 +482,7 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
         (EXTRACTOR_VERSION,),
     ).fetchall()
 
-    # Same basis as `rows` (background_pdf rows, not distinct hashes), at ANY version: the
-    # documents whose extractions fed the tables at some point.
+    # Count corpus docs ever extracted under any extractor_version.
     ever_extracted = conn.execute(
         f"SELECT COUNT(*) FROM background_pdf bp "
         f"WHERE {sql_where} AND bp.sha256 IS NOT NULL "
@@ -579,7 +515,7 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
         except ValueError as exc:
             raise RuntimeError(f'backfill {corpus}: {exc}; existing rows kept') from exc
 
-    # ── derive: build every row before touching any table ──
+    # Derive rows before modifying tables.
     solicitations, bids, awards = [], [], []
 
     contracts_refused = 0
@@ -619,8 +555,7 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
         except IdentityReviewRequired as exc:
             raise RuntimeError(f'backfill {corpus}: {exc}; existing rows kept') from exc
 
-        # Holds follow exact source bytes across duplicate indexed URLs. Preserve the
-        # original agenda context; a later calendar date is not decision evidence.
+        # Holds follow exact source bytes across duplicate indexed URLs.
         award_review_contexts = {r["sha256"]: r["award_review_context_json"]
             for r in conn.execute("SELECT sha256, award_review_context_json FROM background_pdf "
                 "WHERE sha256 IS NOT NULL AND award_review_context_json IS NOT NULL")}
@@ -659,8 +594,7 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
                 withheld_awards_reason = (identity_evidence.get('withheld_awards_reason')
                                           if identity_evidence is not None else None)
                 if corpus == 'ttc' and contract.get('awards'):
-                    # A procurement authorization report is a recommendation. Its
-                    # minutes/decision must be reviewed separately before an award fact.
+                    # TTC reports are recommendations; withhold awards until minutes/decisions are verified.
                     withheld_awards_reason = 'TTC report award recommendation requires independent decision verification'
                     identity_evidence = dict(identity_evidence or {}, withheld_awards_reason=withheld_awards_reason)
                 if corpus == 'trca' and contract.get('awards') and row['sha256'] in award_review_contexts and claim_admission is None:
@@ -676,7 +610,7 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
                 decisions.append(decision(row, corpus, buyer_id, index, contract, ref, withheld_awards_reason,
                                           len(contracts), identity_evidence))
                 if identity_evidence and identity_evidence.get('representative_source'):
-                    continue  # Ledger-only historical confirmation; original facts and metadata derive normally.
+                    continue  # ledger-only confirmation; primary document derives facts
                 admitted_awards = (claim_admission['accepted'] if claim_admission is not None else
                     [] if withheld_awards_reason else [{'award': a, 'award_date': derived_date} for a in contract.get('awards', [])])
                 has_awards = bool(admitted_awards)
@@ -771,9 +705,7 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
                 continue
             result = json.loads(row["result_json"])
             for contract in result.get("contracts", []):
-                # The council reference always keys the bid (bid_key COALESCEs it); a document
-                # number rides along only when the contract names a real one — never a Call
-                # Number that happens to strip to 10 digits, never a guess.
+                # Key on council reference; include document_number only if it parses as a real 10-digit ID.
                 doc_num = _contract_document_number(contract, None)
                 for bid in contract.get("bids", []):
                     name = bid.get("supplier_name")
@@ -791,15 +723,14 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
                             source=source,
                         )
                     )
-        # Awards deliberately not stored: BA-era awards are on the spine (#216).
+        # BA-era awards are already on the OData spine.
         rebuilt = [("bid", bids)]
 
     elif corpus in ("award_summary", "committee"):
         for row in rows:
             result = json.loads(row["result_json"])
             for contract in result.get("contracts", []):
-                # One Award Summary Form is one document, so its own number stands; a
-                # committee report can hold several contracts, each keyed on its own (#217).
+                # Committee reports can cover multiple contracts; Award Summary Forms map 1:1 to row.document_number.
                 doc_num = (
                     _contract_document_number(contract, row["document_number"])
                     if corpus == "committee"
@@ -817,7 +748,6 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
                             hst_basis=_hst_basis(bid),
                             price_header=bid.get("price_header"),
                             status=bid.get("status"),
-                            # A missing verbatim header stays NULL; never fabricate one.
                             source=source,
                         )
                     )
@@ -832,8 +762,7 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
             for contract in result.get("contracts", []):
                 raw_ref = contract.get("reference")
                 named = [a for a in contract.get("awards", []) if a.get("supplier_name")]
-                # Keyed on the shape, never the prefix, and never the model's raw string: a
-                # reference with no Call Number shape is refused and counted, not stored (#216).
+                # Refuse awards whose reference does not parse as a Call Number.
                 call_number = normalize_call_number(raw_ref)
                 if not call_number:
                     refused += len(named)
@@ -854,7 +783,6 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
                         )
                     )
         if refused:
-            # Never silent: a bounded refusal nobody prints reads as full coverage later.
             log(
                 f"  backfill composite: refused {refused} award(s) whose reference carries "
                 f"no Call Number ({len(refused_refs)} contract(s)): "
@@ -863,10 +791,8 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
             )
         rebuilt = [("composite_award", awards)]
 
-    # ── swap: one transaction; an empty derived set deletes nothing ──
-    # Mark-and-sweep, not delete + reinsert: a row derived again keeps its id and
-    # first_seen (archive history, #218); only rows no longer derived are deleted.
-    conn.commit()  # so a rollback below undoes the swap alone, never a caller's work
+    # Swap in one transaction; empty derived sets delete nothing.
+    conn.commit()  # isolate swap rollback from prior caller work
     aliases = {"normalized": 0, "merged": 0}
     try:
         if corpus in _CORPUS_BUYER_SLUG and buyer_id is not None:
@@ -879,8 +805,7 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
                 log(f"  backfill {corpus}: nothing derived for {table}, existing rows kept")
                 continue
             if corpus == 'bd_report':
-                # Refused/incomplete reports keep any earlier supported facts. Only
-                # admitted item contexts participate in this historical source's sweep.
+                # Only sweep admitted references so refused reports preserve earlier supported facts.
                 accepted = sorted({d['reference'] for d in admission if d['accepted']})
                 refused = {d['reference'] for d in admission if not d['accepted']}
                 if refused & set(accepted):
@@ -897,8 +822,7 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
             from toronto_bids.linking.city_cached_bids import persist_evidence
             persist_evidence(conn,city_reviews)
         if corpus == 'trca':
-            # Empty derivation normally preserves the archive. An explicit, source-bound
-            # claim review may still withdraw that exact unsupported prior observation.
+            # Withdraw specific prior award rows rejected by a source-bound claim review.
             accepted = {(a.buyer_id, a.native_ref, a.supplier_name_raw, a.award_amount) for a in awards}
             for d in decisions:
                 proof = json.loads(d['identity_evidence_json'] or 'null') or {}
@@ -914,12 +838,11 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
                         conn.execute("DELETE FROM agency_award WHERE buyer_id=? AND native_ref=? "
                             "AND supplier_name_raw IS ? AND award_amount IS ? AND source=? AND report_url=?",
                             (*key, source, d['report_url']))
-        # agency_solicitation is backfill-only (fills NULLs, never deleted), so no swap.
+        # agency_solicitation is backfill-only (fills NULLs, never swept).
         for r in solicitations:
             upsert_row(conn, r, overwrite=False)
         if corpus == 'trca':
-            # Board-derived status is not independent evidence. Withdraw stale awarded
-            # labels for reviewed/held claims only when no accepted award survives.
+            # Clear board-derived 'awarded' status for held claims when no accepted award remains.
             held_refs = {d['native_ref'] for d in decisions if d['native_ref'] and d['reason']
                 and d['identity_evidence_json'] and any(k in json.loads(d['identity_evidence_json'])
                     for k in ('award_admission', 'withheld_awards_reason'))}
@@ -963,21 +886,10 @@ def backfill_from_extraction(conn, corpus, *, log=lambda _m: None) -> dict:
 def extract_and_backfill(
     conn, corpus, *, log=lambda _m: None, failures=None
 ) -> dict:
-    """Extract any uncached documents via LLM, then backfill store tables.
+    """Extract uncached documents via LLM and backfill derived store tables.
 
-    If the configured provider key is unset and all documents are already cached,
-    the extraction step is skipped and only backfill runs.
-
-    Per-document extraction errors are caught and logged by `extract_corpus`, so this
-    returns normally even when every new document failed (#219) — the #176/#178 lesson.
-    Pass the nightly's shared `failures` list and ONE summary entry per corpus is appended
-    when any document failed (the per-document lines are already logged), so
-    `_mark_if_swallowed_failures` can mark the step failed. Declared-count flags are NOT
-    failures: most are composite noise (appendices publish a count, no bidder list), so
-    they ride on the summary log line only.
-
-    Agency identity refusals independently append an `identity:<corpus>` summary from
-    deduplicated coverage, even when extraction and all supported contracts succeeded.
+    Skips API calls if credentials are unset and all documents are cached. Appends summary
+    entries to failures for extraction errors and agency/bd_report coverage refusals.
     """
     from toronto_bids.config import CLASSIFICATION_LABELS_PATH
     from toronto_bids.extract import ExtractionClient
@@ -1033,11 +945,7 @@ def extract_and_backfill(
 
 
 def _count_uncached(conn, corpus, labels, classifier=_DEFAULT_CLASSIFIER) -> int:
-    """Count documents in a corpus that are not yet in the extraction cache.
-
-    Resolves the classifier exactly as `extract_corpus` does, so a document the gate
-    skips never counts as uncached (#220).
-    """
+    """Count uncached eligible documents using the same classifier gate as extract_corpus."""
     classifier = _resolve_classifier(corpus, classifier)
     sql_where = CORPORA[corpus]
     rows = conn.execute(
@@ -1057,10 +965,7 @@ def _count_uncached(conn, corpus, labels, classifier=_DEFAULT_CLASSIFIER) -> int
 
 
 def validate_against_ground_truth(conn, ground_truth_path) -> dict:
-    """Compare cached extractions against human-labelled ground truth.
-
-    Returns per-document and aggregate recall/precision.
-    """
+    """Compare cached extractions against ground truth and return recall/precision metrics."""
     gt = json.loads(Path(ground_truth_path).read_text())
     results = []
 

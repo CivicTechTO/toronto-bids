@@ -1,15 +1,24 @@
 # Published City document aliases
 
-During the transition to Ariba, an original City call page can explicitly relate a native Call Number to an Ariba Doc identifier. `linking/city_document_aliases.py` admits reviewed same-page assertions. The original bytes and exact original/archive URLs travel in `data/city_document_aliases.json`; no network or model call occurs during resolution.
+During the City's transition to Ariba, some original City call pages printed both a native Call Number and an Ariba Doc number on the same page. `linking/city_document_aliases.py` applies reviewed same-page aliases from `data/city_document_aliases.json` (which includes the archived HTML bytes and URLs so resolution runs offline without network or LLM calls).
 
-The labelled Call number must agree with an independently validated original City award publication. Its exact full supplier, printed award date and amount must identify one current record against the complete frozen and current publisher populations. The call page must separately label one unambiguous Ariba document in its Description field (`See ARIBA Doc`, `Ariba Doc No.`, `Ariba Reference No. Doc` and equivalent document-label typography). Repeated equal identifiers remain one assertion; different identifiers and cancellation/supersession wording refuse admission. Original document URLs may include the publisher’s Domino view identifier; a filename, digit conversion or mention elsewhere does not establish this relation. Labelled issue and closing dates must equal the current publisher dates. A second current City solicitation for the alternate identifier requires further review rather than automatic fusion.
+## Admission requirements
 
-`city_document_alias_evidence` retains the immutable approval and its digest. Changed or removed applied proofs, source bytes, current publisher identity or competing identifiers fail visibly. All aliases are validated before any merge. Resolution's savepoint rolls back both evidence and canonical changes if a later conflict fails.
+An alias entry is accepted only when all of the following hold:
 
-Only the exact validated pair can cross the resolver's singular City-document anchor guard. Unrelated document, workspace, call and agency anchors retain their protections. The real City solicitation keeps its existing canonical ID; the alternate source identity redirects to it. Original bid IDs, document numbers, council references, prices, status fields and first-seen values are retained. This path creates no new submitted-bid claims and infers no supplier equivalence or price equality.
+1. The printed Call Number matches an independently validated archived City award (exact full supplier name, printed award date, and amount uniquely matching one record across the frozen and current publisher populations).
+2. The call page's Description field explicitly names one unambiguous Ariba Doc number (for example `See ARIBA Doc`, `Ariba Doc No.`, or `Ariba Reference No. Doc`). Repeated identical IDs count as one; multiple different IDs or cancellation/supersession text are rejected. Filenames, digit conversions, and mentions outside the call page do not qualify.
+3. The call page's issue and closing dates match the current publisher record.
+4. No second current City solicitation exists for the alternate Doc number (otherwise it requires manual review).
 
-Independent coverage attribution reads the immutable source alias proof rather than trusting assigned canonical IDs. Incorrect canonical attribution still fails the audit. Reference comparisons recognize the exact approved aliases as one document; unrelated sibling calls remain ambiguous. JSON nests the original bids and report under the City record while preserving each bid's original alternate document identifier. The full approval is exported, including CSV/Parquet table exports.
+## Resolution and export behavior
 
-The first reviewed page is [the original call 3721-19-0159](https://web.archive.org/web/20190615041306id_/https://wx.toronto.ca/inter/pmmd/calls.nsf/0/A82A07B374C7DA89852583F6006A9D14?OpenDocument). It explicitly prints both `Call number: 3721-19-0159` and `See ARIBA Doc 1745310659`. [BA40.8's original report](https://www.toronto.ca/legdocs/mmis/2019/ba/bgrd/backgroundfile-136556.pdf) supplies the three already stored submitted bidders. Its second award value is rounded relative to the feed; that value and the supplier-name variants are not used to establish identity or alter source facts.
+- All aliases are validated before any merge runs. `city_document_alias_evidence` stores the immutable approval and digest. Any changed proof, source bytes, publisher identity, or conflicting identifier fails resolution and rolls back via savepoint.
+- Only validated pairs cross the resolver's single-City-document anchor guard. The main City solicitation keeps its canonical ID and the alternate identity redirects to it.
+- Existing bid IDs, document numbers, council references, prices, statuses, and `first_seen` timestamps stay unchanged. Aliases do not add bids or merge suppliers.
+- Coverage audits read `city_document_alias_evidence` directly and check that canonical attribution agrees.
+- JSON exports nest the bids and report under the City solicitation while keeping each bid's original alternate document number. The approval table is included in JSON, CSV, and Parquet exports.
 
-This is a component of the cumulative exhaustive recovery workload. It does not establish that other records are unrecoverable. The dated validation note records actual rehearsed coverage and preservation outcomes.
+## Example
+
+The first reviewed alias is [call 3721-19-0159](https://web.archive.org/web/20190615041306id_/https://wx.toronto.ca/inter/pmmd/calls.nsf/0/A82A07B374C7DA89852583F6006A9D14?OpenDocument), which prints both `Call number: 3721-19-0159` and `See ARIBA Doc 1745310659`. [BA40.8's staff report](https://www.toronto.ca/legdocs/mmis/2019/ba/bgrd/backgroundfile-136556.pdf) provides the three submitted bidders. (The report's second award amount is rounded relative to the feed and is not used for identity or to alter stored source values.)

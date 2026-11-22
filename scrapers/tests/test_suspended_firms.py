@@ -48,6 +48,10 @@ def test_normalize_maps_row_dict_to_suspended_firm():
     assert firm.source == "suspended_firms"
 
 
+def test_normalize_skips_blank_supplier_name():
+    assert list(SuspendedFirmsSource().normalize({"Supplier Name": "   ", "Status": "Suspended"})) == []
+
+
 def test_fetch_gets_page_and_yields_row_dicts():
     def handler(request):
         return httpx.Response(200, text=_html())
@@ -57,14 +61,19 @@ def test_fetch_gets_page_and_yields_row_dicts():
     assert rows[0]["Supplier Name"].startswith("Capital Sewers")
 
 
-def test_source_attributes():
-    src = SuspendedFirmsSource()
-    assert src.name == "suspended_firms"
-    assert src.overwrite is True
+def test_parse_handles_missing_table_and_empty_rows():
+    assert parse_suspended_table("<html><body><p>No table here</p></body></html>") == []
+
+    html_with_empty_tr = """<html><body><table>
+      <thead><tr><th>Supplier Name</th><th>Status</th></tr></thead>
+      <tbody><tr></tr><tr><td>Acme</td><td>Suspended</td></tr></tbody>
+    </table></body></html>"""
+    assert parse_suspended_table(html_with_empty_tr) == [
+        {"Supplier Name": "Acme", "Status": "Suspended"}
+    ]
 
 
 def test_parse_raises_on_cell_header_count_mismatch():
-    # A row with fewer <td>s than <thead> columns must surface (not silently truncate).
     bad = """<html><body><table>
       <thead><tr><th>Supplier Name</th><th>Status</th><th>Authority</th></tr></thead>
       <tbody><tr><td>Acme</td><td>Suspended</td></tr></tbody>

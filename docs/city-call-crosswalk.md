@@ -1,40 +1,35 @@
 # Reviewed City Call Number crosswalks
 
-A historical council item and a numeric City solicitation key can describe the same procurement while keeping different publisher identifiers. `linking/city_crosswalk.py` links only committed reviewed source proofs. Original bid, award and extraction payloads remain unchanged; resolution assigns their existing canonical identities and records redirects and proof hashes.
+Historical council items and numeric City solicitation keys can refer to the same procurement under different identifiers. `linking/city_crosswalk.py` links them only through committed, reviewed source proofs in `data/city_call_crosswalk.json`. Original bid, award, and extraction payloads stay untouched; canonical resolution merges their procurement identities and records redirects and proof hashes.
 
-## Evidence boundary
+## Proof classes
 
-Source assertions, ordinary compound proofs and explicit reviewed contexts remain distinct:
+### Standard proof classes
 
-- `publisher_native_call`: an original publisher record explicitly names the same native call in its award-details Call Number field. The typed call must be unique and the source agenda, solicitation type and issued/closed dates must agree.
-- `corroborated_compound`: the original agenda has one unambiguous native call and a named winner. Exact issued/closed dates, solicitation type, the full supplier name and the initial award's explicitly net-of-tax value identify one record in the complete original publisher population. Punctuation/legal-form variants are allowed; spelling, geography, joint-venture components, generic token overlap, date tolerances and rounded prices are not.
+- **`publisher_native_call`**: The City's award record names the same Call Number in its award-details field. The typed call must be unique, and the agenda, solicitation type, and issue/close dates must match.
+- **`corroborated_compound`**: The agenda has one clear Call Number and named winner. Exact issue/close dates, solicitation type, full supplier name, and initial net-of-tax award amount must uniquely match one record in the complete publisher population. Punctuation and legal-suffix variants are allowed; spelling differences, locations, joint-venture splits, generic word overlap, date tolerances, and rounded prices are not.
 
-Additional compound proof classes require committed review annotations; discovery keeps the ordinary gates:
+### Review-annotated proof classes
 
-- `reviewed_type_discrepancy`: the annotation records both conflicting original methods and why identity is still established. Exact issued/closed dates, full supplier identity and the initial net award must identify one record across **all** publisher methods, in both the original population and current held facts. The raw types remain unchanged. A method disagreement alone never authorizes a match.
-- `reviewed_initial_award`: a combined title names several winners, while a separately named first initial award identifies one full supplier and its exact amount. Literal recommendation, supplier heading and net award quotations keep the relation in one scope; later options, other winners and combined totals cannot substitute for it. All ordinary date, method, global uniqueness and competing-call checks still apply.
+These require explicit review annotations committed in the registry:
 
-`reviewed_recommended_supplier` uses one literal `Recommended Bidder`, `Recommended Bidder or Proponent`, or `Recommended Proponent` field immediately before the first initial award. This handles abbreviated or long titles without guessing supplier aliases. The committed annotation pins that whole field and the initial net award quotation, including following miscellaneous or allowance qualifications. Exact supplier, amount, issued/closed dates and global uniqueness still apply; conflicting methods must be explicitly recorded and uniqueness checked across all methods. Recommendation amounts establish identity only; they never overwrite submitted bid prices.
+- **`reviewed_type_discrepancy`**: Records conflicting solicitation types between the agenda and the City feed. Exact issue/close dates, full supplier name, and initial net award must uniquely identify one record across all solicitation types in both the frozen and current populations. Raw types stay unchanged.
+- **`reviewed_initial_award`**: Used when a combined title lists multiple winners, while a separately labelled first initial award names one full supplier and exact amount. Pinned quotations keep the match within one scope; later options, other winners, and combined totals do not qualify.
+- **`reviewed_recommended_supplier`**: Uses a single `Recommended Bidder` / `Recommended Proponent` field directly before the first initial award (for abbreviated or long titles without inventing supplier aliases). Pins the full field and initial net award quotation, including trailing miscellaneous/allowance notes. Recommendation amounts establish identity only and never overwrite submitted bid prices.
+- **`archived_publisher_award`**: Uses the City's old award portal as a separate primary source. The Call Number must be unambiguous in both the portal and the agenda, and the portal's HST-exclusive amount, full supplier name, and printed `Date Awarded` must uniquely match one record across the frozen population, archived views, and current award facts. `Date Awarded` is the printed award date, never a capture timestamp or council decision date. Original HTML is stored in `city_archived_award_sources.zip` alongside the compact award-date comparison population.
 
-`archived_publisher_award` uses the original City's award portal as a separate primary source. A native Call Number in that portal and the original agenda must be unambiguous. The portal's explicitly HST-exclusive amount, full supplier and literal `Date Awarded` must identify one record across the complete frozen publisher population, every held archive view and currently held award facts. This is the **award date as printed**, not the archive capture time, webpage publication time or council decision date. The old portal's amount can differ from the council's initial recommendation; neither is substituted for a bid price. Original recommendation and date quotations, both source methods, archive timestamps, record URLs and hashes remain in the proof.
+### Matching rules
 
-The separate `publisher_award_identity_json` projection retains current nested supplier dates and supplier/value pairs, including removals. It does not alter the established `publisher_identity_json` projection or existing proof content. First deployment requires a successful full OData sync, or a controlled recovery that seeds only this new column from a pinned complete original response after exact stored-record/base-projection checks. A missing or changed current date projection refuses new archive links. Stale award archive rows may establish ambiguity but cannot positively approve a link.
+- Accepted formatting variants: `Request of Quotation`, colonless date labels, ordinal day suffixes, `Closed on` labels, `Sept` abbreviations, and spaced Call Numbers. Exact dates and matching Call Numbers are still required.
+- Equivalent net-tax labels: `net of applicable taxes` and `excluding all applicable taxes`. `Net of HST recoveries`, tax-inclusive amounts, and unlabeled prices are distinct and cannot be mixed. No rounding tolerance is allowed.
+- Award amounts must come from the labelled initial-award section (no option-year values, tax conversions, or summed periods).
+- Digit stripping and tender-number padding generate search candidates only and never approve a link. Derived titles, legacy matcher results, LLM caches, and `Parent_Id` cannot serve as independent proof.
 
-Original HTML is committed in `city_archived_award_sources.zip`, alongside the compact complete award-date comparison population. Byte hashes, exact source/archive URLs and capture chronology are checked; future-award rows relative to capture, conflicting native calls, repeated target keys, competing source contexts and explicit bid identities remain refused. Two earlier temporary identity holds have explicit supersession pointers to intact, registered proofs. Their history remains; the resolver does not repeatedly split and rejoin newly proven identities.
+## Generating and reviewing candidates
 
-Literal `Request of Quotation`, colonless labelled dates, ordinal day suffixes, labelled `Closed on` dates, `Sept` abbreviations and a typed native call printed with spaces are source wording/typography variants. They still require the exact date values and agreement with the labelled Call Number field. These recognizers do not map a numeric document key from a call.
+Save a snapshot of the City's paged OData solicitation records (with a `rows` array, request URLs, timestamps, and hashes).
 
-Literal `net of applicable taxes` and `excluding all applicable taxes` are equivalent explicit net roles. `Net of HST recoveries`, tax-inclusive amounts and unlabeled prices remain different roles. No rounding tolerance is introduced.
-
-The net award witness is bounded to the labelled initial award section. A later option value cannot be selected to match the feed. No tax conversion or contract-period aggregation is performed. The publisher's contract-execution/award-authority date is not a council-decision date and is not used as that proof.
-
-Digit stripping and tender-number padding only create search candidates. Admission never reads that transformation. Enriched solicitation titles, old matcher decisions, model extraction caches and `Parent_Id` cannot supply independent proof. A proposal file has no authority to write links.
-
-## Reproducible review
-
-Capture the original OData solicitation records with the existing paged endpoint, serial pacing and normal backoff. Retain exact responses, request URLs, timestamps and hashes; save a JSON snapshot with a `rows` array. The first pass's pinned capture is described in [the publisher investigation](research/city-call-publisher-keys-2026-11-01.md).
-
-From `scrapers/`:
+Run discovery read-only from `scrapers/`:
 
 ```sh
 uv run python -m toronto_bids.city_crosswalk \
@@ -44,30 +39,42 @@ uv run python -m toronto_bids.city_crosswalk \
   --out /tmp/city-crosswalk-review
 ```
 
-The database opens read-only. Discovery refreshes the currently missing historical candidate inventory; optional `--candidates /path/to/frozen.json` replays a frozen inventory. The command writes candidates, proposals, refusal reasons and a portable review bundle outside the database. It makes no source requests or model calls and never applies an equivalence.
+Pass `--candidates /path/to/frozen.json` to replay a frozen candidate list. The command writes candidate proposals, refusal reasons, and a review bundle outside the database without making network or model calls.
 
-Review the proposed source relationships before updating `data/city_call_crosswalk.json` and its compact original publisher population. The gzip population retains every source record's identity fields, so global uniqueness can be replayed without storing every full record. Full original publisher records for approved proofs, page/item hashes and literal source witnesses remain in the review bundle. This changes neither the shared extraction prompt nor its cache version.
+After reviewing proposals, update `data/city_call_crosswalk.json` and the compact gzipped publisher population (which stores identity fields for every publisher record so global uniqueness checks can run offline).
 
-## Application and changed context
+## Applying crosswalks and handling drift
 
-The OData normalizer stores the latest identity projection in `solicitation.publisher_identity_json`, including the current supplier/value pairs and publisher call details. Empty supplier arrays replace that projection while older `award` rows remain archived. This prevents source corrections/removals from being concealed by an old matching award row. Irrelevant bookkeeping changes and supplier-array ordering do not invalidate identity evidence.
+The OData normalizer stores current publisher identity fields on `solicitation`:
 
-**First deployment requires the original publisher identity snapshots before resolving the new links.** An ordinary OData sync populates them. A controlled recovery can populate only this newly introduced column from a fresh, pinned original response after checking the record ID, document key, dates, type and reviewed facts. Never seed it from derived titles or reconstruct a current supplier set from the award archive. The production-copy rehearsal seeds the new field from its pinned official capture; it does not change pre-existing source fields.
+- `publisher_identity_json`: current supplier/value pairs and publisher call details (empty arrays overwrite the projection while old `award` rows stay archived, so upstream removals are not hidden).
+- `publisher_award_identity_json`: current nested supplier award dates and supplier/value pairs (for `archived_publisher_award` proofs).
 
-The resolver revalidates current source fields, global ambiguity, agenda title/call context, original bytes when held, and competing source identities before storing any new link. A previously accepted proof can travel with a released database when raw agenda files are absent; its canonical JSON and hash must still agree. A new approval requires the held original agenda. Changed contexts or silently removed registry entries fail visibly and require explicit review/repair.
+Before resolving new crosswalks on a database that lacks these columns, run a full OData sync (or seed only the new column from a pinned official capture after checking record ID, document key, dates, and type).
 
-Accepted links use `solicitation_link.method='city_call_crosswalk'`. `city_crosswalk_evidence` is an immutable history table included in SQLite, CSV and Parquet exports; `procurement.merge_evidence` names the proof class and hash when an identity is merged. Legacy supplier/value rebuilds replace only their own rows. An existing canonical ID and its redirects remain archive history; removing a link does not undo a merge, so rejected identities need an explicit repair.
+During canonical resolution:
 
-The reviewed first-pass measurements and negative controls are in [the validation report](research/city-call-crosswalk-validation-2026-11-01.md).
+- The resolver rechecks current source fields, global uniqueness, agenda context, local agenda bytes (when present), and competing identities before writing new links.
+- Already-applied proofs can replay on release databases without local agenda HTML as long as their canonical JSON and hash match. New approvals require the local original agenda.
+- Changed contexts or missing registry entries fail resolution and require explicit review or repair. Do not delete registry entries or weaken checks to clear a failure.
+- Accepted links write `solicitation_link.method = 'city_call_crosswalk'` and immutable rows in `city_crosswalk_evidence` (exported to SQLite, CSV, and Parquet), with proof class and hash in `procurement.merge_evidence`.
+- Because canonical IDs and redirects are permanent history, undoing a bad merge requires an explicit repair rather than just deleting the link. Two earlier temporary holds have explicit supersession pointers to valid proofs so the resolver does not split and re-merge them.
 
 ## Reviewed cached City bids
 
-`linking/city_cached_bids.py` applies `data/city_cached_bid_reviews.json` during ordinary procurement resolution, including nightly export. Explicit BA/BD backfills use the same projections. Each approval binds the original PDF and text hashes, whole extraction result, contract position, council title, independent procurement identity and literal submission table/row quotations. Historical identities pass the crosswalk gate above; modern identities require a primary Doc assertion. Participation in a prequalification belongs to that event, not a later tender.
+`linking/city_cached_bids.py` applies `data/city_cached_bid_reviews.json` during canonical resolution and explicit BA/BD backfills. Each entry projects verified bids from an immutable `extraction_cache` entry without modifying the raw cache or extraction prompt.
 
-This is a reviewed projection over immutable cache payloads, not another extractor. Wrapped names and price footnotes come from bounded source rows; inferred compliance and unsupported tax/price claims are withheld. Duplicate submissions, lots and contradictory document roles remain held until their scope can be represented and proved. The shared extraction prompt/version stays unchanged.
+Each review pins:
 
-A new approval requires the held original PDF. Moved archives may use the conventional council download path only after matching its pinned hash. Applied `city_bid_evidence` proofs travel with the public database, allowing portable replay without local PDFs. A changed source, cache, identity, applied proof or conflicting link aborts before replacing bids; the canonical resolver also rolls back the projections and evidence if later resolution fails. Surviving bid IDs and `first_seen` values are preserved. Re-review and explicit repair are required to amend an applied proof.
+- Original PDF hash, extracted text hash, full cached extraction result, contract index, and council title.
+- An independent procurement identity (accepted crosswalk for historical calls, or a primary `Doc` number for modern items; prequalification bids stay on the prequalification event).
+- Literal table and row quotations from the PDF.
 
-When extending this registry, freeze the entire target inventory, review identity independently of submission/price scope, and account for every case, including holds. Rehearse against a fresh production copy and compare original facts, canonical identities, immutable caches and exports before deploying. The [November 5 review and validation](research/city-cached-bid-validation-2026-11-05.md) links the complete case inventory and source investigation.
+Rules:
 
-The [43-case identity-hold follow-up](research/city-identity-holds-validation-2026-11-05.md) records the reviewed discrepancy and named-award decisions, all remaining holds, and the production-copy rehearsal. Reviewed hourly prices retain `/Hour` and have no parsed numeric total; a report declaring more bids than it names retains an explicit completeness discrepancy in its exported proof.
+- Wrapped supplier names and price footnotes come from bounded source rows. Inferred compliance and unsupported tax/price claims are withheld. Duplicate submissions, multi-lot tables, and contradictory document roles stay held until handled by [scoped-city-bids.md](scoped-city-bids.md).
+- Hourly rates keep `/Hour` with a `NULL` numeric total. When a report declares more bids than it names, the discrepancy is recorded in the exported proof.
+- New approvals require the original PDF locally (matching its pinned hash). Once applied, `city_bid_evidence` travels with the database for portable replay without local PDFs.
+- Any changed source, cache, identity, applied proof, or conflicting link aborts before replacing bids; late canonical errors roll back both projections and evidence. Surviving bid IDs and `first_seen` timestamps are preserved.
+
+Test-pinned review snapshots live in `docs/research/city-cached-bid-review-2026-11-05.json` and `docs/research/city-identity-holds-review-2026-11-05.json`.

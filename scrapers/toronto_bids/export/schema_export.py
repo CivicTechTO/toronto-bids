@@ -5,10 +5,7 @@ from pathlib import Path
 
 from toronto_bids.store import db
 
-# Coded columns whose observed value set is worth publishing as an enum. Declared (not
-# auto-detected by cardinality) so `title` — hundreds of distinct values but not coded —
-# is never mistaken for one. Enums are OBSERVED (SELECT DISTINCT), so a new City value
-# appears automatically (the drift #168 exists to prevent).
+# Coded columns published as observed SELECT DISTINCT enums.
 _ENUM_COLUMNS = {
     ("bid_scope", "scope_kind"),
     ("bid_scope", "scope_status"),
@@ -45,19 +42,14 @@ def _observed_enum(conn, table: str, column: str) -> list:
 
 
 def load_descriptions(text: str | None = None) -> dict[str, str]:
-    """The curated column dictionary, keyed '<table>.<column>' -> gloss (#168)."""
+    """Load curated column descriptions keyed by '<table>.<column>'."""
     if text is None:
         text = resources.files("toronto_bids.data").joinpath("schema_dictionary.toml").read_text()
     return {key: entry["description"] for key, entry in tomllib.loads(text).items()}
 
 
 def build_schema_document(conn, generated_at: str | None = None) -> dict:
-    """A column-level data dictionary generated from the SQLite (#168).
-
-    Pure and deterministic given `generated_at`: PRAGMA table_info + COUNT(*) per table,
-    no file I/O. type/nullable/primary_key come from the declared schema; row_count from
-    the live data. Descriptions (curated) and enums (observed) are layered on in later steps.
-    """
+    """Build column-level schema dictionary from SQLite metadata, row counts, observed enums, and descriptions."""
     if generated_at is None:
         generated_at = datetime.now(timezone.utc).isoformat()
 
@@ -88,8 +80,7 @@ def build_schema_document(conn, generated_at: str | None = None) -> dict:
 
 
 def build_manifest_document(files, generated_at: str | None = None) -> dict:
-    """Published-artifact file sizes (#168). Pure over the given paths; a file that does not
-    exist is omitted (publish only passes files it has already written/verified)."""
+    """Build file-size manifest for existing artifact paths."""
     if generated_at is None:
         generated_at = datetime.now(timezone.utc).isoformat()
     artifacts = []

@@ -46,7 +46,7 @@ def test_agency_award_upsert_is_idempotent_with_null_amount(conn):
         source="trca_board",
     )
     db.upsert_row(conn, row, overwrite=True)
-    db.upsert_row(conn, row, overwrite=True)  # NULLs must not duplicate (COALESCE key)
+    db.upsert_row(conn, row, overwrite=True)
     assert conn.execute("SELECT COUNT(*) FROM agency_award").fetchone()[0] == 1
 
 
@@ -99,8 +99,8 @@ def test_agency_solicitation_backfill_never_overwrites(conn):
         overwrite=False,
     )
     row = conn.execute("SELECT title, status FROM agency_solicitation").fetchone()
-    assert row["title"] == "Portal title"  # backfill only fills NULLs
-    assert row["status"] == "awarded"  # ...but does fill them
+    assert row["title"] == "Portal title"
+    assert row["status"] == "awarded"
 
 
 def test_counts_include_agency_tables(conn):
@@ -140,7 +140,7 @@ def test_supplier_dimension_spans_agency_tables(conn):
         overwrite=True,
     )
     n = build_supplier_dimension(conn)
-    assert n == 2  # winner + losing bidder both in the dimension
+    assert n == 2
     linked = conn.execute(
         "SELECT COUNT(*) FROM agency_bid WHERE supplier_id IS NOT NULL"
     ).fetchone()[0]
@@ -148,14 +148,12 @@ def test_supplier_dimension_spans_agency_tables(conn):
 
 
 def test_enrich_agencies_offline_runs_without_error(conn, monkeypatch, capsys):
-    """Offline default: no network, runs the CLI path without crashing (#205)."""
     from toronto_bids import cli
 
     seed_buyers(conn)
 
     class _NoClose:
-        """sqlite3.Connection is a C type — its methods can't be monkeypatched directly
-        (see test_nightly.py's _CloseFails), so proxy everything except close."""
+        # Proxy sqlite3.Connection because its C methods cannot be monkeypatched.
 
         def close(self):
             pass
@@ -191,17 +189,13 @@ def test_export_buyers_section(conn):
     doc = build_export_document(conn, generated_at="2026-07-18T00:00:00+00:00")
     buyers = {b["slug"]: b for b in doc["buyers"]}
     assert set(buyers) == {"toronto-zoo", "trca", "exhibition-place", "waterfront-toronto", "toronto-public-library", "toronto-community-housing", "the-atmospheric-fund", "toronto-transit-commission", 'toronto-police-service', 'toronto-parking-authority', 'createto', 'toronto-pan-am-sports-centre'}
-    assert buyers["trca"]["partnered"] == 1  # consumers can segment
+    assert buyers["trca"]["partnered"] == 1
     assert buyers["trca"]["awards"][0]["native_ref"] == "10039751"
     assert buyers["toronto-zoo"]["awards"] == []
-    # City-only headline sections keep their meaning: no agency rows leak in.
     assert all("native_ref" not in s for s in doc["solicitations"])
 
 
 def test_no_portal_is_enabled_without_a_recorded_permission():
-    # The safety invariant, independent of how many bodies have said yes: a portal may be
-    # enabled only with a permission file recorded in docs/permissions/ (#135 / #103).
-
     from toronto_bids import config
 
     repo_root = pathlib.Path(__file__).resolve().parents[2]
@@ -227,7 +221,7 @@ def test_gate_blocks_a_portal_without_permission():
         "permission": None,
     }
     with _pytest.raises(PermissionError):
-        next(fetch_listings(ungranted))  # generator: gate fires on first pull
+        next(fetch_listings(ungranted))
 
 
 def test_search_params_match_the_live_ui_all_filter_and_stable_sort():

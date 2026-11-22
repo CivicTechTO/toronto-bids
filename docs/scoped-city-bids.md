@@ -1,31 +1,44 @@
 # Scoped City bid responses
 
-City reports can list the same firm in several lots, categories, regions or alternatives. A response cell is not another participating firm, and its price is not a procurement-wide total. The vocabulary is in [GLOSSARY.md](../GLOSSARY.md); [ADR 0001](adr/0001-scoped-bid-responses.md) records the storage decision.
+Some City reports list the same firm across multiple lots, categories, regions, or alternative offers. A single table cell is not a separate participating firm, and a lot price is not a procurement-wide total. See [GLOSSARY.md](../GLOSSARY.md) for terminology and [ADR 0001](adr/0001-scoped-bid-responses.md) for the schema decision.
 
-## Representation and counts
+## Schema and counts
 
-Existing `bid` keys, prices and IDs retain their meaning. For the reviewed scoped cohort, an unpriced `bid` records each proven firm's participation once per event and source. Three child tables retain the detail:
+Existing `bid` rows keep their keys, prices, and IDs. For reviewed scoped reports, `bid` stores one unpriced participation row per proven supplier per event and source, while three child tables hold the detailed breakdown:
 
-- `bid_scope` identifies a source's named part, lot, category or region, or explicitly unspecified scope.
-- `bid_response` retains the literal party name, source-labelled alternative, submitted/No Bid/unscoped-outcome classification and scope-specific status. Its optional `bid_id` links a proven participant.
-- `bid_response_price` retains individual quoted values, headers, units, tax basis and qualifications. Percentage discounts and unit rates have no currency-total numeric value.
+- **`bid_scope`**: A source-labelled lot, part, category, or region (or an explicitly unspecified scope).
+- **`bid_response`**: The literal party name, any source-labelled alternative, the response classification (`submitted`, `no_bid`, or unscoped outcome), scope-specific status, and an optional `bid_id` linking to the proven participant.
+- **`bid_response_price`**: Individual quoted values, column headers, units, tax basis, and qualifiers. Percentage discounts and unit rates have a `NULL` currency-total numeric value.
 
-A literal No Bid cell records nonparticipation in that scope. An empty cell establishes neither submission nor No Bid. An outcome with unstated scope stays unscoped. A cancelled or unawarded scope can still contain real submissions. Unknown party fragments remain visible, including supported prices, without a fabricated firm identity. Firm counts and source response-cell counts are separate in the export.
+Interpretation rules:
 
-## Source review and extension
+- A literal `No Bid` cell records non-participation for that scope. An empty cell means neither a submission nor a `No Bid`.
+- Outcomes without a stated scope stay unscoped.
+- Cancelled or unawarded lots can still have valid submissions.
+- Unidentified party fragments stay visible (along with any supported prices) without inventing a firm identity.
+- Exports report distinct firm counts and response-cell counts separately.
 
-`linking/city_scoped_bids.py` is the admission boundary. `data/city_scoped_bid_reviews.json` holds immutable reviews; `pdf_witness.py` verifies literal rectangular quotations against original PDF words using Poppler. The shared extraction prompt and cached model results stay unchanged. For image-space witnesses and corroborated OCR corrections, read [image-pdf-text.md](image-pdf-text.md).
+## Adding and replaying reviews
 
-For another review, first establish procurement identity independently through an existing accepted crosswalk or the source's primary document number. Review the entire source table and every raw cached observation. Commit the report/text/cache/contract-collection hashes, original source rectangles, supplier identities and unresolved fragments, leaf scopes, alternatives, prices, qualifiers and explicitly bound outcomes. Supplier columns and scope rows must geometrically contain their own response cells. Keep all literal aliases even when existing legal-form normalization proves one firm. Record a reason for every cached observation that is replaced or withheld.
+- `linking/city_scoped_bids.py` validates and applies reviews from `data/city_scoped_bid_reviews.json`.
+- `pdf_witness.py` checks quoted text against original PDF word coordinates using Poppler. For scanned PDFs with image-space coordinates and OCR corrections, see [image-pdf-text.md](image-pdf-text.md).
 
-Preflight requires the original PDF for a new review. Missing or changed evidence aborts before writes. Once accepted, `city_scoped_bid_evidence` stores the complete proof and digest: release consumers can replay without local PDFs, but still check current archived context and identities. Changed or removed applied proofs require an explicit reviewed repair; deleting the ledger to bypass a mismatch is unsafe.
+To add a new review:
 
-Resolution and explicit BA/BD backfills use the same preflight and persistence path. Participation and child rows rebuild atomically under their stable source keys, preserving IDs and `first_seen`. Late canonical conflicts roll back the entire resolution. The older scalar bid-review ledger remains separate; overlapping applied scalar reviews require an explicit migration.
+1. Establish procurement identity first via an accepted crosswalk or the source's primary document number.
+2. Review the full source table and every raw cached model observation.
+3. Record the report/text/cache/contract hashes, PDF witness rectangles, supplier identities (or unresolved fragments), leaf scopes, alternatives, prices, qualifiers, and outcomes. Supplier columns and scope rows must geometrically contain their response cells. Keep literal aliases even when legal-form normalization maps them to one firm, and record a reason for every cached observation that is replaced or withheld.
 
-## Export and deployment
+Runtime behavior:
 
-JSON nests `bid_scopes` and `bid_scope_summary` under the proven City solicitation, with response prices and participant names. The accepted proof ledger is exported too. CSV, Parquet and the schema dictionary expose all four new tables. Canonical procurement identity attaches to the scope; responses and prices follow its foreign keys.
+- New reviews require the original PDF locally; missing or changed evidence aborts before any writes.
+- Accepted reviews are stored with their full proof and digest in `city_scoped_bid_evidence`, allowing release consumers to replay without local PDFs while still verifying archived context and identities.
+- Modifying or deleting an already-applied proof requires an explicit repair; do not delete ledger rows to bypass a mismatch.
+- Both canonical resolution and explicit BA/BD backfills run the same validation and atomic rebuild, preserving IDs and `first_seen` timestamps and rolling back on late conflicts. The older scalar bid-review ledger is separate; overlapping scalar reviews need an explicit migration.
 
-Deploy the companion frontend that renders these optional fields before publishing recovered data. It distinguishes firms from cells, labels percentage discounts and unknown tax bases, preserves alternatives and qualifications, and links supplier participation back to the scoped view without a global win/loss claim. Older exports remain supported by that frontend.
+## Export
 
-After merge, use the normal locked production deployment/recovery workflow to resolve, rebuild suppliers and export. Verify the cohort counts against the [validation record](research/city-scoped-bid-validation-2026-11-05.md), SQLite foreign keys, stable previous facts and the published site. This implementation's validation used a disposable production copy; it did not publish production data.
+- JSON nests `bid_scopes` and `bid_scope_summary` under the City solicitation, along with response prices, participant names, and the proof ledger.
+- CSV, Parquet, and the generated schema dictionary include all four tables.
+- Canonical procurement identity attaches to `bid_scope`, with `bid_response` and `bid_response_price` linked by foreign key.
+- The test-pinned review snapshot for the initial cohort lives in `docs/research/city-scoped-bid-review-2026-11-05.json`.

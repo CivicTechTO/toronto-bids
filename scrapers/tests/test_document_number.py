@@ -6,13 +6,13 @@ from toronto_bids.linking.document_number import normalize_document_number, brid
 @pytest.mark.parametrize(
     "raw,expected",
     [
-        ("3303123110", "3303123110"),            # already clean
-        ("Doc5725384704", "5725384704"),         # Ariba Doc-prefixed
-        ("3303-12-3110", "3303123110"),          # hyphenated in free text
-        ("Doc5581608073 - Request for Quotations", "5581608073"),  # embedded in title
-        ("﻿3674586673", "3674586673"),      # leading BOM
-        ("4147794028﻿", "4147794028"),      # trailing BOM
-        ("2821040966 )", "2821040966"),          # trailing junk
+        ("3303123110", "3303123110"),
+        ("Doc5725384704", "5725384704"),
+        ("3303-12-3110", "3303123110"),
+        ("Doc5581608073 - Request for Quotations", "5581608073"),
+        ("﻿3674586673", "3674586673"),  # leading BOM
+        ("4147794028﻿", "4147794028"),  # trailing BOM
+        ("2821040966 )", "2821040966"),
     ],
 )
 def test_valid_document_numbers_normalize_to_ten_digits(raw, expected):
@@ -25,19 +25,19 @@ def test_valid_document_numbers_normalize_to_ten_digits(raw, expected):
         None,
         "",
         "   ",
-        "xxxxxxxx",                 # placeholder
+        "xxxxxxxx",
         "xxxxxxx",
-        "390513test",               # <10 digits after strip
+        "390513test",
         "Notice913418",
         "Summary67141",
         "No. 22436",
-        "1111111111",               # denylisted test row
-        "0000000000",               # denylisted test row
-        "1234567890",               # denylisted test row
-        "3.77E+1100",               # Excel scientific-notation corruption
-        "3710106+0111",             # digits present but 11 after strip -> reject
-        "123",                      # too short
-        "123456789012",             # too long (12 digits)
+        "1111111111",
+        "0000000000",
+        "1234567890",
+        "3.77E+1100",
+        "3710106+0111",
+        "123",
+        "123456789012",
     ],
 )
 def test_invalid_document_numbers_return_none(raw):
@@ -45,7 +45,6 @@ def test_invalid_document_numbers_return_none(raw):
 
 
 def test_bridge_uses_external_rfx_id():
-    # "Doc5672751291" -> strip -> "5672751291"
     assert bridge_document_number("Doc5672751291", "some title") == "5672751291"
 
 
@@ -65,5 +64,4 @@ def test_bridge_returns_none_when_neither_resolves():
 
 
 def test_bridge_rejects_title_doc_with_more_than_ten_digits():
-    # An 11-digit run is ambiguous -> must NOT fabricate a truncated document number.
     assert bridge_document_number(None, "Doc56727512911 - eleven digit run") is None

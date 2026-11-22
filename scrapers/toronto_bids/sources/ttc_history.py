@@ -1,8 +1,4 @@
-"""Bounded TTC Board history: reconcile public discovery, then preserve every PDF link.
-
-Capture is independent of paid extraction. Roles describe published links, not
-approved awards; archived reports require separate source review before extraction.
-"""
+"""Discover and archive public TTC Board meeting pages and linked PDFs (no LLM extraction)."""
 import hashlib
 import json
 import re
@@ -133,9 +129,7 @@ def _meeting(raw, year):
     heading = _text(title[0])
     if re.search(r'\b' + str(year) + r'\b', heading):
         return main[0], heading, None
-    # The archive includes cancelled/rescheduled placeholders whose h1 is just
-    # "Board Meeting". Only an explicit source date and disposition establish
-    # their scope; neither their URL nor absence of PDFs proves a cancellation.
+    # Cancelled/rescheduled placeholders use h1='Board Meeting' with date/status in <strong> labels.
     _require(heading == 'Board Meeting', 'Unexpected TTC meeting year/title')
     fields = {}
     for label in main[0].xpath('.//strong'):
@@ -289,8 +283,7 @@ def _year(conn, year, root, session, settings, report, *, resume, download, cloc
             else:
                 db.upsert_row(conn, BackgroundPdf(url=url, kind=kind, local_path=held['path'],
                               sha256=held['sha256'], text=text or None), overwrite=True)
-                # Archive-owned text belongs to these exact bytes. The shared
-                # COALESCE upsert cannot clear an older version's text on its own.
+                # Clear stale text when a re-fetched PDF is textless (COALESCE upsert preserves old text).
                 conn.execute('UPDATE background_pdf SET text=? WHERE url=?', (text or None, url))
                 conn.commit()
             docs['held'] += 1
@@ -307,19 +300,13 @@ def _year(conn, year, root, session, settings, report, *, resume, download, cloc
 def capture_history(conn, years, *, resume=False, download=True, max_requests=1000,
                     client=None, data_dir=None, sleep=time.sleep,
                     clock=lambda: datetime.now(timezone.utc), log=lambda _: None):
-    """Archive explicit years; resume hash-checks held bytes and rechecks live discovery.
-
-    Returns scope and failures. Nothing here queues model work or asserts award facts.
-    Capture all linked PDFs, including decisions, amendments and recognition context;
-    no title classifier is allowed to erase the discovery inventory.
-    """
+    """Discover and optionally download TTC Board meetings and all linked PDFs for the given years."""
     _require(years and all(type(y) is int and 2000 <= y <= 2024 for y in years),
              'TTC history years must be within the published 2000–2024 archive')
     _require(type(max_requests) is int and max_requests > 0, 'max_requests must be positive')
     years = sorted(set(years))
     root = Path(data_dir or config.DATA_DIR) / 'agencies' / 'ttc_history'
-    # Match other TTC readers' parent directory so the shared host lock and
-    # Retry-After deadline serialize traffic across TTC capture commands.
+    # Share parent directory with other TTC commands so host lock and Retry-After state are shared.
     session = PublicSession(root, client, sleep=sleep, clock=clock,
                             max_requests=max_requests, allowed_hosts=HOSTS)
     result = dict(scope='meeting and PDF capture' if download else 'meeting and link discovery',

@@ -1,16 +1,4 @@
-"""The bids&tenders portal source (#135) — listing metadata with page-scoped identities.
-
-Reads public bid listings from a body's bids&tenders portal via its plain-HTTP JSON grid
-endpoint (no browser). GATED: fetch_listings raises PermissionError unless the portal's
-config entry is enabled, which happens only when the body's written grant is recorded in
-docs/permissions/ (the PMMD/Ariba precedent). Listings only — bid documents sit behind the
-Vendor clickwrap and are never fetched.
-
-TRCA fields are verified against real grid records and public detail metadata (#226).
-Zoo parsing is verified against its complete recorded off-peak sweep. Distinct portal
-postings retain distinct identities when a native reference is absent or reused (#124).
-Nonempty replies are recorded automatically, including when later parsing fails.
-"""
+"""Capture public bids&tenders portal listings via the JSON grid endpoint (requires enabled permission)."""
 import hashlib
 import json
 import re
@@ -28,25 +16,20 @@ _LANDING = "Module/Tenders/en"
 _SEARCH = "Module/Tenders/en/Tender/Search/"
 _NODE_RE = re.compile(r'id="NodeId"[^>]*value="([^"]+)"')
 _TOKEN_RE = re.compile(r'name="__RequestVerificationToken"[^>]*value="([^"]+)"')
-# The UI sends named filters, not integer enum values: numeric filters silently return
-# success=true, total=0 (#226). Its empty "All" filter includes every published status.
+# Empty status queries "All"; numeric status codes silently return total=0.
 _STATUS_FILTERS = ("",)
 _PAGE = 50
 _DELAY = 1.5
 
 
 def _search_params(status: str, start: int, limit: int = _PAGE) -> dict:
-    # Match the UI's deterministic DateClosing + Id sort so pages cannot overlap on ties.
+    # Sort by DateClosing DESC,Id so pages do not overlap on ties.
     return {"status": status, "limit": limit, "start": start, "dir": "DESC",
             "from": "", "to": "", "sort": "DateClosing DESC,Id"}
 
 
 def _search_payload(resp, slug: str, status: str, start: int) -> dict:
-    """The search reply's JSON payload — or RAISE, naming the portal, HTTP status and status
-    filter (#226). A non-2xx, a non-JSON body (e.g. the Error?aspxerrorpath page a bad request
-    redirects to) or `success: false` means the portal is BROKEN, which must never read as
-    "no open bids": run_portal_capture turns the raise into that slug's `FAILED: ...`. A
-    payload with no `success` key at all is accepted — only an explicit false fails."""
+    """Validate a search response and return its JSON payload, raising RuntimeError on HTTP, JSON, or pagination errors."""
     where = f"bids&tenders {slug}: search status={status or 'All'} start={start} got HTTP {resp.status_code}"
     if not resp.is_success:
         raise RuntimeError(where)
@@ -69,13 +52,9 @@ def _search_payload(resp, slug: str, status: str, start: int) -> dict:
 
 
 def fetch_listings(portal: dict, *, delay: float = _DELAY, log=lambda _m: None):
-    """Yield all public listings using the UI's All filter, paged and rate-limited.
+    """Yield all public listings from an enabled portal using the All filter, paged and rate-limited.
 
-    Manages its own httpx.Client (the antiforgery cookie set on the landing GET must persist
-    to the search POSTs — a session concern specific to this source, not the shared HttpClient).
-    Yields each raw JSON record with `buyer_slug` and `status_filter` attached. An explicit
-    empty page with total=0 yields nothing. A broken or incomplete reply
-    (non-2xx, non-JSON, `success: false`) RAISES instead (#226), so it can't pass for empty.
+    Uses a dedicated httpx.Client so the landing-page antiforgery cookie persists to search POSTs.
     """
     if not portal.get("enabled"):
         raise PermissionError(
@@ -99,7 +78,7 @@ def fetch_listings(portal: dict, *, delay: float = _DELAY, log=lambda _m: None):
             seen = set()
             expected_total = None
             while True:
-                time.sleep(delay)                        # rate-limit (permission condition)
+                time.sleep(delay)
                 resp = client.post(base + _SEARCH + node,
                                    params=_search_params(status, start),
                                    data={"keywords": "", "__RequestVerificationToken": token})
@@ -122,17 +101,11 @@ def fetch_listings(portal: dict, *, delay: float = _DELAY, log=lambda _m: None):
         client.close()
 
 
-# Portal base per slug, for building a record's detail URL. Derived from config so the two
-# stay in sync.
 _PORTAL_BASE = {p["slug"]: p["portal_url"].rstrip("/") for p in config.BIDS_TENDERS_PORTALS}
 
 
 def _native_ref(record: dict) -> str | None:
-    """Prefer explicit bid numbers; recognize only demonstrated title-prefix shapes.
-
-    A GUID locates a portal page, but is never invented as a printed reference.
-    Unknown layouts remain unlabelled; source pages and raw replies are still preserved.
-    """
+    """Extract a normalized native reference from explicit fields or known TRCA/Zoo title prefixes, or None."""
     raw = record.get("ReferenceNumber") or record.get("BidNumber")
     if not raw:
         title = record.get("Title") or ""
@@ -141,10 +114,7 @@ def _native_ref(record: dict) -> str | None:
             match = re.match(pattern, title, re.I)
             raw = match[1] if match else None
         elif record.get("buyer_slug") == "toronto-zoo":
-            # The captured grid consistently publishes "identifier - description".
-            # Zoo identifiers are not restricted to RFQ/RFP: preserve numeric, NRFP,
-            # dotted and spaced values verbatim rather than inventing a prefix from
-            # the description ("127 - RFQ 127 ..." is published under "127").
+            # Zoo titles use "<ref> - <description>"; keep the prefix verbatim.
             prefix, separator, description = title.partition(" - ")
             prefix = prefix.strip()
             if (separator and description.strip()
@@ -167,7 +137,6 @@ def _listing_date(value):
     match = re.fullmatch(r"/Date\((-?\d+)(?:[+-]\d{4})?\)/", str(value))
     if match:
         return datetime.fromtimestamp(int(match[1]) / 1000, timezone.utc).isoformat()
-    # Existing ISO date fields stay verbatim; unfamiliar formats must not enter the store.
     try:
         datetime.fromisoformat(value)
     except (ValueError, TypeError):
@@ -176,7 +145,7 @@ def _listing_date(value):
 
 
 def _listing_status(record):
-    """The live UI publishes named statuses; preserve them without guessing enum codes."""
+    """Return the named status string from StatusText or Status, rejecting numeric codes."""
     for field in ('StatusText', 'Status'):
         value = record.get(field)
         if value is None:
@@ -189,7 +158,7 @@ def _listing_status(record):
 
 
 def parse_listing(record: dict, buyer_id: int) -> PortalListing:
-    """Preserve a source page independently of its optional printed reference."""
+    """Convert a raw bids&tenders JSON record into a PortalListing keyed by detail URL."""
     base = _PORTAL_BASE.get(record.get("buyer_slug"), "")
     rid = record.get("Id")
     portal_url = f"{base}/Module/Tenders/en/Tender/Detail/{rid}" if (base and rid) else None
@@ -208,12 +177,7 @@ def parse_listing(record: dict, buyer_id: int) -> PortalListing:
 
 
 def store_listings(conn, records, buyer_ids: dict) -> int:
-    """Capture every distinct buyer/page; references are optional, nonunique labels.
-
-    Validate the complete batch before any write. The latest non-null source metadata
-    refreshes the same page (#140); missing fields preserve held values. An absent page
-    is never inferred closed/deleted, and board rows are untouched.
-    """
+    """Validate and atomically upsert a batch of bids&tenders listings, then resolve procurements."""
     from toronto_bids.linking.procurement import _transaction, resolve_procurements
     rows = [parse_listing(record, buyer_ids[record["buyer_slug"]]) for record in records
             if record.get("buyer_slug") in buyer_ids]
@@ -226,7 +190,7 @@ def store_listings(conn, records, buyer_ids: dict) -> int:
 
 
 def record_listings(records, out_dir) -> int:
-    """Keep content-addressed raw record snapshots without overwriting prior observations."""
+    """Write content-addressed raw record snapshots without overwriting existing files."""
     import pathlib
     out = pathlib.Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
@@ -244,8 +208,7 @@ def record_listings(records, out_dir) -> int:
 
 
 def run_portal_capture(conn, *, record: bool = False, only=None, log=lambda _m: None) -> dict:
-    """Fetch, record nonempty replies, and store every enabled portal, per-body isolated: one
-    body's failure is caught and reported, never stops the others. Returns {slug: count | 'FAILED: ...'}."""
+    """Fetch, record, and store all enabled bids&tenders portals with per-body error isolation."""
     buyer_ids = seed_buyers(conn)
     result = {}
     for portal in config.BIDS_TENDERS_PORTALS:
@@ -264,7 +227,7 @@ def run_portal_capture(conn, *, record: bool = False, only=None, log=lambda _m: 
                     log(f"  {portal['slug']}: recorded {written} raw record(s)")
             result[portal["slug"]] = store_listings(conn, records, buyer_ids)
             log(f"  {portal['slug']}: {result[portal['slug']]} listing(s) stored")
-        except Exception as exc:                       # per-body isolation (empty portal is fine; a real error is caught)
+        except Exception as exc:
             result[portal["slug"]] = f"FAILED: {exc}"
             log(f"  FAILED {portal['slug']}: {exc}")
     return result

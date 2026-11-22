@@ -140,6 +140,13 @@ def build_parser() -> argparse.ArgumentParser:
         help="Run --capture's headed Chromium under Xvfb (headless servers; needs Xvfb "
         "installed). Ignored by the offline --ingest/--reindex modes.",
     )
+    p_ariba.add_argument(
+        "--document",
+        action="append",
+        metavar="N",
+        help="With --capture, attempt only this open document number (repeatable); refused "
+        "unless the event is open and still pending capture (#304).",
+    )
 
     p_titles.add_argument(
         "--reports",
@@ -152,8 +159,7 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_parser(
         "nightly",
         help="Sync, archive new Award Summary Forms, export, and post a summary to Slack. "
-        "What the systemd timer runs — see docs/superpowers/specs/"
-        "2026-07-17-deployment-design.md",
+        "What the systemd timer runs (see deploy/README.md).",
     )
 
     p_ttc_reports = sub.add_parser('capture-ttc-reports',
@@ -328,28 +334,16 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def _is_first_of_month() -> bool:
-    """The monthly-council gate for the nightly (a test seam)."""
+    """Monthly gate for council enrichment (test seam)."""
     from datetime import date
 
     return date.today().day == 1
 
 
 def _run_step(steps: list, failures: list, name: str, fn, conn=None):
-    """Run one nightly step, timing it and recording a step record. On failure the error is
-    ALSO appended to `failures` — the authoritative list the exit code and the report's Failures
-    section read — so the exit-code contract is untouched while the Steps section gains status +
-    timing. `fn` returns a short detail string (or None). Returns the `sync_run` id when `conn`
-    is given, so a caller whose step swallows its OWN sub-failures (below) can correct the row
-    after the fact — `fn` returning normally is not proof nothing failed.
+    """Run and time one nightly step, recording status in steps, failures, and optional sync_run.
 
-    Pass `conn` to ALSO write a `sync_run` row for this step (#176): before this, everything
-    past the 14 `tb sync` sources — award summaries, portal, Ariba attachments, agencies,
-    export — wrote nothing durable, so a step failing every night for a week was invisible to
-    `tb status` and findable only by grepping a journal subject to rotation. `conn` is optional
-    and deliberately omitted for the "sync" step itself: it already writes 14 rows of its own
-    via `pipeline.sync`, and giving it a 15th wrapping row here would insert between
-    `sync_cutoff` and `_sync_detail`'s own count of "what this run wrote", corrupting the #178
-    fix — the same mistake that fix exists to prevent, one level up.
+    Omit conn for the top-level sync step because pipeline.sync already writes per-source sync_run rows.
     """
     import time
 
@@ -373,7 +367,7 @@ def _run_step(steps: list, failures: list, name: str, fn, conn=None):
         )
         if run_id is not None:
             db.finish_sync_run(conn, run_id, status="pending" if pending else "ok")
-    except Exception as exc:  # isolation: never propagates
+    except Exception as exc:
         steps.append(
             {
                 "name": name,
@@ -390,21 +384,12 @@ def _run_step(steps: list, failures: list, name: str, fn, conn=None):
 
 
 def _mark_if_swallowed_failures(steps, failures, conn, run_id, before: int, known: list) -> None:
-    """A step whose OWN sub-units (portal slugs, agency bodies) record their failures into the
-    shared `failures` list rather than raising reads as ✅ to `_run_step`, which only sees
-    whether `fn()` raised — exactly the bug #178 found for `pipeline.sync` and fixed one level
-    up. Call this right after `_run_step` with the `failures` length from before the call: if it
-    grew, the step is corrected in both places `_run_step` already wrote to — the Steps entry
-    just appended, and, since the row was already committed as 'ok' before the caller could
-    know better, the `sync_run` row itself (#176).
+    """Reconcile step status and sync_run when a step appends sub-failures instead of raising.
 
-    Sub-failures matching reviewed evidence (`known_gaps`, #283) move from `failures` to
-    `known`: they leave the step ✅ with a count, and never reach the exit code. Only an
-    exact match is known; if classification itself breaks, every failure stays a failure.
+    Downgrades entries matching known_gaps baselines without failing the step; fails closed on classification errors.
     """
     if steps[-1]["status"] == "fail":
-        # The step RAISED: _run_step already marked both places, and its own append to
-        # `failures` would otherwise read as growth and overwrite the raised error (#223).
+        # Step already failed via exception; keep its original sync_run error.
         return
     new = failures[before:]
     if not new:
@@ -413,7 +398,7 @@ def _mark_if_swallowed_failures(steps, failures, conn, run_id, before: int, know
         from toronto_bids import known_gaps
 
         unknown, recognized = known_gaps.classify(conn, new)
-    except Exception as exc:  # fail closed: an unreadable registry recognizes nothing
+    except Exception as exc:  # fail closed
         unknown, recognized = new + [("known_gaps", str(exc))], []
     failures[before:] = unknown
     known.extend(recognized)
@@ -431,32 +416,13 @@ def _mark_if_swallowed_failures(steps, failures, conn, run_id, before: int, know
 
 
 def _report_sources(conn, after_id: int) -> list:
-    """This-run sync_run rows for the DATA fetch sources only — the report's Sources section.
-
-    sync_run also records the schema-drift validator (`schema_check`, which writes 0 rows by
-    nature) and the post-source linking passes (`title_cleanup`, `ariba_bridge`,
-    `amount_backfill`, `amount_labels`, `supplier_dimension`). Those are not fetches — a pass
-    touching 0 rows is normal — so including them would falsely ⚠-flag them as broken every
-    single night. Keep only the real City feeds; a genuine `schema_check` failure still surfaces
-    in the Failures section via pipeline.sync's return.
-    """
+    """Return this run's sync_run rows for data feeds (excluding schema_check and linking passes)."""
     names = {s.name for s in pipeline.default_sources()} - {"schema_check"}
     return [r for r in db.sync_runs_since(conn, after_id) if r["source"] in names]
 
 
 def _sync_detail(conn, after_id: int) -> str:
-    """What the sync step actually consisted of, read back from `sync_run` (#178).
-
-    The old detail was `len(pipeline.default_sources())` — a static 9 that undercounted the 14
-    units the run records by exactly the five post-source passes, and that could not have
-    noticed if a source had failed. It is derived from the run now, and every category is
-    named, because the one number in the summary that claims coverage should not need a
-    reader who knows which of the three kinds `default_sources()` happens to contain.
-
-    Failures are counted from the rows, not from `pipeline.sync`'s return: both linking passes
-    and sources record their own status, so this stays right if a future unit is added to
-    either list.
-    """
+    """Format a summary of schema checks, sources, linking passes, and failures from sync_run rows."""
     rows = db.sync_runs_since(conn, after_id)
     if not rows:
         return "nothing recorded"
@@ -490,15 +456,7 @@ def _open_db():
 
 
 def _cmd_record_step(args) -> int:
-    """Write one `sync_run` row for a step that runs outside this process (#176).
-
-    `deploy/publish-data.sh` is bash, downstream of `tb nightly` in a separate systemd unit —
-    it can't call `_run_step` directly. Before this it reported its own outcome only to the
-    journal and Slack; the R2 mirror in particular is best-effort by design (a failed upload
-    only warns, the script still exits 0), so `tb status` read 14/14 ok while the mirror had
-    been dead for 8 nights (#173). This gives that script — or any future non-Python step —
-    the same durable record every Python step now gets via `_run_step`.
-    """
+    """Record a sync_run row for an external step (e.g. deploy/publish-data.sh)."""
     conn = _open_db()
     try:
         run_id = db.start_sync_run(conn, args.name)
@@ -531,7 +489,6 @@ def _cmd_sync(args) -> int:
     finally:
         http.close()
         conn.close()
-    # Non-zero so a human or a cron job notices; a silent zero-row run is the bug (#18).
     return 1 if failures else 0
 
 
@@ -578,11 +535,7 @@ def _cmd_export(args) -> int:
         write_csv_zip(conn, out_path.parent / "bids-csv.zip")
         print(f"Wrote Parquet + CSV bulk exports to {out_path.parent}")
         counts = db.counts(conn)
-        # `counts['solicitation']` is the CITY SPINE alone -- on an agency-only DB (agency
-        # enrichment has run, `tb sync` never has) it reads 0 even though the export's `buyers`
-        # section wrote real data, making a successful export look like it did nothing (#143).
-        # `buyer` is only ever non-zero once agency enrichment has seeded it, so a plain
-        # City-spine export (the overwhelming majority) is unaffected.
+        # Include buyer count when seeded so agency-only exports do not report 0.
         buyers = counts.get("buyer", 0)
         detail = (
             f"{counts['solicitation']} solicitations + {buyers} agency buyer(s)"
@@ -629,14 +582,7 @@ def _cmd_enrich_council(args) -> int:
 
 
 def _cmd_enrich_titles(args) -> int:
-    """Fill titles the City never published. Offline: the Bid Award Panel was abolished
-    2025-10-01, so the cached agenda corpus is final and there is no scrape path.
-
-    Both fills only ever touch a NULL title, so a title the City published always wins.
-    They are ordered council-then-legacy for readable output, not for correctness: the
-    precedence between the two is encoded in legacy_titles' query, so the result does not
-    depend on which runs first.
-    """
+    """Fill missing solicitation titles from cached Bid Award Panel agendas and legacy Ariba HTML."""
     from toronto_bids.sources.bid_award_panel import (
         _BA_REPORTS_WITHOUT_BIDS,
         _COMPOSITE_REPORTS,
@@ -672,22 +618,14 @@ def _cmd_enrich_titles(args) -> int:
         if agendas:
             print(f"Bid Award Panel agendas: {len(agendas)} (cached)")
             print(f"  council items stored: {store_items(conn, agendas)}")
-            # The same cached pages are the staff-report index spec §2.3 says does not
-            # exist, so index them here rather than make anyone walk the files twice.
             print(f"  staff reports indexed: {store_background_pdfs(conn, agendas)}")
-            # The same pages tabulate every bid, including the losers that spec
-            # §2.5.2 calls unrecoverable (#84).
             print(f"  bids extracted       : {store_bids(conn, agendas, failures=failures, log=print)}")
             print(f"  titles from council : {fill_titles_from_council(conn)}")
-            # Pre-Ariba items name no document number, so they are matched on
-            # (supplier, award value) instead (#77).
             print(f"  titles pre-Ariba    : {match_pre_ariba_titles(conn, agendas)}")
             print(
                 f"  bids linked pre-Ariba: {match_pre_ariba_solicitations(conn, agendas)}"
             )
 
-        # 2009-2012 agendas describe nothing ("Composite Report"); their staff-report
-        # appendices carry the awards, and feed them to the same join (#93).
         if args.reports:
             http = HttpClient()
             try:
@@ -696,8 +634,6 @@ def _cmd_enrich_titles(args) -> int:
                     conn, http, _COMPOSITE_REPORTS, "composite reports", log=out
                 )
                 print(f"  composite reports downloaded: {n}")
-                # The only thing the PDFs can still add: BA items whose agenda tabulates no
-                # bids (#83). Everything else the panel handled has its bids from the agenda.
                 n = download_reports(
                     conn,
                     http,
@@ -708,20 +644,15 @@ def _cmd_enrich_titles(args) -> int:
                 print(f"  BA reports downloaded       : {n}")
             finally:
                 http.close()
-        # Not a linking pass: for 2009-2011 the City's feed publishes 13 awards against the
-        # 799 in these reports, so this is the archive reaching back past the feed (#96).
         print(
             f"  composite awards    : "
             f"{store_composite_awards(conn, log=lambda m: print(m, flush=True))}"
         )
-        # BA staff reports share kind='bgrd' with the composites but are a separate corpus:
-        # their bids go to `bid`, their awards are already on the spine (#216).
         print(
             f"  BA report bids      : "
             f"{store_ba_report_bids(conn, log=lambda m: print(m, flush=True))}"
         )
-        # After the store, not before: the matcher reads composite_award, so it must see
-        # this run's rows rather than the previous run's (#216).
+        # Must run after store_composite_awards so match_composite_titles sees new rows.
         print(f"  titles composite    : {match_composite_titles(conn)}")
 
         n_legacy = fill_titles_from_legacy(conn, config.LEGACY_ARIBA_DIR)
@@ -748,29 +679,19 @@ def _cmd_enrich_titles(args) -> int:
 
 
 def _bid_count(conn, source: str) -> int:
-    """Distinct `bid` rows attributed to one `source` — a real row count, never a store's return.
-
-    Since the LLM extraction switch (#205) the award-summary and committee stores REBUILD their
-    source's rows (delete + reinsert), so what they return is the corpus total, not what was new
-    (#218). Same lesson as #177/#142: "what's new" is two `SELECT COUNT(*)`s diffed, nothing else.
-    """
+    """Count distinct bid rows for a source (store functions rebuild rows and return corpus totals)."""
     return conn.execute(
         "SELECT COUNT(*) FROM bid WHERE source=?", (source,)
     ).fetchone()[0]
 
 
 def _bid_delta(before: int, after: int) -> str:
-    """'+3 bids (1105 total)'. Signed, because a rebuild can REMOVE rows and that must show."""
+    """Format signed bid delta and total."""
     return f"{after - before:+d} bids ({after} total)"
 
 
 def _cmd_enrich_awards(args) -> int:
-    """Archive and parse the Award Summary Forms (#114).
-
-    The Bid Award Panel was abolished on 2025-10-01, so `enrich-titles --scrape` will never
-    find another agenda: 891 is the final corpus. This is where the losing bidders come from
-    now. Offline by default — it parses forms already on disk, exactly as enrich-titles does.
-    """
+    """Archive and parse Award Summary Forms (offline unless --download)."""
     from toronto_bids.sources.award_summary import (
         download_award_summaries,
         store_award_summary_bids,
@@ -817,13 +738,7 @@ def _cmd_enrich_awards(args) -> int:
 
 
 def _cmd_enrich_ariba_attachments(args) -> int:
-    """Archive the documents behind Ariba's Respond gate (#117).
-
-    Two entry points on one manifest: --capture drives the browser; --ingest indexes bundles a
-    human already downloaded. Both land in the same ariba_attachment index and the same
-    <DATA_DIR>/ariba/attachments/ store. Nothing is surfaced in the export yet — archive now,
-    publish later.
-    """
+    """Capture, ingest, or reindex Ariba attachment bundles."""
     from toronto_bids.sources import ariba_attachments as aa
 
     conn = _open_db()
@@ -840,12 +755,17 @@ def _cmd_enrich_ariba_attachments(args) -> int:
             )
         elif args.capture:
             print("Capturing open-solicitation attachment bundles (headed browser):")
-            n = aa.capture_attachments(
-                conn,
-                log=out,
-                headless=args.headless,
-                virtual_display=args.virtual_display,
-            )
+            try:
+                n = aa.capture_attachments(
+                    conn,
+                    log=out,
+                    headless=args.headless,
+                    virtual_display=args.virtual_display,
+                    only=args.document,
+                )
+            except ValueError as exc:
+                print(f"  refused --document: {exc}", file=sys.stderr)
+                return 2
             print(f"  bundles captured: {n}")
         else:
             open_n = len(aa.open_solicitation_events(conn))
@@ -873,11 +793,7 @@ def _cmd_enrich_ariba_attachments(args) -> int:
 
 
 def _cmd_amounts(args) -> int:
-    """Surface amount strings nobody has ruled on yet.
-
-    The discovery half of #74: the labels file handles the 35 known strings, and this is what
-    stops the trickle from future syncs sitting silent until someone happens to look.
-    """
+    """List unparseable amount strings without a verdict in amount_labels.toml."""
     from toronto_bids.linking.amount_labels import load_labels, unlabelled_amounts
 
     conn = _open_db()
@@ -900,8 +816,6 @@ def _cmd_amounts(args) -> int:
         )
     finally:
         conn.close()
-    # Non-zero so a human or CI notices the queue is non-empty, as `tb sync` does for
-    # failures. An unreviewed amount is a known gap, not an error — but a silent one is worse.
     return 1
 
 
@@ -920,22 +834,10 @@ def _cmd_nightly(args) -> int:
 
 
 def _run_nightly(args) -> int:
-    """The whole unattended run: sync -> award summaries -> portal -> ariba attachments ->
-    agency board reports -> (monthly) council -> supplier rebuild -> export -> tell Slack.
+    """Run the full unattended nightly pipeline and post a summary to Slack.
 
-    Each step is isolated exactly as pipeline.run_source isolates a source: a failure is
-    recorded and the steps behind it still run. In particular the EXPORT RUNS EVEN AFTER A
-    PARTIAL SYNC — rows are committed per-source and never deleted, so partial data is still
-    data, and discarding a good artifact over one bad feed would be the worse outcome. That
-    reasoning applies just as much to opening the DB and building the HTTP client: those used
-    to sit outside every try, so a dead disk or a network hiccup left `_cmd_nightly` uncaught
-    and notify.post never fired — silence, in the one case a nightly line exists to catch.
-    `conn` and `http` are opened defensively for exactly that reason, and the export runs off
-    `conn` alone — a failed HttpClient must not cost us a good artifact.
-
-    Exits non-zero if anything failed, so systemd marks the unit failed and the next run's
-    Slack line is not the only record. Never raises: every step, including closing what we
-    opened, is caught so notify.summarize/post always run.
+    Isolates each step (including DB/HTTP setup and close) so export and Slack reporting still
+    run after partial failures. Exits non-zero if any failure occurred.
     """
     import time
     from pathlib import Path
@@ -967,9 +869,6 @@ def _run_nightly(args) -> int:
     except Exception as exc:
         failures.append(("open_db", str(exc)))
 
-    # Separate from the open above: if `conn` opened fine but this raises, blaming "open_db"
-    # would send the reader to the wrong system, and leaving `before` at {} would let a
-    # transient failure that clears by the `after` count fabricate a delta against zero.
     if conn is not None:
         try:
             before = db.counts(conn)
@@ -1015,10 +914,7 @@ def _run_nightly(args) -> int:
                     return _sync_detail(conn, sync_cutoff)
 
                 _run_step(steps, failures, "sync", _sync)
-                # `pipeline.sync` RETURNS its failures rather than raising — that is what
-                # per-source isolation means — so `_run_step` only ever saw the ok branch and
-                # a night where every feed died still read `✅ sync`. Set it from the run's own
-                # verdict (#178). Raising instead would double-count into `failures`.
+                # pipeline.sync returns failures instead of raising; mark step failed without double-appending.
                 if sync_failures:
                     steps[-1]["status"] = "fail"
 
@@ -1029,11 +925,8 @@ def _run_nightly(args) -> int:
 
                 def _awards():
                     download_award_summaries(conn, http, log=out)
-                    # The store rebuilds the source's rows, so its return is the corpus
-                    # total — Slack read ~1,100 as nightly growth (#218). Diff real counts.
+                    # Diff real counts because store_award_summary_bids rebuilds and returns totals.
                     n_before = _bid_count(conn, "award_summary")
-                    # Extraction errors are swallowed per document; without `failures` a
-                    # night where every new form failed extraction reads ✅ (#219).
                     store_award_summary_bids(conn, log=out, failures=failures)
                     return _bid_delta(n_before, _bid_count(conn, "award_summary"))
 
@@ -1094,8 +987,6 @@ def _run_nightly(args) -> int:
                 def _ariba():
                     from toronto_bids.sources import ariba_attachments as aa
 
-                    # Per-event failures are caught inside capture_attachments; without handing
-                    # it `failures` a night where every event raised reads ✅ (#223).
                     n = aa.capture_attachments(
                         conn, log=out, virtual_display=True, failures=failures,
                         training_restrictions=training_restrictions,
@@ -1113,7 +1004,7 @@ def _run_nightly(args) -> int:
                     from toronto_bids.buyers import seed_buyers
 
                     a0 = db.counts(conn)
-                    seed_buyers(conn)  # the extraction backfill looks buyers up by slug
+                    seed_buyers(conn)  # extraction backfill looks up buyers by slug
                     failures.extend(
                         _capture_agency_bodies(
                             conn,
@@ -1207,9 +1098,7 @@ def _run_nightly(args) -> int:
             export_dir = Path(config.DATA_DIR) / "export"
             generated_at = datetime.now(UTC).isoformat()
             written = export_json(conn, export_dir / "bids.json", generated_at)
-            # schema.json rides the same export step with a shared timestamp — publish-data.sh
-            # requires it beside bids.json (#168), so the production path must emit it here (the
-            # nightly calls export_json directly, not `tb export`).
+            # Emit schema.json with the same timestamp as bids.json for publish-data.sh.
             export_schema(conn, export_dir / "schema.json", generated_at)
             write_parquet_files(conn, export_dir)
             write_csv_zip(conn, export_dir / "bids-csv.zip")
@@ -1218,9 +1107,7 @@ def _run_nightly(args) -> int:
 
         _run_step(steps, failures, "export", _export, conn=conn)
 
-        # Open Ariba postings about to close with missing/incomplete bundles (#223/#243). A warning, not a step and
-        # not a failure: it goes into the report only. Computed after the capture step so it
-        # reflects what tonight's capture actually got.
+        # Report-only warning for open Ariba postings closing soon without complete bundles.
         try:
             from toronto_bids.sources import ariba_attachments as aa
 
@@ -1264,13 +1151,7 @@ def _run_nightly(args) -> int:
 
 
 def _source_row_counts(conn, source: str) -> tuple[int, int, int]:
-    """(agency_solicitation, agency_award, agency_bid) rows attributed to one board's `source`.
-
-    Distinct ROWS, which is what the tables actually hold — not the number of upserts issued to
-    write them. The two differ by design and by a lot: the tables dedup on
-    `(buyer_id, native_ref)` and the award line key, so a report and its amendment collapse into
-    one row (#142).
-    """
+    """Count distinct (agency_solicitation, agency_award, agency_bid) rows for one source."""
 
     def n(table):
         return conn.execute(
@@ -1283,24 +1164,7 @@ def _source_row_counts(conn, source: str) -> tuple[int, int, int]:
 def _stored_line(
     label: str, got: dict, before: tuple[int, int, int], after: tuple[int, int, int]
 ) -> str:
-    """'  ep stored : 74 solicitations (+0), 88 awards (+0), 115 bids (+0)  [upserts 107/107/115]'
-
-    **The leading numbers are DISTINCT ROWS, never the upsert count (#142).** `got[...]` counts
-    upserts ISSUED this call, and the tables dedup on `(buyer_id, native_ref)` and the award
-    line key — so a report and its amendment, or two items sharing a fallback ref, collapse
-    into one row. Live-measured on EP: **107 upserts against 74 solicitation rows and 88 award
-    rows**. Printing the upsert count as though it were the table's contents is what sent a
-    reader looking for 107 rows and finding 74. The dedup is correct and intended; only the
-    messaging was wrong.
-
-    The upsert totals are still shown, in a trailing bracket that names them, because they are
-    a real diagnostic the row counts cannot give: "0 upserts" and "107 upserts that all
-    deduped" are very different runs and otherwise look identical from a flat `(+0)`.
-
-    The delta remains `after - before` over `_source_row_counts` (#177) — two real row-count
-    queries, immune to how many upserts happened to write them. A `got` with no "bids" key
-    omits the bids segment.
-    """
+    """Format distinct stored row counts, deltas, and issued upsert counts for one agency source."""
     line = (
         f"  {label} stored : {after[0]} solicitations ({after[0] - before[0]:+d}), "
         f"{after[1]} awards ({after[1] - before[1]:+d})"
@@ -1313,16 +1177,7 @@ def _stored_line(
 
 
 def _capture_agency_bodies(conn, *, bodies, fetch, scrape, virtual_display, out):
-    """Capture TRCA/Zoo/EP board-report awards+bids, each body isolated. Returns failures.
-
-    Shared by `tb enrich-agencies` and `tb nightly`. TRCA is plain HTTP (eSCRIBE); Zoo and EP
-    need a headed browser for TMMIS discovery, so `scrape`/`virtual_display` apply to them.
-    Does not run the portal step or the supplier rebuild — the caller owns those.
-
-    Per-document extraction errors, which the store calls swallow, land in the SAME returned
-    list as `extract:<corpus>` entries (#219) — one mechanism, so the nightly's
-    `_mark_if_swallowed_failures` sees them without a second channel.
-    """
+    """Capture TRCA/Zoo/EP board reports in isolation and return any failures (including per-doc extraction errors)."""
     failures: list[tuple[str, str]] = []
 
     if "trca" in bodies:
@@ -1430,7 +1285,7 @@ def _cmd_enrich_agencies(args) -> int:
     out = lambda m: print(m, flush=True)
     failures: list[tuple[str, str]] = []
     try:
-        seed_buyers(conn)  # the extraction backfill looks buyers up by slug
+        seed_buyers(conn)  # extraction backfill looks up buyers by slug
         bodies = [args.only] if args.only else ["trca", "zoo", "ep"]
 
         failures.extend(
@@ -1448,12 +1303,7 @@ def _cmd_enrich_agencies(args) -> int:
             try:
                 from toronto_bids.sources.bids_tenders import run_portal_capture
 
-                # `args.only` names a BODY ("trca"/"zoo"/"ep"), but the portal is keyed by its
-                # own SLUG ("toronto-zoo" for the zoo) — and EP has no bids&tenders portal at
-                # all (#134, Bonfire instead). `--only ep --portal` is a reachable combination
-                # (--only accepts any body), so indexing this map raised an uncaught KeyError
-                # that the surrounding try/except then reported as a portal FAILURE for a body
-                # that was never supposed to have one (#152). `.get` + a clean skip instead.
+                # Map body name to bids&tenders portal slug; EP uses Bonfire instead, so skip cleanly.
                 portal_slug = {"trca": "trca", "zoo": "toronto-zoo"}.get(args.only)
                 if args.only and portal_slug is None:
                     print(
@@ -1486,11 +1336,7 @@ def _cmd_enrich_agencies(args) -> int:
 
 
 def _cmd_enrich_committee_awards(args) -> int:
-    """Archive the bid record for committee/Council awards since the Bid Award Panel's
-    abolition on 2025-10-01 (#164): voting-record award items -> item page's report ->
-    bid table. Offline by default -- parses reports already on disk, exactly as
-    enrich-titles/enrich-awards do.
-    """
+    """Archive bids from post-2025-10-01 committee/Council award reports (offline unless --scrape)."""
     from toronto_bids.linking.supplier import build_supplier_dimension
     from toronto_bids.sources.committee_awards import (
         award_items_from_voting_record,
@@ -1519,9 +1365,7 @@ def _cmd_enrich_committee_awards(args) -> int:
                                 items.append(item)
                     print(f"  award items found          : {len(items)}")
 
-                    # Only chase items that name a spine solicitation with no captured
-                    # bid yet -- an item whose bids are already stored (or that doesn't
-                    # match any award we track) is not worth a browser round-trip.
+                    # Only scrape items matching a spine solicitation that still lack bids.
                     have_bids = {
                         r[0]
                         for r in conn.execute(
@@ -1587,7 +1431,7 @@ def _cmd_enrich_committee_awards(args) -> int:
 
 
 def _cmd_extract(args) -> int:
-    """Run LLM extraction — single document or batch by corpus (#205)."""
+    """Run LLM extraction for a single document (--dry-run) or a corpus."""
     import json
 
     from toronto_bids.extract import EXTRACTOR_VERSION, ExtractionClient
@@ -1648,7 +1492,7 @@ def _cmd_extract(args) -> int:
 
 
 def _cmd_extract_corpus(args) -> int:
-    """Batch extraction across a corpus (#209)."""
+    """Run batch LLM extraction across a corpus."""
     import json
 
     from toronto_bids.config import CLASSIFICATION_LABELS_PATH
@@ -1708,7 +1552,7 @@ def _cmd_extract_corpus(args) -> int:
 
 
 def _cmd_extract_validate(args) -> int:
-    """Validate cached extractions against ground-truth labels (#209)."""
+    """Validate cached extractions against ground-truth labels."""
     from toronto_bids.extraction import validate_against_ground_truth
 
     conn = _open_db()

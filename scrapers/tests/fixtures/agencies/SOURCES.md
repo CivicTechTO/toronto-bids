@@ -1,238 +1,78 @@
-# Agency board-report fixtures (#135)
+# Agency fixtures
 
-## TRCA public PDF recovery fixtures (#259)
+Provenance and notes for real and synthetic agency test fixtures (#130, #135, #137, #138, #140, #175, #224, #226, #257, #258, #259).
 
-`trca_20812.pdf` and `trca_20636.pdf` are complete public PDF responses captured
-anonymously in ordinary headed Chromium on 2026-10-21 from
-`https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=20812` and
-`https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=20636`.
-The first contains the June 16, 2026 Partners in Project Green Executive Management
-Committee minutes. The second is the calendar-published April 14, 2026 minutes;
-its PDF omits the meeting date, so identity was cross-checked against the dated HTML
-minutes and matching PPG 7/26 resolution. The reviewed source links, hashes and
-identity evidence live in `toronto_bids/data/trca_document_gaps.json`.
-These fixtures exercise actual byte/structure validation, stored text, exact-hash
-replacement acceptance and resumability. Viewer/verification HTML is tested separately.
+## TRCA PDF recovery (#259)
 
-## Agency identity recovery fixtures (#258)
+Captured anonymously in headed Chromium on 2026-10-21:
 
-`identity_recovery_2026-10-21.json` retains ten complete, unchanged cached extraction
-results read offline on 2026-10-21. Source URLs and PDF SHA-256 values identify the
-original public records. The `recoveries` indices are zero-based positions in the
-complete contract arrays, including empty/unrelated contracts.
+- `trca_20812.pdf`: `https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=20812` (June 16, 2026 Partners in Project Green Executive Management Committee minutes).
+- `trca_20636.pdf`: `https://pub-trca.escribemeetings.com/FileStream.ashx?DocumentId=20636` (April 14, 2026 minutes; the PDF omits the date, confirmed against HTML minutes and resolution PPG 7/26).
 
-Source passages and identifier roles are recorded in
-`toronto_bids/data/agency_identity_evidence.json`. Each quoted passage was checked
-against a fresh `pdftotext -layout` rendering of the held PDF after verifying its
-SHA-256. Twelve distinct PDFs support the ten relationships: compound solicitation /
-contract identifiers, Ontario-framework / TRCA-adoption identifiers, dated meeting-item
-links between minutes and staff reports, and the source-printed `10042722-01` suffix.
-The last is a correction of our earlier truncation, not a general parent/lot equivalence.
+Reviewed links, hashes, and evidence live in `toronto_bids/data/trca_document_gaps.json`.
 
-DocumentId=19889's cached result assigns a shared $1,035,000 VOR ceiling to each
-supplier. Its bidder facts are supported; those individual award amounts are withheld.
-DocumentId=19982 independently supports the vendor memberships with NULL amounts.
-Original extracted claims remain unchanged in the fixture/cache and inspectable ledger.
+## Agency identity recovery and refusal caches (#257, #258)
 
-## Agency identity refusal cache fixtures (#257)
+- **`identity_recovery_2026-10-21.json` (#258):** 10 cached extraction results read offline on 2026-10-21 (`recoveries` are 0-based indices into the full contract arrays). Supporting passages live in `toronto_bids/data/agency_identity_evidence.json`, checked against `pdftotext -layout` of 12 verified PDFs (compound solicitation/contract IDs, Ontario-framework/TRCA adoption IDs, dated meeting-item links, and the printed `10042722-01` suffix). In DocumentId=19889, a shared $1,035,000 VOR ceiling is withheld from individual awards while keeping bids; DocumentId=19982 supports vendor memberships with `NULL` amounts.
+- **`identity_refusals_2026-10-21.json` (#257):** 3 cached extraction results read offline on 2026-10-21 (cached model outputs, not independently verified facts; 0-based refusal indices):
+  - TRCA DocumentId=4831: mixes valid contracts with an unknown-reference contract.
+  - TRCA DocumentId=19635: carries distinct solicitation and contract numbers.
+  - Zoo `backgroundfile-76755`: multi-contract result without references, including one empty contract.
 
-`identity_refusals_2026-10-21.json` contains three complete, unchanged held extraction
-results read offline on 2026-10-21. Each records the published source URL, source PDF
-SHA-256, original extraction version and result digest. These are cached model outputs,
-not claims that every extracted fact has been independently verified against the PDF.
-Expected refusal positions are zero-based indices in the complete contract array.
+## Board award reports (`pdftotext -layout`, 2026-07-18)
 
-TRCA DocumentId=4831 mixes valid contracts with an unknown-reference contract;
-DocumentId=19635 carries distinct solicitation and contract numbers. Zoo backgroundfile-76755
-has a reference-less multi-contract result, including one empty contract. The fixtures
-exercise retention and refusal reporting without paid extraction or new source requests.
-
-pdftotext -layout output of real board award reports, captured 2026-07-18.
-
-| fixture | source URL |
-|---|---|
-| trca_armour_stone_2023.txt | https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=14809 |
-| trca_vor_appraisal_2021.txt | https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=7921 |
-| zoo_energy_retrofit_2019.txt | https://www.toronto.ca/legdocs/mmis/2019/zb/bgrd/backgroundfile-124313.pdf |
-| zoo_red_panda_2025.txt | https://www.toronto.ca/legdocs/mmis/2025/zb/bgrd/backgroundfile-257571.pdf |
-| zoo_perimeter_fence_2025.txt | https://www.toronto.ca/legdocs/mmis/2025/zb/bgrd/backgroundfile-260182.pdf |
-
-The two 2025 Zoo reports route financials to a CONFIDENTIAL ATTACHMENT — they are the
-value_confidential=1 cases. The 2019 Zoo report names its winner publicly. The TRCA
-armour-stone report tabulates all four bidders with opening results; the VOR report is
-the vendor-of-record shape (multiple winners, no per-bid prices).
-
-## TRCA parser precision/recall fixtures (#138)
-
-Real reports, captured live 2026-07-18 from `pub-trca.escribemeetings.com` (FileStream), each
-chosen because it broke the first-cut `_AWARD`/`_REFS` regexes — the two originals happened to
-be the clean case, so the offline suite was green while ~69% of the real corpus mis-parsed.
-
-| fixture | why it matters |
-|---|---|
-| trca_rfq_spelled_out_2019.txt (DocumentId=…4474) | ref labelled "Request for Quotation No." spelled out — the abbreviation-only matcher dropped it |
-| trca_contract_label_2019.txt (…3250) | ref labelled `Contract #10008808` (a `#`, not "No.") |
-| trca_multiline_winner_2021.txt (…4837) | winner name spans a pdftotext line break ("W.F. Baird & Associates / Coastal Engineers Ltd.") |
-| trca_overcapture_2021.txt (…4831) | the run-on trigger: the winner clause uses "at a total **annual** cost", so the old `(.+?)` skipped it and captured 268,757 chars to a distant plain "cost" phrase |
-
-## trca_getcalendarmeetings_2023q1.json — REAL (#137)
-
-Live capture (2026-07-18) of the eSCRIBE calendar page-method that actually drives
-discovery: `POST https://pub-trca.escribemeetings.com/MeetingsCalendarView.aspx/GetCalendarMeetings`
-with body `{"calendarStartDate":"2023-01-01","calendarEndDate":"2023-03-31"}` → `{"d":[…]}`,
-five agenda'd meetings for Q1 2023, each with `ID` (GUID), `MeetingName`, `StartDate`,
-`HasAgenda`. `meeting_detail_urls` turns these into `Meeting.aspx?Id=<guid>` URLs, whose
-detail pages carry the real `FileStream.ashx?DocumentId=N` report links (verified live:
-22 on the 2023-02-17 Board of Directors meeting). This is the fix for #137 — the reason
-the old static year-page walk found zero.
-
-## trca_escribe_2023.html — SYNTHETIC (#135), a detail-page stand-in
-
-Not a real capture. `curl -sL -A "Mozilla/5.0" "https://pub-trca.escribemeetings.com/?FillWidth=1&Year=2023"`
-was run live on 2026-07-18 and returned a real 286KB page, but its shape doesn't match a
-static-HTML walker: the page is a JS-rendered FullCalendar widget, and its two literal
-"Meeting.aspx" occurrences are inside a JS template string assembled at click time, not
-`<a href="Meeting.aspx?...">` anchors — so `escribe_document_urls`'s regexes correctly
-find nothing on the real *year* page. (Discovery no longer walks the year page at all —
-it POSTs GetCalendarMeetings, above.) `escribe_document_urls` still runs on the meeting
-*detail* pages, which ARE server-rendered with `FileStream.ashx` anchors; this
-hand-written fixture exercises that extractor on the anchor shapes it must find.
-
-## trca_escribe_meeting_assets.html — REAL, TRIMMED (#175)
-
-Verbatim fragments of a real meeting detail page,
-`Meeting.aspx?Id=61119747-5c38-4080-a3f8-0d45952a03b7&Agenda=Agenda&lang=English`
-(Board of Directors), fetched 2026-07-28; the live page is 131,700 bytes and only the
-surrounding markup was cut away. This is the fixture the synthetic
-`trca_escribe_2023.html` above could not be: it carries the two shapes that broke the
-extractor, exactly as eSCRIBE emits them —
-`<link rel='stylesheet' type='text/css' href='/FileStream.ashx?DocumentId=3253'>` and
-`<DIV class='AgendaHeaderLogo' ><img  src='filestream.ashx?DocumentId=3251' ...>`. Both
-were fetched live the same day: 3253 returns `text/css`, 3251 returns `image/jpeg` (the
-TRCA logo, the same 22,692 bytes on all 230 meeting pages). It also carries a document
-anchor whose `href` is NOT the first attribute (`<a class='Link' tabindex='15' href=...>`),
-which is the ordinary shape on these pages.
-
-## bids_tenders_record_sample.json — REAL (#140)
-
-Complete unchanged TRCA public grid record for page
-`5082161c-f80a-4cd8-aaac-8388a237e99e`, bid `10044383`, read from the captured
-production recordings on 2026-10-22. The source is
-`https://trca.bidsandtenders.ca/Module/Tenders/en`; the page identity, named Closed
-status, title-prefix reference and JSON.NET dates are independently covered by the
-real TRCA positive controls below. `buyer_slug`/`status_filter` are capture context.
-This replaces the original provisional synthetic primary sample.
-
-`bids_tenders_legacy_synthetic.json` retains that hand-built #135 sample solely for
-backwards-compatible field aliases (`ReferenceNumber`, `ClosingDate`, `DatePosted`,
-`StatusText`). Its values are invented and establish no live-source coverage.
-
-## Exhibition Place board-report fixtures (#130)
-
-Real EP Board of Governors reports, captured live 2026-07-18 from legdocs (plain HTTP;
-discovered via the TMMIS EP committee, `YYYY.EP<n>.<n>`). EP's board handles far more than
-procurement, so most reports are NOT awards — the negatives below are load-bearing (they carry
-`$` amounts that must NOT be read as awards).
-
-| fixture | shape | source |
+| Fixture | Source URL | Notes |
 |---|---|---|
-| ep_award_with_table_2023.txt | AWARD + Table 1 bid prices (Powell Fence, M.J.K., Clearway); RFT No. EP110-2023 | /legdocs/mmis/2023/ep/bgrd/backgroundfile-240943.pdf |
-| ep_confidential_decision_2025.txt | confidential award, winner named (Coca-Cola Canada Bottling Ltd), value withheld | /legdocs/mmis/2025/ex/bgrd/backgroundfile-258727.pdf |
-| ep_confidential_agreement.txt | confidential agreement, counterparty redacted ("a Consumer Show Client") → winner None | 2022-2026 EP term, backgroundfile-230177 |
-| ep_non_award_wsib_report.txt | NEGATIVE: WSIB lost-time-injury safety report; carries `$` (WSIB costs) but no award → must return None | backgroundfile-230165 |
-| ep_non_award_procurement_status.txt | NEGATIVE: procurement status update ("currently in procurement"), no award yet → must return None | backgroundfile-230442 |
-| ep_non_award_collective_agreement.txt | NEGATIVE: SYNTHETIC refusal regression test for non-procurement guard; collective-agreement/labour-relations report wrongly kept without guard (the live run found 23 such reports) | test fixture (#130) |
+| `trca_armour_stone_2023.txt` | `https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=14809` | Four bidders with opening prices |
+| `trca_vor_appraisal_2021.txt` | `https://pub-trca.escribemeetings.com/filestream.ashx?DocumentId=7921` | Vendor of Record (multiple winners, no per-bid prices) |
+| `zoo_energy_retrofit_2019.txt` | `https://www.toronto.ca/legdocs/mmis/2019/zb/bgrd/backgroundfile-124313.pdf` | Winner named publicly |
+| `zoo_red_panda_2025.txt` | `https://www.toronto.ca/legdocs/mmis/2025/zb/bgrd/backgroundfile-257571.pdf` | Financials in confidential attachment (`value_confidential = 1`) |
+| `zoo_perimeter_fence_2025.txt` | `https://www.toronto.ca/legdocs/mmis/2025/zb/bgrd/backgroundfile-260182.pdf` | Financials in confidential attachment (`value_confidential = 1`) |
 
-EP award clause shape: "award of Contract No. <c> (RFT No. EP###-YYYY) to WINNER for the
-<project> in the amount of $AMOUNT" — text sits between WINNER and the amount phrase, so the
-winner regex is EP-specific (stops at " for "/amount), not the shared Zoo "to WINNER <phrase> $".
+## Legacy TRCA parser edge-case fixtures (#138)
 
-### EP award fixtures — 2019 (year variety, #130)
+Real TRCA FileStream reports captured 2026-07-18 that exposed bugs in early regexes:
 
-Live-captured 2026-07-18 (EP 2018-2022 term). Table-awards are rare (4 of 151 reports scanned),
-and 2019 EP reports differ from the 2023 seed — the parser must handle both:
+| Fixture | DocumentId | Edge case |
+|---|---|---|
+| `trca_rfq_spelled_out_2019.txt` | 4474 | Reference spelled out as "Request for Quotation No." |
+| `trca_contract_label_2019.txt` | 3250 | Reference uses `Contract #10008808` (`#` instead of `No.`) |
+| `trca_multiline_winner_2021.txt` | 4837 | Winner spans a line break ("W.F. Baird & Associates / Coastal Engineers Ltd.") |
+| `trca_overcapture_2021.txt` | 4831 | "at a total annual cost" caused greedy capture across 268k chars |
 
-| fixture | why it matters |
-|---|---|
-| ep_award_2019_sole_tender.txt (bgrd-131331, 2019.EP2) | winner spans a line break ("Westbury National / Show System Ltd."); `Contract No. 19-085-98518` ref (no RFT-EP); ONE bidder; award $969,415.00 ≠ the sole bid $1,139,944.00 (distinct columns) |
-| ep_award_2019_multi_bidder.txt (bgrd-137241, 2019.EP6) | winner carries a location qualifier ("Sutherland-Schultz Ltd. **of Cambridge, Ontario**") — strip it; 5 bidders; a bid price footnote `*` (revised-price marker) |
+## TRCA eSCRIBE HTML and calendar fixtures (#135, #137, #175)
 
-Corpus gotchas the parser must handle: (1) winners span pdftotext line breaks → the winner class
-must allow internal whitespace, bounded, stopping at for/at/,/in-the-amount; (2) strip a trailing
-" of <City>, <Province>" location qualifier so the same firm keys consistently; (3) `native_ref`
-is `RFT No. EP###-YYYY` (2023) OR `Contract No. <token>` (2019); (4) both years use "in the amount
-of $X"; (5) a bid price may carry a trailing `*` footnote.
+- **`trca_getcalendarmeetings_2023q1.json` (real, #137):** Captured 2026-07-18 from `POST https://pub-trca.escribemeetings.com/MeetingsCalendarView.aspx/GetCalendarMeetings` (`2023-01-01` to `2023-03-31`), returning 5 meetings with `ID`, `MeetingName`, `StartDate`, and `HasAgenda`. Used to build `Meeting.aspx?Id=<guid>` URLs.
+- **`trca_escribe_2023.html` (synthetic, #135):** Hand-written stand-in for server-rendered `Meeting.aspx` detail pages to test `escribe_document_urls` anchor extraction. (Year pages themselves are JS FullCalendar widgets, which is why discovery uses `GetCalendarMeetings`.)
+- **`trca_escribe_meeting_assets.html` (real, trimmed, #175):** Excerpts from `Meeting.aspx?Id=61119747-5c38-4080-a3f8-0d45952a03b7&Agenda=Agenda&lang=English` (2026-07-28). Includes eSCRIBE stylesheet (`DocumentId=3253`, CSS) and logo (`DocumentId=3251`, JPEG) tags that must be excluded, plus a real document `<a>` link where `href` is not the first attribute.
 
-## bids_tenders_trca_2026-10-20.json — REAL (#226)
+## TRCA Laserfiche history (#224)
 
-Four unmodified records selected from the public TRCA grid search on 2026-10-20. Request:
-`POST https://trca.bidsandtenders.ca/Module/Tenders/en/Tender/Search/950af760-3894-40ef-86fd-ef17e2f5104a`
-with the landing page's cookie/token pair, empty `status` (All), `limit=50`, `start` offsets,
-blank `from`/`to`, `dir=DESC`, and `sort=DateClosing DESC,Id`. No login or documents fetched.
-The full rate-limited sweep yielded 249 unique listing IDs against total=249. Tokens/cookies
-are not fixture content; tests add `buyer_slug` locally.
+`trca_laserfiche_{series,1957,2018}.json`: captured anonymously on 2026-10-20 from `https://laserfiche.trca.ca/WebLink/FolderListingService.aspx/GetFolderListing2` (`repoName=LASERFICHE`, `folderId` 1030915 / 212734 / 1477012, random `__breach` padding omitted). Covers the 1957-2022 annual minute-book series, scanned 1957 files with no extension, and nested 2018 folders with a native PDF. Entry types from `app/dist/browse/main.js`: Document `-2`, Shortcut `-1`, Folder `0`, RecordSeries `1`.
 
-Public Bid Number fields on these detail pages independently confirmed the title-prefix keys:
+## Exhibition Place board reports (#130)
 
-| Bid number | Public detail URL |
-| --- | --- |
-| 10044383 | https://trca.bidsandtenders.ca/Module/Tenders/en/Tender/Detail/5082161c-f80a-4cd8-aaac-8388a237e99e |
-| 10042501 | https://trca.bidsandtenders.ca/Module/Tenders/en/Tender/Detail/d58d0f1a-696d-4ee2-8f01-ac13ba93b07b |
-| 10022400_33 | https://trca.bidsandtenders.ca/Module/Tenders/en/Tender/Detail/6de5fbf3-f9d6-4698-a27d-f0b882e51469 |
-| 10044944-1 | https://trca.bidsandtenders.ca/Module/Tenders/en/Tender/Detail/3c6879d8-b712-42cb-ba23-cd1ea1ea8ad0 |
+Real reports captured 2026-07-18 from legdocs via TMMIS `EP` committees (plus one synthetic collective-agreement refusal case):
 
-The explicitly named legacy synthetic sample remains a compatibility input. It does not establish Zoo coverage.
+| Fixture | Type / edge case | Source |
+|---|---|---|
+| `ep_award_with_table_2023.txt` | Award + Table 1 bid prices (`RFT No. EP110-2023`) | `/legdocs/mmis/2023/ep/bgrd/backgroundfile-240943.pdf` |
+| `ep_confidential_decision_2025.txt` | Confidential award (winner named, value withheld) | `/legdocs/mmis/2025/ex/bgrd/backgroundfile-258727.pdf` |
+| `ep_confidential_agreement.txt` | Counterparty redacted ("a Consumer Show Client") -> winner `None` | `backgroundfile-230177` (2022-2026 EP) |
+| `ep_non_award_wsib_report.txt` | Non-award: WSIB safety report with `$` amounts -> `None` | `backgroundfile-230165` |
+| `ep_non_award_procurement_status.txt` | Non-award: status update ("currently in procurement") -> `None` | `backgroundfile-230442` |
+| `ep_non_award_collective_agreement.txt` | Non-award (synthetic): collective-agreement refusal regression | Test fixture (#130) |
+| `ep_award_2019_sole_tender.txt` | 2019: multiline winner, `Contract No. 19-085-98518`, sole bid ($1,139,944) != award ($969,415) | `bgrd-131331` (`2019.EP2`) |
+| `ep_award_2019_multi_bidder.txt` | 2019: location suffix ("of Cambridge, Ontario"), 5 bidders, trailing `*` price footnote | `bgrd-137241` (`2019.EP6`) |
 
-### TRCA public Laserfiche history (#224)
+## bids&tenders portal fixtures (#124, #140, #226)
 
-`trca_laserfiche_{series,1957,2018}.json` were fetched anonymously over HTTP on
-2026-10-20 from TRCA's own WebLink installation at
-`https://laserfiche.trca.ca/WebLink/FolderListingService.aspx/GetFolderListing2`.
-The requests used `repoName=LASERFICHE`, `folderId=1030915`, `212734`, and `1477012`,
-respectively, `getNewListing=true`, `start=0`, `end=100`, `sortColumn=Name`,
-`sortAscending=true`. Ordinary anonymous session cookies were accepted; no login.
-Payload `data` is unchanged; random response padding (`__breach`) is omitted.
-
-The series lists 1957–2022 annual minute-book folders. The 1957 folder contains scanned
-index/member/minutes documents with no native extension. The 2018 folder contains nested
-folders and a native PDF. Client entry-type values are Document=-2, Shortcut=-1,
-Folder=0, RecordSeries=1, as declared by the public `app/dist/browse/main.js`.
-
-### Toronto Zoo public listings — off-peak 2026-10-21 (#226)
-
-`bids_tenders_zoo_2026-10-21.json` contains all 122 recorded public listings from the
-permitted 05:10 America/Toronto capture (09:10 UTC), sorted by page ID. Each object is an
-unchanged automatically recorded response row, including the locally attached `buyer_slug`
-and `status_filter`. No session cookies, antiforgery tokens or document content are included.
-The HTTP sweep used the UI's All filter with offsets 0, 50 and 100 and completed at 122/122.
-It initially failed only after fetching, while mapping published references for storage.
-
-Every Zoo title has the shape `published identifier - description`. Nine records demonstrate
-that the identifier cannot be restricted to RFQ/RFP plus a simple integer: they include
-`127`, `13`, `108`, `Q32202208`, `NRFP-08`, dotted identifiers and spaced numeric segments.
-The numeric published prefix is retained; a different RFQ number is not inferred from the
-description. Whitespace is normalized under the existing agency reference contract.
-
-The exact dated controls are page `6fc2f901-6847-469e-b630-d09fc5e75cb9` (RFQ-50,
-Awarded, closing 2022-11-04 16:00 UTC) and `ae4980d4-38f2-44cb-b5c4-0fe9ccc634b2`
-(RFP-03, Terminated, closing 2026-02-06 17:00 UTC). Their raw display dates independently
-agree with the converted millisecond timestamps. An older RFP 03 listing is a separate
-2023 project, not the 2026 control.
-
-The 122 page IDs reduce to 114 normalized reference strings. Eight references are reused
-for distinct published listings/projects across years. This fixture preserves those separate
-page IDs and must not be read as proof that those procurements can safely be coalesced into
-one solicitation row. Wider solicitation identity work is tracked under #124.
-
-
-## TRCA complete portal identity replay (#124)
-
-`bids_tenders_trca_identity_2026-10-22.json` retains 249 distinct TRCA portal page
-observations from the production raw recordings inspected on 2026-10-22. Each selected
-field is copied unchanged: Id, Title, optional ReferenceNumber/BidNumber, status, opening
-and closing dates, and buyer_slug. Descriptions and unrelated grid counters are omitted.
-Source: `https://trca.bidsandtenders.ca/Module/Tenders/en`, the permitted anonymous All
-listing sweep captured before this migration. No new portal requests were made for the
-identity replay. Seven normalized references are reused across distinct page IDs. Together
-with the complete Zoo fixture (122 pages), this tests 371 source identities without treating
-any shared reference, title or date as equivalence evidence.
+- **`bids_tenders_record_sample.json` (real, #140):** Unmodified TRCA grid record (`5082161c-f80a-4cd8-aaac-8388a237e99e`, bid `10044383`) from `https://trca.bidsandtenders.ca/Module/Tenders/en` (2026-10-22).
+- **`bids_tenders_legacy_synthetic.json` (synthetic, #135):** Retained only to test backwards-compatible field aliases (`ReferenceNumber`, `ClosingDate`, `DatePosted`, `StatusText`).
+- **`bids_tenders_trca_2026-10-20.json` (real, #226):** 4 records from the 249-record TRCA grid sweep (`status=""`, `limit=50`, `sort=DateClosing DESC,Id`; tokens/cookies stripped). Detail pages confirmed title-prefix bid numbers:
+  - `10044383`: `https://trca.bidsandtenders.ca/Module/Tenders/en/Tender/Detail/5082161c-f80a-4cd8-aaac-8388a237e99e`
+  - `10042501`: `https://trca.bidsandtenders.ca/Module/Tenders/en/Tender/Detail/d58d0f1a-696d-4ee2-8f01-ac13ba93b07b`
+  - `10022400_33`: `https://trca.bidsandtenders.ca/Module/Tenders/en/Tender/Detail/6de5fbf3-f9d6-4698-a27d-f0b882e51469`
+  - `10044944-1`: `https://trca.bidsandtenders.ca/Module/Tenders/en/Tender/Detail/3c6879d8-b712-42cb-ba23-cd1ea1ea8ad0`
+- **`bids_tenders_zoo_2026-10-21.json` (real, #226):** All 122 public Toronto Zoo listings captured off-peak (05:10 America/Toronto, 09:10 UTC), sorted by page ID (no cookies/tokens). Covers varied title prefixes (`127`, `13`, `108`, `Q32202208`, `NRFP-08`, dotted and spaced forms) and 8 references reused across years (114 unique normalized references across 122 pages). Positive controls: `6fc2f901-6847-469e-b630-d09fc5e75cb9` (RFQ-50, Awarded, 2022-11-04 16:00 UTC) and `ae4980d4-38f2-44cb-b5c4-0fe9ccc634b2` (RFP-03, Terminated, 2026-02-06 17:00 UTC; distinct from a 2023 RFP 03 page).
+- **`bids_tenders_trca_identity_2026-10-22.json` (real, #124):** All 249 TRCA portal page records (selected identity/status/date fields copied verbatim, 7 reused references). Combined with the 122 Zoo pages, exercises 371 portal page identities.

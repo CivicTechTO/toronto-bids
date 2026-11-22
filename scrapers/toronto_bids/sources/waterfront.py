@@ -1,8 +1,4 @@
-"""Waterfront's public monthly award publication (#108).
-
-HTML structure supplies source blocks and month precision; the shared extraction
-client supplies supplier/value relationships. Evidence checks never infer those roles.
-"""
+"""Fetch, archive, and verify Waterfront Toronto's monthly awarded-contracts page."""
 import hashlib
 import json
 import os
@@ -21,7 +17,7 @@ from toronto_bids.store import db
 URL = 'https://www.waterfrontoronto.ca/opportunities/procurement/awarded-contracts'
 MONTHS = {name: i for i, name in enumerate(('January', 'February', 'March', 'April',
     'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'), 1)}
-# Source qualifiers, not supplier/title parsing. Keep their exact text on the block.
+# Parenthetical procurement-method qualifiers preserved as block labels.
 ANNOTATION = re.compile(r'\([^()]*(?:competitive|copetitive|sole.?source|vendor of record|awarded by)[^()]*\)', re.I)
 NUMBER = re.compile(r'\$?\s*(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d{1,2})?')
 
@@ -68,7 +64,7 @@ def _events(element):
 
 
 def parse_publication(content):
-    """Return every visible body block, or refuse an unfamiliar/lossy layout."""
+    """Parse awarded-contracts HTML into per-month text blocks, failing on unexpected layout."""
     doc = html.fromstring(content)
     headings = [n for n in doc.xpath('//h2') if _clean(n.text_content()) == 'List of Awarded Contracts']
     if len(headings) != 1:
@@ -121,24 +117,23 @@ def extraction_text(month, rows):
 
 
 def _amount_extent(text, amount):
-    """Require literal model evidence and retain the surrounding source qualifier."""
+    """Locate literal amount in text and expand to enclosing parenthetical qualifier if present."""
     if not amount:
-        # A missing price is valid only when the source has none (or says TBD).
+        # Missing amount is valid only when the block has no '$' or parenthesized figure.
         return None if '$' not in text and not re.search(r'\(\s*\d[\d,]+', text) else False
     positions = [m.start() for m in re.finditer(re.escape(amount), text)]
     if len(positions) != 1:
         return False
     start = positions[0]
     for match in re.finditer(r'\([^()]*\)', text):
-        # The source determines the extent, including qualifiers, whether the
-        # model copied the display parentheses or just their contents.
+        # Expand to enclosing parentheses so qualifiers stay attached.
         if match.start() <= start and start + len(amount) <= match.end():
             return match.group()[1:-1].strip()
     return amount
 
 
 def verified_claims(rows, result, *, observations=None):
-    """Map model roles to unambiguous literal source evidence; retain refusals."""
+    """Match extracted awards to unambiguous literal text blocks and reject unmapped money tokens."""
     from toronto_bids.linking.publication_evidence import reviewed_recipients
     month=rows[0].get('publication_month') if rows else None
     reviewed=reviewed_recipients(rows,result,
@@ -173,8 +168,7 @@ def verified_claims(rows, result, *, observations=None):
                     matches.append((row, extent))
             title = contract.get('title')
             if len(matches) > 1 and isinstance(title, str) and title.strip():
-                # The model's literal title may distinguish two published observations
-                # with the same supplier/value; it never establishes equivalence.
+                # Disambiguate duplicate supplier/amount blocks using an exact title substring if unique.
                 titled = [(row, extent) for row, extent in matches if _clean(title) in row['raw_text']]
                 if len(titled) == 1:
                     matches = titled
@@ -200,8 +194,7 @@ def verified_claims(rows, result, *, observations=None):
                                supplier_name_raw=name, award_amount=extent,
                                evidence_json=json.dumps(proof,sort_keys=True,ensure_ascii=False) if proof else None,
                                award_amount_numeric=numeric, title_extracted=contract.get('title')))
-    # Every visible money token must be accounted for, including a second award
-    # in the same block. Title/context blocks remain visible without invented facts.
+    # Fail if any monetary token in a block was left unmapped.
     for row in rows:
         remainder = ANNOTATION.sub('', row['raw_text'])
         for extent in mapped[row['source_key']]:
@@ -217,10 +210,9 @@ def verified_claims(rows, result, *, observations=None):
 
 def capture_awards(conn, http, *, data_dir=None, client=None, limit=None, log=print,
                    cached_only=False, only_extractions=None):
-    """One HTTP page, immutable snapshots, cached month extraction, honest coverage.
+    """Fetch and snapshot the awards page, archive blocks, and run/verify per-month LLM extraction.
 
-    `limit` bounds new model requests only; every source block is always archived.
-    Failed/ambiguous extraction retains raw evidence and previously held facts.
+    limit caps new model requests; failed months keep prior verified claims.
     """
     if limit is not None and limit < 0:
         raise ValueError('Extraction limit must be nonnegative')
@@ -233,8 +225,6 @@ def capture_awards(conn, http, *, data_dir=None, client=None, limit=None, log=pr
         if hashlib.sha256(path.read_bytes()).hexdigest() != sha:
             raise ValueError('Held Waterfront snapshot failed hash verification')
     else:
-        # Publish a complete snapshot atomically; interrupted writes cannot truncate
-        # an earlier archive file bearing the same content address.
         with tempfile.NamedTemporaryFile(dir=root, suffix='.tmp', delete=False) as held:
             temporary = Path(held.name)
             try:
@@ -243,7 +233,6 @@ def capture_awards(conn, http, *, data_dir=None, client=None, limit=None, log=pr
                 os.replace(temporary, path)
             finally:
                 temporary.unlink(missing_ok=True)
-    # Snapshot precedes parsing; even a changed layout retains its original bytes.
     rows = parse_publication(content)
     buyer_id = seed_buyers(conn)['waterfront-toronto']
     by_month = defaultdict(list)
@@ -255,7 +244,6 @@ def capture_awards(conn, http, *, data_dir=None, client=None, limit=None, log=pr
         by_month[row['publication_month']].append(row)
     conn.commit()
     from toronto_bids.batch_extraction import ExtractionPending
-    # Record the last successfully parsed snapshot for offline batch completion.
     with tempfile.NamedTemporaryFile(dir=root, mode='w', delete=False) as marker:
         temporary = Path(marker.name)
         try:
@@ -291,8 +279,7 @@ def capture_awards(conn, http, *, data_dir=None, client=None, limit=None, log=pr
                 result = json.loads(cached)
             processed.append(digest)
             claims, errors = verified_claims(blocks, result)
-            # Supported claims survive a partial month. Only a complete verification
-            # may retire older derived claims; source observations are never deleted.
+            # Retire stale published_award rows for a month only when verification has no errors.
             conn.execute('SAVEPOINT waterfront_month')
             live = {c['source_key'] for c in claims}
             if not errors:
@@ -320,7 +307,6 @@ def capture_awards(conn, http, *, data_dir=None, client=None, limit=None, log=pr
             log(f'Waterfront {month}: extraction pending; prior supported claims retained')
             continue
         except Exception as exc:
-            # Roll back any derived-fact refresh as a unit; source capture is committed.
             if conn.in_transaction:
                 conn.rollback()
             errors = [str(exc)]
@@ -337,7 +323,7 @@ def capture_awards(conn, http, *, data_dir=None, client=None, limit=None, log=pr
 
 
 def replay_cached_awards(conn, *, data_dir=None, only_extractions=None, log=print):
-    """Apply completed batches against the last validated snapshot without fetching."""
+    """Replay cached extractions against the latest stored Waterfront HTML snapshot."""
     root = Path(data_dir or config.DATA_DIR) / 'waterfront'
     sha = (root / 'latest').read_text().strip()
     if not re.fullmatch(r'[a-f0-9]{64}', sha):

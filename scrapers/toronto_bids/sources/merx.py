@@ -1,8 +1,4 @@
-"""Public buyer-scoped MERX capture, including bounded historical searches.
-
-No login, private endpoints, bidding actions or guessed document links. Retain
-responses before parsing; listing coverage and detail availability are independent.
-"""
+"""Public buyer-scoped MERX listing and detail capture (incremental and historical backfill)."""
 import ast
 import fcntl
 import hashlib
@@ -61,7 +57,7 @@ def _url(value):
 
 
 def notice_identity(href):
-    """Stable public notice ID, independent of slug, tab and tracking parameters."""
+    """Extract the numeric MERX notice ID from a modern or legacy notice URL."""
     path = urlsplit(_url(href)).path
     modern = re.fullmatch(r'/(?:(?:[^/]+/){0,2})solicitations/(?:[^/]+/)*?(\d{10})', path)
     legacy = re.fullmatch(r'/public/supplier/interception/view-notice/(\d+)', path)
@@ -77,13 +73,12 @@ def _date(raw):
 
 
 def parse_page(content, portal, section, buyer_id):
-    """Parse only real listing anchors; hidden empty templates are not records."""
+    """Parse a MERX buyer listing page into {total, page, listings, links}."""
     tree = _tree(content)
     title = tree.xpath('//title/text()')
     if len(title) != 1 or portal['body'] not in title[0]:
         raise ValueError('MERX unexpected buyer page')
     label = SECTIONS[section][1]
-    # The count is the visible heading, not the navigation links or empty template.
     text = _text(tree)
     matches = re.findall(r'(?<!\d)([\d,]+)\s+' + re.escape(label[:-1]) + r's?\b', text)
     if len(set(matches)) != 1:
@@ -115,7 +110,6 @@ def parse_page(content, portal, section, buyer_id):
                 raise ValueError('MERX missing listing date')
             else:
                 dates.append(_date(_text(fields[0])))
-        # A result/award tab is evidence of tab membership, not an award fact.
         references = row[0].xpath('.//*[' + _class('sol-num') + ']')
         if len(references) > 1:
             raise ValueError('MERX ambiguous printed reference')
@@ -131,7 +125,7 @@ def parse_page(content, portal, section, buyer_id):
 
 
 class PublicSession:
-    """Serial five-second access, bounded backoff and persistent server deadlines."""
+    """Rate-limited (5.2s) HTTP session with cross-process locking, Retry-After persistence, and browser fallback."""
     def __init__(self, root, client=None, *, sleep=time.sleep,
                  clock=lambda: datetime.now(timezone.utc), max_requests=300, allowed_hosts=("www.merx.com",), browser_factory=None):
         self.browser_factory = browser_factory
@@ -146,8 +140,7 @@ class PublicSession:
         self.root.mkdir(parents=True, exist_ok=True)
 
     def get(self, url):
-        # All buyers/processes sharing the data directory serialize their MERX
-        # traffic, including backfills alongside incremental commands.
+        # Serialize requests across all processes sharing the parent data directory.
         host_key = hashlib.sha256(','.join(self.allowed_hosts).encode()).hexdigest()[:16]
         with (self.root.parent / ('.public-' + host_key + '.lock')).open('a') as lock:
             fcntl.flock(lock, fcntl.LOCK_EX)
@@ -161,8 +154,7 @@ class PublicSession:
 
     def _record_response(self, response):
         _record(response, self.root, self.clock())
-        # Diagnostics are separate from raw-response manifests and contain an
-        # allowlist only: cookies, authentication and request headers stay private.
+        # Record allowlisted response headers only (omit cookies/auth).
         diagnostic = dict(url=str(response.request.url), status=response.status_code,
             captured_at=self.clock().isoformat(), bytes=len(response.content),
             headers={k:response.headers[k] for k in ('content-type', 'content-length',
@@ -179,7 +171,7 @@ class PublicSession:
             raise RuntimeError(f'MERX HTTP {response.status_code}: request budget exhausted; capture is partial')
         if delay > 60 or urlsplit(str(response.request.url)).netloc != 'www.merx.com':
             raise RuntimeError(f'MERX HTTP {response.status_code}: incomplete response; retry deferred {delay:g}s')
-        self.sleep(delay)  # one bounded fallback, never a fast retry loop
+        self.sleep(delay)
         try:
             if self.browser is None:
                 if self.browser_factory is None:
@@ -191,8 +183,7 @@ class PublicSession:
                                       before_request=self._pace, record=self._record_response)
             if result.status_code != 200 or not result.content:
                 raise RuntimeError(f'MERX browser HTTP {result.status_code}: incomplete public response')
-            # Reuse anonymous browser state in subsequent HTTP requests. No login
-            # state is supplied, and cookie values never enter response manifests.
+            # Reuse anonymous browser cookies on subsequent HTTP requests.
             for cookie in self.browser.cookies():
                 self.client.cookies.set(cookie['name'], cookie['value'],
                                         domain=cookie['domain'], path=cookie['path'])
@@ -229,7 +220,7 @@ class PublicSession:
                     response.raise_for_status()
                 self.sleep(delay)
                 continue
-            response.raise_for_status()  # redirects/denials are not empty datasets
+            response.raise_for_status()
             if response.status_code == 202 or not response.content:
                 response = self._incomplete_response(response, cooldown)
             if '/abstract/' not in urlsplit(url).path:
@@ -252,7 +243,7 @@ def _fields(tree, wanted=None):
         if len(label) == len(body) == 1:
             name, value = _text(label[0]), _text(body[0])
             if not name or (wanted is not None and name not in wanted):
-                continue  # unlabeled contact/address fields are not named notice metadata
+                continue
             if name in values:
                 raise ValueError('MERX repeated field: ' + name)
             values[name] = value
@@ -260,7 +251,7 @@ def _fields(tree, wanted=None):
 
 
 def fragment(content, tab):
-    """Decode the UI's literal HTML payload; never execute source JavaScript."""
+    """Decode the HTML string passed to $("#innerTabContent").html(...) without executing JS."""
     matches = re.findall(r'\$\("#innerTabContent"\)\.html\((\'(?:\\.|[^\'\\])*\')\);', content.decode())
     if len(matches) != 1:
         raise ValueError('MERX unfamiliar public fragment envelope')
@@ -300,7 +291,7 @@ def parse_bids(content, buyer_id, page_url, source_url):
         if (len(documents) == 1 and
                 {'mets-table-row-empty', 'visible'} <= set(documents[0].get('class', '').split()) and
                 _text(documents[0]) == 'No Files' and not tables[0].xpath('.//a[@href]')):
-            return []  # No disclosed bidder data; never infer zero submissions.
+            return []  # Explicit "No Files" empty state (no disclosed bidders).
     if not rows or len({r.bidder_name_raw for r in rows}) != len(rows):
         raise ValueError('MERX empty/repeated bidder collection')
     return rows
@@ -312,7 +303,7 @@ def parse_awards(content, buyer_id, page_url, source_url, notice_id):
     if len(headers) == 1 and _text(headers[0]) == 'No Award':
         if tree.xpath('//*[' + _class('awardeeItem') + ']'):
             raise ValueError('MERX contradictory No Award/awardee content')
-        return []  # explicit public non-award outcome, not a missing identity
+        return []
     refs = tree.xpath('//*[' + _class('mets-field') + '][./*[' + _class('mets-field-label') + ' and normalize-space(.)="Reference Number"]]')
     if len(refs) != 1 or _fields(refs[0].getparent()).get('Reference Number') != notice_id:
         raise ValueError('MERX award reference differs from listing')
@@ -326,7 +317,7 @@ def parse_awards(content, buyer_id, page_url, source_url, notice_id):
         if not all(fields.get(k) for k in ('Supplier Awarded', 'Awarded Value', 'Award Date')):
             raise ValueError('MERX missing explicit award fields')
         date = fields['Award Date']
-        # Preserve only day precision; do not invent a UTC time from EST/EDT text.
+        # Keep date-only precision; do not infer UTC from EST/EDT text.
         if not re.fullmatch(r'\d{4}/\d{2}/\d{2} \d{2}:\d{2}:\d{2} [AP]M E[DS]T', date):
             raise ValueError('MERX unfamiliar award date')
         rows.append(AgencyAward(buyer_id=buyer_id, native_ref=page_url,
@@ -338,9 +329,8 @@ def parse_awards(content, buyer_id, page_url, source_url, notice_id):
 
 
 def capture_details(conn, session, listing, detail_url, notice_id, *, fetch=None, observations=None):
-    """Only tabs advertised by this notice's public detail, never guessed tab IDs."""
-    # Legacy published links lead to an account gate; preserve the known gap without
-    # repeatedly requesting it. Modern public listing routes are fetched directly.
+    """Fetch a notice detail page and advertised bid-results/award AJAX tabs; caller resolves procurement identity after the batch (#305)."""
+    # Legacy interception links are account-gated; keep the public listing only.
     if '/public/supplier/interception/' in urlsplit(detail_url).path:
         raise PermissionError('legacy detail entitlement unverified; public listing retained')
     fetch = fetch or (lambda url: session.get(url).content)
@@ -371,7 +361,6 @@ def capture_details(conn, session, listing, detail_url, notice_id, *, fetch=None
             db.upsert_row(conn, replace(listing, native_ref=native_ref), overwrite=True)
         for row in rows:
             db.upsert_row(conn, row, overwrite=True)
-        resolve_procurements(conn)
     conn.commit()
     if observations is not None:
         observations.extend(notes)
@@ -381,11 +370,7 @@ def capture_details(conn, session, listing, detail_url, notice_id, *, fetch=None
 def capture_portal(conn, portal, *, backfill=False, resume=False, details=False, sections=None,
                    queries=(), keyword=None, max_requests=300, client=None, data_dir=None,
                    sleep=time.sleep, clock=lambda: datetime.now(timezone.utc), log=lambda m: None):
-    """Capture useful public records even when full historical coverage is unproven.
-
-    Full-mode reconciliation uses this run's union only, never accumulated DB counts.
-    Query matches may overlap; neither prefix syntax nor disjointness is assumed.
-    """
+    """Capture listings (and optionally detail tabs) for one enabled MERX buyer portal, resolving procurement identity once in finally (#305)."""
     if not portal.get('enabled') or not portal.get('permission'):
         raise PermissionError('MERX capture requires recorded permission and enabled buyer')
     if not re.fullmatch(r'https://www\.merx\.com/[a-z0-9]+', portal['portal_url']):
@@ -395,7 +380,7 @@ def capture_portal(conn, portal, *, backfill=False, resume=False, details=False,
     session = PublicSession(root, client, sleep=sleep, clock=clock, max_requests=max_requests)
     cache = root / 'backfill-pages'
     if backfill and not resume and cache.exists():
-        shutil.rmtree(cache)  # pointers only; immutable held responses remain archived
+        shutil.rmtree(cache)  # Clear pointer cache only; raw .bin responses stay archived.
     cache.mkdir(exist_ok=True)
     def fetch_page(url):
         pointer = cache / (hashlib.sha256(url.encode()).hexdigest() + '.json')
@@ -436,14 +421,12 @@ def capture_portal(conn, portal, *, backfill=False, resume=False, details=False,
             rows.update(page['listings']); links.update(page['links'])
             if len(rows) >= total or (not backfill and section != 'open'):
                 break
-        # Every validated query/window may contribute useful records, even if parent
-        # coverage is incomplete. Nothing is deleted for absence from a search.
+        # Upsert each validated window without deleting rows absent from a search.
         with _transaction(conn):
             for nid, row in rows.items():
                 conn.execute('INSERT OR IGNORE INTO merx_notice VALUES(?,?,?)',
                              (buyer_id, nid, row.portal_url))
                 db.upsert_row(conn, row, overwrite=True)
-            resolve_procurements(conn)
         conn.commit()
         all_listings.update(rows); all_links.update(links)
         if not window and backfill and len(rows) != total:
@@ -458,8 +441,7 @@ def capture_portal(conn, portal, *, backfill=False, resume=False, details=False,
                 if backfill and len(union) < total:
                     _, older = query(section, keyword or '', direction='ASC', window=True)
                     union.update(older)
-                    # These are positive keyword searches within the SAME buyer profile.
-                    # Prefixes are observed labels; they are not presumed exhaustive.
+                    # Run positive keyword queries within the same buyer profile to reach past the 1,000-row window.
                     codes = set(queries) if not keyword else set()
                     for row in [*rows.values(), *older.values()]:
                         if not keyword:
@@ -490,7 +472,7 @@ def capture_portal(conn, portal, *, backfill=False, resume=False, details=False,
                 log(f'{section}: {len(union)}/{total} unique ({report["sections"][section]["scope"]})')
             except Exception as exc:
                 report['failures'].append(f'{section}: {exc}')
-                # Stop the entire buyer on server/access problems or request budget.
+                # Stop buyer capture on transport/budget errors; continue across parse ValueErrors.
                 if not isinstance(exc, ValueError):
                     network_stopped = True
                     break
@@ -506,6 +488,16 @@ def capture_portal(conn, portal, *, backfill=False, resume=False, details=False,
                     if not isinstance(exc, ValueError):
                         break
     finally:
+        # Failed resolution rolls back to its savepoint; committed rows wait for the next pass.
+        interrupted = None
+        try:
+            resolve_procurements(conn)
+            conn.commit()
+        except Exception as exc:
+            report['failures'].append(f'procurement resolution: {exc}')
+        except BaseException as exc:
+            report['failures'].append(f'procurement resolution interrupted: {exc!r}')
+            interrupted = exc
         report['requests'] = session.requests
         report['finished_at'] = clock().isoformat()
         report['listings'] = len(all_listings)
@@ -520,15 +512,13 @@ def capture_portal(conn, portal, *, backfill=False, resume=False, details=False,
             (buyer_id, report['finished_at'], report['mode'], int(report['complete']), encoded))
         conn.commit()
         session.close()
+        if interrupted is not None:
+            raise interrupted
     return report
 
 
 def run_merx_capture(conn, *, log=lambda m: None):
-    """Nightly incremental capture; isolate buyers and return every coverage failure.
-
-    Historical backfills remain separate. Routine capture includes the public
-    detail tabs so bid/award evidence survives after notices close.
-    """
+    """Run incremental MERX capture (with detail tabs) for all enabled portals with per-buyer isolation."""
     results = {}
     for portal in config.MERX_PORTALS:
         if not portal['enabled']:

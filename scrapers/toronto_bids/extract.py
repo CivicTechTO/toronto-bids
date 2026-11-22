@@ -1,9 +1,4 @@
-"""LLM-based bid extraction client.
-
-Text in, validated extraction records out. Direct Claude is the default;
-OpenRouter remains an explicit legacy option. Provider changes preserve the prompt
-and document cache.
-"""
+"""LLM bid extraction client (direct Claude default, OpenRouter legacy option)."""
 
 import hashlib
 import json
@@ -110,11 +105,7 @@ def build_prompt(text: str) -> str:
 
 
 def validate_extraction(data) -> dict:
-    """Refuse a response that breaks the contract, always with ValueError (#219).
-
-    ValueError is what callers treat as one document's refusal; a TypeError from a shape
-    surprise (`"bids": null`, a string where a dict belongs) used to escape as a crash.
-    """
+    """Validate extraction JSON shape, raising ValueError on any structural mismatch."""
     if not isinstance(data, dict):
         raise ValueError(
             f"Extraction result is not a JSON object: {type(data).__name__}"
@@ -159,14 +150,10 @@ def parse_llm_response(response: dict) -> dict:
 
 
 class ExtractionClient:
-    """Uses direct Claude by default, or explicitly selected legacy OpenRouter.
+    """Extract contracts via Claude (default) or OpenRouter.
 
-    Per model: 429, 5xx, transport errors and malformed output (ValueError) are
-    retried with exponential backoff, then fall through to the next model. Any
-    other 4xx (retired slug 404, payment 402, model unavailable) skips straight
-    to the next model without retrying. 401/403 raise immediately: the same API
-    key is used for every model, so falling back cannot help. If every model
-    fails, the last error is raised.
+    Retries 429, 5xx, transport errors, and ValueError per model before falling through;
+    skips to the next model on other 4xx; raises immediately on 401/403.
     """
 
     def __init__(
@@ -234,12 +221,10 @@ class ExtractionClient:
                     if isinstance(exc, httpx.HTTPStatusError):
                         status = exc.response.status_code
                         if status in (401, 403):
-                            # Same key for every model: no fallback can help.
+                            # Auth failure applies to all models.
                             raise
                         if status < 500 and status != 429:
-                            # Retired slug (404), no credit (402), model
-                            # unavailable: retrying this model is futile, but
-                            # the next one may serve.
+                            # Non-retryable client error for this model; try next model.
                             break
                     if attempt < self._retries:
                         time.sleep(self._backoff * (2**attempt))

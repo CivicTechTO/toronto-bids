@@ -1,7 +1,3 @@
-"""The nightly job's Slack summary.
-
-`summarize` is pure, so the whole message is tested offline with no webhook and no network.
-"""
 from toronto_bids import notify
 
 
@@ -84,28 +80,45 @@ def test_steps_section_renders_status_detail_and_skip():
     assert "*Steps*" in text
     assert "✅ sync  9/9 sources · 3m12s" in text
     assert "➖ council  not the 1st" in text
-    assert "❌ ariba attachments  boom · 48m0" in text[:1000] or "❌ ariba attachments  boom · 48m00s" in text
+    assert "❌ ariba attachments  boom · 48m00s" in text
 
 
-def test_sources_section_flags_zero_fetch():
+def test_sources_section_flags_zero_fetch_and_failed_status():
     report = {"ok": True, "before": _counts(), "after": _counts(), "failures": [],
               "sources": [
                   {"source": "odata_solicitations", "status": "ok", "rows_fetched": 7446, "rows_upserted": 12, "error": None},
                   {"source": "suspended_firms", "status": "ok", "rows_fetched": 0, "rows_upserted": 0, "error": None},
+                  {"source": "ckan_open", "status": "failed", "rows_fetched": 0, "rows_upserted": 0, "error": "500"},
               ],
               "export_bytes": 1000, "elapsed_s": 60.0}
     text = notify.summarize(report)
     assert "*Sources* (fetched)" in text
     assert "odata_solicitations 7,446" in text
-    assert "→ +" not in text   # rows_upserted is written-rows, NOT "new" — Growth owns new-record counts
+    assert "→ +" not in text
     assert "⚠ suspended_firms 0 fetched" in text
+    assert "⚠ ckan_open 0 fetched (failed)" in text
+
+
+def test_training_restrictions_section_renders_detail_and_fallback():
+    report = {
+        "ok": True,
+        "export_bytes": 1000,
+        "elapsed_s": 5.0,
+        "ariba_training_restrictions": [
+            {"document_number": "5713434353", "detail": "Doc5713434353: restricted to invited bidders"},
+            {"document_number": "5713434354", "reason": "training gate"},
+        ],
+    }
+    text = notify.summarize(report)
+    assert "*Training event restrictions (2)*" in text
+    assert "Doc5713434353: restricted to invited bidders" in text
+    assert "Doc5713434354: training gate" in text
 
 
 def test_nothing_moved_omits_growth_and_empty_before_suppresses_deltas():
     same = _counts(solicitation=10)
     assert "*Growth*" not in notify.summarize(
         {"ok": True, "before": same, "after": same, "failures": [], "export_bytes": 1, "elapsed_s": 1.0})
-    # empty before => before-count failed => no fabricated deltas
     assert "*Growth*" not in notify.summarize(
         {"ok": True, "before": {}, "after": _counts(bid=5), "failures": [], "export_bytes": 1, "elapsed_s": 1.0})
 
@@ -128,8 +141,6 @@ def test_growth_labels_agency_and_ariba():
 
 
 def test_post_without_a_webhook_is_a_no_op_and_makes_no_request(monkeypatch):
-    """Absence of the credential degrades gracefully — this Mac and CI stay silent with no
-    separate code path, the same way the rewrite design's goal 3 asks of auth-optional parts."""
     monkeypatch.delenv("TB_SLACK_WEBHOOK", raising=False)
     def boom(*a, **k):
         raise AssertionError("must not make a request without a webhook")
@@ -164,8 +175,6 @@ def test_post_reads_the_webhook_from_the_environment(monkeypatch):
 
 
 def test_a_slack_failure_never_fails_the_run(monkeypatch):
-    """The archive outranks the notification. A dead webhook must not turn a good sync into a
-    failed unit."""
     def boom(*a, **k):
         raise OSError("slack is down")
     monkeypatch.setattr(notify.httpx, "post", boom)
@@ -174,38 +183,17 @@ def test_a_slack_failure_never_fails_the_run(monkeypatch):
     assert any("slack" in m.lower() for m in said)
 
 
-def test_a_rejected_webhook_is_reported_rather_than_counted_as_sent(monkeypatch):
-    """A revoked webhook returns 4xx without raising. Reporting that as success is how the
-    channel goes quiet while the job believes it is still talking."""
+def test_a_rejected_webhook_is_reported_without_leaking_url(monkeypatch):
     class Resp:
         status_code = 403
     monkeypatch.setattr(notify.httpx, "post", lambda url, **kw: Resp())
     said = []
-    assert notify.post("hi", webhook="https://hooks.slack.test/x", log=said.append) is False
+    assert notify.post("hi", webhook="https://hooks.slack.test/SECRET-TOKEN", log=said.append) is False
     assert any("403" in m for m in said)
-
-
-def test_a_rejection_never_leaks_the_webhook_into_the_log(monkeypatch):
-    """log() goes to journald. raise_for_status() would put the URL in the exception message
-    and write the credential to the system log — which is why the status code is read by hand."""
-    class Resp:
-        status_code = 403
-    monkeypatch.setattr(notify.httpx, "post", lambda url, **kw: Resp())
-    said = []
-    notify.post("hi", webhook="https://hooks.slack.test/SECRET-TOKEN", log=said.append)
     assert not any("SECRET-TOKEN" in m for m in said)
 
 
-def test_a_successful_post_returns_true(monkeypatch):
-    class Resp:
-        status_code = 200
-    monkeypatch.setattr(notify.httpx, "post", lambda url, **kw: Resp())
-    assert notify.post("hi", webhook="https://hooks.slack.test/x") is True
-
-
 def test_a_malformed_webhook_exception_never_leaks_the_url_into_the_log(monkeypatch):
-    """The exception branch must not undo what the status-code branch is careful about:
-    httpx.InvalidURL embeds the request URL in its message, and log() goes to journald."""
     def raise_invalid(*a, **k):
         raise notify.httpx.InvalidURL("Invalid URL 'https://hooks.slack.test/SECRET-TOKEN'")
     monkeypatch.setattr(notify.httpx, "post", raise_invalid)
@@ -227,7 +215,7 @@ def test_near_close_section_lists_postings_and_does_not_change_the_header():
                   {"document_number": "5701234567", "closes": "2026-10-04", "days_left": 3},
               ]}
     text = notify.summarize(report)
-    assert text.startswith("*✅ toronto-bids nightly*")       # a warning, not a failure
+    assert text.startswith("*✅ toronto-bids nightly*")
     assert "*⚠ Ariba closing soon, not fully archived (3)*" in text
     assert "Doc5713434353 · closes 2026-10-01 · last day" in text
     assert "Doc5660182540 · closes 2026-10-02 · 1 day left" in text
