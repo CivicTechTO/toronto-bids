@@ -80,7 +80,15 @@ def test_scrape_revalidates_legacy_caps_then_persists_successor_evidence(tmp_pat
     assert not any(r.startswith(('2023.','2024.')) for r in calls)
 
 
-@pytest.mark.parametrize('module,fn',[('ep_board','scrape_ep_agendas'),('zoo_board','scrape_zb_agendas'),('tpa_board','scrape_pa_agendas')])
+@pytest.mark.parametrize(
+    'module,fn',
+    [
+        ('ep_board', 'scrape_ep_agendas'),
+        ('zoo_board', 'scrape_zb_agendas'),
+        ('tpa_board', 'scrape_pa_agendas'),
+        ('ttc_tmmis_board', 'scrape_ttc_agendas'),
+    ],
+)
 def test_active_body_wrappers_enable_automatic_terms(monkeypatch,module,fn):
     import importlib
     body=importlib.import_module('toronto_bids.sources.'+module)
@@ -138,3 +146,50 @@ def test_invalid_calendar_date_cannot_confirm_a_term():
     with pytest.raises(RuntimeError, match="agenda"):
         discover(site({'2023.EP1': 'January 4, 2023', '2027.EP1': 'February 31, 2027'}),
                  today='2027-03-01')
+
+
+def test_mid_term_seed_rolls_over_to_next_four_year_council_term(tmp_path, monkeypatch):
+    ttc_terms = [('TTC', 2025, '2022-2026', 1)]
+    pages = {
+        '2025.TTC1': 'January 27, 2025',
+        '2026.TTC2': 'May 14, 2026',
+        '2027.TTC1': 'January 25, 2027',
+    }
+    calls = []
+
+    @contextmanager
+    def fetcher(**kwargs):
+        yield site(pages, calls)
+
+    monkeypatch.setattr(bap, 'agenda_fetcher', fetcher)
+    found = bap.scrape_agendas(tmp_path, term_starts=ttc_terms, auto_terms=True, today='2027-03-01')
+    assert {'2025.TTC1', '2026.TTC2', '2027.TTC1'} <= found.keys()
+    proof = bap._load_closed_terms(tmp_path)['TTC2022-2026']
+    assert proof['last_n'] == 2 and proof['successor'] == '2027.TTC1'
+    # Re-run should trust cached 2026.TTC2 (May 2026) and 2027.TTC1 (Jan 2027) without refetching.
+    calls.clear()
+    bap.scrape_agendas(tmp_path, term_starts=ttc_terms, auto_terms=True, today='2027-03-01')
+    assert '2026.TTC2' not in calls and '2027.TTC1' not in calls
+
+
+def test_election_year_seed_caches_final_year_agendas(tmp_path, monkeypatch):
+    pa_terms = [('PA', 2022, '2022-2026', 1)]
+    cached = {
+        '2022.PA1': 'December 12, 2022',
+        '2023.PA2': 'May 15, 2023',
+        '2024.PA3': 'May 15, 2024',
+        '2025.PA4': 'May 15, 2025',
+        '2026.PA5': 'May 15, 2026',
+    }
+    for ref, when in cached.items():
+        (tmp_path / f'{ref}.html').write_text(site({ref: when})(ref))
+    calls = []
+
+    @contextmanager
+    def fetcher(**kwargs):
+        yield site({}, calls)
+
+    monkeypatch.setattr(bap, 'agenda_fetcher', fetcher)
+    found = bap.scrape_agendas(tmp_path, term_starts=pa_terms, auto_terms=True, today='2026-06-01')
+    assert set(cached) <= found.keys()
+    assert not (set(cached) & set(calls))

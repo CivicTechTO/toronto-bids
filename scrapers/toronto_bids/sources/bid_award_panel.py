@@ -192,9 +192,8 @@ def _automatic_term_plan(fetch, term_starts, today, log):
     if end - start != 4:
         raise ValueError(f"automatic council terms require a four-year seed, got {term!r}")
     while end <= int(today[:4]):
-        year += 4
         start, end = end, end + 4
-        entry = (series, year, f"{start}-{end}", 1)
+        entry = (series, start, f"{start}-{end}", 1)
         proof = confirm(entry)
         if proof:
             terms.append(entry)
@@ -378,15 +377,11 @@ def scrape_agendas(
             return True
         year, code = meeting.split(".", 1)
         year = int(year)
-        seeds = [entry for entry in term_starts
-                 if code.startswith(entry[0]) and entry[1] <= year]
-        if not seeds:
+        if not any(code.startswith(entry[0]) for entry in term_starts):
             return False
-        _, seed_year, term, _ = seeds[-1]
-        start, end = map(int, term.split("-"))
-        shift = max(0, (year - seed_year) // 4) * 4
         when = _read_agenda_date(page)
-        return bool(when and f"{start + shift}-11-01" <= when < f"{end + shift}-11-01")
+        # Session-year prefixes cover Nov/Dec of (year - 1) through Dec of year.
+        return bool(when and f"{year - 1}-11-01" <= when < f"{year + 1}-01-01")
 
     def _persist_closed(key: str, last_n) -> None:
         closed_terms[key] = last_n
