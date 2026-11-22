@@ -1,0 +1,316 @@
+{
+  "campaign": "2026-11-22-sonnet-evidence",
+  "cohort_sha256": "6024baeb0c81df79ec2a0c19aeeda0fb7ef4d2d7a4f97fe0cd45cbf4ee022638",
+  "prompt_version": "eval-3e995e90436c",
+  "schema_sha256": "e64065a2d8c3082bbd57a1d360245de9882a75c1007eb2d67b9826b04574d2fb",
+  "model": "claude-sonnet-5-5",
+  "effort": "high",
+  "settled_policies": {
+    "award_tax_basis": "strictly_local_unknown",
+    "ongoing_procurement_scope": "empty_contracts_array"
+  },
+  "unique_response_ids": 0,
+  "prompt_only": {
+    "total": {
+      "requests": 72,
+      "states": {
+        "pending": 72
+      },
+      "exact_relations": {
+        "expected": 0,
+        "observed": 0,
+        "correct": 0,
+        "omissions": 0,
+        "attribute_errors": 0,
+        "false_joins": 0,
+        "fabrications": 0,
+        "duplicates": 0,
+        "planned_expected": 448
+      },
+      "numeric_correct": 0,
+      "exact_documents": 0,
+      "charged_microdollars": 0
+    },
+    "partitions": {
+      "held_out_new_corpora": {
+        "requests": 28,
+        "states": {
+          "pending": 28
+        },
+        "exact_relations": {
+          "expected": 0,
+          "observed": 0,
+          "correct": 0,
+          "omissions": 0,
+          "attribute_errors": 0,
+          "false_joins": 0,
+          "fabrications": 0,
+          "duplicates": 0,
+          "planned_expected": 116
+        },
+        "numeric_correct": 0,
+        "exact_documents": 0,
+        "charged_microdollars": 0,
+        "by_mode": {
+          "sync": {
+            "requests": 14,
+            "states": {
+              "pending": 14
+            },
+            "exact_relations": {
+              "expected": 0,
+              "observed": 0,
+              "correct": 0,
+              "omissions": 0,
+              "attribute_errors": 0,
+              "false_joins": 0,
+              "fabrications": 0,
+              "duplicates": 0,
+              "planned_expected": 58
+            },
+            "numeric_correct": 0,
+            "exact_documents": 0,
+            "charged_microdollars": 0
+          },
+          "batch": {
+            "requests": 14,
+            "states": {
+              "pending": 14
+            },
+            "exact_relations": {
+              "expected": 0,
+              "observed": 0,
+              "correct": 0,
+              "omissions": 0,
+              "attribute_errors": 0,
+              "false_joins": 0,
+              "fabrications": 0,
+              "duplicates": 0,
+              "planned_expected": 58
+            },
+            "numeric_correct": 0,
+            "exact_documents": 0,
+            "charged_microdollars": 0
+          }
+        }
+      },
+      "regression": {
+        "requests": 44,
+        "states": {
+          "pending": 44
+        },
+        "exact_relations": {
+          "expected": 0,
+          "observed": 0,
+          "correct": 0,
+          "omissions": 0,
+          "attribute_errors": 0,
+          "false_joins": 0,
+          "fabrications": 0,
+          "duplicates": 0,
+          "planned_expected": 332
+        },
+        "numeric_correct": 0,
+        "exact_documents": 0,
+        "charged_microdollars": 0,
+        "by_mode": {
+          "sync": {
+            "requests": 22,
+            "states": {
+              "pending": 22
+            },
+            "exact_relations": {
+              "expected": 0,
+              "observed": 0,
+              "correct": 0,
+              "omissions": 0,
+              "attribute_errors": 0,
+              "false_joins": 0,
+              "fabrications": 0,
+              "duplicates": 0,
+              "planned_expected": 166
+            },
+            "numeric_correct": 0,
+            "exact_documents": 0,
+            "charged_microdollars": 0
+          },
+          "batch": {
+            "requests": 22,
+            "states": {
+              "pending": 22
+            },
+            "exact_relations": {
+              "expected": 0,
+              "observed": 0,
+              "correct": 0,
+              "omissions": 0,
+              "attribute_errors": 0,
+              "false_joins": 0,
+              "fabrications": 0,
+              "duplicates": 0,
+              "planned_expected": 166
+            },
+            "numeric_correct": 0,
+            "exact_documents": 0,
+            "charged_microdollars": 0
+          }
+        }
+      }
+    }
+  },
+  "evidence_validated": {
+    "total": {
+      "requests": 72,
+      "states": {
+        "pending": 72
+      },
+      "exact_relations": {
+        "expected": 0,
+        "observed": 0,
+        "correct": 0,
+        "omissions": 0,
+        "attribute_errors": 0,
+        "false_joins": 0,
+        "fabrications": 0,
+        "duplicates": 0,
+        "planned_expected": 448
+      },
+      "numeric_correct": 0,
+      "exact_documents": 0,
+      "charged_microdollars": 0
+    },
+    "partitions": {
+      "held_out_new_corpora": {
+        "requests": 28,
+        "states": {
+          "pending": 28
+        },
+        "exact_relations": {
+          "expected": 0,
+          "observed": 0,
+          "correct": 0,
+          "omissions": 0,
+          "attribute_errors": 0,
+          "false_joins": 0,
+          "fabrications": 0,
+          "duplicates": 0,
+          "planned_expected": 116
+        },
+        "numeric_correct": 0,
+        "exact_documents": 0,
+        "charged_microdollars": 0,
+        "by_mode": {
+          "sync": {
+            "requests": 14,
+            "states": {
+              "pending": 14
+            },
+            "exact_relations": {
+              "expected": 0,
+              "observed": 0,
+              "correct": 0,
+              "omissions": 0,
+              "attribute_errors": 0,
+              "false_joins": 0,
+              "fabrications": 0,
+              "duplicates": 0,
+              "planned_expected": 58
+            },
+            "numeric_correct": 0,
+            "exact_documents": 0,
+            "charged_microdollars": 0
+          },
+          "batch": {
+            "requests": 14,
+            "states": {
+              "pending": 14
+            },
+            "exact_relations": {
+              "expected": 0,
+              "observed": 0,
+              "correct": 0,
+              "omissions": 0,
+              "attribute_errors": 0,
+              "false_joins": 0,
+              "fabrications": 0,
+              "duplicates": 0,
+              "planned_expected": 58
+            },
+            "numeric_correct": 0,
+            "exact_documents": 0,
+            "charged_microdollars": 0
+          }
+        }
+      },
+      "regression": {
+        "requests": 44,
+        "states": {
+          "pending": 44
+        },
+        "exact_relations": {
+          "expected": 0,
+          "observed": 0,
+          "correct": 0,
+          "omissions": 0,
+          "attribute_errors": 0,
+          "false_joins": 0,
+          "fabrications": 0,
+          "duplicates": 0,
+          "planned_expected": 332
+        },
+        "numeric_correct": 0,
+        "exact_documents": 0,
+        "charged_microdollars": 0,
+        "by_mode": {
+          "sync": {
+            "requests": 22,
+            "states": {
+              "pending": 22
+            },
+            "exact_relations": {
+              "expected": 0,
+              "observed": 0,
+              "correct": 0,
+              "omissions": 0,
+              "attribute_errors": 0,
+              "false_joins": 0,
+              "fabrications": 0,
+              "duplicates": 0,
+              "planned_expected": 166
+            },
+            "numeric_correct": 0,
+            "exact_documents": 0,
+            "charged_microdollars": 0
+          },
+          "batch": {
+            "requests": 22,
+            "states": {
+              "pending": 22
+            },
+            "exact_relations": {
+              "expected": 0,
+              "observed": 0,
+              "correct": 0,
+              "omissions": 0,
+              "attribute_errors": 0,
+              "false_joins": 0,
+              "fabrications": 0,
+              "duplicates": 0,
+              "planned_expected": 166
+            },
+            "numeric_correct": 0,
+            "exact_documents": 0,
+            "charged_microdollars": 0
+          }
+        }
+      }
+    }
+  },
+  "validation_interventions": [],
+  "production_qualified": false,
+  "limitations": [
+    "Purposive source-level holdout across the seven previously absent corpora, not a random archive sample.",
+    "Agent-reviewed source labels, not independent human adjudication.",
+    "Experimental candidate prompt and schema cannot confer production qualification without promotion review."
+  ]
+}

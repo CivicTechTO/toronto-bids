@@ -1,0 +1,104 @@
+AWARD INFORMATION
+                                                        Open Competitive Award Summary Form
+
+
+1. Award Details                                                                 Please fill out below:
+
+Date of Submission to PMMD (mmm/dd/yyyy)                                         May 1, 2026
+
+Select Division                                                                  Engineering & Construction Services
+
+If multiple divisions, expand the below grouped rows and select
+
+Solicitation Type                                                                RFT (Request for Tender)
+
+                                                                                 Ashbridges Bay Treatment Plant Digester Gas Compressors, Dryers, and
+Solicitation Title
+                                                                                 Chillers Installation
+
+Ward                                                                             14 - Toronto-Danforth
+
+If multiple wards, expand rows and add wards below
+
+Contract No. (if applicable)                                                     25ECS-MI-04AB
+
+Ariba Document No. (Ex. DocXXXXXXXXXX)                                            Doc5491818166
+
+                                                                                 Ashbridges Bay Treatment Plant Digester Gas Compressors, Dryers and Chillers
+Description of Work
+                                                                                 Installation Contract
+
+Term of the Contract (Excluding option periods)                                  54 months
+
+Number of Optional Renewal Periods                                               0
+
+
+2. Recommended Supplier (s)                                                      Supplier Award Value (net of all applicable taxes and charges)
+
+Pomerleau Inc.                                                                    $                                                           55,637,201.55
+
+
+
+
+Are the recommended Supplier(s) a Joint Venture (JV)?                            This is not a Joint Venture
+
+If this is a Joint Venture, provide details on the JV
+
+                                                                                 NOTE: This Section is locked, because it will autopopulate based on the
+3. Financial Impact Summary
+                                                                                 figures entered in the Financial Impact Tab
+
+3. Financial Impact - Supplier 1                                                 Pomerleau Inc.
+
+Contract Award Value (Bid Price, net of all applicable taxes and charges)        $55,637,201.55
+
+Contract Award Value (Bid Price, net of HST recoveries)                          $56,616,416.30
+Contract Award Value including HST and all applicable charges                    $62,870,037.75
+Maximum Cost to City including Option Periods and
+                                                                                 $56,616,416.30
+Applicable Contingencies (net of HST recoveries)
+
+Total Potential Cost to the City net of all applicable taxes and
+                                                                                 $55,637,201.55
+charges
+
+Total Potential Cost to the City including HST and all applicable
+                                                                                 $62,870,037.75
+charges
+
+Total Potential Cost to the City including Option Periods and
+                                                                                 $56,616,416.30
+applicable contingencies (net of HST recoveries)
+
+
+
+
+                                                                            Page 1 of 2
+4. Solicitation Summary
+
+Solicitation Issued Date (mmm/dd/yyyy)                                              January 14, 2026
+
+Solicitation Closed Date (mmm/dd/yyyy)                                              March 30, 2026
+
+Number of Addenda Issued                                                            11
+
+Number of Bids Received                                                             2
+
+
+5. Bid Summary
+
+Supplier Name                                                                       Bid Price (Excluding HST)
+* indicates non-compliant Supplier                                                  NOTE: Not applicable for RFP
+**Supplier did not meet the required technical threshold to be considered further   NOTE: Range of Scores for RFP if 3 or more Suppliers passed the technical
+for award                                                                           threshold
+
+Range:
+
+1. Pomerleau Inc.                                                                   $                                                              50,777,563.11
+
+2. ASCO Construction (Toronto) Ltd.                                                 $                                                              55,304,943.94
+
+
+
+
+                                                                              Page 2 of 2

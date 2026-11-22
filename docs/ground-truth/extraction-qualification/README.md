@@ -1,5 +1,11 @@
 # Extraction qualification cohort (#302)
 
+The [2026-11-22 evidence-backed candidate campaign](followups/2026-11-22/) is prepared offline (72 requests, 0 sent) with a separately versioned prompt (`eval-3e995e90436c`) and schema adding `bids[].amount_evidence`, applying the settled #302 policy rules (strictly local award tax basis and empty contract arrays for ongoing-procurement status updates) and expanding the untouched holdout across all seven previously absent corpora (`award_summary`, `ba_report`, `bd_report`, `committee`, `composite`, `ttc`, `waterfront`). Reproduce the offline pre-flight summary without credentials or network access:
+
+```sh
+uv run --project scrapers python docs/ground-truth/extraction-qualification/followups/2026-11-22/summarize.py
+```
+
 The [68-request revised-prompt follow-up](../../extraction-sonnet-revised-followup-2026-11-15.md) tests seven fresh sources and ten regression cases twice in both modes. New source relationships match after disclosed printed-reference review, but an unsupported bid price and stage/compliance repeat failures remain. Production is unchanged; the candidate is not qualified.
 
 The subsequent [80-request model/effort/prompt comparison](../../extraction-model-effort-prompt-comparison-2026-11-13.md) improved the known-case result from 121/166 to 164/166 exact relations with general clarifications. Higher effort and Opus alone recovered names but assigned unsupported bid prices. Experimental prompts have separate hash-bound versions and never production cache identities; they do not confer production qualification.
