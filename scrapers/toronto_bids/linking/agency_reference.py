@@ -3,10 +3,20 @@ import re
 import uuid
 
 
+_TCHC_RFX = re.compile(
+    r"\b(RF(?:P|Q|VQ|PQ|T|R|S|QL|EOI|I))[\s-]*"
+    r"([0-9]{4,5}(?:\s*-\s*[0-9]+)?|RP-?[0-9]+|[0-9]{2}-[0-9]{3})"
+    r"(?:[\s-]+(PP))?\b",
+    re.I,
+)
+
+
 def normalize_agency_reference(buyer_slug, raw):
     text = " ".join(str(raw or "").split()).strip()
     if text.lower() in {"", "unknown", "none", "null", "n/a", "not stated", "not provided",
-                        "rfp", "rft", "rfq", "request for quotation", "new agreement"}:
+                        "not applicable", "rfp", "rft", "rfq", "request for quotation",
+                        "new agreement", "direct award", "sole source", "single source",
+                        "change order", "non-competitive"}:
         return None
     if re.match(r"https?://", text, re.I):
         return text  # Report-URL fallbacks are case-sensitive.
@@ -31,6 +41,20 @@ def normalize_agency_reference(buyer_slug, raw):
         match = re.fullmatch(r"Contract\s+(?:No\.?|#)\s*([0-9][0-9A-Za-z-]{3,})", text, re.I)
         if match:
             return match[1].upper()
+    elif buyer_slug == "toronto-community-housing":
+        refs = set()
+        for prefix, num, suffix in _TCHC_RFX.findall(text):
+            clean_num = re.sub(r"\s*-\s*", "-", num.upper())
+            if clean_num.startswith("RP") and not clean_num.startswith("RP-"):
+                clean_num = "RP-" + clean_num[2:]
+            canon = f"{prefix.upper()} {clean_num}"
+            if suffix:
+                canon += f"-{suffix.upper()}"
+            refs.add(canon)
+        if len(refs) > 1:
+            raise ValueError(f"ambiguous TCHC reference {text!r}")
+        if refs:
+            return refs.pop()
     return text.upper()
 
 
