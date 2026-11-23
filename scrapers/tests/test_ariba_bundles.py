@@ -1011,9 +1011,10 @@ def test_bundle_complete_rejects_corrupt_zip_and_mismatched_provenance(tmp_path)
     assert not aa.bundle_complete(tmp_path, "2222222222")
 
 
-def test_store_bundle_copies_indexes_and_rebuilds_stale_rows(conn, tmp_path):
+@pytest.mark.parametrize("payload_size", [1, 2 << 20], ids=["small", "multi-buffer"])
+def test_store_bundle_copies_indexes_and_rebuilds_stale_rows(conn, tmp_path, payload_size):
     inner = _zip_bytes({"a.pdf": b"a"})
-    src = _make_zip(tmp_path / "Doc5660182540.zip", {"P1.pdf": b"p", "Appx.zip": inner})
+    src = _make_zip(tmp_path / "Doc5660182540.zip", {"P1.pdf": b"p" * payload_size, "Appx.zip": inner})
     dest = tmp_path / "store"
 
     assert aa.store_bundle(conn, src, "5660182540", dest) == 2
@@ -1024,7 +1025,8 @@ def test_store_bundle_copies_indexes_and_rebuilds_stale_rows(conn, tmp_path):
     ).fetchall()
     assert [r["path"] for r in rows] == ["Appx.zip/a.pdf", "P1.pdf"]
     assert rows[0]["zip_name"] == "Doc5660182540.zip"
-    assert all(len(r["zip_sha256"]) == 64 for r in rows)
+    expected_digest = hashlib.sha256(src.read_bytes()).hexdigest()
+    assert {r["zip_sha256"] for r in rows} == {expected_digest}
 
     conn.execute(
         "INSERT INTO ariba_attachment (document_number, filename, path) VALUES ('5660182540', 'Appx.zip', 'Appx.zip')"
