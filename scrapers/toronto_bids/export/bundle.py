@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+import fcntl
 import hashlib
 import json
 import os
@@ -12,6 +13,7 @@ import tempfile
 from toronto_bids import config
 from toronto_bids.export.json_export import export_json, export_schema
 from toronto_bids.export.tabular_export import write_csv_zip, write_parquet_files
+from toronto_bids.store import db
 
 COMPLETE_MARKER = ".export-complete.json"
 
@@ -46,17 +48,67 @@ def write_complete_marker(export_dir: Path, generated_at: str, artifact_names: l
     return marker_path
 
 
-def export_all(conn, out_path=None, *, generated_at: str | None = None) -> dict:
-    """Write JSON, schema dictionary, Parquet tables, and CSV bundle atomically with one timestamp.
+def _custom_export_artifacts(json_path: Path, artifact_names: list[str]) -> set[str]:
+    """Check destination collisions and return prior artifacts whose bytes still match."""
+    out_dir = json_path.parent
+    marker_path = out_dir / COMPLETE_MARKER
+    owned = set()
+    if os.path.lexists(marker_path):
+        if marker_path.is_symlink() or not marker_path.is_file():
+            raise FileExistsError(f"Export marker is occupied: {marker_path}")
+        try:
+            marker = json.loads(marker_path.read_text(encoding="utf-8"))
+        except (ValueError, OSError) as exc:
+            raise FileExistsError(f"Export marker is occupied: {marker_path}") from exc
+        if (not isinstance(marker, dict) or marker.get("version") != 1
+                or marker.get("json_file") != json_path.name
+                or not isinstance(marker.get("artifacts"), dict)
+                or not {json_path.name, "schema.json", "bids-csv.zip"} <= marker["artifacts"].keys()):
+            raise FileExistsError(f"Export marker is occupied: {marker_path}")
 
-    Invalidates any prior completion marker before writing and stages all artifacts in a sibling
-    temp directory so an interrupted or failed export never leaves a mixed or publishable bundle.
-    """
-    json_path = Path(out_path) if out_path else Path(config.DATA_DIR) / "export" / "bids.json"
+        for name, fingerprint in marker["artifacts"].items():
+            if name in ("", ".", "..", COMPLETE_MARKER) or "/" in name or chr(0) in name:
+                continue
+            artifact = out_dir / name
+            if not artifact.is_symlink() and artifact.is_file() and _file_fingerprint(artifact) == fingerprint:
+                owned.add(name)
+
+    for name in artifact_names:
+        target = out_dir / name
+        if name not in owned and os.path.lexists(target):
+            raise FileExistsError(f"Export output is occupied: {target}")
+    return owned
+
+
+def export_all(conn, out_path=None, *, generated_at: str | None = None) -> dict:
+    """Stage a full bundle with one timestamp and publish its completion marker last."""
+    default_path = Path(config.DATA_DIR) / "export" / "bids.json"
+    json_path = Path(out_path) if out_path else default_path
     out_dir = json_path.parent
     out_dir.mkdir(parents=True, exist_ok=True)
+    custom = json_path.name != default_path.name or out_dir.resolve() != default_path.parent.resolve()
+
+    # Serialize exporters without adding a lock file to the destination.
+    directory_fd = os.open(out_dir, os.O_RDONLY | os.O_DIRECTORY)
+    try:
+        fcntl.flock(directory_fd, fcntl.LOCK_EX)
+        return _export_bundle(conn, json_path, generated_at, custom=custom)
+    finally:
+        os.close(directory_fd)
+
+
+def _export_bundle(conn, json_path: Path, generated_at: str | None, *, custom: bool) -> dict:
+    out_dir = json_path.parent
     marker_path = out_dir / COMPLETE_MARKER
-    marker_path.unlink(missing_ok=True)
+    artifact_names = [json_path.name, "schema.json", "bids-csv.zip", *(f"{t}.parquet" for t in db.EXPORT_TABLES)]
+    if len(set(artifact_names)) != len(artifact_names) or json_path.name == COMPLETE_MARKER:
+        raise FileExistsError(f"JSON output name is reserved by the export bundle: {json_path}")
+
+    if custom:
+        obsolete = _custom_export_artifacts(json_path, artifact_names).difference(artifact_names)
+    else:
+        marker_path.unlink(missing_ok=True)
+        obsolete = {p.name for p in out_dir.glob("*.parquet")}.difference(artifact_names)
 
     timestamp = generated_at or datetime.now(timezone.utc).isoformat()
     with tempfile.TemporaryDirectory(dir=out_dir, prefix=".export-stage.") as stage_raw:
@@ -67,15 +119,13 @@ def export_all(conn, out_path=None, *, generated_at: str | None = None) -> dict:
         stage_csv = write_csv_zip(conn, stage / "bids-csv.zip")
 
         staged = [stage_json, stage_schema, stage_csv, *stage_parquets]
-        expected_parquets = {p.name for p in stage_parquets}
-        for stale in out_dir.glob("*.parquet"):
-            if stale.name not in expected_parquets:
-                stale.unlink()
+        stage_marker = write_complete_marker(stage, timestamp, artifact_names, json_file=json_path.name)
         for src in staged:
             os.replace(src, out_dir / src.name)
+        for name in sorted(obsolete):
+            (out_dir / name).unlink(missing_ok=True)
+        os.replace(stage_marker, marker_path)
 
-    artifact_names = [json_path.name, "schema.json", "bids-csv.zip", *sorted(expected_parquets)]
-    write_complete_marker(out_dir, timestamp, artifact_names, json_file=json_path.name)
     return {
         "generated_at": timestamp,
         "export_dir": out_dir,
@@ -83,7 +133,7 @@ def export_all(conn, out_path=None, *, generated_at: str | None = None) -> dict:
         "json_bytes": json_path.stat().st_size,
         "schema_path": out_dir / "schema.json",
         "csv_zip_path": out_dir / "bids-csv.zip",
-        "parquet_paths": [out_dir / name for name in sorted(expected_parquets)],
+        "parquet_paths": [out_dir / p.name for p in sorted(stage_parquets)],
         "marker_path": marker_path,
     }
 

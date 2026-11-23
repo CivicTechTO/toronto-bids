@@ -58,6 +58,8 @@ Each source runs independently: if one fails, the others still commit their rows
 
 `build_export_document(conn)` in `export/document.py` builds the format-independent structure and `export_json()` serializes it. Keep all shaping logic in `document.py` so new export formats reuse the same builder.
 
+With a custom `--out` path, the schema, CSV ZIP, and Parquet files are written beside the JSON. If an output name is already occupied, the export stops before writing unless the previous completion marker for that JSON records the file and its contents still match.
+
 ## Data caveats
 
 Keep these details in mind when querying `bids.sqlite`:
