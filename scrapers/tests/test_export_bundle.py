@@ -47,6 +47,48 @@ def test_export_all_shares_timestamp_and_verifies_cleanly(tmp_path, monkeypatch)
     assert bundle.main([str(export_dir)]) == 0
 
 
+def test_custom_export_preserves_unrelated_parquet_and_removes_owned_obsolete_file(tmp_path, conn):
+    output = tmp_path / "custom.json"
+    analysis = tmp_path / "analysis.parquet"
+    analysis.write_bytes(b"independent analysis")
+    result = bundle.export_all(conn, output)
+
+    obsolete = tmp_path / "obsolete.parquet"
+    obsolete.write_bytes(b"prior export")
+    replaced = tmp_path / "replaced.parquet"
+    replaced.write_bytes(b"prior export")
+    artifacts = json.loads(result["marker_path"].read_text())["artifacts"]
+    bundle.write_complete_marker(
+        tmp_path, result["generated_at"], [*artifacts, obsolete.name, replaced.name], json_file=output.name
+    )
+    replaced.write_bytes(b"independent replacement")
+
+    bundle.export_all(conn, output)
+    assert analysis.read_bytes() == b"independent analysis"
+    assert replaced.read_bytes() == b"independent replacement"
+    assert not obsolete.exists()
+
+
+@pytest.mark.parametrize("occupied", ["custom.json", "schema.json", "solicitation.parquet", bundle.COMPLETE_MARKER])
+def test_custom_export_rejects_occupied_output_before_writing(tmp_path, conn, occupied):
+    destination = tmp_path / "custom"
+    destination.mkdir()
+    (destination / occupied).write_bytes(b"unrelated")
+    with pytest.raises(FileExistsError, match=occupied):
+        bundle.export_all(conn, destination / "custom.json")
+    assert {p.name: p.read_bytes() for p in destination.iterdir()} == {occupied: b"unrelated"}
+
+
+def test_custom_export_rejects_replaced_artifact_without_changing_bundle(tmp_path, conn):
+    output = tmp_path / "custom.json"
+    bundle.export_all(conn, output)
+    (tmp_path / "schema.json").write_bytes(b"unrelated replacement")
+    before = {p.name: p.read_bytes() for p in tmp_path.iterdir()}
+    with pytest.raises(FileExistsError, match="schema.json"):
+        bundle.export_all(conn, output)
+    assert {p.name: p.read_bytes() for p in tmp_path.iterdir()} == before
+
+
 def test_failed_export_invalidates_marker_and_preserves_prior_files_unmixed(tmp_path, monkeypatch):
     conn = _init_db(tmp_path, monkeypatch)
     try:
