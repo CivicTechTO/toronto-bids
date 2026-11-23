@@ -1,13 +1,18 @@
 """Tests for the shared full-bundle export sequence and completeness validation (#319, #320)."""
+import csv
+import io
 import json
+import sqlite3
 from pathlib import Path
 import zipfile
 
+import pyarrow.parquet as pq
 import pytest
 
-from toronto_bids import cli, config
+from toronto_bids import cli, config, pipeline
 from toronto_bids.export import bundle
 from toronto_bids.models import Solicitation
+from toronto_bids.sources.odata import ODataNonCompetitiveSource
 from toronto_bids.store import db
 
 
@@ -45,6 +50,67 @@ def test_export_all_shares_timestamp_and_verifies_cleanly(tmp_path, monkeypatch)
     marker = bundle.verify_complete_export(export_dir)
     assert marker["generated_at"] == ts
     assert bundle.main([str(export_dir)]) == 0
+
+
+def test_noncompetitive_recipients_survive_upgrade_resync_and_export(tmp_path, monkeypatch):
+    monkeypatch.setattr(config, "DATA_DIR", tmp_path)
+    path = tmp_path / "bids.sqlite"
+    schema = db.resources.files("toronto_bids.store").joinpath("schema.sql").read_text()
+    legacy = sqlite3.connect(path)
+    try:
+        legacy.executescript(schema.replace("    recipients               TEXT,\n", ""))
+        assert "recipients" not in {col[1] for col in legacy.execute("PRAGMA table_info(noncompetitive)")}
+        legacy.execute(
+            "INSERT INTO noncompetitive (workspace_number, supplier_name_raw, contract_amount, contract_date) "
+            "VALUES ('old', 'Legacy Supplier', '42', '2015-07-28')"
+        )
+        legacy.commit()
+    finally:
+        legacy.close()
+
+    source = ODataNonCompetitiveSource()
+    raw = {"Non_Competitive_Reference_Number": "8614", "Awarded_Suppliers": [
+        {"Successful_Bidder": "First Supplier", "Award_Amount": "300", "Date_Awarded": "2026-10-01"},
+        {"Successful_Bidder": "Second Supplier", "Award_Amount": "$1,200", "Date_Awarded": "2026-10-02"},
+    ]}
+    expected = [
+        {"supplier_name_raw": "First Supplier", "contract_amount": "300", "contract_date": "2026-10-01"},
+        {"supplier_name_raw": "Second Supplier", "contract_amount": "$1,200", "contract_date": "2026-10-02"},
+    ]
+    class FakeHttp:
+        def get_json(self, _url, *, params):
+            return {"value": [] if params["$skip"] else [raw]}
+
+    conn = db.connect(path)
+    try:
+        db.init_db(conn)
+        for _ in range(2):
+            assert pipeline.run_source(conn, FakeHttp(), source) == (1, 1, None)
+        result = bundle.export_all(conn)
+        assert conn.execute("SELECT COUNT(*) FROM noncompetitive").fetchone()[0] == 2
+    finally:
+        conn.close()
+
+    document = json.loads(result["json_path"].read_text())
+    rows = {row["workspace_number"]: row for row in document["noncompetitive"]}
+    assert rows["8614"]["recipients"] == expected
+    assert rows["8614"]["supplier_name_raw"] == "First Supplier"
+    assert rows["8614"]["contract_amount_numeric"] == 300
+    assert rows["old"]["supplier_name_raw"] == "Legacy Supplier"
+    assert rows["old"]["recipients"] == [
+        {"supplier_name_raw": "Legacy Supplier", "contract_amount": "42", "contract_date": "2015-07-28"}
+    ]
+
+    export_dir = result["export_dir"]
+    with sqlite3.connect(export_dir / "bids.sqlite") as snapshot:
+        stored = snapshot.execute("SELECT recipients FROM noncompetitive WHERE workspace_number='8614'").fetchone()
+        assert json.loads(stored[0]) == expected
+    snapshot.close()
+    with zipfile.ZipFile(result["csv_zip_path"]) as archive, archive.open("noncompetitive.csv") as stream:
+        rows = {row["workspace_number"]: row for row in csv.DictReader(io.TextIOWrapper(stream))}
+        assert json.loads(rows["8614"]["recipients"]) == expected
+    rows = {row["workspace_number"]: row for row in pq.read_table(export_dir / "noncompetitive.parquet").to_pylist()}
+    assert json.loads(rows["8614"]["recipients"]) == expected
 
 
 def test_custom_export_preserves_unrelated_parquet_and_removes_owned_obsolete_file(tmp_path, conn):

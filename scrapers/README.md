@@ -7,7 +7,7 @@ A `uv`-managed Python 3.12+ package that collects City of Toronto and agency pro
 ### Core sync (`tb sync`)
 
 - **OData `feis_solicitation_published`**: Authoritative City solicitation lifecycle feed (open, awarded, cancelled) and nested awards.
-- **OData `feis_non_competitive_published`**: Non-competitive (sole-source) City contracts.
+- **OData `feis_non_competitive_published`**: Non-competitive (sole-source) City contracts. Each workspace keeps its published supplier lines in `recipients`, as an array in public JSON and JSON text in SQLite, CSV, and Parquet. The existing scalar fields remain available for single-recipient readers.
 - **CKAN datasets** (`tobids-awarded-contracts`, `tobids-all-open-solicitations`, `tobids-non-competitive-contracts`, and capital pipeline): Historical backfill and cross-check for the OData feeds.
 - **SAP Ariba Discovery (`ariba_discovery`)**: Archives open City postings into `ariba_posting` via public JSON APIs before they close. Postings are linked to `document_number` when the detail endpoint resolves (it frequently returns HTTP 500; later runs fill gaps). The stored price range and currency stay together during a detail outage. Search-only estimates have no stored currency.
 - **Suspended and Disqualified Firms (`suspended_firms`)**: Parses the City's public suspension registry into `suspended_firm`, including supplier name, status, dates, type, and council authority reference.

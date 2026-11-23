@@ -32,10 +32,13 @@ description = "Award provenance ('odata' spine or 'ckan_awarded' cross-check). T
 description = "Identifier for a non-competitive contract — a separate keyspace with no join to document_number."
 
 ["noncompetitive.contract_amount"]
-description = "The City's published contract-amount string, verbatim. NOT summable — aggregate contract_amount_numeric."
+description = "The City's published contract-amount string for the scalar supplier. Use recipients for the full set of published lines when present."
 
 ["noncompetitive.contract_amount_numeric"]
-description = "Machine-parsed CAD contract amount. NULL when the raw string is not a single CAD amount."
+description = "Machine-parsed CAD contract amount for the scalar supplier. NULL when the raw string is not a single CAD amount."
+
+["noncompetitive.recipients"]
+description = "JSON array of published OData supplier lines in source order. Each line carries supplier_name_raw, contract_amount, and contract_date. A null tabular value leaves the stored scalar fields available for older and CKAN-only records."
 
 ["bid.reference"]
 description = "The council item (e.g. '2016.BD106.3') this bid was tabulated under, for Bid Award Panel-era bids. NULL for Award Summary Form bids, which carry a document_number instead."
