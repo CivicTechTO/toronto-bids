@@ -1,21 +1,39 @@
 """Exercise the real publish script with local artifacts and stubbed network commands."""
+import csv
+import hashlib
+import io
 import json
 import os
 import shutil
 import sqlite3
 import subprocess
 import sys
+import zipfile
+from unittest.mock import patch
+
+import pyarrow.parquet as pq
 
 import pytest
 
 from tests.helpers_deploy import BASH, DEPLOY
-from toronto_bids.export.bundle import COMPLETE_MARKER, write_complete_marker
+from toronto_bids import config
+from toronto_bids.export.bundle import COMPLETE_MARKER, export_all
+from toronto_bids.models import Solicitation
 from toronto_bids.store import db
 
 pytestmark = pytest.mark.skipif(
     shutil.which("bash") is None or shutil.which("uv") is None,
     reason="publish-data.sh needs bash and uv",
 )
+
+
+FIRST_DOC = "5672751291"
+LATER_DOC = "5672751292"
+
+
+def _import_contract(conn, document_number):
+    db.upsert_row(conn, Solicitation(document_number=document_number, source="odata"), overwrite=True)
+    conn.commit()
 
 
 def _publish(
@@ -33,21 +51,17 @@ def _publish(
     export = data / "export"
     export.mkdir(parents=True)
     generated_at = "2026-10-20T13:00:00Z"
-    (export / "bids.json").write_text(json.dumps({"meta": {"generated_at": generated_at}}))
-    (export / "schema.json").write_text(json.dumps({"generated_at": generated_at, "tables": {}}))
-    (export / "bids-csv.zip").write_bytes(b"csv fixture")
-    (export / "ariba_posting.parquet").write_bytes(b"parquet fixture")
-    if write_marker:
-        write_complete_marker(
-            export,
-            generated_at,
-            ["bids.json", "schema.json", "bids-csv.zip", "ariba_posting.parquet"],
-        )
-    if tamper_after_marker is not None:
-        tamper_after_marker(export)
     conn = db.connect(data / "bids.sqlite")
     db.init_db(conn)
-    conn.close()
+    conn.execute("PRAGMA journal_mode = WAL")
+    _import_contract(conn, FIRST_DOC)
+    with patch.object(config, "DATA_DIR", data):
+        export_all(conn, generated_at=generated_at)
+        conn.close()
+        if not write_marker:
+            (export / COMPLETE_MARKER).unlink()
+        if tamper_after_marker is not None:
+            tamper_after_marker(export)
     uploads_dir = tmp_path / "uploaded_sqlite"
     uploads_dir.mkdir()
     bin_dir = tmp_path / "bin"
@@ -74,6 +88,8 @@ if sys.argv[1:3] == ['release','upload']:
     for arg in sys.argv[3:]:
         if os.path.basename(arg) == 'bids.sqlite' and os.path.isfile(arg):
             shutil.copy2(arg, os.path.join(os.environ['UPLOADS_DIR'], 'latest-bids.sqlite'))
+        elif os.path.basename(arg) in ('bids.json', 'bids-csv.zip', 'solicitation.parquet'):
+            shutil.copy2(arg, os.environ['UPLOADS_DIR'])
 if sys.argv[1:3] == ['release','create']:
     for arg in sys.argv[3:]:
         if os.path.basename(arg) == 'bids.sqlite' and os.path.isfile(arg):
@@ -274,6 +290,56 @@ def test_mixed_fresh_json_and_old_tabular_artifacts_refuses_publish(tmp_path):
     assert rows[-1][0:2] == ("publish", "failed")
 
 
+@pytest.mark.parametrize("reexport", [False, True])
+def test_release_formats_agree_after_import_between_export_and_publish(tmp_path, reexport):
+    def import_later_contract(export):
+        conn = db.connect(export.parent / "bids.sqlite")
+        try:
+            _import_contract(conn, LATER_DOC)
+            if reexport:
+                export_all(conn, generated_at="2026-10-21T00:00:00Z")
+        finally:
+            conn.close()
+
+    result, _, _, _ = _publish(tmp_path, tamper_after_marker=import_later_contract)
+    assert result.returncode == 0, result.stdout + result.stderr
+
+    expected = {FIRST_DOC, LATER_DOC} if reexport else {FIRST_DOC}
+    uploads = tmp_path / "uploaded_sqlite"
+    conn = sqlite3.connect(uploads / "latest-bids.sqlite")
+    try:
+        assert conn.execute("PRAGMA journal_mode").fetchone()[0] == "delete"
+        assert {row[0] for row in conn.execute("SELECT document_number FROM solicitation")} == expected
+    finally:
+        conn.close()
+    document = json.loads((uploads / "bids.json").read_text())
+    assert {row["document_number"] for row in document["solicitations"]} == expected
+    with zipfile.ZipFile(uploads / "bids-csv.zip") as archive, archive.open("solicitation.csv") as stream:
+        assert {row["document_number"] for row in csv.DictReader(io.TextIOWrapper(stream))} == expected
+    parquet = pq.read_table(uploads / "solicitation.parquet", columns=["document_number"])
+    assert set(parquet["document_number"].to_pylist()) == expected
+
+
+def test_publish_rejects_a_substituted_sqlite_snapshot_before_upload(tmp_path):
+    def substitute_snapshot(export):
+        conn = db.connect(export.parent / "bids.sqlite")
+        replacement = export / "replacement.sqlite"
+        target = sqlite3.connect(replacement)
+        try:
+            _import_contract(conn, LATER_DOC)
+            conn.backup(target)
+        finally:
+            target.close()
+            conn.close()
+        replacement.replace(export / "bids.sqlite")
+
+    result, rows, _, commands = _publish(tmp_path, tamper_after_marker=substitute_snapshot)
+    assert result.returncode == 1
+    assert "export artifact bids.sqlite does not match completion marker" in result.stderr
+    assert not any(command[:3] == ["gh", "release", "upload"] for command in commands)
+    assert rows[-1][:2] == ("publish", "failed")
+
+
 def test_rolling_r2_and_monthly_snapshot_upload_identical_frozen_sqlite_bytes(tmp_path):
     result, rows, _, commands = _publish(tmp_path, r2=True, day="01")
     assert result.returncode == 0, result.stdout + result.stderr
@@ -294,7 +360,10 @@ def test_rolling_r2_and_monthly_snapshot_upload_identical_frozen_sqlite_bytes(tm
     manifest = json.loads((tmp_path / "data" / "export" / "manifest.json").read_text())
     sqlite_entry = next(a for a in manifest["artifacts"] if a["name"] == "bids.sqlite")
     assert sqlite_entry["bytes"] == len(latest_bytes)
-    assert list((tmp_path / "data").glob(".publish-stage.*")) == []
+    export = tmp_path / "data" / "export"
+    completion = json.loads((export / COMPLETE_MARKER).read_text())
+    assert completion["artifacts"]["bids.sqlite"]["sha256"] == hashlib.sha256(latest_bytes).hexdigest()
+    assert latest_bytes == (export / "bids.sqlite").read_bytes()
 
 
 def test_nightly_wrapper_blocks_publish_on_failed_export_and_publishes_after_upstream_failure(tmp_path):

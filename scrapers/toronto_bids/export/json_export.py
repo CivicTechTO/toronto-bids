@@ -9,6 +9,11 @@ def export_json(conn, out_path, generated_at: str | None = None) -> Path:
     from toronto_bids.linking.procurement import resolve_procurements
     resolve_procurements(conn)
     conn.commit()
+    return write_json(conn, out_path, generated_at)
+
+
+def write_json(conn, out_path, generated_at: str | None = None) -> Path:
+    """Serialize the archive after procurement identities have been resolved."""
     document = build_export_document(conn, generated_at)
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)

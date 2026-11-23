@@ -84,7 +84,7 @@ Both upsert modes use `COALESCE` (`db._upsert_keyed`): with `overwrite=True`, no
 
 ### Export seam (`export/`)
 
-`build_export_document(conn)` in `export/document.py` is deterministic given `generated_at` (ordered queries, no file I/O). `export_json` resolves and commits procurement identities first (because nightly enrichment runs after sync linking passes), then serializes the builder. Keep all document-shaping logic in `document.py`. Per-solicitation `documents` union Ariba leaves, Award Summary Forms, and staff reports using exact bridges only; internal hashes stay private and Ariba zip bytes are unpublished.
+`build_export_document(conn)` in `export/document.py` is deterministic given `generated_at` (ordered queries, no file I/O). The full export resolves and commits procurement identities first (because nightly enrichment runs after sync linking passes). The default export then freezes SQLite and serializes every release format from that snapshot. Keep all document-shaping logic in `document.py`. Per-solicitation `documents` union Ariba leaves, Award Summary Forms, and staff reports using exact bridges only; internal hashes stay private and Ariba zip bytes are unpublished.
 
 ## Subsystem documentation
 
