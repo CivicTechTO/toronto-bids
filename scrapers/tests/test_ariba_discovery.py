@@ -231,21 +231,50 @@ def test_search_failure_preserves_archive_and_other_sources_continue(conn):
     )
 
 
-def test_detail_failure_does_not_erase_existing_snapshot(conn):
+def test_detail_outage_preserves_price_range_until_detail_recovers(conn):
     search = _fixture("ariba_search_record.json")
-    detail = _fixture("ariba_detail.json")
-    for row in ariba.normalize_posting({"search": search, "detail": detail}):
-        db.upsert_row(conn, row, overwrite=True)
+    first_detail = _fixture("ariba_detail.json")
+    detail = None
 
     def handler(request):
         if request.url.path.endswith("/search"):
             return httpx.Response(200, json={"totalNumberOfRecords": 1, "records": [search]})
-        return httpx.Response(503)
+        return httpx.Response(503) if detail is None else httpx.Response(200, json=detail)
 
-    assert pipeline.run_source(conn, _http(handler), AribaDiscoverySource()) == (1, 1, None)
-    saved = conn.execute("SELECT document_number, raw_json FROM ariba_posting").fetchone()
+    source = AribaDiscoverySource()
+    http = _http(handler)
+
+    def refresh():
+        assert pipeline.run_source(conn, http, source) == (1, 1, None)
+        return conn.execute("SELECT * FROM ariba_posting").fetchone()
+
+    assert _price_range(refresh()) == ("712.5552230298", "70542967.0799487", None)
+
+    detail = first_detail
+    assert _price_range(refresh()) == ("1000", "99000000", "CAD")
+
+    detail = None
+    search["title"] = "Updated title from search"
+    saved = refresh()
+    assert _price_range(saved) == ("1000", "99000000", "CAD")
+    assert saved["title"] == search["title"]
     assert saved["document_number"] == "5672751291"
-    assert json.loads(saved["raw_json"]) == detail
+    assert json.loads(saved["raw_json"]) == first_detail
+
+    detail = dict(first_detail, lowerLimit_amount=200, upperLimit_amount=900, upperLimit_currency="USD")
+    assert _price_range(refresh()) == ("200", "900", "USD")
+
+    detail = dict(first_detail, lowerLimit_amount=None, upperLimit_amount=5000, upperLimit_currency=None)
+    assert _price_range(refresh()) == (None, "5000", None)
+
+    detail = dict(first_detail, upperLimit_amount=None)
+    assert _price_range(refresh()) == (None, "5000", None)
+    detail = None
+    assert _price_range(refresh()) == (None, "5000", None)
+
+
+def _price_range(row):
+    return row["amount_min"], row["amount_max"], row["currency"]
 
 
 def test_detail_for_another_buyer_is_rejected():
