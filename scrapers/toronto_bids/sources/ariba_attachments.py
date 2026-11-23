@@ -8,11 +8,15 @@ Documents are captured one file at a time from the event content tree (`ariba_fi
 Pure indexing/storage (`index_zip`, `store_bundle`, `ingest_downloads`) is separated from the
 Playwright browser flow (`login`, `capture_event`, `capture_attachments`, `AribaFileSource`).
 """
+import fcntl
 import hashlib
 import json
+import os
 import re
 import shutil
+import tempfile
 import zipfile
+from contextlib import nullcontext
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -47,35 +51,58 @@ def index_zip(zip_path) -> list[dict]:
 
 
 def store_bundle(conn, zip_path, document_number: str, dest_dir=None) -> int:
-    """Copy a bundle to `<dest_dir>/Doc<document_number>.zip` and rebuild its DB index rows.
-
-    Returns the number of leaf files indexed.
-    """
+    """Validate and install a bundle, or rebuild the index from the installed ZIP."""
     dest_dir = Path(dest_dir if dest_dir is not None else config.ARIBA_ATTACHMENTS_DIR)
     dest_dir.mkdir(parents=True, exist_ok=True)
     canonical = dest_dir / f"Doc{document_number}.zip"
-
     zip_path = Path(zip_path)
-    if zip_path.resolve() != canonical.resolve():
-        shutil.copy2(zip_path, canonical)
 
-    with canonical.open("rb") as stream:
-        zip_sha = hashlib.file_digest(stream, "sha256").hexdigest()
-    entries = index_zip(canonical)
-    # Rebuild all rows for this document so stale entries cannot survive.
-    conn.execute("DELETE FROM ariba_attachment WHERE document_number = ?", (document_number,))
-    for entry in entries:
-        db.upsert_row(conn, AribaAttachment(
-            document_number=document_number,
-            filename=entry["filename"],
-            path=entry["path"],
-            file_size=entry["file_size"],
-            crc32=entry["crc32"],
-            zip_name=canonical.name,
-            zip_sha256=zip_sha,
-        ), overwrite=True)
-    conn.commit()
-    return len(entries)
+    # Serialize installs and reindexes against the same archive.
+    directory_fd = os.open(dest_dir, os.O_RDONLY | os.O_DIRECTORY)
+    try:
+        fcntl.flock(directory_fd, fcntl.LOCK_EX)
+        replacing = zip_path.resolve() != canonical.resolve()
+        staging = tempfile.TemporaryDirectory(dir=dest_dir, prefix=".ariba-import.") if replacing else nullcontext()
+        with staging as stage:
+            candidate = canonical
+            if replacing:
+                candidate = Path(stage) / canonical.name
+                shutil.copy2(zip_path, candidate)
+
+            with candidate.open("rb") as stream:
+                if replacing:
+                    with zipfile.ZipFile(stream) as archive:
+                        for member in archive.infolist():
+                            if member.flag_bits & 1:  # Encrypted members can still be indexed.
+                                continue
+                            with archive.open(member) as content:
+                                while content.read(1 << 20):
+                                    pass
+                    os.fsync(stream.fileno())
+                entries = index_zip(stream)
+                stream.seek(0)
+                zip_sha = hashlib.file_digest(stream, "sha256").hexdigest()
+
+            # Prepare the index before replacing the ZIP. If the process stops before
+            # commit, reindexing the installed ZIP repairs the rolled-back index.
+            with conn:
+                conn.execute("DELETE FROM ariba_attachment WHERE document_number = ?", (document_number,))
+                for entry in entries:
+                    db.upsert_row(conn, AribaAttachment(
+                        document_number=document_number,
+                        filename=entry["filename"],
+                        path=entry["path"],
+                        file_size=entry["file_size"],
+                        crc32=entry["crc32"],
+                        zip_name=canonical.name,
+                        zip_sha256=zip_sha,
+                    ), overwrite=True)
+                if replacing:
+                    candidate.replace(canonical)
+                    os.fsync(directory_fd)
+            return len(entries)
+    finally:
+        os.close(directory_fd)
 
 
 def ingest_downloads(conn, source_dir, dest_dir=None, log=lambda _m: None) -> int:

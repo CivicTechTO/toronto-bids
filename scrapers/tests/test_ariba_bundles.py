@@ -1,6 +1,7 @@
 import hashlib
 import io
 import json
+import sqlite3
 import zipfile
 
 import pytest
@@ -1035,6 +1036,65 @@ def test_store_bundle_copies_indexes_and_rebuilds_stale_rows(conn, tmp_path, pay
     aa.store_bundle(conn, src, "5660182540", dest)
     paths = {r["path"] for r in conn.execute("SELECT path FROM ariba_attachment WHERE document_number='5660182540'")}
     assert paths == {"P1.pdf", "Appx.zip/a.pdf"}
+
+
+def _bundle_index(conn):
+    return {
+        (row["path"], row["zip_sha256"])
+        for row in conn.execute("SELECT path, zip_sha256 FROM ariba_attachment")
+    }
+
+
+@pytest.mark.parametrize("damage", ["truncated", "bad-crc"])
+def test_ingest_invalid_replacement_preserves_archive_and_index(conn, tmp_path, damage):
+    downloads = tmp_path / "downloads"
+    downloads.mkdir()
+    dest = tmp_path / "archive"
+    source = _make_zip(downloads / f"Doc{DOC}.zip", {"old.pdf": b"original"})
+    installed = dest / source.name
+    original = source.read_bytes()
+    assert aa.ingest_downloads(conn, downloads, dest) == 1
+
+    _make_zip(source, {"new.pdf": b"replacement"})
+    replacement = source.read_bytes()
+    damaged = replacement[:-22] if damage == "truncated" else replacement.replace(b"replacement", b"replacemenX")
+    source.write_bytes(damaged)
+    with pytest.raises(zipfile.BadZipFile):
+        aa.ingest_downloads(conn, downloads, dest)
+    assert installed.read_bytes() == original
+    assert _bundle_index(conn) == {("old.pdf", hashlib.sha256(original).hexdigest())}
+
+    source.write_bytes(replacement)
+    assert aa.ingest_downloads(conn, downloads, dest) == 1
+    assert installed.read_bytes() == replacement
+    assert _bundle_index(conn) == {("new.pdf", hashlib.sha256(replacement).hexdigest())}
+
+
+def test_reindex_recovers_after_interruption_between_install_and_commit(conn, tmp_path):
+    source = _make_zip(tmp_path / f"Doc{DOC}.zip", {"old.pdf": b"original"})
+    dest = tmp_path / "archive"
+    aa.store_bundle(conn, source, DOC, dest)
+    previous_index = _bundle_index(conn)
+    _make_zip(source, {"new.pdf": b"replacement"})
+    replacement = source.read_bytes()
+
+    def interrupt_commit(action, operation, *_):
+        if action == sqlite3.SQLITE_TRANSACTION and operation == "COMMIT":
+            return sqlite3.SQLITE_DENY
+        return sqlite3.SQLITE_OK
+
+    conn.set_authorizer(interrupt_commit)
+    try:
+        with pytest.raises(sqlite3.DatabaseError, match="not authorized"):
+            aa.store_bundle(conn, source, DOC, dest)
+    finally:
+        conn.set_authorizer(None)
+
+    assert not conn.in_transaction
+    assert _bundle_index(conn) == previous_index
+    assert (dest / source.name).read_bytes() == replacement
+    assert aa.reindex_bundles(conn, dest) == 1
+    assert _bundle_index(conn) == {("new.pdf", hashlib.sha256(replacement).hexdigest())}
 
 
 def test_ingest_downloads_skips_invalid_names_and_is_idempotent(conn, tmp_path):

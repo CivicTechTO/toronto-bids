@@ -56,3 +56,5 @@ Ariba's built-in bundle download fails above 500 MB, so `AribaFileSource` downlo
 ## Attachment index (`ariba_attachment`)
 
 `ariba_attachment` is a derived index built from the local zip files (`--reindex`, offline), with one row per leaf file keyed by `(document_number, path)`. `index_zip` recurses into nested zips up to `_MAX_ZIP_DEPTH` and `_MAX_ZIP_ENTRIES`, reading sizes and CRCs from central directories (corrupt nested zips are indexed as opaque leaves). Nested paths prevent leaf-name collisions (#123). Zip files live under `<DATA_DIR>/ariba/attachments/` and are not committed or published.
+
+`--ingest` stages incoming ZIPs in the archive directory, verifies unencrypted member CRCs, and builds the replacement index before installing the ZIP with an atomic rename. If installation is interrupted after the rename but before the SQLite commit, rerun the import or use `--reindex` to rebuild the index from the installed ZIP.
