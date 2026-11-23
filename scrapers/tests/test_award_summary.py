@@ -4,7 +4,11 @@ Parser tests were removed in #205 (LLM extraction replaces per-source parsers).
 These test the download/indexing infrastructure that remains.
 """
 
-from toronto_bids.sources.award_summary import award_summary_files
+from urllib.parse import parse_qs, urlsplit
+
+import pytest
+
+from toronto_bids.sources.award_summary import award_summary_files, fetch_awarded_records
 
 
 def test_finds_the_award_summary_form_on_a_record():
@@ -36,40 +40,34 @@ def test_other_attachments_are_not_mistaken_for_the_form():
     assert award_summary_files(rec) == []
 
 
-def test_fetch_awarded_records_paginates_and_stops_at_odata_count():
-    from toronto_bids.sources.award_summary import fetch_awarded_records
-
-    urls = []
-    pages = [
-        {"value": [{"id": 1}], "@odata.count": 501},
-        {"value": [{"id": 2}], "@odata.count": 501},
-    ]
+@pytest.mark.parametrize("total, server_cap", [(600, 100), (600, 500), (0, 500)])
+def test_fetch_awarded_records_paginates_and_stops_at_odata_count(total, server_cap):
+    records = [{"id": index} for index in range(total)]
+    offsets = []
 
     class FakeHttp:
         def get_json(self, url):
-            urls.append(url)
-            return pages[len(urls) - 1]
+            query = parse_qs(urlsplit(url).query)
+            assert query["$count"] == ["true"]
+            offset = int(query["$skip"][0])
+            offsets.append(offset)
+            limit = min(int(query["$top"][0]), server_cap)
+            return {"value": records[offset:offset + limit], "@odata.count": total}
 
-    rows = fetch_awarded_records(FakeHttp())
-    assert rows == [{"id": 1}, {"id": 2}]
-    assert len(urls) == 2
-    assert "$skip=0&$top=500" in urls[0]
-    assert "$skip=500&$top=500" in urls[1]
+    assert fetch_awarded_records(FakeHttp()) == records
+    assert offsets == (list(range(0, total, server_cap)) or [0])
 
 
-def test_fetch_awarded_records_stops_on_empty_page():
-    from toronto_bids.sources.award_summary import fetch_awarded_records
-
-    calls = 0
-
+def test_fetch_awarded_records_rejects_empty_page_before_advertised_total():
     class FakeHttp:
-        def get_json(self, _url):
-            nonlocal calls
-            calls += 1
-            return {"value": [], "@odata.count": 1000}
+        def get_json(self, url):
+            query = parse_qs(urlsplit(url).query)
+            if query["$skip"] == ["0"]:
+                return {"value": [{"id": 1}], "@odata.count": 3}
+            return {"value": []}
 
-    assert fetch_awarded_records(FakeHttp()) == []
-    assert calls == 1
+    with pytest.raises(RuntimeError, match="empty page.*1 of 3"):
+        fetch_awarded_records(FakeHttp())
 
 
 def test_download_award_summaries_skips_held_stores_normalized_and_isolates_failures(
