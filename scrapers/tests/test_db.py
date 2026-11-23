@@ -7,6 +7,7 @@ from toronto_bids.models import (
     Award,
     BackgroundPdf,
     Bid,
+    BidResponse,
     CouncilItem,
     NonCompetitive,
     Solicitation,
@@ -470,6 +471,68 @@ def test_award_line_key_migration_is_idempotent(tmp_path):
     assert not db._rebuild_award_for_line_key(conn, schema)
     assert conn.execute("SELECT COUNT(*) FROM award").fetchone()[0] == 1
     conn.close()
+
+
+@pytest.mark.parametrize("already_affected", [False, True], ids=["legacy-bid", "broken-response-fk"])
+def test_bid_upgrade_preserves_rows_and_repairs_response_links(tmp_path, already_affected):
+    path = tmp_path / "legacy.sqlite"
+    schema = db.resources.files("toronto_bids.store").joinpath("schema.sql").read_text()
+    if already_affected:
+        schema = schema.replace('REFERENCES bid(id)', 'REFERENCES "_bid_pre114"(id)')
+    else:
+        schema = schema.replace("reference          TEXT,", "reference          TEXT NOT NULL,", 1)
+
+    old = sqlite3.connect(path)
+    old.executescript(schema)
+    old.executescript("""
+        INSERT INTO bid(id, reference, bidder_name_raw, first_seen)
+        VALUES (42, '2020.BA5.3', 'Held Supplier', '2020-07-01');
+        INSERT INTO city_scoped_bid_evidence VALUES
+            ('proof', '5672751291', '2020.BA5.3', 'test', 'url', 'report', 'result', 1, 1, 1, '{}', '2020-07-01');
+        INSERT INTO bid_scope(id, reference, source, scope_key, scope_kind, proof_sha256)
+        VALUES (7, '2020.BA5.3', 'test', 'lot', 'lot', 'proof');
+        INSERT INTO bid_response(id, scope_id, response_key, bid_id, bidder_name_raw,
+                                 identity_status, response_kind, row_quotation, first_seen)
+        VALUES (13, 7, 'held', 42, 'Held Supplier', 'named', 'base', 'held quote', '2020-07-02');
+        INSERT INTO bid_response_price(id, response_id, price_key, value_raw, value_kind, price_header, quotation)
+        VALUES (5, 13, 'total', '300', 'money', 'Total', 'quoted price');
+    """)
+    old.execute("UPDATE sqlite_sequence SET seq=100 WHERE name IN ('bid', 'bid_response')")
+    if already_affected:
+        old.execute(
+            "INSERT INTO bid_response (scope_id, response_key, bid_id, bidder_name_raw, "
+            "identity_status, response_kind, row_quotation) VALUES (7, 'orphan', 99, 'Supplier', 'named', 'base', '')"
+        )
+    old.commit()
+    old.close()
+
+    conn = db.connect(path)
+    try:
+        db.init_db(conn)
+        db.upsert_row(conn, BidResponse(7, "new", "Held Supplier", "named", "base", "new quote", bid_id=42),
+                      overwrite=True)
+        db.upsert_row(conn, Bid(bidder_name_raw="Later Supplier", source="award_summary"), overwrite=True)
+        conn.commit()
+        db.init_db(conn)
+
+        assert tuple(conn.execute("SELECT id, reference, first_seen FROM bid WHERE id=42").fetchone()) == (
+            42, "2020.BA5.3", "2020-07-01",
+        )
+        assert tuple(conn.execute("SELECT id, bid_id, first_seen FROM bid_response WHERE response_key='held'").fetchone()) == (
+            13, 42, "2020-07-02",
+        )
+        assert tuple(conn.execute("SELECT id, bid_id FROM bid_response WHERE response_key='new'").fetchone()) == (
+            102 if already_affected else 101, 42,
+        )
+        if already_affected:
+            assert conn.execute("SELECT bid_id FROM bid_response WHERE response_key='orphan'").fetchone()[0] is None
+        assert conn.execute("SELECT id FROM bid WHERE reference IS NULL").fetchone()[0] == 101
+        assert tuple(conn.execute("SELECT id, response_id, value_raw FROM bid_response_price").fetchone()) == (5, 13, "300")
+        assert conn.execute("PRAGMA foreign_key_check").fetchall() == []
+        with pytest.raises(sqlite3.IntegrityError, match="FOREIGN KEY constraint failed"):
+            conn.execute("UPDATE bid_response SET bid_id = 999 WHERE id = 13")
+    finally:
+        conn.close()
 
 
 # --- extraction cache ---
