@@ -51,6 +51,7 @@ class NonCompetitive:
     council_authority_link: str | None = None
     odata_id: str | None = None
     source: str = ""
+    recipients: str | None = None  # JSON array of published supplier lines
     contract_amount_numeric: float | None = field(init=False, default=None)
 
     def __post_init__(self):

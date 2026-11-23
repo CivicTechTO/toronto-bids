@@ -107,18 +107,23 @@ def normalize_noncompetitive(raw: dict) -> Iterable[Row]:
     workspace = _clean(raw.get("Non_Competitive_Reference_Number"))
     if workspace is None:
         return
-    suppliers = raw.get("Awarded_Suppliers") or []
-    first = suppliers[0] if suppliers else {}
+    recipients = [
+        {
+            "supplier_name_raw": _clean(supplier.get("Successful_Bidder")),
+            "contract_amount": _clean(supplier.get("Award_Amount")),
+            "contract_date": _clean(supplier.get("Date_Awarded")),
+        }
+        for supplier in (raw.get("Awarded_Suppliers") or [])
+    ]
     yield NonCompetitive(
         workspace_number=workspace,
-        supplier_name_raw=_clean(first.get("Successful_Bidder")),
         reason=_clean(raw.get("Non_Competitive_Reason")),
-        contract_amount=_clean(first.get("Award_Amount")),
-        contract_date=_clean(first.get("Date_Awarded")),
+        recipients=json.dumps(recipients, ensure_ascii=False) if recipients else None,
         division=_clean(raw.get("Client_Division")),
         council_authority_link=_clean(raw.get("Council_Authority_Link_to_Staff_Report")),
         odata_id=_clean(raw.get("id")),
         source="odata",
+        **(recipients[0] if recipients else {}),
     )
 
 

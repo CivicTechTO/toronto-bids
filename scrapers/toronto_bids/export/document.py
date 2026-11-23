@@ -175,10 +175,13 @@ def build_export_document(conn, generated_at: str | None = None) -> dict:
             sol['bid_scope_summary'] = scoped_by_doc[doc]['summary']
         solicitations.append(sol)
 
-    noncompetitive = [
-        _drop(nc, "odata_id")
-        for nc in _rows(conn, "SELECT * FROM noncompetitive ORDER BY workspace_number")
-    ]
+    noncompetitive = []
+    for nc in _rows(conn, "SELECT * FROM noncompetitive ORDER BY workspace_number"):
+        nc = _parse_json(_drop(nc, "odata_id"), "recipients")
+        if nc["recipients"] is None:
+            recipient = {key: nc[key] for key in ("supplier_name_raw", "contract_amount", "contract_date")}
+            nc["recipients"] = [recipient] if any(value is not None for value in recipient.values()) else []
+        noncompetitive.append(nc)
 
     capital_projects = _rows(conn, "SELECT * FROM capital_project ORDER BY name")
 

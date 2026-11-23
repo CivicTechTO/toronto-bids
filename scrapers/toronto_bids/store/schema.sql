@@ -104,6 +104,7 @@ CREATE TABLE IF NOT EXISTS noncompetitive (
     contract_amount_labelled REAL,
     contract_amount_verdict  TEXT,
     contract_date            TEXT,
+    recipients               TEXT,
     division                TEXT,
     council_authority_link  TEXT,
     odata_id                TEXT,
