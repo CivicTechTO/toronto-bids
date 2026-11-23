@@ -256,16 +256,28 @@ def _add_missing_columns(conn, schema: str) -> None:
 def _upsert_keyed(conn, table, cols, values, key_cols, overwrite: bool) -> None:
     placeholders = ", ".join("?" for _ in cols)
     non_key = [c for c in cols if c not in key_cols]
-    if overwrite:
-        # Overwrite: incoming non-NULL wins.
-        sets = ", ".join(f"{c} = COALESCE(excluded.{c}, {table}.{c})" for c in non_key)
-    else:
-        # Backfill: keep existing non-NULL.
-        sets = ", ".join(f"{c} = COALESCE({table}.{c}, excluded.{c})" for c in non_key)
+    sets = {}
+    for column in non_key:
+        existing, incoming = f"{table}.{column}", f"excluded.{column}"
+        first, fallback = (incoming, existing) if overwrite else (existing, incoming)
+        sets[column] = f"COALESCE({first}, {fallback})"
+    if table == "noncompetitive":
+        # The derived fields belong to the raw amount that wins the upsert.
+        use_incoming = "excluded.contract_amount IS NOT NULL"
+        if not overwrite:
+            use_incoming += " AND noncompetitive.contract_amount IS NULL"
+        sets["contract_amount_numeric"] = (
+            f"CASE WHEN {use_incoming} THEN excluded.contract_amount_numeric "
+            "ELSE noncompetitive.contract_amount_numeric END"
+        )
+        changed = f"{sets['contract_amount']} IS NOT noncompetitive.contract_amount"
+        for column in ("contract_amount_labelled", "contract_amount_verdict"):
+            sets[column] = f"CASE WHEN {changed} THEN NULL ELSE noncompetitive.{column} END"
+    assignments = ", ".join(f"{column} = {expr}" for column, expr in sets.items())
     conflict = _CONFLICT_TARGETS.get(table) or ", ".join(key_cols)
     sql = (
         f"INSERT INTO {table} ({', '.join(cols)}) VALUES ({placeholders}) "
-        f"ON CONFLICT ({conflict}) DO UPDATE SET {sets}, last_seen = datetime('now')"
+        f"ON CONFLICT ({conflict}) DO UPDATE SET {assignments}, last_seen = datetime('now')"
     )
     conn.execute(sql, values)
 

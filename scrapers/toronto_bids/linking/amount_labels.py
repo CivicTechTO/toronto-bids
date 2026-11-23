@@ -34,19 +34,20 @@ def load_labels(path=None) -> dict:
 
 
 def backfill_numeric_amounts(conn) -> int:
-    """Populate NULL *_numeric columns wherever parse_amount succeeds. Idempotent."""
+    """Fill missing award parses and reconcile non-competitive parses with current raw text."""
     filled = 0
     for table, column in _AMOUNT_COLUMNS:
+        where = f"WHERE {column}_numeric IS NULL AND {column} IS NOT NULL" if table == "award" else ""
         updates = []
         for row in conn.execute(
-                f"SELECT rowid AS rid, {column} AS raw FROM {table} "
-                f"WHERE {column} IS NOT NULL AND TRIM({column}) != '' "
-                f"AND {column}_numeric IS NULL"):
+                f"SELECT rowid AS rid, {column} AS raw, {column}_numeric AS numeric FROM {table} {where}"):
             value = parse_amount(row["raw"])
-            if value is not None:
-                updates.append((value, row["rid"]))
-        conn.executemany(f"UPDATE {table} SET {column}_numeric = ? WHERE rowid = ?", updates)
-        filled += len(updates)
+            if value != row["numeric"]:
+                updates.append((value, row["rid"], row["raw"]))
+        cursor = conn.executemany(
+            f"UPDATE {table} SET {column}_numeric = ? WHERE rowid = ? AND {column} IS ?", updates
+        )
+        filled += cursor.rowcount
     conn.commit()
     return filled
 
@@ -62,6 +63,14 @@ def apply_amount_labels(conn, labels=None) -> int:
             f"UPDATE {table} SET {column}_labelled = ?, {column}_verdict = ? "
             f"WHERE {column} = ?", rows)
         labelled += cursor.rowcount if cursor.rowcount and cursor.rowcount > 0 else 0
+    # A workspace can change its raw amount while keeping the same row.
+    placeholders = ", ".join("?" for _ in labels)
+    conn.execute(
+        f"UPDATE noncompetitive SET contract_amount_labelled = NULL, contract_amount_verdict = NULL "
+        f"WHERE (contract_amount_labelled IS NOT NULL OR contract_amount_verdict IS NOT NULL) "
+        f"AND (contract_amount IS NULL OR contract_amount NOT IN ({placeholders}))",
+        tuple(labels),
+    )
     conn.commit()
     return labelled
 

@@ -1,6 +1,7 @@
 import pytest
 
 from toronto_bids.amount import parse_amount
+from toronto_bids.export.document import build_export_document
 from toronto_bids.linking.amount_labels import (
     VERDICTS,
     apply_amount_labels,
@@ -9,6 +10,7 @@ from toronto_bids.linking.amount_labels import (
     unlabelled_amounts,
 )
 from toronto_bids.models import Award, NonCompetitive
+from toronto_bids.pipeline import sync
 from toronto_bids.store import db
 
 
@@ -149,6 +151,57 @@ def test_labels_reach_noncompetitive_too(conn):
                        "FROM noncompetitive").fetchone()
     assert row["contract_amount_labelled"] == 2035000.00
     assert row["contract_amount_verdict"] == "amount"
+
+
+def _published_noncompetitive_amounts(conn):
+    return {
+        row["workspace_number"]: (
+            row["contract_amount"], row["contract_amount_numeric"],
+            row["contract_amount_labelled"], row["contract_amount_verdict"],
+        )
+        for row in build_export_document(conn)["noncompetitive"]
+    }
+
+
+def test_noncompetitive_corrections_update_amount_fields_together(conn):
+    def write_amount(raw, *, overwrite=True):
+        db.upsert_row(conn, NonCompetitive("W1", contract_amount=raw, source="odata"), overwrite=overwrite)
+
+    write_amount("S2,035,000.00")
+    apply_amount_labels(conn, _LABELS)
+    write_amount("S2,035,000.00")
+    write_amount("300", overwrite=False)
+    write_amount(None)
+    assert _published_noncompetitive_amounts(conn)["W1"] == ("S2,035,000.00", None, 2035000.0, "amount")
+
+    write_amount("300")
+    assert _published_noncompetitive_amounts(conn)["W1"] == ("300", 300.0, None, None)
+
+    write_amount("unreported")
+    assert _published_noncompetitive_amounts(conn)["W1"] == ("unreported", None, None, None)
+
+
+def test_post_sync_amount_passes_repair_existing_noncompetitive_rows(conn):
+    conn.executemany(
+        "INSERT INTO noncompetitive (workspace_number, contract_amount, contract_amount_numeric, "
+        "contract_amount_labelled, contract_amount_verdict) VALUES (?, ?, ?, ?, ?)",
+        [
+            ("corrected", "300", 400, 2035000, "amount"),
+            ("unreported", "unreported", 300, 2035000, "amount"),
+            ("reviewed", "S2,035,000.00", 300, None, "unknown"),
+            ("missing", None, 300, 2035000, None),
+        ],
+    )
+    conn.commit()
+    expected = {
+        "corrected": ("300", 300.0, None, None),
+        "unreported": ("unreported", None, None, None),
+        "reviewed": ("S2,035,000.00", None, 2035000.0, "amount"),
+        "missing": (None, None, None, None),
+    }
+    for _ in range(2):
+        assert sync(conn, None, sources=[]) == []
+        assert _published_noncompetitive_amounts(conn) == expected
 
 
 def test_applying_labels_is_idempotent(conn):
