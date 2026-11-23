@@ -347,8 +347,20 @@ def test_no_bid_is_dropped_counts_reconcile(seeded):
     db.upsert_row(seeded, Bid(bidder_name_raw="Orphan Co", reference=None,
                               document_number="4044346425", bid_price="300",
                               source="award_summary"), overwrite=True)
+    db.upsert_row(seeded, Bid(bidder_name_raw="Unmatched Council Co", reference="2020.BA5.4",
+                              bid_price="400", source="bid_award_panel"), overwrite=True)
+    db.upsert_row(seeded, Bid(bidder_name_raw="Solicitation Match Co", reference="2020.BA5.5",
+                              document_number="5672751291", bid_price="500",
+                              source="bid_award_panel"), overwrite=True)
     seeded.commit()
     doc = build_export_document(seeded, generated_at="t")
+    assert [(bid["bidder_name_raw"], bid["reference"]) for bid in doc["unlinked_bids"]] == [
+        ("Orphan Co", None),
+        ("Unmatched Council Co", "2020.BA5.4"),
+    ]
+    assert {bid["bidder_name_raw"] for bid in doc["solicitations"][0]["bids"]} == {
+        "Nested Co", "Solicitation Match Co",
+    }
     counts = doc["meta"]["counts"]
     council = sum(len(ci["bids"]) for ci in doc["council_items"])
     nested = sum(len(s["bids"]) for s in doc["solicitations"])

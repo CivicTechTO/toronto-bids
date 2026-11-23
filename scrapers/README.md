@@ -54,7 +54,7 @@ Each source runs independently: if one fails, the others still commit their rows
 
 ### Export seam
 
-`tb export` writes a solicitation-centric nested JSON file (`<DATA_DIR>/export/bids.json` by default). Each solicitation includes its nested `awards`, `ariba_postings`, `bids`, and `documents`, alongside top-level arrays for `noncompetitive`, `suspended_firms`, `suppliers`, `buyers`, `unlinked_ariba_postings`, and `unlinked_awards`.
+`tb export` writes a solicitation-centric nested JSON file (`<DATA_DIR>/export/bids.json` by default). Each solicitation includes its nested `awards`, `ariba_postings`, `bids`, and `documents`, alongside top-level arrays for `noncompetitive`, `suspended_firms`, `suppliers`, `buyers`, `unlinked_ariba_postings`, and `unlinked_awards`. City bids without a matching solicitation or council item appear in `unlinked_bids` with their original references.
 
 `build_export_document(conn)` in `export/document.py` builds the format-independent structure and `export_json()` serializes it. Keep all shaping logic in `document.py` so new export formats reuse the same builder.
 
