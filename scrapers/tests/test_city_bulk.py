@@ -638,3 +638,112 @@ def test_missing_awarded_documents_matches_legacy_semantics_without_correlated_b
     for q in sql_log:
         plan = " ".join(r[3] for r in conn.execute("EXPLAIN QUERY PLAN " + q))
         assert "CORRELATED" not in plan.upper()
+
+
+def test_joint_two_doc_award_report_admits_each_doc_from_its_own_table_only():
+    a = archive()
+    a.execute("INSERT INTO solicitation VALUES('2155284733',2),('2155392775',3)")
+    row = dict(
+        url='https://www.toronto.ca/legdocs/mmis/2020/ie/bgrd/backgroundfile-146571.pdf',
+        sha256='a' * 64,
+        text=(
+            'Contract Awards for Tender Ariba Doc #2155284733 and Tender Ariba Doc #2155392775\n'
+            'SUMMARY\n'
+            'Table 3: Bidders and Bid Prices for Tender Ariba Doc #2155284733, Contract No. 20ECS-TI-13LR\n'
+            'Bidders\nPrice\n'
+            'D. Crupi & Sons Limited\n$10\nSanscon Construction Ltd.\n$20\n'
+            'The submissions received from the two (2) bidders that responded to Tender Ariba Doc\n'
+            '#2155284733, Contract No. 20ECS-TI-13LR, were reviewed.\n'
+            'Contract Awards for Tender Ariba Doc #2155284733 and Doc #2155392775\nPage 4 of 6\n\f'
+            'Table 4: Bidders and Bid Prices for Tender Ariba Doc #2155392775, Contract No. 20ECS-TI-14LR\n'
+            'Bidders\nPrice\n'
+            'A & F Di Carlo Construction Inc.\n$30\nCoco Paving Inc.\n$40\n'
+            'The submissions received from the two (2) bidders that responded to Tender Ariba Doc\n'
+            '#2155392775, Contract No. 20ECS-TI-14LR, were reviewed.\n'
+            'Contract Awards for Tender Ariba Doc #2155284733 and Doc #2155392775\nPage 5 of 6\n'
+        ),
+        items=[dict(
+            reference='2020.IE12.2', meeting='2020.IE12',
+            title='Contract Awards for Tender Ariba Doc #2155284733 and Tender Ariba Doc #2155392775',
+            source_sha256='b' * 64,
+        )],
+        result=dict(contracts=[
+            dict(reference='Tender Ariba Doc #2155284733', stage='single_stage', prequalified=[], invited_to_tender=[],
+                 bids=[dict(supplier_name='D. Crupi & Sons Limited'), dict(supplier_name='Sanscon Construction Ltd.')]),
+            dict(reference='Tender Ariba Doc #2155392775', stage='single_stage', prequalified=[], invited_to_tender=[],
+                 bids=[dict(supplier_name='A & F Di Carlo Construction Inc.'), dict(supplier_name='Coco Paving Inc.')]),
+        ]),
+    )
+    accepted, held = city_bulk.propose(a, row)
+    assert not held and len(accepted) == 2
+    assert {p['document_number']: p['names'] for p in accepted} == {
+        '2155284733': ['D. Crupi & Sons Limited', 'Sanscon Construction Ltd.'],
+        '2155392775': ['A & F Di Carlo Construction Inc.', 'Coco Paving Inc.'],
+    }
+    assert all(p['identity_role'] == 'joint_primary_subject_and_local_table' for p in accepted)
+    # Cross-attributed bidder or unannounced copied footer must still refuse.
+    bad = json.loads(json.dumps(row))
+    bad['result']['contracts'][0]['bids'].append(dict(supplier_name='Coco Paving Inc.'))
+    assert len(city_bulk.propose(a, bad)[0]) == 1
+    bad_footer = json.loads(json.dumps(row))
+    bad_footer['text'] += '\fAward of Doc9999999999\nPage 6 of 6\n'
+    assert not city_bulk.propose(a, bad_footer)[0]
+
+
+def test_compound_bare_doc_post_table_receipt_and_body_line_above_clean_footer():
+    row = report()
+    row['result']['contracts'][0]['reference'] = '3987477359 / 22ECS-MI-03AB'
+    row['text'] = (
+        'Award of Doc3987477359\nSUMMARY\n'
+        'Related prior contract Doc1111111111 was completed.\n'
+        'Award of Doc3987477359\nPage 1 of 3\n\f'
+        'Table 2: Suppliers and Bid Prices for Request for Tender, Ariba Document\n'
+        'Number 3987477359, Contract Number 22ECS-MI-03AB\n'
+        'Suppliers\nBid Price\n'
+        'Alberici Constructors Ltd.\n$10\nMaple Reinders Limited\n$20\n'
+        'The submissions received from the two (2) Suppliers that responded to Ariba Tender\n'
+        'Document Number 3987477359, Contract Number 22ECS-MI-03AB, were reviewed.\n'
+        'Award of Doc3987477359\nPage 2 of 3\n'
+    )
+    accepted, held = city_bulk.propose(archive(), row)
+    assert not held and accepted[0]['document_number'] == '3987477359'
+    assert accepted[0]['names'] == ['Alberici Constructors Ltd.', 'Maple Reinders Limited']
+    # Wrong post-table count still refuses.
+    row['text'] = row['text'].replace('two (2)', 'one (1)')
+    assert not city_bulk.propose(archive(), row)[0]
+
+
+@pytest.mark.parametrize('variant', ['as_follows', 'inline_prose', 'responses_after_negotiation_note', 'doc_headed_table_after_history_call'])
+def test_strict_fallback_receipt_witnesses_and_count_guards(variant):
+    row = report()
+    if variant == 'as_follows':
+        row['text'] = (
+            'Award of Doc3987477359\nSUMMARY\n'
+            'A total of two (2) bids were received by PMMD\nand submitted for review, as follows:\n'
+            '1. Alberici Constructors Ltd.\n2. Maple Reinders Limited\n'
+        )
+    elif variant == 'inline_prose':
+        row['text'] = (
+            'Award of Doc3987477359\nSUMMARY\n'
+            'Two (2) Suppliers submitted a proposal: Alberici Constructors Ltd. and Maple Reinders Limited.\n'
+        )
+    elif variant == 'responses_after_negotiation_note':
+        row['result']['contracts'][0]['reference'] = '3987477359 - Service Area A'
+        row['text'] = (
+            'Award of Doc3987477359\nSUMMARY\n'
+            'The highest scoring proponent would be invited to enter into direct contract negotiations.\n'
+            'At the time of closing, responses were received from the following two (2) firms:\n'
+            'Alberici Constructors Ltd.\nMaple Reinders Limited\n'
+        )
+    elif variant == 'doc_headed_table_after_history_call':
+        row['text'] = (
+            'Award of Doc3987477359\nSUMMARY\n'
+            'Prior contract RFQ 6114-17-0259 expired. ' + ('Background text. ' * 25) + '\n'
+            'Table 2: Summary of two (2) Bids Received for Request for Quotation Ariba Document\n'
+            'Number 3987477359:\nSupplier Name\nAlberici Constructors Ltd.\n$10\nMaple Reinders Limited\n$20\n'
+        )
+    accepted, held = city_bulk.propose(archive(), row)
+    assert not held and accepted[0]['names'] == ['Alberici Constructors Ltd.', 'Maple Reinders Limited']
+    # Count bound refuses when declared receipt count is smaller than observed names.
+    row['text'] = row['text'].replace('Two (2)', 'One (1)').replace('two (2)', 'one (1)')
+    assert not city_bulk.propose(archive(), row)[0]
