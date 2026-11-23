@@ -21,24 +21,37 @@ _SOURCE_COUNT=r'(?:[A-Za-z]+(?:-[A-Za-z]+)?\s*\(\d+\)|\d+)'
 _RESPONDED_LIST=re.compile(r'\b(?:(?P<count>'+_SOURCE_COUNT+r')\s+)?(?:firms?|bidders?|proponents?|suppliers?)\s+responded\s+to\s+the\s+(?:RFP|RFT|RFQ|Call|Tender|Solicitation|Request\s+for\s+(?:Proposals?|Quotations?|Tenders?))\b[^:\n]{0,80}\bas\s+follows:\s*\n',re.I)
 _RECEIVED_LIST_COUNT=re.compile(r'\b(?P<count>'+_SOURCE_COUNT+r')\s+(?:bids?|proposals?|submissions?|responses?)\b.{0,100}\breceived\b|\breceipt\s+of\s+(?:a\s+total\s+of\s+)?(?P<receipt>'+_SOURCE_COUNT+r')\s+(?:bids?|proposals?|submissions?)\b',re.I)
 _TABLE=re.compile(r'\bTable\s+\d+\s*[:.\-]\s*(?:Summary\s+(?:of\s+)?(?:(?P<count>'+_SOURCE_COUNT+r')\s+)?(?:Bids?|Proposals?|Submissions?)\s+Received|List\s+of\s+(?:the\s+)?Suppliers\s+Who\s+Submitted\s+(?:a\s+)?(?:Proposals?|Bids?|Tenders?))\b[^\n]*(?:\n|$)',re.I)
-_RESPONDED_TABLE=re.compile(r'\bTable\s+(?P<table>\d+)\s*[:.]\s*Suppliers\s+and\s+(?:Fixed\s+)?Bid\s+Prices\b[^\n]*(?:\n|$)',re.I)
+_RESPONDED_TABLE=re.compile(r'\bTable\s+(?P<table>\d+)\s*[:.]\s*(?:Suppliers|Bidders)\s+and\s+(?:Fixed\s+)?Bid\s+Prices\b[^\n]*(?:\n|$)',re.I)
 _RESPONDED_LEAD=re.compile(r'\b(?:A\s+total\s+(?:of\s+)?)?(?P<count>'+_SOURCE_COUNT+r')\s+(?:bidders?\s+responded|suppliers?\s+submitted\s+their\s+fixed\s+priced\s+bids?|bids?\s+were\s+submitted[^.\n]{0,80}?\bfrom\s+the\s+Suppliers)\b[^.\n:]{0,60}?\blisted\s+in\s+Table\s+(?P<table>\d+)\s+below\s*[:.]',re.I)
+_POST_TABLE_RESPONDED=re.compile(r'\bsubmissions?\s+received\s+from\s+the\s+(?P<count>'+_SOURCE_COUNT+r')\s+(?:Suppliers?|bidders?|proponents?|firms?)\s+that\s+responded\s+to\b[^.]{0,180}',re.I)
+_RECEIVED_AS_FOLLOWS=re.compile(r'\b(?:A\s+total\s+of\s+)?(?P<count>'+_SOURCE_COUNT+r')\s+(?:bids?|proposals?|submissions?)\s+were\s+received\b[^:]{0,180}\bas\s+follows:\s*\n',re.I)
+_INLINE_SUBMITTED=re.compile(r'\b(?P<count>'+_SOURCE_COUNT+r')\s+(?:Suppliers?|Firms?|Proponents?|Bidders?)\s+submitted\s+(?:a\s+)?(?:proposals?|bids?|tenders?|submissions?)\s*:\s*(?P<body>.{10,400}?\.)(?=\s*(?:\n|$))',re.I|re.DOTALL)
 
 
 def _primary_heading(text):
     return re.split(r'\b(?:SUMMARY|RECOMMENDATIONS|PURPOSE)\b',text,flags=re.I)[0][:1600]
 
 
-def _identity_role(doc,text):
+def _identity_role(doc,text,items=None):
     published=set(_DOC.findall(text))
     if published=={doc}:return 'unique_published_document'
     # Mixed reports must have a unique primary subject Doc and no conflicting page-footer Docs.
-    if set(_DOC.findall(_primary_heading(text)))!={doc}:raise ValueError('conflicting_source_document_roles')
+    heading_docs=set(_DOC.findall(_primary_heading(text)))
+    allowed=None
+    if heading_docs=={doc}:
+        allowed={doc}
+        role='primary_subject_and_local_document'
+    elif (items and len(heading_docs)>1 and doc in heading_docs
+          and any(set(_DOC.findall(i['title']))==heading_docs for i in items)):
+        allowed=heading_docs
+        role='joint_primary_subject_and_local_table'
+    else:
+        raise ValueError('conflicting_source_document_roles')
     for page in text.split('\f'):
-        tail='\n'.join([line for line in page.splitlines() if line.strip()][-4:])
-        if re.search(r'\bPage\s+\d+\s+of\s+\d+\b',tail,re.I) and set(_DOC.findall(tail))-{doc}:
+        tail='\n'.join([line for line in page.splitlines() if line.strip()][-2:])
+        if re.search(r'\bPage\s+\d+\s+of\s+\d+\b',tail,re.I) and set(_DOC.findall(tail))-allowed:
             raise ValueError('conflicting_source_document_roles')
-    return 'primary_subject_and_local_document'
+    return role
 
 
 def propose(archive, row, native_identities=None):
@@ -53,7 +66,10 @@ def propose(archive, row, native_identities=None):
         try:
             reference=clean(contract.get('reference'))
             docs=set(_DOC.findall(reference))
-            if not docs and re.fullmatch(r'\d{10}',reference):docs={reference}
+            if not docs:
+                bare=set(re.findall(r'(?<!\d)\d{10}(?!\d)',reference))
+                if len(bare)==1 and re.match(r'^\d{10}(?:\s*[-/]|$)',reference):
+                    docs=bare
             native_identity=None;call=None
             if not docs and len(find_call_numbers(reference))==1:
                 call=next(iter(find_call_numbers(reference)))
@@ -71,14 +87,19 @@ def propose(archive, row, native_identities=None):
             else:
                 if len(docs)!=1:raise ValueError('historical_or_unresolved_contract_identity')
                 doc=next(iter(docs))
-                identity_role=_identity_role(doc,text)
-                items=[i for i in row['items'] if set(_DOC.findall(i['title']))=={doc}]
-                identity_anchor='agenda_title'
-                if not items:
-                    items=[i for i in row['items'] if not _DOC.findall(i['title'])]
-                    if not items or set(_DOC.findall(_primary_heading(text)))!={doc}:
-                        raise ValueError('primary_document_absent_from_agenda_title_or_report_subject')
-                    identity_anchor='report_subject'
+                identity_role=_identity_role(doc,text,row['items'])
+                if identity_role=='joint_primary_subject_and_local_table':
+                    heading_docs=set(_DOC.findall(_primary_heading(text)))
+                    items=[i for i in row['items'] if set(_DOC.findall(i['title']))==heading_docs]
+                    identity_anchor='agenda_title'
+                else:
+                    items=[i for i in row['items'] if set(_DOC.findall(i['title']))=={doc}]
+                    identity_anchor='agenda_title'
+                    if not items:
+                        items=[i for i in row['items'] if not _DOC.findall(i['title'])]
+                        if not items or set(_DOC.findall(_primary_heading(text)))!={doc}:
+                            raise ValueError('primary_document_absent_from_agenda_title_or_report_subject')
+                        identity_anchor='report_subject'
                 if not archive.execute('SELECT 1 FROM solicitation WHERE document_number=?',(doc,)).fetchone():
                     raise ValueError('document_absent_from_publisher_spine')
             tender=None
@@ -104,7 +125,7 @@ def propose(archive, row, native_identities=None):
                            [(m,'submitted_firm_list') for m in _RESPONDED_LIST.finditer(text)]+
                            [(m,'submitted_bid_table') for m in _TABLE.finditer(text)]+
                            [(m,'submitted_bid_table') for m in _RESPONDED_TABLE.finditer(text)],key=lambda pair:pair[0].start())
-            for marker,kind in ([] if tender else markers):
+            for marker,kind in ([] if tender or identity_role=='joint_primary_subject_and_local_table' else markers):
                 context=clean(text[max(0,marker.start()-1200):marker.end()])
                 lead=clean(text[max(0,marker.start()-250):marker.end()])
                 count_quotation=marker.groupdict().get('count')
@@ -134,6 +155,83 @@ def propose(archive, row, native_identities=None):
                     return re.search(r'(?:^|\n)[ \t]*(?:[•●▪][ \t]*|\d+\.[ \t]+)?'+pattern+suffix+r'[ \t]*[*†‡]*(?=\r?\n|$)',section)
                 if all(name in quote and literal_list_row(name) for name in names):
                     witness=dict(kind=kind,context=context,list_quotation=quote);break
+            # Strict fallback witnesses (run only when primary loop found nothing, preserving byte-identical prior proofs).
+            if witness is None and not tender:
+                def _match_rows(sec):
+                    q=clean(sec)
+                    if re.search(r'^\s*no[- ]+bid\s*$',sec,re.I|re.M):return None
+                    def _row(name):
+                        pat=re.escape(name).replace(r'\ ',r'\s+')
+                        return re.search(r'(?:^|\n)[ \t]*(?:[•●▪][ \t]*|\d+\.[ \t]+)?'+pat+r'[ \t]*[*†‡]*(?=\r?\n|$)',sec)
+                    return q if all(name in q and _row(name) for name in names) else None
+
+                # 1) Explicit doc-bound Suppliers/Bidders & Bid Prices table confirmed by an immediate post-table receipt sentence.
+                for marker in _RESPONDED_TABLE.finditer(text):
+                    heading_span=text[marker.start():marker.end()+120]
+                    if set(_DOC.findall(heading_span))!={doc}:continue
+                    section=text[marker.end():marker.end()+2000]
+                    post=_POST_TABLE_RESPONDED.search(section)
+                    if not post or set(_DOC.findall(post[0]))!={doc}:continue
+                    if len(names)>int(re.search(r'\d+',post['count'])[0]):continue
+                    table_body=section[:post.start()]
+                    quote=_match_rows(table_body)
+                    if quote:
+                        witness=dict(kind='submitted_bid_table',context=clean(heading_span+' '+post[0]),list_quotation=quote);break
+
+                # 2) Explicit doc-headed (or locally doc-bound) Summary of Bids Received table (immune to distant historical refs).
+                if witness is None and identity_role!='joint_primary_subject_and_local_table':
+                    for marker in _TABLE.finditer(text):
+                        heading_span=text[marker.start():marker.end()+120]
+                        heading_docs=set(_DOC.findall(heading_span))
+                        lead=clean(text[max(0,marker.start()-(250 if heading_docs else 450)):marker.end()+120])
+                        local_docs=heading_docs or set(_DOC.findall(lead))
+                        if local_docs!={doc}:continue
+                        if not _PARTICIPATION.search(lead) or re.search(r'pre[- ]?qualif|invited\s+to\s+(?:bid|tender|submit)',lead,re.I):continue
+                        if find_call_numbers(lead):continue
+                        cnt=marker.groupdict().get('count')
+                        if not cnt:
+                            m_cnt=_RECEIVED_LIST_COUNT.search(lead)
+                            cnt=(m_cnt['count'] or m_cnt['receipt']) if m_cnt else None
+                        if cnt and len(names)>int(re.search(r'\d+',cnt)[0]):continue
+                        section=text[marker.end():marker.end()+1800]
+                        boundary=re.search(r'\n\s*(?:As required|A selection|The selection|The evaluation|Contract Award|Financial Impact|CONTACT|RECOMMENDATIONS)\b',section,re.I)
+                        if boundary:section=section[:boundary.start()]
+                        quote=_match_rows(section)
+                        if quote:
+                            witness=dict(kind='submitted_bid_table',context=lead,list_quotation=quote);break
+
+                # 3) Explicit "<count> bids/proposals were received ... as follows:" list/table or received-from-following-firms list
+                #    where earlier negotiation-invitation wording does not indicate prequalification.
+                if witness is None and identity_role!='joint_primary_subject_and_local_table':
+                    for marker in sorted(list(_RECEIVED_AS_FOLLOWS.finditer(text))+list(_LIST.finditer(text)),key=lambda m:m.start()):
+                        lead=clean(text[max(0,marker.start()-250):marker.end()])
+                        context=clean(text[max(0,marker.start()-600):marker.end()])
+                        if marker.re is _LIST and not (_PARTICIPATION.search(lead) or _NATIVE_PARTICIPATION.search(lead)):continue
+                        if re.search(r'pre[- ]?qualif|invited\s+to\s+(?:bid|tender|submit)',context,re.I) or find_call_numbers(context):continue
+                        if identity_role=='primary_subject_and_local_document' and set(_DOC.findall(context))!={doc}:continue
+                        cnt=marker.groupdict().get('count')
+                        if not cnt:
+                            m_cnt=re.search(r'\b('+_SOURCE_COUNT+r')\b',marker[0]) or _RECEIVED_LIST_COUNT.search(lead)
+                            cnt=m_cnt.group(1) if m_cnt and m_cnt.re.groups==1 else ((m_cnt['count'] or m_cnt['receipt']) if m_cnt else None)
+                        if cnt and len(names)>int(re.search(r'\d+',cnt)[0]):continue
+                        section=text[marker.end():marker.end()+1800]
+                        boundary=re.search(r'\n\s*(?:As required|A selection|The selection|The evaluation|The bids were evaluated|Contract Award|Financial Impact|CONTACT|RECOMMENDATIONS)\b',section,re.I)
+                        if boundary:section=section[:boundary.start()]
+                        quote=_match_rows(section)
+                        if quote:
+                            witness=dict(kind='submitted_firm_list',context=context,list_quotation=quote);break
+
+                # 4) Explicit inline prose "<count> Suppliers submitted a proposal: A, B and C."
+                if witness is None and identity_role!='joint_primary_subject_and_local_table':
+                    for marker in _INLINE_SUBMITTED.finditer(text):
+                        context=clean(text[max(0,marker.start()-600):marker.end()])
+                        if re.search(r'pre[- ]?qualif|invited\s+to\s+(?:bid|tender|submit)',context,re.I) or find_call_numbers(context):continue
+                        if identity_role=='primary_subject_and_local_document' and set(_DOC.findall(context))!={doc}:continue
+                        if len(names)>int(re.search(r'\d+',marker['count'])[0]):continue
+                        body=clean(marker['body'])
+                        if re.search(r'\bno[- ]+bid\b',body,re.I):continue
+                        if all(name in body for name in names):
+                            witness=dict(kind='submitted_firm_list',context=context,list_quotation=body);break
             if witness is None:raise ValueError('literal_submitted_firm_list_not_established')
             if any(name not in flat for name in names):raise ValueError('supplier_not_literal')
             proposal=dict(admission_version='city-list-v1',document_number=doc,contract_index=index,names=names,
