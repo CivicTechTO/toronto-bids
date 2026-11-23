@@ -23,20 +23,24 @@ _PAGE = 500
 
 def fetch_awarded_records(http, log=lambda _m: None) -> list:
     """Page through awarded-contract records from the OData API."""
-    out, skip = [], 0
+    out, total = [], None
     while True:
         page = http.get_json(
             f"{_DATA}?$format=application/json;odata.metadata=none&$count=true"
-            f"&$skip={skip}&$top={_PAGE}&$filter={quote(_AWARDED_FILTER)}"
+            f"&$skip={len(out)}&$top={_PAGE}&$filter={quote(_AWARDED_FILTER)}"
             f"&$orderby=Latest_Date_Awarded desc"
         )
         rows = page.get("value") or []
+        if total is None:
+            total = page.get("@odata.count")
         out.extend(rows)
-        total = page.get("@odata.count", len(out))
-        skip += _PAGE
-        log(f"    {min(skip, total)}/{total}")
-        if skip >= total or not rows:
+        log(f"    {len(out)}" if total is None else f"    {min(len(out), total)}/{total}")
+        if total is not None and len(out) >= total:
             return out
+        if not rows:
+            if total is None:
+                return out
+            raise RuntimeError(f"Award summary search returned an empty page after {len(out)} of {total} records")
 
 
 def award_summary_files(record: dict) -> list:

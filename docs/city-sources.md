@@ -74,6 +74,7 @@ The City's OData and CKAN feeds have very few awards for 2009-2011. For those ye
 `tb enrich-awards --download` archives the Toronto Bids Portal's Award Summary Form PDF for each award, and bids are extracted through the `award_summary` corpus.
 
 - Uses plain HTTP against the same OData spine (`feis_solicitation_published`). PDFs are linked via `uploadedFilesStaff[].bin_id` at `c3api_upload/retrieve/pmmd_solicitations/{bin_id}`. `secure.toronto.ca` is not Akamai-gated.
+- Advances pagination by the number of records returned. An empty page before the advertised total fails the download step.
 - The portal's "available for 18 months" rule is a client-side filter (`Latest_Date_Awarded gt <today-18mo>`). Omitting it returns awarded records back to 2010, though the City could enforce it server-side later.
 - `bid.reference` is nullable and `bid_key` coalesces both identifiers. Panel bids carry a council reference (and, pre-2019, no document number); award-summary and committee bids carry a document number.
 - Coverage is bounded: Award Summary Forms exist only for awards over $500,000 (the abolished Bid Award Panel had no dollar floor), so bid coverage for smaller awards drops off after October 2025.
