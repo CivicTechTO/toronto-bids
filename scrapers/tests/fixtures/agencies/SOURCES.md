@@ -18,6 +18,7 @@ Reviewed links, hashes, and evidence live in `toronto_bids/data/trca_document_ga
   - TRCA DocumentId=4831: mixes valid contracts with an unknown-reference contract.
   - TRCA DocumentId=19635: carries distinct solicitation and contract numbers.
   - Zoo `backgroundfile-76755`: multi-contract result without references, including one empty contract.
+- **`ttc_award_decisions_2026-11-22.json` (#341):** 16 real held `ttc_board` staff reports and paired `ttc_archive_decision` PDFs from the local 2014–2024 TTC archive covering standard single-award (`N1-24`), metadata-reviewed multi-award (`G85-404`), 3-contract single report (`S45-11`, `S45-12`, `D45-14`), short-form supplier (`E85-24`), `report_url_fallback`, Board-amended withholding (`P32PL17757`, 440→325 buses), amount-omitted withholding (`M60-88`), and `Notice of Award` received-for-information (`W45-11`).
 
 ## Board award reports (`pdftotext -layout`, 2026-07-18)
 

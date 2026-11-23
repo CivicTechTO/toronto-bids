@@ -74,6 +74,10 @@ When a model extracts the right bidder name and price but adds an unsupported HS
 - Generic "taxes included" wording does not prove HST specifically, and failing a qualitative score does not prove commercial non-compliance. Keep supported metadata intact; do not wipe all bidders because one claim is unsupported.
 - Raw `extraction_cache` and `contract_json` stay unchanged. `identity_evidence_json` records the suppression proof, and `tb agency-coverage --only ttc` reports `withheld_bid_metadata_fields` separately. Mismatched guards abort before swapping derived rows.
 
+### Decision-verified award admissions (#341)
+
+Staff award recommendations in `ttc_board` stay withheld by default unless an entry in `data/agency_identity_evidence.json` includes a source-bound `award_review` citing an independently held `ttc_archive_decision` PDF (`role = "decision"` with explicit ISO `decision_date`). `agency_claim_review.admit_claims` verifies every cited PDF's SHA-256 and verbatim passages against `background_pdf`, requires explicit Board `adopted`/`approved`/`carried` wording (rejecting amended, deferred, rejected, or received-for-information outcomes), and checks that the decision binds the contract reference, supplier (or report-defined short name), and dollar value before admitting rows into `agency_award`. Uncorroborated `2000–2013` recommendations (where `ttc.ca` published no per-item decision sheets), `2018-04-11` misfiled reports, `Notice of Award` items received for information, amended recommendations (e.g., `P32PL17757`), and decisions omitting dollar amounts (e.g., `M60-88`) remain explicitly withheld.
+
 ## Regression fixtures
 
 Offline tests replay a held 2017 archive snapshot (52 all-type records, 13 Board meetings, 472 PDF link observations across 440 unique URLs) along with multi-page cohorts, drift, denied/missing files, corrupt checkpoints, resume, request budgets, role preservation, hash-pinned admission, and no-bid accounting.

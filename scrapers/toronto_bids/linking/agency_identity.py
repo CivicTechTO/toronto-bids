@@ -40,8 +40,8 @@ def _evidence():
             raise ValueError('unsupported agency identity kind')
         if kind == 'report_url_fallback':
             if (native != item.get('report_url') or item.get('contract_count') != 1
-                    or not any(i['role'] == 'administrative' and i['value']
-                               and i['authority'] == buyers[corpus] for i in item['identifiers'])):
+                    or (not item.get('award_review') and not any(i['role'] == 'administrative' and i['value']
+                               and i['authority'] == buyers[corpus] for i in item['identifiers']))):
                 raise ValueError('reviewed report identity requires one collection and an administrative identifier')
         elif (corpus == 'ttc' and re.match(r'https?://', native)) or not any(
                 i['role'] == kind and i['value'] == native and i['authority'] == buyers[corpus]
@@ -144,6 +144,8 @@ def reviewed_identity(corpus, document_sha256, contract, *, report_url=None, con
         return None
     if (match is None or match['report_url'] != report_url or type(contract_count) is not int
             or match['contract_count'] != contract_count):
+        raise IdentityReviewRequired('reviewed TTC identity no longer matches its source, extraction or collection context; re-review required')
+    if 'result_sha256' in match and (match.get('contract_index') != contract_index or match.get('result_sha256') != result_sha256):
         raise IdentityReviewRequired('reviewed TTC identity no longer matches its source, extraction or collection context; re-review required')
     return match
 
