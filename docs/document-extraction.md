@@ -34,6 +34,7 @@ To add a new document-backed source, add a corpus entry and a branch in `backfil
 - `award_summary`, `committee`, and `ba_report` are never classifier-gated because they are procurement documents by nature.
 - Regenerate weights with `docs/ground-truth/document-classification/build-classifier.py` (uses `scikit-learn` via `uv run --with`; do not edit the weights file by hand). The script refuses to write a threshold that drops any labelled bid document.
 - `_skip_reason` is shared by `extract_corpus` and `_count_uncached`. Keep them in sync so keyless runs behave properly (#220).
+- Each request carries at most 400,000 characters of report text by default. Longer documents split at blank lines where possible and at the character limit when a paragraph exceeds it. The chunks preserve the original text and order.
 - Per-document errors are logged and counted without stopping the corpus.
 - `check_declared_counts` logs a warning when extracted bids fall short of a document's stated bid count. Higher counts are kept because documents sometimes declare only compliant bids. These warnings are log-only and noisy on composite reports, which often state a count without listing bidders.
 

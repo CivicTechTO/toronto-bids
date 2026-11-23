@@ -350,10 +350,11 @@ def test_corpus_queues_every_chunk_and_limit_counts_pending_documents(setup, con
         def extract_document(self, sha, chunks):
             return queue.document(sha, EXTRACTOR_VERSION, [body(text) for text in chunks])
 
+    text = 'one paragraph\n\ntwo paragraph\n\nthree paragraph'
     for i in range(2):
         conn.execute(
             "INSERT INTO background_pdf (url,kind,sha256,text) VALUES (?,'award_summary',?,?)",
-            (f'https://example.com/{i}', str(i), 'one paragraph\n\ntwo paragraph\n\nthree paragraph'),
+            (f'https://example.com/{i}', str(i), text),
         )
     conn.commit()
     stats = extract_corpus(conn, 'award_summary', client=Client(), labels={}, max_chars=20, limit=1)
@@ -361,6 +362,9 @@ def test_corpus_queues_every_chunk_and_limit_counts_pending_documents(setup, con
     assert len(queue.jobs()) == 3
     assert conn.execute('SELECT COUNT(*) FROM extraction_cache').fetchone()[0] == 0
     queue.submit()
+    sent = [request['params']['messages'][0]['content'][-1]['text'] for request in api.posts[0]['requests']]
+    assert all(len(chunk) <= 20 for chunk in sent)
+    assert ''.join(sent) == text
     queue.collect(conn)
     assert db.get_extraction(conn, '0', EXTRACTOR_VERSION)
     assert db.get_extraction(conn, '1', EXTRACTOR_VERSION) is None
