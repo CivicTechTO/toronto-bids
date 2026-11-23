@@ -16,6 +16,7 @@ EXPORT_DIR="$DATA_DIR/export"
 JSON="$EXPORT_DIR/bids.json"
 GZ="$EXPORT_DIR/bids.json.gz"
 SQLITE="$DATA_DIR/bids.sqlite"
+FROZEN_SQLITE="$EXPORT_DIR/bids.sqlite"
 SCHEMA="$EXPORT_DIR/schema.json"
 MANIFEST="$EXPORT_DIR/manifest.json"
 CSV_ZIP="$EXPORT_DIR/bids-csv.zip"
@@ -61,6 +62,10 @@ gh_run() {
 [ -f "$JSON" ]   || fail "no export at $JSON — nothing to publish"
 [ -f "$SQLITE" ] || fail "no database at $SQLITE"
 
+# Hold the same directory lock as the exporter through the uploads.
+exec 8<"$EXPORT_DIR" || fail "could not open export directory at $EXPORT_DIR"
+flock -x 8 || fail "could not lock export directory at $EXPORT_DIR"
+
 # Verify the export completed cleanly and all artifacts match its completion marker.
 GENERATED_AT="$("$UV" run --project "$SCRAPERS" python -m toronto_bids.export.bundle "$EXPORT_DIR")" \
   || fail "export in $EXPORT_DIR is incomplete or inconsistent — refusing to publish"
@@ -69,21 +74,6 @@ echo "publish-data: export generated_at=$GENERATED_AT"
 if [ "$DRY_RUN" != 1 ] && ! gh auth status >/dev/null 2>&1; then
   fail "gh is not authenticated — set GH_TOKEN in ~/.config/toronto-bids/tb.env or run 'gh auth login'"
 fi
-
-# Freeze one consistent SQLite snapshot before any publish-time sync_run writes mutate bids.sqlite.
-STAGE_DIR="$(mktemp -d "$DATA_DIR/.publish-stage.XXXXXX")" || fail "could not create publish staging directory"
-trap 'rm -rf "$STAGE_DIR"' EXIT
-FROZEN_SQLITE="$STAGE_DIR/bids.sqlite"
-python3 -c '
-import sqlite3, sys
-src = sqlite3.connect(sys.argv[1])
-dst = sqlite3.connect(sys.argv[2])
-try:
-    src.backup(dst)
-finally:
-    dst.close()
-    src.close()
-' "$SQLITE" "$FROZEN_SQLITE" || fail "could not snapshot database at $SQLITE"
 
 gzip -9 -c "$JSON" > "$GZ" || fail "gzip failed"
 

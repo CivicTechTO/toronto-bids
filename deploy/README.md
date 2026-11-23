@@ -184,6 +184,8 @@ systemctl --user daemon-reload
 https://github.com/CivicTechTO/toronto-bids-data/releases/download/latest/bids.json
 ```
 
+The default export freezes the archive at `<DATA_DIR>/export/bids.sqlite` and uses that snapshot to build JSON, CSV, and Parquet. Publication verifies the snapshot and other artifacts against `.export-complete.json` before generating the release manifest or uploading. Run a fresh default export before publishing after upgrading. Allow space in the export directory for the previous snapshot and its staged replacement.
+
 Uploads retry up to three times on HTTP 5xx errors (5s / 10s backoff), and the manifest uploads last. On the 1st of each month, the script also creates a dated `snapshot-YYYY-MM-DD` release. After uploading, it dispatches the frontend build (`gh workflow run deploy.yml`, best-effort).
 
 Slack notifications: `tb nightly` posts the archive summary, and `publish-data.sh` posts a one-line publish result (including any rejected frontend deploy dispatch error, #237).

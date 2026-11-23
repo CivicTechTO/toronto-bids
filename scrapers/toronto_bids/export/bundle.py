@@ -1,6 +1,7 @@
 """Shared full-bundle export sequence and release completeness verification (#319, #320)."""
 from __future__ import annotations
 
+from contextlib import ExitStack, closing
 from datetime import datetime, timezone
 import fcntl
 import hashlib
@@ -11,11 +12,13 @@ import sys
 import tempfile
 
 from toronto_bids import config
-from toronto_bids.export.json_export import export_json, export_schema
+from toronto_bids.export.json_export import export_schema, write_json
 from toronto_bids.export.tabular_export import write_csv_zip, write_parquet_files
+from toronto_bids.linking.procurement import resolve_procurements
 from toronto_bids.store import db
 
 COMPLETE_MARKER = ".export-complete.json"
+SNAPSHOT_FILE = "bids.sqlite"
 
 
 def _file_fingerprint(path: Path) -> dict:
@@ -107,18 +110,34 @@ def _export_bundle(conn, json_path: Path, generated_at: str | None, *, custom: b
     if custom:
         obsolete = _custom_export_artifacts(json_path, artifact_names).difference(artifact_names)
     else:
+        artifact_names.append(SNAPSHOT_FILE)
         marker_path.unlink(missing_ok=True)
         obsolete = {p.name for p in out_dir.glob("*.parquet")}.difference(artifact_names)
 
     timestamp = generated_at or datetime.now(timezone.utc).isoformat()
     with tempfile.TemporaryDirectory(dir=out_dir, prefix=".export-stage.") as stage_raw:
         stage = Path(stage_raw)
-        stage_json = export_json(conn, stage / json_path.name, timestamp)
-        stage_schema = export_schema(conn, stage / "schema.json", timestamp)
-        stage_parquets = write_parquet_files(conn, stage)
-        stage_csv = write_csv_zip(conn, stage / "bids-csv.zip")
+        resolve_procurements(conn)
+        conn.commit()
 
-        staged = [stage_json, stage_schema, stage_csv, *stage_parquets]
+        staged = []
+        with ExitStack() as stack:
+            export_conn = conn
+            if not custom:
+                snapshot = stage / SNAPSHOT_FILE
+                export_conn = stack.enter_context(closing(db.connect(snapshot)))
+                conn.backup(export_conn)
+                # A WAL-mode working database must still produce a standalone asset.
+                export_conn.execute("PRAGMA journal_mode = DELETE")
+                export_conn.execute("PRAGMA query_only = ON")
+                staged.append(snapshot)
+
+            stage_json = write_json(export_conn, stage / json_path.name, timestamp)
+            stage_schema = export_schema(export_conn, stage / "schema.json", timestamp)
+            stage_parquets = write_parquet_files(export_conn, stage)
+            stage_csv = write_csv_zip(export_conn, stage / "bids-csv.zip")
+            staged.extend([stage_json, stage_schema, stage_csv, *stage_parquets])
+
         stage_marker = write_complete_marker(stage, timestamp, artifact_names, json_file=json_path.name)
         for src in staged:
             os.replace(src, out_dir / src.name)
@@ -160,7 +179,7 @@ def verify_complete_export(export_dir) -> dict:
     if not isinstance(artifacts, dict) or not artifacts:
         raise ValueError("export completion marker has no artifacts")
 
-    for required in ("bids.json", "schema.json", "bids-csv.zip"):
+    for required in ("bids.json", "schema.json", "bids-csv.zip", SNAPSHOT_FILE):
         if required not in artifacts:
             raise ValueError(f"export completion marker missing required artifact {required}")
     recorded_parquets = {name for name in artifacts if name.endswith(".parquet")}
