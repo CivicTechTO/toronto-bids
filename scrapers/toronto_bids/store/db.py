@@ -273,6 +273,19 @@ def _upsert_keyed(conn, table, cols, values, key_cols, overwrite: bool) -> None:
         changed = f"{sets['contract_amount']} IS NOT noncompetitive.contract_amount"
         for column in ("contract_amount_labelled", "contract_amount_verdict"):
             sets[column] = f"CASE WHEN {changed} THEN NULL ELSE noncompetitive.{column} END"
+    if table == "ariba_posting" and overwrite:
+        # Search estimates are converted, so replace the entire range only when its source wins.
+        use_incoming_range = """
+            excluded.currency IS NOT NULL
+            OR (CASE WHEN json_valid(excluded.raw_json)
+                     THEN json_extract(excluded.raw_json, '$.upperLimit_amount') END) IS NOT NULL
+            OR (ariba_posting.currency IS NULL
+                AND (ariba_posting.raw_json IS NULL
+                     OR (ariba_posting.amount_min IS NULL AND ariba_posting.amount_max IS NULL))
+                AND (excluded.amount_min IS NOT NULL OR excluded.amount_max IS NOT NULL))
+        """
+        for column in ("amount_min", "amount_max", "currency"):
+            sets[column] = f"CASE WHEN {use_incoming_range} THEN excluded.{column} ELSE ariba_posting.{column} END"
     assignments = ", ".join(f"{column} = {expr}" for column, expr in sets.items())
     conflict = _CONFLICT_TARGETS.get(table) or ", ".join(key_cols)
     sql = (
