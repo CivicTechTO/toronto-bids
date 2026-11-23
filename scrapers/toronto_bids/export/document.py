@@ -52,8 +52,8 @@ def _attribution() -> list[dict]:
 def build_export_document(conn, generated_at: str | None = None) -> dict:
     """Assemble the nested solicitation-centric export document.
 
-    Awards, postings, and reference-null bids nest under their solicitation when
-    document_number matches, or fall into unlinked_* lists.
+    Awards and postings nest under matching solicitations. Bids can also nest
+    under council items. Rows without a parent go into unlinked_* lists.
     """
     if generated_at is None:
         generated_at = datetime.now(timezone.utc).isoformat()
@@ -135,7 +135,9 @@ def build_export_document(conn, generated_at: str | None = None) -> dict:
             name=url.rsplit('/',1)[-1]
             documents_by_doc.setdefault(doc,[]).append(dict(source='staff_report',name=name,path=name,type='pdf',size_bytes=None,url=url))
 
-    # Route bids by identifier: matched/bridged/reference-null under solicitation, other council-ref bids under council_item, rest unlinked.
+    council_items = _rows(conn, "SELECT * FROM council_item ORDER BY reference")
+    council_refs = {item["reference"] for item in council_items}
+
     scoped_participation_ids = {r[0] for r in conn.execute("SELECT DISTINCT bid_id FROM bid_response WHERE bid_id IS NOT NULL")}
     bids_by_ref: dict = {}
     bids_by_doc: dict[str, list] = {}
@@ -151,7 +153,7 @@ def build_export_document(conn, generated_at: str | None = None) -> dict:
             bids_by_doc.setdefault(doc, []).append(_drop(cleaned, 'document_number'))
         elif ref is not None and doc is None and bridged in sol_docs:
             bids_by_doc.setdefault(bridged, []).append(_drop(cleaned, "document_number"))
-        elif ref is not None:
+        elif ref is not None and ref in council_refs:
             bids_by_ref.setdefault(ref, []).append(cleaned)
         elif doc in sol_docs:
             bids_by_doc.setdefault(doc, []).append(_drop(cleaned, "document_number"))
@@ -214,11 +216,9 @@ def build_export_document(conn, generated_at: str | None = None) -> dict:
     ):
         pdfs_by_ref.setdefault(pdf["reference"], []).append(pdf)
 
-    council_items = []
-    for ci in _rows(conn, "SELECT * FROM council_item ORDER BY reference"):
+    for ci in council_items:
         ci["background_pdfs"] = pdfs_by_ref.get(ci["reference"], [])
         ci["bids"] = bids_by_ref.get(ci["reference"], [])
-        council_items.append(ci)
 
     # Agency/corporation buyers, separate from the City solicitation spine.
     buyers_out = []
