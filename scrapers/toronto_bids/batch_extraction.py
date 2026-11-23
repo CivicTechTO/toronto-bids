@@ -75,6 +75,37 @@ def _remote_id(value):
     return value
 
 
+_CREDIT_EXHAUSTED_RE = re.compile(
+    r'credit\s+balance\s+is\s+too\s+low'
+    r'|insufficient\s+(?:api\s+)?credits?'
+    r'|out\s+of\s+(?:api\s+)?credits?'
+    r'|(?:api\s+)?credits?\s+(?:are\s+|have\s+been\s+)?exhausted',
+    re.I,
+)
+
+
+def _credit_rejection_message(exc):
+    """Return the billing message when an HTTP rejection confirms exhausted API credits, else None."""
+    if not isinstance(exc, httpx.HTTPStatusError):
+        return None
+    status = exc.response.status_code
+    if status not in (400, 402, 403):
+        return None
+    try:
+        payload = exc.response.json()
+    except (ValueError, TypeError):
+        payload = None
+    err = payload.get('error') if isinstance(payload, dict) and isinstance(payload.get('error'), dict) else None
+    err_type = str(err.get('type') or '').strip().lower() if err else ''
+    err_msg = str(err.get('message') or '').strip() if err else ''
+    if status == 402:
+        return err_msg or 'Payment required'
+    if isinstance(payload, dict) and payload.get('type') == 'error' and err is not None:
+        if err_type == 'billing_error' or _CREDIT_EXHAUSTED_RE.search(err_msg):
+            return err_msg or err_type
+    return None
+
+
 class BatchQueue:
     def __init__(self, path=None, *, budget=None, http=None, api_key=None):
         from toronto_bids.config import DATA_DIR
@@ -217,15 +248,30 @@ class BatchQueue:
                 remote = _remote_id(response.json().get('id'))
             except Exception as exc:
                 rejected = isinstance(exc, httpx.HTTPStatusError) and exc.response.status_code in (400, 401, 402, 403, 404, 413, 422, 429)
+                credit_error = _credit_rejection_message(exc) if rejected else None
+                error_detail = (
+                    f'Claude API billing rejection (HTTP {exc.response.status_code}): {credit_error}'
+                    if credit_error else str(exc)
+                )
                 with conn:
                     conn.execute('BEGIN IMMEDIATE')
                     conn.execute('UPDATE batch_submission SET status=?,error=? WHERE id=?',
-                                 ('rejected' if rejected else 'uncertain', str(exc), local_id))
+                                 ('rejected' if rejected else 'uncertain', error_detail, local_id))
                     for item in manifest.values():
-                        conn.execute('UPDATE batch_job SET status=?,error=? WHERE id=?',
-                                     ('failed' if rejected else 'submitting', str(exc), item['job']))
+                        if credit_error:
+                            conn.execute(
+                                "UPDATE batch_job SET status='queued',submission=NULL,reservation=NULL,error=NULL WHERE id=?",
+                                (item['job'],),
+                            )
+                        else:
+                            conn.execute('UPDATE batch_job SET status=?,error=? WHERE id=?',
+                                         ('failed' if rejected else 'submitting', error_detail, item['job']))
                         if rejected:
                             self.budget.settle(item['reservation'], 0, 'rejected', conn=conn)
+                if credit_error:
+                    raise httpx.HTTPStatusError(
+                        error_detail, request=exc.request, response=exc.response,
+                    ) from exc
                 raise
             with conn:
                 conn.execute('UPDATE batch_submission SET remote_id=?,status=\'submitted\' WHERE id=?', (remote, local_id))

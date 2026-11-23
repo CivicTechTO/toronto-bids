@@ -22,6 +22,7 @@ class API:
         self.ended = True
         self.outcomes = {}
         self.post_status = 200
+        self.post_json = None
         self.timeout_after_acceptance = False
         self.mutate_lines = lambda lines: lines
 
@@ -31,7 +32,8 @@ class API:
         self.requests[remote] = json['requests']
         if self.timeout_after_acceptance:
             raise httpx.ReadTimeout('receipt lost')
-        return httpx.Response(self.post_status, json={'id': remote}, request=httpx.Request('POST', url))
+        payload = self.post_json if self.post_json is not None else {'id': remote}
+        return httpx.Response(self.post_status, json=payload, request=httpx.Request('POST', url))
 
     def get(self, url, *, headers, timeout):
         if not url.endswith('/results'):
@@ -928,3 +930,230 @@ def test_batch_split_document_merges_bids_awards_and_conflicts(setup, conn):
     assert c['_merge_conflicts'] == [
         {'kind': 'field', 'field': 'decision_date', 'kept': '2025-04-01', 'conflicting': '2025-04-15'}
     ]
+
+
+@pytest.mark.parametrize(
+    'status, payload, expected_text',
+    [
+        (
+            400,
+            {
+                'type': 'error',
+                'error': {
+                    'type': 'invalid_request_error',
+                    'message': 'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.',
+                },
+            },
+            'credit balance is too low',
+        ),
+        (
+            400,
+            {
+                'type': 'error',
+                'error': {
+                    'type': 'billing_error',
+                    'message': 'Organization has reached its workspace spend limit.',
+                },
+            },
+            'workspace spend limit',
+        ),
+        (
+            402,
+            {
+                'type': 'error',
+                'error': {
+                    'type': 'billing_error',
+                    'message': 'Payment required to continue API access.',
+                },
+            },
+            'Payment required',
+        ),
+    ],
+)
+def test_credit_exhaustion_rejection_releases_reservations_preserves_queue_and_recovers(
+    setup, conn, status, payload, expected_text
+):
+    queue, api, body = setup
+    enqueue(queue, body, doc='credit-doc', text='credit test', source='pdf')
+    api.post_status = status
+    api.post_json = payload
+
+    with pytest.raises(httpx.HTTPStatusError, match=expected_text):
+        queue.submit()
+
+    # Local spending reservation is released and submission records the billing rejection.
+    assert charges(queue) == [(0, 'rejected')]
+    sub = queue.status()['submissions'][0]
+    assert sub['status'] == 'rejected' and expected_text in sub['error']
+
+    # Jobs stay cleanly queued so no manual retry is required and re-queuing stays pending.
+    job = queue.jobs()[0]
+    assert job['status'] == 'queued' and job['submission'] is None and job['reservation'] is None and job['error'] is None
+    assert queue.has_work()
+    with pytest.raises(batch.ExtractionPending):
+        queue.document('credit-doc', EXTRACTOR_VERSION, [body('credit test')], source='pdf')
+
+    # After credits are restored, the next scheduled submit succeeds with a fresh custom_id and collects cleanly.
+    first_custom = api.posts[0]['requests'][0]['custom_id']
+    api.post_status = 200
+    api.post_json = None
+    submitted = queue.submit()
+    assert submitted['submitted'] == 1
+    assert api.posts[1]['requests'][0]['custom_id'] != first_custom
+    collected = queue.collect(conn)
+    assert collected['errors'] == [] and collected['cached'] == 1
+    assert db.get_extraction(conn, 'credit-doc', EXTRACTOR_VERSION)
+    assert charges(queue) == [(0, 'rejected'), (2000, 'reported')]
+
+
+def test_credit_rejection_preserves_accepted_batches_and_recovers_on_next_refresh(setup, conn, tmp_path):
+    queue, api, body = setup
+    seed_buyers(conn)
+    for sha, slug in [('pdf-1', 'r1'), ('pdf-2', 'r2')]:
+        conn.execute(
+            "INSERT INTO background_pdf (url,kind,sha256,text,reference) VALUES (?,'agency_board',?,'report','2026.EP1.1')",
+            (f'https://toronto.ca/ep/{slug}.pdf', sha),
+        )
+    conn.commit()
+
+    # Batch 1 is accepted and still in progress on Anthropic.
+    enqueue(queue, body, doc='pdf-1', text='first report', source='pdf')
+    first = queue.submit()
+    api.ended = False
+    first_custom = api.posts[0]['requests'][0]['custom_id']
+    api.outcomes[first_custom] = {
+        'type': 'succeeded',
+        'message': {
+            'stop_reason': 'end_turn',
+            'content': [
+                {
+                    'type': 'text',
+                    'text': json.dumps(
+                        {
+                            'contracts': [
+                                {
+                                    'reference': 'EP01-2026',
+                                    'title': 'First Works',
+                                    'bids': [{'supplier_name': 'Alpha Inc.', 'amount_raw': '$100'}],
+                                    'awards': [{'supplier_name': 'Alpha Inc.', 'amount_raw': '$100'}],
+                                }
+                            ]
+                        }
+                    ),
+                }
+            ],
+            'usage': {'input_tokens': 1000, 'output_tokens': 200},
+        },
+    }
+
+    # Doc 2 is queued, then Anthropic rejects its submission due to exhausted credits.
+    enqueue(queue, body, doc='pdf-2', text='second report', source='pdf')
+    api.post_status = 400
+    api.post_json = {
+        'type': 'error',
+        'error': {
+            'type': 'invalid_request_error',
+            'message': 'Your credit balance is too low to access the Anthropic API.',
+        },
+    }
+    with pytest.raises(httpx.HTTPStatusError, match='credit balance is too low'):
+        queue.submit()
+
+    # Previously accepted batch 1 keeps its tracking state and reservation; doc 2 stays queued with released reservation.
+    submissions = {s['remote_id']: s['status'] for s in queue.status()['submissions']}
+    assert submissions[first['remote_id']] == 'submitted'
+    assert submissions[None] == 'rejected'
+    jobs_by_status = queue.status()['jobs']
+    assert jobs_by_status == {'submitted': 1, 'queued': 1}
+    assert charges(queue)[0][1] == 'reserved' and charges(queue)[1] == (0, 'rejected')
+
+    # Batch 1 finishes while credits are still exhausted: hourly refresh publishes doc 1 and keeps doc 2 queued.
+    api.ended = True
+    handoff = tmp_path / 'handoff.json'
+    exports = []
+    during_outage = refresh(queue, conn, export=lambda: exports.append('outage'), manifest_path=handoff)
+    assert len(during_outage['ready_documents']) == 1 and exports == ['outage'] and handoff.exists()
+    assert any('credit balance is too low' in err for err in during_outage['errors'])
+    assert queue.status()['jobs'] == {'ready': 1, 'queued': 1}
+    assert charges(queue)[0] == (2000, 'reported') and charges(queue)[2] == (0, 'rejected')
+    queue.acknowledge(during_outage['ready_documents'])
+    handoff.unlink()
+
+    # Credits are restored: next hourly refresh automatically submits doc 2, and the following refresh collects it.
+    api.post_status = 200
+    api.post_json = None
+    exports.clear()
+    resumed = refresh(queue, conn, export=lambda: exports.append('unexpected'), manifest_path=handoff)
+    assert resumed['errors'] == [] and resumed['submission']['submitted'] == 1
+    assert queue.status()['jobs'] == {'ready': 1, 'submitted': 1}
+    second_custom = api.posts[-1]['requests'][0]['custom_id']
+    api.outcomes[second_custom] = {
+        'type': 'succeeded',
+        'message': {
+            'stop_reason': 'end_turn',
+            'content': [
+                {
+                    'type': 'text',
+                    'text': json.dumps(
+                        {
+                            'contracts': [
+                                {
+                                    'reference': 'EP02-2026',
+                                    'title': 'Second Works',
+                                    'bids': [{'supplier_name': 'Beta Ltd.', 'amount_raw': '$200'}],
+                                    'awards': [{'supplier_name': 'Beta Ltd.', 'amount_raw': '$200'}],
+                                }
+                            ]
+                        }
+                    ),
+                }
+            ],
+            'usage': {'input_tokens': 1000, 'output_tokens': 200},
+        },
+    }
+
+    finished = refresh(queue, conn, export=lambda: exports.append('recovered'), manifest_path=handoff)
+    assert finished['errors'] == [] and len(finished['ready_documents']) == 1 and exports == ['recovered']
+    assert conn.execute('SELECT COUNT(*) FROM agency_bid').fetchone()[0] == 2
+
+
+@pytest.mark.parametrize(
+    'status, payload',
+    [
+        (400, {'type': 'error', 'error': {'type': 'invalid_request_error', 'message': 'max_tokens: must be positive'}}),
+        (401, {'type': 'error', 'error': {'type': 'authentication_error', 'message': 'invalid x-api-key'}}),
+        (403, {'type': 'error', 'error': {'type': 'permission_error', 'message': 'Your API key does not have permission'}}),
+        (429, {'type': 'error', 'error': {'type': 'rate_limit_error', 'message': 'Rate limit exceeded'}}),
+    ],
+)
+def test_non_credit_permanent_rejections_still_mark_jobs_failed(setup, status, payload):
+    queue, api, body = setup
+    enqueue(queue, body, doc='perm-fail', text='permanent failure')
+    api.post_status = status
+    api.post_json = payload
+
+    with pytest.raises(httpx.HTTPStatusError):
+        queue.submit()
+
+    assert charges(queue) == [(0, 'rejected')]
+    assert queue.status()['submissions'][0]['status'] == 'rejected'
+    assert queue.jobs()[0]['status'] == 'failed'
+    assert queue.submit()['submitted'] == 0
+
+
+def test_uncertain_5xx_keeps_reservation_and_submitting_state_even_if_body_mentions_credits(setup):
+    queue, api, body = setup
+    enqueue(queue, body, doc='uncertain-doc', text='uncertain')
+    api.post_status = 500
+    api.post_json = {
+        'type': 'error',
+        'error': {'type': 'api_error', 'message': 'Your credit balance is too low'},
+    }
+
+    with pytest.raises(httpx.HTTPStatusError):
+        queue.submit()
+
+    assert charges(queue)[0][1] == 'reserved'
+    assert queue.status()['submissions'][0]['status'] == 'uncertain'
+    assert queue.jobs()[0]['status'] == 'submitting'
+    assert queue.submit()['submitted'] == 0
