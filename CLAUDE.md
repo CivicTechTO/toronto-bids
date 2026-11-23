@@ -53,7 +53,7 @@ Order in `default_sources()` matters:
 3. CKAN backfill (`overwrite=False`, except `ckan_pipeline` which uses `overwrite=True` because it is the only source for `capital_project`, #69)
 4. Ariba Discovery and suspended firms
 
-Both upsert modes use `COALESCE` (`db._upsert_keyed`): with `overwrite=True`, non-null incoming values win and `NULL` never overwrites an existing value; with `overwrite=False`, only currently-`NULL` columns are filled. Feed rows are never deleted (`first_seen`/`last_seen` archive semantics). Only derived tables rebuilt from held bytes (supplier dimension, Ariba attachment index, extraction-backed bid/award tables) are swapped.
+For source fields, `db._upsert_keyed` prefers non-null incoming values with `overwrite=True` and non-null stored values with `overwrite=False`. A non-competitive upsert takes the parse from the source that supplied the winning raw amount and clears the review when the raw text changes. Feed rows are never deleted (`first_seen`/`last_seen` archive semantics). Only derived tables rebuilt from held bytes (supplier dimension, Ariba attachment index, extraction-backed bid/award tables) are swapped.
 
 ### Failure surfacing and known gaps
 
@@ -79,7 +79,7 @@ Both upsert modes use `COALESCE` (`db._upsert_keyed`): with `overwrite=True`, no
 - **Sync linking passes** (`pipeline.linking_passes()`, run on every sync regardless of `--only`):
   - `title_cleanup`: clears placeholder titles (`Doc-3524228095`) to `NULL` and drops orphaned `title_source`. Always test `title IS NULL`, never `title LIKE 'Doc-%'`.
   - `ariba_bridge`: links `ariba_posting` rows to `solicitation` via `/RfxEvent/preview/<id>` in `ariba_posting_link` (legacy `discovery.ariba.com/rfx/<id>` URLs still redirect and work, #117). Unlinked postings export in `unlinked_ariba_postings`.
-  - `amount_backfill` and `amount_labels`: backfill machine-parsed numeric amounts and apply human verdicts from `data/amount_labels.toml`.
+  - `amount_backfill` and `amount_labels`: backfill machine-parsed numeric amounts and apply human verdicts from `data/amount_labels.toml`. These passes also repair stored non-competitive parses and reviews against the current raw text.
   - `supplier_dimension`: rebuilds canonical `supplier` rows across awards, non-competitive contracts, suspended firms, bids (`bidder_name_raw`), composite awards, and agency records (#87; see `docs/supplier-entity-resolution.md`).
 
 ### Export seam (`export/`)
@@ -114,7 +114,7 @@ Read the relevant guide before changing these areas:
 ## Gotchas
 
 - **Never aggregate `award_amount` or `contract_amount`.** They are raw `TEXT`. Aggregate `award_amount_numeric` / `contract_amount_numeric` (`REAL`). A `NULL` numeric value next to a non-null raw string means the string is not a single CAD amount.
-- **Three amount tiers (#74):** raw (`award_amount`), machine-parsed (`award_amount_numeric`), and human-labelled (`award_amount_labelled` + `award_amount_verdict` from `toronto_bids/data/amount_labels.toml`). Never write human labels into `*_numeric`, and keep labelled columns off the `Award`/`NonCompetitive` models so sync upserts cannot overwrite them. Verdicts are `amount`, `not_an_amount`, `corrupt`, `unknown` (including USD values like `'$1,311,936.00 USD'`), and `not_an_award`. Run `tb amounts unlabelled` to find unreviewed unparseable strings.
+- **Three amount tiers (#74):** raw (`award_amount`), machine-parsed (`award_amount_numeric`), and human-labelled (`award_amount_labelled` + `award_amount_verdict` from `toronto_bids/data/amount_labels.toml`). Write human judgments only to the labelled and verdict columns. Keep those columns off the `Award` and `NonCompetitive` source models. Verdicts are `amount`, `not_an_amount`, `corrupt`, `unknown` (including USD values like `'$1,311,936.00 USD'`), and `not_an_award`. Run `tb amounts unlabelled` to find unreviewed unparseable strings.
 - **Filter `award` by `source` before aggregating.** Both `odata` and `ckan_awarded` store rows in `award`; filter to `source = 'odata'` to avoid double-counting.
 - **Do not deduplicate `award` by `(document_number, supplier_name_raw)`.** One row is one award line (standing-offer call-ups repeat the same supplier). Uniqueness uses the expression index `award_line_key`, which coalesces nullable columns; `db._upsert_keyed`'s `_CONFLICT_TARGETS` must match it exactly.
 - **Do not edit upstream City errors in normalizers.** Some amounts are wrong in both City feeds (for example, doc `3901175008` lists `$9.05B` to an individual). Store what the City published.
