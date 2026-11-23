@@ -165,6 +165,35 @@ def test_odata_spine_wins_and_ckan_links_on_document_number(conn):
     assert "ckan_awarded" in sources
 
 
+def test_ckan_open_advances_to_awarded_and_odata_status_takes_precedence(conn):
+    award = _load("ckan_awarded.json")["result"]["records"][0]
+    document = award["Document Number"]
+    listing = {"Document Number": document, "Division": "Open listing division"}
+    open_source = FakeSource("ckan_open", list(ckan.normalize_open(listing)), overwrite=False)
+    awarded_source = FakeSource("ckan_awarded", list(ckan.normalize_awarded(award)), overwrite=False)
+
+    def refresh(source):
+        assert pipeline.run_source(conn, None, source)[2] is None
+        return tuple(conn.execute(
+            "SELECT document_number, status, source, division FROM solicitation"
+        ).fetchone())
+
+    assert refresh(open_source) == (document, "Open", "ckan_open", "Open listing division")
+    awarded = (document, "Awarded", "ckan_awarded", "Open listing division")
+    assert refresh(awarded_source) == awarded
+    assert refresh(open_source) == awarded
+    assert db.counts(conn)["solicitation"] == 1
+    assert db.counts(conn)["award"] == 1
+
+    odata_rows = list(odata.normalize_solicitation({
+        "Solicitation_Document_Number": document, "Status": "Open", "Client_Division": "OData division",
+    }))
+    authoritative = (document, "Open", "odata", "OData division")
+    assert refresh(FakeSource("odata_solicitations", odata_rows)) == authoritative
+    assert refresh(awarded_source) == authoritative
+    assert refresh(open_source) == authoritative
+
+
 def test_ariba_fetch_normalize_upsert_bridges_and_archives(conn):
     search = _load("ariba_search_record.json")
     detail = _load("ariba_detail.json")
