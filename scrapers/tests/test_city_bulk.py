@@ -37,6 +37,114 @@ def test_bulk_participation_requires_literal_current_event_and_submitted_firm_li
     assert 'Alberici' in accepted[0]['witness']['list_quotation']
 
 
+@pytest.mark.parametrize("change", [None, "report_hash", "odata_id", "receipt"])
+def test_reviewed_receipt_requires_held_report_identity_and_literal_receipt(conn, monkeypatch, change):
+    row = report()
+    row["text"] = (
+        "Award of Doc9999999999\fProcurement Process for Doc3987477359\n"
+        "Two firms submitted: Alberici Constructors Ltd. and Maple Reinders Limited"
+    )
+    row["result"] = None
+    review = dict(
+        document_number="3987477359", odata_id="publisher-id", report_sha256=row["sha256"],
+        identity_page=2, identity_quotation="Procurement Process for Doc3987477359",
+        receipt_page=2, receipt_quotation="Two firms submitted: Alberici Constructors Ltd. and Maple Reinders Limited",
+        names=["Alberici Constructors Ltd.", "Maple Reinders Limited"],
+    )
+    monkeypatch.setattr(city_bulk, "_RECEIVED_REVIEWS", {row["url"]: review})
+    conn.execute("INSERT INTO solicitation (document_number, source, odata_id) VALUES ('3987477359', 'odata', ?)",
+                 ("changed" if change == "odata_id" else "publisher-id",))
+    if change == "report_hash":
+        row["sha256"] = "b" * 64
+    if change == "receipt":
+        row["text"] = row["text"].replace("submitted", "were invited")
+    accepted, held = city_bulk.propose(conn, row)
+    if change:
+        assert accepted == [] and len(held) == 1
+    else:
+        assert held == []
+        assert accepted[0]["names"] == review["names"]
+        assert accepted[0]["prices_withheld"] and accepted[0]["statuses_withheld"]
+
+
+def test_reviewed_native_receipt_requires_unique_exact_publisher_match(conn, monkeypatch):
+    from toronto_bids.models import Award, Solicitation
+    from toronto_bids.store import db
+
+    row = report()
+    row["text"] = "Tender 5-2024. Issued in June, closed in July. Acme awarded $100.\nAcme submitted."
+    review = dict(
+        document_number="3987477359", odata_id="primary", report_sha256=row["sha256"],
+        identity_page=1, identity_quotation="Tender 5-2024", receipt_page=1,
+        receipt_quotation="Acme submitted.", names=["Acme"], native_call="5-2024",
+        publisher_match=dict(dates_page=1, dates_quotation="Issued in June, closed in July.",
+                             award_page=1, award_quotation="Acme awarded $100.",
+                             issue_date="2024-06-01", close_date="2024-07-01", rfx_type="RFT",
+                             supplier="Acme", amount="100"),
+    )
+    monkeypatch.setattr(city_bulk, "_RECEIVED_REVIEWS", {row["url"]: review})
+    for doc, oid in (("3987477359", "primary"), ("9999999999", "competing")):
+        db.upsert_row(conn, Solicitation(doc, odata_id=oid, source="odata", rfx_type="RFT",
+                                       issue_date="2024-06-01", submission_deadline="2024-07-01"),
+                      overwrite=True)
+        db.upsert_row(conn, Award(doc, "Acme", award_amount="100", source="odata"), overwrite=True)
+        accepted, held = city_bulk.propose(conn, row)
+        if oid == "primary":
+            assert accepted and not held
+        else:
+            assert not accepted and held[0]["reason"] == "reviewed_publisher_match_absent_or_ambiguous"
+
+
+def test_reviewed_independent_identity_binds_the_archived_city_row(tmp_path):
+    data = b"<table><tr><td>Doc3987477359</td><td>project RFP-1</td></tr></table>"
+    sha = hashlib.sha256(data).hexdigest()
+    source = tmp_path / f"{sha}.html"
+    source.write_bytes(data)
+    review = dict(document_number="3987477359",
+                  independent_identity=dict(sha256=sha, contract="RFP-1", row=["Doc3987477359", "project RFP-1"]))
+    row = {"local_path": str(tmp_path / "report.pdf")}
+    city_bulk._reviewed_identity_source(row, review, "Bid results for RFP-1")
+    with pytest.raises(ValueError, match="reviewed_independent_identity_not_literal"):
+        city_bulk._reviewed_identity_source(row, review, "Bid results for RFP-2")
+    source.write_bytes(data.replace(b"3987477359", b"9999999999"))
+    with pytest.raises(ValueError, match="reviewed_independent_identity_changed"):
+        city_bulk._reviewed_identity_source(row, review, "Bid results for RFP-1")
+
+
+@pytest.mark.parametrize("alias", [None, "9876543210"], ids=["reference-only", "alternate-doc"])
+def test_reviewed_receipt_links_held_bid_without_copying_it(conn, alias):
+    from toronto_bids.bid_coverage import audit
+    from toronto_bids.linking.city_crosswalk import canonical, digest
+    from toronto_bids.linking.procurement import resolve_procurements
+    from toronto_bids.models import Award, Bid, Solicitation
+    from toronto_bids.store import db
+
+    doc, ref = "3987477359", "2024.BA1.1"
+    for row in (Solicitation(doc, source="odata", odata_id="publisher", publisher_award_identity_json="{}"),
+                Award(doc, "Winner", source="odata"),
+                Bid("Winner", reference=ref, document_number=alias, source="bid_award_panel")):
+        db.upsert_row(conn, row, overwrite=True)
+    resolve_procurements(conn)
+    original_bid = tuple(conn.execute("SELECT id, document_number FROM bid").fetchone())
+    proof = dict(admission_version="city-reviewed-receipt-v1", document_number=doc,
+                 report_url="https://example.org/report.pdf", report_sha256="1" * 64, names=["Winner"],
+                 receipt_review=dict(council_reference=ref, odata_id="publisher", reuse_reference_bids=alias is None))
+    if alias is not None:
+        proof.update(alias_document_number=alias, call_number="1-2024",
+                     native_call_identity={"publisher_record_sha256": digest({})})
+
+    city_bulk._reuse_reviewed_bids(conn, proof)
+    conn.execute(
+        "INSERT INTO city_bulk_bid_evidence (proof_sha256,document_number,report_url,report_sha256,proof_json) "
+        "VALUES (?,?,?,?,?)", (digest(proof), doc, proof["report_url"], proof["report_sha256"], canonical(proof))
+    )
+    resolve_procurements(conn)
+    result = audit(conn)
+    assert result["missing"] == []
+    assert result["summary"]["canonical_bid_attribution_mismatches"] == []
+    assert [tuple(row) for row in conn.execute("SELECT id, document_number FROM bid")] == [original_bid]
+
+
 @pytest.mark.parametrize('heading', [
     'Table 2: Summary of two (2) Bids Received for Doc3987477359',
     'Table 2: Summary of 2 Bids Received for Doc3987477359',

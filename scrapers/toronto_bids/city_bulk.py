@@ -28,6 +28,127 @@ _RECEIVED_AS_FOLLOWS=re.compile(r'\b(?:A\s+total\s+of\s+)?(?P<count>'+_SOURCE_CO
 _INLINE_SUBMITTED=re.compile(r'\b(?P<count>'+_SOURCE_COUNT+r')\s+(?:Suppliers?|Firms?|Proponents?|Bidders?)\s+submitted\s+(?:a\s+)?(?:proposals?|bids?|tenders?|submissions?)\s*:\s*(?P<body>.{10,400}?\.)(?=\s*(?:\n|$))',re.I|re.DOTALL)
 
 
+_RECEIVED_REVIEWS = json.loads(
+    Path(__file__).with_name("data").joinpath("city_bulk_received_reviews.json").read_text()
+)
+
+
+def _reviewed_identity_source(row, review, report_page):
+    from lxml import html
+
+    identity = review["independent_identity"]
+    path = Path(row["local_path"]).with_name(identity["sha256"] + ".html")
+    if not path.is_file():
+        raise ValueError("reviewed_independent_identity_missing")
+    data = path.read_bytes()
+    if hashlib.sha256(data).hexdigest() != identity["sha256"]:
+        raise ValueError("reviewed_independent_identity_changed")
+    contract = identity["contract"]
+    wanted = identity["row"]
+    matches = sum(
+        [clean(cell.text_content()) for cell in tr.xpath("./td")] == wanted
+        for tr in html.fromstring(data).xpath("//tr")
+    )
+    published_key = identity.get("published_key", "Doc" + review["document_number"])
+    if (matches != 1 or contract not in report_page or not any(contract in cell for cell in wanted)
+            or published_key not in wanted):
+        raise ValueError("reviewed_independent_identity_not_literal")
+
+
+def _reviewed_award_terms(archive, doc, identity, pages):
+    # The original register supplies the award date. The report supplies the net term amounts.
+    from datetime import date
+
+    award_date = date.fromisoformat(identity["award_date"])
+    terms = identity["net_terms"]
+    award_text = " ".join(pages[page - 1] for page in identity["award_pages"])
+    if (award_date.strftime("%m/%d/%Y") not in identity["row"]
+            or identity["supplier"] not in award_text
+            or not all(f"${amount:,} net of all applicable taxes and charges" in award_text for amount in terms)):
+        raise ValueError("reviewed_award_terms_not_literal")
+    matches = archive.execute(
+        "SELECT DISTINCT document_number FROM award WHERE source='odata' AND award_date=? "
+        "AND supplier_name_raw=? COLLATE NOCASE AND award_amount_numeric=?",
+        (identity["award_date"], identity["supplier"], sum(terms)),
+    )
+    if {row[0] for row in matches} != {doc}:
+        raise ValueError("reviewed_award_terms_match_absent_or_ambiguous")
+
+
+def _reviewed_receipt(archive, row, review, native_identities):
+    doc = review["document_number"]
+    pages = [clean(page) for page in (row["text"] or "").split("\f")]
+    for role in ("identity", "receipt"):
+        page = review[f"{role}_page"]
+        if not 1 <= page <= len(pages) or review[f"{role}_quotation"] not in pages[page - 1]:
+            raise ValueError(f"reviewed_{role}_quotation_changed")
+    if row["sha256"] != review["report_sha256"]:
+        raise ValueError("reviewed_report_bytes_changed")
+    publisher = archive.execute(
+        "SELECT publisher_award_identity_json FROM solicitation WHERE document_number = ? AND source = 'odata' AND odata_id = ?",
+        (doc, review["odata_id"]),
+    ).fetchone()
+    if not publisher:
+        raise ValueError("reviewed_odata_identity_changed")
+    if not review["names"] or not all(name in review["receipt_quotation"] for name in review["names"]):
+        raise ValueError("invalid_reviewed_receipt")
+
+    proof = dict(admission_version="city-reviewed-receipt-v1", report_url=row["url"],
+                 contract_index=0, receipt_review=review, document_number=doc,
+                 names=review["names"], report_sha256=review["report_sha256"],
+                 prices_withheld=True, statuses_withheld=True)
+    if call := review.get("native_call"):
+        from toronto_bids.linking.city_bulk_identity import NativeCallIdentities
+        if find_call_numbers(review["identity_quotation"]) != {call}:
+            raise ValueError("reviewed_native_call_not_literal")
+        if match := review.get("publisher_match"):
+            from toronto_bids.amount import parse_amount
+
+            for role in ("dates", "award"):
+                page = match[f"{role}_page"]
+                if not 1 <= page <= len(pages) or match[f"{role}_quotation"] not in pages[page - 1]:
+                    raise ValueError(f"reviewed_{role}_quotation_changed")
+            targets = archive.execute(
+                "SELECT DISTINCT s.document_number FROM solicitation s JOIN award a USING (document_number) "
+                "WHERE s.source='odata' AND a.source='odata' AND s.rfx_type=? AND s.issue_date=? "
+                "AND s.submission_deadline=? AND a.supplier_name_raw=? COLLATE NOCASE AND a.award_amount_numeric=?",
+                (match["rfx_type"], match["issue_date"], match["close_date"],
+                 match["supplier"], parse_amount(match["amount"])),
+            )
+            if {row[0] for row in targets} != {doc} or review.get("alias_document_number"):
+                raise ValueError("reviewed_publisher_match_absent_or_ambiguous")
+        else:
+            resolved, identity = (native_identities or NativeCallIdentities(archive)).resolve(call)
+            if resolved != doc:
+                raise ValueError("reviewed_native_call_identity_changed")
+            proof["native_call_identity"] = identity
+        if alias := review.get("alias_document_number"):
+            quote = review["alias_quotation"]
+            if quote not in pages[review["identity_page"] - 1] or set(re.findall(r"(?<!\d)\d{10}(?!\d)", quote)) != {alias}:
+                raise ValueError("reviewed_alias_quotation_changed")
+            if alias == doc or archive.execute(
+                "SELECT 1 FROM solicitation WHERE document_number = ?", (alias,)
+            ).fetchone():
+                raise ValueError("reviewed_alias_conflicts_with_publisher_spine")
+            proof.update(alias_document_number=alias, call_number=call)
+    elif review.get("independent_identity"):
+        from toronto_bids.linking.city_crosswalk import digest
+
+        if not publisher[0] or digest(json.loads(publisher[0])) != review["publisher_record_sha256"]:
+            raise ValueError("reviewed_independent_publisher_identity_changed")
+        _reviewed_identity_source(row, review, pages[review["identity_page"] - 1])
+        if alias := review.get("alias_document_number"):
+            if (set(_DOC.findall(review["identity_quotation"])) != {alias} or alias == doc
+                    or archive.execute("SELECT 1 FROM solicitation WHERE document_number = ?", (alias,)).fetchone()):
+                raise ValueError("reviewed_independent_alias_identity_changed")
+            proof["alias_document_number"] = alias
+        else:
+            _reviewed_award_terms(archive, doc, review["independent_identity"], pages)
+    elif doc not in _DOC.findall(review["identity_quotation"]):
+        raise ValueError("reviewed_document_not_literal")
+    return proof
+
+
 def _primary_heading(text):
     return re.split(r'\b(?:SUMMARY|RECOMMENDATIONS|PURPOSE)\b',text,flags=re.I)[0][:1600]
 
@@ -56,6 +177,11 @@ def _identity_role(doc,text,items=None):
 
 def propose(archive, row, native_identities=None):
     """Emit source-bound participation proposals and structured exceptions for one screened report."""
+    if review := _RECEIVED_REVIEWS.get(row["url"]):
+        try:
+            return [_reviewed_receipt(archive, row, review, native_identities)], []
+        except ValueError as exc:
+            return [], [dict(document_number=review["document_number"], reason=str(exc))]
     proposals=[];exceptions=[]
     if native_identities is None:
         from toronto_bids.linking.city_bulk_identity import NativeCallIdentities
@@ -270,6 +396,17 @@ def inventory(directory, archive):
             state=('unavailable' if row['state']!='held' else 'no_native_text' if not text.strip() else
                    'cached' if cache else 'eligible' if _PARTICIPATION.search(clean(text)) else 'no_participation_language')
             rows.append(dict(row,screen=state,items=items,result=json.loads(cache[0]) if cache else None))
+        existing_urls = {row["url"] for row in rows}
+        for url, review in _RECEIVED_REVIEWS.items():
+            path = Path(directory) / "reviewed-reports" / Path(url).name
+            if url in existing_urls or not path.is_file():
+                continue
+            sha = hashlib.sha256(path.read_bytes()).hexdigest()
+            if sha != review["report_sha256"]:
+                raise ValueError(f"Held reviewed report bytes changed for {url}")
+            native = subprocess.run(["pdftotext", "-q", str(path), "-"], capture_output=True, text=True, check=True)
+            rows.append(dict(url=url, sha256=sha, local_path=str(path.resolve()), text=native.stdout.strip(),
+                             screen="reviewed", items=[], result=None, error=None))
         return rows
     finally:conn.close()
 
@@ -375,6 +512,28 @@ def write_inventory(directory, archive, output):
     return result['states']
 
 
+def _reuse_reviewed_bids(archive, proof):
+    from toronto_bids.linking.supplier import supplier_key
+
+    review = proof["receipt_review"]
+    ref = review["council_reference"]
+    doc = proof["document_number"]
+    alias = proof.get("alias_document_number")
+    held = archive.execute("SELECT document_number, bidder_name_raw FROM bid WHERE reference = ?", (ref,)).fetchall()
+    if (any(bid[0] != alias for bid in held)
+            or {supplier_key(bid[1]) for bid in held} != {supplier_key(name) for name in proof["names"]}):
+        raise ValueError(f"Previously held bid list disagrees with reviewed receipt for {ref}")
+    if alias is not None:
+        return
+    prior = archive.execute("SELECT document_number FROM solicitation_link WHERE reference = ?", (ref,)).fetchone()
+    if prior and prior[0] != doc:
+        raise ValueError(f"Conflicting stored solicitation link for {ref}")
+    archive.execute(
+        "INSERT OR IGNORE INTO solicitation_link (reference, document_number, method) "
+        "VALUES (?, ?, 'city_bulk_reviewed_receipt')", (ref, doc),
+    )
+
+
 def backfill(directory, archive):
     """Validate and atomically admit bulk participation rows and evidence (caller owns commit)."""
     from toronto_bids.models import Bid, BackgroundPdf
@@ -451,8 +610,11 @@ def backfill(directory, archive):
             if old and old[0] not in (None,row['sha256']):raise ValueError('Archived report bytes changed')
             db.upsert_row(archive,BackgroundPdf(url=row['url'],document_number=proof['document_number'],
                 kind='city_bulk',local_path=row['local_path'],sha256=row['sha256'],text=row['text']),overwrite=False)
-            for name in proof['names']:
-                db.upsert_row(archive,Bid(name,document_number=proof['document_number'],source='city_bulk'),overwrite=False)
+            if proof.get("alias_document_number") or proof.get("receipt_review", {}).get("reuse_reference_bids"):
+                _reuse_reviewed_bids(archive, proof)
+            else:
+                for name in proof['names']:
+                    db.upsert_row(archive,Bid(name,document_number=proof['document_number'],source='city_bulk'),overwrite=False)
             archive.execute('INSERT OR IGNORE INTO city_bulk_bid_evidence '
                 '(proof_sha256,document_number,report_url,report_sha256,proof_json) VALUES (?,?,?,?,?)',
                 (digest(proof),proof['document_number'],proof['report_url'],proof['report_sha256'],canonical(proof)))

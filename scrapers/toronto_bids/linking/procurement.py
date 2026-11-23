@@ -78,15 +78,17 @@ def _resolve(conn):
     crosswalks = reviewed_links(conn)
     from toronto_bids.linking.city_native_participation import replay as replay_native_participation
     native_participation = replay_native_participation(conn)
-    from toronto_bids.linking.city_document_aliases import replay as replay_city_aliases
+    from toronto_bids.linking.city_document_aliases import reviewed_receipt_aliases, replay as replay_city_aliases
     from toronto_bids.linking.city_crosswalk import digest as proof_digest
-    city_aliases = replay_city_aliases(conn)
+    city_aliases = [*replay_city_aliases(conn), *reviewed_receipt_aliases(conn)]
     alias_targets = {p['alias_document_number']: p['document_number'] for p in city_aliases}
     ids = _Identities(conn, city_aliases)
     for proof in city_aliases:
         target = ids.get('city_document', proof['document_number'])
-        evidence = json.dumps(dict(rule='published_city_ariba_alias', proof_sha256=proof_digest(proof)))
-        ids.join(target, ids.get('city_call', proof['call_number']), evidence, prefer=target)
+        rule = 'reviewed_city_receipt_alias' if 'receipt_review' in proof else 'published_city_ariba_alias'
+        evidence = json.dumps(dict(rule=rule, proof_sha256=proof_digest(proof)))
+        if call := proof.get('call_number'):
+            ids.join(target, ids.get('city_call', call), evidence, prefer=target)
         ids.join(target, ids.get('city_document', proof['alias_document_number']),
                  evidence, prefer=target)
     for proof in native_participation:

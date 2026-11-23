@@ -1,0 +1,434 @@
+{
+  "https://www.toronto.ca/legdocs/mmis/2023/gg/bgrd/backgroundfile-237724.pdf": {
+    "document_number": "3872270278",
+    "odata_id": "fc9c3315-6098-431e-aba3-0576ef910231",
+    "report_sha256": "2acac4a540a904574bb5f48b1346997413ca680d937fad160f1d479f055b2f9f",
+    "council_reference": "2023.GG5.8",
+    "identity_page": 5,
+    "identity_quotation": "The Negotiated Request for Proposal (nRFP) Doc3872270278 was issued by PMMD on February 24, 2023",
+    "receipt_page": 5,
+    "receipt_quotation": "At the time of closing, proposals were received from the following two (2) firms: • • Enterprise Rent-A-Car Canada Company Hertz Canada Limited",
+    "names": [
+      "Enterprise Rent-A-Car Canada Company",
+      "Hertz Canada Limited"
+    ]
+  },
+  "https://www.toronto.ca/legdocs/mmis/2025/gg/bgrd/backgroundfile-253128.pdf": {
+    "document_number": "4502108451",
+    "odata_id": "a0fe96c5-2d5f-44ef-bb79-39c12088121a",
+    "report_sha256": "b880dc25c0e0bf8b5ace6de7e63e808bfda191fa29d05e8d2f9368739f7ad183",
+    "council_reference": "2025.GG19.9",
+    "identity_page": 5,
+    "identity_quotation": "The nRFP Doc4502108451 was issued by Purchasing and Materials Management (PMMD) on June 12, 2024",
+    "receipt_page": 5,
+    "receipt_quotation": "At the time of nRFP closing, submissions were received from the following two suppliers: 1. Pomerleau Inc. 2. Matheson Constructors Limited",
+    "names": [
+      "Pomerleau Inc.",
+      "Matheson Constructors Limited"
+    ],
+    "corroboration_url": "https://www.toronto.ca/legdocs/mmis/2025/gg/bgrd/backgroundfile-253129.pdf",
+    "corroboration_sha256": "206c91c4bfd636262cdc68bd235fca0fd8ed02a80eee72716bc17c3140ab7302"
+  },
+  "https://www.toronto.ca/legdocs/mmis/2025/gg/bgrd/backgroundfile-256852.pdf": {
+    "document_number": "5060162215",
+    "odata_id": "bb1b66a0-9748-4974-b2d7-958cbbc7bb99",
+    "report_sha256": "262b13eaceafcbaa32c162350d8bc58aed692cfa98197a1b451d0a98bbf204dc",
+    "council_reference": "2025.GG23.9",
+    "identity_page": 7,
+    "identity_quotation": "A Request for Proposal Doc5060162215, was issued to select two qualified Suppliers for the award of Program Management Assignments PM9A and PM9B, respectively.",
+    "receipt_page": 7,
+    "receipt_quotation": "This resulted in a total of three (3) proposals being received from the following firms: 1. GHD Limited 2. R.V. Anderson Associates Limited 3. Aecom Canada ULC",
+    "names": [
+      "GHD Limited",
+      "R.V. Anderson Associates Limited",
+      "Aecom Canada ULC"
+    ]
+  },
+  "https://www.toronto.ca/legdocs/mmis/2024/ba/bgrd/backgroundfile-247006.pdf": {
+    "document_number": "4589616736",
+    "odata_id": "555d5b73-8da2-42fb-8aa2-98404d5a21be",
+    "report_sha256": "ecda851a92925b2c1cf58c5ba505c16cad10c943695e27d07365493fc1f2dc72",
+    "council_reference": "2024.BA85.7",
+    "identity_page": 1,
+    "identity_quotation": "Request for Service Number Doc4589616736.",
+    "receipt_page": 3,
+    "receipt_quotation": "Table 2: Summary of Bids Received Supplier Name Accenture Inc Deloitte LLP",
+    "names": [
+      "Accenture Inc",
+      "Deloitte LLP"
+    ]
+  },
+  "https://www.toronto.ca/legdocs/mmis/2021/ie/bgrd/backgroundfile-168619.pdf": {
+    "document_number": "2736063782",
+    "odata_id": "7c2eb19f-8f55-4629-b13f-32a93867181f",
+    "report_sha256": "8e16517a062354e1c1c1a5608fbf5ef8d14e441fff2c89dc6df0dc04ed790f0e",
+    "council_reference": "2021.IE23.12",
+    "identity_page": 6,
+    "identity_quotation": "Tender Call Doc2736063782 Contract Number 19ECS-MI-01AB",
+    "receipt_page": 6,
+    "receipt_quotation": "The submissions received from the two (2) bidders that responded to Tender Call Doc2736063782 Contract Number 19ECS-MI-01AB, were reviewed and evaluated by staff from Purchasing and Materials Management Division, Engineering and Construction Services and the Engineering Consultant and were found to be in conformance with the Tender requirements. The results are shown in the table below: Bidders Bid Price excluding HST * Maple Reinders Constructors Limited $131,267,530 Kenaidan Contracting Limited",
+    "names": [
+      "Maple Reinders Constructors Limited",
+      "Kenaidan Contracting Limited"
+    ]
+  },
+  "https://www.toronto.ca/legdocs/mmis/2021/ie/bgrd/backgroundfile-159607.pdf": {
+    "document_number": "2604028867",
+    "odata_id": "71267a0f-6ea6-4a4f-8c7a-d640a0b6ca4d",
+    "report_sha256": "58aca0678805e02dbeacca78c5f8dcd3450a035f81a96b408c0d50dd4a450e28",
+    "council_reference": "2021.IE19.5",
+    "identity_page": 5,
+    "identity_quotation": "Request for Proposal Number Doc2604028867, was issued",
+    "receipt_page": 5,
+    "receipt_quotation": "submissions received on October 6, 2020, from the following suppliers: 1. Robinson Consultant Incorporated 2. The Municipal Infrastructure Group Limited 3. WSP Canada Group Limited 4. R.V. Anderson Associates Limited",
+    "names": [
+      "Robinson Consultant Incorporated",
+      "The Municipal Infrastructure Group Limited",
+      "WSP Canada Group Limited",
+      "R.V. Anderson Associates Limited"
+    ]
+  },
+  "https://www.toronto.ca/legdocs/mmis/2020/ie/bgrd/backgroundfile-148333.pdf": {
+    "document_number": "2401515363",
+    "odata_id": "2078fae8-8281-4580-8e91-4b6f4828f8a9",
+    "report_sha256": "e85eab8fcd57481ed236a7f6f094f3ac0905bcc29060c9beb23c25df99c25c3e",
+    "council_reference": "2020.IE14.4",
+    "identity_page": 7,
+    "identity_quotation": "Table 2: Summary of Bids Received for Ariba Doc No. 2401515363",
+    "receipt_page": 7,
+    "receipt_quotation": "Summary of Bids Received for Ariba Doc No. 2401515363 Bidders Bid Price including HST * Sanscon Construction Ltd. $24,583,124 CRCE Construction Ltd. $32,277,758 Midome Construction Services Ltd. $37,290,000 CRH Canada Group Inc. C.O.B. as Dufferin Construction Company",
+    "names": [
+      "Sanscon Construction Ltd.",
+      "CRCE Construction Ltd.",
+      "Midome Construction Services Ltd.",
+      "CRH Canada Group Inc. C.O.B. as Dufferin Construction Company"
+    ]
+  },
+  "https://www.toronto.ca/legdocs/mmis/2021/ie/bgrd/backgroundfile-159600.pdf": {
+    "document_number": "2611519655",
+    "odata_id": "2652059f-6b22-404d-890f-f31eda6fef72",
+    "report_sha256": "e49ebe399b545944a5577eb1d9f93cb3f3c92c047fc836f4f24c42eef447255c",
+    "council_reference": "2021.IE19.4",
+    "identity_page": 6,
+    "identity_quotation": "Award for Request for Tender Document Number 2611519655 (196-2020)",
+    "receipt_page": 6,
+    "receipt_quotation": "Table 1: Summary of Bids Received for Document Number 2611519655 (196-2020) including bid price. Supplier Name Bid Price (including H.S.T.)* Alberici Constructors Limited $23,740,508 Bennett Mechanical Installations (2001) Limited $37,382,829",
+    "names": [
+      "Alberici Constructors Limited",
+      "Bennett Mechanical Installations (2001) Limited"
+    ]
+  },
+  "https://www.toronto.ca/legdocs/mmis/2020/ba/bgrd/backgroundfile-146575.pdf": {
+    "document_number": "9117197130",
+    "odata_id": "82972a4c-9306-4014-9b8e-f1e827152a57",
+    "report_sha256": "7c49ae886c2e83b2c7c81ee0ba02a1149f021c1eb8f4529b8ef59a54e2ae81fb",
+    "council_reference": "2020.BA70.2",
+    "native_call": "9117-19-7130",
+    "identity_page": 1,
+    "identity_quotation": "Solicitation Number: RFQ No. 9117-19-7130",
+    "receipt_page": 4,
+    "receipt_quotation": "Table 1: Summary of Bids Received for RFQ 9117-19-7130 including bid price Supplier Names Bid Price (including H.S.T.) January 1, 2020 to December 31, 2022 Biosolids Dewatering SNF Canada Ltd. Quadra Chemicals Ltd. Jes-Chem Ltd. Brenntag Canada",
+    "names": [
+      "SNF Canada Ltd.",
+      "Quadra Chemicals Ltd.",
+      "Jes-Chem Ltd.",
+      "Brenntag Canada"
+    ]
+  },
+  "https://www.toronto.ca/legdocs/mmis/2020/ba/bgrd/backgroundfile-141923.pdf": {
+    "document_number": "2412019000",
+    "odata_id": "30b36d73-8961-412a-b76f-cf16ffc869c9",
+    "report_sha256": "9094ec5440bc98296fb6e9957fb6e75872fdc343d43c067589785b89f1c30f48",
+    "council_reference": "2020.BA63.4",
+    "native_call": "241-2019",
+    "identity_page": 1,
+    "identity_quotation": "Call Number: Tender Call No. 241-2019",
+    "receipt_page": 2,
+    "receipt_quotation": "Table 2: Summary of Bids Received for Tender Call No. 241-2019 including bid price Bidder Name Bid Price (including H.S.T.) Midome Construction Service Ltd $7,062,500** Loc Pave Construction Ltd. $7,113,149** Hawkins Contracting Services Ltd. $7,282,049* Bevcon Construction and Paving Ltd $7,725,358 Wessuc Inc. $8,651,054 Metric/Aquicon Joint Venture $10,160,323",
+    "names": [
+      "Midome Construction Service Ltd",
+      "Loc Pave Construction Ltd.",
+      "Hawkins Contracting Services Ltd.",
+      "Bevcon Construction and Paving Ltd",
+      "Wessuc Inc.",
+      "Metric/Aquicon Joint Venture"
+    ],
+    "reuse_reference_bids": true
+  },
+  "https://www.toronto.ca/legdocs/mmis/2020/ba/bgrd/backgroundfile-146746.pdf": {
+    "document_number": "3405190301",
+    "odata_id": "c8dc3c5a-9112-4c04-b601-aa29f98ea472",
+    "report_sha256": "48263855e4cfe78943bc31db158acf6041fed0c74e1617b9a5fc53c408ff5d56",
+    "council_reference": "2020.BA71.3",
+    "native_call": "3405-19-0301",
+    "identity_page": 1,
+    "identity_quotation": "Call Number: Doc Number 2115727879 Description: For RFP 3405-19-0301",
+    "receipt_page": 2,
+    "receipt_quotation": "Table 1: Summary of Proposals Received Proponent Name Acumen Solutions Inc Minimum threshold not met Deloitte Inc Minimum threshold not met Catalyst Consulting Group Inc Successful",
+    "names": [
+      "Acumen Solutions Inc",
+      "Deloitte Inc",
+      "Catalyst Consulting Group Inc"
+    ],
+    "alias_document_number": "2115727879",
+    "alias_quotation": "Call Number: Doc Number 2115727879 Description: For RFP 3405-19-0301"
+  },
+  "https://www.toronto.ca/legdocs/mmis/2019/ie/bgrd/backgroundfile-134694.pdf": {
+    "document_number": "6033190109",
+    "odata_id": "38db1810-dda3-4af0-841a-796c535a2489",
+    "report_sha256": "5cdf16d6ee7b10dce57e76f93e5158b7da1482b2fe2f5256f5d1777327ddd58a",
+    "council_reference": "2019.IE6.3",
+    "identity_page": 1,
+    "identity_quotation": "Request for Quotation (RFQ) No. 6033-19-0109",
+    "receipt_page": 6,
+    "receipt_quotation": "Five (5) Bidders responded to the Request for Quotation. Bids were received for Price Schedules \"A\" and \"B\" for trucks utilizing diesel and dual fuel (diesel/Compressed Natural Gas) and no Bids were received for Price Schedules \"C\" and \"D\" for trucks utilizing Compressed Natural Gas (CNG) fuel as summarized in Table 1. Table 1: Bid Prices for Diesel and Dual Fuel Bidder Verspeeten Cartage Inc. Laidlaw Carriers Bulk GP Inc. Challenger GFL Environmental Inc. Waste Management Inc.",
+    "names": [
+      "Verspeeten Cartage Inc.",
+      "Laidlaw Carriers Bulk GP Inc.",
+      "Challenger",
+      "GFL Environmental Inc.",
+      "Waste Management Inc."
+    ],
+    "native_call": "6033-19-0109"
+  },
+  "https://www.toronto.ca/legdocs/mmis/2020/ie/bgrd/backgroundfile-141319.pdf": {
+    "document_number": "2492019000",
+    "odata_id": "e0f06fd1-a50c-4de2-810d-196975eb2314",
+    "report_sha256": "3f344425de4ed17bcecfe72f80aa850b52f2a57b101a1debaee299e8ffb0bf99",
+    "council_reference": "2020.IE11.4",
+    "identity_page": 1,
+    "identity_quotation": "Tender Call No. 249-2019, Contract No. 19ECS-LU-03TT",
+    "receipt_page": 3,
+    "receipt_quotation": "opened the following four (4) Tender responses: Bidders Price including HST and all applicable charges Capital Sewer Services Inc. ** $26,272,599 Drainstar Contracting Ltd. ** $30,166,317 Southland Mole of Canada $32,830,800 Clean Water Works Inc.",
+    "names": [
+      "Capital Sewer Services Inc.",
+      "Drainstar Contracting Ltd.",
+      "Southland Mole of Canada",
+      "Clean Water Works Inc."
+    ],
+    "native_call": "249-2019"
+  },
+  "https://www.toronto.ca/legdocs/mmis/2020/ba/bgrd/backgroundfile-145213.pdf": {
+    "document_number": "8720190000",
+    "odata_id": "7fa0d8d6-038b-4bb8-9631-25a93e3dd80a",
+    "report_sha256": "277289081a8f8b5d2db4628dc6a1717afbb8ce7224138f1f0969a2808e8bae86",
+    "council_reference": "2020.BA64.5",
+    "identity_page": 1,
+    "identity_quotation": "Call Number: Tender Call No. 1844251415 Description: Tender Call No. 87-2019",
+    "receipt_page": 2,
+    "receipt_quotation": "Table 2: Summary of Bids Received for Tender No. 1844251415 including bid price Bidder Name Bid Price (including H.S.T.) Alberici Constructors, Ltd. $ 20,323,398.04* Black & McDonald Limited $ 21,849,731.29 E.S. Fox Limited $ 29,080,713.85 Bennett Mechanical Installations (2001) Ltd.",
+    "names": [
+      "Alberici Constructors, Ltd.",
+      "Black & McDonald Limited",
+      "E.S. Fox Limited",
+      "Bennett Mechanical Installations (2001) Ltd."
+    ],
+    "native_call": "87-2019",
+    "alias_document_number": "1844251415",
+    "alias_quotation": "Call Number: Tender Call No. 1844251415 Description: Tender Call No. 87-2019"
+  },
+  "https://www.toronto.ca/legdocs/mmis/2020/ba/bgrd/backgroundfile-145732.pdf": {
+    "document_number": "3412190273",
+    "odata_id": "b5059cd9-be8f-4152-98fe-454fb8d0959b",
+    "report_sha256": "cd48351b3ffe7f25cabec53d54ea09d331ec811e8cd1ac90adf9ef9c9975adf2",
+    "council_reference": "2020.BA65.4",
+    "identity_page": 1,
+    "identity_quotation": "Call Number: RFQ Doc2036198510 Description: RFQ 3412-19-0273",
+    "receipt_page": 2,
+    "receipt_quotation": "Table 2: Summary of Bids Received (net of all taxes and charges) Bidder Name Bid Price (including H.S.T.) OnX Enterprise Solutions Ltd $8,752,315.15 The Streaming Tech Inc.",
+    "names": [
+      "OnX Enterprise Solutions Ltd",
+      "The Streaming Tech Inc."
+    ],
+    "native_call": "3412-19-0273",
+    "alias_document_number": "2036198510",
+    "alias_quotation": "Call Number: RFQ Doc2036198510 Description: RFQ 3412-19-0273"
+  },
+  "https://www.toronto.ca/legdocs/mmis/2020/gl/bgrd/backgroundfile-146372.pdf": {
+    "document_number": "1202190133",
+    "odata_id": "14f2c363-082e-4935-8c2b-35d69f1a5609",
+    "report_sha256": "babbde07a54438b89e85598ce74f552a19d396875250b744e9205c1359577e7f",
+    "council_reference": "2020.GL12.14",
+    "identity_page": 1,
+    "identity_quotation": "Contract Award for Request for Quotation Call Number 1202-19-0133",
+    "receipt_page": 3,
+    "receipt_quotation": "Table 1: Summary of Bid Received for Request for Quotation 1202-19-0133 including Bid Price per District (After Volume Rebate Discount and Net of Taxes) Evaluated Bid Price Per District After Volume Rebate Discount and Net of Taxes Evaluated Bid Price Per District After Volume Firm Name TORONTO AND Rebate Discount and NORTH YORK SCARBROUGH EAST YORK ETOBICOKE DISTRICT DISTRICT DISTRICT YORK DISTRICT $960,275.71 $949,059.91 $1,113,975.01 $942,606.91 $3,965,917.54 $966,107.53 $955,003.68 $1,121,610.05 $948,623.84 $3,991,345.10 $991,775.81 $980,376.95 $1,151,409.85 $973,827.61 $4,097,390.22 $1,058,183.27 $1,046,316.98 $1,227,642.38 $1,039,447.27 $4,371,589.91 Net of Taxes POWERTRADE ELECTRIC LTD ROBERTSON ELECTRIC WHOLESALE PROVINCE ELECTRIC SUPPLY * GERRIE ELECTRIC WHOLESALE LIMITED",
+    "names": [
+      "POWERTRADE ELECTRIC LTD",
+      "ROBERTSON ELECTRIC WHOLESALE",
+      "PROVINCE ELECTRIC SUPPLY",
+      "GERRIE ELECTRIC WHOLESALE LIMITED"
+    ],
+    "native_call": "1202-19-0133",
+    "publisher_match": {
+      "dates_page": 2,
+      "dates_quotation": "issued on August 16, 2019 and the Request for Quotation closed on September 20, 2019.",
+      "award_page": 1,
+      "award_quotation": "award a contract to Powertrade Electric Ltd., in the total amount of $23,395,105.34",
+      "supplier": "Powertrade Electric Ltd",
+      "amount": "23395105.34",
+      "rfx_type": "RFQ",
+      "issue_date": "2019-08-16",
+      "close_date": "2019-09-20"
+    }
+  },
+  "https://www.toronto.ca/legdocs/mmis/2019/ba/bgrd/backgroundfile-140010.pdf": {
+    "document_number": "9117197037",
+    "odata_id": "3883f978-4684-4fe3-83e8-5910022042b2",
+    "report_sha256": "f5f6d8633676939b43f659d36cbc8fd8c689a31b818ecbd59ff5df51a527f304",
+    "council_reference": "2019.BA55.5",
+    "identity_page": 1,
+    "identity_quotation": "Call Number: Request for Proposal No. 9117-19-7037",
+    "receipt_page": 2,
+    "receipt_quotation": "Table 2: Summary of Bids Received for RFP No. 9117-19-7037 Proponent Name Associated Engineering* Cole Engineering Group Ltd.* GHD Limited Parsons Corporation*** R.V. Anderson Associates Limited Robinson Consultants Inc.* The Municipal Infrastructure Group Ltd. WSP Canada Inc.",
+    "names": [
+      "Associated Engineering",
+      "Cole Engineering Group Ltd.",
+      "GHD Limited",
+      "Parsons Corporation",
+      "R.V. Anderson Associates Limited",
+      "Robinson Consultants Inc.",
+      "The Municipal Infrastructure Group Ltd.",
+      "WSP Canada Inc."
+    ],
+    "native_call": "9117-19-7037",
+    "publisher_match": {
+      "dates_page": 2,
+      "dates_quotation": "Call Issued: July 29, 2019 Call Closed: September 9, 2019",
+      "award_page": 3,
+      "award_quotation": "amount not to exceed $1,810,504 net of HST",
+      "supplier": "GHD Limited",
+      "amount": "1810504",
+      "rfx_type": "RFP",
+      "issue_date": "2019-07-29",
+      "close_date": "2019-09-09"
+    },
+    "reuse_reference_bids": true
+  },
+  "https://www.toronto.ca/legdocs/mmis/2019/ba/bgrd/backgroundfile-140009.pdf": {
+    "document_number": "9117197179",
+    "odata_id": "8e9cf382-19bf-42cc-9e5b-fca013f326f0",
+    "report_sha256": "07bcc4d53fbd2f5054781643ade54985e242d52aa011b3c6958c086428bbfc28",
+    "council_reference": "2019.BA55.4",
+    "identity_page": 1,
+    "identity_quotation": "Call Number: Request for Proposal No. 9117-19-7179",
+    "receipt_page": 4,
+    "receipt_quotation": "Table 4: Summary of Bids Received for RFP No. 9117-19-7179 Proponent Name Associated Engineering* Cole Engineering Group Ltd.* GHD Limited Parsons Corporation** R.V. Anderson Associates Limited The Municipal Infrastructure Group Ltd. WSP Canada Inc.",
+    "names": [
+      "Associated Engineering",
+      "Cole Engineering Group Ltd.",
+      "GHD Limited",
+      "Parsons Corporation",
+      "R.V. Anderson Associates Limited",
+      "The Municipal Infrastructure Group Ltd.",
+      "WSP Canada Inc."
+    ],
+    "native_call": "9117-19-7179",
+    "publisher_match": {
+      "dates_page": 4,
+      "dates_quotation": "Call Issued: July 29, 2019 Call Closed: September 9, 2019",
+      "award_page": 5,
+      "award_quotation": "amount not to exceed $1,705,554 net of HST",
+      "supplier": "GHD Limited",
+      "amount": "1705554",
+      "rfx_type": "RFP",
+      "issue_date": "2019-07-29",
+      "close_date": "2019-09-09"
+    },
+    "reuse_reference_bids": true
+  },
+  "https://www.toronto.ca/legdocs/mmis/2021/ba/bgrd/backgroundfile-164441.pdf": {
+    "report_sha256": "bc959efa6c26cef62405bd5e18b48e47bf9ea919de40d72fa7b1a62ac90e7e63",
+    "document_number": "2678413650",
+    "odata_id": "9e65376b-86d1-4379-a9b5-f3f5160fe344",
+    "council_reference": "2021.BA124.1",
+    "identity_page": 1,
+    "identity_quotation": "Negotiated Request for Proposal (nRFP), Ariba Doc No. 2678423650",
+    "receipt_page": 2,
+    "receipt_quotation": "Table 2: Summary of Proposals Received for Ariba Doc 2487291193 Supplier Name Jacobs (CH2M HILL Canada Ltd) Morrison Hershfield Parsons Inc. WSP Canada",
+    "names": [
+      "Jacobs (CH2M HILL Canada Ltd)",
+      "Morrison Hershfield",
+      "Parsons Inc.",
+      "WSP Canada"
+    ],
+    "alias_document_number": "2678423650",
+    "misprinted_receipt_document_number": "2487291193",
+    "misprinted_receipt_source_url": "https://secure.toronto.ca/council/agenda-item.do?item=2021.BA117.2",
+    "publisher_record_sha256": "37c4fb3a11db05f348fbccc155730111d416d318c3d35e27d1f673c6d7013139",
+    "independent_identity": {
+      "url": "https://web.archive.org/web/20210423093936id_/https://wx.toronto.ca/inter/pmmd/callawards.nsf/postedawards?OpenView",
+      "sha256": "b6806de074284034fe408a5d1b4b63ec046091bf46acaee64749af1f59c62fe7",
+      "row": [
+        "",
+        "",
+        "",
+        "",
+        "Doc2678413650",
+        "Engineering & Construction Services - Engineering Review",
+        "RFP for OE-TA Gardiner Expressway Rehabilitation Project Section 2; Dufferin St to Strachan Ave, nRFP-20ECS-TI-01GE",
+        "",
+        "Parsons Inc.",
+        "13,394,886.84",
+        "03/27/2021",
+        ""
+      ],
+      "contract": "nRFP-20ECS-TI-01GE"
+    }
+  },
+  "https://www.toronto.ca/legdocs/mmis/2018/ba/bgrd/backgroundfile-120312.pdf": {
+    "report_sha256": "8ae9ff294c50d8abe188a9fa7083a6763f2ffe7a8a61db6ff44c6968fc549697",
+    "document_number": "6031187163",
+    "odata_id": "53b9b360-897d-4b5a-96b7-616c97f8eca3",
+    "council_reference": "2018.BA96.5",
+    "identity_page": 1,
+    "identity_quotation": "Call Number: Request for Quotation No. 6031-18-7163",
+    "receipt_page": 7,
+    "receipt_quotation": "Table 3: Summary of Bids Received for RFQ No. 6031-18-7163 (Part B) including bid price Bidder Name Bid Price (net H.S.T.) Cipparone Construction Ltd. $200,633.60 2644286 Ontario Inc. $208,240.10 Supco Construction Ltd. $214,494.25 Distinct Concrete Cutting Inc. $233,365.00 N&M Excavating Inc. $258,961.85 Fava Construction $262,473.25 Powerline Plus Ltd. $278,568.75 Rafat General Contractor Inc. $292,175.00",
+    "names": [
+      "Cipparone Construction Ltd.",
+      "2644286 Ontario Inc.",
+      "Supco Construction Ltd.",
+      "Distinct Concrete Cutting Inc.",
+      "N&M Excavating Inc.",
+      "Fava Construction",
+      "Powerline Plus Ltd.",
+      "Rafat General Contractor Inc."
+    ],
+    "publisher_record_sha256": "b8f78a5980c46153bae516df7e83546797300cc9e89ca990b52ed3fdc36e8c48",
+    "reuse_reference_bids": true,
+    "independent_identity": {
+      "url": "https://web.archive.org/web/20201206015126id_/https://wx.toronto.ca/inter/pmmd/callawards.nsf/postedawards?OpenView&Start=1&ExpandView",
+      "sha256": "ec2aea2100a5c8064e48d8c49b06f7b5012a3fbd8e5ddc905201c6b38aa03616",
+      "row": [
+        "",
+        "",
+        "",
+        "",
+        "6031-18-7163",
+        "Toronto Water",
+        "Backhoe Services with Operators for planned, unplanned, emergency work and repair",
+        "",
+        "Multiple Awards",
+        "",
+        "10/29/2020",
+        ""
+      ],
+      "contract": "6031-18-7163",
+      "published_key": "6031-18-7163",
+      "supplier": "Supco Construction Ltd.",
+      "award_date": "2020-10-29",
+      "award_pages": [
+        3,
+        4
+      ],
+      "net_terms": [
+        1128546,
+        1162402,
+        1197274,
+        1233192,
+        1270188
+      ]
+    }
+  }
+}

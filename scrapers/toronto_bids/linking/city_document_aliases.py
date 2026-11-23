@@ -19,6 +19,36 @@ _DOC = re.compile(r'\b'+_DOCUMENT, re.I)
 _ARIBA = re.compile(r'\b(?:See\s+)?ARIBA\s+(?:Reference\s+No\.?\s*)?'+_DOCUMENT, re.I)
 
 
+def reviewed_receipt_aliases(conn):
+    """Read alternate Docs already verified against a held report and a native award."""
+    if not conn.execute(
+        "SELECT 1 FROM sqlite_master WHERE type='table' AND name='city_bulk_bid_evidence'"
+    ).fetchone():
+        return []
+    aliases = []
+    for row in conn.execute(
+        "SELECT * FROM city_bulk_bid_evidence "
+        "WHERE json_extract(proof_json, '$.alias_document_number') IS NOT NULL ORDER BY proof_sha256"
+    ):
+        proof = json.loads(row["proof_json"])
+        publisher = conn.execute(
+            "SELECT odata_id, publisher_award_identity_json FROM solicitation WHERE document_number=? AND source='odata'",
+            (row["document_number"],),
+        ).fetchone()
+        if (proof.get("admission_version") != "city-reviewed-receipt-v1"
+                or cw.digest(proof) != row["proof_sha256"]
+                or any(row[k] != proof[k] for k in ("document_number", "report_sha256", "report_url"))
+                or not publisher or publisher[0] != proof["receipt_review"]["odata_id"] or not publisher[1]
+                or cw.digest(json.loads(publisher[1])) != (
+                    proof.get("native_call_identity") or proof["receipt_review"]
+                )["publisher_record_sha256"]
+                or conn.execute("SELECT 1 FROM solicitation WHERE document_number=?",
+                                (proof["alias_document_number"],)).fetchone()):
+            raise ValueError("Applied City receipt alias evidence changed")
+        aliases.append(proof)
+    return aliases
+
+
 def applied_targets(conn):
     """Read source-proven aliases independently of assigned canonical IDs."""
     if not conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='city_document_alias_evidence'").fetchone():
@@ -32,6 +62,11 @@ def applied_targets(conn):
         alias, doc = row['alias_document_number'], row['document_number']
         if alias in targets and targets[alias] != doc:
             raise ValueError('competing applied City identifier evidence')
+        targets[alias] = doc
+    for proof in reviewed_receipt_aliases(conn):
+        alias, doc = proof["alias_document_number"], proof["document_number"]
+        if alias in targets and targets[alias] != doc:
+            raise ValueError("Competing City receipt alias evidence")
         targets[alias] = doc
     return targets
 
