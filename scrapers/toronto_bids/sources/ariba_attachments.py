@@ -46,15 +46,6 @@ def index_zip(zip_path) -> list[dict]:
     return read_zip(zip_path, max_depth=_MAX_ZIP_DEPTH, max_entries=_MAX_ZIP_ENTRIES)
 
 
-def sha256_of_file(path, _chunk=1 << 20) -> str:
-    """Streamed sha256 so large bundles never load into memory whole."""
-    h = hashlib.sha256()
-    with open(path, "rb") as f:
-        for block in iter(lambda: f.read(_chunk), b""):
-            h.update(block)
-    return h.hexdigest()
-
-
 def store_bundle(conn, zip_path, document_number: str, dest_dir=None) -> int:
     """Copy a bundle to `<dest_dir>/Doc<document_number>.zip` and rebuild its DB index rows.
 
@@ -68,7 +59,8 @@ def store_bundle(conn, zip_path, document_number: str, dest_dir=None) -> int:
     if zip_path.resolve() != canonical.resolve():
         shutil.copy2(zip_path, canonical)
 
-    zip_sha = sha256_of_file(canonical)
+    with canonical.open("rb") as stream:
+        zip_sha = hashlib.file_digest(stream, "sha256").hexdigest()
     entries = index_zip(canonical)
     # Rebuild all rows for this document so stale entries cannot survive.
     conn.execute("DELETE FROM ariba_attachment WHERE document_number = ?", (document_number,))
