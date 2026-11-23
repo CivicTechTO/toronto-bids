@@ -286,6 +286,13 @@ def _upsert_keyed(conn, table, cols, values, key_cols, overwrite: bool) -> None:
         existing, incoming = f"{table}.{column}", f"excluded.{column}"
         first, fallback = (incoming, existing) if overwrite else (existing, incoming)
         sets[column] = f"COALESCE({first}, {fallback})"
+    if table == "solicitation" and not overwrite:
+        ckan_award = """
+            solicitation.source = 'ckan_open' AND solicitation.status = 'Open'
+            AND excluded.source = 'ckan_awarded' AND excluded.status = 'Awarded'
+        """
+        for column in ("status", "source"):
+            sets[column] = f"CASE WHEN {ckan_award} THEN excluded.{column} ELSE {sets[column]} END"
     if table == "noncompetitive":
         # The derived fields belong to the raw amount that wins the upsert.
         use_incoming = "excluded.contract_amount IS NOT NULL"

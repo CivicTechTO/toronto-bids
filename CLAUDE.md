@@ -53,7 +53,7 @@ Order in `default_sources()` matters:
 3. CKAN backfill (`overwrite=False`, except `ckan_pipeline` which uses `overwrite=True` because it is the only source for `capital_project`, #69)
 4. Ariba Discovery and suspended firms
 
-For source fields, `db._upsert_keyed` prefers non-null incoming values with `overwrite=True` and non-null stored values with `overwrite=False`. A non-competitive upsert takes the parse from the source that supplied the winning raw amount and clears the review when the raw text changes. Feed rows are never deleted (`first_seen`/`last_seen` archive semantics). Only derived tables rebuilt from held bytes (supplier dimension, Ariba attachment index, extraction-backed bid/award tables) are swapped.
+For source fields, `db._upsert_keyed` prefers non-null incoming values with `overwrite=True` and non-null stored values with `overwrite=False`. A CKAN award advances a CKAN-only solicitation from open to awarded and updates its source. A non-competitive upsert takes the parse from the source that supplied the winning raw amount and clears the review when the raw text changes. Feed rows are never deleted (`first_seen`/`last_seen` archive semantics). Only derived tables rebuilt from held bytes (supplier dimension, Ariba attachment index, extraction-backed bid/award tables) are swapped.
 
 ### Failure surfacing and known gaps
 
