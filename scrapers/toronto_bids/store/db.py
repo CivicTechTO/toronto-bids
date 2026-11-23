@@ -1,4 +1,5 @@
 import sqlite3
+from contextlib import closing
 from dataclasses import fields
 from importlib import resources
 
@@ -140,35 +141,59 @@ def init_db(conn) -> None:
             conn.execute(f'ALTER TABLE {table} ADD COLUMN procurement_id INTEGER REFERENCES procurement(id)')
     _add_missing_columns(conn, schema)
     _rebuild_award_for_line_key(conn, schema)
-    _rebuild_bid_for_nullable_reference(conn, schema)
+    _upgrade_bid_tables(conn, schema)
     _rebuild_ariba_attachment_for_path(conn, schema)
     conn.commit()
 
 
-def _rebuild_bid_for_nullable_reference(conn, schema: str) -> bool:
-    """Rebuild legacy bid table to make reference nullable and update bid_key, preserving first_seen. Idempotent."""
-    row = conn.execute(
-        "SELECT sql FROM sqlite_master WHERE type='table' AND name='bid'"
-    ).fetchone()
-    if (
-        row is None
-        or "NOT NULL" not in (row["sql"] or "").split("reference")[-1][:24].upper()
-    ):
-        return False
+def _upgrade_bid_tables(conn, schema: str) -> None:
+    legacy_bid = any(col["name"] == "reference" and col["notnull"]
+                     for col in conn.execute("PRAGMA table_info(bid)"))
+    broken_response = any(fk["from"] == "bid_id" and fk["table"] == "_bid_pre114"
+                          for fk in conn.execute("PRAGMA foreign_key_list(bid_response)"))
+    if not (legacy_bid or broken_response):
+        return
 
-    cols = [r[1] for r in conn.execute("PRAGMA table_info(bid)")]
-    quoted = ", ".join(cols)
-    conn.executescript("PRAGMA foreign_keys = OFF;")
-    try:
-        conn.execute("ALTER TABLE bid RENAME TO _bid_pre114")
-        # Drop renamed index first so schema.sql recreates bid_key on the new table.
-        conn.execute("DROP INDEX IF EXISTS bid_key")
-        conn.executescript(schema)
-        conn.execute(f"INSERT INTO bid ({quoted}) SELECT {quoted} FROM _bid_pre114")
-        conn.execute("DROP TABLE _bid_pre114")
-    finally:
-        conn.executescript("PRAGMA foreign_keys = ON;")
-    return True
+    with closing(sqlite3.connect(":memory:")) as canonical:
+        canonical.executescript(schema)
+        foreign_keys = conn.execute("PRAGMA foreign_keys").fetchone()[0]
+        conn.execute("PRAGMA foreign_keys = OFF")
+        try:
+            with conn:
+                conn.execute("BEGIN IMMEDIATE")
+                if legacy_bid:
+                    _replace_bid_table(conn, canonical, "bid")
+                if broken_response:
+                    _replace_bid_table(conn, canonical, "bid_response")
+                    conn.execute("""
+                        UPDATE bid_response SET bid_id = NULL
+                        WHERE bid_id IS NOT NULL AND NOT EXISTS (
+                            SELECT 1 FROM bid WHERE bid.id = bid_response.bid_id
+                        )
+                    """)
+                for table in ("bid", "bid_response", "bid_response_price"):
+                    if conn.execute(f"PRAGMA foreign_key_check({table})").fetchone() is not None:
+                        raise sqlite3.IntegrityError(f"Foreign key violation after upgrading {table}")
+        finally:
+            conn.execute(f"PRAGMA foreign_keys = {foreign_keys}")
+
+
+def _replace_bid_table(conn, canonical, table: str) -> None:
+    # Rename the replacement, so SQLite never rewrites references to the original table.
+    replacement = f"_new_{table}"
+    ddl = canonical.execute("SELECT sql FROM sqlite_schema WHERE type = 'table' AND name = ?", (table,)).fetchone()[0]
+    conn.execute(ddl.replace(f"CREATE TABLE {table} (", f"CREATE TABLE {replacement} (", 1))
+    columns = ", ".join(row["name"] for row in conn.execute(f"PRAGMA table_info({table})"))
+    sequence = conn.execute("SELECT seq FROM sqlite_sequence WHERE name = ?", (table,)).fetchone()
+    conn.execute(f"INSERT INTO {replacement} ({columns}) SELECT {columns} FROM {table}")
+    conn.execute(f"DROP TABLE {table}")
+    conn.execute(f"ALTER TABLE {replacement} RENAME TO {table}")
+    if sequence is not None:
+        conn.execute("UPDATE sqlite_sequence SET seq = MAX(seq, ?) WHERE name = ?", (sequence[0], table))
+    for (sql,) in canonical.execute(
+        "SELECT sql FROM sqlite_schema WHERE type = 'index' AND tbl_name = ? AND sql IS NOT NULL", (table,)
+    ):
+        conn.execute(sql)
 
 
 def _rebuild_award_for_line_key(conn, schema: str) -> bool:
