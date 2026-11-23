@@ -45,24 +45,20 @@ _DEFAULT_MAX_CHARS = 400_000
 
 
 def split_document(text: str, max_chars: int = _DEFAULT_MAX_CHARS) -> list[str]:
-    """Split a large document into chunks on double-newline boundaries."""
-    if len(text) <= max_chars:
-        return [text]
-    sections = text.split("\n\n")
+    """Preserve the text while splitting at blank lines when they fit the limit."""
+    if max_chars < 1:
+        raise ValueError("max_chars must be positive")
+
     chunks = []
-    current = []
-    current_len = 0
-    for section in sections:
-        section_len = len(section) + (2 if current else 0)
-        if current and current_len + section_len > max_chars:
-            chunks.append("\n\n".join(current))
-            current = [section]
-            current_len = len(section)
-        else:
-            current.append(section)
-            current_len += section_len
-    if current:
-        chunks.append("\n\n".join(current))
+    start = 0
+    while len(text) - start > max_chars:
+        end = start + max_chars
+        boundary = text.rfind("\n\n", start, end)
+        if boundary > start:
+            end = boundary + 2
+        chunks.append(text[start:end])
+        start = end
+    chunks.append(text[start:])
     return chunks
 
 

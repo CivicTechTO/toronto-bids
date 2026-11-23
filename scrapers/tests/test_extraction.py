@@ -329,19 +329,38 @@ def test_extract_corpus_stores_flags_on_shortfall(conn):
 
 
 @pytest.mark.parametrize(
-    "text, max_chars, expect_split",
+    "text, max_chars, expected",
     [
-        ("short text", 1000, False),
-        ("\n\n".join(f"Section {i}\n" + "x" * 200 for i in range(10)), 500, True),
+        ("", 1, [""]),
+        ("short text", 10, ["short text"]),
+        ("abc\n\ndefgh", 6, ["abc\n\n", "defgh"]),
+        ("\n\nabc\n\n", 1, list("\n\nabc\n\n")),
     ],
 )
-def test_split_document(text, max_chars, expect_split):
-    chunks = split_document(text, max_chars=max_chars)
-    if expect_split:
-        assert len(chunks) > 1
-        assert all(len(c) <= max_chars for c in chunks)
-    else:
-        assert chunks == [text]
+def test_split_document(text, max_chars, expected):
+    assert split_document(text, max_chars=max_chars) == expected
+
+
+def test_split_document_rejects_non_positive_limit():
+    with pytest.raises(ValueError, match="max_chars must be positive"):
+        split_document("text", max_chars=0)
+
+
+@pytest.mark.parametrize(
+    "text, expected_requests",
+    [("short paragraph", 1), ("abcde" * 80_000 + "vwxyz" * 20_000, 2)],
+    ids=["short", "500k-paragraph"],
+)
+def test_extract_corpus_bounds_requests_without_changing_text(conn, text, expected_requests):
+    _insert_pdf(conn, url="https://example.com/report.pdf", sha="report", text=text, kind="award_summary")
+    client = FakeClient()
+
+    stats = extract_corpus(conn, "award_summary", client=client, labels={}, max_chars=400_000)
+
+    assert stats["extracted"] == 1
+    assert len(client.calls) == expected_requests
+    assert all(len(chunk) <= 400_000 for chunk in client.calls)
+    assert "".join(client.calls) == text
 
 
 def test_extract_corpus_splits_large_doc_and_merges(conn):
