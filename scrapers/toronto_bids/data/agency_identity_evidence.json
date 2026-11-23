@@ -8805,6 +8805,128 @@
           "decision_date": "2017-07-12"
         }
       ]
+    },
+    {
+      "corpus": "tchc",
+      "document_sha256": "5b2e3d2867e7e27f14c3fa1766a26a910c3f3d91bb034130be08149ec7c9b208",
+      "extractor_version": "v1-b63aa8c835ae",
+      "contract_sha256": "a4520ab4bf1066ee406c6a619794c47de65d692667b5c6dfc49e3fb4d8f3f3dd",
+      "native_ref": "RFP 21125",
+      "report_url": "https://torontohousing.ca/sites/default/files/2023-11/item_8a_-_multiple_vendor_award_-_rfp_21125_rfq_21247_fire_services_211026_a.pdf",
+      "contract_count": 1,
+      "contract_index": 0,
+      "result_sha256": "8a5e977bbe0523f9dc32b179fc5c9ce7dc4a4e5f818a040fc68f5b94da04eb30",
+      "withheld_awards_reason": "BIFAC:2021-107 is the earlier committee recommendation for RFP 21125 / RFQ 21247; retain all 4 named bids and withhold duplicate unpriced award rows because Board report item_4a (2022-03-08) already records the 3 awards with the $50,569,759.75 shared ceiling.",
+      "identifiers": [
+        {
+          "role": "solicitation",
+          "value": "RFP 21125",
+          "authority": "toronto-community-housing"
+        },
+        {
+          "role": "secondary_rfq",
+          "value": "RFQ 21247",
+          "authority": "toronto-community-housing"
+        },
+        {
+          "role": "board_report",
+          "value": "BIFAC:2021-107",
+          "authority": "toronto-community-housing"
+        }
+      ],
+      "basis": "BIFAC:2021-107 recommends five-year fire alarm/suppression maintenance and demand-repair work under a combined solicitation (RFP 21125 and second-stage RFQ 21247). Public TCHC Bonfire portal listing RFP 21125 is the primary solicitation identifier; its 4 named bids are retained while duplicate unpriced recommendation awards are deferred to the existing Board award report for RFP 21125.",
+      "scope": "Retain all 4 named bids under canonical primary solicitation RFP 21125; withhold duplicate unpriced recommendation award rows already recorded under RFP 21125.",
+      "sources": [
+        {
+          "url": "https://torontohousing.ca/sites/default/files/2023-11/item_8a_-_multiple_vendor_award_-_rfp_21125_rfq_21247_fire_services_211026_a.pdf",
+          "sha256": "5b2e3d2867e7e27f14c3fa1766a26a910c3f3d91bb034130be08149ec7c9b208",
+          "passages": [
+            "Contract Award: Preventative Maintenance Services and\nDemand Repairs for Fire Alarm/Suppression Systems (RFP\n21125 and RFQ 21247)\nItem 8A\nNovember 3, 2021\nBuilding Investment, Finance and Audit Committee\n\nReport:         BIFAC:2021-107\nTo:             Building Investment, Finance and Audit Committee\n                (“BIFAC”)\nFrom:           Vice President, Facilities Management\n\nDate:           October 26, 2021\n\nPURPOSE:\nThe purpose of this report is to seek the BIFAC’s approval to award work\ntotaling up to $50,569,759.75 (exclusive of taxes) to Oak Ridge Building\nSolutions Inc., Greater Toronto Fire Protection, and Eurotech Safety Inc. for\npreventative maintenance services and demand repairs for fire\nalarm/suppression systems at various lo",
+            "PROCUREMENT PROCESS:\nAn RFP was issued on June 29, 2021 and closed on July 27th. Four\nsubmissions were received. The submissions were evaluated through a five\nstage process to determine qualified vendors based on rated criteria and\npricing. The table below outlines the cumulative ranking and score attained\nfor each vendor during the procurement process.\n\f                                           "
+          ]
+        }
+      ]
+    },
+    {
+      "corpus": "tchc",
+      "document_sha256": "cbabe07271af983650d6efe3b5f31d85d79c53408e05cd61987fcc41d0a78da8",
+      "extractor_version": "v1-b63aa8c835ae",
+      "contract_sha256": "05af339b2e672cfd75f32d070ee59171a7c3726e3ad5a0014566ed54f186c0a6",
+      "native_ref": "RFP 22278",
+      "report_url": "https://torontohousing.ca/sites/default/files/2023-10/item_4_-_2023-125_-_vendor_award_supply_delivery_and_installation_of_new_appliances.pdf",
+      "contract_count": 1,
+      "contract_index": 0,
+      "result_sha256": "f3d38a94ce1d56b686adea61644228171282885e77a487db778924c805467720",
+      "withheld_awards_reason": "BIFAC:2023-125 is the committee recommendation for RFP 22278 / RFQ 23145; retain its 2 compliant bids and withhold duplicate recommendation award claims because Board report TCHC:2023-54 records the authoritative Board approval.",
+      "identifiers": [
+        {
+          "role": "solicitation",
+          "value": "RFP 22278",
+          "authority": "toronto-community-housing"
+        },
+        {
+          "role": "secondary_rfq",
+          "value": "RFQ 23145",
+          "authority": "toronto-community-housing"
+        },
+        {
+          "role": "board_report",
+          "value": "BIFAC:2023-125",
+          "authority": "toronto-community-housing"
+        }
+      ],
+      "basis": "BIFAC:2023-125 recommends awarding West Portfolio new appliance supply/installation under RFP 22278 followed by invitational second-stage pricing RFQ 23145. Public TCHC Bonfire portal listing RFP 22278 is the primary solicitation identifier; its 2 compliant bids are retained while duplicate recommendation awards are deferred to Board approval report TCHC:2023-54.",
+      "scope": "Retain 2 compliant bids under canonical primary solicitation RFP 22278; withhold duplicate recommendation award rows in favour of TCHC:2023-54.",
+      "sources": [
+        {
+          "url": "https://torontohousing.ca/sites/default/files/2023-10/item_4_-_2023-125_-_vendor_award_supply_delivery_and_installation_of_new_appliances.pdf",
+          "sha256": "cbabe07271af983650d6efe3b5f31d85d79c53408e05cd61987fcc41d0a78da8",
+          "passages": [
+            "Report:         BIFAC:2023-125\n\nTo:             Building Investment, Finance and Audit Committee\n                (“BIFAC”)\nFrom:           Chief Operating Officer (Acting)\nDate:           October 3, 2023\n\n\nPURPOSE:\nThe purpose of this report is to seek the BIFAC’s and the Board of Directors’\napproval to award work to HD Supply Canada Inc. and Canadian Appliance\nRecycling Enterprise (“CARE”) with a value up to $20,157,766.90 (exclusive\nof taxes) to supply, deliver and install new appliances as well as remove\nand dispose of old appliances for all TCHC and Toronto Seniors Housing\nCorporation (“TSHC”) units west of Yonge Street.\n\nBIFAC approval i",
+            "PROCUREMENT PROCESS:\nRFP 22278 was issued on January 18, 2023 and closed on February 24,\n2023. Three submissions were received. The submissions were evaluated\nthrough a six-stage process to determine qualified vendors based on\nmandatory requirements, rated criteria and pricing. Two submissions met\nthe requirements of the first two stages. Following the fourth stage, the\nqualified proponents were invited to a second stage RFQ to obtain pricing.\nPricing was accepted for products from the approved list without exception.\nThe RFQ was conducted in two stages to evaluate mandatory items such\nas inventory of specific appliances, energy star rating, "
+          ]
+        }
+      ]
+    },
+    {
+      "corpus": "tchc",
+      "document_sha256": "d5bf44509028160b3856ab82edec0490f7d2916338241ba7cbdd29ac5559f961",
+      "extractor_version": "v1-b63aa8c835ae",
+      "contract_sha256": "d01370c9b0c7a3b24688fc0f0e543c845286fd17a92015dec28b90946bd6f3d3",
+      "native_ref": "RFP 22278",
+      "report_url": "https://torontohousing.ca/sites/default/files/2023-11/item_9b_-_2023-54_-_vendor_award_supply_delivery_and_installation_of_appliances_r_-_updated.pdf",
+      "contract_count": 1,
+      "contract_index": 0,
+      "result_sha256": "135224535c59e17b4fabe5e33cb0c4911fa15a50a1d9b07d7dd1a759a0f07022",
+      "identifiers": [
+        {
+          "role": "solicitation",
+          "value": "RFP 22278",
+          "authority": "toronto-community-housing"
+        },
+        {
+          "role": "secondary_rfq",
+          "value": "RFQ 23145",
+          "authority": "toronto-community-housing"
+        },
+        {
+          "role": "board_report",
+          "value": "TCHC:2023-54",
+          "authority": "toronto-community-housing"
+        }
+      ],
+      "basis": "TCHC:2023-54 is the Board of Directors report approving the West Portfolio new appliance vendor award resulting from public RFP 22278 and invitational second-stage pricing RFQ 23145. Public TCHC Bonfire portal listing RFP 22278 is the primary solicitation identifier.",
+      "scope": "Authoritative Board approval for RFP 22278; retain the 2 named award recipients (HD Supply Canada Inc. and Canadian Appliance Recycling Enterprise) with undisclosed individual allocations.",
+      "sources": [
+        {
+          "url": "https://torontohousing.ca/sites/default/files/2023-11/item_9b_-_2023-54_-_vendor_award_supply_delivery_and_installation_of_appliances_r_-_updated.pdf",
+          "sha256": "d5bf44509028160b3856ab82edec0490f7d2916338241ba7cbdd29ac5559f961",
+          "passages": [
+            "Report:         TCHC:2023-54\n\nTo:             Board of Directors (the “Board”)\n\nFrom:           Building Investment, Finance and Audit Committee\n                (“BIFAC”)\nDate:           October 24, 2023\n\n\nPURPOSE:\nThe purpose of this report is to seek the Board of Directors’ approval to\naward work to HD Supply Canada Inc. and Canadian Appliance Recycling\nEnterprise (“CARE”) for up to $20,157,766.90 (exclusive of taxes) to supply,\ndeliver and install new appliances as well as remove and dispose of old\nappliances for all TCHC and Toronto Seniors Housing Corporation\n(“TSHC”) units west of Yonge Street.\n\nThe Board of Directors’ (the “Board”) app",
+            "PROCUREMENT PROCESS:\nRFP 22278 was issued on January 18, 2023 and closed on February 24,\n2023. Three submissions were received. The submissions were evaluated\nthrough a six-stage process to determine qualified vendors based on\nmandatory requirements, rated criteria and pricing. Two submissions met\nthe requirements of the first two stages. Following the fourth stage, the\nqualified proponents were invited to a second stage RFQ to obtain pricing.\nPricing was accepted for products from the approved list without exception.\nThe RFQ was conducted in two stages to evaluate mandatory items such\nas inventory of specific appliances, energy star rating, "
+          ]
+        }
+      ]
     }
   ]
 }
