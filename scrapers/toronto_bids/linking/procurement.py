@@ -3,6 +3,8 @@ import json
 from collections import defaultdict
 from contextlib import contextmanager
 
+AGENCY_CONTRACT = 'agency_contract:'
+
 FACT_TABLES = ('solicitation', 'award', 'noncompetitive', 'ariba_posting', 'bid',
                'background_pdf', 'composite_award', 'ariba_attachment', 'capital_project', 'bid_scope',
                'agency_solicitation', 'agency_award', 'agency_bid', 'portal_listing', 'published_award')
@@ -42,7 +44,7 @@ class _Identities:
         groups = defaultdict(set)
         for (namespace, value), pid in self.keys.items():
             if pid in (left, right) and (namespace in ('city_document', 'city_workspace', 'city_call')
-                                         or namespace.startswith('agency_contract:')):
+                                         or namespace.startswith(AGENCY_CONTRACT)):
                 groups[namespace].add(value)
         if any(len(values) > 1 and not (namespace == 'city_document' and frozenset(values) in self.city_aliases)
                for namespace, values in groups.items()):
@@ -59,6 +61,13 @@ class _Identities:
             if pid == loser:
                 self.keys[key] = winner
         return winner
+
+
+def register_agency_contract_keys(conn, buyer_id, references):
+    """Allocate standard agency keys for reviewed references within the caller's transaction."""
+    ids = _Identities(conn)
+    namespace = AGENCY_CONTRACT + str(buyer_id)
+    return {reference: ids.get(namespace, reference) for reference in sorted(references)}
 
 
 def resolve_procurements(conn):
@@ -154,7 +163,7 @@ def _resolve(conn):
                                                and row['source'] == 'bids_tenders' and row['portal_url']):
                 pid = ids.get('agency_portal:' + str(row['buyer_id']), row['portal_url'])
             else:
-                pid = ids.get('agency_contract:' + str(row['buyer_id']), row['native_ref'])
+                pid = ids.get(AGENCY_CONTRACT + str(row['buyer_id']), row['native_ref'])
             updates.append((pid, row['_rowid']))
             if 'reference' in row.keys() and row['reference']:
                 ref_ids[row['reference']].add(pid)

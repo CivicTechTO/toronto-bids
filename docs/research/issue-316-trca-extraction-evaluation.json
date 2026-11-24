@@ -1,0 +1,3459 @@
+{
+  "model": "claude-sonnet-5-5",
+  "effort": "high",
+  "prompt_version": "v1-b63aa8c835ae",
+  "transport": "synchronous",
+  "total_cost_microdollars": 137493,
+  "totals": {
+    "expected_tender_bids": 61,
+    "expected_bid": 67,
+    "expected_no_bid": 14,
+    "expected_recommendation": 3,
+    "printed_reference_returned": 7,
+    "printed_reference_correct": 6,
+    "returned_bid": 62,
+    "matched_bid": 61,
+    "lot_resolved_bids": 54,
+    "bid_price_expected": 50,
+    "bid_price_exact": 41,
+    "returned_award": 14,
+    "matched_award_or_recommendation": 14,
+    "returned_no_bid": 13,
+    "matched_no_bid": 13,
+    "expected_award": 11,
+    "matched_award": 11,
+    "award_price_expected": 9,
+    "award_price_exact": 4
+  },
+  "cases": {
+    "C01": {
+      "source": {
+        "docid": "213167",
+        "url": "https://laserfiche.trca.ca/WebLink/ElectronicFile.aspx?docid=213167&dbid=0",
+        "sha256": "3d5b48823169ee4344fcd0c7435ee383cfb510ffa96dd65460bb3178611107d2",
+        "reference": "1959 TRCA Minute Book/Index 1959",
+        "ranges": [
+          [
+            16,
+            0,
+            null
+          ]
+        ],
+        "input_sha256": "f49e0495f3346b53561cb142299ff7ab45ee0fc5374e8604408936dbd38554c4"
+      },
+      "expected": {
+        "contracts": [],
+        "notes": [
+          "Index pointers only. No named supplier, price or adopted substantive award in the cut. The scan image corrects the broken OCR layout."
+        ],
+        "contract_only_leads": [
+          {
+            "title": "WC 4 Lower Humber, contract award",
+            "pointer": "189"
+          },
+          {
+            "title": "WC 6 Black Creek Channel, re contract award",
+            "pointer": "169, 172, 173"
+          }
+        ]
+      },
+      "model_results": [],
+      "counts": {},
+      "usage": {
+        "input_tokens": 552,
+        "cache_creation_input_tokens": 2866,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 2866,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 11,
+        "output_tokens_details": {
+          "thinking_tokens": 0
+        },
+        "service_tier": "standard",
+        "inference_geo": "global",
+        "speed": "standard"
+      },
+      "cost_microdollars": 8379
+    },
+    "C02": {
+      "source": {
+        "docid": "202181",
+        "url": "https://laserfiche.trca.ca/WebLink/ElectronicFile.aspx?docid=202181&dbid=0",
+        "sha256": "bac43b1b38ed22baddd494e7d02d64be72d5864c3407c9c0341363b1af411de2",
+        "reference": "1986 TRCA Minute Book/Authority 1986",
+        "ranges": [
+          [
+            441,
+            0,
+            null
+          ]
+        ],
+        "input_sha256": "6953ac49d83e7c03e742da8de2f63538c07df7a7c463e459d3a88062b9f2b269"
+      },
+      "expected": {
+        "contracts": [],
+        "notes": [
+          "Purchasing policy amendment covers tender-opening procedures and conflicts for consultants. Carried approval of unrelated Executive Committee report section supplies no subject, supplier or amount, and a Board appointment is unrelated. No direct contract lead."
+        ],
+        "contract_only_leads": []
+      },
+      "model_results": [],
+      "counts": {},
+      "usage": {
+        "input_tokens": 827,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 2866,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 11,
+        "output_tokens_details": {
+          "thinking_tokens": 0
+        },
+        "service_tier": "standard",
+        "inference_geo": "global",
+        "speed": "standard"
+      },
+      "cost_microdollars": 2051
+    },
+    "C03": {
+      "source": {
+        "docid": "212535",
+        "url": "https://laserfiche.trca.ca/WebLink/ElectronicFile.aspx?docid=212535&dbid=0",
+        "sha256": "3fb3e1673504ee0e273396769546ef124155726dbadd886874361cd986693e1a",
+        "reference": "1977 TRCA Minute Book/Executive Committee 1977",
+        "ranges": [
+          [
+            451,
+            0,
+            null
+          ]
+        ],
+        "input_sha256": "617677fdbb38cbc27e259fd2562c0ba7291991eb26b802e2037fb4b3fa581e82"
+      },
+      "expected": {
+        "contracts": [],
+        "notes": [
+          "Water Resource Division progress and budget figures are not bids or contract awards. The construction tender was called and approval to award was explicitly pending."
+        ],
+        "contract_only_leads": [
+          {
+            "title": "Construction of the dam operator’s residence at G. Ross Lord Dam and Reservoir",
+            "stage": "tenders called, award pending",
+            "reference": null
+          }
+        ]
+      },
+      "model_results": [],
+      "counts": {},
+      "usage": {
+        "input_tokens": 848,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 2866,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 11,
+        "output_tokens_details": {
+          "thinking_tokens": 0
+        },
+        "service_tier": "standard",
+        "inference_geo": "global",
+        "speed": "standard"
+      },
+      "cost_microdollars": 2093
+    },
+    "C04": {
+      "source": {
+        "docid": "1327362",
+        "url": "https://laserfiche.trca.ca/WebLink/ElectronicFile.aspx?docid=1327362&dbid=0",
+        "sha256": "3c0b7f61b3fcf314bf83422cbc503ab7df76c16e297b2f822f104abd6e6d3bf4",
+        "reference": "2014 TRCA Minute Book/Executive Committee 2014.pdf",
+        "ranges": [
+          [
+            536,
+            0,
+            null
+          ],
+          [
+            537,
+            0,
+            30
+          ]
+        ],
+        "input_sha256": "8fd1080e9d6c8eacbdf9f60ec393ebe4ce98ead986c21674a2b79af5cb06517c"
+      },
+      "expected": {
+        "contracts": [
+          {
+            "key": "clothing-original",
+            "title": "Supply and Delivery of Clothing 2015–2017",
+            "reference": "10000128",
+            "facts": [
+              {
+                "role": "bid",
+                "supplier": "Needham Promotions Inc.",
+                "amount": 132470.45,
+                "amount_kind": "estimated_annual",
+                "amount_basis": "plus_HST",
+                "status": "compliant"
+              },
+              {
+                "role": "bid",
+                "supplier": "Dufferin Apparel",
+                "amount": 137525.65,
+                "amount_kind": "estimated_annual",
+                "amount_basis": "plus_HST",
+                "status": "not_stated"
+              },
+              {
+                "role": "bid",
+                "supplier": "ANS Promotional Marketing Inc.",
+                "amount": 156854,
+                "amount_kind": "estimated_annual",
+                "amount_basis": "plus_HST",
+                "status": "not_stated"
+              },
+              {
+                "role": "bid",
+                "supplier": "Cotton Candy",
+                "amount": 165870.8,
+                "amount_kind": "estimated_annual",
+                "amount_basis": "plus_HST",
+                "status": "not_stated"
+              },
+              {
+                "role": "bid",
+                "supplier": "MARCC Apparel Co.",
+                "amount": null,
+                "amount_kind": null,
+                "amount_basis": "unknown",
+                "status": "disqualified",
+                "note": "Disqualified for not acknowledging addenda, indicating a response without compliant acknowledgement."
+              },
+              {
+                "role": "no_bid",
+                "supplier": "Grant Custom Products",
+                "amount": null,
+                "amount_kind": null,
+                "amount_basis": "unknown",
+                "status": "no_timely_quotation",
+                "alternate_statuses": [
+                  "no_bid",
+                  "disqualified"
+                ],
+                "note": "The opening table prints DISQUALIFIED. Explanation establishes no quotation by the deadline but is silent on whether a late response was submitted."
+              },
+              {
+                "role": "recommendation",
+                "supplier": "Needham Promotions Inc.",
+                "amount": 270000,
+                "amount_kind": "estimated_two_year_total",
+                "amount_basis": "plus_HST",
+                "prices": [
+                  {
+                    "amount": 135000,
+                    "kind": "estimated_annual",
+                    "basis": "plus_HST"
+                  }
+                ],
+                "contingency_percent": 10
+              }
+            ],
+            "resolution": "B120/14",
+            "type": "RFQ",
+            "opening_date": "2014-10-28"
+          }
+        ],
+        "notes": [
+          "The carried operative wording is THE EXECUTIVE COMMITTEE RECOMMENDS THAT. Staff and Executive Committee concur, but this cut does not carry final Authority approval. Subsequent approval appears in the separate Authority minutes for December 12, 2014, Laserfiche docid 1327312, PDF p536, and it is also recounted in P07. Neither adds a required award to C04. Four submitted priced quotes, one disqualified respondent, and one expressly untimely supplier."
+        ],
+        "contract_only_leads": [],
+        "outside_cut_evidence": {
+          "url": "https://laserfiche.trca.ca/WebLink/ElectronicFile.aspx?docid=1327312&dbid=0",
+          "pages": [
+            536
+          ],
+          "date": "2014-12-12",
+          "result": "authority approval"
+        }
+      },
+      "model_results": [
+        {
+          "reference": "10000128",
+          "title": "Supply and Delivery of Clothing 2015 - 2017 for Toronto and Region Conservation Authority staff",
+          "matched_source_items": [
+            "clothing-original"
+          ],
+          "observations": [
+            {
+              "role": "bid",
+              "vendor": "Needham Promotions Inc.",
+              "amount_raw": "$132,470.45",
+              "amount_basis": "plus_HST",
+              "status": "compliant",
+              "parsed_amount": 132470.45,
+              "source_roles": [
+                "bid",
+                "recommendation"
+              ],
+              "result": "matched"
+            },
+            {
+              "role": "bid",
+              "vendor": "Dufferin Apparel",
+              "amount_raw": "$137,525.65",
+              "amount_basis": "plus_HST",
+              "status": "compliant",
+              "parsed_amount": 137525.65,
+              "source_roles": [
+                "bid"
+              ],
+              "result": "matched"
+            },
+            {
+              "role": "bid",
+              "vendor": "ANS Promotional Marketing Inc.",
+              "amount_raw": "$156,854.00",
+              "amount_basis": "plus_HST",
+              "status": "compliant",
+              "parsed_amount": 156854.0,
+              "source_roles": [
+                "bid"
+              ],
+              "result": "matched"
+            },
+            {
+              "role": "bid",
+              "vendor": "Cotton Candy",
+              "amount_raw": "$165,870.80",
+              "amount_basis": "plus_HST",
+              "status": "compliant",
+              "parsed_amount": 165870.8,
+              "source_roles": [
+                "bid"
+              ],
+              "result": "matched"
+            },
+            {
+              "role": "bid",
+              "vendor": "Grant Custom Products",
+              "amount_raw": null,
+              "amount_basis": null,
+              "status": "disqualified",
+              "parsed_amount": null,
+              "source_roles": [
+                "no_bid"
+              ],
+              "result": "no_timely_quotation"
+            },
+            {
+              "role": "bid",
+              "vendor": "MARCC Apparel Co.",
+              "amount_raw": null,
+              "amount_basis": null,
+              "status": "disqualified",
+              "parsed_amount": null,
+              "source_roles": [
+                "bid"
+              ],
+              "result": "matched"
+            },
+            {
+              "role": "award",
+              "vendor": "Needham Promotions Inc.",
+              "amount_raw": "$270,000.00",
+              "amount_basis": "plus_HST",
+              "status": null,
+              "parsed_amount": 270000.0,
+              "source_roles": [
+                "bid",
+                "recommendation"
+              ],
+              "result": "recommendation_only"
+            }
+          ]
+        }
+      ],
+      "counts": {
+        "expected_bid": 5,
+        "expected_no_bid": 1,
+        "expected_recommendation": 1,
+        "expected_tender_bids": 5,
+        "printed_reference_returned": 1,
+        "printed_reference_correct": 1,
+        "returned_bid": 6,
+        "matched_bid": 5,
+        "lot_resolved_bids": 5,
+        "bid_price_expected": 4,
+        "bid_price_exact": 4,
+        "returned_award": 1,
+        "matched_award_or_recommendation": 1
+      },
+      "usage": {
+        "input_tokens": 1457,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 2866,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 678,
+        "output_tokens_details": {
+          "thinking_tokens": 0
+        },
+        "service_tier": "standard",
+        "inference_geo": "global",
+        "speed": "standard"
+      },
+      "cost_microdollars": 9981
+    },
+    "C05": {
+      "source": {
+        "docid": "1046313",
+        "url": "https://laserfiche.trca.ca/WebLink/ElectronicFile.aspx?docid=1046313&dbid=0",
+        "sha256": "93d7361a51238ecab229d58039aadd930e8e492c23bc049635441d4971aa4e76",
+        "reference": "2013 TRCA Minute Book/Tender Opening Committee 2013",
+        "ranges": [
+          [
+            17,
+            0,
+            17
+          ],
+          [
+            18,
+            0,
+            null
+          ]
+        ],
+        "input_sha256": "16da4699d2dab69edbb4dcc0554cd344bba4a37242dd4b2b3d477636821cf52c"
+      },
+      "expected": {
+        "contracts": [
+          {
+            "key": "pioneer-generator",
+            "title": "Black Creek Pioneer Village Visitor Centre Generator Project – Generator Installation Works",
+            "reference": null,
+            "facts": [
+              {
+                "role": "no_bid",
+                "supplier": "Cummins Eastern Canada",
+                "amount": null,
+                "amount_kind": null,
+                "amount_basis": "unknown",
+                "status": "no_bid"
+              },
+              {
+                "role": "bid",
+                "supplier": "Dilisado Enterpirses",
+                "amount": 499000,
+                "amount_kind": "total",
+                "amount_basis": "plus_HST",
+                "status": "not_stated",
+                "aliases": [
+                  "Dilisado Enterprises"
+                ],
+                "note": "The scan prints Enterpirses, an apparent source typo."
+              },
+              {
+                "role": "bid",
+                "supplier": "Ferguson Electrical",
+                "amount": 327700,
+                "amount_kind": "total",
+                "amount_basis": "plus_HST",
+                "status": "not_stated"
+              },
+              {
+                "role": "no_bid",
+                "supplier": "Gal Power System",
+                "amount": null,
+                "amount_kind": null,
+                "amount_basis": "unknown",
+                "status": "no_bid"
+              },
+              {
+                "role": "bid",
+                "supplier": "Kenstruct Limited",
+                "amount": 851890.08,
+                "amount_kind": "total",
+                "amount_basis": "plus_HST",
+                "status": "not_stated"
+              },
+              {
+                "role": "no_bid",
+                "supplier": "Paramount Systems Limited",
+                "amount": null,
+                "amount_kind": null,
+                "amount_basis": "unknown",
+                "status": "no_bid"
+              },
+              {
+                "role": "bid",
+                "supplier": "Platinum Electrical Contracting",
+                "amount": 379750,
+                "amount_kind": "total",
+                "amount_basis": "plus_HST",
+                "status": "not_stated"
+              },
+              {
+                "role": "bid",
+                "supplier": "Superior Boiler Works & Welding Ltd.",
+                "amount": 290459,
+                "amount_kind": "total",
+                "amount_basis": "plus_HST",
+                "status": "not_stated"
+              },
+              {
+                "role": "no_bid",
+                "supplier": "Total Power",
+                "amount": null,
+                "amount_kind": null,
+                "amount_basis": "unknown",
+                "status": "no_bid"
+              },
+              {
+                "role": "no_bid",
+                "supplier": "Tri-Phase Group",
+                "amount": null,
+                "amount_kind": null,
+                "amount_basis": "unknown",
+                "status": "no_bid"
+              },
+              {
+                "role": "no_bid",
+                "supplier": "United Contracting",
+                "amount": null,
+                "amount_kind": null,
+                "amount_basis": "unknown",
+                "status": "no_bid"
+              },
+              {
+                "role": "no_bid",
+                "supplier": "Wajax Power Systems",
+                "amount": null,
+                "amount_kind": null,
+                "amount_basis": "unknown",
+                "status": "no_bid"
+              }
+            ],
+            "item": "1.2",
+            "type": "RFT",
+            "opening_date": "2013-07-22"
+          },
+          {
+            "key": "port-union-paving",
+            "title": "Port Union Waterfront Parking Lot – Parking Lot Construction",
+            "reference": "RSD13-096",
+            "facts": [
+              {
+                "role": "no_bid",
+                "supplier": "Appco Paving",
+                "amount": null,
+                "amount_kind": null,
+                "amount_basis": "unknown",
+                "status": "no_bid"
+              },
+              {
+                "role": "no_bid",
+                "supplier": "CLS Group",
+                "amount": null,
+                "amount_kind": null,
+                "amount_basis": "unknown",
+                "status": "no_bid"
+              },
+              {
+                "role": "no_bid",
+                "supplier": "Dynex Construction",
+                "amount": null,
+                "amount_kind": null,
+                "amount_basis": "unknown",
+                "status": "no_bid"
+              },
+              {
+                "role": "bid",
+                "supplier": "Four Seasons Site Development",
+                "amount": 70000,
+                "amount_kind": "total",
+                "amount_basis": "plus_HST",
+                "status": "not_stated"
+              },
+              {
+                "role": "bid",
+                "supplier": "LocPav Construction Ltd.",
+                "amount": 69900,
+                "amount_kind": "total",
+                "amount_basis": "plus_HST",
+                "status": "not_stated"
+              },
+              {
+                "role": "bid",
+                "supplier": "Lomco Contracting",
+                "amount": 87980,
+                "amount_kind": "total",
+                "amount_basis": "plus_HST",
+                "status": "not_stated"
+              },
+              {
+                "role": "no_bid",
+                "supplier": "McPherson-Andrews Contracting",
+                "amount": null,
+                "amount_kind": null,
+                "amount_basis": "unknown",
+                "status": "no_bid"
+              },
+              {
+                "role": "bid",
+                "supplier": "Mopal Construction",
+                "amount": 215002,
+                "amount_kind": "total",
+                "amount_basis": "plus_HST",
+                "status": "not_stated"
+              },
+              {
+                "role": "bid",
+                "supplier": "Pacific Paving",
+                "amount": 94950,
+                "amount_kind": "total",
+                "amount_basis": "plus_HST",
+                "status": "not_stated"
+              },
+              {
+                "role": "bid",
+                "supplier": "Serve Construction",
+                "amount": 118200,
+                "amount_kind": "total",
+                "amount_basis": "plus_HST",
+                "status": "not_stated"
+              },
+              {
+                "role": "no_bid",
+                "supplier": "TBG Landscape Inc.",
+                "amount": null,
+                "amount_kind": null,
+                "amount_basis": "unknown",
+                "status": "no_bid"
+              }
+            ],
+            "item": "1.3",
+            "type": "RFT",
+            "opening_date": "2013-07-22"
+          }
+        ],
+        "notes": [
+          "The supplied fragment on page 17 ends before Albion Hills (item 1.1), so exclude that procurement and all of its rows even though the full scan has the table. Both complete tables from page 18 belong in gold. The final motion refers tenders to staff for review; it contains no recommendation or carried award to a specific supplier. Positive acknowledgement/deposit columns establish those fields only. No-bid suppliers are explicit responses, never competitive bidder counts."
+        ],
+        "contract_only_leads": []
+      },
+      "model_results": [
+        {
+          "reference": null,
+          "title": "Black Creek Pioneer Village Visitor Centre Generator Project - Generator Installation Works",
+          "matched_source_items": [
+            "pioneer-generator"
+          ],
+          "observations": [
+            {
+              "role": "no_bid",
+              "vendor": "Cummins Eastern Canada",
+              "amount_raw": null,
+              "amount_basis": null,
+              "status": "no_bid",
+              "parsed_amount": null,
+              "source_roles": [
+                "no_bid"
+              ],
+              "result": "matched"
+            },
+            {
+              "role": "bid",
+              "vendor": "Dilisado Enterpirses",
+              "amount_raw": "499,000.00",
+              "amount_basis": "plus_HST",
+              "status": "not_stated",
+              "parsed_amount": 499000.0,
+              "source_roles": [
+                "bid"
+              ],
+              "result": "matched"
+            },
+            {
+              "role": "bid",
+              "vendor": "Ferguson Electrical",
+              "amount_raw": "327,700.00",
+              "amount_basis": "plus_HST",
+              "status": "not_stated",
+              "parsed_amount": 327700.0,
+              "source_roles": [
+                "bid"
+              ],
+              "result": "matched"
+            },
+            {
+              "role": "no_bid",
+              "vendor": "Gal Power System",
+              "amount_raw": null,
+              "amount_basis": null,
+              "status": "no_bid",
+              "parsed_amount": null,
+              "source_roles": [
+                "no_bid"
+              ],
+              "result": "matched"
+            },
+            {
+              "role": "bid",
+              "vendor": "Kenstruct Limited",
+              "amount_raw": "851,890.08",
+              "amount_basis": "plus_HST",
+              "status": "not_stated",
+              "parsed_amount": 851890.08,
+              "source_roles": [
+                "bid"
+              ],
+              "result": "matched"
+            },
+            {
+              "role": "no_bid",
+              "vendor": "Paramount Systems Limited",
+              "amount_raw": null,
+              "amount_basis": null,
+              "status": "no_bid",
+              "parsed_amount": null,
+              "source_roles": [
+                "no_bid"
+              ],
+              "result": "matched"
+            },
+            {
+              "role": "bid",
+              "vendor": "Platinum Electrical Contracting",
+              "amount_raw": "379,750.00",
+              "amount_basis": "plus_HST",
+              "status": "not_stated",
+              "parsed_amount": 379750.0,
+              "source_roles": [
+                "bid"
+              ],
+              "result": "matched"
+            },
+            {
+              "role": "bid",
+              "vendor": "Superior Boiler Works & Welding Ltd.",
+              "amount_raw": "290,459.00",
+              "amount_basis": "plus_HST",
+              "status": "not_stated",
+              "parsed_amount": 290459.0,
+              "source_roles": [
+                "bid"
+              ],
+              "result": "matched"
+            },
+            {
+              "role": "no_bid",
+              "vendor": "Total Power",
+              "amount_raw": null,
+              "amount_basis": null,
+              "status": "no_bid",
+              "parsed_amount": null,
+              "source_roles": [
+                "no_bid"
+              ],
+              "result": "matched"
+            },
+            {
+              "role": "no_bid",
+              "vendor": "Tri-Phase Group",
+              "amount_raw": null,
+              "amount_basis": null,
+              "status": "no_bid",
+              "parsed_amount": null,
+              "source_roles": [
+                "no_bid"
+              ],
+              "result": "matched"
+            },
+            {
+              "role": "no_bid",
+              "vendor": "United Contracting",
+              "amount_raw": null,
+              "amount_basis": null,
+              "status": "no_bid",
+              "parsed_amount": null,
+              "source_roles": [
+                "no_bid"
+              ],
+              "result": "matched"
+            },
+            {
+              "role": "no_bid",
+              "vendor": "Wajax Power Systems",
+              "amount_raw": null,
+              "amount_basis": null,
+              "status": "no_bid",
+              "parsed_amount": null,
+              "source_roles": [
+                "no_bid"
+              ],
+              "result": "matched"
+            }
+          ]
+        },
+        {
+          "reference": "RSD13-096",
+          "title": "Port Union Waterfront Parking Lot - Parking Lot Construction",
+          "matched_source_items": [
+            "port-union-paving"
+          ],
+          "observations": [
+            {
+              "role": "no_bid",
+              "vendor": "Appco Paving",
+              "amount_raw": null,
+              "amount_basis": null,
+              "status": "no_bid",
+              "parsed_amount": null,
+              "source_roles": [
+                "no_bid"
+              ],
+              "result": "matched"
+            },
+            {
+              "role": "no_bid",
+              "vendor": "CLS Group",
+              "amount_raw": null,
+              "amount_basis": null,
+              "status": "no_bid",
+              "parsed_amount": null,
+              "source_roles": [
+                "no_bid"
+              ],
+              "result": "matched"
+            },
+            {
+              "role": "no_bid",
+              "vendor": "Dynex Construction",
+              "amount_raw": null,
+              "amount_basis": null,
+              "status": "no_bid",
+              "parsed_amount": null,
+              "source_roles": [
+                "no_bid"
+              ],
+              "result": "matched"
+            },
+            {
+              "role": "bid",
+              "vendor": "Four Seasons Site Development",
+              "amount_raw": "70,000.00",
+              "amount_basis": "plus_HST",
+              "status": "not_stated",
+              "parsed_amount": 70000.0,
+              "source_roles": [
+                "bid"
+              ],
+              "result": "matched"
+            },
+            {
+              "role": "bid",
+              "vendor": "LocPav Construction Ltd.",
+              "amount_raw": "69,900.00",
+              "amount_basis": "plus_HST",
+              "status": "not_stated",
+              "parsed_amount": 69900.0,
+              "source_roles": [
+                "bid"
+              ],
+              "result": "matched"
+            },
+            {
+              "role": "bid",
+              "vendor": "Lomco Contracting",
+              "amount_raw": "87,980.00",
+              "amount_basis": "plus_HST",
+              "status": "not_stated",
+              "parsed_amount": 87980.0,
+              "source_roles": [
+                "bid"
+              ],
+              "result": "matched"
+            },
+            {
+              "role": "no_bid",
+              "vendor": "McPherson-Andrews Contracting",
+              "amount_raw": null,
+              "amount_basis": null,
+              "status": "no_bid",
+              "parsed_amount": null,
+              "source_roles": [
+                "no_bid"
+              ],
+              "result": "matched"
+            },
+            {
+              "role": "bid",
+              "vendor": "Mopal Construction",
+              "amount_raw": "215,002.00",
+              "amount_basis": "plus_HST",
+              "status": "not_stated",
+              "parsed_amount": 215002.0,
+              "source_roles": [
+                "bid"
+              ],
+              "result": "matched"
+            },
+            {
+              "role": "bid",
+              "vendor": "Pacific Paving",
+              "amount_raw": "94,950.00",
+              "amount_basis": "plus_HST",
+              "status": "not_stated",
+              "parsed_amount": 94950.0,
+              "source_roles": [
+                "bid"
+              ],
+              "result": "matched"
+            },
+            {
+              "role": "bid",
+              "vendor": "Serve Construction",
+              "amount_raw": "118,200.00",
+              "amount_basis": "plus_HST",
+              "status": "not_stated",
+              "parsed_amount": 118200.0,
+              "source_roles": [
+                "bid"
+              ],
+              "result": "matched"
+            },
+            {
+              "role": "no_bid",
+              "vendor": "TBG Landscape Inc.",
+              "amount_raw": null,
+              "amount_basis": null,
+              "status": "no_bid",
+              "parsed_amount": null,
+              "source_roles": [
+                "no_bid"
+              ],
+              "result": "matched"
+            }
+          ]
+        }
+      ],
+      "counts": {
+        "expected_no_bid": 12,
+        "expected_bid": 11,
+        "expected_tender_bids": 11,
+        "returned_no_bid": 12,
+        "matched_no_bid": 12,
+        "returned_bid": 11,
+        "matched_bid": 11,
+        "lot_resolved_bids": 11,
+        "bid_price_expected": 11,
+        "bid_price_exact": 11,
+        "printed_reference_returned": 1,
+        "printed_reference_correct": 1
+      },
+      "usage": {
+        "input_tokens": 1081,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 2866,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 2251,
+        "output_tokens_details": {
+          "thinking_tokens": 607
+        },
+        "service_tier": "standard",
+        "inference_geo": "global",
+        "speed": "standard"
+      },
+      "cost_microdollars": 24959
+    },
+    "P01": {
+      "source": {
+        "docid": "212735",
+        "url": "https://laserfiche.trca.ca/WebLink/ElectronicFile.aspx?docid=212735&dbid=0",
+        "sha256": "a57737aceb489ca1fa037c55ffe69e748403ff21151676dd305df0682fa1eced",
+        "reference": "1957 TRCA Minute Book/Minutes 1957",
+        "ranges": [
+          [
+            33,
+            3,
+            6
+          ],
+          [
+            38,
+            51,
+            null
+          ]
+        ],
+        "input_sha256": "bde6d832581c49f5226bc9e0e9e5eb5fac993cdc14b043a96cae118cd2d5c636"
+      },
+      "expected": {
+        "contracts": [
+          {
+            "key": "goodwood-pumping",
+            "title": "Goodwood Scheme – Pumping Unit",
+            "reference": null,
+            "facts": [
+              {
+                "role": "recommendation",
+                "supplier": "Upton, Bradeen & James",
+                "amount": 6455,
+                "amount_kind": "total",
+                "amount_basis": "unknown",
+                "note": "The page image shows $6455.00, while frozen OCR reads 66455. 00."
+              }
+            ],
+            "resolution": "Executive Committee 177",
+            "item": "18",
+            "type": "unknown"
+          },
+          {
+            "key": "goodwood-ditches",
+            "title": "Goodwood Scheme – Ditches, Pumping Station & Force Main",
+            "reference": null,
+            "facts": [
+              {
+                "role": "recommendation",
+                "supplier": "L. J. Kydd Construction Ltd.",
+                "amount": 18547.54,
+                "amount_kind": "total",
+                "amount_basis": "unknown"
+              }
+            ],
+            "resolution": "Executive Committee 177",
+            "item": "18",
+            "type": "unknown"
+          }
+        ],
+        "notes": [
+          "The cut reproduces two proposed awards in Report #2 of the Executive Committee within Authority General Meeting No. 4 on October 29, 1957. Executive resolution 177 and item 18 are evidence pointers, not advertised procurement references. No adoption marker survives in the supplied cut. Outside that cut, PDF p35 records Authority Res. #48 adopting Report #2 without amendment, PDF p38 lists item 18, and PDF p40 marks the full motion Carried. The original source confirms the two awards; the frozen text supports proposed awards only. The supplied lines show neither a tender roster nor independent proof that the named recipients submitted bids."
+        ],
+        "contract_only_leads": [],
+        "outside_cut_evidence": {
+          "url": "https://laserfiche.trca.ca/WebLink/ElectronicFile.aspx?docid=212735&dbid=0",
+          "pages": [
+            35,
+            40
+          ],
+          "authority_resolution": "48",
+          "date": "1957-10-29",
+          "result": "carried"
+        }
+      },
+      "model_results": [
+        {
+          "reference": null,
+          "title": "Goodwood Scheme - Pumping Unit",
+          "matched_source_items": [
+            "goodwood-pumping"
+          ],
+          "observations": [
+            {
+              "role": "award",
+              "vendor": "Upton, Bradeen & James",
+              "amount_raw": "66455. 00",
+              "amount_basis": "unknown",
+              "status": null,
+              "parsed_amount": null,
+              "source_roles": [
+                "recommendation"
+              ],
+              "result": "recommendation_only"
+            }
+          ]
+        },
+        {
+          "reference": null,
+          "title": "Goodwood Scheme - Ditches, Pumping Station & Force Bain",
+          "matched_source_items": [
+            "goodwood-ditches"
+          ],
+          "observations": [
+            {
+              "role": "award",
+              "vendor": "L. J. Kydd Construction Ltd.",
+              "amount_raw": "$ 18, 547. 54",
+              "amount_basis": "unknown",
+              "status": null,
+              "parsed_amount": null,
+              "source_roles": [
+                "recommendation"
+              ],
+              "result": "recommendation_only"
+            }
+          ]
+        }
+      ],
+      "counts": {
+        "expected_recommendation": 2,
+        "returned_award": 2,
+        "matched_award_or_recommendation": 2
+      },
+      "usage": {
+        "input_tokens": 219,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 2866,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 491,
+        "output_tokens_details": {
+          "thinking_tokens": 0
+        },
+        "service_tier": "standard",
+        "inference_geo": "global",
+        "speed": "standard"
+      },
+      "cost_microdollars": 5635
+    },
+    "P02": {
+      "source": {
+        "docid": "212897",
+        "url": "https://laserfiche.trca.ca/WebLink/ElectronicFile.aspx?docid=212897&dbid=0",
+        "sha256": "e4834f8190a13d4e9d7bf76aa021c3d60a7e84cab0e7e07f3c52aa502cbc074a",
+        "reference": "1961 TRCA Minute Book/Executive Committee 1961",
+        "ranges": [
+          [
+            138,
+            3,
+            5
+          ],
+          [
+            140,
+            6,
+            23
+          ]
+        ],
+        "input_sha256": "230a9fde879c0284259ce4ac36db97a7a88a24ed1f53c45e59b1331bc87793ff"
+      },
+      "expected": {
+        "contracts": [
+          {
+            "key": "woodbridge-soils",
+            "title": "Woodbridge Channelization – Soils Investigation Programme",
+            "reference": null,
+            "facts": [
+              {
+                "role": "bid",
+                "supplier": "Geocon Limited",
+                "amount": 3517,
+                "amount_kind": "total",
+                "amount_basis": "unknown",
+                "status": "not_stated"
+              },
+              {
+                "role": "bid",
+                "supplier": "H. Q. Golder & Assoc. Limited",
+                "amount": 3925,
+                "amount_kind": "total",
+                "amount_basis": "unknown",
+                "status": "not_stated"
+              },
+              {
+                "role": "bid",
+                "supplier": "Raymond Concrete Pile Co.",
+                "amount": 2968,
+                "amount_kind": "total",
+                "amount_basis": "unknown",
+                "status": "not_stated",
+                "aliases": [
+                  "Raymond Concrete Pile Company"
+                ]
+              },
+              {
+                "role": "bid",
+                "supplier": "W. A. Trow and Associates",
+                "amount": 3433,
+                "amount_kind": "total",
+                "amount_basis": "unknown",
+                "status": "not_stated"
+              },
+              {
+                "role": "award",
+                "supplier": "Raymond Concrete Pile Company",
+                "amount": 2968,
+                "amount_kind": "total",
+                "amount_basis": "unknown",
+                "aliases": [
+                  "Raymond Concrete Pile Co."
+                ]
+              },
+              {
+                "role": "recommendation",
+                "supplier": "Raymond Concrete Pile Company",
+                "amount": 2968,
+                "amount_kind": "total",
+                "amount_basis": "unknown",
+                "score": "secondary",
+                "note": "The carried decision expressly states the consulting engineers recommended that same tender. James F. MacLaren Associates is the reviewer, not a bidder for this section."
+              }
+            ],
+            "resolution": "140",
+            "type": "RFT",
+            "decision_date": "1961-06-21"
+          }
+        ],
+        "notes": [],
+        "contract_only_leads": []
+      },
+      "model_results": [
+        {
+          "reference": null,
+          "title": "Soils investigation programme for the Woodbridge Channelization",
+          "matched_source_items": [
+            "woodbridge-soils"
+          ],
+          "observations": [
+            {
+              "role": "bid",
+              "vendor": "Geocon Limited",
+              "amount_raw": "3, 517. 00",
+              "amount_basis": "unknown",
+              "status": "not_stated",
+              "parsed_amount": null,
+              "source_roles": [
+                "bid"
+              ],
+              "result": "matched"
+            },
+            {
+              "role": "bid",
+              "vendor": "H. Q. Golder & Assoc. Limited",
+              "amount_raw": "3, 925. 00",
+              "amount_basis": "unknown",
+              "status": "not_stated",
+              "parsed_amount": null,
+              "source_roles": [
+                "bid"
+              ],
+              "result": "matched"
+            },
+            {
+              "role": "bid",
+              "vendor": "Raymond Concrete Pile Co.",
+              "amount_raw": "2, 968. 00",
+              "amount_basis": "unknown",
+              "status": "not_stated",
+              "parsed_amount": null,
+              "source_roles": [
+                "award",
+                "bid"
+              ],
+              "result": "matched"
+            },
+            {
+              "role": "bid",
+              "vendor": "W. A. Trow and Associates",
+              "amount_raw": "3, 433. 00",
+              "amount_basis": "unknown",
+              "status": "not_stated",
+              "parsed_amount": null,
+              "source_roles": [
+                "bid"
+              ],
+              "result": "matched"
+            },
+            {
+              "role": "award",
+              "vendor": "Raymond Concrete Pile Company",
+              "amount_raw": "$ 2, 968. 00",
+              "amount_basis": "unknown",
+              "status": null,
+              "parsed_amount": null,
+              "source_roles": [
+                "award",
+                "bid",
+                "recommendation"
+              ],
+              "result": "matched"
+            }
+          ]
+        }
+      ],
+      "counts": {
+        "expected_bid": 4,
+        "expected_award": 1,
+        "expected_tender_bids": 4,
+        "returned_bid": 4,
+        "matched_bid": 4,
+        "lot_resolved_bids": 4,
+        "bid_price_expected": 4,
+        "returned_award": 1,
+        "matched_award": 1,
+        "matched_award_or_recommendation": 1,
+        "award_price_expected": 1
+      },
+      "usage": {
+        "input_tokens": 365,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 2866,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 502,
+        "output_tokens_details": {
+          "thinking_tokens": 0
+        },
+        "service_tier": "standard",
+        "inference_geo": "global",
+        "speed": "standard"
+      },
+      "cost_microdollars": 6037
+    },
+    "P03": {
+      "source": {
+        "docid": "212535",
+        "url": "https://laserfiche.trca.ca/WebLink/ElectronicFile.aspx?docid=212535&dbid=0",
+        "sha256": "3fb3e1673504ee0e273396769546ef124155726dbadd886874361cd986693e1a",
+        "reference": "1977 TRCA Minute Book/Executive Committee 1977",
+        "ranges": [
+          [
+            87,
+            5,
+            7
+          ],
+          [
+            98,
+            1,
+            42
+          ]
+        ],
+        "input_sha256": "61d43d97952f2634a7284ef95fc4958af13115e9f08409f56a2bc6c714258e70"
+      },
+      "expected": {
+        "contracts": [
+          {
+            "key": "kortright-paving",
+            "title": "Kortright Centre for Conservation – Paving of Roads, Parking Lot and Pathways",
+            "reference": null,
+            "facts": [
+              {
+                "role": "bid",
+                "supplier": "D. Crupi & Sons Ltd.",
+                "amount": 70500,
+                "amount_kind": "total",
+                "amount_basis": "unknown",
+                "status": "not_stated",
+                "aliases": [
+                  "D. Crusp & Sons Ltd."
+                ]
+              },
+              {
+                "role": "bid",
+                "supplier": "Miller Paving",
+                "amount": 77826.5,
+                "amount_kind": "total",
+                "amount_basis": "unknown",
+                "status": "not_stated"
+              },
+              {
+                "role": "bid",
+                "supplier": "K. J. Beamish",
+                "amount": 82390,
+                "amount_kind": "total",
+                "amount_basis": "unknown",
+                "status": "not_stated"
+              },
+              {
+                "role": "bid",
+                "supplier": "Prospect Paving",
+                "amount": 82410,
+                "amount_kind": "total",
+                "amount_basis": "unknown",
+                "status": "not_stated"
+              },
+              {
+                "role": "bid",
+                "supplier": "Armbro Brothers Con.",
+                "amount": 91200,
+                "amount_kind": "total",
+                "amount_basis": "unknown",
+                "status": "not_stated"
+              },
+              {
+                "role": "award",
+                "supplier": "D. Crupi & Sons Ltd.",
+                "amount": 70500,
+                "amount_kind": "total",
+                "amount_basis": "unknown",
+                "aliases": [
+                  "D. Crusp & Sons Ltd."
+                ],
+                "note": "The actual source spells the bidder Crupi in the bid table and Crusp in the carried motion. Same scope, sole lowest amount."
+              }
+            ],
+            "resolution": "116",
+            "type": "RFT",
+            "decision_date": "1977-04-06"
+          }
+        ],
+        "notes": [],
+        "contract_only_leads": []
+      },
+      "model_results": [
+        {
+          "reference": null,
+          "title": "Paving of roads, parking lot and pathways at The Kortright Centre for Conservation",
+          "matched_source_items": [
+            "kortright-paving"
+          ],
+          "observations": [
+            {
+              "role": "bid",
+              "vendor": "D. Crupi & Sons Ltd.",
+              "amount_raw": "70, 500. 00",
+              "amount_basis": "unknown",
+              "status": "not_stated",
+              "parsed_amount": null,
+              "source_roles": [
+                "award",
+                "bid"
+              ],
+              "result": "matched"
+            },
+            {
+              "role": "bid",
+              "vendor": "Miller Paving",
+              "amount_raw": "77 , 826 . 50",
+              "amount_basis": "unknown",
+              "status": "not_stated",
+              "parsed_amount": null,
+              "source_roles": [
+                "bid"
+              ],
+              "result": "matched"
+            },
+            {
+              "role": "bid",
+              "vendor": "K. J. Beamish",
+              "amount_raw": "82, 390. 00",
+              "amount_basis": "unknown",
+              "status": "not_stated",
+              "parsed_amount": null,
+              "source_roles": [
+                "bid"
+              ],
+              "result": "matched"
+            },
+            {
+              "role": "bid",
+              "vendor": "Prospect Paving",
+              "amount_raw": "82, 410. 00",
+              "amount_basis": "unknown",
+              "status": "not_stated",
+              "parsed_amount": null,
+              "source_roles": [
+                "bid"
+              ],
+              "result": "matched"
+            },
+            {
+              "role": "bid",
+              "vendor": "Armbro Brothers Con.",
+              "amount_raw": "91, 200. 00",
+              "amount_basis": "unknown",
+              "status": "not_stated",
+              "parsed_amount": null,
+              "source_roles": [
+                "bid"
+              ],
+              "result": "matched"
+            },
+            {
+              "role": "award",
+              "vendor": "D. Crusp & Sons Ltd.",
+              "amount_raw": "$ 70, 500. 00",
+              "amount_basis": "unknown",
+              "status": null,
+              "parsed_amount": null,
+              "source_roles": [
+                "award",
+                "bid"
+              ],
+              "result": "matched"
+            }
+          ]
+        }
+      ],
+      "counts": {
+        "expected_bid": 5,
+        "expected_award": 1,
+        "expected_tender_bids": 5,
+        "returned_bid": 5,
+        "matched_bid": 5,
+        "lot_resolved_bids": 5,
+        "bid_price_expected": 5,
+        "returned_award": 1,
+        "matched_award": 1,
+        "matched_award_or_recommendation": 1,
+        "award_price_expected": 1
+      },
+      "usage": {
+        "input_tokens": 813,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 2866,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 609,
+        "output_tokens_details": {
+          "thinking_tokens": 0
+        },
+        "service_tier": "standard",
+        "inference_geo": "global",
+        "speed": "standard"
+      },
+      "cost_microdollars": 8003
+    },
+    "P04": {
+      "source": {
+        "docid": "202224",
+        "url": "https://laserfiche.trca.ca/WebLink/ElectronicFile.aspx?docid=202224&dbid=0",
+        "sha256": "b91a6bcb54491443871a01f72b5319a5e97c03786dc461121c44b8025078c431",
+        "reference": "1986 TRCA Minute Book/Executive Committee 1986",
+        "ranges": [
+          [
+            257,
+            51,
+            null
+          ],
+          [
+            258,
+            2,
+            24
+          ]
+        ],
+        "input_sha256": "dac542c0857b3647222de46027f2ef48863f8149e3863e836a30edd78e185734"
+      },
+      "expected": {
+        "contracts": [
+          {
+            "key": "bluffers-gabion",
+            "title": "Bluffers Waterfront Park Marina – Gabion Stone Supply",
+            "reference": null,
+            "facts": [
+              {
+                "role": "bid",
+                "supplier": "Wiles Transport Co. Ltd.",
+                "amount": null,
+                "amount_kind": null,
+                "amount_basis": "unknown",
+                "status": "not_stated",
+                "prices": [
+                  {
+                    "amount": 11.85,
+                    "kind": "per_tonne",
+                    "basis": "unknown",
+                    "delivery": "trailer"
+                  }
+                ]
+              },
+              {
+                "role": "bid",
+                "supplier": "Steeley Lime & Aggregates",
+                "amount": null,
+                "amount_kind": null,
+                "amount_basis": "unknown",
+                "status": "not_stated",
+                "prices": [
+                  {
+                    "amount": 13.75,
+                    "kind": "per_tonne",
+                    "basis": "unknown",
+                    "delivery": "tandem"
+                  },
+                  {
+                    "amount": 11.75,
+                    "kind": "per_tonne",
+                    "basis": "unknown",
+                    "delivery": "trailer"
+                  }
+                ]
+              },
+              {
+                "role": "bid",
+                "supplier": "Canada Building Materials Company–Aggregates Div.",
+                "amount": null,
+                "amount_kind": null,
+                "amount_basis": "unknown",
+                "status": "not_stated",
+                "prices": [
+                  {
+                    "amount": 11.74,
+                    "kind": "per_tonne",
+                    "basis": "unknown",
+                    "delivery": "tandem"
+                  },
+                  {
+                    "amount": 11.35,
+                    "kind": "per_tonne",
+                    "basis": "unknown",
+                    "delivery": "trailer"
+                  }
+                ]
+              },
+              {
+                "role": "bid",
+                "supplier": "Standard Aggregates Inc.",
+                "amount": null,
+                "amount_kind": null,
+                "amount_basis": "unknown",
+                "status": "not_stated",
+                "prices": [
+                  {
+                    "amount": 13.75,
+                    "kind": "per_tonne",
+                    "basis": "unknown",
+                    "delivery": "tandem"
+                  },
+                  {
+                    "amount": 13.25,
+                    "kind": "per_tonne",
+                    "basis": "unknown",
+                    "delivery": "trailer"
+                  }
+                ]
+              },
+              {
+                "role": "bid",
+                "supplier": "Armbro Aggregates – Division of United Aggregates Ltd.",
+                "amount": null,
+                "amount_kind": null,
+                "amount_basis": "unknown",
+                "status": "not_stated",
+                "prices": [
+                  {
+                    "amount": 13.61,
+                    "kind": "per_tonne",
+                    "basis": "unknown",
+                    "delivery": "tandem"
+                  }
+                ]
+              },
+              {
+                "role": "bid",
+                "supplier": "Dufferin Aggregates",
+                "amount": 57304,
+                "amount_kind": "total",
+                "amount_basis": "unknown",
+                "status": "not_stated",
+                "prices": [
+                  {
+                    "amount": 11.79,
+                    "kind": "per_tonne",
+                    "basis": "unknown",
+                    "delivery": "tandem"
+                  },
+                  {
+                    "amount": 11.02,
+                    "kind": "per_tonne",
+                    "basis": "unknown",
+                    "delivery": "trailer"
+                  }
+                ],
+                "note": "The resolution calls $57,304.00 the total tendered price; the table lists per-tonne rates."
+              },
+              {
+                "role": "award",
+                "supplier": "Dufferin Aggregates",
+                "amount": 57304,
+                "amount_kind": "total",
+                "amount_basis": "unknown"
+              }
+            ],
+            "resolution": "97",
+            "item": "13",
+            "type": "RFT"
+          },
+          {
+            "key": "bluffers-clear",
+            "title": "Bluffers Waterfront Park Marina – 50mm Clear Stone Supply",
+            "reference": null,
+            "facts": [
+              {
+                "role": "bid",
+                "supplier": "Wiles Transport Co. Ltd.",
+                "amount": 21525,
+                "amount_kind": "total",
+                "amount_basis": "unknown",
+                "status": "not_stated",
+                "prices": [
+                  {
+                    "amount": 10.25,
+                    "kind": "per_tonne",
+                    "basis": "unknown",
+                    "delivery": "trailer"
+                  }
+                ],
+                "aliases": [
+                  "Wiles Transport Company Limited"
+                ],
+                "note": "The resolution calls $21,525.00 the total tendered price; the table lists a trailer per-tonne rate."
+              },
+              {
+                "role": "bid",
+                "supplier": "Steeley Lime & Aggregates",
+                "amount": null,
+                "amount_kind": null,
+                "amount_basis": "unknown",
+                "status": "not_stated",
+                "prices": [
+                  {
+                    "amount": 13.35,
+                    "kind": "per_tonne",
+                    "basis": "unknown",
+                    "delivery": "tandem"
+                  },
+                  {
+                    "amount": 11.36,
+                    "kind": "per_tonne",
+                    "basis": "unknown",
+                    "delivery": "trailer"
+                  }
+                ]
+              },
+              {
+                "role": "bid",
+                "supplier": "Canada Building Materials Company–Aggregates Div.",
+                "amount": null,
+                "amount_kind": null,
+                "amount_basis": "unknown",
+                "status": "not_stated",
+                "prices": [
+                  {
+                    "amount": 11.49,
+                    "kind": "per_tonne",
+                    "basis": "unknown",
+                    "delivery": "tandem"
+                  },
+                  {
+                    "amount": 11.1,
+                    "kind": "per_tonne",
+                    "basis": "unknown",
+                    "delivery": "trailer"
+                  }
+                ]
+              },
+              {
+                "role": "bid",
+                "supplier": "Standard Aggregates Inc.",
+                "amount": null,
+                "amount_kind": null,
+                "amount_basis": "unknown",
+                "status": "not_stated",
+                "prices": [
+                  {
+                    "amount": 12.25,
+                    "kind": "per_tonne",
+                    "basis": "unknown",
+                    "delivery": "tandem"
+                  },
+                  {
+                    "amount": 11.75,
+                    "kind": "per_tonne",
+                    "basis": "unknown",
+                    "delivery": "trailer"
+                  }
+                ]
+              },
+              {
+                "role": "bid",
+                "supplier": "Nelson Aggregate Company",
+                "amount": null,
+                "amount_kind": null,
+                "amount_basis": "unknown",
+                "status": "not_stated",
+                "prices": [
+                  {
+                    "amount": 12,
+                    "kind": "per_tonne",
+                    "basis": "unknown",
+                    "delivery": "tandem"
+                  },
+                  {
+                    "amount": 10.84,
+                    "kind": "per_tonne",
+                    "basis": "unknown",
+                    "delivery": "trailer"
+                  }
+                ]
+              },
+              {
+                "role": "bid",
+                "supplier": "Armbro Aggregates – Division of United Aggregates Ltd.",
+                "amount": null,
+                "amount_kind": null,
+                "amount_basis": "unknown",
+                "status": "not_stated",
+                "prices": [
+                  {
+                    "amount": 12.51,
+                    "kind": "per_tonne",
+                    "basis": "unknown",
+                    "delivery": "tandem"
+                  },
+                  {
+                    "amount": 11.02,
+                    "kind": "per_tonne",
+                    "basis": "unknown",
+                    "delivery": "trailer"
+                  }
+                ]
+              },
+              {
+                "role": "bid",
+                "supplier": "Dufferin Aggregates",
+                "amount": null,
+                "amount_kind": null,
+                "amount_basis": "unknown",
+                "status": "not_stated",
+                "prices": [
+                  {
+                    "amount": 11.79,
+                    "kind": "per_tonne",
+                    "basis": "unknown",
+                    "delivery": "tandem"
+                  },
+                  {
+                    "amount": 11.02,
+                    "kind": "per_tonne",
+                    "basis": "unknown",
+                    "delivery": "trailer"
+                  }
+                ]
+              },
+              {
+                "role": "award",
+                "supplier": "Wiles Transport Company Limited",
+                "amount": 21525,
+                "amount_kind": "total",
+                "amount_basis": "unknown",
+                "aliases": [
+                  "Wiles Transport Co. Ltd."
+                ]
+              }
+            ],
+            "resolution": "97",
+            "item": "13",
+            "type": "RFT"
+          }
+        ],
+        "notes": [
+          "Scan verifies the tender table’s two scopes with two delivery methods each. In the frozen OCR, inter-column layout was lost; correct geometry is recovered from the original page image for the exact supplied lines. Nelson did not quote any gabion price. Blank delivery cells do not establish an explicit no-bid response for a separate tender or variant; keep them distinct from substantive submissions. Per-tonne figures may support prices as explicitly labelled variants. Never compare them to total award amounts."
+        ],
+        "contract_only_leads": []
+      },
+      "model_results": [
+        {
+          "reference": null,
+          "title": "Bluffers Waterfront Park - Marina Development: Stone Supply (supply and delivery of 50mm clear stone and gabion stone)",
+          "matched_source_items": [
+            "bluffers-gabion",
+            "bluffers-clear"
+          ],
+          "observations": [
+            {
+              "role": "bid",
+              "vendor": "Wiles Transport Co Ltd.",
+              "amount_raw": "Sl1 85/ t. S10. 25/ t",
+              "amount_basis": "unknown",
+              "status": "not_stated",
+              "parsed_amount": null,
+              "source_roles": [
+                "award",
+                "bid"
+              ],
+              "result": "lot_unresolved"
+            },
+            {
+              "role": "bid",
+              "vendor": "Steeley Lime & Aggregates",
+              "amount_raw": "S13. 75/ t. Sl1. 75/ t. S13. 35/ t. Sl1.36/ t.",
+              "amount_basis": "unknown",
+              "status": "not_stated",
+              "parsed_amount": null,
+              "source_roles": [
+                "bid"
+              ],
+              "result": "lot_unresolved"
+            },
+            {
+              "role": "bid",
+              "vendor": "Canada Building Materials Company- Aggregates Div.",
+              "amount_raw": "Sl1. 74/ t Sl1.35/ t Sl1. 49/ t. Sl1. 10/ t.",
+              "amount_basis": "unknown",
+              "status": "not_stated",
+              "parsed_amount": null,
+              "source_roles": [
+                "bid"
+              ],
+              "result": "lot_unresolved"
+            },
+            {
+              "role": "bid",
+              "vendor": "Standard Aggregates Inc.,",
+              "amount_raw": "S13 75/ t. S13. 25/ t. S12. 25/ t. Sl1.75/ t.",
+              "amount_basis": "unknown",
+              "status": "not_stated",
+              "parsed_amount": null,
+              "source_roles": [
+                "bid"
+              ],
+              "result": "lot_unresolved"
+            },
+            {
+              "role": "bid",
+              "vendor": "Nelson Aggregate Company",
+              "amount_raw": "S12. 00/ t. SlO 84/ t.",
+              "amount_basis": "unknown",
+              "status": "not_stated",
+              "parsed_amount": null,
+              "source_roles": [
+                "bid"
+              ],
+              "result": "lot_unresolved"
+            },
+            {
+              "role": "bid",
+              "vendor": "Armbro Aggregates - Division of United Aggregates Ltd",
+              "amount_raw": "S13 6l/ t. S12. 5l/ t Sl1.02/ t.",
+              "amount_basis": "unknown",
+              "status": "not_stated",
+              "parsed_amount": null,
+              "source_roles": [
+                "bid"
+              ],
+              "result": "lot_unresolved"
+            },
+            {
+              "role": "bid",
+              "vendor": "Dufferin Aggregates",
+              "amount_raw": "Sl1 79/ t. Sl1.02/ t. SIlo 79/ t Sl1.02/ t.",
+              "amount_basis": "unknown",
+              "status": "not_stated",
+              "parsed_amount": null,
+              "source_roles": [
+                "award",
+                "bid"
+              ],
+              "result": "lot_unresolved"
+            },
+            {
+              "role": "award",
+              "vendor": "Wiles Transport Company Limited",
+              "amount_raw": "S21, 525 00",
+              "amount_basis": "unknown",
+              "status": null,
+              "parsed_amount": null,
+              "source_roles": [
+                "award",
+                "bid"
+              ],
+              "result": "matched"
+            },
+            {
+              "role": "award",
+              "vendor": "Dufferin Aggregates",
+              "amount_raw": "S57, 304. 00",
+              "amount_basis": "unknown",
+              "status": null,
+              "parsed_amount": null,
+              "source_roles": [
+                "award",
+                "bid"
+              ],
+              "result": "matched"
+            }
+          ]
+        }
+      ],
+      "counts": {
+        "expected_bid": 13,
+        "expected_award": 2,
+        "expected_tender_bids": 7,
+        "returned_bid": 7,
+        "matched_bid": 7,
+        "returned_award": 2,
+        "matched_award": 2,
+        "matched_award_or_recommendation": 2,
+        "award_price_expected": 2
+      },
+      "usage": {
+        "input_tokens": 685,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 2866,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 1623,
+        "output_tokens_details": {
+          "thinking_tokens": 656
+        },
+        "service_tier": "standard",
+        "inference_geo": "global",
+        "speed": "standard"
+      },
+      "cost_microdollars": 17887
+    },
+    "P05": {
+      "source": {
+        "docid": "211822",
+        "url": "https://laserfiche.trca.ca/WebLink/ElectronicFile.aspx?docid=211822&dbid=0",
+        "sha256": "739982d2ae45e1187d2522bae4c8f7a461477001f54770048e78a300d059fb8c",
+        "reference": "1996 TRCA Minute Book/Executive Committee 1996",
+        "ranges": [
+          [
+            182,
+            0,
+            null
+          ],
+          [
+            183,
+            1,
+            null
+          ]
+        ],
+        "input_sha256": "79098d5bceab77205a7f8931950758291445b929960536582e644a0bbfd64a9e"
+      },
+      "expected": {
+        "contracts": [
+          {
+            "key": "don-valley-hydro",
+            "title": "Don Valley Brick Works Regeneration Project – Hydro Electric Servicing",
+            "reference": null,
+            "facts": [
+              {
+                "role": "award",
+                "supplier": "East York Hydro",
+                "amount": 71690,
+                "amount_kind": "total",
+                "amount_basis": "including_GST",
+                "prices": [
+                  {
+                    "amount": 54998,
+                    "kind": "primary_work_component",
+                    "basis": "unknown"
+                  },
+                  {
+                    "amount": 16692,
+                    "kind": "secondary_work_component",
+                    "basis": "unknown"
+                  }
+                ]
+              },
+              {
+                "role": "recommendation",
+                "supplier": "East York Hydro",
+                "amount": 71690,
+                "amount_kind": "total",
+                "amount_basis": "including_GST",
+                "score": "secondary",
+                "note": "Staff recommends the same scope and recipient; the amount and GST qualification are printed in the carried motion."
+              }
+            ],
+            "resolution": "E58/96",
+            "type": "noncompetitive",
+            "decision_date": "1996-05-10"
+          }
+        ],
+        "notes": [
+          "The principal work is within East York Hydro’s jurisdiction and staff preferred bundling the competitively priced secondary scope. The rationale calls it a competitive quote, which supports a direct-vendor quote description, but there is no competitive bidder roster or separately stated public tender submission total. No bid rows required. The two component values are not separate awards. The amount includes GST, and the text does not support labelling it plus HST."
+        ],
+        "contract_only_leads": []
+      },
+      "model_results": [
+        {
+          "reference": null,
+          "title": "Reconstruct the main hydro-electric service pole line with high voltage overhead cables within the Don Valley Brick Works Site and install services to other areas of the site",
+          "matched_source_items": [
+            "don-valley-hydro"
+          ],
+          "observations": [
+            {
+              "role": "award",
+              "vendor": "East York Hydro",
+              "amount_raw": "$ 71, 690. 00",
+              "amount_basis": "including_HST",
+              "status": null,
+              "parsed_amount": null,
+              "source_roles": [
+                "award",
+                "recommendation"
+              ],
+              "result": "matched"
+            }
+          ]
+        }
+      ],
+      "counts": {
+        "expected_award": 1,
+        "returned_award": 1,
+        "matched_award": 1,
+        "matched_award_or_recommendation": 1,
+        "award_price_expected": 1
+      },
+      "usage": {
+        "input_tokens": 1356,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 2866,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 314,
+        "output_tokens_details": {
+          "thinking_tokens": 0
+        },
+        "service_tier": "standard",
+        "inference_geo": "global",
+        "speed": "standard"
+      },
+      "cost_microdollars": 6139
+    },
+    "P06": {
+      "source": {
+        "docid": "213027",
+        "url": "https://laserfiche.trca.ca/WebLink/ElectronicFile.aspx?docid=213027&dbid=0",
+        "sha256": "5fcf649331512453cfaf2aed54ac1cdec3eb2f772e74769aba78e20152721ee4",
+        "reference": "2002 TRCA Minute Book/Executive Committee 2002",
+        "ranges": [
+          [
+            872,
+            34,
+            40
+          ],
+          [
+            873,
+            0,
+            31
+          ]
+        ],
+        "input_sha256": "0ce1fe6e2fcb3d5b9532d78b6d35b9650933ba46c9f97a87c4b6346fb2ab3cc1"
+      },
+      "expected": {
+        "contracts": [
+          {
+            "key": "paper-2003",
+            "title": "2003 Paper Supplies Tender",
+            "reference": null,
+            "facts": [
+              {
+                "role": "bid",
+                "supplier": "Buntin Reid",
+                "amount": null,
+                "amount_kind": null,
+                "amount_basis": "unknown",
+                "status": "not_stated"
+              },
+              {
+                "role": "bid",
+                "supplier": "Cascades Resources",
+                "amount": 6.47,
+                "amount_kind": "unit_price",
+                "amount_basis": "unknown",
+                "status": "not_stated",
+                "aliases": [
+                  "Cascade Resources"
+                ],
+                "note": "Selected 50% recycled 8½×11 paper comparison only; price unit/package size is not stated."
+              },
+              {
+                "role": "bid",
+                "supplier": "Coast Paper",
+                "amount": null,
+                "amount_kind": null,
+                "amount_basis": "unknown",
+                "status": "not_stated"
+              },
+              {
+                "role": "no_bid",
+                "supplier": "Unisource",
+                "amount": null,
+                "amount_kind": null,
+                "amount_basis": "unknown",
+                "status": "no_bid",
+                "note": "Explicit note refraining from tendering, not a submitted bid."
+              },
+              {
+                "role": "award",
+                "supplier": "Cascades Resources",
+                "amount": null,
+                "amount_kind": null,
+                "amount_basis": "unknown",
+                "aliases": [
+                  "Cascade Resources"
+                ],
+                "scope": "Paper supplies within Cascades' stock"
+              },
+              {
+                "role": "award",
+                "supplier": "Coast Paper",
+                "amount": null,
+                "amount_kind": null,
+                "amount_basis": "unknown",
+                "scope": "Paper products unavailable from Cascades"
+              }
+            ],
+            "resolution": "B195/02",
+            "type": "RFT"
+          }
+        ],
+        "notes": [
+          "The carried operative text accepts Cascades’ tender and awards the unavailable stock to Coast Paper. The heading refers to recommending award, while the carried text contains an operative acceptance/direct award. Buntin Reid and Coast Paper submitted pricing, but their individual figures are not shown. $30,000–$40,000 is historical annual expenditure and $25,000 is an approval threshold. Date printed below the report is January 22, 2003 while resolution is B195/02; neither is proof of an exact decision date without meeting context. A price-aware evaluation may allow null for the Cascades total bid field if the evaluator separately records $6.47 as a unit price."
+        ],
+        "contract_only_leads": []
+      },
+      "model_results": [
+        {
+          "reference": "B195/02",
+          "title": "2003 paper supplies tender",
+          "matched_source_items": [
+            "paper-2003"
+          ],
+          "observations": [
+            {
+              "role": "bid",
+              "vendor": "Buntin Reid",
+              "amount_raw": null,
+              "amount_basis": null,
+              "status": "not_stated",
+              "parsed_amount": null,
+              "source_roles": [
+                "bid"
+              ],
+              "result": "matched"
+            },
+            {
+              "role": "bid",
+              "vendor": "Cascade Resources",
+              "amount_raw": "6.47",
+              "amount_basis": "unknown",
+              "status": "compliant",
+              "parsed_amount": 6.47,
+              "source_roles": [
+                "award",
+                "bid"
+              ],
+              "result": "matched"
+            },
+            {
+              "role": "bid",
+              "vendor": "Coast Paper",
+              "amount_raw": null,
+              "amount_basis": null,
+              "status": "not_stated",
+              "parsed_amount": null,
+              "source_roles": [
+                "award",
+                "bid"
+              ],
+              "result": "matched"
+            },
+            {
+              "role": "no_bid",
+              "vendor": "Unisource",
+              "amount_raw": null,
+              "amount_basis": null,
+              "status": "no_bid",
+              "parsed_amount": null,
+              "source_roles": [
+                "no_bid"
+              ],
+              "result": "matched"
+            },
+            {
+              "role": "award",
+              "vendor": "Cascades Resources",
+              "amount_raw": null,
+              "amount_basis": null,
+              "status": null,
+              "parsed_amount": null,
+              "source_roles": [
+                "award",
+                "bid"
+              ],
+              "result": "matched"
+            },
+            {
+              "role": "award",
+              "vendor": "Coast Paper",
+              "amount_raw": null,
+              "amount_basis": null,
+              "status": null,
+              "parsed_amount": null,
+              "source_roles": [
+                "award",
+                "bid"
+              ],
+              "result": "matched"
+            }
+          ]
+        }
+      ],
+      "counts": {
+        "expected_bid": 3,
+        "expected_no_bid": 1,
+        "expected_award": 2,
+        "expected_tender_bids": 3,
+        "printed_reference_returned": 1,
+        "returned_bid": 3,
+        "matched_bid": 3,
+        "lot_resolved_bids": 3,
+        "returned_no_bid": 1,
+        "matched_no_bid": 1,
+        "returned_award": 2,
+        "matched_award": 2,
+        "matched_award_or_recommendation": 2
+      },
+      "usage": {
+        "input_tokens": 717,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 2866,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 498,
+        "output_tokens_details": {
+          "thinking_tokens": 0
+        },
+        "service_tier": "standard",
+        "inference_geo": "global",
+        "speed": "standard"
+      },
+      "cost_microdollars": 6701
+    },
+    "P07": {
+      "source": {
+        "docid": "1328270",
+        "url": "https://laserfiche.trca.ca/WebLink/ElectronicFile.aspx?docid=1328270&dbid=0",
+        "sha256": "aedd3fd609eaa2969add1e07dfbfbd46b98d70eb1583df919285dde5283e2e6e",
+        "reference": "2015 TRCA Minute Book/Authority 2015.pdf",
+        "ranges": [
+          [
+            411,
+            0,
+            null
+          ],
+          [
+            412,
+            0,
+            null
+          ]
+        ],
+        "input_sha256": "259fb068757036bbca354089df0109ae432ef1d9800de49f3bb7bc6402431ee7"
+      },
+      "expected": {
+        "contracts": [
+          {
+            "key": "clothing-replacement",
+            "title": "Supply and Delivery of Clothing 2015–2017",
+            "reference": "10000813",
+            "facts": [
+              {
+                "role": "bid",
+                "supplier": "Dufferin Apparel",
+                "amount": 148391.15,
+                "amount_kind": "estimated_annual",
+                "amount_basis": "plus_HST",
+                "status": "compliant"
+              },
+              {
+                "role": "bid",
+                "supplier": "G & L Promotions",
+                "amount": 163147,
+                "amount_kind": "estimated_annual",
+                "amount_basis": "plus_HST",
+                "status": "not_stated"
+              },
+              {
+                "role": "bid",
+                "supplier": "Needham Promotions",
+                "amount": 170166.79,
+                "amount_kind": "estimated_annual",
+                "amount_basis": "plus_HST",
+                "status": "not_stated",
+                "aliases": [
+                  "Needham Promotions Inc."
+                ]
+              },
+              {
+                "role": "bid",
+                "supplier": "Cotton Candy",
+                "amount": 207298.01,
+                "amount_kind": "estimated_annual",
+                "amount_basis": "plus_HST",
+                "status": "not_stated"
+              },
+              {
+                "role": "award",
+                "supplier": "Dufferin Apparel",
+                "amount": 296000,
+                "amount_kind": "estimated_two_year_total",
+                "amount_basis": "plus_HST",
+                "prices": [
+                  {
+                    "amount": 148000,
+                    "kind": "estimated_annual",
+                    "basis": "plus_HST"
+                  }
+                ],
+                "contingency_percent": 10
+              },
+              {
+                "role": "recommendation",
+                "supplier": "Dufferin Apparel",
+                "amount": 296000,
+                "amount_kind": "estimated_two_year_total",
+                "amount_basis": "plus_HST",
+                "prices": [
+                  {
+                    "amount": 148000,
+                    "kind": "estimated_annual",
+                    "basis": "plus_HST"
+                  }
+                ],
+                "contingency_percent": 10,
+                "score": "secondary",
+                "note": "The rationale states annual estimate and term; the same carried motion prints the total and explicit tax."
+              }
+            ],
+            "resolution": "A167/15",
+            "type": "RFQ",
+            "opening_date": "2015-08-21"
+          },
+          {
+            "key": "clothing-original-background",
+            "title": "Supply and Delivery of Clothing 2015–2017 (prior terminated contract)",
+            "reference": "10000128",
+            "facts": [
+              {
+                "role": "award",
+                "supplier": "Needham Promotions Inc.",
+                "amount": 135000,
+                "amount_kind": "estimated_annual",
+                "amount_basis": "plus_HST",
+                "contingency_percent": 10,
+                "score": "secondary",
+                "note": "Background explicitly states the earlier Authority approval and award. Annual amount only printed in this cut; don't use it as a bid/award on 10000813. Day of reported approval is December 12, 2014."
+              }
+            ],
+            "type": "RFQ",
+            "scope": "background",
+            "decision_date": "2014-12-12"
+          }
+        ],
+        "notes": [
+          "A background sentence says Needham was allowed to re-bid on 10000128, the prior contract reference. The 2015 four-row RFQ table belongs to the new 10000813 motion. The new award’s $148,000 annual estimate is different from the $148,391.15 annual quote. The prior award is a source-supported background claim for the distinct reference and can be accepted separately to avoid making an accurate background award a false positive."
+        ],
+        "contract_only_leads": []
+      },
+      "model_results": [
+        {
+          "reference": "Contract #10000813",
+          "title": "Supply and Delivery of Clothing 2015-2017 for Toronto and Region Conservation Authority staff",
+          "matched_source_items": [
+            "clothing-replacement"
+          ],
+          "observations": [
+            {
+              "role": "bid",
+              "vendor": "Dufferin Apparel",
+              "amount_raw": "$148,391.15",
+              "amount_basis": "plus_HST",
+              "status": "not_stated",
+              "parsed_amount": 148391.15,
+              "source_roles": [
+                "award",
+                "bid",
+                "recommendation"
+              ],
+              "result": "matched"
+            },
+            {
+              "role": "bid",
+              "vendor": "G & L Promotions",
+              "amount_raw": "$163,147.00",
+              "amount_basis": "plus_HST",
+              "status": "not_stated",
+              "parsed_amount": 163147.0,
+              "source_roles": [
+                "bid"
+              ],
+              "result": "matched"
+            },
+            {
+              "role": "bid",
+              "vendor": "Needham Promotions",
+              "amount_raw": "$170,166.79",
+              "amount_basis": "plus_HST",
+              "status": "not_stated",
+              "parsed_amount": 170166.79,
+              "source_roles": [
+                "bid"
+              ],
+              "result": "matched"
+            },
+            {
+              "role": "bid",
+              "vendor": "Cotton Candy",
+              "amount_raw": "$207,298.01",
+              "amount_basis": "plus_HST",
+              "status": "not_stated",
+              "parsed_amount": 207298.01,
+              "source_roles": [
+                "bid"
+              ],
+              "result": "matched"
+            },
+            {
+              "role": "award",
+              "vendor": "Dufferin Apparel",
+              "amount_raw": "$296,000.00",
+              "amount_basis": "plus_HST",
+              "status": null,
+              "parsed_amount": 296000.0,
+              "source_roles": [
+                "award",
+                "bid",
+                "recommendation"
+              ],
+              "result": "matched"
+            }
+          ]
+        }
+      ],
+      "counts": {
+        "expected_bid": 4,
+        "expected_award": 1,
+        "expected_tender_bids": 4,
+        "printed_reference_returned": 1,
+        "printed_reference_correct": 1,
+        "returned_bid": 4,
+        "matched_bid": 4,
+        "lot_resolved_bids": 4,
+        "bid_price_expected": 4,
+        "bid_price_exact": 4,
+        "returned_award": 1,
+        "matched_award": 1,
+        "matched_award_or_recommendation": 1,
+        "award_price_expected": 1,
+        "award_price_exact": 1
+      },
+      "usage": {
+        "input_tokens": 1750,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 2866,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 553,
+        "output_tokens_details": {
+          "thinking_tokens": 0
+        },
+        "service_tier": "standard",
+        "inference_geo": "global",
+        "speed": "standard"
+      },
+      "cost_microdollars": 9317
+    },
+    "P08": {
+      "source": {
+        "docid": "1452956",
+        "url": "https://laserfiche.trca.ca/WebLink/ElectronicFile.aspx?docid=1452956&dbid=0",
+        "sha256": "958e2ab8965f7b2e913cd04be1ff0d5a787704257a92da4a71298c6236b74682",
+        "reference": "2017 TRCA Minute Book/Authority 2017.pdf",
+        "ranges": [
+          [
+            239,
+            0,
+            null
+          ],
+          [
+            240,
+            0,
+            null
+          ],
+          [
+            241,
+            0,
+            null
+          ],
+          [
+            242,
+            0,
+            null
+          ]
+        ],
+        "input_sha256": "9e54a86d2e015b1b191b2fb782a07cb8bade5487a2023080f3aa68be19a8f546"
+      },
+      "expected": {
+        "contracts": [
+          {
+            "key": "fishleigh-riprap",
+            "title": "Fishleigh Drive Erosion Control – 300–600 mm rip-rap",
+            "reference": "10005031",
+            "facts": [
+              {
+                "role": "bid",
+                "supplier": "Glenn Windrem Trucking",
+                "amount": 120650,
+                "amount_kind": "total",
+                "amount_basis": "plus_HST",
+                "status": "compliant",
+                "prices": [
+                  {
+                    "amount": 31.75,
+                    "kind": "per_tonne",
+                    "basis": "plus_HST"
+                  }
+                ]
+              },
+              {
+                "role": "bid",
+                "supplier": "CDR Young Aggregates",
+                "amount": 129998,
+                "amount_kind": "total",
+                "amount_basis": "plus_HST",
+                "status": "not_stated",
+                "prices": [
+                  {
+                    "amount": 34.21,
+                    "kind": "per_tonne",
+                    "basis": "plus_HST"
+                  }
+                ]
+              },
+              {
+                "role": "bid",
+                "supplier": "Btown Group",
+                "amount": 136990,
+                "amount_kind": "total",
+                "amount_basis": "plus_HST",
+                "status": "not_stated",
+                "prices": [
+                  {
+                    "amount": 36.05,
+                    "kind": "per_tonne",
+                    "basis": "plus_HST"
+                  }
+                ]
+              },
+              {
+                "role": "bid",
+                "supplier": "Miller Paving Ltd",
+                "amount": 139650,
+                "amount_kind": "total",
+                "amount_basis": "plus_HST",
+                "status": "not_stated",
+                "prices": [
+                  {
+                    "amount": 36.75,
+                    "kind": "per_tonne",
+                    "basis": "plus_HST"
+                  }
+                ]
+              },
+              {
+                "role": "bid",
+                "supplier": "Ritchie Rocks",
+                "amount": 150100,
+                "amount_kind": "total",
+                "amount_basis": "plus_HST",
+                "status": "not_stated",
+                "prices": [
+                  {
+                    "amount": 39.5,
+                    "kind": "per_tonne",
+                    "basis": "plus_HST"
+                  }
+                ]
+              },
+              {
+                "role": "bid",
+                "supplier": "Atlantis Marine",
+                "amount": 159600,
+                "amount_kind": "total",
+                "amount_basis": "plus_HST",
+                "status": "not_stated",
+                "prices": [
+                  {
+                    "amount": 42,
+                    "kind": "per_tonne",
+                    "basis": "plus_HST"
+                  }
+                ]
+              },
+              {
+                "role": "bid",
+                "supplier": "Amos Excavation",
+                "amount": 298490,
+                "amount_kind": "total",
+                "amount_basis": "plus_HST",
+                "status": "not_stated",
+                "prices": [
+                  {
+                    "amount": 78.55,
+                    "kind": "per_tonne",
+                    "basis": "plus_HST"
+                  }
+                ]
+              },
+              {
+                "role": "award",
+                "supplier": "Glenn Windrem Trucking",
+                "amount": 120650,
+                "amount_kind": "not_to_exceed_total",
+                "amount_basis": "plus_HST",
+                "prices": [
+                  {
+                    "amount": 31.75,
+                    "kind": "per_tonne",
+                    "basis": "plus_HST"
+                  }
+                ],
+                "contingency_percent": 10
+              },
+              {
+                "role": "recommendation",
+                "supplier": "Glenn Windrem Trucking",
+                "amount": 120650,
+                "amount_kind": "not_to_exceed_total",
+                "amount_basis": "plus_HST",
+                "prices": [
+                  {
+                    "amount": 31.75,
+                    "kind": "per_tonne",
+                    "basis": "plus_HST"
+                  }
+                ],
+                "contingency_percent": 10,
+                "score": "secondary",
+                "note": "Same determination independently stated as staff recommendation within the awarded report."
+              }
+            ],
+            "resolution": "A110/17",
+            "type": "RFT",
+            "quantity_tonnes": 3800
+          },
+          {
+            "key": "fishleigh-large-armour",
+            "title": "Fishleigh Drive Erosion Control – 4–6 tonne stackable armourstone",
+            "reference": "10005032",
+            "facts": [
+              {
+                "role": "bid",
+                "supplier": "CDR Young Aggregates",
+                "amount": 246729,
+                "amount_kind": "total",
+                "amount_basis": "plus_HST",
+                "status": "compliant",
+                "prices": [
+                  {
+                    "amount": 53.06,
+                    "kind": "per_tonne",
+                    "basis": "plus_HST"
+                  }
+                ]
+              },
+              {
+                "role": "bid",
+                "supplier": "Atlantis Marine",
+                "amount": 260400,
+                "amount_kind": "total",
+                "amount_basis": "plus_HST",
+                "status": "not_stated",
+                "prices": [
+                  {
+                    "amount": 56,
+                    "kind": "per_tonne",
+                    "basis": "plus_HST"
+                  }
+                ]
+              },
+              {
+                "role": "bid",
+                "supplier": "Cut Above Natural Stone",
+                "amount": 265747.5,
+                "amount_kind": "total",
+                "amount_basis": "plus_HST",
+                "status": "not_stated",
+                "prices": [
+                  {
+                    "amount": 57.15,
+                    "kind": "per_tonne",
+                    "basis": "plus_HST"
+                  }
+                ]
+              },
+              {
+                "role": "bid",
+                "supplier": "Btown Group",
+                "amount": 267607.5,
+                "amount_kind": "total",
+                "amount_basis": "plus_HST",
+                "status": "not_stated",
+                "prices": [
+                  {
+                    "amount": 57.55,
+                    "kind": "per_tonne",
+                    "basis": "plus_HST"
+                  }
+                ]
+              },
+              {
+                "role": "bid",
+                "supplier": "Glenn Windrem Trucking",
+                "amount": 299925,
+                "amount_kind": "total",
+                "amount_basis": "plus_HST",
+                "status": "not_stated",
+                "prices": [
+                  {
+                    "amount": 64.5,
+                    "kind": "per_tonne",
+                    "basis": "plus_HST"
+                  }
+                ]
+              },
+              {
+                "role": "bid",
+                "supplier": "Ritchie Rocks",
+                "amount": 306900,
+                "amount_kind": "total",
+                "amount_basis": "plus_HST",
+                "status": "not_stated",
+                "prices": [
+                  {
+                    "amount": 66,
+                    "kind": "per_tonne",
+                    "basis": "plus_HST"
+                  }
+                ]
+              },
+              {
+                "role": "bid",
+                "supplier": "Amos Excavation",
+                "amount": 498015,
+                "amount_kind": "total",
+                "amount_basis": "plus_HST",
+                "status": "not_stated",
+                "prices": [
+                  {
+                    "amount": 107.1,
+                    "kind": "per_tonne",
+                    "basis": "plus_HST"
+                  }
+                ]
+              },
+              {
+                "role": "award",
+                "supplier": "CDR Young Aggregates",
+                "amount": 246729,
+                "amount_kind": "not_to_exceed_total",
+                "amount_basis": "plus_HST",
+                "prices": [
+                  {
+                    "amount": 53.06,
+                    "kind": "per_tonne",
+                    "basis": "plus_HST"
+                  }
+                ],
+                "contingency_percent": 10,
+                "aliases": [
+                  "CDR Young Aggregates Inc",
+                  "CDR Young Aggregates Inc."
+                ]
+              },
+              {
+                "role": "recommendation",
+                "supplier": "CDR Young Aggregates",
+                "amount": 246729,
+                "amount_kind": "not_to_exceed_total",
+                "amount_basis": "plus_HST",
+                "prices": [
+                  {
+                    "amount": 53.06,
+                    "kind": "per_tonne",
+                    "basis": "plus_HST"
+                  }
+                ],
+                "contingency_percent": 10,
+                "aliases": [
+                  "CDR Young Aggregates Inc",
+                  "CDR Young Aggregates Inc."
+                ],
+                "score": "secondary",
+                "note": "Same determination independently stated as staff recommendation within the awarded report."
+              }
+            ],
+            "resolution": "A110/17",
+            "type": "RFT",
+            "quantity_tonnes": 4650
+          },
+          {
+            "key": "fishleigh-small-armour",
+            "title": "Fishleigh Drive Erosion Control – 3–5 tonne stackable armourstone",
+            "reference": "10005033",
+            "facts": [
+              {
+                "role": "bid",
+                "supplier": "CDR Young Aggregates",
+                "amount": 74284,
+                "amount_kind": "total",
+                "amount_basis": "plus_HST",
+                "status": "compliant",
+                "prices": [
+                  {
+                    "amount": 53.06,
+                    "kind": "per_tonne",
+                    "basis": "plus_HST"
+                  }
+                ]
+              },
+              {
+                "role": "bid",
+                "supplier": "Redstone Quarries",
+                "amount": 75460,
+                "amount_kind": "total",
+                "amount_basis": "plus_HST",
+                "status": "not_stated",
+                "prices": [
+                  {
+                    "amount": 53.9,
+                    "kind": "per_tonne",
+                    "basis": "plus_HST"
+                  }
+                ]
+              },
+              {
+                "role": "bid",
+                "supplier": "Atlantis Marine",
+                "amount": 78400,
+                "amount_kind": "total",
+                "amount_basis": "plus_HST",
+                "status": "not_stated",
+                "prices": [
+                  {
+                    "amount": 56,
+                    "kind": "per_tonne",
+                    "basis": "plus_HST"
+                  }
+                ]
+              },
+              {
+                "role": "bid",
+                "supplier": "Cut Above Natural Stone",
+                "amount": 80010,
+                "amount_kind": "total",
+                "amount_basis": "plus_HST",
+                "status": "not_stated",
+                "prices": [
+                  {
+                    "amount": 57.15,
+                    "kind": "per_tonne",
+                    "basis": "plus_HST"
+                  }
+                ]
+              },
+              {
+                "role": "bid",
+                "supplier": "Btown Group",
+                "amount": 80500,
+                "amount_kind": "total",
+                "amount_basis": "plus_HST",
+                "status": "not_stated",
+                "prices": [
+                  {
+                    "amount": 57.5,
+                    "kind": "per_tonne",
+                    "basis": "plus_HST"
+                  }
+                ]
+              },
+              {
+                "role": "bid",
+                "supplier": "Glenn Windrem Trucking",
+                "amount": 90300,
+                "amount_kind": "total",
+                "amount_basis": "plus_HST",
+                "status": "not_stated",
+                "prices": [
+                  {
+                    "amount": 64.5,
+                    "kind": "per_tonne",
+                    "basis": "plus_HST"
+                  }
+                ]
+              },
+              {
+                "role": "bid",
+                "supplier": "Ritchie Rocks",
+                "amount": 92400,
+                "amount_kind": "total",
+                "amount_basis": "plus_HST",
+                "status": "not_stated",
+                "prices": [
+                  {
+                    "amount": 66,
+                    "kind": "per_tonne",
+                    "basis": "plus_HST"
+                  }
+                ]
+              },
+              {
+                "role": "bid",
+                "supplier": "Amos Excavation",
+                "amount": 156940,
+                "amount_kind": "total",
+                "amount_basis": "plus_HST",
+                "status": "not_stated",
+                "prices": [
+                  {
+                    "amount": 112.1,
+                    "kind": "per_tonne",
+                    "basis": "plus_HST"
+                  }
+                ]
+              },
+              {
+                "role": "award",
+                "supplier": "CDR Young Aggregates",
+                "amount": 74284,
+                "amount_kind": "not_to_exceed_total",
+                "amount_basis": "plus_HST",
+                "prices": [
+                  {
+                    "amount": 53.06,
+                    "kind": "per_tonne",
+                    "basis": "plus_HST"
+                  }
+                ],
+                "contingency_percent": 10,
+                "aliases": [
+                  "CDR Young Aggregates Inc",
+                  "CDR Young Aggregates Inc."
+                ]
+              },
+              {
+                "role": "recommendation",
+                "supplier": "CDR Young Aggregates",
+                "amount": 74284,
+                "amount_kind": "not_to_exceed_total",
+                "amount_basis": "plus_HST",
+                "prices": [
+                  {
+                    "amount": 53.06,
+                    "kind": "per_tonne",
+                    "basis": "plus_HST"
+                  }
+                ],
+                "contingency_percent": 10,
+                "aliases": [
+                  "CDR Young Aggregates Inc",
+                  "CDR Young Aggregates Inc."
+                ],
+                "score": "secondary",
+                "note": "Same determination independently stated as staff recommendation within the awarded report."
+              }
+            ],
+            "resolution": "A110/17",
+            "type": "RFT",
+            "quantity_tonnes": 1400
+          }
+        ],
+        "notes": [
+          "Three explicit tender references, three independently carried awards, and 22 actual bids. Use total contract value for the primary amount and the unit price as a variant. Plus HST is stated in both table columns. No bid evidence for invitees who do not appear in the actual bid tables. No award to fallback negotiation candidates or historic consultants in background. A stock phrase prints Contracts rather than separate meeting reports, but the references and bid tables make attribution clear."
+        ],
+        "contract_only_leads": []
+      },
+      "model_results": [
+        {
+          "reference": "10005031",
+          "title": "Supply and delivery of 3,800 tonnes of 300 – 600mm rip-rap for the Fishleigh Drive Erosion Control Project",
+          "matched_source_items": [
+            "fishleigh-riprap"
+          ],
+          "observations": [
+            {
+              "role": "bid",
+              "vendor": "Glenn Windrem Trucking",
+              "amount_raw": "$120,650.00",
+              "amount_basis": "plus_HST",
+              "status": "compliant",
+              "parsed_amount": 120650.0,
+              "source_roles": [
+                "award",
+                "bid",
+                "recommendation"
+              ],
+              "result": "matched"
+            },
+            {
+              "role": "bid",
+              "vendor": "CDR Young Aggregates",
+              "amount_raw": "$129,998.00",
+              "amount_basis": "plus_HST",
+              "status": "not_stated",
+              "parsed_amount": 129998.0,
+              "source_roles": [
+                "bid"
+              ],
+              "result": "matched"
+            },
+            {
+              "role": "bid",
+              "vendor": "Btown Group",
+              "amount_raw": "$136,990.00",
+              "amount_basis": "plus_HST",
+              "status": "not_stated",
+              "parsed_amount": 136990.0,
+              "source_roles": [
+                "bid"
+              ],
+              "result": "matched"
+            },
+            {
+              "role": "bid",
+              "vendor": "Miller Paving Ltd",
+              "amount_raw": "$139,650.00",
+              "amount_basis": "plus_HST",
+              "status": "not_stated",
+              "parsed_amount": 139650.0,
+              "source_roles": [
+                "bid"
+              ],
+              "result": "matched"
+            },
+            {
+              "role": "bid",
+              "vendor": "Ritchie Rocks",
+              "amount_raw": "$150,100.00",
+              "amount_basis": "plus_HST",
+              "status": "not_stated",
+              "parsed_amount": 150100.0,
+              "source_roles": [
+                "bid"
+              ],
+              "result": "matched"
+            },
+            {
+              "role": "bid",
+              "vendor": "Atlantis Marine",
+              "amount_raw": "$159,600.00",
+              "amount_basis": "plus_HST",
+              "status": "not_stated",
+              "parsed_amount": 159600.0,
+              "source_roles": [
+                "bid"
+              ],
+              "result": "matched"
+            },
+            {
+              "role": "bid",
+              "vendor": "Amos Excavation",
+              "amount_raw": "$298,490.00",
+              "amount_basis": "plus_HST",
+              "status": "not_stated",
+              "parsed_amount": 298490.0,
+              "source_roles": [
+                "bid"
+              ],
+              "result": "matched"
+            },
+            {
+              "role": "award",
+              "vendor": "Glenn Windrem Trucking",
+              "amount_raw": "$120,650.00",
+              "amount_basis": "plus_HST",
+              "status": null,
+              "parsed_amount": 120650.0,
+              "source_roles": [
+                "award",
+                "bid",
+                "recommendation"
+              ],
+              "result": "matched"
+            }
+          ]
+        },
+        {
+          "reference": "10005032",
+          "title": "Supply and delivery of approximately 4650 tonnes of 4 – 6 tonne piece stackable armourstone for the Fishleigh Drive Erosion Control Project",
+          "matched_source_items": [
+            "fishleigh-large-armour"
+          ],
+          "observations": [
+            {
+              "role": "bid",
+              "vendor": "CDR Young Aggregates",
+              "amount_raw": "$246,729.00",
+              "amount_basis": "plus_HST",
+              "status": "compliant",
+              "parsed_amount": 246729.0,
+              "source_roles": [
+                "award",
+                "bid",
+                "recommendation"
+              ],
+              "result": "matched"
+            },
+            {
+              "role": "bid",
+              "vendor": "Atlantis Marine",
+              "amount_raw": "$260,400.00",
+              "amount_basis": "plus_HST",
+              "status": "not_stated",
+              "parsed_amount": 260400.0,
+              "source_roles": [
+                "bid"
+              ],
+              "result": "matched"
+            },
+            {
+              "role": "bid",
+              "vendor": "Cut Above Natural Stone",
+              "amount_raw": "$265,747.50",
+              "amount_basis": "plus_HST",
+              "status": "not_stated",
+              "parsed_amount": 265747.5,
+              "source_roles": [
+                "bid"
+              ],
+              "result": "matched"
+            },
+            {
+              "role": "bid",
+              "vendor": "Btown Group",
+              "amount_raw": "$267,607.50",
+              "amount_basis": "plus_HST",
+              "status": "not_stated",
+              "parsed_amount": 267607.5,
+              "source_roles": [
+                "bid"
+              ],
+              "result": "matched"
+            },
+            {
+              "role": "bid",
+              "vendor": "Glenn Windrem Trucking",
+              "amount_raw": "$299,925.00",
+              "amount_basis": "plus_HST",
+              "status": "not_stated",
+              "parsed_amount": 299925.0,
+              "source_roles": [
+                "bid"
+              ],
+              "result": "matched"
+            },
+            {
+              "role": "bid",
+              "vendor": "Ritchie Rocks",
+              "amount_raw": "$306,900.00",
+              "amount_basis": "plus_HST",
+              "status": "not_stated",
+              "parsed_amount": 306900.0,
+              "source_roles": [
+                "bid"
+              ],
+              "result": "matched"
+            },
+            {
+              "role": "bid",
+              "vendor": "Amos Excavation",
+              "amount_raw": "$498,015.00",
+              "amount_basis": "plus_HST",
+              "status": "not_stated",
+              "parsed_amount": 498015.0,
+              "source_roles": [
+                "bid"
+              ],
+              "result": "matched"
+            },
+            {
+              "role": "award",
+              "vendor": "CDR Young Aggregates Inc",
+              "amount_raw": "$246,729.00",
+              "amount_basis": "plus_HST",
+              "status": null,
+              "parsed_amount": 246729.0,
+              "source_roles": [
+                "award",
+                "recommendation"
+              ],
+              "result": "matched"
+            }
+          ]
+        },
+        {
+          "reference": "10005033",
+          "title": "Supply and delivery of approximately 1400 tonnes of 3 – 5 tonne piece stackable armourstone for the Fishleigh Drive Erosion Control Project",
+          "matched_source_items": [
+            "fishleigh-small-armour"
+          ],
+          "observations": [
+            {
+              "role": "bid",
+              "vendor": "CDR Young Aggregates",
+              "amount_raw": "$74,284.00",
+              "amount_basis": "plus_HST",
+              "status": "compliant",
+              "parsed_amount": 74284.0,
+              "source_roles": [
+                "award",
+                "bid",
+                "recommendation"
+              ],
+              "result": "matched"
+            },
+            {
+              "role": "bid",
+              "vendor": "Redstone Quarries",
+              "amount_raw": "$75,460.00",
+              "amount_basis": "plus_HST",
+              "status": "not_stated",
+              "parsed_amount": 75460.0,
+              "source_roles": [
+                "bid"
+              ],
+              "result": "matched"
+            },
+            {
+              "role": "bid",
+              "vendor": "Atlantis Marine",
+              "amount_raw": "$78,400.00",
+              "amount_basis": "plus_HST",
+              "status": "not_stated",
+              "parsed_amount": 78400.0,
+              "source_roles": [
+                "bid"
+              ],
+              "result": "matched"
+            },
+            {
+              "role": "bid",
+              "vendor": "Cut Above Natural Stone",
+              "amount_raw": "$80,010.00",
+              "amount_basis": "plus_HST",
+              "status": "not_stated",
+              "parsed_amount": 80010.0,
+              "source_roles": [
+                "bid"
+              ],
+              "result": "matched"
+            },
+            {
+              "role": "bid",
+              "vendor": "Btown Group",
+              "amount_raw": "$80,500.00",
+              "amount_basis": "plus_HST",
+              "status": "not_stated",
+              "parsed_amount": 80500.0,
+              "source_roles": [
+                "bid"
+              ],
+              "result": "matched"
+            },
+            {
+              "role": "bid",
+              "vendor": "Glenn Windrem Trucking",
+              "amount_raw": "$90,300.00",
+              "amount_basis": "plus_HST",
+              "status": "not_stated",
+              "parsed_amount": 90300.0,
+              "source_roles": [
+                "bid"
+              ],
+              "result": "matched"
+            },
+            {
+              "role": "bid",
+              "vendor": "Ritchie Rocks",
+              "amount_raw": "$92,400.00",
+              "amount_basis": "plus_HST",
+              "status": "not_stated",
+              "parsed_amount": 92400.0,
+              "source_roles": [
+                "bid"
+              ],
+              "result": "matched"
+            },
+            {
+              "role": "bid",
+              "vendor": "Amos Excavation",
+              "amount_raw": "$156,940.00",
+              "amount_basis": "plus_HST",
+              "status": "not_stated",
+              "parsed_amount": 156940.0,
+              "source_roles": [
+                "bid"
+              ],
+              "result": "matched"
+            },
+            {
+              "role": "award",
+              "vendor": "CDR Young Aggregates Inc",
+              "amount_raw": "$74,284.00",
+              "amount_basis": "plus_HST",
+              "status": null,
+              "parsed_amount": 74284.0,
+              "source_roles": [
+                "award",
+                "recommendation"
+              ],
+              "result": "matched"
+            }
+          ]
+        }
+      ],
+      "counts": {
+        "expected_bid": 22,
+        "expected_award": 3,
+        "expected_tender_bids": 22,
+        "printed_reference_returned": 3,
+        "printed_reference_correct": 3,
+        "returned_bid": 22,
+        "matched_bid": 22,
+        "lot_resolved_bids": 22,
+        "bid_price_expected": 22,
+        "bid_price_exact": 22,
+        "returned_award": 3,
+        "matched_award": 3,
+        "matched_award_or_recommendation": 3,
+        "award_price_expected": 3,
+        "award_price_exact": 3
+      },
+      "usage": {
+        "input_tokens": 3872,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 2866,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 2228,
+        "output_tokens_details": {
+          "thinking_tokens": 0
+        },
+        "service_tier": "standard",
+        "inference_geo": "global",
+        "speed": "standard"
+      },
+      "cost_microdollars": 30311
+    }
+  }
+}
